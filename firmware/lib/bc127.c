@@ -1,34 +1,39 @@
-/* 
+/*
  * File:   bc127.c
  * Author: Ted Salmon <tass2001@gmail.com>
- * This code implements the Sierra Wireless BC127 Bluetooth API
+ * This implements the Sierra Wireless BC127 Bluetooth API
  */
+#include <stdlib.h>
+#include "bc127.h"
 
-#include "lib/bc127.h"
-
-/*
- * BC127 Class Construct
- */
-void newBC127(BC127 *c)
+BC127_t *BC127Init()
 {
-    c->avrcpStatus = BC127_AVRCP_STATUS_PAUSED;
-    c->newAvrcpMeta = 0;
+    BC127_t *bt = malloc(sizeof(BC127_t));
+    if (bt != NULL) {
+        bt->avrcpStatus = BC127_AVRCP_STATUS_PAUSED;
+        bt->newAvrcpMeta = 0;
+        bt->uart = UARTInit(1, 2, UART_BAUD_9600);
+
+        // Function pointers
+        bt->destroy = &BC127Destroy;
+        bt->sendCommand = &BC127SendCommand;
+    } else {
+        // Log("Failed to malloc() BC127 Object");
+    }
+    return bt;
 }
 
-/*
- * Pause Playback on the device
+/**
+ * BC127 Struct Destructor - Takes an object of BC127_t and frees the memory in use
+ *
  */
-void pause(BC127 *c)
+void BC127Destroy(struct BC127_t *bt)
 {
-    sendCommand(*c, "MUSIC PAUSE");
+    bt->uart->destroy(bt->uart);
+    free(bt);
 }
 
-void play(BC127 *c)
+void BC127SendCommand(struct BC127_t *bt, unsigned char *command)
 {
-    sendCommand(*c, "MUSIC PLAY");
-}
-
-void sendCommand(BC127 *c, char *command)
-{
-    
+    bt->uart->sendData(bt->uart, command);
 }

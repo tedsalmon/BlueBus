@@ -9,17 +9,25 @@
 
 #define BC127_AVRCP_STATUS_PAUSED 0
 #define BC127_AVRCP_STATUS_PLAYING 1
+#include <stdint.h>
+#include "uart.h"
 
-typedef struct{
-    int avrcpStatus;
-    int newAvrcpMeta;
+typedef struct BC127_t{
+    uint8_t avrcpStatus;
+    uint8_t newAvrcpMeta;
     char *artist;
     char *title;
     char *album;
-} BC127;
+    uint8_t selectedDevice;
+    UART_t *uart;
+    void (*destroy) (struct BC127_t *);
+    void (*process) (struct BC127_t *);
+    void (*sendCommand) (struct BC127_t *, unsigned char *);
+} BC127_t;
 
-void pause(BC127 *);
-void play(BC127 *);
-void sendCommand(BC127 *);
+BC127_t *BC127Init();
+void BC127Destroy(struct BC127_t *);
+void BC127Process(struct BC127_t *);
+void BC127SendCommand(struct BC127_t *, unsigned char *);
 
 #endif	/* BC127_H */

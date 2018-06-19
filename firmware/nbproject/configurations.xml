@@ -7,7 +7,11 @@
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <itemPath>lib/bc127.h</itemPath>
         <itemPath>lib/uart.h</itemPath>
+        <itemPath>lib/char_queue.h</itemPath>
+        <itemPath>lib/ibus.h</itemPath>
       </logicalFolder>
+      <itemPath>io_mappings.h</itemPath>
+      <itemPath>sys_config.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -19,6 +23,8 @@
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <itemPath>lib/bc127.c</itemPath>
         <itemPath>lib/uart.c</itemPath>
+        <itemPath>lib/char_queue.c</itemPath>
+        <itemPath>lib/ibus.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
@@ -165,6 +171,9 @@
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
       </C30Global>
+      <PKOBSKDEPlatformTool>
+        <property key="firmware.download.all" value="false"/>
+      </PKOBSKDEPlatformTool>
     </conf>
   </confs>
 </configurationDescriptor>
