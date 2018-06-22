@@ -1,28 +1,40 @@
+/*
+ * File: char_queue.h
+ * Author: Ted Salmon <tass2001@gmail.com>
+ * Description:
+ *     Implement a FIFO queue to store bytes read from UART into
+ */
 #include <stdint.h>
 #include <string.h>
 
 #ifndef CHAR_QUEUE_H
 #define	CHAR_QUEUE_H
-#define QUEUE_INIT_SIZE 256
+// The maximum amount of elements that the queue can hold
+#define CHAR_QUEUE_SIZE 384
 
-typedef struct CharQueue_t{
-    uint16_t size;
+/**
+ * CharQueue_t
+ *     Description:
+ *         This object holds QUEUE_SIZE amounts of unsigned chars. It operates
+ *         with a read and write cursor to keep track of where the next byte
+ *         needs to be read from and where the next byte should be added.
+ *         Once those cursors are exhausted, meaning they've hit capacity, they
+ *         are reset. If data is not removed from the buffer before it hits
+ *         capacity, the data will be lost and an error will be logged.
+ */
+typedef struct CharQueue_t {
     uint16_t capacity;
-    unsigned char *data;
-    void (*append) (struct CharQueue_t *, unsigned char);
-    void (*destroy) (struct CharQueue_t *);
-    unsigned char (*get) (struct CharQueue_t *, uint16_t);
-    unsigned char (*next) (struct CharQueue_t *);
+    uint16_t size;
+    uint16_t readCursor;
+    uint16_t writeCursor;
+    unsigned char data[CHAR_QUEUE_SIZE];
+
 } CharQueue_t;
 
-CharQueue_t *CharQueueInit();
+struct CharQueue_t CharQueueInit();
 
-void CharQueueAppend(struct CharQueue_t *queue, unsigned char value);
-
-void CharQueueDestroy(struct CharQueue_t *queue);
-
+void CharQueueAdd(struct CharQueue_t *queue, unsigned char value);
 unsigned char CharQueueGet(struct CharQueue_t *queue, uint16_t idx);
-
 unsigned char CharQueueNext(struct CharQueue_t *queue);
 
 #endif	/* CHAR_QUEUE_H */

@@ -1,51 +1,70 @@
-/* 
- * File:   char_queue.c
+/*
+ * File: char_queue.c
+ * Author: Ted Salmon <tass2001@gmail.com>
+ * Description:
+ *     Implement a FIFO queue to store bytes read from UART into
  */
 #include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include "char_queue.h"
+#include "debug.h"
 
-
-CharQueue_t *CharQueueInit()
+/**
+ * CharQueueInit()
+ *     Description:
+ *         Returns a fresh CharQueue_t object to the caller
+ *     Params:
+ *         None
+ *     Returns:
+ *         struct CharQueue_t *
+ */
+struct CharQueue_t CharQueueInit()
 {
-    CharQueue_t *queue = malloc(sizeof(CharQueue_t));
-    if (queue != NULL) {
-        // Initialize size and capacity
-        queue->size = 0;
-        queue->capacity = QUEUE_INIT_SIZE;
-        queue->data = malloc(queue->capacity);
-        if (queue->data == NULL) {
-            // LogError("Failed to malloc() the char queue");
-        }
-        queue->append = &CharQueueAppend;
-        queue->destroy = &CharQueueDestroy;
-        queue->get = &CharQueueGet;
-        queue->next = &CharQueueNext;
-    } else {
-        // LogError("Failed to malloc() CharQueue_t");
-    }
+    struct CharQueue_t queue;
+    // Initialize size, capacity and cursors
+    queue.size = 0;
+    queue.readCursor = 0;
+    queue.writeCursor = 0;
+    queue.capacity = CHAR_QUEUE_SIZE;
     return queue;
 }
 
-void CharQueueAppend(struct CharQueue_t *queue, unsigned char value)
+/**
+ * CharQueueAdd()
+ *     Description:
+ *         Adds a byte to the queue. If the queue is full, the byte is discarded.
+ *     Params:
+ *         struct CharQueue_t *queue - The queue
+ *         unsigned char value - The value to add
+ *     Returns:
+ *         None
+ */
+void CharQueueAdd(struct CharQueue_t *queue, unsigned char value)
 {
-    // Resize the queue if it's at capacity
-    if (queue->size >= queue->capacity) {
-        queue->capacity *= 2;
-        queue->data = realloc(queue->data, queue->capacity);
+    if (queue->size != queue->capacity) {
+        // Reset the write cursor before it goes out of bounds
+        if (queue->writeCursor == queue->capacity) {
+            queue->writeCursor = 0;
+        }
+        queue->data[queue->writeCursor] = value;
+        queue->writeCursor++;
+        queue->size++;
+    } else {
+        LogError("Char Queue Overflow!\r\n");
     }
-    queue->data[queue->size] = value;
-    queue->size++;
 }
 
-void CharQueueDestroy(struct CharQueue_t *queue)
-{
-    free(queue->data);
-    free(queue);
-}
-
-unsigned char CharQueueGet(struct CharQueue_t *queue, uint16_t idx)
+/**
+ * CharQueueGet()
+ *     Description:
+ *         Returns the byte at location idx. Returning the byte does not remove
+ *         it from the queue.
+ *     Params:
+ *         struct CharQueue_t queue - The queue
+ *         uint16_t idx - The index to return data for
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char CharQueueGet(CharQueue_t *queue, uint16_t idx)
 {
     if (idx >= queue->size) {
         return 0;
@@ -53,20 +72,28 @@ unsigned char CharQueueGet(struct CharQueue_t *queue, uint16_t idx)
     return queue->data[idx];
 }
 
+/**
+ * CharQueueNext()
+ *     Description:
+ *         Shifts the next byte in the queue out, as seen by the read cursor.
+ *         Once the byte is returned, it should be considered destroyed from the
+ *         queue.
+ *     Params:
+ *         struct CharQueue_t queue - The queue
+ *     Returns:
+ *         unsigned char
+ */
 unsigned char CharQueueNext(struct CharQueue_t *queue)
 {
-    unsigned char data = queue->data[0];
-    // Shift all elements one index to the left. 
-    // If that index is empty, fill it with 0x00
-    uint16_t curIdx = 1;
-    while (curIdx <= queue->capacity) {
-        unsigned char curByte = 0x00;
-        if (curIdx < queue->size) {
-            curByte = queue->data[curIdx];
-        }
-        queue->data[curIdx - 1] = curByte;
-        curIdx++;
+    unsigned char data = queue->data[queue->readCursor];
+    // Remove the byte from memory
+    queue->data[queue->readCursor] = 0x00;
+    queue->readCursor++;
+    if (queue->readCursor >= queue->capacity) {
+        queue->readCursor = 0;
     }
-    queue->size--;
+    if (queue->size > 0) {
+        queue->size--;
+    }
     return data;
 }

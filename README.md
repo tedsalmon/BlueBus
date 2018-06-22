@@ -1,5 +1,6 @@
 # Bluebus
-This project covers the hardware and firmware of an interface that connects I-Bus enabled vehicles with an A2DP interface
+This project aims to create Bluetooth interface for vehicles equipped with the IBus.
+
 
 # Features
 * Firmware upgradable
