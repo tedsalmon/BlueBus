@@ -124,9 +124,9 @@ void UARTAddModuleHandler(struct UART_t *uart)
     UARTModules[uart->moduleIndex] = uart;
 }
 
-struct UART_t * UARTGetModuleHandler(uint8_t moduleIndex)
+struct UART_t * UARTGetModuleHandler(uint8_t moduleNumber)
 {
-    return UARTModules[moduleIndex];
+    return UARTModules[moduleNumber - 1];
 }
 
 void UARTHandleRXInterrupt(uint8_t uartModuleNumber)
@@ -157,9 +157,11 @@ void UARTHandleTXInterrupt(uint8_t uartModuleNumber)
     // interrupt is triggered when we setup the UART module.
     if (UARTModules[uartModuleNumber] != 0x00) {
         struct UART_t *uart = UARTModules[uartModuleNumber];
-        while (uart->txQueue.size > 0 && !(uart->registers->uxsta & 0x0200)) {
+        while (uart->txQueue.size > 0) {
             unsigned char c = CharQueueNext(&uart->txQueue);
             uart->registers->uxtxreg = c;
+            // Wait for the data to leave the tx buffer
+            while ((uart->registers->uxsta & (1 << (9) )) != 0);
         }
         // If the queue has data, do not clear the interrupt flag
         SetUARTTXIE(uart->moduleIndex, uart->txQueue.size != 0);

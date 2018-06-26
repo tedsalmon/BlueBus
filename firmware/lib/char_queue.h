@@ -9,7 +9,11 @@
 
 #ifndef CHAR_QUEUE_H
 #define	CHAR_QUEUE_H
-// The maximum amount of elements that the queue can hold
+/* The maximum amount of elements that the queue can hold. It can be this small
+ * because the I-Bus specification dictates that messages not be larger than 
+ * the maximum 8-bit unsigned integer. The BC127 doesn't seem to spout off messages
+ * larger than this as well.
+ */
 #define CHAR_QUEUE_SIZE 384
 
 /**
@@ -33,8 +37,9 @@ typedef struct CharQueue_t {
 
 struct CharQueue_t CharQueueInit();
 
-void CharQueueAdd(struct CharQueue_t *queue, unsigned char value);
-unsigned char CharQueueGet(struct CharQueue_t *queue, uint16_t idx);
-unsigned char CharQueueNext(struct CharQueue_t *queue);
+void CharQueueAdd(struct CharQueue_t *, unsigned char);
+unsigned char CharQueueGet(struct CharQueue_t *, uint16_t);
+unsigned char CharQueueNext(struct CharQueue_t *);
+int16_t CharQueueSeek(struct CharQueue_t *, unsigned char);
 
 #endif	/* CHAR_QUEUE_H */

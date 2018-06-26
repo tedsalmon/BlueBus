@@ -6,6 +6,8 @@
  */
 #include <stdlib.h>
 #include "io_mappings.h"
+#include <p24FJ1024GB610.h>
+#include <stdio.h>
 #include "lib/debug.h"
 #include "lib/bc127.h"
 #include "lib/uart.h"
@@ -22,18 +24,15 @@ int main(void)
     // All UART handler registrations need to be done at
     // this level to maintain a global scope
     UARTAddModuleHandler(&systemUart);
-    LogInfo("***** BlueBus Init *****\r\n");
+    LogInfo("***** BlueBus Init *****");
 
     struct BC127_t bt = BC127Init();
     UARTAddModuleHandler(&bt.uart);
 
     //struct IBus_t ibus = IBusInit();
 
-    // Turn on LED D10 on our Dev Board
-    LogInfo("***** LED ENABLED *****\r\n");
     TRISAbits.TRISA7 = 0;
     LATAbits.LATA7 = 1;
-
     // Process Synchronous events
     while (1) {
         BC127Process(&bt);

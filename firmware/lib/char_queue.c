@@ -6,7 +6,6 @@
  */
 #include <stdlib.h>
 #include "char_queue.h"
-#include "debug.h"
 
 /**
  * CharQueueInit()
@@ -48,8 +47,6 @@ void CharQueueAdd(struct CharQueue_t *queue, unsigned char value)
         queue->data[queue->writeCursor] = value;
         queue->writeCursor++;
         queue->size++;
-    } else {
-        LogError("Char Queue Overflow!\r\n");
     }
 }
 
@@ -96,4 +93,34 @@ unsigned char CharQueueNext(struct CharQueue_t *queue)
         queue->size--;
     }
     return data;
+}
+
+/**
+ * CharQueueSeek()
+ *     Description:
+ *         Checks if a given byte is in the queue and return the length of
+ *         characters prior to it.
+ *     Params:
+ *         struct CharQueue_t queue - The queue
+ *     Returns:
+ *         int16_t - The length of characters prior to the needle or zero if 
+ *                   the needle wasn't found
+ */
+int16_t CharQueueSeek(struct CharQueue_t *queue, unsigned char needle)
+{
+    uint16_t readCursor = (int16_t) queue->readCursor;
+    uint16_t size = queue->size;
+    int cnt = 0;
+    while (size > 0) {
+        if (readCursor >= queue->capacity) {
+            readCursor = 0;
+        }
+        if (queue->data[readCursor] == needle) {
+            return cnt;
+        }
+        size--;
+        readCursor++;
+        cnt++;
+    }
+    return 0;
 }
