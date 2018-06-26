@@ -6,10 +6,10 @@
  */
 #ifndef DEBUG_H
 #define	DEBUG_H
-
-void LogError(char *);
-void LogDebug(char *);
-void LogInfo(char *);
-void LogWarning(char *);
-
+void LogMessage(const char *, char *, ...);
+void LogRaw(char *);
+void LogError(const char *, ...);
+void LogDebug(const char *, ...);
+void LogInfo(const char *, ...);
+void LogWarning(const char *, ...);
 #endif	/* DEBUG_H */

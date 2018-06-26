@@ -8,6 +8,10 @@
 #define	BC127_H
 #define BC127_AVRCP_STATUS_PAUSED 0
 #define BC127_AVRCP_STATUS_PLAYING 1
+#define BC127_MSG_END_CHAR 0x0D
+#define BC127_MSG_LF_CHAR 0x0A
+#define BC127_MSG_DELIMETER 0x20
+#define BC127_METADATA_FIELD_SIZE 32
 #include <stdint.h>
 #include "uart.h"
 
@@ -19,10 +23,9 @@
  */
 typedef struct BC127_t {
     uint8_t avrcpStatus;
-    uint8_t newAvrcpMeta;
-    char artist[32];
-    char title[32];
-    char album[32];
+    char artist[BC127_METADATA_FIELD_SIZE];
+    char title[BC127_METADATA_FIELD_SIZE];
+    char album[BC127_METADATA_FIELD_SIZE];
     uint8_t selectedDevice;
     struct UART_t uart;
 } BC127_t;
@@ -30,5 +33,4 @@ typedef struct BC127_t {
 struct BC127_t BC127Init();
 void BC127Process(struct BC127_t *);
 void BC127SendCommand(struct BC127_t *, unsigned char *);
-
 #endif	/* BC127_H */

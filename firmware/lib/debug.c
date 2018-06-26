@@ -4,61 +4,110 @@
  * Description:
  *     Implementation of logging mechanisms that we can use throughout the project
  */
+#include <stdarg.h>
+#include <string.h>
+#include <stdio.h>
 #include "../io_mappings.h"
 #include "uart.h"
+
+/**
+ * LogMessage()
+ *     Description:
+ *         Send a message over the system UART, for the given syslog level.
+ *         Implicitly adds CRLF
+ *     Params:
+ *         const char *type
+ *         char *data
+ *         ...
+ *     Returns:
+ *         void
+ */
+void LogMessage(const char *type, char *data)
+{
+    struct UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
+    if (debugger != 0) {
+        char output[255];
+        sprintf(output, "%s: %s\r\n", type, data);
+        UARTSendString(debugger, output);
+    }
+}
+
+/**
+ * LogRaw()
+ *     Description:
+ *         Send a message over the system UART. Implicitly pad with newline
+ *     Params:
+ *         const char *data
+ *     Returns:
+ *         void
+ */
+void LogRaw(char *data)
+{
+    struct UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
+    if (debugger != 0) {
+        UARTSendString(debugger, data);
+        UARTSendString(debugger, "\r\n");
+    }
+}
 
 /**
  * LogDebug()
  *     Description:
  *         Send a debug message over the system UART
  *     Params:
- *         char *data
+ *         const char *format
+ *         ...
  *     Returns:
  *         void
  */
-void LogDebug(char *data)
+void LogDebug(const char *format, ...)
 {
-    struct UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
-    if (debugger != 0x00 ) {
-        UARTSendString(debugger, "DEBUG: ");
-        UARTSendString(debugger, data);
-    }
+    char formatted[255];
+    va_list args;
+    va_start(args, format);
+    sprintf(formatted, format, args);
+    va_end(args);
+    LogMessage("DEBUG", formatted);
 }
 
 /**
  * LogError()
  *     Description:
  *         Send an error message over the system UART
+ *         ...
  *     Params:
- *         char *data
+ *         const char *format
  *     Returns:
  *         void
  */
-void LogError(char *data)
+void LogError(const char *format, ...)
 {
-    struct UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
-    if (debugger != 0x00 ) {
-        UARTSendString(debugger, "ERROR: ");
-        UARTSendString(debugger, data);
-    }
+    char formatted[255];
+    va_list argptr;
+    va_start(argptr, format);
+    sprintf(formatted, format, argptr);
+    va_end(argptr);
+    LogMessage("ERROR", formatted);
 }
 
 /**
  * LogInfo()
  *     Description:
  *         Send an info message over the system UART
+ *         ...
  *     Params:
- *         char *data
+ *         const char *format
  *     Returns:
  *         void
  */
-void LogInfo(char *data)
+void LogInfo(const char *format, ...)
 {
-    struct UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
-    if (debugger != 0x00 ) {
-        UARTSendString(debugger, "INFO: ");
-        UARTSendString(debugger, data);
-    }
+    char formatted[255];
+    va_list argptr;
+    va_start(argptr, format);
+    sprintf(formatted, format, argptr);
+    va_end(argptr);
+    LogMessage("INFO", formatted);
 }
 
 /**
@@ -66,15 +115,17 @@ void LogInfo(char *data)
  *     Description:
  *         Send a warning message over the system UART
  *     Params:
- *         char *data
+ *         const char *format
+ *         ...
  *     Returns:
  *         void
  */
-void LogWarning(char *data)
+void LogWarning(const char *format, ...)
 {
-    struct UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
-    if (debugger != 0x00 ) {
-        UARTSendString(debugger, "WARNING: ");
-        UARTSendString(debugger, data);
-    }
+    char formatted[255];
+    va_list argptr;
+    va_start(argptr, format);
+    sprintf(formatted, format, argptr);
+    va_end(argptr);
+    LogMessage("WARNING", formatted);
 }

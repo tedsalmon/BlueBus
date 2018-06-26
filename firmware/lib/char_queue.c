@@ -6,7 +6,7 @@
  */
 #include <stdlib.h>
 #include "char_queue.h"
-
+#include "debug.h"
 /**
  * CharQueueInit()
  *     Description:
@@ -110,8 +110,9 @@ int16_t CharQueueSeek(struct CharQueue_t *queue, unsigned char needle)
 {
     uint16_t readCursor = (int16_t) queue->readCursor;
     uint16_t size = queue->size;
-    int cnt = 0;
+    uint16_t cnt = 0;
     while (size > 0) {
+        cnt++;
         if (readCursor >= queue->capacity) {
             readCursor = 0;
         }
@@ -120,7 +121,6 @@ int16_t CharQueueSeek(struct CharQueue_t *queue, unsigned char needle)
         }
         size--;
         readCursor++;
-        cnt++;
     }
     return 0;
 }
