@@ -9,6 +9,8 @@
 #define UART_BAUD_115200 8
 #define UART_BAUD_9600 103
 #define UART_MODULES_COUNT 4
+#define UART_PARITY_NONE 0
+#define UART_PARITY_EVEN 1
 
 #include <p24FJ1024GB610.h>
 #include "char_queue.h"
@@ -28,8 +30,7 @@ typedef struct UART_t {
     UART *registers;
 } UART_t;
 
-struct UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t);
-
+struct UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 void UARTAddModuleHandler(struct UART_t *uart);
 struct UART_t * UARTGetModuleHandler(uint8_t);
 void UARTHandleRXInterrupt(uint8_t);

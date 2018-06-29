@@ -4,7 +4,6 @@
  * Description:
  *     Implementation of the Sierra Wireless BC127 Bluetooth UART API
  */
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../io_mappings.h"
@@ -30,7 +29,8 @@ struct BC127_t BC127Init()
         BC127_UART_MODULE,
         BC127_UART_RX_PIN,
         BC127_UART_TX_PIN,
-        UART_BAUD_9600
+        UART_BAUD_9600,
+        UART_PARITY_NONE
     );
     return bt;
 }
@@ -94,24 +94,36 @@ void BC127Process(struct BC127_t *bt)
                 removeSubstring(msg, "AVRCP_MEDIA ALBUM: ");
                 strncpy(bt->album, msg, BC127_METADATA_FIELD_SIZE - 1);
             } else if (strcmp(msgBuf[1], "PLAYING_TIME(MS):") == 0) {
-                char nowPlaying[256];
-                sprintf(
-                    nowPlaying,
+                LogDebug(
                     "BT: Now Playing: '%s' - '%s' on '%s'",
                     bt->title,
                     bt->artist,
                     bt->album
                 );
-                LogDebug(nowPlaying);
+                // Fire off Callback
             }
         } else if(strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
             bt->avrcpStatus = BC127_AVRCP_STATUS_PLAYING;
             bt->selectedDevice = (uint8_t)strtol(msgBuf[1], &ptr, 10);
             LogDebug("BT: Playing");
+            // Fire off Callback
         } else if(strcmp(msgBuf[0], "AVRCP_PAUSE") == 0) {
             bt->avrcpStatus = BC127_AVRCP_STATUS_PAUSED;
             bt->selectedDevice = (uint8_t)strtol(msgBuf[1], &ptr, 10);
             LogDebug("BT: Paused");
+            // Fire off Callback
+        } else if(strcmp(msgBuf[0], "CALLER_NUMBER") == 0) {
+            uint8_t closedDevice = (uint8_t)strtol(msgBuf[1], &ptr, 10);
+            if (closedDevice == bt->selectedDevice) {
+                bt->selectedDevice = 0;
+                // Fire off Callback
+                LogDebug("BT: Selected device %s closed connection", msgBuf[1]);
+            } else {
+                LogDebug("BT: Unselected device %s closed connection", msgBuf[1]);
+            }
+        } else if(strcmp(msgBuf[0], "CLOSE_OK") == 0) {
+            LogDebug("BT: Connection Closed for ID %s", msgBuf[1]);
+            // Fire off Callback
         } else if(strcmp(msgBuf[0], "INFO") == 0) {
             if (strcmp(msgBuf[2], "CONNECTED") == 0 &&
                 strcmp(msgBuf[3], "A2DP") == 0
@@ -119,6 +131,10 @@ void BC127Process(struct BC127_t *bt)
                 bt->selectedDevice = (uint8_t)strtol(msgBuf[1], &ptr, 10);
                 LogDebug("BT: A2DP connected");
             }
+        } else if (strcmp(msgBuf[0], "OPEN_OK") == 0) {
+            LogDebug("BT: %s connected on ID %s", msgBuf[2], msgBuf[1]);
+            // Fire off Callback
+            // Get Device Name?
         }
     }
 }

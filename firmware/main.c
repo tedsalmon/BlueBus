@@ -5,11 +5,12 @@
  *     The main loop for our PIC24FJ
  */
 #include <stdlib.h>
-#include "io_mappings.h"
-#include <p24FJ1024GB610.h>
 #include <stdio.h>
+#include <xc.h>
+#include "io_mappings.h"
 #include "lib/debug.h"
 #include "lib/bc127.h"
+#include "lib/ibus.h"
 #include "lib/uart.h"
 
 int main(void)
@@ -19,7 +20,8 @@ int main(void)
         SYSTEM_UART_MODULE,
         SYSTEM_UART_RX_PIN,
         SYSTEM_UART_TX_PIN,
-        UART_BAUD_115200
+        UART_BAUD_115200,
+        UART_PARITY_NONE
     );
     // All UART handler registrations need to be done at
     // this level to maintain a global scope
@@ -29,13 +31,16 @@ int main(void)
     struct BC127_t bt = BC127Init();
     UARTAddModuleHandler(&bt.uart);
 
-    //struct IBus_t ibus = IBusInit();
+    struct IBus_t ibus = IBusInit();
+    UARTAddModuleHandler(&ibus.uart);
 
     TRISAbits.TRISA7 = 0;
     LATAbits.LATA7 = 1;
+
     // Process Synchronous events
     while (1) {
         BC127Process(&bt);
+        IBusProcess(&ibus);
     }
 
     return 0;

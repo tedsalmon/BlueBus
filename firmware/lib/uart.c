@@ -7,7 +7,6 @@
  */
 #include <stdlib.h>
 #include <stdint.h>
-#include <p24FJ1024GB610.h>
 #include "char_queue.h"
 #include "sfr_setters.h"
 #include "uart.h"
@@ -16,7 +15,7 @@
 #define GET_RPOR(num) (((uint16_t *) &RPOR0) + num)
 
 /* Hold a pin to register map for all reprogrammable output pins */
-uint16_t *ROPR_PINS[] = {
+static uint16_t *ROPR_PINS[] = {
     GET_RPOR(0),
     GET_RPOR(0),
     GET_RPOR(1),
@@ -60,13 +59,14 @@ uint16_t *ROPR_PINS[] = {
 struct UART_t *UARTModules[UART_MODULES_COUNT];
 
 // These values constitute the TX mode for each UART module
-const uint8_t UART_TX_MODES[] = {3, 5, 19, 21};
+static const uint8_t UART_TX_MODES[] = {3, 5, 19, 21};
 
 struct UART_t UARTInit(
     uint8_t uartModule,
     uint8_t rxPin,
     uint8_t txPin,
-    uint8_t baudRate
+    uint8_t baudRate,
+    uint8_t parity
 ) {
     struct UART_t uart;
     uart.txQueue = CharQueueInit();
@@ -109,6 +109,9 @@ struct UART_t UARTInit(
     uart.registers->uxbrg = baudRate;
     // Enable UART, keep the module in 3-wire mode
     uart.registers->uxmode ^= 0b1000000000000000;
+    if (parity == UART_PARITY_EVEN) {
+        uart.registers->uxmode ^= 0b0000000000000010;
+    }
     // Enable transmit and receive on the module
     uart.registers->uxsta ^= 0b0001010000000000;
     SetUARTRXIE(uart.moduleIndex, 1);

@@ -62,12 +62,12 @@ void LogRaw(char *data)
  */
 void LogDebug(const char *format, ...)
 {
-    char formatted[255];
+    char buffer[255];
     va_list args;
     va_start(args, format);
-    sprintf(formatted, format, args);
+    vsprintf(buffer, format, args);
     va_end(args);
-    LogMessage("DEBUG", formatted);
+    LogMessage("DEBUG", buffer);
 }
 
 /**
@@ -82,12 +82,12 @@ void LogDebug(const char *format, ...)
  */
 void LogError(const char *format, ...)
 {
-    char formatted[255];
-    va_list argptr;
-    va_start(argptr, format);
-    sprintf(formatted, format, argptr);
-    va_end(argptr);
-    LogMessage("ERROR", formatted);
+    char buffer[255];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buffer, format, args);
+    va_end(args);
+    LogMessage("ERROR", buffer);
 }
 
 /**
@@ -102,12 +102,12 @@ void LogError(const char *format, ...)
  */
 void LogInfo(const char *format, ...)
 {
-    char formatted[255];
-    va_list argptr;
-    va_start(argptr, format);
-    sprintf(formatted, format, argptr);
-    va_end(argptr);
-    LogMessage("INFO", formatted);
+    char buffer[255];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buffer, format, args);
+    va_end(args);
+    LogMessage("INFO", buffer);
 }
 
 /**
@@ -122,10 +122,10 @@ void LogInfo(const char *format, ...)
  */
 void LogWarning(const char *format, ...)
 {
-    char formatted[255];
-    va_list argptr;
-    va_start(argptr, format);
-    sprintf(formatted, format, argptr);
-    va_end(argptr);
-    LogMessage("WARNING", formatted);
+    char buffer[255];
+    va_list args;
+    va_start(args, format);
+    vsprintf(buffer, format, args);
+    va_end(args);
+    LogMessage("WARNING", buffer);
 }

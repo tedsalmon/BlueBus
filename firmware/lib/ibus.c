@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "../io_mappings.h"
 #include "ibus.h"
+#include "debug.h"
 #include "uart.h"
 
 /**
@@ -21,7 +22,13 @@
 struct IBus_t IBusInit ()
 {
     struct IBus_t ibus;
-    //ibus.uart = UARTInit(1, 1, 2, UART_BAUD_9600);
+    ibus.uart = UARTInit(
+        IBUS_UART_MODULE,
+        IBUS_UART_RX_PIN,
+        IBUS_UART_TX_PIN,
+        UART_BAUD_9600,
+        UART_PARITY_EVEN
+    );
     return ibus;
 }
 
@@ -36,5 +43,12 @@ struct IBus_t IBusInit ()
  */
 void IBusProcess(struct IBus_t *ibus)
 {
-
+    uint8_t size = ibus->uart.rxQueue.size;
+    if (ibus->uart.rxQueue.size > 0) {
+        while (size > 0) {
+            unsigned char c = CharQueueNext(&ibus->uart.rxQueue);
+            LogDebug("Got Char 0x%x", c);
+            size--;
+        }
+    }
 }

@@ -12,6 +12,7 @@
         <itemPath>lib/sfr_setters.h</itemPath>
         <itemPath>lib/debug.h</itemPath>
         <itemPath>lib/utils.h</itemPath>
+        <itemPath>lib/timer.h</itemPath>
       </logicalFolder>
       <itemPath>io_mappings.h</itemPath>
     </logicalFolder>
@@ -30,6 +31,7 @@
         <itemPath>lib/sfr_setters.s</itemPath>
         <itemPath>lib/debug.c</itemPath>
         <itemPath>lib/utils.c</itemPath>
+        <itemPath>lib/timer.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>system.c</itemPath>

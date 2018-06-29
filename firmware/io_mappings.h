@@ -5,8 +5,8 @@
 #define IO_MAPPINGS_H
 
 #define IBUS_UART_MODULE 1
-#define IBUS_UART_RX_PIN 0
-#define IBUS_UART_TX_PIN 0
+#define IBUS_UART_RX_PIN 38
+#define IBUS_UART_TX_PIN 14
 
 #define BC127_UART_MODULE 2
 #define BC127_UART_RX_PIN 32

@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include "char_queue.h"
 #include "debug.h"
+
 /**
  * CharQueueInit()
  *     Description:
@@ -103,7 +104,7 @@ unsigned char CharQueueNext(struct CharQueue_t *queue)
  *     Params:
  *         struct CharQueue_t queue - The queue
  *     Returns:
- *         int16_t - The length of characters prior to the needle or zero if 
+ *         int16_t - The length of characters prior to the needle or zero if
  *                   the needle wasn't found
  */
 int16_t CharQueueSeek(struct CharQueue_t *queue, unsigned char needle)
