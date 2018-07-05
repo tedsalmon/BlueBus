@@ -1,5 +1,5 @@
 /*
- * File:   uart.h
+ * File:   uart.c
  * Author: Ted Salmon <tass2001@gmail.com>
  * Description:
  *     Implement the PIC UART modules in a structured way to allow

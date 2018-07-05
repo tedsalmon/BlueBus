@@ -4,15 +4,14 @@
  * Description:
  *     Implement a FIFO queue to store bytes read from UART into
  */
+#ifndef CHAR_QUEUE_H
+#define CHAR_QUEUE_H
 #include <stdint.h>
 #include <string.h>
-
-#ifndef CHAR_QUEUE_H
-#define	CHAR_QUEUE_H
 /* The maximum amount of elements that the queue can hold. It can be this small
- * because the I-Bus specification dictates that messages not be larger than 
+ * because the I-Bus specification dictates that messages not be larger than
  * the maximum 8-bit unsigned integer. The BC127 doesn't seem to spout off messages
- * larger than this as well.
+ * larger than this as well, but sometimes things do get busy on these busses.
  */
 #define CHAR_QUEUE_SIZE 384
 
@@ -41,5 +40,4 @@ void CharQueueAdd(struct CharQueue_t *, unsigned char);
 unsigned char CharQueueGet(struct CharQueue_t *, uint16_t);
 unsigned char CharQueueNext(struct CharQueue_t *);
 int16_t CharQueueSeek(struct CharQueue_t *, unsigned char);
-
-#endif	/* CHAR_QUEUE_H */
+#endif /* CHAR_QUEUE_H */

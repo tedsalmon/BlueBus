@@ -5,16 +5,16 @@
  *      Provides an API for UART module interactions
  */
 #ifndef UART_H
-#define	UART_H
+#define UART_H
+#include <xc.h>
+#include "char_queue.h"
+#include "sfr_setters.h"
+
 #define UART_BAUD_115200 8
 #define UART_BAUD_9600 103
 #define UART_MODULES_COUNT 4
 #define UART_PARITY_NONE 0
 #define UART_PARITY_EVEN 1
-
-#include <p24FJ1024GB610.h>
-#include "char_queue.h"
-#include "sfr_setters.h"
 
 /**
  * UART_t
@@ -37,5 +37,4 @@ void UARTHandleRXInterrupt(uint8_t);
 void UARTHandleTXInterrupt(uint8_t);
 void UARTSendData(struct UART_t *, unsigned char *);
 void UARTSendString(struct UART_t *, char *);
-
-#endif	/* UART_H */
+#endif /* UART_H */

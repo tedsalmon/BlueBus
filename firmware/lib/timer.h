@@ -1,11 +1,11 @@
 /*
- * File: char_queue.c
+ * File: timer.h
  * Author: Ted Salmon <tass2001@gmail.com>
  * Description:
  *     Implement a timer to keep track of events
  */
-#ifndef TIMER_1MS
-#define TIMER_1MS
+#ifndef TIMER_H
+#define TIMER_H
 #define SYS_CLOCK 16000000
 #define STOP_TIMER_IN_IDLE_MODE 0x2000
 #define TIMER_SOURCE_INTERNAL 0x0000
@@ -43,9 +43,8 @@
 #define CLOCK_DIVIDER TIMER_PRESCALER_256
 #define PR3_SETTING (SYSTEM_PERIPHERAL_CLOCK/1000/256)
 #endif
-
 #define TIMER_TICK_INTERVAL_MICRO_SECONDS 1000
 
 void TimerInit();
-
-#endif //TIMER_1MS
+uint32_t TimerGetMillis();
+#endif /* TIMER_H */

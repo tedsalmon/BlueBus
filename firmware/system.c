@@ -65,6 +65,7 @@ void __attribute__ ((__interrupt__ , auto_psv)) _OscillatorFail(void)
 {
     //Clear the trap flag
     INTCON1bits.OSCFAIL = 0;
+    LATAbits.LATA7 = 0;
     while (1);
 }
 
@@ -72,6 +73,7 @@ void __attribute__ ((__interrupt__ , auto_psv)) _AddressError(void)
 {
     //Clear the trap flag
     INTCON1bits.ADDRERR = 0;
+    LATAbits.LATA7 = 0;
     while (1);
 }
 
@@ -80,6 +82,7 @@ void __attribute__ ((__interrupt__ , auto_psv)) _StackError(void)
 {
     //Clear the trap flag
     INTCON1bits.STKERR = 0;
+    LATAbits.LATA7 = 0;
     while (1);
 }
 
@@ -87,5 +90,6 @@ void __attribute__ ((__interrupt__ , auto_psv)) _MathError(void)
 {
     //Clear the trap flag
     INTCON1bits.MATHERR = 0;
+    LATAbits.LATA7 = 0;
     while (1);
 }

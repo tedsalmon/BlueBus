@@ -64,8 +64,8 @@ void CharQueueAdd(struct CharQueue_t *queue, unsigned char value)
  */
 unsigned char CharQueueGet(CharQueue_t *queue, uint16_t idx)
 {
-    if (idx >= queue->size) {
-        return 0;
+    if (idx >= queue->capacity) {
+        return 0x00;
     }
     return queue->data[idx];
 }

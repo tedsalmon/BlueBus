@@ -11,6 +11,7 @@
 #include "lib/debug.h"
 #include "lib/bc127.h"
 #include "lib/ibus.h"
+#include "lib/timer.h"
 #include "lib/uart.h"
 
 int main(void)
@@ -37,9 +38,14 @@ int main(void)
     TRISAbits.TRISA7 = 0;
     LATAbits.LATA7 = 1;
 
+    TimerInit();
+
+    BC127Startup(&bt);
+    IBusStartup(&ibus);
+
     // Process Synchronous events
     while (1) {
-        BC127Process(&bt);
+        BC127Process(&bt, &ibus);
         IBusProcess(&ibus);
     }
 

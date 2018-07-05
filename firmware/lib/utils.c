@@ -25,4 +25,3 @@ void removeSubstring(char *string, const char *trash)
         memmove(string, string + removeLength, 1 + strlen(string + removeLength));
     }
 }
-
