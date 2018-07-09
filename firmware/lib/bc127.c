@@ -49,8 +49,7 @@ struct BC127_t BC127Init()
 void BC127CommandBackward(struct BC127_t *bt)
 {
     char command[19];
-    snprintf(command, 18, "MUSIC %d BACKWARD\r", bt->selectedDevice);
-    LogDebug("BT: Trigger Backward Command");
+    snprintf(command, 19, "MUSIC %d BACKWARD", bt->selectedDevice);
     BC127SendCommand(bt, command);
 }
 
@@ -66,8 +65,7 @@ void BC127CommandBackward(struct BC127_t *bt)
 void BC127CommandForward(struct BC127_t *bt)
 {
     char command[18];
-    snprintf(command, 17, "MUSIC %d FORWARD\r", bt->selectedDevice);
-    LogDebug("BT: Trigger Forward Command");
+    snprintf(command, 18, "MUSIC %d FORWARD", bt->selectedDevice);
     BC127SendCommand(bt, command);
 }
 
@@ -83,7 +81,7 @@ void BC127CommandForward(struct BC127_t *bt)
 void BC127CommandPause(struct BC127_t *bt)
 {
     char command[16];
-    snprintf(command, 15, "MUSIC %d PAUSE\r", bt->selectedDevice);
+    snprintf(command, 16, "MUSIC %d PAUSE", bt->selectedDevice);
     BC127SendCommand(bt, command);
 }
 
@@ -99,7 +97,7 @@ void BC127CommandPause(struct BC127_t *bt)
 void BC127CommandPlay(struct BC127_t *bt)
 {
     char command[15];
-    snprintf(command, 14, "MUSIC %d PLAY\r", bt->selectedDevice);
+    snprintf(command, 15, "MUSIC %d PLAY", bt->selectedDevice);
     BC127SendCommand(bt, command);
 }
 
@@ -166,7 +164,7 @@ void BC127Process(struct BC127_t *bt, struct IBus_t *ibus)
             // The strncpy call adds a null terminator, so send size_t - 1
             if (strcmp(msgBuf[1], "TITLE:") == 0) {
                 removeSubstring(msg, "AVRCP_MEDIA TITLE: ");
-                strncpy(bt->title, msg, BC127_METADATA_FIELD_SIZE - 1);
+                strncpy(bt->title, msg, BC127_METADATA_TITLE_FIELD_SIZE - 1);
                 // We have new metadata, so clear the old
                 memset(&bt->artist, 0, BC127_METADATA_FIELD_SIZE);
                 memset(&bt->album, 0, BC127_METADATA_FIELD_SIZE);
@@ -253,17 +251,17 @@ void BC127Process(struct BC127_t *bt, struct IBus_t *ibus)
  *         Send data over UART
  *     Params:
  *         struct BC127_t *
- *         unsigned char *command
+ *         char *command - A command to send, with null termination included
  *     Returns:
  *         void
  */
 void BC127SendCommand(struct BC127_t *bt, char *command)
 {
-    unsigned char c;
-    while ((c != BC127_MSG_END_CHAR)) {
-        c = *command++;
-        CharQueueAdd(&bt->uart.txQueue, c);
+    uint8_t idx = 0;
+    for (idx = 0; idx < strlen(command); idx++) {
+        CharQueueAdd(&bt->uart.txQueue, command[idx]);
     }
+    CharQueueAdd(&bt->uart.txQueue, BC127_MSG_END_CHAR);
     // Set the interrupt flag
     SetUARTTXIE(bt->uart.moduleIndex, 1);
 }

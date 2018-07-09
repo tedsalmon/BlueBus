@@ -15,7 +15,8 @@
 #define BC127_MSG_END_CHAR 0x0D
 #define BC127_MSG_LF_CHAR 0x0A
 #define BC127_MSG_DELIMETER 0x20
-#define BC127_METADATA_FIELD_SIZE 64
+#define BC127_METADATA_TITLE_FIELD_SIZE 100
+#define BC127_METADATA_FIELD_SIZE 32
 
 /**
  * BC127_t
@@ -25,8 +26,8 @@
  */
 typedef struct BC127_t {
     uint8_t avrcpStatus;
+    char title[BC127_METADATA_TITLE_FIELD_SIZE];
     char artist[BC127_METADATA_FIELD_SIZE];
-    char title[BC127_METADATA_FIELD_SIZE];
     char album[BC127_METADATA_FIELD_SIZE];
     uint8_t selectedDevice;
     struct UART_t uart;

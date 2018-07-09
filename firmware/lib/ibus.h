@@ -88,4 +88,3 @@ void IBusStartup(struct IBus_t *);
 void IBusDisplayText(struct IBus_t *, char *);
 void IBusDisplayTextClear(struct IBus_t *);
 #endif /* IBUS_H */
-

@@ -37,6 +37,7 @@ struct IBus_t IBusInit()
     ibus.txBufferReadIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
+    memset(ibus.displayText, 0, 200);
     ibus.displayTextIdx = 0;
     ibus.displayTextLastStamp = TimerGetMillis();
     ibus.playbackStatus = 0;
@@ -122,11 +123,13 @@ void IBusProcess(struct IBus_t *ibus)
     } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx) {
         uint32_t now = TimerGetMillis();
         if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
+            /*
             LogDebug(
                 "Transmitting Message 0x%x -> 0x%x",
                 ibus->txBuffer[ibus->txBufferReadIdx][0],
                 ibus->txBuffer[ibus->txBufferReadIdx][2]
             );
+            */
             unsigned char len = ibus->txBuffer[ibus->txBufferReadIdx][1];
             uint8_t msgLen = (uint8_t) len + 2;
             uint8_t idx;
@@ -174,13 +177,15 @@ void IBusProcess(struct IBus_t *ibus)
                 for (idx = 0; idx < 11; idx++) {
                     uint8_t offsetIdx = idx + ibus->displayTextIdx;
                     if (offsetIdx < metadataLength) {
-                        text[idx] = c;
+                        text[idx] = ibus->displayText[offsetIdx];
                     } else {
                         text[idx] = '\0';
                         endOfText = 1;
                     }
                 }
-                IBusDisplayText(ibus, text);
+                if (strlen(text) > 0) {
+                    IBusDisplayText(ibus, text);
+                }
                 if (endOfText == 1) {
                     ibus->displayTextIdx = 0;
                 } else {
