@@ -43,8 +43,16 @@
 #define CLOCK_DIVIDER TIMER_PRESCALER_256
 #define PR3_SETTING (SYSTEM_PERIPHERAL_CLOCK/1000/256)
 #endif
-#define TIMER_TICK_INTERVAL_MICRO_SECONDS 1000
+#define TIMER_TASKS_MAX 16
+
+typedef struct TimerScheduledTask_t {
+    uint32_t lastRun;
+    uint16_t timeout;
+    void *context;
+    void (*task)(void *);
+} TimerScheduledTask_t;
 
 void TimerInit();
+void TimerRegisterScheduledTask(void *, void *, uint16_t);
 uint32_t TimerGetMillis();
 #endif /* TIMER_H */

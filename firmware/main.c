@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <xc.h>
+#include "handler.h"
 #include "io_mappings.h"
 #include "lib/debug.h"
 #include "lib/bc127.h"
@@ -39,14 +40,28 @@ int main(void)
     LATAbits.LATA7 = 1;
 
     TimerInit();
+    // Send the module structs to the event handlers
+    HandlerRegister(&bt, &ibus);
 
-    BC127Startup(&bt);
-    IBusStartup(&ibus);
+    // Trigger the event callbacks for the module Start Up
+    BC127Startup();
+    IBusStartup();
 
+    uint32_t lastDebugReport = TimerGetMillis();
     // Process Synchronous events
     while (1) {
-        BC127Process(&bt, &ibus);
+        BC127Process(&bt);
         IBusProcess(&ibus);
+        uint32_t now = TimerGetMillis();
+        if ((now - lastDebugReport) >= 30000) {
+            LogDebug("IBus Rx Queue Max: %d", ibus.uart.rxQueue.maxCap);
+            LogDebug("IBus Tx Queue Max: %d", ibus.uart.txQueue.maxCap);
+            LogDebug("BC127 Rx Queue Max: %d", bt.uart.rxQueue.maxCap);
+            LogDebug("BC127 Tx Queue Max: %d", bt.uart.txQueue.maxCap);
+            LogDebug("System Rx Queue Max: %d", systemUart.rxQueue.maxCap);
+            LogDebug("System Tx Queue Max: %d", systemUart.txQueue.maxCap);
+            lastDebugReport = now;
+        }
     }
 
     return 0;

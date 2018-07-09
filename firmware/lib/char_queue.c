@@ -25,6 +25,7 @@ struct CharQueue_t CharQueueInit()
     queue.readCursor = 0;
     queue.writeCursor = 0;
     queue.capacity = CHAR_QUEUE_SIZE;
+    queue.maxCap = 0;
     return queue;
 }
 
@@ -48,6 +49,9 @@ void CharQueueAdd(struct CharQueue_t *queue, unsigned char value)
         queue->data[queue->writeCursor] = value;
         queue->writeCursor++;
         queue->size++;
+        if (queue->size > queue->maxCap) {
+            queue->maxCap = queue->size;
+        }
     }
 }
 

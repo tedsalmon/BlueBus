@@ -8,6 +8,7 @@
 #include "../io_mappings.h"
 #include "char_queue.h"
 #include "debug.h"
+#include "event.h"
 #include "ibus.h"
 #include "timer.h"
 #include "uart.h"
@@ -31,16 +32,13 @@ struct IBus_t IBusInit()
         UART_BAUD_9600,
         UART_PARITY_EVEN
     );
-    ibus.cdStatus = 0x01;
+    ibus.cdChangerStatus = 0x01;
+    ibus.ignitionStatus = 0x01;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = TimerGetMillis();
     ibus.txBufferReadIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
-    memset(ibus.displayText, 0, 200);
-    ibus.displayTextIdx = 0;
-    ibus.displayTextLastStamp = TimerGetMillis();
-    ibus.playbackStatus = 0;
     return ibus;
 }
 
@@ -56,8 +54,9 @@ struct IBus_t IBusInit()
  */
 void IBusProcess(struct IBus_t *ibus)
 {
-    uint8_t rxSize = ibus->uart.rxQueue.size;
-    if (rxSize > 0) {
+    // Read messages from the IBus and if none are available, attempt to
+    // transmit whatever is sitting in the transmit buffer
+    if (ibus->uart.rxQueue.size > 0) {
         ibus->rxBuffer[ibus->rxBufferIdx] = CharQueueNext(&ibus->uart.rxQueue);
         ibus->rxBufferIdx++;
         ibus->rxLastStamp = TimerGetMillis();
@@ -79,57 +78,20 @@ void IBusProcess(struct IBus_t *ibus)
                     pkt[3],
                     (uint8_t) pkt[1]
                 );
-                // Radio Requests CD Changer Keep Alive
-                if (pkt[0] == IBusDevice_RAD && pkt[2] == IBusDevice_CDC && pkt[3] == 0x01) {
-                    LogDebug("Fire Off Keep Alive");
-                    const unsigned char cdcPing[] = {0x02, 0x00};
-                    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_RAD, cdcPing, sizeof(cdcPing));
+                unsigned char srcSystem = pkt[0];
+                if (srcSystem == IBusDevice_RAD) {
+                    IBusHandleRadioMessage(ibus, pkt);
                 }
-                // Radio Requests CD Changer Status
-                if (pkt[0] == IBusDevice_RAD && pkt[2] == IBusDevice_CDC && pkt[3] == IBusAction_CD_STATUS_REQ) {
-                    LogDebug("Fire Off Status");
-                    ibus->cdStatus = pkt[4];
-                    unsigned char curStatus = 0x02;
-                    if (pkt[4] == 0x03) {
-                        curStatus = 0x09;
-                    }
-                    if (ibus->cdStatus == 0x0A) {
-                        if (pkt[5] == 0x00) {
-                            ibus->playbackStatus = 3;
-                        } else {
-                            ibus->playbackStatus = 4;
-                        }
-                    }
-                    // Radio Number pressed
-                    if (ibus->cdStatus == 0x06) {
-                        if (pkt[5] == 0x01) {
-                            ibus->playbackStatus = 1;
-                        }
-                        if (pkt[5] == 0x02) {
-                            ibus->playbackStatus = 2;
-                        }
-                    }
-                    const unsigned char cdcStatus[] = {IBusAction_CD_STATUS_REP, 0x00, curStatus, 0x00, 0x3F, 0x00, 0x01, 0x01};
-                    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_RAD, cdcStatus, sizeof(cdcStatus));
-                    // If we're not being polled or asked to stop playing, change the title
-                    if (pkt[4] != 0x01 && pkt[4] != 0x00) {
-                        IBusDisplayText(ibus, "BlueBus");
-                    } else {
-                        IBusDisplayTextClear(ibus);
-                    }
+                if (srcSystem == IBusDevice_IKE) {
+                    IBusHandleIKEMessage(ibus, pkt);
                 }
             }
         }
     } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx) {
         uint32_t now = TimerGetMillis();
+        // Wait at least IBUS_TX_BUFFER_WAIT before attempting to send
+        // a new message, since we want to maintain a lower priority on the bus
         if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
-            /*
-            LogDebug(
-                "Transmitting Message 0x%x -> 0x%x",
-                ibus->txBuffer[ibus->txBufferReadIdx][0],
-                ibus->txBuffer[ibus->txBufferReadIdx][2]
-            );
-            */
             unsigned char len = ibus->txBuffer[ibus->txBufferReadIdx][1];
             uint8_t msgLen = (uint8_t) len + 2;
             uint8_t idx;
@@ -150,49 +112,18 @@ void IBusProcess(struct IBus_t *ibus)
             }
         }
     }
+    // Clear the RX Buffer if it's over the timeout
     if (ibus->rxBufferIdx > 0) {
         uint32_t now = TimerGetMillis();
         if ((now - ibus->rxLastStamp) > IBUS_RX_BUFFER_TIMEOUT) {
             LogWarning("Message in the IBus RX Buffer Timed out");
             ibus->rxBufferIdx = 0;
             uint8_t idx = 0;
-            // Reset the data in the buffer
+            // Reset the buffer
             while (idx < IBUS_RX_BUFFER_SIZE) {
                 ibus->rxBuffer[idx] = 0x00;
                 idx++;
             }
-        }
-    }
-    if (strlen(ibus->displayText) > 0 && ibus->cdStatus > 0x01) {
-        uint32_t now = TimerGetMillis();
-        if ((now - ibus->displayTextLastStamp) > 1250) {
-            if (strlen(ibus->displayText) <= 11) {
-                IBusDisplayText(ibus, ibus->displayText);
-            } else {
-                char text[12];
-                text[11] = '\0';
-                uint8_t idx;
-                uint8_t endOfText = 0;
-                uint8_t metadataLength = strlen(ibus->displayText);
-                for (idx = 0; idx < 11; idx++) {
-                    uint8_t offsetIdx = idx + ibus->displayTextIdx;
-                    if (offsetIdx < metadataLength) {
-                        text[idx] = ibus->displayText[offsetIdx];
-                    } else {
-                        text[idx] = '\0';
-                        endOfText = 1;
-                    }
-                }
-                if (strlen(text) > 0) {
-                    IBusDisplayText(ibus, text);
-                }
-                if (endOfText == 1) {
-                    ibus->displayTextIdx = 0;
-                } else {
-                    ibus->displayTextIdx = ibus->displayTextIdx + 11;
-                }
-            }
-            ibus->displayTextLastStamp = now;
         }
     }
 }
@@ -200,8 +131,8 @@ void IBusProcess(struct IBus_t *ibus)
 /**
  * IBusSendCommand()
  *     Description:
- *         Initialize the state of the I-Bus. Useful for doing things like
- *         declaring our
+ *         Take a Destination, source and message and add it to the transmit
+ *         char queue so we can send it later.
  *     Params:
  *         struct IBus_t *ibus,
  *         const unsigned char src,
@@ -250,23 +181,18 @@ void IBusSendCommand(
 /**
  * IBusStartup()
  *     Description:
- *         Initialize the state of the I-Bus. Useful for doing things like
- *         declaring our
+ *        Trigger any callbacks listening for our Startup event
  *     Params:
- *         struct IBus_t *ibus
+ *         None
  *     Returns:
  *         void
  */
-void IBusStartup(struct IBus_t *ibus)
+void IBusStartup()
 {
-    const unsigned char cdcAlive[] = {0x02, 0x01};
-    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_LOC, cdcAlive, sizeof(cdcAlive));
-    const unsigned char ikeAlive[] = {0x1B, 0x02};
-    IBusSendCommand(ibus, IBusDevice_IKE, IBusDevice_RAD, ikeAlive, sizeof(ikeAlive));
-    LogDebug("IBus Startup Complete");
+    EventTriggerCallback(IBusEvent_Startup, 0);
 }
 
-void IBusDisplayText(struct IBus_t *ibus, char *message)
+void IBusCommandDisplayText(struct IBus_t *ibus, char *message)
 {
     unsigned char displayText[strlen(message) + 3];
     displayText[0] = 0x23;
@@ -285,14 +211,59 @@ void IBusDisplayText(struct IBus_t *ibus, char *message)
     );
 }
 
-void IBusDisplayTextClear(struct IBus_t *ibus)
+void IBusCommandDisplayTextClear(struct IBus_t *ibus)
 {
-    const unsigned char displayText[] = {0x23, 0x42, 0x32};
-    IBusSendCommand(
-        ibus,
-        IBusDevice_TEL,
-        IBusDevice_IKE,
-        displayText,
-        sizeof(displayText)
-    );
+    IBusCommandDisplayText(ibus, 0);
+}
+
+void IBusCommandSendCdChangeAnnounce(struct IBus_t *ibus)
+{
+    LogDebug("IBus: Announce CD Changer");
+    const unsigned char cdcAlive[] = {0x02, 0x01};
+    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_LOC, cdcAlive, sizeof(cdcAlive));
+}
+
+void IBusCommandSendCdChangerKeepAlive(struct IBus_t *ibus)
+{
+    LogDebug("IBus: Send CD Changer Keep-Alive");
+    const unsigned char cdcPing[] = {0x02, 0x00};
+    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_RAD, cdcPing, sizeof(cdcPing));
+}
+
+void IBusCommandSendCdChangerStatus(
+    struct IBus_t *ibus,
+    unsigned char *curStatus,
+    unsigned char *curAction
+) {
+    LogDebug("IBus: Send CD Changer Status");
+    const unsigned char cdcStatus[] = {
+        IBusAction_CD_STATUS_REP,
+        *curAction,
+        *curStatus,
+        0x00,
+        0x3F,
+        0x00,
+        0x01, // CD
+        0x01 // Track
+    };
+    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_RAD, cdcStatus, sizeof(cdcStatus));
+}
+
+void IBusHandleIKEMessage(struct IBus_t *ibus, unsigned char *pkt)
+{
+
+}
+
+void IBusHandleRadioMessage(struct IBus_t *ibus, unsigned char *pkt)
+{
+    if (pkt[2] == IBusDevice_CDC) {
+        if (pkt[3] == IBusAction_CD_KEEPALIVE) {
+            EventTriggerCallback(IBusEvent_CDKeepAlive, pkt);
+        } else if(pkt[3] == IBusAction_CD_STATUS_REQ) {
+            if (pkt[4] == 0x01 || pkt[4] == 0x03) {
+                ibus->cdChangerStatus = pkt[4];
+            }
+            EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
+        }
+    }
 }

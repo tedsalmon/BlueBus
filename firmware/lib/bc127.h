@@ -7,7 +7,6 @@
 #ifndef BC127_H
 #define BC127_H
 #include <stdint.h>
-#include "ibus.h"
 #include "uart.h"
 
 #define BC127_AVRCP_STATUS_PAUSED 0
@@ -17,6 +16,11 @@
 #define BC127_MSG_DELIMETER 0x20
 #define BC127_METADATA_TITLE_FIELD_SIZE 100
 #define BC127_METADATA_FIELD_SIZE 32
+
+const static uint8_t BC127Event_Startup = 0;
+const static uint8_t BC127Event_MetadataChange = 1;
+const static uint8_t BC127Event_PlaybackStatusChange = 2;
+
 
 /**
  * BC127_t
@@ -34,9 +38,12 @@ typedef struct BC127_t {
 } BC127_t;
 
 struct BC127_t BC127Init();
-void BC127Process(struct BC127_t *, struct IBus_t *);
+void BC127CommandBackward(struct BC127_t *);
+void BC127CommandForward(struct BC127_t *);
+void BC127CommandPause(struct BC127_t *);
+void BC127CommandPlay(struct BC127_t *);
+void BC127CommandStatus(struct BC127_t *);
+void BC127Process(struct BC127_t *);
 void BC127SendCommand(struct BC127_t *, char *);
-void BC127Startup(struct BC127_t *);
-void BC127Pause(struct BC127_t *);
-void BC127Play(struct BC127_t *);
+void BC127Startup();
 #endif /* BC127_H */

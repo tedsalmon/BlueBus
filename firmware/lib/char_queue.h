@@ -31,7 +31,8 @@ typedef struct CharQueue_t {
     uint16_t readCursor;
     uint16_t writeCursor;
     unsigned char data[CHAR_QUEUE_SIZE];
-
+    /* Temporary */
+    uint16_t maxCap;
 } CharQueue_t;
 
 struct CharQueue_t CharQueueInit();

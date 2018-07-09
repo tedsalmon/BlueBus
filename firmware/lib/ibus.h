@@ -16,20 +16,16 @@
 #define IBUS_TX_BUFFER_WAIT 100
 
 const static unsigned char IBusDevice_GM = 0x00; /* Body module */
-const static unsigned char IBusDevice_SHD = 0x08; /* Sunroof Control */
 const static unsigned char IBusDevice_CDC = 0x18; /* CD Changer */
 const static unsigned char IBusDevice_FUH = 0x28; /* Radio controlled clock */
 const static unsigned char IBusDevice_CCM = 0x30; /* Check control module */
 const static unsigned char IBusDevice_GT = 0x3B; /* Graphics driver (in navigation system) */
 const static unsigned char IBusDevice_DIA = 0x3F; /* Diagnostic */
-const static unsigned char IBusDevice_FBZV = 0x40; /* Remote control central locking */
 const static unsigned char IBusDevice_GTF = 0x43; /* Graphics driver for rear screen (in navigation system) */
 const static unsigned char IBusDevice_EWS = 0x44; /* EWS (Immobileiser) */
 const static unsigned char IBusDevice_CID = 0x46; /* Central information display (flip-up LCD screen) */
 const static unsigned char IBusDevice_MFL = 0x50; /* Multi function steering wheel */
-const static unsigned char IBusDevice_MM0 = 0x51; /* Mirror memory */
 const static unsigned char IBusDevice_IHK = 0x5B; /* Integrated heating and air conditioning */
-const static unsigned char IBusDevice_PDC = 0x60; /* Park distance control */
 const static unsigned char IBusDevice_RAD = 0x68; /* Radio */
 const static unsigned char IBusDevice_DSP = 0x6A; /* Digital signal processing audio amplifier */
 const static unsigned char IBusDevice_SM0 = 0x72; /* Seat memory */
@@ -37,11 +33,6 @@ const static unsigned char IBusDevice_SDRS = 0x73; /* Sirius Radio */
 const static unsigned char IBusDevice_CDCD = 0x76; /* CD changer, DIN size. */
 const static unsigned char IBusDevice_NAVE = 0x7F; /* Navigation (Europe) */
 const static unsigned char IBusDevice_IKE = 0x80; /* Instrument cluster electronics */
-const static unsigned char IBusDevice_MM1 = 0x9B; /* Mirror memory */
-const static unsigned char IBusDevice_MM2 = 0x9C; /* Mirror memory */
-const static unsigned char IBusDevice_FMID = 0xA0; /* Rear multi-info-display */
-const static unsigned char IBusDevice_ABM = 0xA4; /* Air bag module */
-const static unsigned char IBusDevice_NAVJ = 0xBB; /* Navigation (Japan) */
 const static unsigned char IBusDevice_GLO = 0xBF; /* Global, broadcast address */
 const static unsigned char IBusDevice_MID = 0xC0; /* Multi-info display */
 const static unsigned char IBusDevice_TEL = 0xC8; /* Telephone */
@@ -50,13 +41,16 @@ const static unsigned char IBusDevice_LCM = 0xD0; /* Light control module */
 const static unsigned char IBusDevice_GTHL = 0xDA; /* unknown */
 const static unsigned char IBusDevice_IRIS = 0xE0; /* Integrated radio information system */
 const static unsigned char IBusDevice_ANZV = 0xE7; /* Front display */
-const static unsigned char IBusDevice_RLS = 0xE8; /* Rain/Light Sensor */
-const static unsigned char IBusDevice_TV = 0xED; /* Television */
 const static unsigned char IBusDevice_BMBT = 0xF0; /* On-board monitor operating part */
 const static unsigned char IBusDevice_LOC = 0xFF; /* Local */
 
+const static unsigned char IBusAction_CD_KEEPALIVE = 0x01;
 const static unsigned char IBusAction_CD_STATUS_REQ = 0x38;
 const static unsigned char IBusAction_CD_STATUS_REP = 0x39;
+
+const static uint8_t IBusEvent_Startup = 33;
+const static uint8_t IBusEvent_CDKeepAlive = 33;
+const static uint8_t IBusEvent_CDStatusRequest = 34;
 
 /**
  * IBus_t
@@ -66,7 +60,6 @@ const static unsigned char IBusAction_CD_STATUS_REP = 0x39;
  */
 typedef struct IBus_t {
     struct UART_t uart;
-    unsigned char cdStatus;
     unsigned char rxBuffer[IBUS_RX_BUFFER_SIZE];
     uint8_t rxBufferIdx;
     uint32_t rxLastStamp;
@@ -74,17 +67,20 @@ typedef struct IBus_t {
     uint8_t txBufferReadIdx;
     uint8_t txBufferWriteIdx;
     uint32_t txLastStamp;
-    char displayText[200];
-    uint8_t displayTextIdx;
-    uint32_t displayTextLastStamp;
-    /* Temporary */
-    uint8_t playbackStatus;
+    unsigned char cdChangerStatus;
+    unsigned char ignitionStatus;
 } IBus_t;
 
 struct IBus_t IBusInit();
 void IBusProcess(struct IBus_t *);
 void IBusSendCommand(struct IBus_t *, const unsigned char, const unsigned char, const unsigned char *, size_t);
-void IBusStartup(struct IBus_t *);
-void IBusDisplayText(struct IBus_t *, char *);
-void IBusDisplayTextClear(struct IBus_t *);
+void IBusStartup();
+
+void IBusCommandDisplayText(struct IBus_t *, char *);
+void IBusCommandDisplayTextClear(struct IBus_t *);
+void IBusCommandSendCdChangeAnnounce(struct IBus_t *);
+void IBusCommandSendCdChangerKeepAlive(struct IBus_t *);
+void IBusCommandSendCdChangerStatus(struct IBus_t *, unsigned char *,  unsigned char *);
+void IBusHandleIKEMessage(struct IBus_t *, unsigned char *);
+void IBusHandleRadioMessage(struct IBus_t *, unsigned char *);
 #endif /* IBUS_H */

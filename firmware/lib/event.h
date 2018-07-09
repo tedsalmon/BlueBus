@@ -4,25 +4,15 @@
  * Description:
  *     Implement an event system so that modules can interact with each other
  */
-#ifndef EVENTS_H
-#define EVENTS_H
-#include "bc127.h"
-#include "ibus.h"
-#define MAX_EVENT_CALLBACKS 128
-
-Event_t EVENT_CALLBACKS[MAX_EVENT_CALLBACKS];
-
-typedef struct EventContext_t {
-    struct BC127_t *bt;
-    struct IBus_t *ibus;
-    unsigned char data[128];
-} EventContext_t;
-
+#ifndef EVENT_H
+#define EVENT_H
+#define EVENT_MAX_CALLBACKS 128
+#include <stdint.h>
 typedef struct Event_t {
-    uint8_t eventType;
-    void (*callback)(char *, EventContext_t *);
+    uint8_t type;
+    void *context;
+    void (*callback) (void *, unsigned char *);
 } Event_t;
-
-void EventRegisterCallback(char *, void *);
-void EventTriggerCallback(char *, EventContext_t *);
-#endif /* EVENTS_H */
+void EventRegisterCallback(uint8_t, void *, void *);
+void EventTriggerCallback(uint8_t, unsigned char *);
+#endif /* EVENT_H */

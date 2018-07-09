@@ -11,6 +11,7 @@
 #include "../io_mappings.h"
 #include "bc127.h"
 #include "debug.h"
+#include "event.h"
 #include "uart.h"
 #include "utils.h"
 
@@ -125,7 +126,7 @@ void BC127CommandStatus(struct BC127_t *bt)
  *     Returns:
  *         void
  */
-void BC127Process(struct BC127_t *bt, struct IBus_t *ibus)
+void BC127Process(struct BC127_t *bt)
 {
     uint16_t messageLength = CharQueueSeek(
         &bt->uart.rxQueue,
@@ -159,6 +160,7 @@ void BC127Process(struct BC127_t *bt, struct IBus_t *ibus)
             msgBuf[i++] = p;
             p = strtok(NULL, " ");
         }
+
         char *ptr;
         if (strcmp(msgBuf[0], "AVRCP_MEDIA") == 0) {
             // The strncpy call adds a null terminator, so send size_t - 1
@@ -175,36 +177,26 @@ void BC127Process(struct BC127_t *bt, struct IBus_t *ibus)
                 removeSubstring(msg, "AVRCP_MEDIA ALBUM: ");
                 strncpy(bt->album, msg, BC127_METADATA_FIELD_SIZE - 1);
             } else if (strcmp(msgBuf[1], "PLAYING_TIME(MS):") == 0) {
-                snprintf(ibus->displayText, 200, "%s - %s on %s", bt->title, bt->artist, bt->album);
-                ibus->displayTextIdx = 0;
                 LogDebug(
                     "BT: Now Playing: '%s' - '%s' on '%s'",
                     bt->title,
                     bt->artist,
                     bt->album
                 );
+                EventTriggerCallback(BC127Event_MetadataChange, 0);
             }
         } else if(strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
             bt->avrcpStatus = BC127_AVRCP_STATUS_PLAYING;
             bt->selectedDevice = (uint8_t)strtol(msgBuf[1], &ptr, 10);
             LogDebug("BT: Playing");
-            // Fire off Callback
+            EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
         } else if(strcmp(msgBuf[0], "AVRCP_PAUSE") == 0) {
             bt->avrcpStatus = BC127_AVRCP_STATUS_PAUSED;
             bt->selectedDevice = (uint8_t)strtol(msgBuf[1], &ptr, 10);
             LogDebug("BT: Paused");
-            // Fire off Callback
-            strncpy(ibus->displayText, "Paused", 199);
-            ibus->displayTextIdx = 0;
+            EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
         } else if(strcmp(msgBuf[0], "CALLER_NUMBER") == 0) {
-            uint8_t closedDevice = (uint8_t)strtol(msgBuf[1], &ptr, 10);
-            if (closedDevice == bt->selectedDevice) {
-                bt->selectedDevice = 0;
-                // Fire off Callback
-                LogDebug("BT: Selected device %s closed connection", msgBuf[1]);
-            } else {
-                LogDebug("BT: Unselected device %s closed connection", msgBuf[1]);
-            }
+            // HPF Call
         } else if(strcmp(msgBuf[0], "LINK") == 0) {
             LogDebug("BT: Got Link for %s -> %s", msgBuf[3], msgBuf[1]);
             if(strcmp(msgBuf[3], "A2DP") == 0) {
@@ -223,25 +215,7 @@ void BC127Process(struct BC127_t *bt, struct IBus_t *ibus)
         } else if (strcmp(msgBuf[0], "OPEN_OK") == 0) {
             LogDebug("BT: %s connected on ID %s", msgBuf[2], msgBuf[1]);
             // Fire off Callback
-            // Get Device Name?
         }
-    }
-    if (ibus->playbackStatus != 0) {
-        switch (ibus->playbackStatus) {
-            case 1:
-                BC127CommandPause(bt);
-                break;
-            case 2:
-                BC127CommandPlay(bt);
-                break;
-            case 3:
-                BC127CommandForward(bt);
-                break;
-            case 4:
-                BC127CommandBackward(bt);
-                break;
-        }
-        ibus->playbackStatus = 0;
     }
 }
 
@@ -269,14 +243,13 @@ void BC127SendCommand(struct BC127_t *bt, char *command)
 /**
  * BC127Startup()
  *     Description:
- *         Perform initialization of BC127 module
+ *         Trigger the callbacks listening for the BC127 Startup
  *     Params:
- *         struct CharQueue_t *
+ *         None
  *     Returns:
  *         void
  */
-void BC127Startup(struct BC127_t *bt)
+void BC127Startup()
 {
-    BC127CommandStatus(bt);
-    LogDebug("BC127 Startup Complete");
+    EventTriggerCallback(BC127Event_Startup, 0);
 }

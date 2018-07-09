@@ -13,8 +13,10 @@
         <itemPath>lib/debug.h</itemPath>
         <itemPath>lib/utils.h</itemPath>
         <itemPath>lib/timer.h</itemPath>
+        <itemPath>lib/event.h</itemPath>
       </logicalFolder>
       <itemPath>io_mappings.h</itemPath>
+      <itemPath>handler.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -32,9 +34,11 @@
         <itemPath>lib/debug.c</itemPath>
         <itemPath>lib/utils.c</itemPath>
         <itemPath>lib/timer.c</itemPath>
+        <itemPath>lib/event.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>system.c</itemPath>
+      <itemPath>handler.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
