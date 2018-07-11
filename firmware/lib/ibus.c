@@ -4,14 +4,7 @@
  * Description:
  *     This implements the I-Bus
  */
-#include <stdlib.h>
-#include "../io_mappings.h"
-#include "char_queue.h"
-#include "debug.h"
-#include "event.h"
 #include "ibus.h"
-#include "timer.h"
-#include "uart.h"
 
 /**
  * IBusInit()
@@ -20,11 +13,11 @@
  *     Params:
  *         None
  *     Returns:
- *         struct IBus_t *
+ *         IBus_t*
  */
-struct IBus_t IBusInit()
+IBus_t IBusInit()
 {
-    struct IBus_t ibus;
+    IBus_t ibus;
     ibus.uart = UARTInit(
         IBUS_UART_MODULE,
         IBUS_UART_RX_PIN,
@@ -47,12 +40,11 @@ struct IBus_t IBusInit()
  *     Description:
  *         Process messages in the IBus RX queue
  *     Params:
- *         struct IBus_t *ibus
- *         struct BC127_t *bt
+ *         IBus_t *ibus
  *     Returns:
  *         void
  */
-void IBusProcess(struct IBus_t *ibus)
+void IBusProcess(IBus_t *ibus)
 {
     // Read messages from the IBus and if none are available, attempt to
     // transmit whatever is sitting in the transmit buffer
@@ -134,7 +126,7 @@ void IBusProcess(struct IBus_t *ibus)
  *         Take a Destination, source and message and add it to the transmit
  *         char queue so we can send it later.
  *     Params:
- *         struct IBus_t *ibus,
+ *         IBus_t *ibus,
  *         const unsigned char src,
  *         const unsigned char dst,
  *         const unsigned char *data
@@ -142,7 +134,7 @@ void IBusProcess(struct IBus_t *ibus)
  *         void
  */
 void IBusSendCommand(
-    struct IBus_t *ibus,
+    IBus_t *ibus,
     const unsigned char src,
     const unsigned char dst,
     const unsigned char *data,
@@ -192,7 +184,7 @@ void IBusStartup()
     EventTriggerCallback(IBusEvent_Startup, 0);
 }
 
-void IBusCommandDisplayText(struct IBus_t *ibus, char *message)
+void IBusCommandDisplayText(IBus_t *ibus, char *message)
 {
     unsigned char displayText[strlen(message) + 3];
     displayText[0] = 0x23;
@@ -211,19 +203,19 @@ void IBusCommandDisplayText(struct IBus_t *ibus, char *message)
     );
 }
 
-void IBusCommandDisplayTextClear(struct IBus_t *ibus)
+void IBusCommandDisplayTextClear(IBus_t *ibus)
 {
     IBusCommandDisplayText(ibus, 0);
 }
 
-void IBusCommandSendCdChangeAnnounce(struct IBus_t *ibus)
+void IBusCommandSendCdChangeAnnounce(IBus_t *ibus)
 {
     LogDebug("IBus: Announce CD Changer");
     const unsigned char cdcAlive[] = {0x02, 0x01};
     IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_LOC, cdcAlive, sizeof(cdcAlive));
 }
 
-void IBusCommandSendCdChangerKeepAlive(struct IBus_t *ibus)
+void IBusCommandSendCdChangerKeepAlive(IBus_t *ibus)
 {
     LogDebug("IBus: Send CD Changer Keep-Alive");
     const unsigned char cdcPing[] = {0x02, 0x00};
@@ -231,7 +223,7 @@ void IBusCommandSendCdChangerKeepAlive(struct IBus_t *ibus)
 }
 
 void IBusCommandSendCdChangerStatus(
-    struct IBus_t *ibus,
+    IBus_t *ibus,
     unsigned char *curStatus,
     unsigned char *curAction
 ) {
@@ -249,12 +241,12 @@ void IBusCommandSendCdChangerStatus(
     IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_RAD, cdcStatus, sizeof(cdcStatus));
 }
 
-void IBusHandleIKEMessage(struct IBus_t *ibus, unsigned char *pkt)
+void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 {
 
 }
 
-void IBusHandleRadioMessage(struct IBus_t *ibus, unsigned char *pkt)
+void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[2] == IBusDevice_CDC) {
         if (pkt[3] == IBusAction_CD_KEEPALIVE) {

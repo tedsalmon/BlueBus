@@ -6,8 +6,11 @@
  */
 #ifndef DEBUG_H
 #define DEBUG_H
-void LogMessage(const char *, char *, ...);
-void LogRaw(char *);
+#include <stdarg.h>
+#include <stdio.h>
+#include "../io_mappings.h"
+#include "uart.h"
+void LogMessage(const char *, char *);
 void LogError(const char *, ...);
 void LogDebug(const char *, ...);
 void LogInfo(const char *, ...);

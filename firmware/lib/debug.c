@@ -4,11 +4,7 @@
  * Description:
  *     Implementation of logging mechanisms that we can use throughout the project
  */
-#include <stdarg.h>
-#include <string.h>
-#include <stdio.h>
-#include "../io_mappings.h"
-#include "uart.h"
+#include "debug.h"
 
 /**
  * LogMessage()
@@ -18,35 +14,17 @@
  *     Params:
  *         const char *type
  *         char *data
- *         ...
+ *         va_args ...
  *     Returns:
  *         void
  */
 void LogMessage(const char *type, char *data)
 {
-    struct UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
+    UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
     if (debugger != 0) {
         char output[255];
         sprintf(output, "%s: %s\r\n", type, data);
         UARTSendString(debugger, output);
-    }
-}
-
-/**
- * LogRaw()
- *     Description:
- *         Send a message over the system UART. Implicitly pad with newline
- *     Params:
- *         const char *data
- *     Returns:
- *         void
- */
-void LogRaw(char *data)
-{
-    struct UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
-    if (debugger != 0) {
-        UARTSendString(debugger, data);
-        UARTSendString(debugger, "\r\n");
     }
 }
 
@@ -56,7 +34,7 @@ void LogRaw(char *data)
  *         Send a debug message over the system UART
  *     Params:
  *         const char *format
- *         ...
+ *         va_args ...
  *     Returns:
  *         void
  */
@@ -74,7 +52,7 @@ void LogDebug(const char *format, ...)
  * LogError()
  *     Description:
  *         Send an error message over the system UART
- *         ...
+ *         va_args ...
  *     Params:
  *         const char *format
  *     Returns:
@@ -94,7 +72,7 @@ void LogError(const char *format, ...)
  * LogInfo()
  *     Description:
  *         Send an info message over the system UART
- *         ...
+ *         va_args ...
  *     Params:
  *         const char *format
  *     Returns:
@@ -116,7 +94,7 @@ void LogInfo(const char *format, ...)
  *         Send a warning message over the system UART
  *     Params:
  *         const char *format
- *         ...
+ *         va_args ...
  *     Returns:
  *         void
  */

@@ -4,9 +4,7 @@
  * Description:
  *     Helper utils that may be useful in more than one place
  */
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include "utils.h"
 
 /**
  * removeSubstring()

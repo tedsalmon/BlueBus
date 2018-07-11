@@ -5,10 +5,6 @@
  *     Implement the PIC UART modules in a structured way to allow
  *     easier, and consistent data r/w
  */
-#include <stdlib.h>
-#include <stdint.h>
-#include "char_queue.h"
-#include "sfr_setters.h"
 #include "uart.h"
 
 /* Return a reprogrammable port register */
@@ -56,19 +52,19 @@ static uint16_t *ROPR_PINS[] = {
     GET_RPOR(18)
 };
 
-struct UART_t *UARTModules[UART_MODULES_COUNT];
+UART_t *UARTModules[UART_MODULES_COUNT];
 
 // These values constitute the TX mode for each UART module
 static const uint8_t UART_TX_MODES[] = {3, 5, 19, 21};
 
-struct UART_t UARTInit(
+UART_t UARTInit(
     uint8_t uartModule,
     uint8_t rxPin,
     uint8_t txPin,
     uint8_t baudRate,
     uint8_t parity
 ) {
-    struct UART_t uart;
+    UART_t uart;
     uart.txQueue = CharQueueInit();
     uart.rxQueue = CharQueueInit();
     uart.moduleNumber = uartModule;
@@ -122,12 +118,12 @@ struct UART_t UARTInit(
     return uart;
 }
 
-void UARTAddModuleHandler(struct UART_t *uart)
+void UARTAddModuleHandler(UART_t *uart)
 {
     UARTModules[uart->moduleIndex] = uart;
 }
 
-struct UART_t * UARTGetModuleHandler(uint8_t moduleNumber)
+UART_t * UARTGetModuleHandler(uint8_t moduleNumber)
 {
     return UARTModules[moduleNumber - 1];
 }
@@ -135,7 +131,7 @@ struct UART_t * UARTGetModuleHandler(uint8_t moduleNumber)
 void UARTHandleRXInterrupt(uint8_t uartModuleNumber)
 {
     if (UARTModules[uartModuleNumber] != 0x00) {
-        struct UART_t *uart = UARTModules[uartModuleNumber];
+        UART_t *uart = UARTModules[uartModuleNumber];
         // While there's data on the RX buffer
         while (uart->registers->uxsta & 0x1) {
             unsigned char byte = uart->registers->uxrxreg;
@@ -159,7 +155,7 @@ void UARTHandleTXInterrupt(uint8_t uartModuleNumber)
     // If the module is NULL, it hasn't been initialized. This
     // interrupt is triggered when we setup the UART module.
     if (UARTModules[uartModuleNumber] != 0x00) {
-        struct UART_t *uart = UARTModules[uartModuleNumber];
+        UART_t *uart = UARTModules[uartModuleNumber];
         while (uart->txQueue.size > 0) {
             unsigned char c = CharQueueNext(&uart->txQueue);
             uart->registers->uxtxreg = c;
@@ -174,7 +170,7 @@ void UARTHandleTXInterrupt(uint8_t uartModuleNumber)
     }
 }
 
-void UARTSendData(struct UART_t *uart, unsigned char *data)
+void UARTSendData(UART_t *uart, unsigned char *data)
 {
     unsigned char c;
     while ((c = *data++)) {
@@ -184,7 +180,7 @@ void UARTSendData(struct UART_t *uart, unsigned char *data)
     SetUARTTXIE(uart->moduleIndex, 1);
 }
 
-void UARTSendString(struct UART_t *uart, char *data)
+void UARTSendString(UART_t *uart, char *data)
 {
     char c;
     while ((c = *data++)) {

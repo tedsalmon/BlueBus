@@ -6,14 +6,20 @@
  */
 #ifndef IBUS_H
 #define IBUS_H
-#include <stdint.h>
-#include "uart.h"
-
 #define IBUS_RX_BUFFER_SIZE 255
 #define IBUS_TX_BUFFER_SIZE 16
 #define IBUS_MAX_MSG_LENGTH 24
 #define IBUS_RX_BUFFER_TIMEOUT 50
 #define IBUS_TX_BUFFER_WAIT 100
+#include <stdint.h>
+#include <string.h>
+#include "../io_mappings.h"
+#include "char_queue.h"
+#include "debug.h"
+#include "event.h"
+#include "ibus.h"
+#include "timer.h"
+#include "uart.h"
 
 const static unsigned char IBusDevice_GM = 0x00; /* Body module */
 const static unsigned char IBusDevice_CDC = 0x18; /* CD Changer */
@@ -49,8 +55,8 @@ const static unsigned char IBusAction_CD_STATUS_REQ = 0x38;
 const static unsigned char IBusAction_CD_STATUS_REP = 0x39;
 
 const static uint8_t IBusEvent_Startup = 33;
-const static uint8_t IBusEvent_CDKeepAlive = 33;
-const static uint8_t IBusEvent_CDStatusRequest = 34;
+const static uint8_t IBusEvent_CDKeepAlive = 34;
+const static uint8_t IBusEvent_CDStatusRequest = 35;
 
 /**
  * IBus_t
@@ -59,7 +65,7 @@ const static uint8_t IBusEvent_CDStatusRequest = 34;
  *         with the I-Bus
  */
 typedef struct IBus_t {
-    struct UART_t uart;
+    UART_t uart;
     unsigned char rxBuffer[IBUS_RX_BUFFER_SIZE];
     uint8_t rxBufferIdx;
     uint32_t rxLastStamp;
@@ -70,17 +76,15 @@ typedef struct IBus_t {
     unsigned char cdChangerStatus;
     unsigned char ignitionStatus;
 } IBus_t;
-
-struct IBus_t IBusInit();
-void IBusProcess(struct IBus_t *);
-void IBusSendCommand(struct IBus_t *, const unsigned char, const unsigned char, const unsigned char *, size_t);
+IBus_t IBusInit();
+void IBusProcess(IBus_t *);
+void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, size_t);
 void IBusStartup();
-
-void IBusCommandDisplayText(struct IBus_t *, char *);
-void IBusCommandDisplayTextClear(struct IBus_t *);
-void IBusCommandSendCdChangeAnnounce(struct IBus_t *);
-void IBusCommandSendCdChangerKeepAlive(struct IBus_t *);
-void IBusCommandSendCdChangerStatus(struct IBus_t *, unsigned char *,  unsigned char *);
-void IBusHandleIKEMessage(struct IBus_t *, unsigned char *);
-void IBusHandleRadioMessage(struct IBus_t *, unsigned char *);
+void IBusCommandDisplayText(IBus_t *, char *);
+void IBusCommandDisplayTextClear(IBus_t *);
+void IBusCommandSendCdChangeAnnounce(IBus_t *);
+void IBusCommandSendCdChangerKeepAlive(IBus_t *);
+void IBusCommandSendCdChangerStatus(IBus_t *, unsigned char *,  unsigned char *);
+void IBusHandleIKEMessage(IBus_t *, unsigned char *);
+void IBusHandleRadioMessage(IBus_t *, unsigned char *);
 #endif /* IBUS_H */

@@ -6,18 +6,21 @@
  */
 #ifndef HANDLER_H
 #define HANDLER_H
+#define _ADDED_C_LIB 1
+#include <stdio.h>
 #include "lib/bc127.h"
+#include "lib/debug.h"
+#include "lib/event.h"
 #include "lib/ibus.h"
+#include "lib/timer.h"
 #define HANDLER_DISPLAY_TEXT_SIZE 256
-#define HANDLER_DISPLAY_CHANGE_INT 1500
-#define HANDLER_CDC_ANOUNCE_INT 15000
 typedef struct ApplicationContext_t {
     struct BC127_t *bt;
     struct IBus_t *ibus;
+    uint8_t btStartup;
     uint8_t announceSelf;
     char displayText[HANDLER_DISPLAY_TEXT_SIZE];
     uint8_t displayTextIdx;
-    uint32_t displayTextLastStamp;
     uint32_t cdChangeLastKeepAlive;
 } ApplicationContext_t;
 void HandlerRegister(struct BC127_t *, struct IBus_t *);

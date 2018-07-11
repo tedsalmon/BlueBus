@@ -9,7 +9,6 @@
 void SetUARTRXIE(unsigned index, unsigned value);
 void SetUARTRXIF(unsigned index, unsigned value);
 void SetUARTRXIP(unsigned index, unsigned value);
-
 void SetUARTTXIE(unsigned index, unsigned value);
 void SetUARTTXIF(unsigned index, unsigned value);
 void SetUARTTXIP(unsigned index, unsigned value);

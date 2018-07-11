@@ -40,6 +40,7 @@ int main(void)
     LATAbits.LATA7 = 1;
 
     TimerInit();
+
     // Send the module structs to the event handlers
     HandlerRegister(&bt, &ibus);
 

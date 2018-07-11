@@ -4,9 +4,7 @@
  * Description:
  *     Implement a FIFO queue to store bytes read from UART into
  */
-#include <stdlib.h>
 #include "char_queue.h"
-#include "debug.h"
 
 /**
  * CharQueueInit()
@@ -15,11 +13,11 @@
  *     Params:
  *         None
  *     Returns:
- *         struct CharQueue_t *
+ *         CharQueue_t *
  */
-struct CharQueue_t CharQueueInit()
+CharQueue_t CharQueueInit()
 {
-    struct CharQueue_t queue;
+    CharQueue_t queue;
     // Initialize size, capacity and cursors
     queue.size = 0;
     queue.readCursor = 0;
@@ -34,12 +32,12 @@ struct CharQueue_t CharQueueInit()
  *     Description:
  *         Adds a byte to the queue. If the queue is full, the byte is discarded.
  *     Params:
- *         struct CharQueue_t *queue - The queue
+ *         CharQueue_t *queue - The queue
  *         unsigned char value - The value to add
  *     Returns:
  *         None
  */
-void CharQueueAdd(struct CharQueue_t *queue, unsigned char value)
+void CharQueueAdd(CharQueue_t *queue, unsigned char value)
 {
     if (queue->size != queue->capacity) {
         // Reset the write cursor before it goes out of bounds
@@ -61,7 +59,7 @@ void CharQueueAdd(struct CharQueue_t *queue, unsigned char value)
  *         Returns the byte at location idx. Returning the byte does not remove
  *         it from the queue.
  *     Params:
- *         struct CharQueue_t queue - The queue
+ *         CharQueue_t queue - The queue
  *         uint16_t idx - The index to return data for
  *     Returns:
  *         unsigned char
@@ -81,11 +79,11 @@ unsigned char CharQueueGet(CharQueue_t *queue, uint16_t idx)
  *         Once the byte is returned, it should be considered destroyed from the
  *         queue.
  *     Params:
- *         struct CharQueue_t queue - The queue
+ *         CharQueue_t queue - The queue
  *     Returns:
  *         unsigned char
  */
-unsigned char CharQueueNext(struct CharQueue_t *queue)
+unsigned char CharQueueNext(CharQueue_t *queue)
 {
     unsigned char data = queue->data[queue->readCursor];
     // Remove the byte from memory
@@ -106,12 +104,12 @@ unsigned char CharQueueNext(struct CharQueue_t *queue)
  *         Checks if a given byte is in the queue and return the length of
  *         characters prior to it.
  *     Params:
- *         struct CharQueue_t queue - The queue
+ *         CharQueue_t queue - The queue
  *     Returns:
  *         int16_t - The length of characters prior to the needle or zero if
  *                   the needle wasn't found
  */
-int16_t CharQueueSeek(struct CharQueue_t *queue, unsigned char needle)
+int16_t CharQueueSeek(CharQueue_t *queue, unsigned char needle)
 {
     uint16_t readCursor = (int16_t) queue->readCursor;
     uint16_t size = queue->size;
