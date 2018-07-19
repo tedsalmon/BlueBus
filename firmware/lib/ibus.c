@@ -91,7 +91,8 @@ void IBusProcess(IBus_t *ibus)
                 }
             }
         }
-    } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx) {
+    // If we have a byte to read, and we're not still receiving data, transmit
+    } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx && ibus->rxBufferIdx == 0) {
         uint32_t now = TimerGetMillis();
         // Wait at least IBUS_TX_BUFFER_WAIT before attempting to send
         // a new message, since we want to maintain a lower priority on the bus

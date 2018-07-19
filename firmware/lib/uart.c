@@ -108,6 +108,13 @@ UART_t UARTInit(
     __builtin_write_OSCCONL(OSCCON & 0x40);
     //Set the BAUD Rate
     uart.registers->uxbrg = baudRate;
+    // Disable the TX ISR, since we handle it manually and Enable the RX ISR
+    SetUARTTXIE(uart.moduleIndex, 0);
+    SetUARTRXIE(uart.moduleIndex, 1);
+    // Set the ISR Flag to disabled for TX (as it should be when the hardware
+    // buffers are empty) and enable the RX ISR Flag
+    SetUARTRXIF(uart.moduleIndex, 0);
+    SetUARTTXIF(uart.moduleIndex, 1);
     // Enable UART, keep the module in 3-wire mode
     uart.registers->uxmode ^= 0b1000000000000000;
     if (parity == UART_PARITY_EVEN) {
@@ -115,8 +122,6 @@ UART_t UARTInit(
     }
     // Enable transmit and receive on the module
     uart.registers->uxsta ^= 0b0001010000000000;
-    SetUARTRXIE(uart.moduleIndex, 1);
-    SetUARTTXIE(uart.moduleIndex, 1);
     // Set the Interrupt Priority
     SetUARTRXIP(uart.moduleIndex, rxPriority);
     SetUARTTXIP(uart.moduleIndex, txPriority);
@@ -137,8 +142,6 @@ void UARTHandleRXInterrupt(uint8_t uartModuleNumber)
 {
     if (UARTModules[uartModuleNumber] != 0x00) {
         UART_t *uart = UARTModules[uartModuleNumber];
-        char data[255];
-        uint8_t idx = 0;
         // While there's data on the RX buffer
         while (uart->registers->uxsta & 0x1) {
             unsigned char byte = uart->registers->uxrxreg;
@@ -149,9 +152,7 @@ void UARTHandleRXInterrupt(uint8_t uartModuleNumber)
                     LogError("UART: Buffer Overflow for module %d", uartModuleNumber + 1);
                     uart->registers->uxsta ^= 0x2;
                 }
-                data[idx] = byte;
-                idx++;
-                //CharQueueAdd(&uart->rxQueue, byte);
+                CharQueueAdd(&uart->rxQueue, byte);
             } else {
                 // Clear the buffer overflow error, if it exists
                 if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
@@ -166,10 +167,6 @@ void UARTHandleRXInterrupt(uint8_t uartModuleNumber)
                 }
             }
         }
-        uint8_t i;
-        for (i = 0; i < idx; i++) {
-            CharQueueAdd(&uart->rxQueue, data[i]);
-        }
     }
     // Clear the interrupt flag unconditionally, since we will be recalled to
     // this handler if there's additional data
@@ -183,15 +180,17 @@ void UARTHandleTXInterrupt(uint8_t uartModuleNumber)
     if (UARTModules[uartModuleNumber] != 0x00) {
         UART_t *uart = UARTModules[uartModuleNumber];
         while (uart->txQueue.size > 0) {
+            // TXIF is 1 if the queue is empty, set it before pushing data
+            SetUARTTXIF(uartModuleNumber, 0);
             unsigned char c = CharQueueNext(&uart->txQueue);
             uart->registers->uxtxreg = c;
             // Wait for the data to leave the tx buffer
             while ((uart->registers->uxsta & (1 << (9) )) != 0);
         }
-        // If the queue has data, do not clear the interrupt flag
-        SetUARTTXIE(uart->moduleIndex, uart->txQueue.size != 0);
+        // If the queue has data, do not disable the interrupt
+        SetUARTTXIE(uartModuleNumber, uart->txQueue.size != 0);
     } else {
-        // Remove the interrupt, since there's nothing to do
+        // Disable the interrupt, since there's nothing to do
         SetUARTTXIE(uartModuleNumber, 0);
     }
 }
