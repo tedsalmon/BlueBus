@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <xc.h>
 #include "char_queue.h"
+#include "debug.h"
 #include "sfr_setters.h"
 
 #define UART_BAUD_115200 8
@@ -31,7 +32,7 @@ typedef struct UART_t {
     UART *registers;
 } UART_t;
 
-UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
+UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 void UARTAddModuleHandler(UART_t *uart);
 UART_t * UARTGetModuleHandler(uint8_t);
 void UARTHandleRXInterrupt(uint8_t);

@@ -22,6 +22,8 @@ int main(void)
         SYSTEM_UART_MODULE,
         SYSTEM_UART_RX_PIN,
         SYSTEM_UART_TX_PIN,
+        SYSTEM_UART_RX_PRIORITY,
+        SYSTEM_UART_TX_PRIORITY,
         UART_BAUD_115200,
         UART_PARITY_NONE
     );
@@ -41,28 +43,17 @@ int main(void)
 
     TimerInit();
 
-    // Send the module structs to the event handlers
-    HandlerRegister(&bt, &ibus);
+    // Send the module objects to the application implementation handler
+    HandlerInit(&bt, &ibus);
 
     // Trigger the event callbacks for the module Start Up
     BC127Startup();
     IBusStartup();
 
-    uint32_t lastDebugReport = TimerGetMillis();
     // Process Synchronous events
     while (1) {
         BC127Process(&bt);
         IBusProcess(&ibus);
-        uint32_t now = TimerGetMillis();
-        if ((now - lastDebugReport) >= 30000) {
-            LogDebug("IBus Rx Queue Max: %d", ibus.uart.rxQueue.maxCap);
-            LogDebug("IBus Tx Queue Max: %d", ibus.uart.txQueue.maxCap);
-            LogDebug("BC127 Rx Queue Max: %d", bt.uart.rxQueue.maxCap);
-            LogDebug("BC127 Tx Queue Max: %d", bt.uart.txQueue.maxCap);
-            LogDebug("System Rx Queue Max: %d", systemUart.rxQueue.maxCap);
-            LogDebug("System Tx Queue Max: %d", systemUart.txQueue.maxCap);
-            lastDebugReport = now;
-        }
     }
 
     return 0;

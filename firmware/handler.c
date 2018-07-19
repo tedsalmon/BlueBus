@@ -8,7 +8,7 @@
 ApplicationContext_t AppCtx;
 const static uint16_t HANDLER_CDC_ANOUNCE_INT = 30000;
 
-void HandlerRegister(struct BC127_t *bt, struct IBus_t *ibus)
+void HandlerInit(BC127_t *bt, IBus_t *ibus)
 {
     AppCtx.bt = bt;
     AppCtx.ibus = ibus;
@@ -33,6 +33,11 @@ void HandlerRegister(struct BC127_t *bt, struct IBus_t *ibus)
         &AppCtx
     );
     EventRegisterCallback(
+        BC127Event_DeviceReady,
+        &HandlerBC127DeviceReady,
+        &AppCtx
+    );
+    EventRegisterCallback(
         IBusEvent_Startup,
         &HandlerIBusStartup,
         &AppCtx
@@ -48,7 +53,7 @@ void HandlerRegister(struct BC127_t *bt, struct IBus_t *ibus)
         &AppCtx
     );
     TimerRegisterScheduledTask(
-        &HandlerTimerCD53StatusScroll,
+        &HandlerTimerCD53Display,
         &AppCtx,
         1500
     );
@@ -59,10 +64,17 @@ void HandlerRegister(struct BC127_t *bt, struct IBus_t *ibus)
     );
 }
 
-void HandlerBC127Startup(void *ctx, unsigned char *tmp)
+void HandlerBC127DeviceReady(void *ctx, unsigned char *tmp)
 {
     ApplicationContext_t *context = (ApplicationContext_t *) ctx;
-    BC127CommandStatus(context->bt);
+    if (strlen(context->displayText) > 0) {
+        // The BT Device Reset -- Clear the Display
+        memset(context->displayText, 0, HANDLER_DISPLAY_TEXT_SIZE);
+        // If we're in Bluetooth mode, display our banner
+        if (context->ibus->cdChangerStatus > 0x01) {
+            IBusCommandDisplayText(context->ibus, "BlueBus");
+        }
+    }
 }
 
 void HandlerBC127Metadata(void *ctx, unsigned char *metadata)
@@ -77,6 +89,8 @@ void HandlerBC127Metadata(void *ctx, unsigned char *metadata)
         context->bt->album
     );
     context->displayTextIdx = 0;
+    // Immediately update the display
+    HandlerTimerCD53Display(ctx);
 }
 
 void HandlerBC127PlaybackStatus(void *ctx, unsigned char *status)
@@ -99,6 +113,12 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *status)
         // We're playing but not in Bluetooth mode - stop playback
         BC127CommandPause(context->bt);
     }
+}
+
+void HandlerBC127Startup(void *ctx, unsigned char *tmp)
+{
+    ApplicationContext_t *context = (ApplicationContext_t *) ctx;
+    BC127CommandStatus(context->bt);
 }
 
 void HandlerIBusStartup(void *ctx, unsigned char *tmp)
@@ -145,31 +165,45 @@ void HandlerIBusCDChangerStatus(void *ctx, unsigned char *pkt)
             context->announceSelf = 1;
         }
     }
-    if (changerStatus == 0x0A) {
+    if (changerStatus == IBusAction_CD53_SEEK) {
         if (pkt[5] == 0x00) {
             BC127CommandForward(context->bt);
         } else {
             BC127CommandBackward(context->bt);
         }
     }
-    // Radio Number pressed
-    if (changerStatus == 0x06) {
+    if (changerStatus == IBusAction_CD53_CD_SEL) {
         if (pkt[5] == 0x01) {
             if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
             } else {
                 BC127CommandPlay(context->bt);
             }
+        } else if (pkt[5] == 0x02) {
+            // Display Mode Change
+            // Now Playing
+            // OBC Data
+            // Nothing
+        } else if (pkt[5] == 0x05) {
+            // Display & Allow user to select input device
+        } else if (pkt[5] == 0x06) {
+            BC127CommandDiscoverable(context->bt, 1);
         }
     }
     IBusCommandSendCdChangerStatus(context->ibus, &curStatus, &curAction);
     context->cdChangeLastKeepAlive = TimerGetMillis();
+    HandlerTimerCD53Display(ctx);
 }
 
-void HandlerTimerCD53StatusScroll(void *ctx)
+void HandlerTimerCD53Display(void *ctx)
 {
     ApplicationContext_t *context = (ApplicationContext_t *) ctx;
     uint8_t displayTextLength = strlen(context->displayText);
+    // If we're displaying something on the screen, avoid clearing it
+    if (context->displayTextTicks > 0) {
+        displayTextLength = 0;
+        context->displayTextTicks--;
+    }
     if (displayTextLength > 0 &&
         context->ibus->cdChangerStatus > 0x01 &&
         context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING
@@ -180,32 +214,24 @@ void HandlerTimerCD53StatusScroll(void *ctx)
             char text[12];
             text[11] = '\0';
             uint8_t idx;
-            uint8_t endOfText = 0;
             for (idx = 0; idx < 11; idx++) {
                 uint8_t offsetIdx = idx + context->displayTextIdx;
                 if (offsetIdx < displayTextLength) {
                     text[idx] = context->displayText[offsetIdx];
                 } else {
                     text[idx] = '\0';
-                    endOfText = 1;
+                    displayTextLength = 0;
                 }
             }
             if (strlen(text) > 0) {
                 IBusCommandDisplayText(context->ibus, text);
             }
-            if (endOfText == 1) {
-                context->displayTextIdx = 0;
-            } else {
+            if (displayTextLength != 0) {
                 context->displayTextIdx = context->displayTextIdx + 11;
+            } else {
+                context->displayTextIdx = 0;
             }
         }
-    } else {
-        LogDebug(
-            "Display Length: %d Status: %d Change: 0x%x",
-            displayTextLength,
-            context->bt->avrcpStatus,
-            context->ibus->cdChangerStatus
-        );
     }
 }
 

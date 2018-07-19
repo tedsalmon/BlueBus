@@ -23,7 +23,6 @@ CharQueue_t CharQueueInit()
     queue.readCursor = 0;
     queue.writeCursor = 0;
     queue.capacity = CHAR_QUEUE_SIZE;
-    queue.maxCap = 0;
     return queue;
 }
 
@@ -47,9 +46,6 @@ void CharQueueAdd(CharQueue_t *queue, unsigned char value)
         queue->data[queue->writeCursor] = value;
         queue->writeCursor++;
         queue->size++;
-        if (queue->size > queue->maxCap) {
-            queue->maxCap = queue->size;
-        }
     }
 }
 
@@ -64,7 +60,7 @@ void CharQueueAdd(CharQueue_t *queue, unsigned char value)
  *     Returns:
  *         unsigned char
  */
-unsigned char CharQueueGet(CharQueue_t *queue, uint16_t idx)
+unsigned char CharQueueGet(CharQueue_t *queue, uint8_t idx)
 {
     if (idx >= queue->capacity) {
         return 0x00;

@@ -12,7 +12,7 @@
  * the maximum 8-bit unsigned integer. The BC127 doesn't seem to spout off messages
  * larger than this as well, but sometimes things do get busy on these busses.
  */
-#define CHAR_QUEUE_SIZE 384
+#define CHAR_QUEUE_SIZE 255
 
 /**
  * CharQueue_t
@@ -25,19 +25,17 @@
  *         capacity, the data will be lost and an error will be logged.
  */
 typedef struct CharQueue_t {
-    uint16_t capacity;
-    uint16_t size;
-    uint16_t readCursor;
-    uint16_t writeCursor;
+    uint8_t capacity;
+    uint8_t size;
+    uint8_t readCursor;
+    uint8_t writeCursor;
     unsigned char data[CHAR_QUEUE_SIZE];
-    /* Temporary */
-    uint16_t maxCap;
 } CharQueue_t;
 
 struct CharQueue_t CharQueueInit();
 
 void CharQueueAdd(CharQueue_t *, unsigned char);
-unsigned char CharQueueGet(CharQueue_t *, uint16_t);
+unsigned char CharQueueGet(CharQueue_t *, uint8_t);
 unsigned char CharQueueNext(CharQueue_t *);
 int16_t CharQueueSeek(CharQueue_t *, unsigned char);
 #endif /* CHAR_QUEUE_H */

@@ -10,6 +10,9 @@
 /* Return a reprogrammable port register */
 #define GET_RPOR(num) (((uint16_t *) &RPOR0) + num)
 
+/* Check if a bit is set */
+#define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
+
 /* Hold a pin to register map for all reprogrammable output pins */
 static uint16_t *ROPR_PINS[] = {
     GET_RPOR(0),
@@ -61,6 +64,8 @@ UART_t UARTInit(
     uint8_t uartModule,
     uint8_t rxPin,
     uint8_t txPin,
+    uint8_t rxPriority,
+    uint8_t txPriority,
     uint8_t baudRate,
     uint8_t parity
 ) {
@@ -113,8 +118,8 @@ UART_t UARTInit(
     SetUARTRXIE(uart.moduleIndex, 1);
     SetUARTTXIE(uart.moduleIndex, 1);
     // Set the Interrupt Priority
-    SetUARTRXIP(uart.moduleIndex, 4);
-    SetUARTTXIP(uart.moduleIndex, 3);
+    SetUARTRXIP(uart.moduleIndex, rxPriority);
+    SetUARTTXIP(uart.moduleIndex, txPriority);
     return uart;
 }
 
@@ -132,17 +137,38 @@ void UARTHandleRXInterrupt(uint8_t uartModuleNumber)
 {
     if (UARTModules[uartModuleNumber] != 0x00) {
         UART_t *uart = UARTModules[uartModuleNumber];
+        char data[255];
+        uint8_t idx = 0;
         // While there's data on the RX buffer
         while (uart->registers->uxsta & 0x1) {
             unsigned char byte = uart->registers->uxrxreg;
             // No frame or parity errors
             if ((uart->registers->uxsta & 0xC) == 0) {
                 // Clear the buffer overflow error, if it exists
-                if ((uart->registers->uxsta & 0x2) == 1) {
+                if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
+                    LogError("UART: Buffer Overflow for module %d", uartModuleNumber + 1);
                     uart->registers->uxsta ^= 0x2;
                 }
-                CharQueueAdd(&uart->rxQueue, byte);
+                data[idx] = byte;
+                idx++;
+                //CharQueueAdd(&uart->rxQueue, byte);
+            } else {
+                // Clear the buffer overflow error, if it exists
+                if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
+                    LogError("UART: Buffer Overflow for module %d", uartModuleNumber + 1);
+                    uart->registers->uxsta ^= 0x2;
+                } else {
+                    LogError(
+                        "UART: Frame / Parity Error for module %d 0x%X",
+                        uartModuleNumber + 1,
+                        uart->registers->uxsta
+                    );
+                }
             }
+        }
+        uint8_t i;
+        for (i = 0; i < idx; i++) {
+            CharQueueAdd(&uart->rxQueue, data[i]);
         }
     }
     // Clear the interrupt flag unconditionally, since we will be recalled to

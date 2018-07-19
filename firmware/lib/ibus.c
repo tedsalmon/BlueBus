@@ -22,13 +22,15 @@ IBus_t IBusInit()
         IBUS_UART_MODULE,
         IBUS_UART_RX_PIN,
         IBUS_UART_TX_PIN,
+        IBUS_UART_RX_PRIORITY,
+        IBUS_UART_TX_PRIORITY,
         UART_BAUD_9600,
         UART_PARITY_EVEN
     );
     ibus.cdChangerStatus = 0x01;
     ibus.ignitionStatus = 0x01;
     ibus.rxBufferIdx = 0;
-    ibus.rxLastStamp = TimerGetMillis();
+    ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
@@ -63,19 +65,29 @@ void IBusProcess(IBus_t *ibus)
                     ibus->rxBuffer[idx] = 0x00;
                 }
                 ibus->rxBufferIdx = 0;
-                LogDebug(
-                    "Got IBus Message 0x%x -> 0x%x [0x%x] with length %d",
-                    pkt[0],
-                    pkt[2],
-                    pkt[3],
-                    (uint8_t) pkt[1]
-                );
-                unsigned char srcSystem = pkt[0];
-                if (srcSystem == IBusDevice_RAD) {
-                    IBusHandleRadioMessage(ibus, pkt);
-                }
-                if (srcSystem == IBusDevice_IKE) {
-                    IBusHandleIKEMessage(ibus, pkt);
+                if (IBusValidateChecksum(pkt) == 1) {
+                    LogDebug(
+                        "IBus: %02X -> %02X Action: %02X Length: %d",
+                        pkt[0],
+                        pkt[2],
+                        pkt[3],
+                        (uint8_t) pkt[1]
+                    );
+                    unsigned char srcSystem = pkt[0];
+                    if (srcSystem == IBusDevice_RAD) {
+                        IBusHandleRadioMessage(ibus, pkt);
+                    }
+                    if (srcSystem == IBusDevice_IKE) {
+                        IBusHandleIKEMessage(ibus, pkt);
+                    }
+                } else {
+                    LogError(
+                        "IBus: %02X -> %02X Length: %d has invalid checksum",
+                        pkt[0],
+                        pkt[2],
+                        pkt[3],
+                        (uint8_t) pkt[1]
+                    );
                 }
             }
         }
@@ -108,14 +120,12 @@ void IBusProcess(IBus_t *ibus)
     if (ibus->rxBufferIdx > 0) {
         uint32_t now = TimerGetMillis();
         if ((now - ibus->rxLastStamp) > IBUS_RX_BUFFER_TIMEOUT) {
-            LogWarning("Message in the IBus RX Buffer Timed out");
+            LogWarning(
+                "IBus: %d bytes in the RX buffer timed out",
+                ibus->rxBufferIdx + 1
+            );
             ibus->rxBufferIdx = 0;
-            uint8_t idx = 0;
-            // Reset the buffer
-            while (idx < IBUS_RX_BUFFER_SIZE) {
-                ibus->rxBuffer[idx] = 0x00;
-                idx++;
-            }
+            memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_TIMEOUT);
         }
     }
 }
@@ -257,5 +267,20 @@ void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
             }
             EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
         }
+    }
+}
+
+uint8_t IBusValidateChecksum(unsigned char *msg)
+{
+    uint8_t chk = 0;
+    uint8_t msgSize = msg[1] + 2;
+    uint8_t idx;
+    for (idx = 0; idx < msgSize; idx++) {
+        chk =  chk ^ msg[idx];
+    }
+    if (chk == 0) {
+        return 1;
+    } else {
+        return 0;
     }
 }

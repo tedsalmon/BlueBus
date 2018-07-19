@@ -22,7 +22,7 @@
 #define BC127_CONN_STATE_NEW 0
 #define BC127_CONN_STATE_CONNECTED 1
 #define BC127_CONN_STATE_DISCONNECTED 2
-#define BC127_MAX_DEVICE_CONN 5
+#define BC127_MAX_DEVICE_CONN 3
 #define BC127_MAX_DEVICE_PROFILES 5
 #define BC127_METADATA_TITLE_FIELD_SIZE 100
 #define BC127_METADATA_FIELD_SIZE 32
@@ -35,6 +35,7 @@ const static uint8_t BC127Event_Startup = 0;
 const static uint8_t BC127Event_MetadataChange = 1;
 const static uint8_t BC127Event_PlaybackStatusChange = 2;
 const static uint8_t BC127Event_DeviceConnected = 3;
+const static uint8_t BC127Event_DeviceReady = 4;
 
 /**
  * BC127Connection_t
@@ -44,6 +45,7 @@ const static uint8_t BC127Event_DeviceConnected = 3;
 typedef struct BC127Connection_t {
     char macId[13];
     char deviceName[33];
+    uint8_t deviceId;
     uint8_t avrcpLink;
     uint8_t a2dpLink;
     uint8_t hfpLink;
@@ -61,30 +63,36 @@ typedef struct BC127_t {
     char title[BC127_METADATA_TITLE_FIELD_SIZE];
     char artist[BC127_METADATA_FIELD_SIZE];
     char album[BC127_METADATA_FIELD_SIZE];
-    struct BC127Connection_t connections[BC127_MAX_DEVICE_CONN];
-    uint8_t connectionsCount;
-    uint8_t selectedDevice;
-    struct UART_t uart;
+    BC127Connection_t connections[BC127_MAX_DEVICE_CONN];
+    BC127Connection_t *activeDevice;
+    UART_t uart;
 } BC127_t;
 
 BC127_t BC127Init();
 void BC127CommandBackward(BC127_t *);
+void BC127CommandConnectable(BC127_t *, uint8_t);
+void BC127CommandDiscoverable(BC127_t *, uint8_t);
 void BC127CommandForward(BC127_t *);
 void BC127CommandGetDeviceName(BC127_t *, char *);
 void BC127CommandGetMetadata(BC127_t *);
 void BC127CommandPause(BC127_t *);
 void BC127CommandPlay(BC127_t *);
+void BC127CommandProfileClose(BC127_t *, uint8_t);
+void BC127CommandProfileOpen(BC127_t *, char *, char *);
+void BC127CommandReset(BC127_t *);
+void BC127CommandSetDiscoverable(BC127_t *, uint8_t, uint8_t);
+void BC127CommandSetMetadata(BC127_t *, uint8_t);
 void BC127CommandSetModuleName(BC127_t *, char *);
 void BC127CommandSetPin(BC127_t *, char *);
 void BC127CommandStatus(BC127_t *);
-void BC127Connectable(BC127_t *, uint8_t);
-void BC127Discoverable(BC127_t *, uint8_t);
+void BC127CommandWrite(BC127_t *);
+uint8_t BC127GetDeviceId(char *);
 void BC127Process(BC127_t *);
 void BC127SendCommand(BC127_t *, char *);
 void BC127Startup();
 
-BC127Connection_t BC127ConnectionInit(char *);
-BC127Connection_t *BC127ConnectionGet(BC127_t *, char *);
+BC127Connection_t BC127ConnectionInit(char *, uint8_t);
+BC127Connection_t *BC127ConnectionGet(BC127_t *, char *, uint8_t);
 void BC127ConnectionCloseProfile(BC127Connection_t *, char *);
 void BC127ConnectionOpenProfile(BC127Connection_t *, char *, uint8_t);
 #endif /* BC127_H */

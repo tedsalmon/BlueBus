@@ -6,10 +6,10 @@
  */
 #ifndef IBUS_H
 #define IBUS_H
-#define IBUS_RX_BUFFER_SIZE 255
+#define IBUS_RX_BUFFER_SIZE 256
 #define IBUS_TX_BUFFER_SIZE 16
 #define IBUS_MAX_MSG_LENGTH 24
-#define IBUS_RX_BUFFER_TIMEOUT 50
+#define IBUS_RX_BUFFER_TIMEOUT 75
 #define IBUS_TX_BUFFER_WAIT 100
 #include <stdint.h>
 #include <string.h>
@@ -50,9 +50,18 @@ const static unsigned char IBusDevice_ANZV = 0xE7; /* Front display */
 const static unsigned char IBusDevice_BMBT = 0xF0; /* On-board monitor operating part */
 const static unsigned char IBusDevice_LOC = 0xFF; /* Local */
 
+const static unsigned char IBusAction_CD_ACTION_NONE = 0x00;
+const static unsigned char IBusAction_CD_ACTION_START_PLAYBACK = 0x02;
 const static unsigned char IBusAction_CD_KEEPALIVE = 0x01;
 const static unsigned char IBusAction_CD_STATUS_REQ = 0x38;
 const static unsigned char IBusAction_CD_STATUS_REP = 0x39;
+
+const static unsigned char IBusAction_CD_STATUS_REQ_PING = 0x00;
+const static unsigned char IBusAction_CD_STATUS_REQ_STOP = 0x01;
+const static unsigned char IBusAction_CD_STATUS_REQ_PLAY = 0x01;
+
+const static unsigned char IBusAction_CD53_SEEK = 0x0A;
+const static unsigned char IBusAction_CD53_CD_SEL = 0x06;
 
 const static uint8_t IBusEvent_Startup = 33;
 const static uint8_t IBusEvent_CDKeepAlive = 34;
@@ -87,4 +96,5 @@ void IBusCommandSendCdChangerKeepAlive(IBus_t *);
 void IBusCommandSendCdChangerStatus(IBus_t *, unsigned char *,  unsigned char *);
 void IBusHandleIKEMessage(IBus_t *, unsigned char *);
 void IBusHandleRadioMessage(IBus_t *, unsigned char *);
+uint8_t IBusValidateChecksum(unsigned char *);
 #endif /* IBUS_H */

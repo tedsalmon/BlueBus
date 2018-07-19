@@ -50,10 +50,8 @@
 // FDEVOPT1
 #pragma config ALTCMPI = DISABLE        // Alternate Comparator Input Enable bit (C1INC, C2INC, and C3INC are on their standard pin locations)
 #pragma config TMPRPIN = OFF            // Tamper Pin Enable bit (TMPRN pin function is disabled)
-// SOSC High Power Enable bit (valid only when SOSCSEL = 1 (Enable SOSC high power mode (default))
-#pragma config SOSCHP = ON
-// Alternate Voltage Reference Location Enable bit (VREF+ and CVREF+ on RB0, VREF- and CVREF- on RB1)
-#pragma config ALTVREF = ALTVREFDIS
+#pragma config SOSCHP = ON              // SOSC High Power Enable bit (valid only when SOSCSEL = 1 (Enable SOSC high power mode (default))
+#pragma config ALTVREF = ALTVREFDIS     // Alternate Voltage Reference Location Enable bit (VREF+ and CVREF+ on RB0, VREF- and CVREF- on RB1)
 
 // Trap Catches
 void __attribute__ ((__interrupt__ , auto_psv)) _OscillatorFail(void);
@@ -66,6 +64,8 @@ void __attribute__ ((__interrupt__ , auto_psv)) _OscillatorFail(void)
     //Clear the trap flag
     INTCON1bits.OSCFAIL = 0;
     LATAbits.LATA7 = 0;
+    TRISAbits.TRISA6 = 0;
+    LATAbits.LATA6 = 1;
     while (1);
 }
 
@@ -74,6 +74,8 @@ void __attribute__ ((__interrupt__ , auto_psv)) _AddressError(void)
     //Clear the trap flag
     INTCON1bits.ADDRERR = 0;
     LATAbits.LATA7 = 0;
+    TRISAbits.TRISA5 = 0;
+    LATAbits.LATA5 = 1;
     while (1);
 }
 
@@ -83,6 +85,8 @@ void __attribute__ ((__interrupt__ , auto_psv)) _StackError(void)
     //Clear the trap flag
     INTCON1bits.STKERR = 0;
     LATAbits.LATA7 = 0;
+    TRISAbits.TRISA4 = 0;
+    LATAbits.LATA4 = 1;
     while (1);
 }
 
@@ -91,5 +95,7 @@ void __attribute__ ((__interrupt__ , auto_psv)) _MathError(void)
     //Clear the trap flag
     INTCON1bits.MATHERR = 0;
     LATAbits.LATA7 = 0;
+    TRISAbits.TRISA3 = 0;
+    LATAbits.LATA3 = 1;
     while (1);
 }

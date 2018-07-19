@@ -23,3 +23,9 @@ void removeSubstring(char *string, const char *trash)
         memmove(string, string + removeLength, 1 + strlen(string + removeLength));
     }
 }
+
+uint8_t strToInt(char *string)
+{
+    char *ptr;
+    return (uint8_t) strtol(string, &ptr, 10);
+}

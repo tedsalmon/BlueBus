@@ -15,21 +15,23 @@
 #include "lib/timer.h"
 #define HANDLER_DISPLAY_TEXT_SIZE 256
 typedef struct ApplicationContext_t {
-    struct BC127_t *bt;
+    BC127_t *bt;
     struct IBus_t *ibus;
     uint8_t btStartup;
     uint8_t announceSelf;
+    uint32_t cdChangeLastKeepAlive;
     char displayText[HANDLER_DISPLAY_TEXT_SIZE];
     uint8_t displayTextIdx;
-    uint32_t cdChangeLastKeepAlive;
+    uint8_t displayTextTicks;
 } ApplicationContext_t;
-void HandlerRegister(struct BC127_t *, struct IBus_t *);
-void HandlerBC127Startup(void *, unsigned char *);
+void HandlerInit(BC127_t *, IBus_t *);
+void HandlerBC127DeviceReady(void *, unsigned char *);
 void HandlerBC127Metadata(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
-void HandlerIBusStartup(void *, unsigned char *);
+void HandlerBC127Startup(void *, unsigned char *);
 void HandlerIBusCDChangerKeepAlive(void *, unsigned char *);
 void HandlerIBusCDChangerStatus(void *, unsigned char *);
-void HandlerTimerCD53StatusScroll(void *);
+void HandlerIBusStartup(void *, unsigned char *);
+void HandlerTimerCD53Display(void *);
 void HandlerTimerCDChangerAnnounce(void *);
 #endif /* HANDLER_H */
