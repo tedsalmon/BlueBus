@@ -17,6 +17,9 @@
 #define UART_MODULES_COUNT 4
 #define UART_PARITY_NONE 0
 #define UART_PARITY_EVEN 1
+#define UART_STATUS_IDLE 0
+#define UART_STATUS_RX 1
+#define UART_STATUS_TX 2
 
 /**
  * UART_t
@@ -27,8 +30,8 @@
 typedef struct UART_t {
     CharQueue_t rxQueue;
     CharQueue_t txQueue;
-    uint8_t moduleNumber;
     uint8_t moduleIndex;
+    uint8_t status;
     UART *registers;
 } UART_t;
 

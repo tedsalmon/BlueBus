@@ -54,12 +54,12 @@
 #pragma config ALTVREF = ALTVREFDIS     // Alternate Voltage Reference Location Enable bit (VREF+ and CVREF+ on RB0, VREF- and CVREF- on RB1)
 
 // Trap Catches
-void __attribute__ ((__interrupt__ , auto_psv)) _OscillatorFail(void);
-void __attribute__ ((__interrupt__ , auto_psv)) _AddressError(void);
-void __attribute__ ((__interrupt__ , auto_psv)) _StackError(void);
-void __attribute__ ((__interrupt__ , auto_psv)) _MathError(void);
+void __attribute__ ((__interrupt__, auto_psv)) _OscillatorFail(void);
+void __attribute__ ((__interrupt__, auto_psv)) _AddressError(void);
+void __attribute__ ((__interrupt__, auto_psv)) _StackError(void);
+void __attribute__ ((__interrupt__, auto_psv)) _MathError(void);
 
-void __attribute__ ((__interrupt__ , auto_psv)) _OscillatorFail(void)
+void __attribute__ ((__interrupt__, auto_psv)) _OscillatorFail(void)
 {
     //Clear the trap flag
     INTCON1bits.OSCFAIL = 0;
@@ -69,7 +69,7 @@ void __attribute__ ((__interrupt__ , auto_psv)) _OscillatorFail(void)
     while (1);
 }
 
-void __attribute__ ((__interrupt__ , auto_psv)) _AddressError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AddressError(void)
 {
     //Clear the trap flag
     INTCON1bits.ADDRERR = 0;
@@ -80,7 +80,7 @@ void __attribute__ ((__interrupt__ , auto_psv)) _AddressError(void)
 }
 
 
-void __attribute__ ((__interrupt__ , auto_psv)) _StackError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _StackError(void)
 {
     //Clear the trap flag
     INTCON1bits.STKERR = 0;
@@ -90,7 +90,7 @@ void __attribute__ ((__interrupt__ , auto_psv)) _StackError(void)
     while (1);
 }
 
-void __attribute__ ((__interrupt__ , auto_psv)) _MathError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _MathError(void)
 {
     //Clear the trap flag
     INTCON1bits.MATHERR = 0;

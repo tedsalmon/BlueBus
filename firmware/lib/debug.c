@@ -23,7 +23,8 @@ void LogMessage(const char *type, char *data)
     UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
     if (debugger != 0) {
         char output[255];
-        sprintf(output, "%s: %s\r\n", type, data);
+        long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+        sprintf(output, "[%llu] %s: %s\r\n", ts, type, data);
         UARTSendString(debugger, output);
     }
 }

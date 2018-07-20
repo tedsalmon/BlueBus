@@ -72,8 +72,8 @@ UART_t UARTInit(
     UART_t uart;
     uart.txQueue = CharQueueInit();
     uart.rxQueue = CharQueueInit();
-    uart.moduleNumber = uartModule;
     uart.moduleIndex = uartModule - 1;
+    uart.status = UART_STATUS_IDLE;
     // Unlock the reprogrammable pin register
     __builtin_write_OSCCONL(OSCCON & 0xbf);
     // Set the RX Pin and register. The register comes from the PIC24FJ header
@@ -142,6 +142,7 @@ void UARTHandleRXInterrupt(uint8_t uartModuleNumber)
 {
     if (UARTModules[uartModuleNumber] != 0x00) {
         UART_t *uart = UARTModules[uartModuleNumber];
+        uart->status = UART_STATUS_RX;
         // While there's data on the RX buffer
         while (uart->registers->uxsta & 0x1) {
             unsigned char byte = uart->registers->uxrxreg;
@@ -167,6 +168,7 @@ void UARTHandleRXInterrupt(uint8_t uartModuleNumber)
                 }
             }
         }
+        uart->status = UART_STATUS_IDLE;
     }
     // Clear the interrupt flag unconditionally, since we will be recalled to
     // this handler if there's additional data
@@ -179,16 +181,18 @@ void UARTHandleTXInterrupt(uint8_t uartModuleNumber)
     // interrupt is triggered when we setup the UART module.
     if (UARTModules[uartModuleNumber] != 0x00) {
         UART_t *uart = UARTModules[uartModuleNumber];
+        uart->status = UART_STATUS_TX;
         while (uart->txQueue.size > 0) {
             // TXIF is 1 if the queue is empty, set it before pushing data
             SetUARTTXIF(uartModuleNumber, 0);
             unsigned char c = CharQueueNext(&uart->txQueue);
             uart->registers->uxtxreg = c;
             // Wait for the data to leave the tx buffer
-            while ((uart->registers->uxsta & (1 << (9) )) != 0);
+            while ((uart->registers->uxsta & (1 << 9)) != 0);
         }
         // If the queue has data, do not disable the interrupt
         SetUARTTXIE(uartModuleNumber, uart->txQueue.size != 0);
+        uart->status = UART_STATUS_IDLE;
     } else {
         // Disable the interrupt, since there's nothing to do
         SetUARTTXIE(uartModuleNumber, 0);

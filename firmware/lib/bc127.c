@@ -389,7 +389,7 @@ void BC127Process(BC127_t *bt)
             // The strncpy call adds a null terminator, so send size_t - 1
             if (strcmp(msgBuf[1], "TITLE:") == 0) {
                 removeSubstring(msg, "AVRCP_MEDIA TITLE: ");
-                strncpy(bt->title, msg, BC127_METADATA_TITLE_FIELD_SIZE - 1);
+                strncpy(bt->title, msg, BC127_METADATA_FIELD_SIZE - 1);
                 // We have new metadata, so clear the old
                 memset(&bt->artist, 0, BC127_METADATA_FIELD_SIZE);
                 memset(&bt->album, 0, BC127_METADATA_FIELD_SIZE);
@@ -576,19 +576,15 @@ BC127Connection_t *BC127ConnectionGet(BC127_t *bt, char *macId, uint8_t deviceId
             conn = btConn;
         }
     }
-    // A connection state does not exist for this device
-    if (conn == 0) {
+    // Create a connection for this device if it's available
+    if (conn == 0 && deviceId != 0) {
         BC127Connection_t newConn = BC127ConnectionInit(macId, deviceId);
         memset(newConn.deviceName, 0, 33);
         strncpy(newConn.macId, macId, 13);
         bt->connections[deviceId - 1] = newConn;
         conn = &bt->connections[deviceId - 1];
         conn->deviceId = deviceId;
-        if (deviceId != 0) {
-            BC127CommandGetDeviceName(bt, macId);
-        } else {
-            LogError("Device ID 0 for Mac ID %s", macId);
-        }
+        BC127CommandGetDeviceName(bt, macId);
     }
     return conn;
 }
@@ -615,7 +611,7 @@ void BC127ConnectionCloseProfile(BC127Connection_t *btConn, char *profile)
     }
     // Set the state to disconnected if all profiles are disconnected
     if (btConn->a2dpLink == 0 && btConn->avrcpLink == 0 && btConn->hfpLink == 0) {
-        //
+        btConn->state = BC127_CONN_STATE_DISCONNECTED;
     }
 }
 

@@ -53,10 +53,15 @@ void IBusProcess(IBus_t *ibus)
     if (ibus->uart.rxQueue.size > 0) {
         ibus->rxBuffer[ibus->rxBufferIdx] = CharQueueNext(&ibus->uart.rxQueue);
         ibus->rxBufferIdx++;
-        ibus->rxLastStamp = TimerGetMillis();
-        if (ibus->rxBufferIdx > 2) {
+        if (ibus->rxBufferIdx > 1) {
             uint8_t msgLength = (uint8_t) ibus->rxBuffer[1] + 2;
-            if (msgLength == ibus->rxBufferIdx) {
+            // Make sure we do not read more than the maximum packet length
+            if (msgLength > IBUS_MAX_MSG_LENGTH) {
+                LogError("IBus: Invalid Message Length of %d found", msgLength);
+                ibus->rxBufferIdx = 0;
+                memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
+                CharQueueReset(&ibus->uart.rxQueue);
+            } else if (msgLength == ibus->rxBufferIdx) {
                 uint8_t idx, pktSize;
                 pktSize = msgLength;
                 unsigned char pkt[pktSize];
@@ -64,7 +69,6 @@ void IBusProcess(IBus_t *ibus)
                     pkt[idx] = ibus->rxBuffer[idx];
                     ibus->rxBuffer[idx] = 0x00;
                 }
-                ibus->rxBufferIdx = 0;
                 if (IBusValidateChecksum(pkt) == 1) {
                     LogDebug(
                         "IBus: %02X -> %02X Action: %02X Length: %d",
@@ -89,44 +93,62 @@ void IBusProcess(IBus_t *ibus)
                         (uint8_t) pkt[1]
                     );
                 }
+                ibus->rxBufferIdx = 0;
             }
+            ibus->rxLastStamp = TimerGetMillis();
         }
     // If we have a byte to read, and we're not still receiving data, transmit
-    } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx && ibus->rxBufferIdx == 0) {
+    } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
+        ibus->rxBufferIdx == 0
+    ) {
         uint32_t now = TimerGetMillis();
         // Wait at least IBUS_TX_BUFFER_WAIT before attempting to send
         // a new message, since we want to maintain a lower priority on the bus
         if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
-            unsigned char len = ibus->txBuffer[ibus->txBufferReadIdx][1];
-            uint8_t msgLen = (uint8_t) len + 2;
-            uint8_t idx;
-            for (idx = 0; idx < msgLen; idx++) {
-                CharQueueAdd(
-                    &ibus->uart.txQueue,
-                    ibus->txBuffer[ibus->txBufferReadIdx][idx]
-                );
-                // Reset the buffer
-                ibus->txBuffer[ibus->txBufferReadIdx][idx] = 0x00;
+            LogDebug("IBus: Transmit Message");
+            // Make sure we have not gotten or are currently getting a byte
+            if (ibus->uart.rxQueue.size == 0 && ibus->uart.status == UART_STATUS_IDLE) {
+                uint8_t shouldClear = 1;
+                uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
+                uint8_t idx;
+                for (idx = 0; idx < msgLen; idx++) {
+                    // If there isn't a byte waiting
+                    if (ibus->uart.status == UART_STATUS_IDLE) {
+                        ibus->uart.registers->uxtxreg = ibus->txBuffer[ibus->txBufferReadIdx][idx];
+                        // Wait for the data to leave the tx buffer
+                        while ((ibus->uart.registers->uxsta & (1 << 9)) != 0);
+                    } else {
+                        // Stop transmitting and keep the data in the buffer
+                        idx = msgLen;
+                        shouldClear = 0;
+                        LogWarning("IBus: Detected RX while transmitting - Abort");
+                    }
+                }
+                LogDebug("IBus: Finish Tx");
+                if (shouldClear == 1) {
+                     memset(ibus->txBuffer[ibus->txBufferReadIdx], 0, msgLen);
+                    if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
+                        ibus->txBufferReadIdx = 0;
+                    } else {
+                        ibus->txBufferReadIdx++;
+                    }
+                }
             }
             ibus->txLastStamp = now;
-            SetUARTTXIE(ibus->uart.moduleIndex, 1);
-            if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
-                ibus->txBufferReadIdx = 0;
-            } else {
-                ibus->txBufferReadIdx++;
-            }
         }
     }
-    // Clear the RX Buffer if it's over the timeout
+    // Clear the RX Buffer if it's over the timeout or about to overflow
     if (ibus->rxBufferIdx > 0) {
         uint32_t now = TimerGetMillis();
-        if ((now - ibus->rxLastStamp) > IBUS_RX_BUFFER_TIMEOUT) {
-            LogWarning(
+        if ((now - ibus->rxLastStamp) > IBUS_RX_BUFFER_TIMEOUT ||
+            (ibus->rxBufferIdx + 1) == IBUS_RX_BUFFER_SIZE
+        ) {
+            LogError(
                 "IBus: %d bytes in the RX buffer timed out",
                 ibus->rxBufferIdx + 1
             );
             ibus->rxBufferIdx = 0;
-            memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_TIMEOUT);
+            memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
         }
     }
 }
@@ -197,6 +219,7 @@ void IBusStartup()
 
 void IBusCommandDisplayText(IBus_t *ibus, char *message)
 {
+    LogDebug("IBus: Display Text");
     unsigned char displayText[strlen(message) + 3];
     displayText[0] = 0x23;
     displayText[1] = 0x42;
@@ -216,6 +239,7 @@ void IBusCommandDisplayText(IBus_t *ibus, char *message)
 
 void IBusCommandDisplayTextClear(IBus_t *ibus)
 {
+    LogDebug("IBus: Clear Display Text");
     IBusCommandDisplayText(ibus, 0);
 }
 

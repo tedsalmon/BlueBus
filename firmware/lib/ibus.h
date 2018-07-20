@@ -8,8 +8,8 @@
 #define IBUS_H
 #define IBUS_RX_BUFFER_SIZE 256
 #define IBUS_TX_BUFFER_SIZE 16
-#define IBUS_MAX_MSG_LENGTH 24
-#define IBUS_RX_BUFFER_TIMEOUT 75
+#define IBUS_MAX_MSG_LENGTH 37 // Src Len Dest Cmd Data[32 Byte Max] XOR
+#define IBUS_RX_BUFFER_TIMEOUT 50
 #define IBUS_TX_BUFFER_WAIT 100
 #include <stdint.h>
 #include <string.h>

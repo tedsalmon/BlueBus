@@ -95,21 +95,40 @@ unsigned char CharQueueNext(CharQueue_t *queue)
 }
 
 /**
+ * CharQueueReset()
+ *     Description:
+ *         Empty a char queue
+ *     Params:
+ *         CharQueue_t queue - The queue
+ *     Returns:
+ *         void
+ */
+
+void CharQueueReset(CharQueue_t *queue)
+{
+    memset(queue->data, 0, CHAR_QUEUE_SIZE);
+    queue->readCursor = 0;
+    queue->size = 0;
+    queue->writeCursor = 0;
+}
+
+/**
  * CharQueueSeek()
  *     Description:
  *         Checks if a given byte is in the queue and return the length of
  *         characters prior to it.
  *     Params:
- *         CharQueue_t queue - The queue
+ *         CharQueue_t *queue - The queue
+ *         unsigned char needle - The character to look for
  *     Returns:
- *         int16_t - The length of characters prior to the needle or zero if
+ *         uint8_t - The length of characters prior to the needle or zero if
  *                   the needle wasn't found
  */
-int16_t CharQueueSeek(CharQueue_t *queue, unsigned char needle)
+uint8_t CharQueueSeek(CharQueue_t *queue, unsigned char needle)
 {
-    uint16_t readCursor = (int16_t) queue->readCursor;
-    uint16_t size = queue->size;
-    uint16_t cnt = 0;
+    uint8_t readCursor = (uint8_t) queue->readCursor;
+    uint8_t size = queue->size;
+    uint8_t cnt = 0;
     while (size > 0) {
         cnt++;
         if (readCursor >= queue->capacity) {
