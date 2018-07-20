@@ -9,7 +9,7 @@
 #define IBUS_RX_BUFFER_SIZE 256
 #define IBUS_TX_BUFFER_SIZE 16
 #define IBUS_MAX_MSG_LENGTH 37 // Src Len Dest Cmd Data[32 Byte Max] XOR
-#define IBUS_RX_BUFFER_TIMEOUT 50
+#define IBUS_RX_BUFFER_TIMEOUT 50 // At 9600 baud, we transmit ~1 byte/ms
 #define IBUS_TX_BUFFER_WAIT 100
 #include <stdint.h>
 #include <string.h>

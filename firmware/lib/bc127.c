@@ -399,7 +399,6 @@ void BC127Process(BC127_t *bt)
             } else if (strcmp(msgBuf[1], "ALBUM:") == 0) {
                 removeSubstring(msg, "AVRCP_MEDIA ALBUM: ");
                 strncpy(bt->album, msg, BC127_METADATA_FIELD_SIZE - 1);
-            } else if (strcmp(msgBuf[1], "PLAYING_TIME(MS):") == 0) {
                 LogDebug(
                     "BT: title=%s,artist=%s,album=%s",
                     bt->title,
