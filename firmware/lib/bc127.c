@@ -43,51 +43,41 @@ BC127_t BC127Init()
  */
 void BC127CommandBackward(BC127_t *bt)
 {
-    char command[19];
-    snprintf(command, 19, "MUSIC %d BACKWARD", bt->activeDevice->avrcpLink);
+    char command[18];
+    snprintf(command, 18, "MUSIC %d BACKWARD", bt->activeDevice->avrcpLink);
     BC127SendCommand(bt, command);
 }
 
 /**
- * BC127CommandConnectable()
+ * BC127CommandBtState()
  *     Description:
- *         Enable / Disable connectable state
+ *         Configure Discoverable and connectable states temporarily
  *     Params:
  *         BC127_t *bt - A pointer to the module object
- *         uint8_t *connectable - 0 for off and 1 for on
+ *         uint8_t connectable - 0 for off and 1 for on
+ *         uint8_t discoverable - 0 for off and 1 for on
  *     Returns:
  *         void
  */
-void BC127CommandConnectable(BC127_t *bt, uint8_t connectable)
+void BC127CommandBtState(BC127_t *bt, uint8_t connectable, uint8_t discoverable)
 {
+    bt->connectable = connectable;
+    bt->discoverable = discoverable;
+    char connectMode[4];
+    char discoverMode[4];
     if (connectable == 1) {
-        char command[15] = "CONNECTABLE ON";
-        BC127SendCommand(bt, command);
+        strncpy(connectMode, "ON", 4);
     } else if (connectable == 0) {
-        char command[16] = "CONNECTABLE OFF";
-        BC127SendCommand(bt, command);
+        strncpy(connectMode, "OFF", 4);
     }
-}
-
-/**
- * BC127CommandDiscoverable()
- *     Description:
- *         Enable / Disable Pairing mode
- *     Params:
- *         BC127_t *bt - A pointer to the module object
- *         uint8_t *discoverable - 0 for off and 1 for on
- *     Returns:
- *         void
- */
-void BC127CommandDiscoverable(BC127_t *bt, uint8_t discoverable)
-{
     if (discoverable == 1) {
-        char command[16] = "DISCOVERABLE ON";
-        BC127SendCommand(bt, command);
+        strncpy(discoverMode, "ON", 4);
     } else if (discoverable == 0) {
-        char command[17] = "DISCOVERABLE OFF";
-        BC127SendCommand(bt, command);
+        strncpy(discoverMode, "OFF", 4);
     }
+    char command[17];
+    snprintf(command, 17, "BT_STATE %s %s", connectMode, discoverMode);
+    BC127SendCommand(bt, command);
 }
 
 /**
@@ -101,8 +91,8 @@ void BC127CommandDiscoverable(BC127_t *bt, uint8_t discoverable)
  */
 void BC127CommandForward(BC127_t *bt)
 {
-    char command[18];
-    snprintf(command, 18, "MUSIC %d FORWARD", bt->activeDevice->avrcpLink);
+    char command[17];
+    snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice->avrcpLink);
     BC127SendCommand(bt, command);
 }
 
@@ -221,24 +211,38 @@ void BC127CommandReset(BC127_t *bt)
     BC127SendCommand(bt, command);
 }
 
+void BC127CommandSetAutoConnect(BC127_t *bt, uint8_t autoConnect)
+{
+    char command[15];
+    snprintf(command, 15, "SET AUTOCONN=%d", autoConnect);
+    BC127SendCommand(bt, command);
+    BC127CommandWrite(bt);
+}
+
 /**
- * BC127CommandSetDiscoverable()
+ * BC127CommandSetBtState()
  *     Description:
- *         Set the discoverable settings for the device
+ *         Set the discoverable / connectable settings for the device
+ *         <connectable_mode> / <discoverable_mode>
+ *             0 - (Default) Not connectable / discoverable at power-on
+ *             1 - Always connectable  / discoverable
+ *             2 - Connectable  / discoverable at power-on
  *     Params:
  *         BC127_t *bt - A pointer to the module object
- *         uint8_t *mode - The Discoverable mode to set
- *         uint8_t *timeout - The time to remain discoverable
+ *         uint8_t connectMode - The discoverability mode to set
+ *         uint8_t discoverMode - The connectability mode to set
  *     Returns:
  *         void
  */
-void BC127CommandSetDiscoverable(BC127_t *bt, uint8_t mode, uint8_t timeout)
-{
-    char command[23];
-    snprintf(command, 23, "SET DISCOVERABLE=%d %d", mode, timeout);
+void BC127CommandSetBtState(
+    BC127_t *bt,
+    char *connectMode,
+    char *discoverMode
+) {
+    char command[24];
+    snprintf(command, 24, "SET BT_STATE_CONFIG=%s %s", connectMode, discoverMode);
     BC127SendCommand(bt, command);
     BC127CommandWrite(bt);
-    BC127CommandReset(bt);
 }
 
 void BC127CommandSetMetadata(BC127_t *bt, uint8_t value)
@@ -275,7 +279,6 @@ void BC127CommandSetModuleName(BC127_t *bt, char *name)
     snprintf(nameShortSetCommand, 23, "SET NAME_SHORT=%s", shortName);
     BC127SendCommand(bt, nameShortSetCommand);
     BC127CommandWrite(bt);
-    BC127CommandReset(bt);
 }
 
 /**
@@ -328,7 +331,7 @@ void BC127CommandWrite(BC127_t *bt)
 /**
  * BC127GetDeviceId()
  *     Description:
- *         Send the WRITE command to save our settings
+ *         Parse the device ID from the given link ID
  *     Params:
  *         char *str - The link ID to return a device ID for
  *     Returns:
@@ -373,6 +376,7 @@ void BC127Process(BC127_t *bt)
                 msg[i] = '\0';
             }
         }
+        UARTSetModuleState(&bt->uart, UART_STATE_IDLE);
         // Copy the message, since strtok adds a null terminator after the first
         // occurence of the delimiter, causes issues with any functions used going forward
         char tmpMsg[messageLength];
@@ -386,26 +390,34 @@ void BC127Process(BC127_t *bt)
         }
 
         if (strcmp(msgBuf[0], "AVRCP_MEDIA") == 0) {
-            // The strncpy call adds a null terminator, so send size_t - 1
-            if (strcmp(msgBuf[1], "TITLE:") == 0) {
-                removeSubstring(msg, "AVRCP_MEDIA TITLE: ");
-                strncpy(bt->title, msg, BC127_METADATA_FIELD_SIZE - 1);
-                // We have new metadata, so clear the old
-                memset(&bt->artist, 0, BC127_METADATA_FIELD_SIZE);
-                memset(&bt->album, 0, BC127_METADATA_FIELD_SIZE);
-            } else if (strcmp(msgBuf[1], "ARTIST:") == 0) {
-                removeSubstring(msg, "AVRCP_MEDIA ARTIST: ");
-                strncpy(bt->artist, msg, BC127_METADATA_FIELD_SIZE - 1);
-            } else if (strcmp(msgBuf[1], "ALBUM:") == 0) {
-                removeSubstring(msg, "AVRCP_MEDIA ALBUM: ");
-                strncpy(bt->album, msg, BC127_METADATA_FIELD_SIZE - 1);
-                LogDebug(
-                    "BT: title=%s,artist=%s,album=%s",
-                    bt->title,
-                    bt->artist,
-                    bt->album
-                );
-                EventTriggerCallback(BC127Event_MetadataChange, 0);
+            uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
+            if (bt->activeDevice != 0 && bt->activeDevice->deviceId == deviceId) {
+                if (strcmp(msgBuf[2], "TITLE:") == 0) {
+                    strncpy(
+                        bt->title,
+                        &msg[BC127_METADATA_TITLE_OFFSET],
+                        BC127_METADATA_FIELD_SIZE
+                    );
+                } else if (strcmp(msgBuf[2], "ARTIST:") == 0) {
+                    strncpy(
+                        bt->artist,
+                        &msg[BC127_METADATA_ARTIST_OFFSET],
+                        BC127_METADATA_FIELD_SIZE
+                    );
+                } else if (strcmp(msgBuf[2], "ALBUM:") == 0) {
+                    strncpy(
+                        bt->album,
+                        &msg[BC127_METADATA_ALBUM_OFFSET],
+                        BC127_METADATA_FIELD_SIZE
+                    );
+                    LogDebug(
+                        "BT: title=%s,artist=%s,album=%s",
+                        bt->title,
+                        bt->artist,
+                        bt->album
+                    );
+                    EventTriggerCallback(BC127Event_MetadataChange, 0);
+                }
             }
         } else if(strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
@@ -489,6 +501,18 @@ void BC127Process(BC127_t *bt)
             LogDebug("BT: Ready");
             EventTriggerCallback(BC127Event_DeviceReady, 0);
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
+        } else if (strcmp(msgBuf[0], "STATE") == 0) {
+            if (strcmp(msgBuf[2], "CONNECTABLE[ON]") == 0) {
+                bt->connectable = BC127_STATE_ON;
+            } else if (strcmp(msgBuf[2], "CONNECTABLE[OFF]") == 0) {
+                bt->connectable = BC127_STATE_OFF;
+            }
+            if (strcmp(msgBuf[3], "DISCOVERABLE[ON]") == 0) {
+                bt->discoverable = BC127_STATE_ON;
+            } else if (strcmp(msgBuf[3], "DISCOVERABLE[OFF]") == 0) {
+                bt->discoverable = BC127_STATE_OFF;
+            }
+            LogDebug("BT: Got Status %s %s", msgBuf[2], msgBuf[3]);
         }
     }
 }

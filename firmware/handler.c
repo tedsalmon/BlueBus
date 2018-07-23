@@ -109,7 +109,9 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *status)
         context->ibus->cdChangerStatus > 0x01
     ) {
         IBusCommandDisplayText(context->ibus, "Paused");
-    } else if (context->ibus->cdChangerStatus <= 0x01){
+    } else if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING &&
+               context->ibus->cdChangerStatus <= 0x01
+    ){
         // We're playing but not in Bluetooth mode - stop playback
         BC127CommandPause(context->bt);
     }
@@ -187,7 +189,16 @@ void HandlerIBusCDChangerStatus(void *ctx, unsigned char *pkt)
         } else if (pkt[5] == 0x05) {
             // Display & Allow user to select input device
         } else if (pkt[5] == 0x06) {
-            BC127CommandDiscoverable(context->bt, 1);
+            // Toggle the discoverable state
+            uint8_t state;
+            if (context->bt->discoverable == BC127_STATE_ON) {
+                IBusCommandDisplayText(context->ibus, "Pairing Off");
+                state = BC127_STATE_OFF;
+            } else {
+                IBusCommandDisplayText(context->ibus, "Pairing On");
+                state = BC127_STATE_ON;
+            }
+            BC127CommandBtState(context->bt, context->bt->connectable, state);
         }
     }
     IBusCommandSendCdChangerStatus(context->ibus, &curStatus, &curAction);

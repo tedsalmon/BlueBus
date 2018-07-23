@@ -25,7 +25,7 @@ uint32_t TimerGetMillis()
     return TimerCurrentMillis;
 }
 
-void TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
+uint8_t TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
 {
     TimerScheduledTask_t scheduledTask;
     scheduledTask.task = task;
@@ -33,6 +33,16 @@ void TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
     scheduledTask.ticks = 0;
     scheduledTask.interval = interval;
     TimerRegisteredTasks[TimerRegisteredTasksCount++] = scheduledTask;
+    return TimerRegisteredTasksCount - 1;
+}
+
+void TimerTriggerScheduledTask(uint8_t taskId)
+{
+    TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
+    if (t != 0) {
+        t->task(t->context);
+        t->ticks = 0;
+    }
 }
 
 void __attribute__((__interrupt__, auto_psv)) _T3Interrupt(void)

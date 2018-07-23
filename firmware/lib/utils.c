@@ -24,6 +24,15 @@ void removeSubstring(char *string, const char *trash)
     }
 }
 
+/**
+ * strToInt()
+ *     Description:
+ *         Convert a string to an integer
+ *     Params:
+ *         char *string - The subject
+ *     Returns:
+ *         uint8_t The Unsigned 8-bit integer representation
+ */
 uint8_t strToInt(char *string)
 {
     char *ptr;

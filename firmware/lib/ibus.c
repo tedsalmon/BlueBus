@@ -61,6 +61,7 @@ void IBusProcess(IBus_t *ibus)
                 ibus->rxBufferIdx = 0;
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
                 CharQueueReset(&ibus->uart.rxQueue);
+                UARTSetModuleState(&ibus->uart, UART_STATE_IDLE);
             } else if (msgLength == ibus->rxBufferIdx) {
                 uint8_t idx;
                 unsigned char pkt[msgLength];
@@ -68,6 +69,7 @@ void IBusProcess(IBus_t *ibus)
                     pkt[idx] = ibus->rxBuffer[idx];
                     ibus->rxBuffer[idx] = 0x00;
                 }
+                UARTSetModuleState(&ibus->uart, UART_STATE_IDLE);
                 if (IBusValidateChecksum(pkt) == 1) {
                     LogDebug(
                         "IBus: %02X -> %02X Action: %02X Length: %d",
@@ -96,18 +98,25 @@ void IBusProcess(IBus_t *ibus)
             }
         }
         ibus->rxLastStamp = TimerGetMillis();
-    // If we have a byte to read, and we're not still receiving data, transmit
+    /*
+     * The following requirements must be met to transmit:
+     *     * There must be at least one packet waiting for transmission
+     *     * At least IBUS_TX_BUFFER_WAIT milliseconds must have passed since
+     *     our last transmission. This ensures that we do not spam the bus.
+     *     * The UART status must be idle, indicating that we are not receiving
+     *     data. This loop defines the UART Idle status (post-packet read).
+     */
     } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
-        ibus->rxBufferIdx == 0
+        (TimerGetMillis() - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT &&
+        ibus->uart.state == UART_STATE_IDLE
     ) {
-        uint32_t now = TimerGetMillis();
-        // Add a timeout to our transmissions so we do not spam the bus and
-        // make sure we have not gotten or are currently getting a byte
-        if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT &&
-            ibus->uart.rxQueue.size == 0
-        ) {
-            uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
-            uint8_t idx;
+        uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
+        uint8_t idx;
+        /* At a glance this looks redundant, but it's not. It's plausible for
+         * the module to have gotten data in the time it took us to run the
+         * the code in the `else if` and here, so we check prior to transmission
+         */
+        if (ibus->uart.state == UART_STATE_IDLE) {
             for (idx = 0; idx < msgLen; idx++) {
                 ibus->uart.registers->uxtxreg = ibus->txBuffer[ibus->txBufferReadIdx][idx];
                 // Wait for the data to leave the TX buffer
@@ -121,9 +130,10 @@ void IBusProcess(IBus_t *ibus)
                 ibus->txBufferReadIdx++;
             }
             LogDebug("IBus: TX Complete");
-            ibus->txLastStamp = now;
         }
+        ibus->txLastStamp = TimerGetMillis();
     }
+
     // Clear the RX Buffer if it's over the timeout or about to overflow
     if (ibus->rxBufferIdx > 0) {
         uint32_t now = TimerGetMillis();
@@ -136,6 +146,7 @@ void IBusProcess(IBus_t *ibus)
             );
             ibus->rxBufferIdx = 0;
             memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
+            UARTSetModuleState(&ibus->uart, UART_STATE_IDLE);
         }
     }
 }

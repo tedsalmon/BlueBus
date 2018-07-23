@@ -73,6 +73,7 @@ UART_t UARTInit(
     uart.txQueue = CharQueueInit();
     uart.rxQueue = CharQueueInit();
     uart.moduleIndex = uartModule - 1;
+    uart.state = UART_STATE_IDLE;
     // Unlock the reprogrammable pin register
     __builtin_write_OSCCONL(OSCCON & 0xbf);
     // Set the RX Pin and register. The register comes from the PIC24FJ header
@@ -137,6 +138,11 @@ UART_t * UARTGetModuleHandler(uint8_t moduleNumber)
     return UARTModules[moduleNumber - 1];
 }
 
+void UARTSetModuleState(UART_t *uart, uint8_t state)
+{
+    uart->state = state;
+}
+
 uint8_t UARTRXInterruptHandler(uint8_t uartModuleNumber)
 {
     UART_t *uart = UARTModules[uartModuleNumber];
@@ -145,9 +151,10 @@ uint8_t UARTRXInterruptHandler(uint8_t uartModuleNumber)
         SetUARTRXIF(uartModuleNumber, 0);
         return 0;
     }
+    uart->state = UART_STATE_RX;
     // While there's data on the RX buffer
     while (uart->registers->uxsta & 0x1) {
-        // Reading the byte is sometimes a requirement to fix an error
+        // Reading the byte is sometimes a requirement to clear an error
         unsigned char byte = uart->registers->uxrxreg;
         // No frame or parity errors
         if ((uart->registers->uxsta & 0xC) == 0) {
@@ -183,6 +190,7 @@ uint8_t UARTTXInterruptHandler(uint8_t uartModuleNumber)
         SetUARTTXIE(uartModuleNumber, 0);
         return 0;
     }
+    uart->state = UART_STATE_TX;
     while (uart->txQueue.size > 0) {
         // TXIF is 1 if the queue is empty, set it before pushing data
         SetUARTTXIF(uartModuleNumber, 0);
@@ -193,6 +201,8 @@ uint8_t UARTTXInterruptHandler(uint8_t uartModuleNumber)
     }
     // If the queue has data, do not disable the interrupt
     SetUARTTXIE(uartModuleNumber, uart->txQueue.size != 0);
+    // The data was sent, so set us idle again
+    uart->state = UART_STATE_IDLE;
     return 1;
 }
 
@@ -210,7 +220,7 @@ void UARTSendString(UART_t *uart, char *data)
 {
     char c;
     while ((c = *data++)) {
-        // This sucks. Print only ASCII characters, CR and LF
+        // Print only readable and newline characters
         if ((c >= 0x20 && c <= 0x7E) || c == 0x0D || c == 0x0A) {
             CharQueueAdd(&uart->txQueue, c);
         }

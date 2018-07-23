@@ -19,16 +19,25 @@
 
 #define BC127_AVRCP_STATUS_PAUSED 0
 #define BC127_AVRCP_STATUS_PLAYING 1
+#define BC127_CONFIG_STATE_NEVER "0"
+#define BC127_CONFIG_STATE_ALWAYS "1"
+#define BC127_CONFIG_STATE_STARTUP "2"
 #define BC127_CONN_STATE_NEW 0
 #define BC127_CONN_STATE_CONNECTED 1
 #define BC127_CONN_STATE_DISCONNECTED 2
 #define BC127_MAX_DEVICE_CONN 3
 #define BC127_MAX_DEVICE_PROFILES 5
 #define BC127_METADATA_FIELD_SIZE 128
+#define BC127_METADATA_TITLE_OFFSET 22
+#define BC127_METADATA_ARTIST_OFFSET 23
+#define BC127_METADATA_ALBUM_OFFSET 22
 #define BC127_MSG_END_CHAR 0x0D
 #define BC127_MSG_LF_CHAR 0x0A
 #define BC127_MSG_DELIMETER 0x20
 #define BC127_SHORT_NAME_MAX_LEN 7
+#define BC127_STATE_OFF 0
+#define BC127_STATE_ON 1
+
 
 const static uint8_t BC127Event_Startup = 0;
 const static uint8_t BC127Event_MetadataChange = 1;
@@ -64,13 +73,14 @@ typedef struct BC127_t {
     char album[BC127_METADATA_FIELD_SIZE];
     BC127Connection_t connections[BC127_MAX_DEVICE_CONN];
     BC127Connection_t *activeDevice;
+    uint8_t connectable;
+    uint8_t discoverable;
     UART_t uart;
 } BC127_t;
 
 BC127_t BC127Init();
 void BC127CommandBackward(BC127_t *);
-void BC127CommandConnectable(BC127_t *, uint8_t);
-void BC127CommandDiscoverable(BC127_t *, uint8_t);
+void BC127CommandBtState(BC127_t *, uint8_t, uint8_t);
 void BC127CommandForward(BC127_t *);
 void BC127CommandGetDeviceName(BC127_t *, char *);
 void BC127CommandGetMetadata(BC127_t *);
@@ -79,7 +89,8 @@ void BC127CommandPlay(BC127_t *);
 void BC127CommandProfileClose(BC127_t *, uint8_t);
 void BC127CommandProfileOpen(BC127_t *, char *, char *);
 void BC127CommandReset(BC127_t *);
-void BC127CommandSetDiscoverable(BC127_t *, uint8_t, uint8_t);
+void BC127CommandSetAutoConnect(BC127_t *, uint8_t);
+void BC127CommandSetBtState(BC127_t *, char *, char *);
 void BC127CommandSetMetadata(BC127_t *, uint8_t);
 void BC127CommandSetModuleName(BC127_t *, char *);
 void BC127CommandSetPin(BC127_t *, char *);

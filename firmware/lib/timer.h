@@ -30,6 +30,7 @@ typedef struct TimerScheduledTask_t {
 } TimerScheduledTask_t;
 
 void TimerInit();
-void TimerRegisterScheduledTask(void *, void *, uint16_t);
+uint8_t TimerRegisterScheduledTask(void *, void *, uint16_t);
+void TimerTriggerScheduledTask(uint8_t);
 uint32_t TimerGetMillis();
 #endif /* TIMER_H */
