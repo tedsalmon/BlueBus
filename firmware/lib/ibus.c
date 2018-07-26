@@ -108,7 +108,7 @@ void IBusProcess(IBus_t *ibus)
      */
     } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
         (TimerGetMillis() - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT &&
-        ibus->uart.state == UART_STATE_IDLE
+        UARTGetModuleState(&ibus->uart) == UART_STATE_IDLE
     ) {
         uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
         uint8_t idx;
@@ -116,7 +116,9 @@ void IBusProcess(IBus_t *ibus)
          * the module to have gotten data in the time it took us to run the
          * the code in the `else if` and here, so we check prior to transmission
          */
-        if (ibus->uart.state == UART_STATE_IDLE) {
+        if (UARTGetModuleState(&ibus->uart) == UART_STATE_IDLE &&
+            IBUS_UART_RX_STATUS == 1
+        ) {
             for (idx = 0; idx < msgLen; idx++) {
                 ibus->uart.registers->uxtxreg = ibus->txBuffer[ibus->txBufferReadIdx][idx];
                 // Wait for the data to leave the TX buffer
@@ -215,7 +217,7 @@ void IBusStartup()
     EventTriggerCallback(IBusEvent_Startup, 0);
 }
 
-void IBusCommandDisplayText(IBus_t *ibus, char *message)
+void IBusCommandDisplayMIDText(IBus_t *ibus, char *message)
 {
     LogDebug("IBus: Display Text");
     unsigned char displayText[strlen(message) + 3];
@@ -235,13 +237,20 @@ void IBusCommandDisplayText(IBus_t *ibus, char *message)
     );
 }
 
-void IBusCommandDisplayTextClear(IBus_t *ibus)
+void IBusCommandDisplayMIDTextClear(IBus_t *ibus)
 {
     LogDebug("IBus: Clear Display Text");
-    IBusCommandDisplayText(ibus, 0);
+    IBusCommandDisplayMIDText(ibus, 0);
 }
 
-void IBusCommandSendCdChangeAnnounce(IBus_t *ibus)
+void IBusCommandDisplayMIDTextSymbol(IBus_t *ibus, char symbol)
+{
+    LogDebug("IBus: Display Text Symbol 0x%02X", symbol);
+    unsigned char displayText[4] = {0x23, 0x42, 0x32, symbol};
+    IBusSendCommand(ibus, IBusDevice_TEL, IBusDevice_IKE, displayText, 4);
+}
+
+void IBusCommandSendCdChangerAnnounce(IBus_t *ibus)
 {
     LogDebug("IBus: Announce CD Changer");
     const unsigned char cdcAlive[] = {0x02, 0x01};
@@ -289,6 +298,10 @@ void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
                 ibus->cdChangerStatus = pkt[4];
             }
             EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
+        }
+    } else if (pkt[2] == IBusDevice_LOC) {
+        if (pkt[3] == 0x3B) {
+            EventTriggerCallback(IBusEvent_CDClearDisplay, pkt);
         }
     }
 }

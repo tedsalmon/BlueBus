@@ -22,7 +22,6 @@ CharQueue_t CharQueueInit()
     queue.size = 0;
     queue.readCursor = 0;
     queue.writeCursor = 0;
-    queue.capacity = CHAR_QUEUE_SIZE;
     return queue;
 }
 
@@ -38,9 +37,9 @@ CharQueue_t CharQueueInit()
  */
 void CharQueueAdd(CharQueue_t *queue, unsigned char value)
 {
-    if (queue->size != queue->capacity) {
+    if (queue->size != CHAR_QUEUE_SIZE) {
         // Reset the write cursor before it goes out of bounds
-        if (queue->writeCursor == queue->capacity) {
+        if (queue->writeCursor == CHAR_QUEUE_SIZE) {
             queue->writeCursor = 0;
         }
         queue->data[queue->writeCursor] = value;
@@ -62,7 +61,7 @@ void CharQueueAdd(CharQueue_t *queue, unsigned char value)
  */
 unsigned char CharQueueGet(CharQueue_t *queue, uint8_t idx)
 {
-    if (idx >= queue->capacity) {
+    if (idx >= CHAR_QUEUE_SIZE) {
         return 0x00;
     }
     return queue->data[idx];
@@ -85,7 +84,7 @@ unsigned char CharQueueNext(CharQueue_t *queue)
     // Remove the byte from memory
     queue->data[queue->readCursor] = 0x00;
     queue->readCursor++;
-    if (queue->readCursor >= queue->capacity) {
+    if (queue->readCursor >= CHAR_QUEUE_SIZE) {
         queue->readCursor = 0;
     }
     if (queue->size > 0) {
@@ -131,7 +130,7 @@ uint8_t CharQueueSeek(CharQueue_t *queue, unsigned char needle)
     uint8_t cnt = 0;
     while (size > 0) {
         cnt++;
-        if (readCursor >= queue->capacity) {
+        if (readCursor >= CHAR_QUEUE_SIZE) {
             readCursor = 0;
         }
         if (queue->data[readCursor] == needle) {

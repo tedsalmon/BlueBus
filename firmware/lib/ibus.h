@@ -66,6 +66,9 @@ const static unsigned char IBusAction_CD53_CD_SEL = 0x06;
 const static uint8_t IBusEvent_Startup = 33;
 const static uint8_t IBusEvent_CDKeepAlive = 34;
 const static uint8_t IBusEvent_CDStatusRequest = 35;
+const static uint8_t IBusEvent_CDClearDisplay = 36;
+
+const static unsigned char IBusMIDSymbolNext = 0xC9;
 
 /**
  * IBus_t
@@ -89,9 +92,10 @@ IBus_t IBusInit();
 void IBusProcess(IBus_t *);
 void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, size_t);
 void IBusStartup();
-void IBusCommandDisplayText(IBus_t *, char *);
-void IBusCommandDisplayTextClear(IBus_t *);
-void IBusCommandSendCdChangeAnnounce(IBus_t *);
+void IBusCommandDisplayMIDText(IBus_t *, char *);
+void IBusCommandDisplayMIDTextClear(IBus_t *);
+void IBusCommandDisplayMIDTextSymbol(IBus_t *, char);
+void IBusCommandSendCdChangerAnnounce(IBus_t *);
 void IBusCommandSendCdChangerKeepAlive(IBus_t *);
 void IBusCommandSendCdChangerStatus(IBus_t *, unsigned char *,  unsigned char *);
 void IBusHandleIKEMessage(IBus_t *, unsigned char *);

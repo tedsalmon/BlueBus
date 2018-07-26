@@ -55,7 +55,8 @@ static uint16_t *ROPR_PINS[] = {
     GET_RPOR(18)
 };
 
-UART_t *UARTModules[UART_MODULES_COUNT];
+static UART_t *UARTModules[UART_MODULES_COUNT];
+static uint8_t UARTModulesStatus[UART_MODULES_COUNT];
 
 // These values constitute the TX mode for each UART module
 static const uint8_t UART_TX_MODES[] = {3, 5, 19, 21};
@@ -73,26 +74,25 @@ UART_t UARTInit(
     uart.txQueue = CharQueueInit();
     uart.rxQueue = CharQueueInit();
     uart.moduleIndex = uartModule - 1;
-    uart.state = UART_STATE_IDLE;
     // Unlock the reprogrammable pin register
-    __builtin_write_OSCCONL(OSCCON & 0xbf);
+    __builtin_write_OSCCONL(OSCCON & 0xBF);
     // Set the RX Pin and register. The register comes from the PIC24FJ header
     // It's a pointer that Microchip gives you for easy access.
     switch (uartModule) {
         case 1:
-            uart.registers = (UART *) &U1MODE;
+            uart.registers = (volatile UART *) &U1MODE;
             _U1RXR = rxPin;
             break;
         case 2:
-            uart.registers = (UART *) &U2MODE;
+            uart.registers = (volatile UART *) &U2MODE;
             _U2RXR = rxPin;
             break;
         case 3:
-            uart.registers = (UART *) &U3MODE;
+            uart.registers = (volatile UART *) &U3MODE;
             _U3RXR = rxPin;
             break;
         case 4:
-            uart.registers = (UART *) &U4MODE;
+            uart.registers = (volatile UART *) &U4MODE;
             _U4RXR = rxPin;
             break;
     }
@@ -133,77 +133,79 @@ void UARTAddModuleHandler(UART_t *uart)
     UARTModules[uart->moduleIndex] = uart;
 }
 
-UART_t * UARTGetModuleHandler(uint8_t moduleNumber)
+UART_t * UARTGetModuleHandler(uint8_t moduleIndex)
 {
-    return UARTModules[moduleNumber - 1];
+    return UARTModules[moduleIndex - 1];
+}
+
+uint8_t UARTGetModuleState(UART_t *uart)
+{
+    return UARTModulesStatus[uart->moduleIndex];
+}
+
+void UARTSetModuleStateByIdx(uint8_t moduleIndex, uint8_t state)
+{
+    UARTModulesStatus[moduleIndex] = state;
 }
 
 void UARTSetModuleState(UART_t *uart, uint8_t state)
 {
-    uart->state = state;
+    UARTModulesStatus[uart->moduleIndex] = state;
 }
 
-uint8_t UARTRXInterruptHandler(uint8_t uartModuleNumber)
+static void UARTRXInterruptHandler(uint8_t moduleIndex)
 {
-    UART_t *uart = UARTModules[uartModuleNumber];
-    if (uart == 0) {
-        // The module isn't setup -- Return without taking action
-        SetUARTRXIF(uartModuleNumber, 0);
-        return 0;
-    }
-    uart->state = UART_STATE_RX;
-    // While there's data on the RX buffer
-    while (uart->registers->uxsta & 0x1) {
-        // Reading the byte is sometimes a requirement to clear an error
-        unsigned char byte = uart->registers->uxrxreg;
-        // No frame or parity errors
-        if ((uart->registers->uxsta & 0xC) == 0) {
-            // Clear the buffer overflow error, if it exists
-            if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
-                uart->registers->uxsta ^= 0x2;
-            }
-            CharQueueAdd(&uart->rxQueue, byte);
-        } else {
-            // Clear the buffer overflow error, if it is set
-            if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
-                uart->registers->uxsta ^= 0x2;
+    UARTSetModuleStateByIdx(moduleIndex, UART_STATE_RX);
+    UART_t *uart = UARTModules[moduleIndex];
+    if (uart != 0) {
+        // While there's data on the RX buffer
+        while (uart->registers->uxsta & 0x1) {
+            // Reading the byte is sometimes a requirement to clear an error
+            unsigned char byte = uart->registers->uxrxreg;
+            // No frame or parity errors
+            if ((uart->registers->uxsta & 0xC) == 0) {
+                // Clear the buffer overflow error, if it exists
+                if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
+                    uart->registers->uxsta ^= 0x2;
+                }
+                CharQueueAdd(&uart->rxQueue, byte);
             } else {
-                LogError(
-                    "UART [%d]: FERR/PERR -> 0x%X",
-                    uartModuleNumber + 1,
-                    uart->registers->uxsta
-                );
+                // Clear the buffer overflow error, if it is set
+                if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
+                    uart->registers->uxsta ^= 0x2;
+                } else {
+                    LogError(
+                        "UART[%d]: FERR/PERR -> 0x%X",
+                        moduleIndex + 1,
+                        uart->registers->uxsta
+                    );
+                }
             }
         }
     }
     // Clear the interrupt flag unconditionally, since we will be recalled to
     // this handler if there's additional data
-    SetUARTRXIF(uartModuleNumber, 0);
-    return 1;
+    SetUARTRXIF(moduleIndex, 0);
 }
 
-uint8_t UARTTXInterruptHandler(uint8_t uartModuleNumber)
+static void UARTTXInterruptHandler(uint8_t moduleIndex)
 {
-    UART_t *uart = UARTModules[uartModuleNumber];
-    if (uart == 0) {
-        // The module isn't setup -- Return without taking action
-        SetUARTTXIE(uartModuleNumber, 0);
-        return 0;
+    UARTSetModuleStateByIdx(moduleIndex, UART_STATE_TX);
+    UART_t *uart = UARTModules[moduleIndex];
+    if (uart != 0) {
+        while (uart->txQueue.size > 0) {
+            // TXIF is 1 if the queue is empty, set it before pushing data
+            SetUARTTXIF(moduleIndex, 0);
+            unsigned char c = CharQueueNext(&uart->txQueue);
+            uart->registers->uxtxreg = c;
+            // Wait for the data to leave the tx buffer
+            while ((uart->registers->uxsta & (1 << 9)) != 0);
+        }
     }
-    uart->state = UART_STATE_TX;
-    while (uart->txQueue.size > 0) {
-        // TXIF is 1 if the queue is empty, set it before pushing data
-        SetUARTTXIF(uartModuleNumber, 0);
-        unsigned char c = CharQueueNext(&uart->txQueue);
-        uart->registers->uxtxreg = c;
-        // Wait for the data to leave the tx buffer
-        while ((uart->registers->uxsta & (1 << 9)) != 0);
-    }
-    // If the queue has data, do not disable the interrupt
-    SetUARTTXIE(uartModuleNumber, uart->txQueue.size != 0);
+    // Disable the interrupt after flushing the queue
+    SetUARTTXIE(moduleIndex, 0);
     // The data was sent, so set us idle again
-    uart->state = UART_STATE_IDLE;
-    return 1;
+    UARTSetModuleStateByIdx(moduleIndex, UART_STATE_IDLE);
 }
 
 void UARTSendData(UART_t *uart, unsigned char *data)

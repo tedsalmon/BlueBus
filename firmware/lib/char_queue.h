@@ -26,7 +26,6 @@
  *         capacity, the data will be lost and an error will be logged.
  */
 typedef struct CharQueue_t {
-    uint8_t capacity;
     uint8_t size;
     uint8_t readCursor;
     uint8_t writeCursor;
@@ -34,7 +33,6 @@ typedef struct CharQueue_t {
 } CharQueue_t;
 
 struct CharQueue_t CharQueueInit();
-
 void CharQueueAdd(CharQueue_t *, unsigned char);
 unsigned char CharQueueGet(CharQueue_t *, uint8_t);
 unsigned char CharQueueNext(CharQueue_t *);

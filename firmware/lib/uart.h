@@ -31,16 +31,15 @@ typedef struct UART_t {
     CharQueue_t rxQueue;
     CharQueue_t txQueue;
     uint8_t moduleIndex;
-    uint8_t state;
-    UART *registers;
+    volatile UART *registers;
 } UART_t;
 
 UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 void UARTAddModuleHandler(UART_t *uart);
 UART_t * UARTGetModuleHandler(uint8_t);
+uint8_t UARTGetModuleState(UART_t *);
+void UARTSetModuleStateByIdx(uint8_t, uint8_t);
 void UARTSetModuleState(UART_t *, uint8_t);
-uint8_t UARTRXInterruptHandler(uint8_t);
-uint8_t UARTTXInterruptHandler(uint8_t);
 void UARTSendData(UART_t *, unsigned char *);
 void UARTSendString(UART_t *, char *);
 #endif /* UART_H */

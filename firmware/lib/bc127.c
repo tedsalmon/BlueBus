@@ -20,6 +20,10 @@ BC127_t BC127Init()
     BC127_t bt;
     bt.avrcpStatus = BC127_AVRCP_STATUS_PAUSED;
     bt.activeDevice = 0;
+    // Make sure that we initialize the char arrays to all zeros
+    memset(bt.title, 0, BC127_METADATA_FIELD_SIZE);
+    memset(bt.artist, 0, BC127_METADATA_FIELD_SIZE);
+    memset(bt.album, 0, BC127_METADATA_FIELD_SIZE);
     bt.uart = UARTInit(
         BC127_UART_MODULE,
         BC127_UART_RX_PIN,
@@ -392,23 +396,25 @@ void BC127Process(BC127_t *bt)
         if (strcmp(msgBuf[0], "AVRCP_MEDIA") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             if (bt->activeDevice != 0 && bt->activeDevice->deviceId == deviceId) {
+                // Always copy size of buffer minus one to make sure we're always
+                // null terminated
                 if (strcmp(msgBuf[2], "TITLE:") == 0) {
                     strncpy(
                         bt->title,
                         &msg[BC127_METADATA_TITLE_OFFSET],
-                        BC127_METADATA_FIELD_SIZE
+                        BC127_METADATA_FIELD_SIZE - 1
                     );
                 } else if (strcmp(msgBuf[2], "ARTIST:") == 0) {
                     strncpy(
                         bt->artist,
                         &msg[BC127_METADATA_ARTIST_OFFSET],
-                        BC127_METADATA_FIELD_SIZE
+                        BC127_METADATA_FIELD_SIZE - 1
                     );
                 } else if (strcmp(msgBuf[2], "ALBUM:") == 0) {
                     strncpy(
                         bt->album,
                         &msg[BC127_METADATA_ALBUM_OFFSET],
-                        BC127_METADATA_FIELD_SIZE
+                        BC127_METADATA_FIELD_SIZE - 1
                     );
                     LogDebug(
                         "BT: title=%s,artist=%s,album=%s",
