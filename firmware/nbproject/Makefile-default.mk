@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=lib/bc127.c lib/uart.c lib/char_queue.c lib/ibus.c lib/sfr_setters.s lib/debug.c lib/utils.c lib/timer.c lib/event.c main.c system.c handler.c
+SOURCEFILES_QUOTED_IF_SPACED=handlers/cd53.c lib/bc127.c lib/uart.c lib/char_queue.c lib/ibus.c lib/sfr_setters.s lib/debug.c lib/utils.c lib/timer.c lib/event.c main.c system.c handler.c ui/bmbt.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/debug.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/main.o ${OBJECTDIR}/system.o ${OBJECTDIR}/handler.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/lib/bc127.o.d ${OBJECTDIR}/lib/uart.o.d ${OBJECTDIR}/lib/char_queue.o.d ${OBJECTDIR}/lib/ibus.o.d ${OBJECTDIR}/lib/sfr_setters.o.d ${OBJECTDIR}/lib/debug.o.d ${OBJECTDIR}/lib/utils.o.d ${OBJECTDIR}/lib/timer.o.d ${OBJECTDIR}/lib/event.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/system.o.d ${OBJECTDIR}/handler.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/handlers/cd53.o ${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/debug.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/main.o ${OBJECTDIR}/system.o ${OBJECTDIR}/handler.o ${OBJECTDIR}/ui/bmbt.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/handlers/cd53.o.d ${OBJECTDIR}/lib/bc127.o.d ${OBJECTDIR}/lib/uart.o.d ${OBJECTDIR}/lib/char_queue.o.d ${OBJECTDIR}/lib/ibus.o.d ${OBJECTDIR}/lib/sfr_setters.o.d ${OBJECTDIR}/lib/debug.o.d ${OBJECTDIR}/lib/utils.o.d ${OBJECTDIR}/lib/timer.o.d ${OBJECTDIR}/lib/event.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/system.o.d ${OBJECTDIR}/handler.o.d ${OBJECTDIR}/ui/bmbt.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/debug.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/main.o ${OBJECTDIR}/system.o ${OBJECTDIR}/handler.o
+OBJECTFILES=${OBJECTDIR}/handlers/cd53.o ${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/debug.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/main.o ${OBJECTDIR}/system.o ${OBJECTDIR}/handler.o ${OBJECTDIR}/ui/bmbt.o
 
 # Source Files
-SOURCEFILES=lib/bc127.c lib/uart.c lib/char_queue.c lib/ibus.c lib/sfr_setters.s lib/debug.c lib/utils.c lib/timer.c lib/event.c main.c system.c handler.c
+SOURCEFILES=handlers/cd53.c lib/bc127.c lib/uart.c lib/char_queue.c lib/ibus.c lib/sfr_setters.s lib/debug.c lib/utils.c lib/timer.c lib/event.c main.c system.c handler.c ui/bmbt.c
 
 
 CFLAGS=
@@ -94,6 +94,13 @@ MP_LINKER_FILE_OPTION=,--script=p24FJ1024GB610.gld
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: compile
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
+${OBJECTDIR}/handlers/cd53.o: handlers/cd53.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/handlers" 
+	@${RM} ${OBJECTDIR}/handlers/cd53.o.d 
+	@${RM} ${OBJECTDIR}/handlers/cd53.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  handlers/cd53.c  -o ${OBJECTDIR}/handlers/cd53.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/handlers/cd53.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/handlers/cd53.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 ${OBJECTDIR}/lib/bc127.o: lib/bc127.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
 	@${RM} ${OBJECTDIR}/lib/bc127.o.d 
@@ -171,7 +178,21 @@ ${OBJECTDIR}/handler.o: handler.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  handler.c  -o ${OBJECTDIR}/handler.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/handler.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/handler.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/ui/bmbt.o: ui/bmbt.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/ui" 
+	@${RM} ${OBJECTDIR}/ui/bmbt.o.d 
+	@${RM} ${OBJECTDIR}/ui/bmbt.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ui/bmbt.c  -o ${OBJECTDIR}/ui/bmbt.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/ui/bmbt.o.d"      -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -mno-eds-warn  -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/ui/bmbt.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 else
+${OBJECTDIR}/handlers/cd53.o: handlers/cd53.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/handlers" 
+	@${RM} ${OBJECTDIR}/handlers/cd53.o.d 
+	@${RM} ${OBJECTDIR}/handlers/cd53.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  handlers/cd53.c  -o ${OBJECTDIR}/handlers/cd53.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/handlers/cd53.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/handlers/cd53.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 ${OBJECTDIR}/lib/bc127.o: lib/bc127.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
 	@${RM} ${OBJECTDIR}/lib/bc127.o.d 
@@ -248,6 +269,13 @@ ${OBJECTDIR}/handler.o: handler.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/handler.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  handler.c  -o ${OBJECTDIR}/handler.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/handler.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/handler.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/ui/bmbt.o: ui/bmbt.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/ui" 
+	@${RM} ${OBJECTDIR}/ui/bmbt.o.d 
+	@${RM} ${OBJECTDIR}/ui/bmbt.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ui/bmbt.c  -o ${OBJECTDIR}/ui/bmbt.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/ui/bmbt.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/ui/bmbt.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 endif
 

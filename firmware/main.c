@@ -44,7 +44,7 @@ int main(void)
     TimerInit();
 
     // Send the module objects to the application implementation handler
-    HandlerInit(&bt, &ibus);
+    HandlerInit(&bt, &ibus, HANDLER_UI_MODE_CD53);
 
     // Trigger the event callbacks for the module Start Up
     BC127Startup();

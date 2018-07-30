@@ -63,12 +63,15 @@ const static unsigned char IBusAction_CD_STATUS_REQ_PLAY = 0x01;
 const static unsigned char IBusAction_CD53_SEEK = 0x0A;
 const static unsigned char IBusAction_CD53_CD_SEL = 0x06;
 
+const static unsigned char IBusAction_IGN_STATUS_REQ = 0x11;
+
 const static uint8_t IBusEvent_Startup = 33;
 const static uint8_t IBusEvent_CDKeepAlive = 34;
 const static uint8_t IBusEvent_CDStatusRequest = 35;
 const static uint8_t IBusEvent_CDClearDisplay = 36;
+const static uint8_t IBusEvent_IgnitionStatus = 37;
 
-const static unsigned char IBusMIDSymbolNext = 0xC9;
+const static char IBusMIDSymbolNext = 0xC9;
 
 /**
  * IBus_t

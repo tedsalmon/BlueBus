@@ -19,6 +19,7 @@
 
 #define BC127_AVRCP_STATUS_PAUSED 0
 #define BC127_AVRCP_STATUS_PLAYING 1
+#define BC127_CLOSE_ALL 255
 #define BC127_CONFIG_STATE_NEVER "0"
 #define BC127_CONFIG_STATE_ALWAYS "1"
 #define BC127_CONFIG_STATE_STARTUP "2"
@@ -37,7 +38,6 @@
 #define BC127_SHORT_NAME_MAX_LEN 7
 #define BC127_STATE_OFF 0
 #define BC127_STATE_ON 1
-
 
 const static uint8_t BC127Event_Startup = 0;
 const static uint8_t BC127Event_MetadataChange = 1;
@@ -79,8 +79,11 @@ typedef struct BC127_t {
 } BC127_t;
 
 BC127_t BC127Init();
+void BC127ClearConnections(BC127_t *);
+void BC127ClearMetadata(BC127_t *);
 void BC127CommandBackward(BC127_t *);
 void BC127CommandBtState(BC127_t *, uint8_t, uint8_t);
+void BC127CommandClose(BC127_t *, uint8_t);
 void BC127CommandForward(BC127_t *);
 void BC127CommandGetDeviceName(BC127_t *, char *);
 void BC127CommandGetMetadata(BC127_t *);

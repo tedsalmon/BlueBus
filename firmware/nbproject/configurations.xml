@@ -15,6 +15,10 @@
         <itemPath>lib/timer.h</itemPath>
         <itemPath>lib/event.h</itemPath>
       </logicalFolder>
+      <logicalFolder name="f2" displayName="ui" projectFiles="true">
+        <itemPath>handlers/cd53.h</itemPath>
+        <itemPath>ui/bmbt.h</itemPath>
+      </logicalFolder>
       <itemPath>io_mappings.h</itemPath>
       <itemPath>handler.h</itemPath>
     </logicalFolder>
@@ -35,6 +39,10 @@
         <itemPath>lib/utils.c</itemPath>
         <itemPath>lib/timer.c</itemPath>
         <itemPath>lib/event.c</itemPath>
+      </logicalFolder>
+      <logicalFolder name="f2" displayName="ui" projectFiles="true">
+        <itemPath>handlers/cd53.c</itemPath>
+        <itemPath>ui/bmbt.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>system.c</itemPath>
@@ -211,6 +219,7 @@
         <property key="ToolFirmwareFilePath"
                   value="Press to browse for a specific firmware version"/>
         <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="memories.configurationmemory" value="true"/>
         <property key="memories.dataflash" value="true"/>
         <property key="memories.eeprom" value="true"/>

@@ -21,9 +21,7 @@ BC127_t BC127Init()
     bt.avrcpStatus = BC127_AVRCP_STATUS_PAUSED;
     bt.activeDevice = 0;
     // Make sure that we initialize the char arrays to all zeros
-    memset(bt.title, 0, BC127_METADATA_FIELD_SIZE);
-    memset(bt.artist, 0, BC127_METADATA_FIELD_SIZE);
-    memset(bt.album, 0, BC127_METADATA_FIELD_SIZE);
+    BC127ClearMetadata(&bt);
     bt.uart = UARTInit(
         BC127_UART_MODULE,
         BC127_UART_RX_PIN,
@@ -34,6 +32,42 @@ BC127_t BC127Init()
         UART_PARITY_NONE
     );
     return bt;
+}
+
+/**
+ * BC127ClearConnections()
+ *     Description:
+ *        Clear all active connections
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127ClearConnections(BC127_t *bt)
+{
+    uint8_t idx;
+    for (idx = 0; idx <= BC127_MAX_DEVICE_CONN; idx++) {
+        BC127Connection_t *btConn = &bt->connections[idx];
+        if (btConn != 0) {
+            memset(bt->connections[idx], 0, sizeof(bt->connections[idx]));
+        }
+    }
+}
+
+/**
+ * BC127ClearMetadata()
+ *     Description:
+ *        (Re)Initialize the metadata fields to blank
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127ClearMetadata(BC127_t *bt)
+{
+    memset(bt->title, 0, BC127_METADATA_FIELD_SIZE);
+    memset(bt->artist, 0, BC127_METADATA_FIELD_SIZE);
+    memset(bt->album, 0, BC127_METADATA_FIELD_SIZE);
 }
 
 /**
@@ -82,6 +116,28 @@ void BC127CommandBtState(BC127_t *bt, uint8_t connectable, uint8_t discoverable)
     char command[17];
     snprintf(command, 17, "BT_STATE %s %s", connectMode, discoverMode);
     BC127SendCommand(bt, command);
+}
+
+/**
+ * BC127CommandClose()
+ *     Description:
+ *         Close a link ID, device ID or all (255)
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         uint8_t id - The object to close
+ *     Returns:
+ *         void
+ */
+void BC127CommandClose(BC127_t *bt, uint8_t id)
+{
+    if (id == BC127_CLOSE_ALL) {
+        char command[10] = "CLOSE ALL";
+        BC127SendCommand(bt, command);
+    } else {
+        char command[9];
+        snprintf(command, 17, "CLOSE %d", id);
+        BC127SendCommand(bt, command);
+    }
 }
 
 /**
@@ -399,6 +455,8 @@ void BC127Process(BC127_t *bt)
                 // Always copy size of buffer minus one to make sure we're always
                 // null terminated
                 if (strcmp(msgBuf[2], "TITLE:") == 0) {
+                    // Clear Metadata since we're receiving new data
+                    BC127ClearMetadata(bt);
                     strncpy(
                         bt->title,
                         &msg[BC127_METADATA_TITLE_OFFSET],
@@ -430,6 +488,9 @@ void BC127Process(BC127_t *bt)
             if (bt->activeDevice->deviceId != deviceId) {
                 bt->activeDevice = &bt->connections[deviceId - 1];
             }
+            // Clear the Metadata, since this notification comes prior
+            // to the new metadata
+            BC127ClearMetadata(bt);
             bt->avrcpStatus = BC127_AVRCP_STATUS_PLAYING;
             LogDebug("BT: Playing");
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
@@ -452,16 +513,20 @@ void BC127Process(BC127_t *bt)
             if (bt->activeDevice == 0) {
                 bt->activeDevice = conn;
             }
-            // If this is the selected AVRCP device, set the playback status
-            if (strcmp(msgBuf[3], "AVRCP") == 0 &&
-                bt->activeDevice->deviceId == deviceId
-            ) {
-                if (strcmp(msgBuf[5], "PLAYING") == 0) {
-                    bt->avrcpStatus = BC127_AVRCP_STATUS_PLAYING;
-                } else {
-                    bt->avrcpStatus = BC127_AVRCP_STATUS_PAUSED;
+            if (strcmp(msgBuf[3], "AVRCP") == 0) {
+                uint8_t isPlaying = strcmp(msgBuf[5], "PLAYING");
+                // If this AVRCP device is playing, set it as selected
+                if (isPlaying == 0 && deviceId != bt->activeDevice->deviceId) {
+                    bt->activeDevice = conn;
                 }
-                EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
+                if (deviceId == bt->activeDevice->deviceId) {
+                    if (isPlaying == 0) {
+                        bt->avrcpStatus = BC127_AVRCP_STATUS_PLAYING;
+                    } else {
+                        bt->avrcpStatus = BC127_AVRCP_STATUS_PAUSED;
+                    }
+                    EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
+                }
             }
             LogDebug("BT: Status - %s connected on link %s", msgBuf[3], msgBuf[1]);
         } else if(strcmp(msgBuf[0], "CLOSE_OK") == 0) {
@@ -484,6 +549,8 @@ void BC127Process(BC127_t *bt)
                 bt->activeDevice = conn;
             }
             LogDebug("BT: %s connected on ID %s", msgBuf[2], msgBuf[1]);
+            unsigned char deviceId = (unsigned char) conn->deviceId;
+            EventTriggerCallback(BC127Event_DeviceConnected, &deviceId);
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
             // It's okay to pass 0 for the device ID, since it should exist already
             BC127Connection_t *conn = BC127ConnectionGet(bt, msgBuf[1], 0);
@@ -500,7 +567,8 @@ void BC127Process(BC127_t *bt)
             }
             strncpy(conn->deviceName, deviceName, 33);
             LogDebug("BT: Got Device Name %s for Device %d", conn->deviceName, conn->deviceId);
-            //EventTriggerCallback(BC127Event_DeviceConnected, conn->deviceId);
+            unsigned char deviceId = (unsigned char) conn->deviceId;
+            EventTriggerCallback(BC127Event_DeviceConnected, &deviceId);
         } else if(strcmp(msgBuf[0], "Ready") == 0) {
             bt->activeDevice = 0;
             bt->avrcpStatus = BC127_AVRCP_STATUS_PAUSED;

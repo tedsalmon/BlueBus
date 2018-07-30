@@ -13,27 +13,24 @@
 #include "lib/event.h"
 #include "lib/ibus.h"
 #include "lib/timer.h"
-#define HANDLER_DISPLAY_TEXT_SIZE 256
-typedef struct ApplicationContext_t {
+#include "ui/cd53.h"
+#include "ui/bmbt.h"
+#define HANDLER_UI_MODE_CD53 0
+#define HANDLER_UI_MODE_BMBT 1
+typedef struct HandlerContext_t {
     BC127_t *bt;
-    struct IBus_t *ibus;
-    uint8_t btStartup;
-    uint8_t announceSelf;
+    IBus_t *ibus;
+    uint8_t btStartupIsRun;
+    uint8_t ignitionStatus;
     uint32_t cdChangerLastKeepAlive;
-    char displayText[HANDLER_DISPLAY_TEXT_SIZE];
-    uint8_t displayTextIdx;
-    uint8_t displayTextTicks;
-    uint8_t displayUpdateTaskId;
-} ApplicationContext_t;
-void HandlerInit(BC127_t *, IBus_t *);
-void HandlerBC127DeviceReady(void *, unsigned char *);
-void HandlerBC127Metadata(void *, unsigned char *);
+} HandlerContext_t;
+void HandlerInit(BC127_t *, IBus_t *, uint8_t);
+void HandlerBC127DeviceConnected(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
 void HandlerBC127Startup(void *, unsigned char *);
-void HandlerIBusCDClearScreen(void *, unsigned char *);
+void HandlerIBusStartup(void *, unsigned char *);
 void HandlerIBusCDChangerKeepAlive(void *, unsigned char *);
 void HandlerIBusCDChangerStatus(void *, unsigned char *);
-void HandlerIBusStartup(void *, unsigned char *);
-void HandlerTimerCD53Display(void *);
+void HandlerIBusIgnitionStatus(void *, unsigned char *);
 void HandlerTimerCDChangerAnnounce(void *);
 #endif /* HANDLER_H */

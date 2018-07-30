@@ -285,7 +285,9 @@ void IBusCommandSendCdChangerStatus(
 
 void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 {
-
+    if (pkt[3] == IBusAction_IGN_STATUS_REQ) {
+        EventTriggerCallback(IBusEvent_IgnitionStatus, pkt);
+    }
 }
 
 void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
