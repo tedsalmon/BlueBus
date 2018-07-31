@@ -16,7 +16,7 @@
         <itemPath>lib/event.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
-        <itemPath>handlers/cd53.h</itemPath>
+        <itemPath>ui/cd53.h</itemPath>
         <itemPath>ui/bmbt.h</itemPath>
       </logicalFolder>
       <itemPath>io_mappings.h</itemPath>
@@ -41,7 +41,7 @@
         <itemPath>lib/event.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
-        <itemPath>handlers/cd53.c</itemPath>
+        <itemPath>ui/cd53.c</itemPath>
         <itemPath>ui/bmbt.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>

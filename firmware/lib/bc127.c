@@ -49,7 +49,7 @@ void BC127ClearConnections(BC127_t *bt)
     for (idx = 0; idx <= BC127_MAX_DEVICE_CONN; idx++) {
         BC127Connection_t *btConn = &bt->connections[idx];
         if (btConn != 0) {
-            memset(bt->connections[idx], 0, sizeof(bt->connections[idx]));
+            memset(btConn, 0, sizeof(bt->connections[idx]));
         }
     }
 }
@@ -135,7 +135,7 @@ void BC127CommandClose(BC127_t *bt, uint8_t id)
         BC127SendCommand(bt, command);
     } else {
         char command[9];
-        snprintf(command, 17, "CLOSE %d", id);
+        snprintf(command, 9, "CLOSE %d", id);
         BC127SendCommand(bt, command);
     }
 }
@@ -533,7 +533,9 @@ void BC127Process(BC127_t *bt)
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             // If the open connection is closing, update the state
             if (bt->activeDevice->deviceId == deviceId) {
+                bt->avrcpStatus = BC127_AVRCP_STATUS_PAUSED;
                 bt->activeDevice = 0;
+                EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
             BC127Connection_t *conn = BC127ConnectionGet(bt, msgBuf[3], deviceId);
             BC127ConnectionCloseProfile(conn, msgBuf[2]);
@@ -549,8 +551,10 @@ void BC127Process(BC127_t *bt)
                 bt->activeDevice = conn;
             }
             LogDebug("BT: %s connected on ID %s", msgBuf[2], msgBuf[1]);
-            unsigned char deviceId = (unsigned char) conn->deviceId;
-            EventTriggerCallback(BC127Event_DeviceConnected, &deviceId);
+            EventTriggerCallback(
+                BC127Event_DeviceLinkConnected,
+                (unsigned char *) msgBuf[1]
+            );
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
             // It's okay to pass 0 for the device ID, since it should exist already
             BC127Connection_t *conn = BC127ConnectionGet(bt, msgBuf[1], 0);
@@ -671,6 +675,9 @@ BC127Connection_t *BC127ConnectionGet(BC127_t *bt, char *macId, uint8_t deviceId
         BC127Connection_t *btConn = &bt->connections[idx];
         if (strcmp(macId, btConn->macId) == 0) {
             conn = btConn;
+            if (deviceId > 0 && conn->deviceId != deviceId) {
+                conn->deviceId = deviceId;
+            }
         }
     }
     // Create a connection for this device if it's available

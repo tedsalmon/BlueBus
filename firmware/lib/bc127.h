@@ -43,7 +43,8 @@ const static uint8_t BC127Event_Startup = 0;
 const static uint8_t BC127Event_MetadataChange = 1;
 const static uint8_t BC127Event_PlaybackStatusChange = 2;
 const static uint8_t BC127Event_DeviceConnected = 3;
-const static uint8_t BC127Event_DeviceReady = 4;
+const static uint8_t BC127Event_DeviceLinkConnected = 4;
+const static uint8_t BC127Event_DeviceReady = 5;
 
 /**
  * BC127Connection_t

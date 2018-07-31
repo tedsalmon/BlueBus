@@ -13,6 +13,7 @@
 #include "lib/event.h"
 #include "lib/ibus.h"
 #include "lib/timer.h"
+#include "lib/utils.h"
 #include "ui/cd53.h"
 #include "ui/bmbt.h"
 #define HANDLER_UI_MODE_CD53 0
@@ -26,6 +27,7 @@ typedef struct HandlerContext_t {
 } HandlerContext_t;
 void HandlerInit(BC127_t *, IBus_t *, uint8_t);
 void HandlerBC127DeviceConnected(void *, unsigned char *);
+void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
 void HandlerBC127Startup(void *, unsigned char *);
 void HandlerIBusStartup(void *, unsigned char *);

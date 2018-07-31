@@ -21,6 +21,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &Context
     );
     EventRegisterCallback(
+        BC127Event_DeviceLinkConnected,
+        &HandlerBC127DeviceLinkConnected,
+        &Context
+    );
+    EventRegisterCallback(
         BC127Event_PlaybackStatusChange,
         &HandlerBC127PlaybackStatus,
         &Context
@@ -69,9 +74,22 @@ void HandlerBC127DeviceConnected(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t deviceId = (uint8_t) *data;
-    if (deviceId != context->bt->activeDevice->deviceId) {
-        BC127CommandClose(context->bt, deviceId);
-        BC127ClearConnections(context->bt);
+    if (context->bt->activeDevice != 0) {
+        if (deviceId != context->bt->activeDevice->deviceId) {
+            BC127CommandClose(context->bt, deviceId);
+        }
+    }
+}
+
+void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bt->activeDevice != 0) {
+        uint8_t linkId = strToInt((char *) data);
+        uint8_t deviceId = BC127GetDeviceId((char *) data);
+        if (deviceId != context->bt->activeDevice->deviceId) {
+            BC127CommandClose(context->bt, linkId);
+        }
     }
 }
 
