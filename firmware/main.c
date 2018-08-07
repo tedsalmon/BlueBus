@@ -1,5 +1,5 @@
 /*
- * File: ibus.c
+ * File: main.c
  * Author: Ted Salmon <tass2001@gmail.com>
  * Description:
  *     The main loop for our PIC24FJ
@@ -44,7 +44,7 @@ int main(void)
     TimerInit();
 
     // Send the module objects to the application implementation handler
-    HandlerInit(&bt, &ibus, HANDLER_UI_MODE_CD53);
+    HandlerInit(&bt, &ibus, HANDLER_UI_MODE_BMBT);
 
     // Trigger the event callbacks for the module Start Up
     BC127Startup();

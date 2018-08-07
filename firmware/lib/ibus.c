@@ -37,6 +37,63 @@ IBus_t IBusInit()
     return ibus;
 }
 
+static void IBusHandleBMBTMessage(unsigned char *pkt)
+{
+    if (pkt[3] == IBusAction_BMBT_BUTTON) {
+        EventTriggerCallback(IBusEvent_BMBTButton, pkt);
+    }
+}
+
+static void IBusHandleGTMessage(unsigned char *pkt)
+{
+    if (pkt[2] == IBusDevice_DIA &&
+        pkt[3] == IBusAction_DIAG_DATA) {
+        EventTriggerCallback(IBusEvent_NavDiagResponse, pkt);
+    } else if (pkt[3] == IBusAction_GT_MMENU_SELECT) {
+        EventTriggerCallback(IBusEvent_GTMenuSelect, pkt);
+    }
+}
+
+static void IBusHandleIKEMessage(unsigned char *pkt)
+{
+    if (pkt[3] == IBusAction_IGN_STATUS_REQ) {
+        EventTriggerCallback(IBusEvent_IgnitionStatus, pkt);
+    }
+}
+
+static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
+{
+    if (pkt[2] == IBusDevice_CDC) {
+        if (pkt[3] == IBusAction_CD_KEEPALIVE) {
+            EventTriggerCallback(IBusEvent_CDKeepAlive, pkt);
+        } else if(pkt[3] == IBusAction_CD_STATUS_REQ) {
+            if (pkt[4] == 0x01 || pkt[4] == 0x03) {
+                ibus->cdChangerStatus = pkt[4];
+            }
+            EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
+        }
+    } else if (pkt[2] == IBusDevice_LOC) {
+        if (pkt[3] == 0x3B) {
+            EventTriggerCallback(IBusEvent_CDClearDisplay, pkt);
+        }
+    }
+}
+
+static uint8_t IBusValidateChecksum(unsigned char *msg)
+{
+    uint8_t chk = 0;
+    uint8_t msgSize = msg[1] + 2;
+    uint8_t idx;
+    for (idx = 0; idx < msgSize; idx++) {
+        chk =  chk ^ msg[idx];
+    }
+    if (chk == 0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 /**
  * IBusProcess()
  *     Description:
@@ -79,11 +136,17 @@ void IBusProcess(IBus_t *ibus)
                         (uint8_t) pkt[1]
                     );
                     unsigned char srcSystem = pkt[0];
-                    if (srcSystem == IBusDevice_RAD) {
-                        IBusHandleRadioMessage(ibus, pkt);
+                    if (srcSystem == IBusDevice_BMBT) {
+                        IBusHandleBMBTMessage(pkt);
                     }
                     if (srcSystem == IBusDevice_IKE) {
-                        IBusHandleIKEMessage(ibus, pkt);
+                        IBusHandleIKEMessage(pkt);
+                    }
+                    if (srcSystem == IBusDevice_GT) {
+                        IBusHandleGTMessage(pkt);
+                    }
+                    if (srcSystem == IBusDevice_RAD) {
+                        IBusHandleRadioMessage(ibus, pkt);
                     }
                 } else {
                     LogError(
@@ -219,7 +282,6 @@ void IBusStartup()
 
 void IBusCommandDisplayMIDText(IBus_t *ibus, char *message)
 {
-    LogDebug("IBus: Display Text");
     unsigned char displayText[strlen(message) + 3];
     displayText[0] = 0x23;
     displayText[1] = 0x42;
@@ -239,15 +301,93 @@ void IBusCommandDisplayMIDText(IBus_t *ibus, char *message)
 
 void IBusCommandDisplayMIDTextClear(IBus_t *ibus)
 {
-    LogDebug("IBus: Clear Display Text");
     IBusCommandDisplayMIDText(ibus, 0);
 }
 
-void IBusCommandDisplayMIDTextSymbol(IBus_t *ibus, char symbol)
+void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
 {
-    LogDebug("IBus: Display Text Symbol 0x%02X", symbol);
-    unsigned char displayText[4] = {0x23, 0x42, 0x32, symbol};
-    IBusSendCommand(ibus, IBusDevice_TEL, IBusDevice_IKE, displayText, 4);
+    unsigned char msg[4] = {
+        IBusAction_GT_WRITE_NEWER,
+        updateType,
+        0x01,
+        0x00
+    };
+    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, msg, 4);
+}
+
+void IBusCommandGTWriteIndex(IBus_t *ibus, uint8_t index, char *message)
+{
+    uint8_t length = strlen(message);
+    if (length > 21) {
+        length = 21;
+    }
+    const size_t pktLenght = length + 4;
+    unsigned char text[pktLenght];
+    text[0] = IBusAction_GT_WRITE;
+    text[1] = IBusAction_GT_WRITE_MENU;
+    text[2] = 0x00;
+    text[3] = 0x40 + (unsigned char) index;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 4] = message[idx];
+    }
+    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
+}
+
+void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
+{
+    uint8_t length = strlen(message);
+    if (length > 38) {
+        length = 38;
+    }
+    const size_t pktLenght = length + 4;
+    unsigned char text[pktLenght];
+    text[0] = IBusAction_GT_WRITE_NEWER;
+    text[1] = IBusAction_GT_WRITE_STATIC;
+    text[2] = 0x00;
+    text[3] = 0x40 + (unsigned char) index;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 4] = message[idx];
+    }
+    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
+}
+
+void IBusCommandGTWriteTitle(IBus_t *ibus, char *message)
+{
+    uint8_t length = strlen(message);
+    if (length > 11) {
+        length = 11;
+    }
+    const size_t pktLenght = length + 3;
+    unsigned char text[pktLenght];
+    text[0] = IBusAction_GT_WRITE_TITLE;
+    text[1] = IBusAction_GT_WRITE_ZONE;
+    text[2] = 0x30;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 3] = message[idx];
+    }
+    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
+}
+
+void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
+{
+    uint8_t length = strlen(message);
+    if (length > 11) {
+        length = 11;
+    }
+    const size_t pktLenght = length + 4;
+    unsigned char text[pktLenght];
+    text[0] = IBusAction_GT_WRITE;
+    text[1] = IBusAction_GT_WRITE_ZONE;
+    text[2] = 0x01;
+    text[3] = (unsigned char) index;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 4] = message[idx];
+    }
+    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
 }
 
 void IBusCommandSendCdChangerAnnounce(IBus_t *ibus)
@@ -277,48 +417,14 @@ void IBusCommandSendCdChangerStatus(
         0x00,
         0x3F,
         0x00,
-        0x01, // CD
-        0x01 // Track
+        0x01,
+        0x01
     };
-    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_RAD, cdcStatus, sizeof(cdcStatus));
-}
-
-void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
-{
-    if (pkt[3] == IBusAction_IGN_STATUS_REQ) {
-        EventTriggerCallback(IBusEvent_IgnitionStatus, pkt);
-    }
-}
-
-void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
-{
-    if (pkt[2] == IBusDevice_CDC) {
-        if (pkt[3] == IBusAction_CD_KEEPALIVE) {
-            EventTriggerCallback(IBusEvent_CDKeepAlive, pkt);
-        } else if(pkt[3] == IBusAction_CD_STATUS_REQ) {
-            if (pkt[4] == 0x01 || pkt[4] == 0x03) {
-                ibus->cdChangerStatus = pkt[4];
-            }
-            EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
-        }
-    } else if (pkt[2] == IBusDevice_LOC) {
-        if (pkt[3] == 0x3B) {
-            EventTriggerCallback(IBusEvent_CDClearDisplay, pkt);
-        }
-    }
-}
-
-uint8_t IBusValidateChecksum(unsigned char *msg)
-{
-    uint8_t chk = 0;
-    uint8_t msgSize = msg[1] + 2;
-    uint8_t idx;
-    for (idx = 0; idx < msgSize; idx++) {
-        chk =  chk ^ msg[idx];
-    }
-    if (chk == 0) {
-        return 1;
-    } else {
-        return 0;
-    }
+    IBusSendCommand(
+        ibus,
+        IBusDevice_CDC,
+        IBusDevice_RAD,
+        cdcStatus,
+        sizeof(cdcStatus)
+    );
 }

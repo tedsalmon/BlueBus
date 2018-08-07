@@ -7,9 +7,9 @@
 #ifndef IBUS_H
 #define IBUS_H
 #define IBUS_RX_BUFFER_SIZE 256
-#define IBUS_TX_BUFFER_SIZE 16
-#define IBUS_MAX_MSG_LENGTH 37 // Src Len Dest Cmd Data[32 Byte Max] XOR
-#define IBUS_RX_BUFFER_TIMEOUT 50 // At 9600 baud, we transmit ~1 byte/ms
+#define IBUS_TX_BUFFER_SIZE 24
+#define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
+#define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 100
 #include <stdint.h>
 #include <string.h>
@@ -50,6 +50,13 @@ const static unsigned char IBusDevice_ANZV = 0xE7; /* Front display */
 const static unsigned char IBusDevice_BMBT = 0xF0; /* On-board monitor operating part */
 const static unsigned char IBusDevice_LOC = 0xFF; /* Local */
 
+const static unsigned char IBusDevice_BMBT_Button_Next_Out = 0x80;
+const static unsigned char IBusDevice_BMBT_Button_Prev_Out = 0x90;
+const static unsigned char IBusDevice_BMBT_Button_PlayPause_Out = 0x94;
+const static unsigned char IBusDevice_BMBT_Button_Knob_Out = 0x85;
+
+const static unsigned char IBusAction_BMBT_BUTTON = 0x48;
+
 const static unsigned char IBusAction_CD_ACTION_NONE = 0x00;
 const static unsigned char IBusAction_CD_ACTION_START_PLAYBACK = 0x02;
 const static unsigned char IBusAction_CD_KEEPALIVE = 0x01;
@@ -63,6 +70,17 @@ const static unsigned char IBusAction_CD_STATUS_REQ_PLAY = 0x01;
 const static unsigned char IBusAction_CD53_SEEK = 0x0A;
 const static unsigned char IBusAction_CD53_CD_SEL = 0x06;
 
+const static unsigned char IBusAction_DIAG_DATA = 0xA0;
+
+const static unsigned char IBusAction_GT_MMENU_SELECT = 0x31;
+const static unsigned char IBusAction_GT_WRITE = 0x21;
+const static unsigned char IBusAction_GT_WRITE_TITLE = 0x23;
+// Newer GTs use a different action to write to fields
+const static unsigned char IBusAction_GT_WRITE_NEWER = 0xA5;
+const static unsigned char IBusAction_GT_WRITE_MENU = 0x60;
+const static unsigned char IBusAction_GT_WRITE_ZONE = 0x62;
+const static unsigned char IBusAction_GT_WRITE_STATIC = 0x63;
+
 const static unsigned char IBusAction_IGN_STATUS_REQ = 0x11;
 
 const static uint8_t IBusEvent_Startup = 33;
@@ -70,6 +88,9 @@ const static uint8_t IBusEvent_CDKeepAlive = 34;
 const static uint8_t IBusEvent_CDStatusRequest = 35;
 const static uint8_t IBusEvent_CDClearDisplay = 36;
 const static uint8_t IBusEvent_IgnitionStatus = 37;
+const static uint8_t IBusEvent_NavDiagResponse = 38;
+const static uint8_t IBusEvent_BMBTButton = 39;
+const static uint8_t IBusEvent_GTMenuSelect = 40;
 
 const static char IBusMIDSymbolNext = 0xC9;
 const static char IBusMIDSymbolBack = 0xCA;
@@ -99,10 +120,12 @@ void IBusStartup();
 void IBusCommandDisplayMIDText(IBus_t *, char *);
 void IBusCommandDisplayMIDTextClear(IBus_t *);
 void IBusCommandDisplayMIDTextSymbol(IBus_t *, char);
+void IBusCommandGTUpdate(IBus_t *, unsigned char);
+void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *);
+void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t, char *);
+void IBusCommandGTWriteTitle(IBus_t *ibus, char *);
+void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t, char *);
 void IBusCommandSendCdChangerAnnounce(IBus_t *);
 void IBusCommandSendCdChangerKeepAlive(IBus_t *);
 void IBusCommandSendCdChangerStatus(IBus_t *, unsigned char *,  unsigned char *);
-void IBusHandleIKEMessage(IBus_t *, unsigned char *);
-void IBusHandleRadioMessage(IBus_t *, unsigned char *);
-uint8_t IBusValidateChecksum(unsigned char *);
 #endif /* IBUS_H */

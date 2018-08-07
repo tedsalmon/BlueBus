@@ -55,6 +55,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &HandlerIBusIgnitionStatus,
         &Context
     );
+    //EventRegisterCallback(
+    //    IBusEvent_NavDiagResponse,
+    //    0, // Implement
+    //    &Context
+    //);
     TimerRegisterScheduledTask(
         &HandlerTimerCDChangerAnnounce,
         &Context,
@@ -167,8 +172,8 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
     } else {
         if (context->ignitionStatus == 0) {
             HandlerIBusStartup(ctx, 0);
-            // Set the BT module connectable and discoverable
-            BC127CommandBtState(context->bt, BC127_STATE_ON, BC127_STATE_ON);
+            // Set the BT module connectable but not discoverable
+            BC127CommandBtState(context->bt, BC127_STATE_ON, BC127_STATE_OFF);
         }
         context->ignitionStatus = 1;
     }
