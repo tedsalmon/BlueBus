@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+void removeNonAscii(char *, const char *);
 void removeSubstring(char *, const char *);
 uint8_t strToInt(char *);
 #endif /* UTILS_H */

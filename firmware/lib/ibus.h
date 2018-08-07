@@ -72,6 +72,7 @@ const static uint8_t IBusEvent_CDClearDisplay = 36;
 const static uint8_t IBusEvent_IgnitionStatus = 37;
 
 const static char IBusMIDSymbolNext = 0xC9;
+const static char IBusMIDSymbolBack = 0xCA;
 
 /**
  * IBus_t

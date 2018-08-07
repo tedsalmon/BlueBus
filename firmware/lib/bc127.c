@@ -389,6 +389,27 @@ void BC127CommandWrite(BC127_t *bt)
 }
 
 /**
+ * BC127GetConnectedDeviceCount()
+ *     Description:
+ *         Get the number of connected devices
+ *     Params:
+*         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         uint8_t - Connected device count
+ */
+uint8_t BC127GetConnectedDeviceCount(BC127_t *bt)
+{
+    uint8_t count = 0;
+    uint8_t idx;
+    for (idx = 0; idx < BC127_MAX_DEVICE_CONN; idx++) {
+        if (bt->connections[idx].deviceId != 0) {
+            count++;
+        }
+    }
+    return count;
+}
+
+/**
  * BC127GetDeviceId()
  *     Description:
  *         Parse the device ID from the given link ID
@@ -559,14 +580,15 @@ void BC127Process(BC127_t *bt)
             // It's okay to pass 0 for the device ID, since it should exist already
             BC127Connection_t *conn = BC127ConnectionGet(bt, msgBuf[1], 0);
             char deviceName[33];
-            // Clear out the stack
-            memset(deviceName, 0, 33);
             uint8_t idx;
+            uint8_t strIdx = 0;
             uint8_t nameLen = strlen(msg) - 19;
             for (idx = 0; idx < nameLen; idx++) {
                 char c = msg[idx + 19];
+                // 0x22 (:) is the character that delimits the device name
                 if (c != 0x22) {
-                    deviceName[idx] = msg[idx + 19];
+                    deviceName[strIdx] = c;
+                    strIdx++;
                 }
             }
             strncpy(conn->deviceName, deviceName, 33);
