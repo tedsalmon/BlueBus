@@ -25,7 +25,6 @@ typedef struct BMBTContext_t {
     uint8_t mode;
 } BMBTContext_t;
 void BMBTInit(BC127_t *, IBus_t *);
-void BMBTSetStaticScreen(BMBTContext_t *, char *, char *, char *);
 void BMBTBC127Metadata(void *, unsigned char *);
 void BMBTBC127PlaybackStatus(void *, unsigned char *);
 void BMBTIBusBMBTButtonPress(void *, unsigned char *);

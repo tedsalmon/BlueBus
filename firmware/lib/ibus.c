@@ -34,6 +34,8 @@ IBus_t IBusInit()
     ibus.txBufferReadIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
+    ibus.gtHardwareVersion = IBUS_GT_MKI;
+    ibus.gtCanDisplayStatic = 0;
     return ibus;
 }
 
@@ -44,12 +46,42 @@ static void IBusHandleBMBTMessage(unsigned char *pkt)
     }
 }
 
-static void IBusHandleGTMessage(unsigned char *pkt)
+static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[2] == IBusDevice_DIA &&
-        pkt[3] == IBusAction_DIAG_DATA) {
-        EventTriggerCallback(IBusEvent_NavDiagResponse, pkt);
-    } else if (pkt[3] == IBusAction_GT_MMENU_SELECT) {
+        pkt[3] == IBusAction_DIAG_DATA
+    ) {
+        // Decode the software and hardware versions
+        char hwVersion[3] = {
+            pkt[IBUS_GT_HW_ID_OFFSET],
+            pkt[IBUS_GT_HW_ID_OFFSET + 1],
+            '\0'
+        };
+        uint8_t hardwareVersion = strToInt(hwVersion);
+        switch (hardwareVersion) {
+            case 10:
+                ibus->gtHardwareVersion = IBUS_GT_MKIV;
+                break;
+            case 11:
+                ibus->gtHardwareVersion = IBUS_GT_MKIII;
+            case 21:
+                ibus->gtHardwareVersion = IBUS_GT_MKII;
+            // No idea what an MKI reports -- Anything else must be it?
+            default:
+                ibus->gtHardwareVersion = IBUS_GT_MKI;
+        }
+        char swVersion[3] = {
+            (char) pkt[IBUS_GT_SW_ID_OFFSET],
+            (char) pkt[IBUS_GT_SW_ID_OFFSET + 1],
+            '\0'
+        };
+        uint8_t softwareVersion = strToInt(swVersion);
+        if (softwareVersion == 0 || softwareVersion >= 40) {
+            ibus->gtCanDisplayStatic = 1;
+        }
+        LogDebug("IBus: Got GT HW %d SW %d", hardwareVersion, softwareVersion);
+        EventTriggerCallback(IBusEvent_GTDiagResponse, pkt);
+    } else if (pkt[3] == IBusAction_GT_MENU_SELECT) {
         EventTriggerCallback(IBusEvent_GTMenuSelect, pkt);
     }
 }
@@ -143,7 +175,7 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleIKEMessage(pkt);
                     }
                     if (srcSystem == IBusDevice_GT) {
-                        IBusHandleGTMessage(pkt);
+                        IBusHandleGTMessage(ibus, pkt);
                     }
                     if (srcSystem == IBusDevice_RAD) {
                         IBusHandleRadioMessage(ibus, pkt);
@@ -304,10 +336,16 @@ void IBusCommandDisplayMIDTextClear(IBus_t *ibus)
     IBusCommandDisplayMIDText(ibus, 0);
 }
 
+void IBusCommandGTGetDiagnostics(IBus_t *ibus)
+{
+    unsigned char msg[1] = {0x00};
+    IBusSendCommand(ibus, IBusDevice_DIA, IBusDevice_GT, msg, 1);
+}
+
 void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
 {
     unsigned char msg[4] = {
-        IBusAction_GT_WRITE_NEWER,
+        IBusAction_GT_WRITE_MK2,
         updateType,
         0x01,
         0x00
@@ -315,16 +353,41 @@ void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
     IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, msg, 4);
 }
 
-void IBusCommandGTWriteIndex(IBus_t *ibus, uint8_t index, char *message)
-{
+void IBusCommandGTWriteIndexMk2(IBus_t *ibus, uint8_t index, char *message) {
+    IBusCommandGTWriteIndex(
+        ibus,
+        index,
+        message,
+        IBusAction_GT_WRITE_MK2,
+        IBusAction_GT_WRITE_ZONE
+    );
+}
+
+void IBusCommandGTWriteIndexMk4(IBus_t *ibus, uint8_t index, char *message) {
+    IBusCommandGTWriteIndex(
+        ibus,
+        index,
+        message,
+        IBusAction_GT_WRITE_MK4,
+        IBusAction_GT_WRITE_MENU
+    );
+}
+
+void IBusCommandGTWriteIndex(
+    IBus_t *ibus,
+    uint8_t index,
+    char *message,
+    unsigned char command,
+    unsigned char mode
+) {
     uint8_t length = strlen(message);
-    if (length > 21) {
-        length = 21;
+    if (length > 20) {
+        length = 20;
     }
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
-    text[0] = IBusAction_GT_WRITE;
-    text[1] = IBusAction_GT_WRITE_MENU;
+    text[0] = command;
+    text[1] = mode;
     text[2] = 0x00;
     text[3] = 0x40 + (unsigned char) index;
     uint8_t idx;
@@ -342,7 +405,7 @@ void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
     }
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
-    text[0] = IBusAction_GT_WRITE_NEWER;
+    text[0] = IBusAction_GT_WRITE_MK4;
     text[1] = IBusAction_GT_WRITE_STATIC;
     text[2] = 0x00;
     text[3] = 0x40 + (unsigned char) index;
@@ -379,7 +442,7 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
     }
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
-    text[0] = IBusAction_GT_WRITE;
+    text[0] = IBusAction_GT_WRITE_MK2;
     text[1] = IBusAction_GT_WRITE_ZONE;
     text[2] = 0x01;
     text[3] = (unsigned char) index;

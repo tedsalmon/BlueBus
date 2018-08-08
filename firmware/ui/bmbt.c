@@ -40,27 +40,23 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
     );
 }
 
-static void BMBTBuildMenu(
-    BMBTContext_t *context
-) {
-
-}
-
 static void BMBTMainMenu(BMBTContext_t *context)
 {
-    IBusCommandGTWriteIndex(context->ibus, 0, "Now Playing");
+    IBusCommandGTWriteIndexMk4(context->ibus, 0, "Now Playing");
+    IBusCommandGTWriteIndexMk4(context->ibus, 1, " ");
+    IBusCommandGTWriteIndexMk4(context->ibus, 2, " ");
     if (context->bt->discoverable == BC127_STATE_ON) {
-        IBusCommandGTWriteIndex(context->ibus, 5, "Pairing: On");
+        IBusCommandGTWriteIndexMk4(context->ibus, 5, "Pairing: On");
     } else {
-        IBusCommandGTWriteIndex(context->ibus, 5, "Pairing: Off");
+        IBusCommandGTWriteIndexMk4(context->ibus, 5, "Pairing: Off");
     }
-    IBusCommandGTWriteIndex(context->ibus, 6, "Select Device");
-    IBusCommandGTWriteIndex(context->ibus, 7, "About");
+    IBusCommandGTWriteIndexMk4(context->ibus, 6, "Select Device");
+    IBusCommandGTWriteIndexMk4(context->ibus, 7, "Settings");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_MENU);
     context->menu = BMBT_MENU_MAIN;
 }
 
-void BMBTSetStaticScreen(BMBTContext_t *context, char *f1, char *f2, char *f3)
+static void BMBTSetStaticScreen(BMBTContext_t *context, char *f1, char *f2, char *f3)
 {
     IBusCommandGTWriteIndexStatic(context->ibus, 1, f1);
     IBusCommandGTWriteIndexStatic(context->ibus, 2, f2);
@@ -91,7 +87,7 @@ void BMBTBC127PlaybackStatus(void *ctx, unsigned char *status)
         if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PAUSED) {
             IBusCommandGTWriteZone(context->ibus, 4, "||");
         } else {
-            IBusCommandGTWriteZone(context->ibus, 4, ">");
+            IBusCommandGTWriteZone(context->ibus, 4, "> ");
         }
         IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
     }
@@ -113,7 +109,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
                 IBusCommandGTWriteZone(context->ibus, 4, "||");
             } else {
                 BC127CommandPlay(context->bt);
-                IBusCommandGTWriteZone(context->ibus, 4, ">");
+                IBusCommandGTWriteZone(context->ibus, 4, "> ");
             }
             IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
         }
@@ -146,10 +142,10 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
             IBusCommandGTWriteZone(context->ibus, 4, "||");
             IBusCommandGTWriteZone(context->ibus, 5, "BT");
             if (context->bt->activeDevice != 0) {
-                char name[12];
-                strncpy(name, context->bt->activeDevice->deviceName, 11);
+                char name[33];
                 char cleanName[12];
-                removeNonAscii(cleanName, name);
+                removeNonAscii(name, context->bt->activeDevice->deviceName);
+                strncpy(cleanName, name, 11);
                 IBusCommandGTWriteZone(context->ibus, 6, cleanName);
             } else {
                 IBusCommandGTWriteZone(context->ibus, 6, "No Device");
@@ -176,14 +172,14 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
             } else if (selectedIdx == 5) {
                 uint8_t state;
                 if (context->bt->discoverable == BC127_STATE_ON) {
-                    IBusCommandGTWriteIndex(context->ibus, 5, "Pairing: Off");
+                    IBusCommandGTWriteIndexMk4(context->ibus, 5, "Pairing: Off");
                     state = BC127_STATE_OFF;
                 } else {
-                    IBusCommandGTWriteIndex(context->ibus, 5, "Pairing: On");
+                    IBusCommandGTWriteIndexMk4(context->ibus, 5, "Pairing: On");
                     state = BC127_STATE_ON;
                 }
                 IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_MENU);
-                BC127CommandBtState(context->bt, context->bt->connectable, state);
+                BC127CommandDiscoverable(context->bt, state);
             } else if (selectedIdx == 6) {
                 uint8_t idx;
                 uint8_t screenIdx = 0;
@@ -192,19 +188,22 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                 for (idx = 0; idx < connectedDevices; idx++) {
                     conn = &context->bt->connections[idx];
                     if (conn != 0) {
-                        char name[12];
-                        strncpy(name, conn->deviceName, 11);
-                        IBusCommandGTWriteIndex(context->ibus, screenIdx, name);
+                        char name[33];
+                        removeNonAscii(name, conn->deviceName);
+                        char cleanName[12];
+                        strncpy(cleanName, name, 11);
+                        cleanName[11] = '\0';
+                        IBusCommandGTWriteIndexMk4(context->ibus, screenIdx, cleanName);
                         screenIdx++;
                     }
                 }
                 while (screenIdx < 7) {
-                    IBusCommandGTWriteIndex(context->ibus, screenIdx, "");
+                    IBusCommandGTWriteIndexMk4(context->ibus, screenIdx, " ");
                     screenIdx++;
                 }
-                IBusCommandGTWriteIndex(context->ibus, screenIdx++, "Back");
-                IBusCommandGTWriteIndex(context->ibus, screenIdx++, "");
-                IBusCommandGTWriteIndex(context->ibus, screenIdx++, "");
+                IBusCommandGTWriteIndexMk4(context->ibus, screenIdx++, "Back");
+                IBusCommandGTWriteIndexMk4(context->ibus, screenIdx++, " ");
+                IBusCommandGTWriteIndexMk4(context->ibus, screenIdx++, " ");
                 IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_MENU);
                 context->menu = BMBT_MENU_DEVICE_SELECTION;
             } else if (selectedIdx == 7) {
@@ -212,7 +211,7 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                 BMBTSetStaticScreen(
                     context,
                     "BlueBus - SW: 1.0.0 HW: 1",
-                    "Copyright 2018 Ted Salmon",
+                    " ", " "
                 );
             }
         } else if (context->menu == BMBT_MENU_DEVICE_SELECTION) {

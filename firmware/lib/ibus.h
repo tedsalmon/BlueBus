@@ -6,9 +6,15 @@
  */
 #ifndef IBUS_H
 #define IBUS_H
+#define IBUS_GT_MKI 1
+#define IBUS_GT_MKII 2
+#define IBUS_GT_MKIII 2
+#define IBUS_GT_MKIV 4
+#define IBUS_GT_HW_ID_OFFSET 11
+#define IBUS_GT_SW_ID_OFFSET 33
+#define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RX_BUFFER_SIZE 256
 #define IBUS_TX_BUFFER_SIZE 24
-#define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 100
 #include <stdint.h>
@@ -20,6 +26,7 @@
 #include "ibus.h"
 #include "timer.h"
 #include "uart.h"
+#include "utils.h"
 
 const static unsigned char IBusDevice_GM = 0x00; /* Body module */
 const static unsigned char IBusDevice_CDC = 0x18; /* CD Changer */
@@ -72,11 +79,11 @@ const static unsigned char IBusAction_CD53_CD_SEL = 0x06;
 
 const static unsigned char IBusAction_DIAG_DATA = 0xA0;
 
-const static unsigned char IBusAction_GT_MMENU_SELECT = 0x31;
-const static unsigned char IBusAction_GT_WRITE = 0x21;
+const static unsigned char IBusAction_GT_MENU_SELECT = 0x31;
+const static unsigned char IBusAction_GT_WRITE_MK4 = 0x21;
 const static unsigned char IBusAction_GT_WRITE_TITLE = 0x23;
 // Newer GTs use a different action to write to fields
-const static unsigned char IBusAction_GT_WRITE_NEWER = 0xA5;
+const static unsigned char IBusAction_GT_WRITE_MK2 = 0xA5;
 const static unsigned char IBusAction_GT_WRITE_MENU = 0x60;
 const static unsigned char IBusAction_GT_WRITE_ZONE = 0x62;
 const static unsigned char IBusAction_GT_WRITE_STATIC = 0x63;
@@ -88,7 +95,7 @@ const static uint8_t IBusEvent_CDKeepAlive = 34;
 const static uint8_t IBusEvent_CDStatusRequest = 35;
 const static uint8_t IBusEvent_CDClearDisplay = 36;
 const static uint8_t IBusEvent_IgnitionStatus = 37;
-const static uint8_t IBusEvent_NavDiagResponse = 38;
+const static uint8_t IBusEvent_GTDiagResponse = 38;
 const static uint8_t IBusEvent_BMBTButton = 39;
 const static uint8_t IBusEvent_GTMenuSelect = 40;
 
@@ -112,6 +119,8 @@ typedef struct IBus_t {
     uint32_t txLastStamp;
     unsigned char cdChangerStatus;
     unsigned char ignitionStatus;
+    unsigned char gtHardwareVersion;
+    unsigned char gtCanDisplayStatic;
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
@@ -120,8 +129,11 @@ void IBusStartup();
 void IBusCommandDisplayMIDText(IBus_t *, char *);
 void IBusCommandDisplayMIDTextClear(IBus_t *);
 void IBusCommandDisplayMIDTextSymbol(IBus_t *, char);
+void IBusCommandGTGetDiagnostics(IBus_t *);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
-void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *);
+void IBusCommandGTWriteIndexMk2(IBus_t *, uint8_t, char *);
+void IBusCommandGTWriteIndexMk4(IBus_t *, uint8_t, char *);
+void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *, unsigned char, unsigned char);
 void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t, char *);
 void IBusCommandGTWriteTitle(IBus_t *ibus, char *);
 void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t, char *);
