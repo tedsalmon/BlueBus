@@ -19,6 +19,7 @@
 #define CD53_MODE_OFF 0
 #define CD53_MODE_ACTIVE 1
 #define CD53_MODE_DEVICE_SEL 2
+#define CD53_PAIRING_DEVICE_NONE -1
 /*
  * CD53DisplayValue_t
  *  This is a struct to hold text values to be displayed
@@ -53,12 +54,13 @@ typedef struct CD53Context_t {
     IBus_t *ibus;
     uint8_t mode;
     uint8_t displayUpdateTaskId;
-    uint8_t btDeviceIndex;
+    int8_t btDeviceIndex;
     CD53DisplayValue_t mainDisplay;
     CD53DisplayValue_t tempDisplay;
 } CD53Context_t;
 void CD53Init(BC127_t *, IBus_t *);
 CD53DisplayValue_t CD53DisplayValueInit(char *);
+void CD53BC127DeviceDisconnected(void *, unsigned char *);
 void CD53BC127DeviceReady(void *, unsigned char *);
 void CD53BC127Metadata(void *, unsigned char *);
 void CD53BC127PlaybackStatus(void *, unsigned char *);

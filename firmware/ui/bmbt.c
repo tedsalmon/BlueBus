@@ -13,9 +13,25 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
     Context.ibus = ibus;
     Context.menu = BMBT_MENU_MAIN;
     Context.mode = BMBT_MODE_OFF;
+    Context.selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
+    EventRegisterCallback(
+        BC127Event_DeviceConnected,
+        &BMBTBC127DeviceConnected,
+        &Context
+    );
+    EventRegisterCallback(
+        BC127Event_DeviceDisconnected,
+        &BMBTBC127DeviceDisconnected,
+        &Context
+    );
     EventRegisterCallback(
         BC127Event_MetadataChange,
         &BMBTBC127Metadata,
+        &Context
+    );
+    EventRegisterCallback(
+        BC127Event_DeviceReady,
+        &BMBTBC127Ready,
         &Context
     );
     EventRegisterCallback(
@@ -45,6 +61,8 @@ static void BMBTMainMenu(BMBTContext_t *context)
     IBusCommandGTWriteIndexMk4(context->ibus, 0, "Now Playing");
     IBusCommandGTWriteIndexMk4(context->ibus, 1, " ");
     IBusCommandGTWriteIndexMk4(context->ibus, 2, " ");
+    IBusCommandGTWriteIndexMk4(context->ibus, 3, " ");
+    IBusCommandGTWriteIndexMk4(context->ibus, 4, " ");
     if (context->bt->discoverable == BC127_STATE_ON) {
         IBusCommandGTWriteIndexMk4(context->ibus, 5, "Pairing: On");
     } else {
@@ -52,6 +70,8 @@ static void BMBTMainMenu(BMBTContext_t *context)
     }
     IBusCommandGTWriteIndexMk4(context->ibus, 6, "Select Device");
     IBusCommandGTWriteIndexMk4(context->ibus, 7, "Settings");
+    IBusCommandGTWriteIndexMk4(context->ibus, 8, " ");
+    IBusCommandGTWriteIndexMk4(context->ibus, 9, " ");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_MENU);
     context->menu = BMBT_MENU_MAIN;
 }
@@ -64,7 +84,36 @@ static void BMBTSetStaticScreen(BMBTContext_t *context, char *f1, char *f2, char
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_STATIC);
 }
 
-void BMBTBC127Metadata(void *ctx, unsigned char *metadata)
+void BMBTBC127DeviceConnected(void *ctx, unsigned char *data)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    char name[33];
+    char cleanName[12];
+    removeNonAscii(name, context->bt->activeDevice.deviceName);
+    strncpy(cleanName, name, 11);
+    IBusCommandGTWriteZone(context->ibus, 6, cleanName);
+    IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
+}
+
+void BMBTBC127DeviceDisconnected(void *ctx, unsigned char *data)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    IBusCommandGTWriteZone(context->ibus, 6, "No Device");
+    IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
+    if (context->selectedPairingDevice != BMBT_PAIRING_DEVICE_NONE) {
+        BC127PairedDevice_t *dev = &context->bt->pairedDevices[
+            context->selectedPairingDevice
+        ];
+        if (strlen(dev->macId) > 0) {
+            BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
+            BC127CommandProfileOpen(context->bt, dev->macId, "AVRCP");
+            BC127CommandProfileOpen(context->bt, dev->macId, "HPF");
+        }
+        context->selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
+    }
+}
+
+void BMBTBC127Metadata(void *ctx, unsigned char *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->mode == BMBT_MODE_ACTIVE &&
@@ -73,23 +122,38 @@ void BMBTBC127Metadata(void *ctx, unsigned char *metadata)
         char title[BC127_METADATA_FIELD_SIZE];
         char artist[BC127_METADATA_FIELD_SIZE];
         char album[BC127_METADATA_FIELD_SIZE];
-        removeNonAscii(title, context->bt->title);
-        removeNonAscii(artist, context->bt->artist);
-        removeNonAscii(album, context->bt->album);
+        removeNonAscii(title, context->bt->activeDevice.title);
+        removeNonAscii(artist, context->bt->activeDevice.artist);
+        removeNonAscii(album, context->bt->activeDevice.album);
         BMBTSetStaticScreen(context, title, artist, album);
     }
 }
 
-void BMBTBC127PlaybackStatus(void *ctx, unsigned char *status)
+void BMBTBC127PlaybackStatus(void *ctx, unsigned char *tmp)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->mode == BMBT_MODE_ACTIVE) {
-        if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PAUSED) {
+        if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
             IBusCommandGTWriteZone(context->ibus, 4, "||");
         } else {
             IBusCommandGTWriteZone(context->ibus, 4, "> ");
         }
         IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
+    }
+}
+
+void BMBTBC127Ready(void *ctx, unsigned char *tmp)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    IBusCommandGTWriteZone(context->ibus, 6, "No Device");
+    IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
+    if (context->menu == BMBT_MENU_MAIN) {
+        if (context->bt->discoverable == BC127_STATE_ON) {
+            IBusCommandGTWriteIndexMk4(context->ibus, 5, "Pairing: Off");
+        } else {
+            IBusCommandGTWriteIndexMk4(context->ibus, 5, "Pairing: On");
+        }
+        IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_MENU);
     }
 }
 
@@ -104,7 +168,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             BC127CommandBackward(context->bt);
         }
         if (pkt[4] == IBusDevice_BMBT_Button_PlayPause_Out) {
-            if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING) {
+            if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
                 IBusCommandGTWriteZone(context->ibus, 4, "||");
             } else {
@@ -135,16 +199,16 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     } else if (changerStatus == 0x03) {
         // Start Playing
         if (context->mode == BMBT_MODE_OFF) {
-            if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING) {
+            if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
             }
             IBusCommandGTWriteTitle(context->ibus, "BlueBus");
             IBusCommandGTWriteZone(context->ibus, 4, "||");
             IBusCommandGTWriteZone(context->ibus, 5, "BT");
-            if (context->bt->activeDevice != 0) {
+            if (context->bt->activeDevice.deviceId != 0) {
                 char name[33];
                 char cleanName[12];
-                removeNonAscii(name, context->bt->activeDevice->deviceName);
+                removeNonAscii(name, context->bt->activeDevice.deviceName);
                 strncpy(cleanName, name, 11);
                 IBusCommandGTWriteZone(context->ibus, 6, cleanName);
             } else {
@@ -183,13 +247,12 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
             } else if (selectedIdx == 6) {
                 uint8_t idx;
                 uint8_t screenIdx = 0;
-                uint8_t connectedDevices = BC127GetConnectedDeviceCount(context->bt);
-                BC127Connection_t *conn = 0;
-                for (idx = 0; idx < connectedDevices; idx++) {
-                    conn = &context->bt->connections[idx];
-                    if (conn != 0) {
+                BC127PairedDevice_t *dev = 0;
+                for (idx = 0; idx < context->bt->pairedDevicesCount; idx++) {
+                    dev = &context->bt->pairedDevices[idx];
+                    if (dev != 0) {
                         char name[33];
-                        removeNonAscii(name, conn->deviceName);
+                        removeNonAscii(name, dev->deviceName);
                         char cleanName[12];
                         strncpy(cleanName, name, 11);
                         cleanName[11] = '\0';
@@ -197,7 +260,7 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                         screenIdx++;
                     }
                 }
-                while (screenIdx < 7) {
+                while (screenIdx < 9) {
                     IBusCommandGTWriteIndexMk4(context->ibus, screenIdx, " ");
                     screenIdx++;
                 }
@@ -216,9 +279,29 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
             }
         } else if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             // Back Button
-            if (selectedIdx == 7) {
+            if (selectedIdx == 9) {
                 context->mode = BMBT_MODE_ACTIVE;
                 BMBTMainMenu(context);
+            } else {
+                BC127PairedDevice_t *dev = &context->bt->pairedDevices[selectedIdx];
+                if (strcmp(dev->macId, context->bt->activeDevice.macId) != 0 &&
+                    dev != 0
+                ) {
+                    // If we don't have a device connected, connect immediately
+                    if (context->bt->activeDevice.deviceId == 0) {
+                        BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
+                        BC127CommandProfileOpen(context->bt, dev->macId, "AVRCP");
+                        BC127CommandProfileOpen(context->bt, dev->macId, "HPF");
+                    } else {
+                        // Wait until the current device disconnects to
+                        // connect the new one
+                        BC127CommandClose(
+                            context->bt,
+                            context->bt->activeDevice.deviceId
+                        );
+                        context->selectedPairingDevice = selectedIdx;
+                    }
+                }
             }
         }
     }

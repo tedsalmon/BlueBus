@@ -26,7 +26,7 @@
 #define BC127_CONN_STATE_NEW 0
 #define BC127_CONN_STATE_CONNECTED 1
 #define BC127_CONN_STATE_DISCONNECTED 2
-#define BC127_MAX_DEVICE_CONN 3
+#define BC127_MAX_DEVICE_PAIRED 8
 #define BC127_MAX_DEVICE_PROFILES 5
 #define BC127_METADATA_FIELD_SIZE 128
 #define BC127_METADATA_TITLE_OFFSET 19
@@ -44,21 +44,50 @@ const static uint8_t BC127Event_MetadataChange = 1;
 const static uint8_t BC127Event_PlaybackStatusChange = 2;
 const static uint8_t BC127Event_DeviceConnected = 3;
 const static uint8_t BC127Event_DeviceLinkConnected = 4;
-const static uint8_t BC127Event_DeviceReady = 5;
+const static uint8_t BC127Event_DeviceDisconnected = 5;
+const static uint8_t BC127Event_DeviceReady = 6;
 
 /**
- * BC127Connection_t
+ * BC127PairedDevice_t
  *     Description:
- *         This object defines an open device connection
+ *         This object defines a previously paired device
+ *     Fields:
+ *         macId - The MAC ID of the device (12 hexadecimal characters)
+ *         deviceName - The friendly name of the device (32 ASCII characters)
+ */
+typedef struct BC127PairedDevice_t {
+    char macId[13];
+    char deviceName[33];
+} BC127PairedDevice_t;
+
+/**
+ * BC127Device_t
+ *     Description:
+ *         This object defines the actively connected device
+ *     Fields:
+ *         macId - The MAC ID of the device (12 hexadecimal characters)
+ *         deviceName - The friendly name of the device (32 ASCII characters)
+ *         playbackStatus - Current Playback status - BC127_AVRCP_STATUS_PAUSED
+ *                          or BC127_AVRCP_STATUS_PLAYING
+ *         title - The title of the currently playing media
+ *         artist - The artist of the currently playing media
+ *         album - The album of the currently playing media
+ *         deviceId - The Melody device ID (1-3)
+ *         avrcpLinkId - The Melody Link ID for the AVRCP connection
+ *         a2dpLinkId - The Melody Link ID for the A2DP connection
+ *         hfpLinkId - The Melody Link ID for the HFP connection
  */
 typedef struct BC127Connection_t {
     char macId[13];
     char deviceName[33];
+    uint8_t playbackStatus;
+    char title[BC127_METADATA_FIELD_SIZE];
+    char artist[BC127_METADATA_FIELD_SIZE];
+    char album[BC127_METADATA_FIELD_SIZE];
     uint8_t deviceId;
-    uint8_t avrcpLink;
-    uint8_t a2dpLink;
-    uint8_t hfpLink;
-    uint8_t state;
+    uint8_t avrcpLinkId;
+    uint8_t a2dpLinkId;
+    uint8_t hfpLinkId;
 } BC127Connection_t;
 
 /**
@@ -68,12 +97,9 @@ typedef struct BC127Connection_t {
  *         with the BC127
  */
 typedef struct BC127_t {
-    uint8_t avrcpStatus;
-    char title[BC127_METADATA_FIELD_SIZE];
-    char artist[BC127_METADATA_FIELD_SIZE];
-    char album[BC127_METADATA_FIELD_SIZE];
-    BC127Connection_t connections[BC127_MAX_DEVICE_CONN];
-    BC127Connection_t *activeDevice;
+    BC127Connection_t activeDevice;
+    BC127PairedDevice_t pairedDevices[BC127_MAX_DEVICE_PAIRED];
+    uint8_t pairedDevicesCount;
     uint8_t connectable;
     uint8_t discoverable;
     UART_t uart;
@@ -110,8 +136,10 @@ void BC127Process(BC127_t *);
 void BC127SendCommand(BC127_t *, char *);
 void BC127Startup();
 
-BC127Connection_t BC127ConnectionInit(char *, uint8_t);
-BC127Connection_t *BC127ConnectionGet(BC127_t *, char *, uint8_t);
+void BC127PairedDeviceInit(BC127_t *, char *, char *);
+char *BC127PairedDeviceGetName(BC127_t *, char *);
+
+BC127Connection_t BC127ConnectionInit();
 void BC127ConnectionCloseProfile(BC127Connection_t *, char *);
 void BC127ConnectionOpenProfile(BC127Connection_t *, char *, uint8_t);
 #endif /* BC127_H */

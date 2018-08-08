@@ -18,15 +18,20 @@
 #define BMBT_MENU_ABOUT 3
 #define BMBT_MODE_OFF 0
 #define BMBT_MODE_ACTIVE 1
+#define BMBT_PAIRING_DEVICE_NONE -1
 typedef struct BMBTContext_t {
     BC127_t *bt;
     IBus_t *ibus;
     uint8_t menu;
     uint8_t mode;
+    int8_t selectedPairingDevice;
 } BMBTContext_t;
 void BMBTInit(BC127_t *, IBus_t *);
+void BMBTBC127DeviceConnected(void *, unsigned char *);
+void BMBTBC127DeviceDisconnected(void *, unsigned char *);
 void BMBTBC127Metadata(void *, unsigned char *);
 void BMBTBC127PlaybackStatus(void *, unsigned char *);
+void BMBTBC127Ready(void *, unsigned char *);
 void BMBTIBusBMBTButtonPress(void *, unsigned char *);
 void BMBTIBusCDChangerStatus(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);

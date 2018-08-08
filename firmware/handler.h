@@ -26,8 +26,8 @@ typedef struct HandlerContext_t {
     uint32_t cdChangerLastKeepAlive;
 } HandlerContext_t;
 void HandlerInit(BC127_t *, IBus_t *, uint8_t);
-void HandlerBC127DeviceConnected(void *, unsigned char *);
 void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
+void HandlerBC127DeviceDisconnected(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
 void HandlerBC127Ready(void *, unsigned char *);
 void HandlerBC127Startup(void *, unsigned char *);

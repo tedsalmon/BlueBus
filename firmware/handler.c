@@ -27,13 +27,13 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     Context.btStartupIsRun = 0;
     Context.ignitionStatus = 0;
     EventRegisterCallback(
-        BC127Event_DeviceConnected,
-        &HandlerBC127DeviceConnected,
+        BC127Event_DeviceLinkConnected,
+        &HandlerBC127DeviceLinkConnected,
         &Context
     );
     EventRegisterCallback(
-        BC127Event_DeviceLinkConnected,
-        &HandlerBC127DeviceLinkConnected,
+        BC127Event_DeviceDisconnected,
+        &HandlerBC127DeviceDisconnected,
         &Context
     );
     EventRegisterCallback(
@@ -92,31 +92,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
 }
 
 /**
- * HandlerBC127DeviceConnected()
- *     Description:
- *         Close any new connections that do not match our active BT device.
- *         This event is triggered when a brand new device connects.
- *     Params:
- *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerBC127DeviceConnected(void *ctx, unsigned char *data)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    uint8_t deviceId = (uint8_t) *data;
-    if (context->bt->activeDevice != 0) {
-        if (deviceId != context->bt->activeDevice->deviceId) {
-            BC127CommandClose(context->bt, deviceId);
-        }
-    }
-}
-
-/**
  * HandlerBC127DeviceLinkConnected()
  *     Description:
- *         Close any new connections that do not match our active BT device
+ *         If a device link is opened, make sure that the other links open too.
+ *         Sometimes a device won't open all profiles. Once AVRCP and A2DP
+ *         are open, make the BT device unconnectable
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *tmp - Any event data
@@ -126,13 +106,50 @@ void HandlerBC127DeviceConnected(void *ctx, unsigned char *data)
 void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->bt->activeDevice != 0) {
-        uint8_t linkId = strToInt((char *) data);
-        uint8_t deviceId = BC127GetDeviceId((char *) data);
-        if (deviceId != context->bt->activeDevice->deviceId) {
-            BC127CommandClose(context->bt, linkId);
-        }
+    // If the AVRCP link is being opened and the A2DP link closed, open it
+    if (context->bt->activeDevice.avrcpLinkId != 0 &&
+        context->bt->activeDevice.a2dpLinkId == 0
+    ) {
+        BC127CommandProfileOpen(
+            context->bt,
+            context->bt->activeDevice.macId,
+            "A2DP"
+        );
     }
+    // If the HFP link is being opened and the A2DP link closed, open it
+    if (context->bt->activeDevice.hfpLinkId != 0 &&
+        context->bt->activeDevice.avrcpLinkId == 0
+    ) {
+        BC127CommandProfileOpen(
+            context->bt,
+            context->bt->activeDevice.macId,
+            "AVRCP"
+        );
+    }
+    // Once A2DP and AVRCP are connected, we can disable connectability
+    if (context->bt->activeDevice.avrcpLinkId != 0 &&
+        context->bt->activeDevice.a2dpLinkId != 0
+    ) {
+        BC127CommandConnectable(context->bt, BC127_STATE_OFF);
+        context->bt->connectable = BC127_STATE_OFF;
+    }
+}
+
+/**
+ * HandlerBC127DeviceDisconnected()
+ *     Description:
+ *         If a device disconnects, make the module connectable again.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBC127DeviceDisconnected(void *ctx, unsigned char *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    BC127CommandConnectable(context->bt, BC127_STATE_ON);
+    context->bt->connectable = BC127_STATE_ON;
 }
 
 /**
@@ -152,13 +169,13 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // If this is the first Status update
     if (context->btStartupIsRun == 0) {
-        if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING) {
+        if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
             // Request Metadata
             BC127CommandGetMetadata(context->bt);
         }
         context->btStartupIsRun = 1;
     }
-    if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING &&
+    if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING &&
         context->ibus->cdChangerStatus <= 0x01
     ){
         // We're playing but not in Bluetooth mode - stop playback
@@ -190,6 +207,8 @@ void HandlerBC127Ready(void *ctx, unsigned char *tmp)
         BC127CommandDiscoverable(context->bt, context->bt->discoverable);
         BC127CommandConnectable(context->bt, BC127_STATE_ON);
     }
+    BC127CommandStatus(context->bt);
+    BC127CommandList(context->bt);
 }
 
 /**
@@ -205,7 +224,10 @@ void HandlerBC127Ready(void *ctx, unsigned char *tmp)
 void HandlerBC127Startup(void *ctx, unsigned char *tmp)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // Set it connectable until a connection is found
+    BC127CommandConnectable(context->bt, BC127_STATE_ON);
     BC127CommandStatus(context->bt);
+    BC127CommandList(context->bt);
 }
 
 /**
@@ -267,8 +289,9 @@ void HandlerIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     if (changerStatus == 0x00) {
         // Asking for status
         curStatus = context->ibus->cdChangerStatus;
-        } else if (changerStatus == 0x01) {
-        if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING) {
+    } else if (changerStatus == 0x01) {
+        // Stop Playing
+        if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
             BC127CommandPause(context->bt);
         }
     } else if (changerStatus == 0x03) {
@@ -323,10 +346,11 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         BC127CommandClose(context->bt, BC127_CLOSE_ALL);
     } else {
         if (context->ignitionStatus == 0) {
-            HandlerIBusStartup(ctx, 0);
+            // Ignore the ignition states while developing
+            // HandlerIBusStartup(ctx, 0);
             // Set the BT module connectable and discoverable
-            BC127CommandDiscoverable(context->bt, BC127_STATE_ON);
-            BC127CommandConnectable(context->bt, BC127_STATE_ON);
+            // BC127CommandDiscoverable(context->bt, BC127_STATE_ON);
+            // BC127CommandConnectable(context->bt, BC127_STATE_ON);
         }
         context->ignitionStatus = 1;
     }
