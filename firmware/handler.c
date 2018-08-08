@@ -8,6 +8,17 @@
 static HandlerContext_t Context;
 const static uint16_t HANDLER_CDC_ANOUNCE_INT = 30000;
 
+/**
+ * HandlerInit()
+ *     Description:
+ *         Initialize our context and register all event listeners and
+ *         scheduled tasks.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
 {
     Context.bt = bt;
@@ -28,6 +39,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     EventRegisterCallback(
         BC127Event_PlaybackStatusChange,
         &HandlerBC127PlaybackStatus,
+        &Context
+    );
+    EventRegisterCallback(
+        BC127Event_DeviceReady,
+        &HandlerBC127Ready,
         &Context
     );
     EventRegisterCallback(
@@ -55,11 +71,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &HandlerIBusIgnitionStatus,
         &Context
     );
-    //EventRegisterCallback(
-    //    IBusEvent_NavDiagResponse,
-    //    0, // Implement
-    //    &Context
-    //);
+    EventRegisterCallback(
+        IBusEvent_GTDiagResponse,
+        &HandlerIBusGTDiagnostics,
+        &Context
+    );
     TimerRegisterScheduledTask(
         &HandlerTimerCDChangerAnnounce,
         &Context,
@@ -75,6 +91,17 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     }
 }
 
+/**
+ * HandlerBC127DeviceConnected()
+ *     Description:
+ *         Close any new connections that do not match our active BT device.
+ *         This event is triggered when a brand new device connects.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerBC127DeviceConnected(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
@@ -86,6 +113,16 @@ void HandlerBC127DeviceConnected(void *ctx, unsigned char *data)
     }
 }
 
+/**
+ * HandlerBC127DeviceLinkConnected()
+ *     Description:
+ *         Close any new connections that do not match our active BT device
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
@@ -98,6 +135,18 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
     }
 }
 
+/**
+ * HandlerBC127PlaybackStatus()
+ *     Description:
+ *         If the application is starting, request the BC127 AVRCP Metadata
+ *         if it is playing. If the CD Change status is not set to "playing"
+ *         then we pause playback.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
@@ -117,21 +166,79 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
     }
 }
 
+/**
+ * HandlerBC127Ready()
+ *     Description:
+ *         If the BC127 restarts, make sure that it is in the right
+ *         connectable and discoverable states
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBC127Ready(void *ctx, unsigned char *tmp)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->ignitionStatus == 0) {
+        // Set the BT module not connectable or discoverable and disconnect all devices
+        BC127CommandDiscoverable(context->bt, BC127_STATE_OFF);
+        BC127CommandConnectable(context->bt, BC127_STATE_OFF);
+        BC127CommandClose(context->bt, BC127_CLOSE_ALL);
+    } else {
+        // Set the connectable and discoverable states to what they were
+        BC127CommandDiscoverable(context->bt, context->bt->discoverable);
+        BC127CommandConnectable(context->bt, BC127_STATE_ON);
+    }
+}
+
+/**
+ * HandlerBC127Startup()
+ *     Description:
+ *         Ask for the BC127 device on application startup
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerBC127Startup(void *ctx, unsigned char *tmp)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     BC127CommandStatus(context->bt);
 }
 
+/**
+ * HandlerIBusStartup()
+ *     Description:
+ *         On application startup, announce that we are a CDC on the IBus. We
+ *         also poll the GT, if it's on the network, for its diagnostics info
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerIBusStartup(void *ctx, unsigned char *tmp)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    IBusCommandGTGetDiagnostics(context->ibus);
     IBusCommandSendCdChangerAnnounce(context->ibus);
     // Always assume that we're playing, that way the radio can tell us
     // if we shouldn't be, then we can deduce the system state
     context->ibus->cdChangerStatus = 0x09;
 }
 
+/**
+ * HandlerIBusCDChangerKeepAlive()
+ *     Description:
+ *         Respond to the Radio's "ping" with a "pong"
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerIBusCDChangerKeepAlive(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
@@ -139,6 +246,18 @@ void HandlerIBusCDChangerKeepAlive(void *ctx, unsigned char *pkt)
     context->cdChangerLastKeepAlive = TimerGetMillis();
 }
 
+/**
+ * HandlerIBusCDChangerStatus()
+ *     Description:
+ *         Track the current CD Changer status based on what the radio
+ *         instructs us to do. We respond with exactly what the radio instructs
+ *         even if we haven't done it yet.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerIBusCDChangerStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
@@ -148,6 +267,10 @@ void HandlerIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     if (changerStatus == 0x00) {
         // Asking for status
         curStatus = context->ibus->cdChangerStatus;
+        } else if (changerStatus == 0x01) {
+        if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING) {
+            BC127CommandPause(context->bt);
+        }
     } else if (changerStatus == 0x03) {
         // Start Playing
         curAction = 0x02;
@@ -159,6 +282,34 @@ void HandlerIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     context->cdChangerLastKeepAlive = TimerGetMillis();
 }
 
+/**
+ * HandlerIBusGTDiagnostics()
+ *     Description:
+ *         Track the GT diagnostics info. Here we can define what device versions
+ *         are installed in the vehicle.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGTDiagnostics(void *ctx, unsigned char *pkt)
+{
+
+}
+
+/**
+ * HandlerIBusIgnitionStatus()
+ *     Description:
+ *         Track the Ignition state and update the BC127 accordingly. We set
+ *         the BT device "off" when the key is set to position 0 and on
+ *         as soon as it goes to a position >= 1
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
@@ -166,24 +317,40 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
     // the ignition is off
     if (pkt[4] == 0x00){
         context->ignitionStatus = 0;
-        // Set the BT module connectable and discoverable
-        BC127CommandBtState(context->bt, BC127_STATE_OFF, BC127_STATE_OFF);
+        // Set the BT module not connectable or discoverable and disconnect all devices
+        BC127CommandDiscoverable(context->bt, BC127_STATE_OFF);
+        BC127CommandConnectable(context->bt, BC127_STATE_OFF);
         BC127CommandClose(context->bt, BC127_CLOSE_ALL);
     } else {
         if (context->ignitionStatus == 0) {
             HandlerIBusStartup(ctx, 0);
-            // Set the BT module connectable but not discoverable
-            BC127CommandBtState(context->bt, BC127_STATE_ON, BC127_STATE_OFF);
+            // Set the BT module connectable and discoverable
+            BC127CommandDiscoverable(context->bt, BC127_STATE_ON);
+            BC127CommandConnectable(context->bt, BC127_STATE_ON);
         }
         context->ignitionStatus = 1;
     }
 }
 
+/**
+ * HandlerTimerCDChangerAnnounce()
+ *     Description:
+ *         This periodic task tracks how long it has been since the radio
+ *         sent us (the CDC) a "ping". We should re-announce ourselves if that
+ *         value reaches the timeout specified and the ignition is on.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerTimerCDChangerAnnounce(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint32_t now = TimerGetMillis();
-    if ((now - context->cdChangerLastKeepAlive) >= HANDLER_CDC_ANOUNCE_INT) {
+    if ((now - context->cdChangerLastKeepAlive) >= HANDLER_CDC_ANOUNCE_INT &&
+        context->ignitionStatus == 1
+    ) {
         IBusCommandSendCdChangerAnnounce(context->ibus);
         context->cdChangerLastKeepAlive = now;
     }

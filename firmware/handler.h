@@ -29,10 +29,12 @@ void HandlerInit(BC127_t *, IBus_t *, uint8_t);
 void HandlerBC127DeviceConnected(void *, unsigned char *);
 void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
+void HandlerBC127Ready(void *, unsigned char *);
 void HandlerBC127Startup(void *, unsigned char *);
 void HandlerIBusStartup(void *, unsigned char *);
 void HandlerIBusCDChangerKeepAlive(void *, unsigned char *);
 void HandlerIBusCDChangerStatus(void *, unsigned char *);
+void HandlerIBusGTDiagnostics(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
 void HandlerTimerCDChangerAnnounce(void *);
 #endif /* HANDLER_H */

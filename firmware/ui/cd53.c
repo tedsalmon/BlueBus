@@ -148,9 +148,6 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
     if (changerStatus == 0x01) {
         // Stop Playing
         IBusCommandDisplayMIDTextClear(context->ibus);
-        if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING) {
-            BC127CommandPause(context->bt);
-        }
         context->mode = CD53_MODE_OFF;
     } else if (changerStatus == 0x03) {
         // Start Playing
@@ -259,7 +256,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
                 CD53SetTempDisplayText(context, "Pairing On", timeout);
                 state = BC127_STATE_ON;
             }
-            BC127CommandBtState(context->bt, context->bt->connectable, state);
+            BC127CommandDiscoverable(context->bt, state);
         } else {
             // A button was pressed - Push our display text back
             TimerTriggerScheduledTask(context->displayUpdateTaskId);

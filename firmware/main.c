@@ -50,7 +50,7 @@ int main(void)
     BC127Startup();
     IBusStartup();
 
-    // Process Synchronous events
+    // Process events
     while (1) {
         BC127Process(&bt);
         IBusProcess(&ibus);

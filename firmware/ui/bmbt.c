@@ -134,10 +134,6 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     unsigned char changerStatus = pkt[4];
     if (changerStatus == 0x01) {
         // Stop Playing
-        IBusCommandDisplayMIDTextClear(context->ibus);
-        if (context->bt->avrcpStatus == BC127_AVRCP_STATUS_PLAYING) {
-            BC127CommandPause(context->bt);
-        }
         BMBTSetStaticScreen(context, " ", " ", " ");
         context->mode = BMBT_MODE_OFF;
     } else if (changerStatus == 0x03) {
