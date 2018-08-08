@@ -202,6 +202,22 @@ void BC127CommandGetMetadata(BC127_t *bt)
 }
 
 /**
+ * BC127CommandList()
+ *     Description:
+ *         Request the paired devices list
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandList(BC127_t *bt)
+{
+    char command[5];
+    snprintf(command, 5, "LIST");
+    BC127SendCommand(bt, command);
+}
+
+/**
  * BC127CommandPause()
  *     Description:
  *         Pause the currently selected A2DP device
@@ -388,6 +404,36 @@ void BC127CommandSetPin(BC127_t *bt, char *pin)
 {
     char command[13];
     snprintf(command, 13, "SET PIN=%s", pin);
+    BC127SendCommand(bt, command);
+}
+
+/**
+ * BC127CommandSetProfiles()
+ *     Description:
+ *         Configuration of the BT profiles. Each value indicates the maximum
+ *         number of connections (up to 3).
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandSetProfiles(
+    BC127_t *bt,
+    uint8_t a2dp,
+    uint8_t avrcp,
+    uint8_t ble,
+    uint8_t hpf
+) {
+    char command[37];
+    snprintf(
+        command,
+        37,
+        "SET PROFILES=%d 0 %d 0 %d %d 1 1 0 0 1 0",
+        hpf,
+        a2dp,
+        avrcp,
+        ble
+    );
     BC127SendCommand(bt, command);
 }
 
@@ -580,6 +626,10 @@ void BC127Process(BC127_t *bt)
                 }
             }
             LogDebug("BT: Status - %s connected on link %s", msgBuf[3], msgBuf[1]);
+        } else if(strcmp(msgBuf[0], "LIST") == 0) {
+            // Request the device name. Note that the name will only be returned
+            // if the device is in range
+            BC127CommandName(bt, msgBuf[1]);
         } else if(strcmp(msgBuf[0], "CLOSE_OK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             // If the open connection is closing, update the state
