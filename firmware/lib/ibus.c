@@ -146,11 +146,10 @@ void IBusProcess(IBus_t *ibus)
             uint8_t msgLength = (uint8_t) ibus->rxBuffer[1] + 2;
             // Make sure we do not read more than the maximum packet length
             if (msgLength > IBUS_MAX_MSG_LENGTH) {
-                LogError("IBus: Invalid Message Length of %d found", msgLength);
+                LogError("IBus: RX Invalid Length [%d]", msgLength);
                 ibus->rxBufferIdx = 0;
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
                 CharQueueReset(&ibus->uart.rxQueue);
-                UARTSetModuleState(&ibus->uart, UART_STATE_IDLE);
             } else if (msgLength == ibus->rxBufferIdx) {
                 uint8_t idx;
                 unsigned char pkt[msgLength];
@@ -158,7 +157,6 @@ void IBusProcess(IBus_t *ibus)
                     pkt[idx] = ibus->rxBuffer[idx];
                     ibus->rxBuffer[idx] = 0x00;
                 }
-                UARTSetModuleState(&ibus->uart, UART_STATE_IDLE);
                 if (IBusValidateChecksum(pkt) == 1) {
                     LogDebug(
                         "IBus: %02X -> %02X Action: %02X Length: %d",
@@ -182,7 +180,7 @@ void IBusProcess(IBus_t *ibus)
                     }
                 } else {
                     LogError(
-                        "IBus: %02X -> %02X Length: %d has invalid checksum",
+                        "IBus: %02X -> %02X Length: %d - Invalid Checksum",
                         pkt[0],
                         pkt[2],
                         msgLength,
@@ -193,32 +191,26 @@ void IBusProcess(IBus_t *ibus)
             }
         }
         ibus->rxLastStamp = TimerGetMillis();
-    /*
-     * The following requirements must be met to transmit:
-     *     * There must be at least one packet waiting for transmission
-     *     * At least IBUS_TX_BUFFER_WAIT milliseconds must have passed since
-     *     our last transmission. This ensures that we do not spam the bus.
-     *     * The UART status must be idle, indicating that we are not receiving
-     *     data. This loop defines the UART Idle status (post-packet read).
-     */
     } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
-        (TimerGetMillis() - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT &&
-        UARTGetModuleState(&ibus->uart) == UART_STATE_IDLE
+               (TimerGetMillis() - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT
     ) {
         uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
         uint8_t idx;
-        /* At a glance this looks redundant, but it's not. It's plausible for
-         * the module to have gotten data in the time it took us to run the
-         * the code in the `else if` and here, so we check prior to transmission
+        /*
+         * Make sure that the STATUS pin on the TH3122 is low, indicating no
+         * bus activity, before transmitting
          */
-        if (UARTGetModuleState(&ibus->uart) == UART_STATE_IDLE &&
-            IBUS_UART_RX_STATUS == 1
-        ) {
+        if (IBUS_UART_STATUS == 0) {
             for (idx = 0; idx < msgLen; idx++) {
                 ibus->uart.registers->uxtxreg = ibus->txBuffer[ibus->txBufferReadIdx][idx];
                 // Wait for the data to leave the TX buffer
                 while ((ibus->uart.registers->uxsta & (1 << 9)) != 0);
             }
+            LogDebug(
+                "IBus: TX %02X -> %02X",
+                ibus->txBuffer[ibus->txBufferReadIdx][0],
+                ibus->txBuffer[ibus->txBufferReadIdx][2]
+            );
             // Clear the slot and advance the index
             memset(ibus->txBuffer[ibus->txBufferReadIdx], 0, msgLen);
             if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
@@ -226,7 +218,6 @@ void IBusProcess(IBus_t *ibus)
             } else {
                 ibus->txBufferReadIdx++;
             }
-            LogDebug("IBus: TX Complete");
         }
         ibus->txLastStamp = TimerGetMillis();
     }
@@ -238,12 +229,11 @@ void IBusProcess(IBus_t *ibus)
             (ibus->rxBufferIdx + 1) == IBUS_RX_BUFFER_SIZE
         ) {
             LogError(
-                "IBus: %d bytes in the RX buffer timed out",
+                "IBus: RX Buffer Timeout [%d]",
                 ibus->rxBufferIdx + 1
             );
             ibus->rxBufferIdx = 0;
             memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
-            UARTSetModuleState(&ibus->uart, UART_STATE_IDLE);
         }
     }
 }
@@ -312,33 +302,73 @@ void IBusStartup()
     EventTriggerCallback(IBusEvent_Startup, 0);
 }
 
-void IBusCommandDisplayMIDText(IBus_t *ibus, char *message)
+/**
+ * IBusCommandCDCAnnounce()
+ *     Description:
+ *        Send the CDC Announcement Message so the radio knows we're here
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandCDCAnnounce(IBus_t *ibus)
 {
-    unsigned char displayText[strlen(message) + 3];
-    displayText[0] = 0x23;
-    displayText[1] = 0x42;
-    displayText[2] = 0x32;
-    uint8_t idx;
-    for (idx = 0; idx < strlen(message); idx++) {
-        displayText[idx + 3] = message[idx];
-    }
-    IBusSendCommand(
-        ibus,
-        IBusDevice_TEL,
-        IBusDevice_IKE,
-        displayText,
-        sizeof(displayText)
-    );
+    LogDebug("IBus: Announce CD Changer");
+    const unsigned char cdcAlive[] = {0x02, 0x01};
+    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_LOC, cdcAlive, sizeof(cdcAlive));
 }
 
-void IBusCommandDisplayMIDTextClear(IBus_t *ibus)
+/**
+ * IBusCommandCDCKeepAlive()
+ *     Description:
+ *        Respond to the Radio's "Ping" with our "Pong"
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandCDCKeepAlive(IBus_t *ibus)
 {
-    IBusCommandDisplayMIDText(ibus, 0);
+    LogDebug("IBus: Send CD Changer Keep-Alive");
+    const unsigned char cdcPing[] = {0x02, 0x00};
+    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_RAD, cdcPing, sizeof(cdcPing));
+}
+
+/**
+ * IBusCommandCDCStatus()
+ *     Description:
+ *        Respond to the Radio's status request
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         unsigned char *status - The current CDC status
+ *         unsigned char *action - The current CDC action
+ *     Returns:
+ *         void
+ */
+void IBusCommandCDCStatus(IBus_t *ibus, unsigned char *status, unsigned char *action) {
+    LogDebug("IBus: Send CD Changer Status");
+    const unsigned char cdcStatus[] = {
+        IBusAction_CD_STATUS_REP,
+        *action,
+        *status,
+        0x00,
+        0x3F,
+        0x00,
+        0x01,
+        0x01
+    };
+    IBusSendCommand(
+        ibus,
+        IBusDevice_CDC,
+        IBusDevice_RAD,
+        cdcStatus,
+        sizeof(cdcStatus)
+    );
 }
 
 void IBusCommandGTGetDiagnostics(IBus_t *ibus)
 {
-    unsigned char msg[1] = {0x00};
+    unsigned char msg[] = {0x00};
     IBusSendCommand(ibus, IBusDevice_DIA, IBusDevice_GT, msg, 1);
 }
 
@@ -453,41 +483,61 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
     IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
 }
 
-void IBusCommandSendCdChangerAnnounce(IBus_t *ibus)
+/**
+ * IBusCommandIKEGetIgnition()
+ *     Description:
+ *        Send the command to request the ignition status
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKEGetIgnition(IBus_t *ibus)
 {
-    LogDebug("IBus: Announce CD Changer");
-    const unsigned char cdcAlive[] = {0x02, 0x01};
-    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_LOC, cdcAlive, sizeof(cdcAlive));
+    LogDebug("IBus: Get Ignition Status");
+    unsigned char msg[] = {0x10};
+    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_IKE, msg, 1);
 }
 
-void IBusCommandSendCdChangerKeepAlive(IBus_t *ibus)
+/**
+ * IBusCommandMIDText()
+ *     Description:
+ *        Send text to the radio's MID
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *message - The to display on the MID
+ *     Returns:
+ *         void
+ */
+void IBusCommandMIDText(IBus_t *ibus, char *message)
 {
-    LogDebug("IBus: Send CD Changer Keep-Alive");
-    const unsigned char cdcPing[] = {0x02, 0x00};
-    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_RAD, cdcPing, sizeof(cdcPing));
-}
-
-void IBusCommandSendCdChangerStatus(
-    IBus_t *ibus,
-    unsigned char *curStatus,
-    unsigned char *curAction
-) {
-    LogDebug("IBus: Send CD Changer Status");
-    const unsigned char cdcStatus[] = {
-        IBusAction_CD_STATUS_REP,
-        *curAction,
-        *curStatus,
-        0x00,
-        0x3F,
-        0x00,
-        0x01,
-        0x01
-    };
+    unsigned char displayText[strlen(message) + 3];
+    displayText[0] = 0x23;
+    displayText[1] = 0x42;
+    displayText[2] = 0x32;
+    uint8_t idx;
+    for (idx = 0; idx < strlen(message); idx++) {
+        displayText[idx + 3] = message[idx];
+    }
     IBusSendCommand(
         ibus,
-        IBusDevice_CDC,
-        IBusDevice_RAD,
-        cdcStatus,
-        sizeof(cdcStatus)
+        IBusDevice_TEL,
+        IBusDevice_IKE,
+        displayText,
+        sizeof(displayText)
     );
+}
+
+/**
+ * IBusCommandMIDTextClear()
+ *     Description:
+ *        Send an empty string to the MID to clear the display
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandMIDTextClear(IBus_t *ibus)
+{
+    IBusCommandMIDText(ibus, 0);
 }

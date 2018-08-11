@@ -519,7 +519,6 @@ void BC127Process(BC127_t *bt)
                 msg[i] = '\0';
             }
         }
-        UARTSetModuleState(&bt->uart, UART_STATE_IDLE);
         // Copy the message, since strtok adds a null terminator after the first
         // occurence of the delimiter, causes issues with any functions used going forward
         char tmpMsg[messageLength];

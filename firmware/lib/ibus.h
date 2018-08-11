@@ -16,7 +16,7 @@
 #define IBUS_RX_BUFFER_SIZE 256
 #define IBUS_TX_BUFFER_SIZE 24
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
-#define IBUS_TX_BUFFER_WAIT 100
+#define IBUS_TX_BUFFER_WAIT 25 // If we transmit faster, other modules may not hear us
 #include <stdint.h>
 #include <string.h>
 #include "../io_mappings.h"
@@ -124,11 +124,11 @@ typedef struct IBus_t {
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
-void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, size_t);
+void IBusCDCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, size_t);
 void IBusStartup();
-void IBusCommandDisplayMIDText(IBus_t *, char *);
-void IBusCommandDisplayMIDTextClear(IBus_t *);
-void IBusCommandDisplayMIDTextSymbol(IBus_t *, char);
+void IBusCommandCDCAnnounce(IBus_t *);
+void IBusCommandCDCKeepAlive(IBus_t *);
+void IBusCommandCDCStatus(IBus_t *, unsigned char *,  unsigned char *);
 void IBusCommandGTGetDiagnostics(IBus_t *);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
 void IBusCommandGTWriteIndexMk2(IBus_t *, uint8_t, char *);
@@ -137,7 +137,7 @@ void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *, unsigned char, unsigned 
 void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t, char *);
 void IBusCommandGTWriteTitle(IBus_t *ibus, char *);
 void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t, char *);
-void IBusCommandSendCdChangerAnnounce(IBus_t *);
-void IBusCommandSendCdChangerKeepAlive(IBus_t *);
-void IBusCommandSendCdChangerStatus(IBus_t *, unsigned char *,  unsigned char *);
+void IBusCommandIKEGetIgnition(IBus_t *);
+void IBusCommandMIDText(IBus_t *, char *);
+void IBusCommandMIDTextClear(IBus_t *);
 #endif /* IBUS_H */

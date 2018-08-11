@@ -56,7 +56,6 @@ static uint16_t *ROPR_PINS[] = {
 };
 
 static UART_t *UARTModules[UART_MODULES_COUNT];
-static uint8_t UARTModulesStatus[UART_MODULES_COUNT];
 
 // These values constitute the TX mode for each UART module
 static const uint8_t UART_TX_MODES[] = {3, 5, 19, 21};
@@ -138,24 +137,8 @@ UART_t * UARTGetModuleHandler(uint8_t moduleIndex)
     return UARTModules[moduleIndex - 1];
 }
 
-uint8_t UARTGetModuleState(UART_t *uart)
-{
-    return UARTModulesStatus[uart->moduleIndex];
-}
-
-void UARTSetModuleStateByIdx(uint8_t moduleIndex, uint8_t state)
-{
-    UARTModulesStatus[moduleIndex] = state;
-}
-
-void UARTSetModuleState(UART_t *uart, uint8_t state)
-{
-    UARTModulesStatus[uart->moduleIndex] = state;
-}
-
 static void UARTRXInterruptHandler(uint8_t moduleIndex)
 {
-    UARTSetModuleStateByIdx(moduleIndex, UART_STATE_RX);
     UART_t *uart = UARTModules[moduleIndex];
     if (uart != 0) {
         // While there's data on the RX buffer
@@ -190,7 +173,6 @@ static void UARTRXInterruptHandler(uint8_t moduleIndex)
 
 static void UARTTXInterruptHandler(uint8_t moduleIndex)
 {
-    UARTSetModuleStateByIdx(moduleIndex, UART_STATE_TX);
     UART_t *uart = UARTModules[moduleIndex];
     if (uart != 0) {
         while (uart->txQueue.size > 0) {
@@ -204,8 +186,6 @@ static void UARTTXInterruptHandler(uint8_t moduleIndex)
     }
     // Disable the interrupt after flushing the queue
     SetUARTTXIE(moduleIndex, 0);
-    // The data was sent, so set us idle again
-    UARTSetModuleStateByIdx(moduleIndex, UART_STATE_IDLE);
 }
 
 void UARTSendData(UART_t *uart, unsigned char *data)
