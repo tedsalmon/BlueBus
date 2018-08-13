@@ -16,6 +16,16 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
     Context.tempDisplay = CD53DisplayValueInit("");
     Context.btDeviceIndex = CD53_PAIRING_DEVICE_NONE;
     EventRegisterCallback(
+        BC127Event_DeviceReady,
+        &CD53BC127DeviceReady,
+        &Context
+    );
+    EventRegisterCallback(
+        BC127Event_DeviceDisconnected,
+        &CD53BC127DeviceDisconnected,
+        &Context
+    );
+    EventRegisterCallback(
         BC127Event_MetadataChange,
         &CD53BC127Metadata,
         &Context
@@ -23,11 +33,6 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         BC127Event_PlaybackStatusChange,
         &CD53BC127PlaybackStatus,
-        &Context
-    );
-    EventRegisterCallback(
-        BC127Event_DeviceReady,
-        &CD53BC127DeviceReady,
         &Context
     );
     EventRegisterCallback(
@@ -53,7 +58,7 @@ CD53DisplayValue_t CD53DisplayValueInit(char *text)
     strncpy(value.text, text, CD53_DISPLAY_TEXT_SIZE - 1);
     value.index = 0;
     value.timeout = 0;
-    value.status = 0;
+    value.status = CD53_DISPLAY_STATUS_OFF;
     return value;
 }
 
@@ -77,7 +82,7 @@ static void CD53SetTempDisplayText(
     strncpy(context->tempDisplay.text, str, CD53_DISPLAY_TEMP_TEXT_SIZE);
     context->tempDisplay.length = strlen(context->tempDisplay.text);
     context->tempDisplay.index = 0;
-    context->tempDisplay.status = 2;
+    context->tempDisplay.status = CD53_DISPLAY_STATUS_NEW;
     // Unlike the main display, we need to set the timouet beforehand, that way
     // the timer knows how many iterations to display the text for.
     context->tempDisplay.timeout = timeout;
@@ -146,10 +151,10 @@ void CD53IBusClearScreen(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
     if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-        // If we're display temp text, we need to override the screen
+        // If we're displaying temp text, we need to override the screen
         // state again, since it will now be clear
-        if (context->tempDisplay.status == 1) {
-            context->tempDisplay.status = 2;
+        if (context->tempDisplay.status == CD53_DISPLAY_STATUS_ON) {
+            context->tempDisplay.status = CD53_DISPLAY_STATUS_NEW;
         }
         TimerTriggerScheduledTask(context->displayUpdateTaskId);
     }
@@ -162,7 +167,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
     uint8_t btPlaybackStatus = context->bt->activeDevice.playbackStatus;
     if (changerStatus == 0x01) {
         // Stop Playing
-        IBusCommandDisplayMIDTextClear(context->ibus);
+        IBusCommandMIDTextClear(context->ibus);
         context->mode = CD53_MODE_OFF;
     } else if (changerStatus == 0x03) {
         // Start Playing
@@ -243,7 +248,6 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
                 CD53SetMainDisplayText(context, "BlueBus", 0);
             }
         } else if (pkt[5] == 0x05) {
-            //
             if (context->bt->pairedDevicesCount == 0) {
                 CD53SetTempDisplayText(context, "No Device", 4);
             } else {
@@ -258,10 +262,21 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
                     }
                 }
                 char text[12];
-                strncpy(text, dev->deviceName, 11);
-                text[11] = '\0';
+                removeNonAscii(text, dev->deviceName);
                 char cleanText[12];
-                removeNonAscii(cleanText, text);
+                strncpy(cleanText, text, 11);
+                text[11] = '\0';
+                // Add a space and asterisks to the end of the device name
+                // if it's the currently selected device
+                if (strcmp(dev->macId, context->bt->activeDevice.macId) == 0) {
+                    uint8_t startIdx = strlen(cleanText);
+                    if (startIdx > 9) {
+                        startIdx = 9;
+                    }
+                    cleanText[startIdx++] = 0x20;
+                    cleanText[startIdx++] = 0x2A;
+                }
+
                 CD53SetTempDisplayText(context, cleanText, -1);
             }
         } else if (pkt[5] == 0x06) {
@@ -288,20 +303,20 @@ void CD53TimerDisplay(void *ctx)
     CD53Context_t *context = (CD53Context_t *) ctx;
     if (context->ibus->cdChangerStatus > 0x01) {
         // Display the temp text, if there is any
-        if (context->tempDisplay.status > 0) {
+        if (context->tempDisplay.status > CD53_DISPLAY_STATUS_OFF) {
             if (context->tempDisplay.timeout == 0) {
-                context->tempDisplay.status = 0;
+                context->tempDisplay.status = CD53_DISPLAY_STATUS_OFF;
             } else if (context->tempDisplay.timeout > 0) {
                 context->tempDisplay.timeout--;
             } else if (context->tempDisplay.timeout < -1) {
-                context->tempDisplay.status = 0;
+                context->tempDisplay.status = CD53_DISPLAY_STATUS_OFF;
             }
-            if (context->tempDisplay.status == 2) {
-                IBusCommandDisplayMIDText(
+            if (context->tempDisplay.status == CD53_DISPLAY_STATUS_NEW) {
+                IBusCommandMIDText(
                     context->ibus,
                     context->tempDisplay.text
                 );
-                context->tempDisplay.status = 1;
+                context->tempDisplay.status = CD53_DISPLAY_STATUS_ON;
             }
             if (context->mainDisplay.length <= 11) {
                 context->mainDisplay.index = 0;
@@ -319,7 +334,7 @@ void CD53TimerDisplay(void *ctx)
                         11
                     );
                     text[11] = '\0';
-                    IBusCommandDisplayMIDText(context->ibus, text);
+                    IBusCommandMIDText(context->ibus, text);
                     // Pause at the beginning of the text
                     if (context->mainDisplay.index == 0) {
                         context->mainDisplay.timeout = 5;
@@ -334,7 +349,7 @@ void CD53TimerDisplay(void *ctx)
                     }
                 } else {
                     if (context->mainDisplay.index == 0) {
-                        IBusCommandDisplayMIDText(
+                        IBusCommandMIDText(
                             context->ibus,
                             context->mainDisplay.text
                         );

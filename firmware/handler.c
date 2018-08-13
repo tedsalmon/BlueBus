@@ -25,7 +25,9 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     Context.ibus = ibus;
     Context.cdChangerLastKeepAlive = TimerGetMillis();
     Context.btStartupIsRun = 0;
-    Context.ignitionStatus = 0;
+    // Assume the ignition is on so we don't update the state of the
+    // BC127 unnecessarily
+    Context.ignitionStatus = 1;
     EventRegisterCallback(
         BC127Event_DeviceLinkConnected,
         &HandlerBC127DeviceLinkConnected,
@@ -235,6 +237,7 @@ void HandlerBC127Startup(void *ctx, unsigned char *tmp)
  *     Description:
  *         On application startup, announce that we are a CDC on the IBus. We
  *         also poll the GT, if it's on the network, for its diagnostics info
+ *         and the IKE for the ignition status
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *tmp - Any event data
@@ -244,8 +247,9 @@ void HandlerBC127Startup(void *ctx, unsigned char *tmp)
 void HandlerIBusStartup(void *ctx, unsigned char *tmp)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    IBusCommandCDCAnnounce(context->ibus);
+    IBusCommandIKEGetIgnition(context->ibus);
     IBusCommandGTGetDiagnostics(context->ibus);
-    IBusCommandSendCdChangerAnnounce(context->ibus);
     // Always assume that we're playing, that way the radio can tell us
     // if we shouldn't be, then we can deduce the system state
     context->ibus->cdChangerStatus = 0x09;
@@ -264,7 +268,7 @@ void HandlerIBusStartup(void *ctx, unsigned char *tmp)
 void HandlerIBusCDChangerKeepAlive(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    IBusCommandSendCdChangerKeepAlive(context->ibus);
+    IBusCommandCDCKeepAlive(context->ibus);
     context->cdChangerLastKeepAlive = TimerGetMillis();
 }
 
@@ -301,7 +305,7 @@ void HandlerIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     } else if (changerStatus == 0x07 || changerStatus == 0x08) {
         curStatus = changerStatus;
     }
-    IBusCommandSendCdChangerStatus(context->ibus, &curStatus, &curAction);
+    IBusCommandCDCStatus(context->ibus, &curStatus, &curAction);
     context->cdChangerLastKeepAlive = TimerGetMillis();
 }
 
@@ -344,14 +348,14 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         BC127CommandDiscoverable(context->bt, BC127_STATE_OFF);
         BC127CommandConnectable(context->bt, BC127_STATE_OFF);
         BC127CommandClose(context->bt, BC127_CLOSE_ALL);
-    } else {
-        if (context->ignitionStatus == 0) {
-            // Ignore the ignition states while developing
-            // HandlerIBusStartup(ctx, 0);
-            // Set the BT module connectable and discoverable
-            // BC127CommandDiscoverable(context->bt, BC127_STATE_ON);
-            // BC127CommandConnectable(context->bt, BC127_STATE_ON);
-        }
+    } else if (context->ignitionStatus == 0) {
+        IBusCommandCDCAnnounce(context->ibus);
+        // Always assume that we're playing, that way the radio can tell us
+        // if we shouldn't be, then we can deduce the system state
+        context->ibus->cdChangerStatus = 0x09;
+        // Set the BT module connectable and discoverable
+        BC127CommandDiscoverable(context->bt, BC127_STATE_ON);
+        BC127CommandConnectable(context->bt, BC127_STATE_ON);
         context->ignitionStatus = 1;
     }
 }
@@ -375,7 +379,7 @@ void HandlerTimerCDChangerAnnounce(void *ctx)
     if ((now - context->cdChangerLastKeepAlive) >= HANDLER_CDC_ANOUNCE_INT &&
         context->ignitionStatus == 1
     ) {
-        IBusCommandSendCdChangerAnnounce(context->ibus);
+        IBusCommandCDCAnnounce(context->ibus);
         context->cdChangerLastKeepAlive = now;
     }
 

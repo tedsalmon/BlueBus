@@ -78,6 +78,15 @@ static void BMBTMainMenu(BMBTContext_t *context)
 
 static void BMBTSetStaticScreen(BMBTContext_t *context, char *f1, char *f2, char *f3)
 {
+    if (strlen(f1)) {
+        strncpy(f1, " ", 1);
+    }
+    if (strlen(f2)) {
+        strncpy(f2, " ", 1);
+    }
+    if (strlen(f3)) {
+        strncpy(f3, " ", 1);
+    }
     IBusCommandGTWriteIndexStatic(context->ibus, 1, f1);
     IBusCommandGTWriteIndexStatic(context->ibus, 2, f2);
     IBusCommandGTWriteIndexStatic(context->ibus, 3, f3);
@@ -253,10 +262,20 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                     if (dev != 0) {
                         char name[33];
                         removeNonAscii(name, dev->deviceName);
-                        char cleanName[12];
-                        strncpy(cleanName, name, 11);
-                        cleanName[11] = '\0';
-                        IBusCommandGTWriteIndexMk4(context->ibus, screenIdx, cleanName);
+                        char cleanText[12];
+                        strncpy(cleanText, name, 11);
+                        cleanText[11] = '\0';
+                        // Add a space and asterisks to the end of the device name
+                        // if it's the currently selected device
+                        if (strcmp(dev->macId, context->bt->activeDevice.macId) == 0) {
+                            uint8_t startIdx = strlen(cleanText);
+                            if (startIdx > 9) {
+                                startIdx = 9;
+                            }
+                            cleanText[startIdx++] = 0x20;
+                            cleanText[startIdx++] = 0x2A;
+                        }
+                        IBusCommandGTWriteIndexMk4(context->ibus, screenIdx, cleanText);
                         screenIdx++;
                     }
                 }

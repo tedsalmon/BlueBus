@@ -21,7 +21,16 @@
 #define TIMER_TASKS_MAX 16
 #include <stdint.h>
 #include <xc.h>
-
+/**
+ * TimerScheduledTask_t
+ *     Description:
+ *         This object defines a scheduled task
+ *     Fields:
+ *         (*task)(void *) - The pointer to the function to execute
+ *         *context - A pointer to the context to pass to the function pointer
+ *         interval - The number of ticks to let pass before executing (millseconds)
+ *         ticks - The amount of ticks that have passed since the last call
+ */
 typedef struct TimerScheduledTask_t {
     void (*task)(void *);
     void *context;

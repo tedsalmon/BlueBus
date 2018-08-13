@@ -649,6 +649,7 @@ void BC127Process(BC127_t *bt)
             );
         } else if (strcmp(msgBuf[0], "OPEN_ERROR") == 0) {
             if (bt->activeDevice.deviceId != 0) {
+                // Throttle?
                 BC127CommandProfileOpen(bt, bt->activeDevice.macId, msgBuf[1]);
             }
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
@@ -677,17 +678,19 @@ void BC127Process(BC127_t *bt)
             EventTriggerCallback(BC127Event_DeviceReady, 0);
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
         } else if (strcmp(msgBuf[0], "STATE") == 0) {
-            if (strcmp(msgBuf[2], "CONNECTABLE[ON]") == 0) {
-                bt->connectable = BC127_STATE_ON;
-            } else if (strcmp(msgBuf[2], "CONNECTABLE[OFF]") == 0) {
-                bt->connectable = BC127_STATE_OFF;
+            if (sizeof(msgBuf) > 3) {
+                if (strcmp(msgBuf[2], "CONNECTABLE[ON]") == 0) {
+                    bt->connectable = BC127_STATE_ON;
+                } else if (strcmp(msgBuf[2], "CONNECTABLE[OFF]") == 0) {
+                    bt->connectable = BC127_STATE_OFF;
+                }
+                if (strcmp(msgBuf[3], "DISCOVERABLE[ON]") == 0) {
+                    bt->discoverable = BC127_STATE_ON;
+                } else if (strcmp(msgBuf[3], "DISCOVERABLE[OFF]") == 0) {
+                    bt->discoverable = BC127_STATE_OFF;
+                }
+                LogDebug("BT: Got Status %s %s", msgBuf[2], msgBuf[3]);
             }
-            if (strcmp(msgBuf[3], "DISCOVERABLE[ON]") == 0) {
-                bt->discoverable = BC127_STATE_ON;
-            } else if (strcmp(msgBuf[3], "DISCOVERABLE[OFF]") == 0) {
-                bt->discoverable = BC127_STATE_OFF;
-            }
-            LogDebug("BT: Got Status %s %s", msgBuf[2], msgBuf[3]);
         }
     }
 }

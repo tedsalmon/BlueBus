@@ -14,6 +14,9 @@
 #include "../lib/ibus.h"
 #include "../lib/timer.h"
 #define CD53_DISPLAY_SCROLL_SPEED 500
+#define CD53_DISPLAY_STATUS_OFF 0
+#define CD53_DISPLAY_STATUS_ON 1
+#define CD53_DISPLAY_STATUS_NEW 2
 #define CD53_DISPLAY_TEXT_SIZE 255
 #define CD53_DISPLAY_TEMP_TEXT_SIZE 11
 #define CD53_MODE_OFF 0
