@@ -73,6 +73,7 @@ UART_t UARTInit(
     uart.txQueue = CharQueueInit();
     uart.rxQueue = CharQueueInit();
     uart.moduleIndex = uartModule - 1;
+    uart.rxError = 0;
     // Unlock the reprogrammable pin register
     __builtin_write_OSCCONL(OSCCON & 0xBF);
     // Set the RX Pin and register. The register comes from the PIC24FJ header
@@ -146,22 +147,27 @@ static void UARTRXInterruptHandler(uint8_t moduleIndex)
             // Reading the byte is sometimes a requirement to clear an error
             unsigned char byte = uart->registers->uxrxreg;
             // No frame or parity errors
-            if ((uart->registers->uxsta & 0xC) == 0) {
+            uint16_t usta = uart->registers->uxsta;
+            if ((usta & 0xC) == 0) {
                 // Clear the buffer overflow error, if it exists
-                if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
+                if (CHECK_BIT(usta, 1) != 0) {
+                    uart->rxError ^= UART_ERR_OERR;
                     uart->registers->uxsta ^= 0x2;
                 }
                 CharQueueAdd(&uart->rxQueue, byte);
             } else {
+                // Set a "General" Error
+                uart->rxError ^= UART_ERR_GERR;
                 // Clear the buffer overflow error, if it is set
-                if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
+                if (CHECK_BIT(usta, 1) != 0) {
+                    uart->rxError ^= UART_ERR_OERR;
                     uart->registers->uxsta ^= 0x2;
-                } else {
-                    LogError(
-                        "UART[%d]: FERR/PERR -> 0x%X",
-                        moduleIndex + 1,
-                        uart->registers->uxsta
-                    );
+                }
+                if (CHECK_BIT(usta, 2) != 0) {
+                    uart->rxError ^= UART_ERR_FERR;
+                }
+                if (CHECK_BIT(usta, 3) != 0) {
+                    uart->rxError ^= UART_ERR_PERR;
                 }
             }
         }
@@ -186,6 +192,25 @@ static void UARTTXInterruptHandler(uint8_t moduleIndex)
     }
     // Disable the interrupt after flushing the queue
     SetUARTTXIE(moduleIndex, 0);
+}
+
+void UARTReportErrors(UART_t *uart)
+{
+    if (uart->rxError != 0) {
+        if ((uart->rxError & UART_ERR_GERR) != 0) {
+            LogError("UART[%d]: GERR", uart->moduleIndex + 1);
+        }
+        if ((uart->rxError & UART_ERR_OERR) != 0) {
+            LogError("UART[%d]: OERR", uart->moduleIndex + 1);
+        }
+        if ((uart->rxError & UART_ERR_FERR) != 0) {
+            LogError("UART[%d]: FERR", uart->moduleIndex + 1);
+        }
+        if ((uart->rxError & UART_ERR_PERR) != 0) {
+            LogError("UART[%d]: PERR", uart->moduleIndex + 1);
+        }
+        uart->rxError = 0;
+    }
 }
 
 void UARTSendData(UART_t *uart, unsigned char *data)

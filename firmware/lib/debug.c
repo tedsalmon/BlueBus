@@ -14,7 +14,6 @@
  *     Params:
  *         const char *type
  *         char *data
- *         va_args ...
  *     Returns:
  *         void
  */
@@ -26,6 +25,28 @@ void LogMessage(const char *type, char *data)
         long long unsigned int ts = (long long unsigned int) TimerGetMillis();
         sprintf(output, "[%llu] %s: %s\r\n", ts, type, data);
         UARTSendString(debugger, output);
+    }
+}
+
+/**
+ * LogRaw()
+ *     Description:
+ *         Sends the given data over to the debug UART.
+ *     Params:
+ *         char *data
+ *         va_args ...
+ *     Returns:
+ *         void
+ */
+void LogRaw(const char *format, ...)
+{
+    UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
+    if (debugger != 0) {
+        char buffer[255];
+        va_list args;
+        va_start(args, format);
+        vsprintf(buffer, format, args);
+        UARTSendString(debugger, buffer);
     }
 }
 

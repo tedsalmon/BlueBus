@@ -19,7 +19,11 @@ BC127_t BC127Init()
 {
     BC127_t bt;
     bt.activeDevice = BC127ConnectionInit();
+    bt.connectable = BC127_STATE_ON;
+    bt.discoverable = BC127_STATE_ON;
+    bt.metadataStatus = BC127_METADATA_STATUS_NEW;
     bt.pairedDevicesCount = 0;
+    memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
     // Make sure that we initialize the char arrays to all zeros
     BC127ClearMetadata(&bt);
     bt.uart = UARTInit(
@@ -68,7 +72,22 @@ void BC127ClearPairedDevices(BC127_t *bt)
             memset(btConn, 0, sizeof(bt->pairedDevices[idx]));
         }
     }
+    memset(bt->pairingErrors, 0, sizeof(bt->pairingErrors));
     bt->pairedDevicesCount = 0;
+}
+
+/**
+ * BC127ClearPairingErrors()
+ *     Description:
+ *        Clear the pairing error list
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127ClearPairingErrors(BC127_t *bt)
+{
+    memset(bt->pairingErrors, 0, sizeof(bt->pairingErrors));
 }
 
 /**
@@ -530,12 +549,15 @@ void BC127Process(BC127_t *bt)
             msgBuf[i++] = p;
             p = strtok(NULL, " ");
         }
+        LogDebug("BT: %s", msg);
+
         if (strcmp(msgBuf[0], "AVRCP_MEDIA") == 0) {
             // Always copy size of buffer minus one to make sure we're always
             // null terminated
             if (strcmp(msgBuf[1], "TITLE:") == 0) {
                 // Clear Metadata since we're receiving new data
                 BC127ClearMetadata(bt);
+                bt->metadataStatus = BC127_METADATA_STATUS_NEW;
                 strncpy(
                     bt->activeDevice.title,
                     &msg[BC127_METADATA_TITLE_OFFSET],
@@ -547,20 +569,35 @@ void BC127Process(BC127_t *bt)
                     &msg[BC127_METADATA_ARTIST_OFFSET],
                     BC127_METADATA_FIELD_SIZE - 1
                 );
-            } else if (strcmp(msgBuf[1], "ALBUM:") == 0) {
-                strncpy(
-                    bt->activeDevice.album,
-                    &msg[BC127_METADATA_ALBUM_OFFSET],
-                    BC127_METADATA_FIELD_SIZE - 1
-                );
-            } else if (strcmp(msgBuf[1], "PLAYING_TIME(MS):") == 0) {
-                LogDebug(
-                    "BT: title=%s,artist=%s,album=%s",
-                    bt->activeDevice.title,
-                    bt->activeDevice.artist,
-                    bt->activeDevice.album
-                );
-                EventTriggerCallback(BC127Event_MetadataChange, 0);
+            } else {
+                if (strcmp(msgBuf[1], "ALBUM:") == 0) {
+                    strncpy(
+                        bt->activeDevice.album,
+                        &msg[BC127_METADATA_ALBUM_OFFSET],
+                        BC127_METADATA_FIELD_SIZE - 1
+                    );
+                }
+                if (bt->metadataStatus == BC127_METADATA_STATUS_NEW) {
+                    // In some instances, we might not get any metadata
+                    // so we need to request it again
+                    if (strlen(bt->activeDevice.title) == 0 &&
+                        strlen(bt->activeDevice.artist) == 0 &&
+                        strlen(bt->activeDevice.album) == 0
+                    ) {
+                        BC127CommandGetMetadata(bt);
+                    } else {
+                        LogDebug(
+                            "BT: title=%s,artist=%s,album=%s",
+                            bt->activeDevice.title,
+                            bt->activeDevice.artist,
+                            bt->activeDevice.album
+                        );
+                        EventTriggerCallback(BC127Event_MetadataChange, 0);
+                    }
+                    // Setting this flag in either event prevents us from
+                    // potentially spamming the BC127 with metadata requests
+                    bt->metadataStatus = BC127_METADATA_STATUS_CUR;
+                }
             }
         } else if(strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
@@ -593,6 +630,7 @@ void BC127Process(BC127_t *bt)
                     BC127CommandGetDeviceName(bt, msgBuf[4]);
                 }
                 isNew = 1;
+                bt->discoverable = BC127_STATE_OFF;
             }
             if (bt->activeDevice.deviceId == deviceId) {
                 uint8_t linkId = strToInt(msgBuf[1]);
@@ -641,6 +679,16 @@ void BC127Process(BC127_t *bt)
                 }
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
+            // Clear the pairing error
+            if (strcmp(msgBuf[2], "A2DP") == 0) {
+                bt->pairingErrors[BC127_LINK_A2DP] = 0;
+            }
+            if (strcmp(msgBuf[2], "AVRCP") == 0) {
+                bt->pairingErrors[BC127_LINK_AVRCP] = 0;
+            }
+            if (strcmp(msgBuf[2], "HPF") == 0) {
+                bt->pairingErrors[BC127_LINK_HPF] = 0;
+            }
             BC127ConnectionOpenProfile(&bt->activeDevice, msgBuf[2], linkId);
             LogDebug("BT: Open %s for ID %s", msgBuf[2], msgBuf[1]);
             EventTriggerCallback(
@@ -649,8 +697,15 @@ void BC127Process(BC127_t *bt)
             );
         } else if (strcmp(msgBuf[0], "OPEN_ERROR") == 0) {
             if (bt->activeDevice.deviceId != 0) {
-                // Throttle?
-                BC127CommandProfileOpen(bt, bt->activeDevice.macId, msgBuf[1]);
+                if (strcmp(msgBuf[1], "A2DP") == 0) {
+                    bt->pairingErrors[BC127_LINK_A2DP] = 1;
+                }
+                if (strcmp(msgBuf[1], "AVRCP") == 0) {
+                    bt->pairingErrors[BC127_LINK_AVRCP] = 1;
+                }
+                if (strcmp(msgBuf[1], "HPF") == 0) {
+                    bt->pairingErrors[BC127_LINK_HPF] = 1;
+                }
             }
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
             char deviceName[33];
@@ -658,7 +713,7 @@ void BC127Process(BC127_t *bt)
             uint8_t strIdx = 0;
             for (idx = 0; idx < strlen(msg) - 19; idx++) {
                 char c = msg[idx + 19];
-                // 0x22 (") is the character that delimits the device name
+                // 0x22 (") is the character that wraps the device name
                 if (c != 0x22) {
                     deviceName[strIdx] = c;
                     strIdx++;
@@ -668,17 +723,22 @@ void BC127Process(BC127_t *bt)
             if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
                 memset(bt->activeDevice.deviceName, 0, 33);
                 strncpy(bt->activeDevice.deviceName, deviceName, 32);
+                bt->discoverable = BC127_STATE_OFF;
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
             BC127PairedDeviceInit(bt, msgBuf[1], deviceName);
+            EventTriggerCallback(BC127Event_DeviceFound, (unsigned char *) msgBuf[1]);
             LogDebug("BT: New Pairing Profile %s -> %s", msgBuf[1], deviceName);
-        } else if(strcmp(msgBuf[0], "Ready") == 0) {
+        } else if(strcmp(msgBuf[0], "Build:") == 0) {
+            // The device sometimes resets without sending the "Ready" message
+            // so we instead watch for the build string
             bt->activeDevice = BC127ConnectionInit();
             LogDebug("BT: Ready");
-            EventTriggerCallback(BC127Event_DeviceReady, 0);
+            EventTriggerCallback(BC127Event_Boot, 0);
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
         } else if (strcmp(msgBuf[0], "STATE") == 0) {
-            if (sizeof(msgBuf) > 3) {
+            // Make sure the state is not "off"
+            if (strcmp(msgBuf[1], "OFF") != 0) {
                 if (strcmp(msgBuf[2], "CONNECTABLE[ON]") == 0) {
                     bt->connectable = BC127_STATE_ON;
                 } else if (strcmp(msgBuf[2], "CONNECTABLE[OFF]") == 0) {
@@ -693,6 +753,7 @@ void BC127Process(BC127_t *bt)
             }
         }
     }
+    UARTReportErrors(&bt->uart);
 }
 
 /**

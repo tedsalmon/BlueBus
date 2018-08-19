@@ -12,6 +12,8 @@
 #include "../lib/event.h"
 #include "../lib/ibus.h"
 #include "../lib/timer.h"
+#define BMBT_DISPLAY_OFF 0
+#define BMBT_DISPLAY_ON 1
 #define BMBT_MENU_MAIN 0
 #define BMBT_MENU_NOW_PLAYING 1
 #define BMBT_MENU_DEVICE_SELECTION 2
@@ -24,6 +26,7 @@ typedef struct BMBTContext_t {
     IBus_t *ibus;
     uint8_t menu;
     uint8_t mode;
+    uint8_t displayMode;
     int8_t selectedPairingDevice;
 } BMBTContext_t;
 void BMBTInit(BC127_t *, IBus_t *);
@@ -35,4 +38,6 @@ void BMBTBC127Ready(void *, unsigned char *);
 void BMBTIBusBMBTButtonPress(void *, unsigned char *);
 void BMBTIBusCDChangerStatus(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);
+void BMBTRADUpdateMainArea(void *, unsigned char *);
+void BMBTScreenModeUpdate(void *, unsigned char *);
 #endif /* BMBT_H */

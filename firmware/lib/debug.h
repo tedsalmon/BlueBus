@@ -12,6 +12,7 @@
 #include "timer.h"
 #include "uart.h"
 void LogMessage(const char *, char *);
+void LogRaw(const char *, ...);
 void LogError(const char *, ...);
 void LogDebug(const char *, ...);
 void LogInfo(const char *, ...);

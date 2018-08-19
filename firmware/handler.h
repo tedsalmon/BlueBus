@@ -16,25 +16,29 @@
 #include "lib/utils.h"
 #include "ui/cd53.h"
 #include "ui/bmbt.h"
+#define HANDLER_BT_CONN_OFF 0
+#define HANDLER_BT_CONN_ON 1
 #define HANDLER_UI_MODE_CD53 0
 #define HANDLER_UI_MODE_BMBT 1
 typedef struct HandlerContext_t {
     BC127_t *bt;
     IBus_t *ibus;
     uint8_t btStartupIsRun;
-    uint8_t ignitionStatus;
+    uint8_t btConnectionStatus;
     uint32_t cdChangerLastKeepAlive;
 } HandlerContext_t;
 void HandlerInit(BC127_t *, IBus_t *, uint8_t);
 void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
 void HandlerBC127DeviceDisconnected(void *, unsigned char *);
+void HandlerBC127DeviceFound(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
 void HandlerBC127Ready(void *, unsigned char *);
 void HandlerBC127Startup(void *, unsigned char *);
 void HandlerIBusStartup(void *, unsigned char *);
-void HandlerIBusCDChangerKeepAlive(void *, unsigned char *);
-void HandlerIBusCDChangerStatus(void *, unsigned char *);
+void HandlerIBusCDCKeepAlive(void *, unsigned char *);
+void HandlerIBusCDCStatus(void *, unsigned char *);
 void HandlerIBusGTDiagnostics(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
-void HandlerTimerCDChangerAnnounce(void *);
+void HandlerTimerCDCAnnounce(void *);
+void HandlerTimerOpenProfileErrors(void *);
 #endif /* HANDLER_H */

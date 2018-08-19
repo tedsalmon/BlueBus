@@ -12,9 +12,12 @@
 #define IBUS_GT_MKIV 4
 #define IBUS_GT_HW_ID_OFFSET 11
 #define IBUS_GT_SW_ID_OFFSET 33
+#define IBUS_IGNITION_OFF 0
+#define IBUS_IGNITION_ON 1
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
+#define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
 #define IBUS_RX_BUFFER_SIZE 256
-#define IBUS_TX_BUFFER_SIZE 24
+#define IBUS_TX_BUFFER_SIZE 32
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 25 // If we transmit faster, other modules may not hear us
 #include <stdint.h>
@@ -57,10 +60,12 @@ const static unsigned char IBusDevice_ANZV = 0xE7; /* Front display */
 const static unsigned char IBusDevice_BMBT = 0xF0; /* On-board monitor operating part */
 const static unsigned char IBusDevice_LOC = 0xFF; /* Local */
 
-const static unsigned char IBusDevice_BMBT_Button_Next_Out = 0x80;
-const static unsigned char IBusDevice_BMBT_Button_Prev_Out = 0x90;
-const static unsigned char IBusDevice_BMBT_Button_PlayPause_Out = 0x94;
-const static unsigned char IBusDevice_BMBT_Button_Knob_Out = 0x85;
+// All buttons presses are triggered on the "Push" message
+const static unsigned char IBusDevice_BMBT_Button_Next = 0x00;
+const static unsigned char IBusDevice_BMBT_Button_Prev = 0x10;
+const static unsigned char IBusDevice_BMBT_Button_PlayPause = 0x14;
+const static unsigned char IBusDevice_BMBT_Button_Knob = 0x05;
+const static unsigned char IBusDevice_BMBT_Button_Display = 0x30;
 
 const static unsigned char IBusAction_BMBT_BUTTON = 0x48;
 
@@ -72,7 +77,7 @@ const static unsigned char IBusAction_CD_STATUS_REP = 0x39;
 
 const static unsigned char IBusAction_CD_STATUS_REQ_PING = 0x00;
 const static unsigned char IBusAction_CD_STATUS_REQ_STOP = 0x01;
-const static unsigned char IBusAction_CD_STATUS_REQ_PLAY = 0x01;
+const static unsigned char IBusAction_CD_STATUS_REQ_PLAY = 0x02;
 
 const static unsigned char IBusAction_CD53_SEEK = 0x0A;
 const static unsigned char IBusAction_CD53_CD_SEL = 0x06;
@@ -84,11 +89,14 @@ const static unsigned char IBusAction_GT_WRITE_MK4 = 0x21;
 const static unsigned char IBusAction_GT_WRITE_TITLE = 0x23;
 // Newer GTs use a different action to write to fields
 const static unsigned char IBusAction_GT_WRITE_MK2 = 0xA5;
-const static unsigned char IBusAction_GT_WRITE_MENU = 0x60;
+const static unsigned char IBusAction_GT_WRITE_INDEX = 0x60;
 const static unsigned char IBusAction_GT_WRITE_ZONE = 0x62;
 const static unsigned char IBusAction_GT_WRITE_STATIC = 0x63;
 
 const static unsigned char IBusAction_IGN_STATUS_REQ = 0x11;
+
+const static unsigned char IBusAction_RAD_SCREEN_MODE_UPDATE = 0x46;
+const static unsigned char IBusAction_RAD_UPDATE_MAIN_AREA = 0x23;
 
 const static uint8_t IBusEvent_Startup = 33;
 const static uint8_t IBusEvent_CDKeepAlive = 34;
@@ -98,6 +106,8 @@ const static uint8_t IBusEvent_IgnitionStatus = 37;
 const static uint8_t IBusEvent_GTDiagResponse = 38;
 const static uint8_t IBusEvent_BMBTButton = 39;
 const static uint8_t IBusEvent_GTMenuSelect = 40;
+const static uint8_t IBusEvent_ScreenModeUpdate = 41;
+const static uint8_t IBusEvent_RADUpdateMainArea = 42;
 
 const static char IBusMIDSymbolNext = 0xC9;
 const static char IBusMIDSymbolBack = 0xCA;
@@ -124,11 +134,10 @@ typedef struct IBus_t {
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
-void IBusCDCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, size_t);
 void IBusStartup();
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCKeepAlive(IBus_t *);
-void IBusCommandCDCStatus(IBus_t *, unsigned char *,  unsigned char *);
+void IBusCommandCDCStatus(IBus_t *, unsigned char,  unsigned char);
 void IBusCommandGTGetDiagnostics(IBus_t *);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
 void IBusCommandGTWriteIndexMk2(IBus_t *, uint8_t, char *);
@@ -140,4 +149,6 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t, char *);
 void IBusCommandIKEGetIgnition(IBus_t *);
 void IBusCommandMIDText(IBus_t *, char *);
 void IBusCommandMIDTextClear(IBus_t *);
+void IBusCommandRADDisableMenu(IBus_t *);
+void IBusCommandRADEnableMenu(IBus_t *);
 #endif /* IBUS_H */

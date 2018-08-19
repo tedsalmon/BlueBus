@@ -16,7 +16,7 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
     Context.tempDisplay = CD53DisplayValueInit("");
     Context.btDeviceIndex = CD53_PAIRING_DEVICE_NONE;
     EventRegisterCallback(
-        BC127Event_DeviceReady,
+        BC127Event_Boot,
         &CD53BC127DeviceReady,
         &Context
     );
@@ -289,6 +289,13 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
             } else {
                 CD53SetTempDisplayText(context, "Pairing On", timeout);
                 state = BC127_STATE_ON;
+                if (context->bt->activeDevice.deviceId != 0) {
+                    // To pair a new device, we must disconnect the active one
+                    BC127CommandClose(
+                        context->bt,
+                        context->bt->activeDevice.deviceId
+                    );
+                }
             }
             BC127CommandDiscoverable(context->bt, state);
         } else {

@@ -32,12 +32,18 @@
 #define BC127_METADATA_TITLE_OFFSET 19
 #define BC127_METADATA_ARTIST_OFFSET 20
 #define BC127_METADATA_ALBUM_OFFSET 19
+#define BC127_METADATA_STATUS_NEW 1
+#define BC127_METADATA_STATUS_CUR 2
 #define BC127_MSG_END_CHAR 0x0D
 #define BC127_MSG_LF_CHAR 0x0A
 #define BC127_MSG_DELIMETER 0x20
 #define BC127_SHORT_NAME_MAX_LEN 7
 #define BC127_STATE_OFF 0
 #define BC127_STATE_ON 1
+#define BC127_PROFILE_COUNT 4
+#define BC127_LINK_A2DP 0
+#define BC127_LINK_AVRCP 1
+#define BC127_LINK_HPF 3
 
 const static uint8_t BC127Event_Startup = 0;
 const static uint8_t BC127Event_MetadataChange = 1;
@@ -45,7 +51,8 @@ const static uint8_t BC127Event_PlaybackStatusChange = 2;
 const static uint8_t BC127Event_DeviceConnected = 3;
 const static uint8_t BC127Event_DeviceLinkConnected = 4;
 const static uint8_t BC127Event_DeviceDisconnected = 5;
-const static uint8_t BC127Event_DeviceReady = 6;
+const static uint8_t BC127Event_Boot = 6;
+const static uint8_t BC127Event_DeviceFound = 7;
 
 /**
  * BC127PairedDevice_t
@@ -95,19 +102,36 @@ typedef struct BC127Connection_t {
  *     Description:
  *         This object defines helper functionality to allow us to interact
  *         with the BC127
+ *     Fields:
+ *         activeDevice - The currently paired device
+ *         pairedDevices - The list of devices we have paired with that are
+ *             in range as of boot time or the last time the key was put in
+ *             position 0.
+ *         connectable - The current connectable state (0 = Off, 1 = On)
+ *         discoverable - The current discoverable state (0 = Off, 1 = On)
+ *         metadataStatus - Tracks if the metadata is new, so we can publish it
+ *         pairedDevicesCount - The number of devices that have paired with us
+ *            in all of time. The max is 8.
+ *         pairingErrors - The key indicates the profile in error and the value
+ *             in error. This is used to track what profiles we need to re-attempt
+ *             a connection with.
  */
 typedef struct BC127_t {
     BC127Connection_t activeDevice;
     BC127PairedDevice_t pairedDevices[BC127_MAX_DEVICE_PAIRED];
-    uint8_t pairedDevicesCount;
     uint8_t connectable;
     uint8_t discoverable;
+    uint8_t metadataStatus;
+    uint8_t pairedDevicesCount;
+    uint8_t pairingErrors[BC127_PROFILE_COUNT];
     UART_t uart;
 } BC127_t;
 
 BC127_t BC127Init();
 void BC127ClearConnections(BC127_t *);
 void BC127ClearMetadata(BC127_t *);
+void BC127ClearPairedDevices(BC127_t *);
+void BC127ClearPairingErrors(BC127_t *);
 void BC127CommandBackward(BC127_t *);
 void BC127CommandClose(BC127_t *, uint8_t);
 void BC127CommandConnectable(BC127_t *, uint8_t);

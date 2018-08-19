@@ -6,18 +6,19 @@
                    projectFiles="true">
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <itemPath>lib/bc127.h</itemPath>
-        <itemPath>lib/uart.h</itemPath>
         <itemPath>lib/char_queue.h</itemPath>
+        <itemPath>lib/debug.h</itemPath>
+        <itemPath>lib/eeprom.h</itemPath>
+        <itemPath>lib/event.h</itemPath>
         <itemPath>lib/ibus.h</itemPath>
         <itemPath>lib/sfr_setters.h</itemPath>
-        <itemPath>lib/debug.h</itemPath>
-        <itemPath>lib/utils.h</itemPath>
         <itemPath>lib/timer.h</itemPath>
-        <itemPath>lib/event.h</itemPath>
+        <itemPath>lib/uart.h</itemPath>
+        <itemPath>lib/utils.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
-        <itemPath>ui/cd53.h</itemPath>
         <itemPath>ui/bmbt.h</itemPath>
+        <itemPath>ui/cd53.h</itemPath>
       </logicalFolder>
       <itemPath>io_mappings.h</itemPath>
       <itemPath>handler.h</itemPath>
@@ -31,22 +32,23 @@
                    projectFiles="true">
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <itemPath>lib/bc127.c</itemPath>
-        <itemPath>lib/uart.c</itemPath>
         <itemPath>lib/char_queue.c</itemPath>
+        <itemPath>lib/debug.c</itemPath>
+        <itemPath>lib/eeprom.c</itemPath>
+        <itemPath>lib/event.c</itemPath>
         <itemPath>lib/ibus.c</itemPath>
         <itemPath>lib/sfr_setters.s</itemPath>
-        <itemPath>lib/debug.c</itemPath>
-        <itemPath>lib/utils.c</itemPath>
         <itemPath>lib/timer.c</itemPath>
-        <itemPath>lib/event.c</itemPath>
+        <itemPath>lib/uart.c</itemPath>
+        <itemPath>lib/utils.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
-        <itemPath>ui/cd53.c</itemPath>
         <itemPath>ui/bmbt.c</itemPath>
+        <itemPath>ui/cd53.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
-      <itemPath>system.c</itemPath>
       <itemPath>handler.c</itemPath>
+      <itemPath>system.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

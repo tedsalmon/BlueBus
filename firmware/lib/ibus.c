@@ -27,7 +27,8 @@ IBus_t IBusInit()
         UART_BAUD_9600,
         UART_PARITY_EVEN
     );
-    ibus.cdChangerStatus = 0x01;
+    // Assume we're playing and the key inserted, so device resets are graceful
+    ibus.cdChangerStatus = 0x09;
     ibus.ignitionStatus = 0x01;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
@@ -86,10 +87,18 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandleIKEMessage(unsigned char *pkt)
+static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[3] == IBusAction_IGN_STATUS_REQ) {
-        EventTriggerCallback(IBusEvent_IgnitionStatus, pkt);
+        if (pkt[4] == 0x00 && ibus->ignitionStatus == IBUS_IGNITION_ON) {
+            // Implied that the CDC should not be playing with the ignition off
+            ibus->cdChangerStatus = 0;
+            ibus->ignitionStatus = IBUS_IGNITION_OFF;
+            EventTriggerCallback(IBusEvent_IgnitionStatus, pkt);
+        } else if (ibus->ignitionStatus == IBUS_IGNITION_OFF) {
+            ibus->ignitionStatus = IBUS_IGNITION_ON;
+            EventTriggerCallback(IBusEvent_IgnitionStatus, pkt);
+        }
     }
 }
 
@@ -99,10 +108,19 @@ static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
         if (pkt[3] == IBusAction_CD_KEEPALIVE) {
             EventTriggerCallback(IBusEvent_CDKeepAlive, pkt);
         } else if(pkt[3] == IBusAction_CD_STATUS_REQ) {
-            if (pkt[4] == 0x01 || pkt[4] == 0x03) {
-                ibus->cdChangerStatus = pkt[4];
+            if (pkt[4] == 0x01) {
+                ibus->cdChangerStatus = 0x02;
+            } else if (pkt[4] == 0x02 || pkt[4] == 0x03) {
+                ibus->cdChangerStatus = 0x09;
             }
             EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
+        }
+    } else if (pkt[2] == IBusDevice_GT) {
+        if (pkt[3] == IBusAction_RAD_SCREEN_MODE_UPDATE) {
+            EventTriggerCallback(IBusEvent_ScreenModeUpdate, pkt);
+        }
+        if (pkt[3] == IBusAction_RAD_UPDATE_MAIN_AREA) {
+            EventTriggerCallback(IBusEvent_RADUpdateMainArea, pkt);
         }
     } else if (pkt[2] == IBusDevice_LOC) {
         if (pkt[3] == 0x3B) {
@@ -140,13 +158,23 @@ void IBusProcess(IBus_t *ibus)
     // Read messages from the IBus and if none are available, attempt to
     // transmit whatever is sitting in the transmit buffer
     if (ibus->uart.rxQueue.size > 0) {
-        ibus->rxBuffer[ibus->rxBufferIdx] = CharQueueNext(&ibus->uart.rxQueue);
-        ibus->rxBufferIdx++;
+        ibus->rxBuffer[ibus->rxBufferIdx++] = CharQueueNext(&ibus->uart.rxQueue);
         if (ibus->rxBufferIdx > 1) {
             uint8_t msgLength = (uint8_t) ibus->rxBuffer[1] + 2;
             // Make sure we do not read more than the maximum packet length
             if (msgLength > IBUS_MAX_MSG_LENGTH) {
-                LogError("IBus: RX Invalid Length [%d]", msgLength);
+                long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+                LogRaw(
+                    "[%llu] ERROR: IBus: RX Invalid Length [%d - %02X]: ",
+                    ts,
+                    msgLength,
+                    ibus->rxBuffer[1]
+                );
+                uint8_t idx;
+                for (idx = 0; idx < ibus->rxBufferIdx; idx++) {
+                    LogRaw("%02X ", ibus->rxBuffer[idx]);
+                }
+                LogRaw("\r\n");
                 ibus->rxBufferIdx = 0;
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
                 CharQueueReset(&ibus->uart.rxQueue);
@@ -155,11 +183,10 @@ void IBusProcess(IBus_t *ibus)
                 unsigned char pkt[msgLength];
                 for(idx = 0; idx < msgLength; idx++) {
                     pkt[idx] = ibus->rxBuffer[idx];
-                    ibus->rxBuffer[idx] = 0x00;
                 }
                 if (IBusValidateChecksum(pkt) == 1) {
                     LogDebug(
-                        "IBus: %02X -> %02X Action: %02X Length: %d",
+                        "IBus: RX: %02X -> %02X Action: %02X Length: %d",
                         pkt[0],
                         pkt[2],
                         pkt[3],
@@ -170,7 +197,7 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleBMBTMessage(pkt);
                     }
                     if (srcSystem == IBusDevice_IKE) {
-                        IBusHandleIKEMessage(pkt);
+                        IBusHandleIKEMessage(ibus, pkt);
                     }
                     if (srcSystem == IBusDevice_GT) {
                         IBusHandleGTMessage(ibus, pkt);
@@ -187,12 +214,13 @@ void IBusProcess(IBus_t *ibus)
                         (uint8_t) pkt[1]
                     );
                 }
+                memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
                 ibus->rxBufferIdx = 0;
             }
         }
         ibus->rxLastStamp = TimerGetMillis();
     } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
-               (TimerGetMillis() - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT
+        (TimerGetMillis() - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT
     ) {
         uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
         uint8_t idx;
@@ -207,7 +235,7 @@ void IBusProcess(IBus_t *ibus)
                 while ((ibus->uart.registers->uxsta & (1 << 9)) != 0);
             }
             LogDebug(
-                "IBus: TX %02X -> %02X",
+                "IBus: TX: %02X -> %02X",
                 ibus->txBuffer[ibus->txBufferReadIdx][0],
                 ibus->txBuffer[ibus->txBufferReadIdx][2]
             );
@@ -228,14 +256,22 @@ void IBusProcess(IBus_t *ibus)
         if ((now - ibus->rxLastStamp) > IBUS_RX_BUFFER_TIMEOUT ||
             (ibus->rxBufferIdx + 1) == IBUS_RX_BUFFER_SIZE
         ) {
-            LogError(
-                "IBus: RX Buffer Timeout [%d]",
-                ibus->rxBufferIdx + 1
+            long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+            LogRaw(
+                "[%llu] ERROR: IBus: RX Buffer Timeout [%d]: ",
+                ts,
+                ibus->rxBufferIdx
             );
+            uint8_t idx;
+            for (idx = 0; idx < ibus->rxBufferIdx; idx++) {
+                LogRaw("%02X ", ibus->rxBuffer[idx]);
+            }
+            LogRaw("\r\n");
             ibus->rxBufferIdx = 0;
             memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
         }
     }
+    UARTReportErrors(&ibus->uart);
 }
 
 /**
@@ -340,20 +376,25 @@ void IBusCommandCDCKeepAlive(IBus_t *ibus)
  *        Respond to the Radio's status request
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char *status - The current CDC status
- *         unsigned char *action - The current CDC action
+ *         unsigned char action - The current CDC action
+ *         unsigned char status - The current CDC status
  *     Returns:
  *         void
  */
-void IBusCommandCDCStatus(IBus_t *ibus, unsigned char *status, unsigned char *action) {
+void IBusCommandCDCStatus(IBus_t *ibus, unsigned char action, unsigned char status) {
     LogDebug("IBus: Send CD Changer Status");
+    status = status + 0x80;
     const unsigned char cdcStatus[] = {
         IBusAction_CD_STATUS_REP,
-        *action,
-        *status,
+        action,
+        status,
         0x00,
-        0x3F,
+        0x01,
         0x00,
+        0x01,
+        0x01,
+        0x00,
+        0x01,
         0x01,
         0x01
     };
@@ -399,7 +440,7 @@ void IBusCommandGTWriteIndexMk4(IBus_t *ibus, uint8_t index, char *message) {
         index,
         message,
         IBusAction_GT_WRITE_MK4,
-        IBusAction_GT_WRITE_MENU
+        IBusAction_GT_WRITE_INDEX
     );
 }
 
@@ -452,15 +493,18 @@ void IBusCommandGTWriteTitle(IBus_t *ibus, char *message)
     if (length > 11) {
         length = 11;
     }
-    const size_t pktLenght = length + 3;
+    // Length + Write Type + Write Area + Size + Watermark
+    const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
     text[0] = IBusAction_GT_WRITE_TITLE;
     text[1] = IBusAction_GT_WRITE_ZONE;
-    text[2] = 0x30;
+    text[2] = 0x10;
     uint8_t idx;
     for (idx = 0; idx < length; idx++) {
         text[idx + 3] = message[idx];
     }
+    // "Watermark" Any update we send, so we know that it was us
+    text[idx + 3] = IBUS_RAD_MAIN_AREA_WATERMARK;
     IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
 }
 
@@ -540,4 +584,46 @@ void IBusCommandMIDText(IBus_t *ibus, char *message)
 void IBusCommandMIDTextClear(IBus_t *ibus)
 {
     IBusCommandMIDText(ibus, 0);
+}
+
+/**
+ * IBusCommandRADDisableMenu()
+ *     Description:
+ *        Disable the Radio Menu
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandRADDisableMenu(IBus_t *ibus)
+{
+    unsigned char msg[] = {0x45, 0x02};
+    IBusSendCommand(
+        ibus,
+        IBusDevice_RAD,
+        IBusDevice_GT,
+        msg,
+        sizeof(msg)
+    );
+}
+
+/**
+ * IBusCommandRADEnableMenu()
+ *     Description:
+ *        Enable the Radio Menu
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandRADEnableMenu(IBus_t *ibus)
+{
+    unsigned char msg[] = {0x45, 0x00};
+    IBusSendCommand(
+        ibus,
+        IBusDevice_RAD,
+        IBusDevice_GT,
+        msg,
+        sizeof(msg)
+    );
 }

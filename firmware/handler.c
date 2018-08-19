@@ -7,6 +7,7 @@
 #include "handler.h"
 static HandlerContext_t Context;
 const static uint16_t HANDLER_CDC_ANOUNCE_INT = 30000;
+const static uint16_t HANDLER_PROFILE_ERROR_INT = 1000;
 
 /**
  * HandlerInit()
@@ -25,9 +26,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     Context.ibus = ibus;
     Context.cdChangerLastKeepAlive = TimerGetMillis();
     Context.btStartupIsRun = 0;
-    // Assume the ignition is on so we don't update the state of the
-    // BC127 unnecessarily
-    Context.ignitionStatus = 1;
+    Context.btConnectionStatus = HANDLER_BT_CONN_OFF;
     EventRegisterCallback(
         BC127Event_DeviceLinkConnected,
         &HandlerBC127DeviceLinkConnected,
@@ -39,12 +38,17 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &Context
     );
     EventRegisterCallback(
+        BC127Event_DeviceFound,
+        &HandlerBC127DeviceFound,
+        &Context
+    );
+    EventRegisterCallback(
         BC127Event_PlaybackStatusChange,
         &HandlerBC127PlaybackStatus,
         &Context
     );
     EventRegisterCallback(
-        BC127Event_DeviceReady,
+        BC127Event_Boot,
         &HandlerBC127Ready,
         &Context
     );
@@ -60,12 +64,12 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     );
     EventRegisterCallback(
         IBusEvent_CDKeepAlive,
-        &HandlerIBusCDChangerKeepAlive,
+        &HandlerIBusCDCKeepAlive,
         &Context
     );
     EventRegisterCallback(
         IBusEvent_CDStatusRequest,
-        &HandlerIBusCDChangerStatus,
+        &HandlerIBusCDCStatus,
         &Context
     );
     EventRegisterCallback(
@@ -79,9 +83,14 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &Context
     );
     TimerRegisterScheduledTask(
-        &HandlerTimerCDChangerAnnounce,
+        &HandlerTimerCDCAnnounce,
         &Context,
         HANDLER_CDC_ANOUNCE_INT
+    );
+    TimerRegisterScheduledTask(
+        &HandlerTimerOpenProfileErrors,
+        &Context,
+        HANDLER_PROFILE_ERROR_INT
     );
     switch (uiMode) {
         case HANDLER_UI_MODE_CD53:
@@ -108,32 +117,35 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
 void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    // If the AVRCP link is being opened and the A2DP link closed, open it
-    if (context->bt->activeDevice.avrcpLinkId != 0 &&
-        context->bt->activeDevice.a2dpLinkId == 0
-    ) {
-        BC127CommandProfileOpen(
-            context->bt,
-            context->bt->activeDevice.macId,
-            "A2DP"
-        );
-    }
-    // If the HFP link is being opened and the A2DP link closed, open it
-    if (context->bt->activeDevice.hfpLinkId != 0 &&
-        context->bt->activeDevice.avrcpLinkId == 0
-    ) {
-        BC127CommandProfileOpen(
-            context->bt,
-            context->bt->activeDevice.macId,
-            "AVRCP"
-        );
-    }
-    // Once A2DP and AVRCP are connected, we can disable connectability
-    if (context->bt->activeDevice.avrcpLinkId != 0 &&
-        context->bt->activeDevice.a2dpLinkId != 0
-    ) {
-        BC127CommandConnectable(context->bt, BC127_STATE_OFF);
-        context->bt->connectable = BC127_STATE_OFF;
+    if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
+        // If the AVRCP link is being opened and the A2DP link closed, open it
+        if (context->bt->activeDevice.avrcpLinkId != 0 &&
+            context->bt->activeDevice.a2dpLinkId == 0
+        ) {
+            BC127CommandProfileOpen(
+                context->bt,
+                context->bt->activeDevice.macId,
+                "A2DP"
+            );
+        }
+        // If the HFP link is being opened and the A2DP link closed, open it
+        if (context->bt->activeDevice.hfpLinkId != 0 &&
+            context->bt->activeDevice.avrcpLinkId == 0
+        ) {
+            BC127CommandProfileOpen(
+                context->bt,
+                context->bt->activeDevice.macId,
+                "AVRCP"
+            );
+        }
+        // Once A2DP and AVRCP are connected, we can disable connectability
+        if (context->bt->activeDevice.avrcpLinkId != 0 &&
+            context->bt->activeDevice.a2dpLinkId != 0
+        ) {
+            BC127CommandConnectable(context->bt, BC127_STATE_OFF);
+        }
+    } else {
+        BC127CommandClose(context->bt, BC127_CLOSE_ALL);
     }
 }
 
@@ -150,8 +162,37 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
 void HandlerBC127DeviceDisconnected(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    BC127CommandConnectable(context->bt, BC127_STATE_ON);
-    context->bt->connectable = BC127_STATE_ON;
+    if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
+        BC127CommandConnectable(context->bt, BC127_STATE_ON);
+    } else {
+        BC127CommandConnectable(context->bt, BC127_STATE_OFF);
+    }
+    context->btConnectionStatus = HANDLER_BT_CONN_OFF;
+    BC127ClearPairingErrors(context->bt);
+}
+
+/**
+ * HandlerBC127DeviceFound()
+ *     Description:
+ *         If a device is found and we are not connected, connect to it
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBC127DeviceFound(void *ctx, unsigned char *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bt->activeDevice.deviceId == 0 &&
+        context->btConnectionStatus == HANDLER_BT_CONN_OFF &&
+        context->ibus->ignitionStatus == IBUS_IGNITION_ON
+    ) {
+        char *macId = (char *) data;
+        BC127CommandProfileOpen(context->bt, macId, "A2DP");
+        BC127CommandProfileOpen(context->bt, macId, "AVRCP");
+        context->btConnectionStatus = HANDLER_BT_CONN_ON;
+    }
 }
 
 /**
@@ -199,7 +240,7 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
 void HandlerBC127Ready(void *ctx, unsigned char *tmp)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->ignitionStatus == 0) {
+    if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
         // Set the BT module not connectable or discoverable and disconnect all devices
         BC127CommandDiscoverable(context->bt, BC127_STATE_OFF);
         BC127CommandConnectable(context->bt, BC127_STATE_OFF);
@@ -250,13 +291,10 @@ void HandlerIBusStartup(void *ctx, unsigned char *tmp)
     IBusCommandCDCAnnounce(context->ibus);
     IBusCommandIKEGetIgnition(context->ibus);
     IBusCommandGTGetDiagnostics(context->ibus);
-    // Always assume that we're playing, that way the radio can tell us
-    // if we shouldn't be, then we can deduce the system state
-    context->ibus->cdChangerStatus = 0x09;
 }
 
 /**
- * HandlerIBusCDChangerKeepAlive()
+ * HandlerIBusCDCKeepAlive()
  *     Description:
  *         Respond to the Radio's "ping" with a "pong"
  *     Params:
@@ -265,7 +303,7 @@ void HandlerIBusStartup(void *ctx, unsigned char *tmp)
  *     Returns:
  *         void
  */
-void HandlerIBusCDChangerKeepAlive(void *ctx, unsigned char *pkt)
+void HandlerIBusCDCKeepAlive(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     IBusCommandCDCKeepAlive(context->ibus);
@@ -273,7 +311,7 @@ void HandlerIBusCDChangerKeepAlive(void *ctx, unsigned char *pkt)
 }
 
 /**
- * HandlerIBusCDChangerStatus()
+ * HandlerIBusCDCStatus()
  *     Description:
  *         Track the current CD Changer status based on what the radio
  *         instructs us to do. We respond with exactly what the radio instructs
@@ -284,28 +322,30 @@ void HandlerIBusCDChangerKeepAlive(void *ctx, unsigned char *pkt)
  *     Returns:
  *         void
  */
-void HandlerIBusCDChangerStatus(void *ctx, unsigned char *pkt)
+void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char curAction = 0x00;
-    unsigned char curStatus = 0x02;
-    unsigned char changerStatus = pkt[4];
-    if (changerStatus == 0x00) {
+    unsigned char curStatus = 0x00;
+    unsigned char changerAction = pkt[4];
+    if (changerAction == 0x00) {
         // Asking for status
         curStatus = context->ibus->cdChangerStatus;
-    } else if (changerStatus == 0x01) {
-        // Stop Playing
+    } else if (changerAction == 0x01) {
         if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
             BC127CommandPause(context->bt);
         }
-    } else if (changerStatus == 0x03) {
+        curStatus = 0x02;
+    } else if (changerAction == 0x02 || changerAction == 0x03) {
         // Start Playing
         curAction = 0x02;
         curStatus = 0x09;
-    } else if (changerStatus == 0x07 || changerStatus == 0x08) {
-        curStatus = changerStatus;
+    } else if (changerAction == 0x0A) {
+        curAction = 0x02;
+    } else {
+        curAction = changerAction;
     }
-    IBusCommandCDCStatus(context->ibus, &curStatus, &curAction);
+    IBusCommandCDCStatus(context->ibus, curAction, curStatus);
     context->cdChangerLastKeepAlive = TimerGetMillis();
 }
 
@@ -342,13 +382,15 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // If the first bit is set, the key is in position 1 at least, otherwise
     // the ignition is off
-    if (pkt[4] == 0x00){
-        context->ignitionStatus = 0;
-        // Set the BT module not connectable or discoverable and disconnect all devices
+    if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
+        LogDebug("Ignition is off");
+        // Set the BT module not connectable/discoverable. Disconnect all devices
         BC127CommandDiscoverable(context->bt, BC127_STATE_OFF);
         BC127CommandConnectable(context->bt, BC127_STATE_OFF);
         BC127CommandClose(context->bt, BC127_CLOSE_ALL);
-    } else if (context->ignitionStatus == 0) {
+        BC127ClearPairedDevices(context->bt);
+    } else if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
+        LogDebug("Ignition is on");
         IBusCommandCDCAnnounce(context->ibus);
         // Always assume that we're playing, that way the radio can tell us
         // if we shouldn't be, then we can deduce the system state
@@ -356,31 +398,77 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         // Set the BT module connectable and discoverable
         BC127CommandDiscoverable(context->bt, BC127_STATE_ON);
         BC127CommandConnectable(context->bt, BC127_STATE_ON);
-        context->ignitionStatus = 1;
+        // Request BC127 state
+        BC127CommandStatus(context->bt);
+        BC127CommandList(context->bt);
     }
 }
 
 /**
- * HandlerTimerCDChangerAnnounce()
+ * HandlerTimerCDCAnnounce()
  *     Description:
  *         This periodic task tracks how long it has been since the radio
  *         sent us (the CDC) a "ping". We should re-announce ourselves if that
  *         value reaches the timeout specified and the ignition is on.
  *     Params:
  *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
  *     Returns:
  *         void
  */
-void HandlerTimerCDChangerAnnounce(void *ctx)
+void HandlerTimerCDCAnnounce(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint32_t now = TimerGetMillis();
     if ((now - context->cdChangerLastKeepAlive) >= HANDLER_CDC_ANOUNCE_INT &&
-        context->ignitionStatus == 1
+        context->ibus->ignitionStatus == IBUS_IGNITION_ON
     ) {
         IBusCommandCDCAnnounce(context->ibus);
         context->cdChangerLastKeepAlive = now;
     }
+}
 
+/**
+ * HandlerTimerMetadataRequest()
+ *     Description:
+ *         If there are any profile open errors, request the profile
+ *         be opened again
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerOpenProfileErrors(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bt->activeDevice.deviceId != 0) {
+        uint8_t idx;
+        for (idx = 0; idx < BC127_PROFILE_COUNT; idx++) {
+            if (context->bt->pairingErrors[idx] == 1) {
+                switch (idx) {
+                    case 0:
+                        BC127CommandProfileOpen(
+                            context->bt,
+                            context->bt->activeDevice.macId,
+                            "A2DP"
+                        );
+                        break;
+                    case 1:
+                        BC127CommandProfileOpen(
+                            context->bt,
+                            context->bt->activeDevice.macId,
+                            "AVRCP"
+                        );
+                        break;
+                    case 3:
+                        BC127CommandProfileOpen(
+                            context->bt,
+                            context->bt->activeDevice.macId,
+                            "HPF"
+                        );
+                        break;
+                }
+                context->bt->pairingErrors[idx] = 0;
+            }
+        }
+    }
 }
