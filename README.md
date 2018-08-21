@@ -1,18 +1,19 @@
 # BlueBus
 This project aims to create a Bluetooth interface for vehicles equipped with
- the BMW IBus. It supports A2DP, AVRCP and the HPF protocols. AVRCP Metadata
- will be displayed on all supported devices along with full integration with the
- vehicle to control it playback.
+the BMW IBus. It supports A2DP, AVRCP and the HPF protocols. AVRCP Metadata
+will be displayed on all supported devices along with full integration with the
+vehicle to control playback. Additional functionality will be added to allow users
+access to their vehicles service data and module information.
 
 
 # Features
 * Firmware upgradable
-* Fully integrated with CD53 / BoardMonitor
+* Full integration with CD53 / BoardMonitor
 * User Configurable
 
 
 # Hardware
-* PIC24FJ 16-bit MCU
+* PIC24FJ1024GB110 (Will be a GA106 on the production board) 16-bit MCU
 * BC127 A2DP / AVRCP Bluetooth Module
 * Melexis TH3122.4 LIN Transceiver
 * TPA6138A Stereo Amplifier
