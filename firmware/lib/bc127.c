@@ -631,6 +631,7 @@ void BC127Process(BC127_t *bt)
                 }
                 isNew = 1;
                 bt->discoverable = BC127_STATE_OFF;
+                bt->connectable = BC127_STATE_OFF;
             }
             if (bt->activeDevice.deviceId == deviceId) {
                 uint8_t linkId = strToInt(msgBuf[1]);
@@ -724,6 +725,7 @@ void BC127Process(BC127_t *bt)
                 memset(bt->activeDevice.deviceName, 0, 33);
                 strncpy(bt->activeDevice.deviceName, deviceName, 32);
                 bt->discoverable = BC127_STATE_OFF;
+                bt->connectable = BC127_STATE_OFF;
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
             BC127PairedDeviceInit(bt, msgBuf[1], deviceName);

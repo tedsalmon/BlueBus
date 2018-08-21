@@ -11,7 +11,7 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
 {
     Context.bt = bt;
     Context.ibus = ibus;
-    Context.menu = BMBT_MENU_MAIN;
+    Context.menu = BMBT_MENU_NONE;
     Context.mode = BMBT_MODE_OFF;
     Context.displayMode = BMBT_DISPLAY_OFF;
     Context.selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
@@ -107,16 +107,6 @@ static void BMBTSetStaticScreen(BMBTContext_t *context, char *f1, char *f2, char
 static void BMBTWriteHeader(BMBTContext_t *context)
 {
     IBusCommandGTWriteTitle(context->ibus, "BlueBus");
-    if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
-        IBusCommandGTWriteZone(context->ibus, 4, "||");
-    } else {
-        IBusCommandGTWriteZone(context->ibus, 4, "> ");
-    }
-    IBusCommandGTWriteZone(context->ibus, 5, "BT");
-}
-
-static void BMBTWriteMainMenu(BMBTContext_t *context)
-{
     if (context->bt->activeDevice.deviceId != 0) {
         char name[33];
         char cleanName[12];
@@ -126,9 +116,20 @@ static void BMBTWriteMainMenu(BMBTContext_t *context)
     } else {
         IBusCommandGTWriteZone(context->ibus, 6, "No Device");
     }
+    if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
+        IBusCommandGTWriteZone(context->ibus, 4, "||");
+    } else {
+        IBusCommandGTWriteZone(context->ibus, 4, "> ");
+    }
+    IBusCommandGTWriteZone(context->ibus, 5, "BT");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
-    BMBTMainMenu(context);
-    BC127CommandStatus(context->bt);
+}
+
+static void BMBTWriteMenuInit(BMBTContext_t *context)
+{
+    if (context->menu == BMBT_MENU_NONE) {
+        BMBTMainMenu(context);
+    }
 }
 
 void BMBTBC127DeviceConnected(void *ctx, unsigned char *data)
@@ -254,8 +255,10 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
                 context->displayMode == BMBT_DISPLAY_OFF
             ) {
                 context->displayMode = BMBT_DISPLAY_ON;
+                BMBTWriteMenuInit(context);
+                IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
+                IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
                 BMBTWriteHeader(context);
-                BMBTWriteMainMenu(context);
             }
         }
     }
@@ -280,8 +283,7 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
             }
             context->mode = BMBT_MODE_ACTIVE;
             context->displayMode = BMBT_DISPLAY_ON;
-            BMBTWriteHeader(context);
-            BMBTWriteMainMenu(context);
+            BMBTWriteMenuInit(context);
         }
     }
 }
@@ -402,8 +404,9 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
         }
     }
     text[textLen - 1] = '\0';
+    LogDebug("TEST: Got Text '%s'", text);
     // Display is showing 'CDC 1-01' or 'NO DISC', write the header and set display mode on
-    if (strcmp("CDC 1-01", text) == 0 || strcmp("NO DISC", text) == 0) {
+    if (strcmp("CDC 1-01", text) == 0 || strcmp("NO DISC ", text) == 0) {
         context->displayMode = BMBT_DISPLAY_ON;
         BMBTWriteHeader(context);
     } else if (pkt[pktLen - 2] == IBUS_RAD_MAIN_AREA_WATERMARK) {
@@ -423,7 +426,8 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
         context->mode == BMBT_MODE_ACTIVE &&
         context->displayMode == BMBT_DISPLAY_ON
     ) {
-        // Write the menu again
-        BMBTWriteMainMenu(context);
+        // Write the header again and trigger
+        BMBTWriteHeader(context);
+        IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
     }
 }
