@@ -28,7 +28,7 @@ IBus_t IBusInit()
         UART_PARITY_EVEN
     );
     // Assume we're playing and the key inserted, so device resets are graceful
-    ibus.cdChangerStatus = 0x09;
+    ibus.cdChangerStatus = IBUS_CDC_PLAYING;
     ibus.ignitionStatus = 0x01;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
@@ -49,9 +49,7 @@ static void IBusHandleBMBTMessage(unsigned char *pkt)
 
 static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[2] == IBusDevice_DIA &&
-        pkt[3] == IBusAction_DIAG_DATA
-    ) {
+    if (pkt[2] == IBUS_DEVICE_DIA && pkt[3] == IBusAction_DIAG_DATA) {
         // Decode the software and hardware versions
         char hwVersion[3] = {
             pkt[IBUS_GT_HW_ID_OFFSET],
@@ -104,25 +102,25 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 
 static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[2] == IBusDevice_CDC) {
-        if (pkt[3] == IBusAction_CD_KEEPALIVE) {
+    if (pkt[2] == IBUS_DEVICE_CDC) {
+        if (pkt[3] == IBUS_COMMAND_CDC_ALIVE) {
             EventTriggerCallback(IBusEvent_CDKeepAlive, pkt);
-        } else if(pkt[3] == IBusAction_CD_STATUS_REQ) {
-            if (pkt[4] == 0x01) {
-                ibus->cdChangerStatus = 0x02;
+        } else if(pkt[3] == IBUS_COMMAND_CDC_GET_STATUS) {
+            if (pkt[4] == IBUS_CDC_STOP_PLAYING) {
+                ibus->cdChangerStatus = IBUS_CDC_NOT_PLAYING;
             } else if (pkt[4] == 0x02 || pkt[4] == 0x03) {
-                ibus->cdChangerStatus = 0x09;
+                ibus->cdChangerStatus = IBUS_CDC_PLAYING;
             }
             EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
         }
-    } else if (pkt[2] == IBusDevice_GT) {
+    } else if (pkt[2] == IBUS_DEVICE_GT) {
         if (pkt[3] == IBusAction_RAD_SCREEN_MODE_UPDATE) {
             EventTriggerCallback(IBusEvent_ScreenModeUpdate, pkt);
         }
         if (pkt[3] == IBusAction_RAD_UPDATE_MAIN_AREA) {
             EventTriggerCallback(IBusEvent_RADUpdateMainArea, pkt);
         }
-    } else if (pkt[2] == IBusDevice_LOC) {
+    } else if (pkt[2] == IBUS_DEVICE_LOC) {
         if (pkt[3] == 0x3B) {
             EventTriggerCallback(IBusEvent_CDClearDisplay, pkt);
         }
@@ -193,16 +191,16 @@ void IBusProcess(IBus_t *ibus)
                         (uint8_t) pkt[1]
                     );
                     unsigned char srcSystem = pkt[0];
-                    if (srcSystem == IBusDevice_BMBT) {
+                    if (srcSystem == IBUS_DEVICE_BMBT) {
                         IBusHandleBMBTMessage(pkt);
                     }
-                    if (srcSystem == IBusDevice_IKE) {
+                    if (srcSystem == IBUS_DEVICE_IKE) {
                         IBusHandleIKEMessage(ibus, pkt);
                     }
-                    if (srcSystem == IBusDevice_GT) {
+                    if (srcSystem == IBUS_DEVICE_GT) {
                         IBusHandleGTMessage(ibus, pkt);
                     }
-                    if (srcSystem == IBusDevice_RAD) {
+                    if (srcSystem == IBUS_DEVICE_RAD) {
                         IBusHandleRadioMessage(ibus, pkt);
                     }
                 } else {
@@ -351,7 +349,7 @@ void IBusCommandCDCAnnounce(IBus_t *ibus)
 {
     LogDebug("IBus: Announce CD Changer");
     const unsigned char cdcAlive[] = {0x02, 0x01};
-    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_LOC, cdcAlive, sizeof(cdcAlive));
+    IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_LOC, cdcAlive, sizeof(cdcAlive));
 }
 
 /**
@@ -367,7 +365,7 @@ void IBusCommandCDCKeepAlive(IBus_t *ibus)
 {
     LogDebug("IBus: Send CD Changer Keep-Alive");
     const unsigned char cdcPing[] = {0x02, 0x00};
-    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_RAD, cdcPing, sizeof(cdcPing));
+    IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_RAD, cdcPing, sizeof(cdcPing));
 }
 
 /**
@@ -385,7 +383,7 @@ void IBusCommandCDCStatus(IBus_t *ibus, unsigned char action, unsigned char stat
     LogDebug("IBus: Send CD Changer Status");
     status = status + 0x80;
     const unsigned char cdcStatus[] = {
-        IBusAction_CD_STATUS_REP,
+        IBUS_COMMAND_CDC_SET_STATUS,
         action,
         status,
         0x00,
@@ -400,8 +398,8 @@ void IBusCommandCDCStatus(IBus_t *ibus, unsigned char action, unsigned char stat
     };
     IBusSendCommand(
         ibus,
-        IBusDevice_CDC,
-        IBusDevice_RAD,
+        IBUS_DEVICE_CDC,
+        IBUS_DEVICE_RAD,
         cdcStatus,
         sizeof(cdcStatus)
     );
@@ -410,7 +408,7 @@ void IBusCommandCDCStatus(IBus_t *ibus, unsigned char action, unsigned char stat
 void IBusCommandGTGetDiagnostics(IBus_t *ibus)
 {
     unsigned char msg[] = {0x00};
-    IBusSendCommand(ibus, IBusDevice_DIA, IBusDevice_GT, msg, 1);
+    IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GT, msg, 1);
 }
 
 void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
@@ -421,7 +419,7 @@ void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
         0x01,
         0x00
     };
-    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, msg, 4);
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, msg, 4);
 }
 
 void IBusCommandGTWriteIndexMk2(IBus_t *ibus, uint8_t index, char *message) {
@@ -465,7 +463,7 @@ void IBusCommandGTWriteIndex(
     for (idx = 0; idx < length; idx++) {
         text[idx + 4] = message[idx];
     }
-    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
 void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
@@ -484,7 +482,7 @@ void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
     for (idx = 0; idx < length; idx++) {
         text[idx + 4] = message[idx];
     }
-    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
 void IBusCommandGTWriteTitle(IBus_t *ibus, char *message)
@@ -505,7 +503,7 @@ void IBusCommandGTWriteTitle(IBus_t *ibus, char *message)
     }
     // "Watermark" Any update we send, so we know that it was us
     text[idx + 3] = IBUS_RAD_MAIN_AREA_WATERMARK;
-    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
 void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
@@ -524,7 +522,7 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
     for (idx = 0; idx < length; idx++) {
         text[idx + 4] = message[idx];
     }
-    IBusSendCommand(ibus, IBusDevice_RAD, IBusDevice_GT, text, pktLenght);
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
 /**
@@ -540,7 +538,7 @@ void IBusCommandIKEGetIgnition(IBus_t *ibus)
 {
     LogDebug("IBus: Get Ignition Status");
     unsigned char msg[] = {0x10};
-    IBusSendCommand(ibus, IBusDevice_CDC, IBusDevice_IKE, msg, 1);
+    IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_IKE, msg, 1);
 }
 
 /**
@@ -565,8 +563,8 @@ void IBusCommandMIDText(IBus_t *ibus, char *message)
     }
     IBusSendCommand(
         ibus,
-        IBusDevice_TEL,
-        IBusDevice_IKE,
+        IBUS_DEVICE_TEL,
+        IBUS_DEVICE_IKE,
         displayText,
         sizeof(displayText)
     );
@@ -600,8 +598,8 @@ void IBusCommandRADDisableMenu(IBus_t *ibus)
     unsigned char msg[] = {0x45, 0x02};
     IBusSendCommand(
         ibus,
-        IBusDevice_RAD,
-        IBusDevice_GT,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_GT,
         msg,
         sizeof(msg)
     );
@@ -621,8 +619,8 @@ void IBusCommandRADEnableMenu(IBus_t *ibus)
     unsigned char msg[] = {0x45, 0x00};
     IBusSendCommand(
         ibus,
-        IBusDevice_RAD,
-        IBusDevice_GT,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_GT,
         msg,
         sizeof(msg)
     );

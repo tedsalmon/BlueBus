@@ -13,7 +13,7 @@ access to their vehicles service data and module information.
 
 
 # Hardware
-* PIC24FJ1024GB110 (Will be a GA106 on the production board) 16-bit MCU
+* PIC24FJ1024GB610 (Will be a GA606 on the production board) 16-bit MCU
 * BC127 A2DP / AVRCP Bluetooth Module
 * Melexis TH3122.4 LIN Transceiver
 * TPA6138A Stereo Amplifier

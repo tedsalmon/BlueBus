@@ -18,6 +18,10 @@
 #include "ui/bmbt.h"
 #define HANDLER_BT_CONN_OFF 0
 #define HANDLER_BT_CONN_ON 1
+#define HANDLER_CDC_ANOUNCE_INT 30000
+#define HANDLER_CDC_STATUS_INT 2000
+#define HANDLER_CDC_STATUS_TIMEOUT 20000
+#define HANDLER_PROFILE_ERROR_INT 2000
 #define HANDLER_UI_MODE_CD53 0
 #define HANDLER_UI_MODE_BMBT 1
 typedef struct HandlerContext_t {
@@ -26,6 +30,7 @@ typedef struct HandlerContext_t {
     uint8_t btStartupIsRun;
     uint8_t btConnectionStatus;
     uint32_t cdChangerLastKeepAlive;
+    uint32_t cdChangerLastStatus;
 } HandlerContext_t;
 void HandlerInit(BC127_t *, IBus_t *, uint8_t);
 void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
@@ -40,5 +45,6 @@ void HandlerIBusCDCStatus(void *, unsigned char *);
 void HandlerIBusGTDiagnostics(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
 void HandlerTimerCDCAnnounce(void *);
+void HandlerTimerCDCSendStatus(void *);
 void HandlerTimerOpenProfileErrors(void *);
 #endif /* HANDLER_H */

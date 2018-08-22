@@ -6,6 +6,47 @@
  */
 #ifndef IBUS_H
 #define IBUS_H
+#define IBUS_CDC_GET_STATUS 0x00
+#define IBUS_CDC_PLAYING 0x09
+#define IBUS_CDC_NOT_PLAYING 0x02
+#define IBUS_CDC_CHANGE_TRACK 0x0A
+#define IBUS_CDC_STOP_PLAYING 0x01
+#define IBUS_CDC_START_PLAYING 0x02
+#define IBUS_CDC_START_PLAYING_CD53 0x03
+// Commands
+#define IBUS_COMMAND_CDC_ALIVE 0x01
+#define IBUS_COMMAND_CDC_GET_STATUS 0x38
+#define IBUS_COMMAND_CDC_SET_STATUS 0x39
+// Devices
+#define IBUS_DEVICE_GM 0x00 /* Body module */
+#define IBUS_DEVICE_CDC 0x18 /* CD Changer */
+#define IBUS_DEVICE_FUH 0x28 /* Radio controlled clock */
+#define IBUS_DEVICE_CCM 0x30 /* Check control module */
+#define IBUS_DEVICE_GT 0x3B /* Graphics driver (in navigation system) */
+#define IBUS_DEVICE_DIA 0x3F /* Diagnostic */
+#define IBUS_DEVICE_GTF 0x43 /* Graphics driver for rear screen (in navigation system) */
+#define IBUS_DEVICE_EWS 0x44 /* EWS (Immobileiser) */
+#define IBUS_DEVICE_CID 0x46 /* Central information display (flip-up LCD screen) */
+#define IBUS_DEVICE_MFL 0x50 /* Multi function steering wheel */
+#define IBUS_DEVICE_IHK 0x5B /* Integrated heating and air conditioning */
+#define IBUS_DEVICE_RAD 0x68 /* Radio */
+#define IBUS_DEVICE_DSP 0x6A /* Digital signal processing audio amplifier */
+#define IBUS_DEVICE_SM0 0x72 /* Seat memory */
+#define IBUS_DEVICE_SDRS 0x73 /* Sirius Radio */
+#define IBUS_DEVICE_CDCD 0x76 /* CD changer, DIN size. */
+#define IBUS_DEVICE_NAVE 0x7F /* Navigation (Europe) */
+#define IBUS_DEVICE_IKE 0x80 /* Instrument cluster electronics */
+#define IBUS_DEVICE_GLO 0xBF /* Global, broadcast address */
+#define IBUS_DEVICE_MID 0xC0 /* Multi-info display */
+#define IBUS_DEVICE_TEL 0xC8 /* Telephone */
+#define IBUS_DEVICE_TCU 0xCA /* BMW Assist */
+#define IBUS_DEVICE_LCM 0xD0 /* Light control module */
+#define IBUS_DEVICE_GTHL 0xDA /* unknown */
+#define IBUS_DEVICE_IRIS 0xE0 /* Integrated radio information system */
+#define IBUS_DEVICE_ANZV 0xE7 /* Front display */
+#define IBUS_DEVICE_BMBT 0xF0 /* On-board monitor operating part */
+#define IBUS_DEVICE_LOC 0xFF /* Local */
+
 #define IBUS_GT_MKI 1
 #define IBUS_GT_MKII 2
 #define IBUS_GT_MKIII 2
@@ -14,6 +55,7 @@
 #define IBUS_GT_SW_ID_OFFSET 33
 #define IBUS_IGNITION_OFF 0
 #define IBUS_IGNITION_ON 1
+// Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
 #define IBUS_RX_BUFFER_SIZE 256
@@ -31,53 +73,15 @@
 #include "uart.h"
 #include "utils.h"
 
-const static unsigned char IBusDevice_GM = 0x00; /* Body module */
-const static unsigned char IBusDevice_CDC = 0x18; /* CD Changer */
-const static unsigned char IBusDevice_FUH = 0x28; /* Radio controlled clock */
-const static unsigned char IBusDevice_CCM = 0x30; /* Check control module */
-const static unsigned char IBusDevice_GT = 0x3B; /* Graphics driver (in navigation system) */
-const static unsigned char IBusDevice_DIA = 0x3F; /* Diagnostic */
-const static unsigned char IBusDevice_GTF = 0x43; /* Graphics driver for rear screen (in navigation system) */
-const static unsigned char IBusDevice_EWS = 0x44; /* EWS (Immobileiser) */
-const static unsigned char IBusDevice_CID = 0x46; /* Central information display (flip-up LCD screen) */
-const static unsigned char IBusDevice_MFL = 0x50; /* Multi function steering wheel */
-const static unsigned char IBusDevice_IHK = 0x5B; /* Integrated heating and air conditioning */
-const static unsigned char IBusDevice_RAD = 0x68; /* Radio */
-const static unsigned char IBusDevice_DSP = 0x6A; /* Digital signal processing audio amplifier */
-const static unsigned char IBusDevice_SM0 = 0x72; /* Seat memory */
-const static unsigned char IBusDevice_SDRS = 0x73; /* Sirius Radio */
-const static unsigned char IBusDevice_CDCD = 0x76; /* CD changer, DIN size. */
-const static unsigned char IBusDevice_NAVE = 0x7F; /* Navigation (Europe) */
-const static unsigned char IBusDevice_IKE = 0x80; /* Instrument cluster electronics */
-const static unsigned char IBusDevice_GLO = 0xBF; /* Global, broadcast address */
-const static unsigned char IBusDevice_MID = 0xC0; /* Multi-info display */
-const static unsigned char IBusDevice_TEL = 0xC8; /* Telephone */
-const static unsigned char IBusDevice_TCU = 0xCA; /* BMW Assist */
-const static unsigned char IBusDevice_LCM = 0xD0; /* Light control module */
-const static unsigned char IBusDevice_GTHL = 0xDA; /* unknown */
-const static unsigned char IBusDevice_IRIS = 0xE0; /* Integrated radio information system */
-const static unsigned char IBusDevice_ANZV = 0xE7; /* Front display */
-const static unsigned char IBusDevice_BMBT = 0xF0; /* On-board monitor operating part */
-const static unsigned char IBusDevice_LOC = 0xFF; /* Local */
 
 // All buttons presses are triggered on the "Push" message
-const static unsigned char IBusDevice_BMBT_Button_Next = 0x00;
-const static unsigned char IBusDevice_BMBT_Button_Prev = 0x10;
-const static unsigned char IBusDevice_BMBT_Button_PlayPause = 0x14;
-const static unsigned char IBusDevice_BMBT_Button_Knob = 0x05;
-const static unsigned char IBusDevice_BMBT_Button_Display = 0x30;
+const static unsigned char IBUS_DEVICE_BMBT_Button_Next = 0x00;
+const static unsigned char IBUS_DEVICE_BMBT_Button_Prev = 0x10;
+const static unsigned char IBUS_DEVICE_BMBT_Button_PlayPause = 0x14;
+const static unsigned char IBUS_DEVICE_BMBT_Button_Knob = 0x05;
+const static unsigned char IBUS_DEVICE_BMBT_Button_Display = 0x30;
 
 const static unsigned char IBusAction_BMBT_BUTTON = 0x48;
-
-const static unsigned char IBusAction_CD_ACTION_NONE = 0x00;
-const static unsigned char IBusAction_CD_ACTION_START_PLAYBACK = 0x02;
-const static unsigned char IBusAction_CD_KEEPALIVE = 0x01;
-const static unsigned char IBusAction_CD_STATUS_REQ = 0x38;
-const static unsigned char IBusAction_CD_STATUS_REP = 0x39;
-
-const static unsigned char IBusAction_CD_STATUS_REQ_PING = 0x00;
-const static unsigned char IBusAction_CD_STATUS_REQ_STOP = 0x01;
-const static unsigned char IBusAction_CD_STATUS_REQ_PLAY = 0x02;
 
 const static unsigned char IBusAction_CD53_SEEK = 0x0A;
 const static unsigned char IBusAction_CD53_CD_SEL = 0x06;

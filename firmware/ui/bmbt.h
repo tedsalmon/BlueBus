@@ -16,9 +16,15 @@
 #define BMBT_DISPLAY_ON 1
 #define BMBT_MENU_NONE 0
 #define BMBT_MENU_MAIN 1
-#define BMBT_MENU_NOW_PLAYING 2
+#define BMBT_MENU_DASHBOARD 2
 #define BMBT_MENU_DEVICE_SELECTION 3
-#define BMBT_MENU_ABOUT 4
+#define BMBT_MENU_SETTINGS 4
+#define BMBT_MENU_IDX_DASHBOARD 0
+#define BMBT_MENU_IDX_DEVICE_SELECTION 1
+#define BMBT_MENU_IDX_SETTINGS 2
+#define BMBT_MENU_IDX_SETTINGS_SCROLL_META 0
+#define BMBT_MENU_IDX_SETTINGS_RESET_BT 1
+#define BMBT_MENU_IDX_SETTINGS_BACK 2
 #define BMBT_MODE_OFF 0
 #define BMBT_MODE_ACTIVE 1
 #define BMBT_PAIRING_DEVICE_NONE -1
@@ -28,6 +34,7 @@ typedef struct BMBTContext_t {
     uint8_t menu;
     uint8_t mode;
     uint8_t displayMode;
+    uint8_t writtenIndexes;
     int8_t selectedPairingDevice;
 } BMBTContext_t;
 void BMBTInit(BC127_t *, IBus_t *);

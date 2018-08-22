@@ -6,8 +6,6 @@
  */
 #include "handler.h"
 static HandlerContext_t Context;
-const static uint16_t HANDLER_CDC_ANOUNCE_INT = 30000;
-const static uint16_t HANDLER_PROFILE_ERROR_INT = 1000;
 
 /**
  * HandlerInit()
@@ -25,6 +23,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     Context.bt = bt;
     Context.ibus = ibus;
     Context.cdChangerLastKeepAlive = TimerGetMillis();
+    Context.cdChangerLastStatus = TimerGetMillis();
     Context.btStartupIsRun = 0;
     Context.btConnectionStatus = HANDLER_BT_CONN_OFF;
     EventRegisterCallback(
@@ -86,6 +85,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &HandlerTimerCDCAnnounce,
         &Context,
         HANDLER_CDC_ANOUNCE_INT
+    );
+    TimerRegisterScheduledTask(
+        &HandlerTimerCDCSendStatus,
+        &Context,
+        HANDLER_CDC_STATUS_INT
     );
     TimerRegisterScheduledTask(
         &HandlerTimerOpenProfileErrors,
@@ -219,7 +223,7 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
         context->btStartupIsRun = 1;
     }
     if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING &&
-        context->ibus->cdChangerStatus <= 0x01
+        context->ibus->cdChangerStatus <= IBUS_CDC_NOT_PLAYING
     ){
         // We're playing but not in Bluetooth mode - stop playback
         BC127CommandPause(context->bt);
@@ -328,25 +332,31 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
     unsigned char curAction = 0x00;
     unsigned char curStatus = 0x00;
     unsigned char changerAction = pkt[4];
-    if (changerAction == 0x00) {
-        // Asking for status
+    if (changerAction == IBUS_CDC_GET_STATUS) {
         curStatus = context->ibus->cdChangerStatus;
-    } else if (changerAction == 0x01) {
+        if (curStatus == IBUS_CDC_PLAYING) {
+            // For some reason, we keep getting a pingback to "start" playing
+            // even if we report that we're playing
+            curAction = IBUS_CDC_START_PLAYING;
+        }
+    } else if (changerAction == IBUS_CDC_STOP_PLAYING) {
         if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
             BC127CommandPause(context->bt);
         }
-        curStatus = 0x02;
-    } else if (changerAction == 0x02 || changerAction == 0x03) {
-        // Start Playing
-        curAction = 0x02;
-        curStatus = 0x09;
-    } else if (changerAction == 0x0A) {
-        curAction = 0x02;
+        curStatus = IBUS_CDC_NOT_PLAYING;
+    } else if (changerAction == IBUS_CDC_START_PLAYING ||
+               changerAction == IBUS_CDC_START_PLAYING_CD53
+    ) {
+        curAction = IBUS_CDC_START_PLAYING;
+        curStatus = IBUS_CDC_PLAYING;
+    } else if (changerAction == IBUS_CDC_CHANGE_TRACK) {
+        curAction = IBUS_CDC_START_PLAYING;
     } else {
         curAction = changerAction;
     }
     IBusCommandCDCStatus(context->ibus, curAction, curStatus);
     context->cdChangerLastKeepAlive = TimerGetMillis();
+    context->cdChangerLastStatus = TimerGetMillis();
 }
 
 /**
@@ -383,18 +393,16 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
     // If the first bit is set, the key is in position 1 at least, otherwise
     // the ignition is off
     if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
-        LogDebug("Ignition is off");
         // Set the BT module not connectable/discoverable. Disconnect all devices
         BC127CommandDiscoverable(context->bt, BC127_STATE_OFF);
         BC127CommandConnectable(context->bt, BC127_STATE_OFF);
         BC127CommandClose(context->bt, BC127_CLOSE_ALL);
         BC127ClearPairedDevices(context->bt);
     } else if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
-        LogDebug("Ignition is on");
         IBusCommandCDCAnnounce(context->ibus);
         // Always assume that we're playing, that way the radio can tell us
         // if we shouldn't be, then we can deduce the system state
-        context->ibus->cdChangerStatus = 0x09;
+        context->ibus->cdChangerStatus = IBUS_CDC_PLAYING;
         // Set the BT module connectable and discoverable
         BC127CommandDiscoverable(context->bt, BC127_STATE_ON);
         BC127CommandConnectable(context->bt, BC127_STATE_ON);
@@ -424,6 +432,38 @@ void HandlerTimerCDCAnnounce(void *ctx)
     ) {
         IBusCommandCDCAnnounce(context->ibus);
         context->cdChangerLastKeepAlive = now;
+    }
+}
+
+/**
+ * HandlerTimerCDCSendStatus()
+ *     Description:
+ *         This periodic task will proactively send the CDC status to the radio
+ *         if we don't see a status poll within the last 20000 milliseconds.
+ *         The CDC poll happens every 19945 milliseconds
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerCDCSendStatus(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint32_t now = TimerGetMillis();
+    if ((now - context->cdChangerLastStatus) >= HANDLER_CDC_STATUS_TIMEOUT &&
+        context->ibus->ignitionStatus == IBUS_IGNITION_ON
+    ) {
+        unsigned char curAction = 0x00;
+        if (context->ibus->cdChangerStatus == IBUS_CDC_PLAYING) {
+            curAction = 0x02;
+        }
+        IBusCommandCDCStatus(
+            context->ibus,
+            curAction,
+            context->ibus->cdChangerStatus
+        );
+        context->cdChangerLastStatus = now;
+        LogDebug("Handler: Send CDC status preemptively");
     }
 }
 
