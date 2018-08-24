@@ -16,6 +16,7 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
     Context.displayMode = BMBT_DISPLAY_OFF;
     Context.writtenIndexes = 0;
     Context.selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
+    Context.activelyPairedDevice = BMBT_PAIRING_DEVICE_NONE;
     EventRegisterCallback(
         BC127Event_DeviceConnected,
         &BMBTBC127DeviceConnected,
@@ -229,7 +230,6 @@ static void BMBTWriteMenuInit(BMBTContext_t *context)
 void BMBTBC127DeviceConnected(void *ctx, unsigned char *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    // We can write to an index without updating it
     if (context->displayMode == BMBT_DISPLAY_ON) {
         char name[33];
         char cleanName[12];
@@ -237,6 +237,21 @@ void BMBTBC127DeviceConnected(void *ctx, unsigned char *data)
         strncpy(cleanName, name, 11);
         IBusCommandGTWriteZone(context->ibus, 6, cleanName);
         IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
+        if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
+            char name[33];
+            removeNonAscii(name, context->bt->activeDevice.deviceName);
+            char cleanText[12];
+            strncpy(cleanText, name, 11);
+            cleanText[11] = '\0';
+            uint8_t startIdx = strlen(cleanText);
+            if (startIdx > 9) {
+                startIdx = 9;
+            }
+            cleanText[startIdx++] = 0x20;
+            cleanText[startIdx++] = 0x2A;
+            IBusCommandGTWriteIndexMk4(context->ibus, context->activelyPairedDevice, cleanText);
+            IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
+        }
     }
 }
 
@@ -416,6 +431,8 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                         BC127CommandProfileOpen(context->bt, dev->macId, "AVRCP");
                         BC127CommandProfileOpen(context->bt, dev->macId, "HPF");
                     } else {
+                        char name[33];
+                        removeNonAscii(name, context->bt->activeDevice.deviceName);
                         // Wait until the current device disconnects to
                         // connect the new one
                         BC127CommandClose(
@@ -423,6 +440,17 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                             context->bt->activeDevice.deviceId
                         );
                         context->selectedPairingDevice = selectedIdx;
+                        // Update the device name to reflect the disconnected state
+                        char cleanText[12];
+                        strncpy(cleanText, name, 11);
+                        cleanText[11] = '\0';
+                        IBusCommandGTWriteIndexMk4(
+                            context->ibus,
+                            context->activelyPairedDevice,
+                            cleanText
+                        );
+                        IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
+                        context->activelyPairedDevice = selectedIdx;
                     }
                 }
             }
@@ -483,6 +511,10 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
     ) {
         // Write the header again and trigger
         BMBTWriteHeader(context);
-        BMBTWriteMenuInit(context);
+        if (context->menu == BMBT_MENU_NONE) {
+            BMBTWriteMenuInit(context);
+        } else {
+            IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
+        }
     }
 }

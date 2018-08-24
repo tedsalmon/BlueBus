@@ -36,6 +36,7 @@ typedef struct BMBTContext_t {
     uint8_t displayMode;
     uint8_t writtenIndexes;
     int8_t selectedPairingDevice;
+    int8_t activelyPairedDevice;
 } BMBTContext_t;
 void BMBTInit(BC127_t *, IBus_t *);
 void BMBTBC127DeviceConnected(void *, unsigned char *);

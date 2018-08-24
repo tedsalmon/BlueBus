@@ -12,7 +12,11 @@
 #define IBUS_CDC_CHANGE_TRACK 0x0A
 #define IBUS_CDC_STOP_PLAYING 0x01
 #define IBUS_CDC_START_PLAYING 0x02
-#define IBUS_CDC_START_PLAYING_CD53 0x03
+#define IBUS_CDC_START_PLAYING_CD43 0x03
+#define IBUS_CDC_SCAN_FORWARD 0x03
+#define IBUS_CDC_SCAN_BACKWARDS 0x04
+#define IBUS_CDC_SONG_END 0x05
+#define IBUS_CDC_CD_CHANGE 0x06
 // Commands
 #define IBUS_COMMAND_CDC_ALIVE 0x01
 #define IBUS_COMMAND_CDC_GET_STATUS 0x38
@@ -28,10 +32,10 @@
 #define IBUS_DEVICE_EWS 0x44 /* EWS (Immobileiser) */
 #define IBUS_DEVICE_CID 0x46 /* Central information display (flip-up LCD screen) */
 #define IBUS_DEVICE_MFL 0x50 /* Multi function steering wheel */
-#define IBUS_DEVICE_IHK 0x5B /* Integrated heating and air conditioning */
+#define IBUS_DEVICE_IHK 0x5B /* HVAC */
 #define IBUS_DEVICE_RAD 0x68 /* Radio */
-#define IBUS_DEVICE_DSP 0x6A /* Digital signal processing audio amplifier */
-#define IBUS_DEVICE_SM0 0x72 /* Seat memory */
+#define IBUS_DEVICE_DSP 0x6A /* DSP */
+#define IBUS_DEVICE_SM0 0x72 /* Seat memory - 0 */
 #define IBUS_DEVICE_SDRS 0x73 /* Sirius Radio */
 #define IBUS_DEVICE_CDCD 0x76 /* CD changer, DIN size. */
 #define IBUS_DEVICE_NAVE 0x7F /* Navigation (Europe) */
@@ -41,10 +45,9 @@
 #define IBUS_DEVICE_TEL 0xC8 /* Telephone */
 #define IBUS_DEVICE_TCU 0xCA /* BMW Assist */
 #define IBUS_DEVICE_LCM 0xD0 /* Light control module */
-#define IBUS_DEVICE_GTHL 0xDA /* unknown */
 #define IBUS_DEVICE_IRIS 0xE0 /* Integrated radio information system */
 #define IBUS_DEVICE_ANZV 0xE7 /* Front display */
-#define IBUS_DEVICE_BMBT 0xF0 /* On-board monitor operating part */
+#define IBUS_DEVICE_BMBT 0xF0 /* On-board monitor */
 #define IBUS_DEVICE_LOC 0xFF /* Local */
 
 #define IBUS_GT_MKI 1

@@ -331,28 +331,37 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char curAction = 0x00;
     unsigned char curStatus = 0x00;
-    unsigned char changerAction = pkt[4];
-    if (changerAction == IBUS_CDC_GET_STATUS) {
+    unsigned char requestedAction = pkt[4];
+    if (requestedAction == IBUS_CDC_GET_STATUS) {
         curStatus = context->ibus->cdChangerStatus;
         if (curStatus == IBUS_CDC_PLAYING) {
-            // For some reason, we keep getting a pingback to "start" playing
-            // even if we report that we're playing
+            /*
+             * The BM53 will pingback action 0x02 ("Start Playing") unless
+             * we proactively report that as our "Playing" action.
+             */
             curAction = IBUS_CDC_START_PLAYING;
         }
-    } else if (changerAction == IBUS_CDC_STOP_PLAYING) {
+    } else if (requestedAction == IBUS_CDC_STOP_PLAYING) {
         if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
             BC127CommandPause(context->bt);
         }
         curStatus = IBUS_CDC_NOT_PLAYING;
-    } else if (changerAction == IBUS_CDC_START_PLAYING ||
-               changerAction == IBUS_CDC_START_PLAYING_CD53
+    } else if (requestedAction == IBUS_CDC_START_PLAYING ||
+               requestedAction == IBUS_CDC_START_PLAYING_CD43
     ) {
-        curAction = IBUS_CDC_START_PLAYING;
+        /*
+         * The action for "Start Playing" can be 0x02 or 0x03 depending on the
+         * type of RAD. The BM5x uses 0x03 to signify "Scan Forward", while the
+         * CD53 uses it to signify "Start Playing". By feeding back the action
+         * we were given, we can support both devices with this code. Since in
+         * both cases, our status should be "Playing" (0x09).
+         */
+        curAction = requestedAction;
         curStatus = IBUS_CDC_PLAYING;
-    } else if (changerAction == IBUS_CDC_CHANGE_TRACK) {
+    } else if (requestedAction == IBUS_CDC_CHANGE_TRACK) {
         curAction = IBUS_CDC_START_PLAYING;
     } else {
-        curAction = changerAction;
+        curAction = requestedAction;
     }
     IBusCommandCDCStatus(context->ibus, curAction, curStatus);
     context->cdChangerLastKeepAlive = TimerGetMillis();
