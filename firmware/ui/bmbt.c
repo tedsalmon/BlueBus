@@ -219,6 +219,25 @@ static void BMBTWriteHeader(BMBTContext_t *context)
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
 }
 
+static void BMBTWriteMenu(BMBTContext_t *context)
+{
+    switch (context->menu) {
+        case BMBT_MENU_MAIN:
+            BMBTMainMenu(context);
+            break;
+        case BMBT_MENU_DEVICE_SELECTION:
+            BMBTDeviceSelectionMenu(context);
+            break;
+        case BMBT_MENU_SETTINGS:
+            BMBTSettingsMenu(context);
+            break;
+        case BMBT_MENU_NONE:
+            BMBTMainMenu(context);
+            break;
+
+    }
+}
+
 static void BMBTWriteMenuInit(BMBTContext_t *context)
 {
     if (context->menu != BMBT_MENU_MAIN) {
@@ -487,6 +506,7 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
         context->mode = BMBT_MODE_ACTIVE;
         context->displayMode = BMBT_DISPLAY_ON;
         BMBTWriteHeader(context);
+        LogDebug("BMBT: Got CDC Text");
         if (context->menu == BMBT_MENU_NONE) {
             BMBTWriteMenuInit(context);
         } else {
@@ -509,12 +529,9 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
         context->mode == BMBT_MODE_ACTIVE &&
         context->displayMode == BMBT_DISPLAY_ON
     ) {
-        // Write the header again and trigger
+        LogDebug("BMBT: Got Screen Clear");
+        // Write the header again and write the current menu back out
         BMBTWriteHeader(context);
-        if (context->menu == BMBT_MENU_NONE) {
-            BMBTWriteMenuInit(context);
-        } else {
-            IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
-        }
+        BMBTWriteMenu(context);
     }
 }

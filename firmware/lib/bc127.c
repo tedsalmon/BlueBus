@@ -616,6 +616,18 @@ void BC127Process(BC127_t *bt)
                 LogDebug("BT: Paused");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
+        } else if(strcmp(msgBuf[0], "A2DP_STREAM_START") == 0) {
+            if (bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
+                bt->activeDevice.playbackStatus = BC127_AVRCP_STATUS_PLAYING;
+                LogDebug("BT: Playing [A2DP Stream Start]");
+                EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
+            }
+        } else if(strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
+            if (bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+                bt->activeDevice.playbackStatus = BC127_AVRCP_STATUS_PAUSED;
+                LogDebug("BT: Playing [A2DP Stream Suspend]");
+                EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
+            }
         } else if(strcmp(msgBuf[0], "LINK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             uint8_t isNew = 0;
@@ -697,16 +709,14 @@ void BC127Process(BC127_t *bt)
                 (unsigned char *) msgBuf[1]
             );
         } else if (strcmp(msgBuf[0], "OPEN_ERROR") == 0) {
-            if (bt->activeDevice.deviceId != 0) {
-                if (strcmp(msgBuf[1], "A2DP") == 0) {
-                    bt->pairingErrors[BC127_LINK_A2DP] = 1;
-                }
-                if (strcmp(msgBuf[1], "AVRCP") == 0) {
-                    bt->pairingErrors[BC127_LINK_AVRCP] = 1;
-                }
-                if (strcmp(msgBuf[1], "HPF") == 0) {
-                    bt->pairingErrors[BC127_LINK_HPF] = 1;
-                }
+            if (strcmp(msgBuf[1], "A2DP") == 0) {
+                bt->pairingErrors[BC127_LINK_A2DP] = 1;
+            }
+            if (strcmp(msgBuf[1], "AVRCP") == 0) {
+                bt->pairingErrors[BC127_LINK_AVRCP] = 1;
+            }
+            if (strcmp(msgBuf[1], "HPF") == 0) {
+                bt->pairingErrors[BC127_LINK_HPF] = 1;
             }
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
             char deviceName[33];
@@ -735,7 +745,7 @@ void BC127Process(BC127_t *bt)
             // The device sometimes resets without sending the "Ready" message
             // so we instead watch for the build string
             bt->activeDevice = BC127ConnectionInit();
-            LogDebug("BT: Ready");
+            LogDebug("BT: Boot Complete");
             EventTriggerCallback(BC127Event_Boot, 0);
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
         } else if (strcmp(msgBuf[0], "STATE") == 0) {
