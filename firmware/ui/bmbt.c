@@ -234,7 +234,6 @@ static void BMBTWriteMenu(BMBTContext_t *context)
         case BMBT_MENU_NONE:
             BMBTMainMenu(context);
             break;
-
     }
 }
 

@@ -9,8 +9,9 @@
 #include <xc.h>
 #include "handler.h"
 #include "io_mappings.h"
-#include "lib/debug.h"
 #include "lib/bc127.h"
+#include "lib/debug.h"
+#include "lib/eeprom.h"
 #include "lib/ibus.h"
 #include "lib/timer.h"
 #include "lib/uart.h"
@@ -41,6 +42,7 @@ int main(void)
     TRISAbits.TRISA7 = 0;
     LATAbits.LATA7 = 1;
 
+    EEPROMInit();
     TimerInit();
 
     // Send the module objects to the application implementation handler

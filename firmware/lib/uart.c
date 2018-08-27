@@ -7,54 +7,6 @@
  */
 #include "uart.h"
 
-/* Return a reprogrammable port register */
-#define GET_RPOR(num) (((uint16_t *) &RPOR0) + num)
-
-/* Check if a bit is set */
-#define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
-
-/* Hold a pin to register map for all reprogrammable output pins */
-static uint16_t *ROPR_PINS[] = {
-    GET_RPOR(0),
-    GET_RPOR(0),
-    GET_RPOR(1),
-    GET_RPOR(1),
-    GET_RPOR(2),
-    GET_RPOR(2),
-    GET_RPOR(3),
-    GET_RPOR(3),
-    GET_RPOR(4),
-    GET_RPOR(4),
-    GET_RPOR(5),
-    GET_RPOR(5),
-    GET_RPOR(6),
-    GET_RPOR(6),
-    GET_RPOR(7),
-    GET_RPOR(7),
-    GET_RPOR(8),
-    GET_RPOR(8),
-    GET_RPOR(9),
-    GET_RPOR(9),
-    GET_RPOR(10),
-    GET_RPOR(10),
-    GET_RPOR(11),
-    GET_RPOR(11),
-    GET_RPOR(12),
-    GET_RPOR(12),
-    GET_RPOR(13),
-    GET_RPOR(13),
-    GET_RPOR(14),
-    GET_RPOR(14),
-    GET_RPOR(15),
-    GET_RPOR(15),
-    GET_RPOR(16),
-    GET_RPOR(16),
-    GET_RPOR(17),
-    GET_RPOR(17),
-    GET_RPOR(18),
-    GET_RPOR(18)
-};
-
 static UART_t *UARTModules[UART_MODULES_COUNT];
 
 // These values constitute the TX mode for each UART module
@@ -97,14 +49,7 @@ UART_t UARTInit(
             break;
     }
     // Set the TX Pin mode
-    uint16_t txPinMode = UART_TX_MODES[uart.moduleIndex];
-    if ((txPin) % 2 == 0) {
-        // Set the least significant bits for the even pin number
-        *ROPR_PINS[txPin] ^= txPinMode;
-    } else {
-        // Set the least significant bits of the register for the odd pin number
-        *ROPR_PINS[txPin] ^= txPinMode * 256;
-    }
+    setRPORMode(txPin, UART_TX_MODES[uart.moduleIndex]);
     __builtin_write_OSCCONL(OSCCON & 0x40);
     //Set the BAUD Rate
     uart.registers->uxbrg = baudRate;

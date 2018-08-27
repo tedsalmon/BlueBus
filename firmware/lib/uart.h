@@ -11,7 +11,7 @@
 #include "char_queue.h"
 #include "debug.h"
 #include "sfr_setters.h"
-
+#include "utils.h"
 #define UART_BAUD_115200 8
 #define UART_BAUD_9600 103
 #define UART_ERR_GERR 0x1
@@ -24,6 +24,9 @@
 #define UART_STATE_IDLE 0
 #define UART_STATE_RX 1
 #define UART_STATE_TX 2
+
+/* Check if a bit is set in a byte */
+#define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
 
 /**
  * UART_t
