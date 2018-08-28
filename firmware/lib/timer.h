@@ -17,10 +17,12 @@
 #define TIMER_PRESCALER 0x0000
 #define TIMER_INTERRUPT_PRIORITY 0x0002
 #define CLOCK_DIVIDER TIMER_PRESCALER
-#define PR3_SETTING (SYS_CLOCK / 1000 / 1)
+#define PR1_SETTING (SYS_CLOCK / 1000 / 1)
 #define TIMER_TASKS_MAX 16
+#define TIMER_INDEX 0
 #include <stdint.h>
 #include <xc.h>
+#include "sfr_setters.h"
 /**
  * TimerScheduledTask_t
  *     Description:
@@ -39,6 +41,7 @@ typedef struct TimerScheduledTask_t {
 } TimerScheduledTask_t;
 
 void TimerInit();
+void TimerProcessScheduledTasks();
 uint8_t TimerRegisterScheduledTask(void *, void *, uint16_t);
 void TimerTriggerScheduledTask(uint8_t);
 uint32_t TimerGetMillis();

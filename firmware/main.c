@@ -56,6 +56,7 @@ int main(void)
     while (1) {
         BC127Process(&bt);
         IBusProcess(&ibus);
+        TimerProcessScheduledTasks();
     }
 
     return 0;

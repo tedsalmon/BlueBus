@@ -7,10 +7,10 @@
 #include "eeprom.h"
 
 // These values constitute the SOA mode for each SPI module
-static const uint8_t SPI_SDO_MODES[] = {0, 7, 10, 23};
+static const uint8_t SPI_SDO_MODES[] = {7, 10, 23};
 
 // These values constitute the SCK mode for each SPI module
-static const uint8_t SPI_SCK_MODES[] = {0, 8, 11, 24};
+static const uint8_t SPI_SCK_MODES[] = {8, 11, 24};
 
 /**
  * EEPROMInit()
@@ -23,16 +23,15 @@ static const uint8_t SPI_SCK_MODES[] = {0, 8, 11, 24};
  */
 void EEPROMInit()
 {
+    uint8_t spiModuleIndex = EEPROM_SPI_MODULE - 1;
     EEPROM_CS_IO_MODE = 0;
     EEPROM_CS_PIN = 1;
     // Disable the Module & associated IRQs
-    IEC0bits.SPI1IE = 0;
-    IEC0bits.SPI1TXIE = 0;
-    IEC3bits.SPI1RXIE = 0;
-
+    SetSPIIE(spiModuleIndex, 0);
+    SetSPITXIE(spiModuleIndex, 0);
+    SetSPITXIE(spiModuleIndex, 0);
     SPI1CON1L = 0;
     SPI1STATLbits.SPIRBF = 0;
-
     // Unlock the programmable pin register
     __builtin_write_OSCCONL(OSCCON & 0xBF);
     // Set the ports to Digital
@@ -42,14 +41,14 @@ void EEPROMInit()
     // Data Input
     _SDI1R = EEPROM_SDI_PIN;
     // Set the SCK Output
-    setRPORMode(EEPROM_SCK_PIN, SPI_SCK_MODES[EEPROM_SPI_MODULE]);
+    setRPORMode(EEPROM_SCK_PIN, SPI_SCK_MODES[spiModuleIndex]);
     // Set the SDO Output
-    setRPORMode(EEPROM_SDO_PIN, SPI_SDO_MODES[EEPROM_SPI_MODULE]);
+    setRPORMode(EEPROM_SDO_PIN, SPI_SDO_MODES[spiModuleIndex]);
     // Lock the programmable pin register
     __builtin_write_OSCCONL(OSCCON & 0x40);
-    SPI1BRGL = EEPROM_BRG; // 16000000 / (2 * (0 + 1)) = 8,000,000 or 8Mhz
+    SPI1BRGL = EEPROM_BRG;
     SPI1STATLbits.SPIROV = 0;
-    // Enable Module / Set CKE to active -> idle // Master Enable
+    // Enable Module | Set CKE to active -> idle | Master Enable
     SPI1CON1L = 0b1000000100100000;
 }
 
@@ -120,7 +119,6 @@ void EEPROMIsReady()
     while (status & EEPROM_STATUS_BUSY) {
         EEPROM_CS_PIN = 0;
         EEPROMSend(EEPROM_COMMAND_RDSR);
-        // Send a dummy byte to receive incoming data
         status = EEPROMSend(EEPROM_COMMAND_GET);
         EEPROM_CS_PIN = 1;
     }

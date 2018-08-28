@@ -8,6 +8,7 @@
 #define EEPROM_H
 #include <xc.h>
 #include "../io_mappings.h"
+#include "sfr_setters.h"
 #include "utils.h"
 /* 16000000 / (2 * (0 + 1)) = 8,000,000 or 8Mhz */
 #define EEPROM_BRG 0

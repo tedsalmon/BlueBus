@@ -7,13 +7,13 @@
  */
 #include "timer.h"
 volatile uint32_t TimerCurrentMillis = 0;
-TimerScheduledTask_t TimerRegisteredTasks[TIMER_TASKS_MAX];
+volatile TimerScheduledTask_t TimerRegisteredTasks[TIMER_TASKS_MAX];
 uint8_t TimerRegisteredTasksCount = 0;
 
 /**
  * TimerInit()
  *     Description:
- *         Initialize the system Timer (Timer3)
+ *         Initialize the system Timer (Timer1)
  *     Params:
  *         None
  *     Returns:
@@ -21,12 +21,12 @@ uint8_t TimerRegisteredTasksCount = 0;
  */
 void TimerInit()
 {
-    IPC2bits.T3IP = TIMER_INTERRUPT_PRIORITY;
-    IFS0bits.T3IF = 0;
-    TMR3 = 0;
-    PR3 = PR3_SETTING;
-    T3CON = TIMER_ON | STOP_TIMER_IN_IDLE_MODE | TIMER_SOURCE_INTERNAL | GATED_TIME_DISABLED | TIMER_16BIT_MODE | CLOCK_DIVIDER;
-    IEC0bits.T3IE = 1;
+    T1CON = 0;
+    T1CON = TIMER_ON | STOP_TIMER_IN_IDLE_MODE | TIMER_SOURCE_INTERNAL | GATED_TIME_DISABLED | TIMER_16BIT_MODE | CLOCK_DIVIDER;
+    PR1 = PR1_SETTING;
+    SetTIMERIP(TIMER_INDEX, TIMER_INTERRUPT_PRIORITY);
+    SetTIMERIF(TIMER_INDEX, 0);
+    SetTIMERIE(TIMER_INDEX, 1);
 }
 
 /**
@@ -41,6 +41,27 @@ void TimerInit()
 uint32_t TimerGetMillis()
 {
     return (uint32_t) TimerCurrentMillis;
+}
+
+/**
+ * TimerProcessScheduledTasks()
+ *     Description:
+ *         Run through the scheduled tasks and run any that are due.
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+void TimerProcessScheduledTasks()
+{
+    uint8_t idx;
+    for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
+        volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
+        if (t->ticks >= t->interval) {
+            t->task(t->context);
+            t->ticks = 0;
+        }
+    }
 }
 
 /**
@@ -77,7 +98,7 @@ uint8_t TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
  */
 void TimerTriggerScheduledTask(uint8_t taskId)
 {
-    TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
+    volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
     if (t != 0) {
         // Prevent it from executing immediately
         t->ticks = 0;
@@ -87,26 +108,22 @@ void TimerTriggerScheduledTask(uint8_t taskId)
     }
 }
 /**
- * T3Interrupt
+ * T1Interrupt
  *     Description:
- *         Update the milliseconds since boot and run through the scheduled
- *         tasks. If a task is not due, increment the interval counter.
+ *         Update the milliseconds since boot. Iterate through the scheduled
+ *         tasks and update their ticks.
  *     Params:
  *         void
  *     Returns:
  *         void
  */
-void __attribute__((__interrupt__, auto_psv)) _T3Interrupt(void)
+void __attribute__((__interrupt__, auto_psv)) _T1Interrupt(void)
 {
     TimerCurrentMillis++;
     uint8_t idx;
     for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
-        TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
+        volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
         t->ticks++;
-        if (t->ticks >= t->interval) {
-            t->task(t->context);
-            t->ticks = 0;
-        }
     }
-    IFS0bits.T3IF = 0;
+    SetTIMERIF(TIMER_INDEX, 0);
 }
