@@ -14,6 +14,9 @@
 #include "../lib/timer.h"
 #define BMBT_DISPLAY_OFF 0
 #define BMBT_DISPLAY_ON 1
+#define BMBT_HEADER_BT 1
+#define BMBT_HEADER_PB_STAT 2
+#define BMBT_HEADER_DEV_NAME 6
 #define BMBT_MENU_NONE 0
 #define BMBT_MENU_MAIN 1
 #define BMBT_MENU_DASHBOARD 2

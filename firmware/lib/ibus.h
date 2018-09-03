@@ -12,11 +12,14 @@
 #define IBUS_CDC_CHANGE_TRACK 0x0A
 #define IBUS_CDC_STOP_PLAYING 0x01
 #define IBUS_CDC_START_PLAYING 0x02
-#define IBUS_CDC_START_PLAYING_CD43 0x03
+#define IBUS_CDC_START_PLAYING_CD53 0x03
 #define IBUS_CDC_SCAN_FORWARD 0x03
 #define IBUS_CDC_SCAN_BACKWARDS 0x04
 #define IBUS_CDC_SONG_END 0x05
 #define IBUS_CDC_CD_CHANGE 0x06
+/* Sending this to the BM53 prevents it from clearing the GT as often */
+#define IBUS_CDC_BM53_START_PLAYING 0x01
+#define IBUS_CDC_BM53_PLAYING 0x0C
 // Commands
 #define IBUS_COMMAND_CDC_ALIVE 0x01
 #define IBUS_COMMAND_CDC_GET_STATUS 0x38
@@ -62,7 +65,7 @@
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
 #define IBUS_RX_BUFFER_SIZE 256
-#define IBUS_TX_BUFFER_SIZE 32
+#define IBUS_TX_BUFFER_SIZE 48
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 25 // If we transmit faster, other modules may not hear us
 #include <stdint.h>
@@ -136,7 +139,6 @@ typedef struct IBus_t {
     uint32_t txLastStamp;
     unsigned char cdChangerStatus;
     unsigned char ignitionStatus;
-    unsigned char gtHardwareVersion;
     unsigned char gtCanDisplayStatic;
 } IBus_t;
 IBus_t IBusInit();
@@ -158,4 +160,5 @@ void IBusCommandMIDText(IBus_t *, char *);
 void IBusCommandMIDTextClear(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
+void IBusCommandRADUpdateMenu(IBus_t *);
 #endif /* IBUS_H */

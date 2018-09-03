@@ -293,7 +293,8 @@ void BC127CommandProfileClose(BC127_t *bt, uint8_t linkId)
 /**
  * BC127CommandProfileOpen()
  *     Description:
- *         Open a profile for a given device
+ *         Open a profile for a given device. Set the given MAC ID as the active
+ *         device so we can reference it in case we get OPEN_ERROR's
  *     Params:
  *         BC127_t *bt - A pointer to the module object
  *         char *macId - The MAC ID of the device for which to open the profile
@@ -304,6 +305,7 @@ void BC127CommandProfileClose(BC127_t *bt, uint8_t linkId)
 void BC127CommandProfileOpen(BC127_t *bt, char *macId, char *profile)
 {
     char command[24];
+    strncpy(bt->activeDevice.macId, macId, 12);
     snprintf(command, 24, "OPEN %s %s", macId, profile);
     BC127SendCommand(bt, command);
 }

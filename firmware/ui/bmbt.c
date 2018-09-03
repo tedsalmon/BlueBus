@@ -109,8 +109,8 @@ static void BMBTMainMenu(BMBTContext_t *context)
         index++;
     }
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
-    context->menu = BMBT_MENU_MAIN;
     context->writtenIndexes = 3;
+    context->menu = BMBT_MENU_MAIN;
 }
 
 static void BMBTDashboardMenu(BMBTContext_t *context)
@@ -124,6 +124,11 @@ static void BMBTDashboardMenu(BMBTContext_t *context)
     removeNonAscii(title, context->bt->activeDevice.title);
     removeNonAscii(artist, context->bt->activeDevice.artist);
     removeNonAscii(album, context->bt->activeDevice.album);
+    if (strlen(title) == 0 &&
+        context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED
+    ) {
+        strncpy(title, "- Not Playing -", 16);
+    }
     BMBTSetStaticScreen(context, title, artist, album);
     context->menu = BMBT_MENU_DASHBOARD;
 }
@@ -167,8 +172,8 @@ static void BMBTDeviceSelectionMenu(BMBTContext_t *context)
         index++;
     }
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
-    context->menu = BMBT_MENU_DEVICE_SELECTION;
     context->writtenIndexes = screenIdx;
+    context->menu = BMBT_MENU_DEVICE_SELECTION;
 }
 
 static void BMBTSettingsMenu(BMBTContext_t *context)
@@ -194,8 +199,8 @@ static void BMBTSettingsMenu(BMBTContext_t *context)
         index++;
     }
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
-    context->menu = BMBT_MENU_SETTINGS;
     context->writtenIndexes = index;
+    context->menu = BMBT_MENU_SETTINGS;
 }
 
 static void BMBTWriteHeader(BMBTContext_t *context)
@@ -206,16 +211,16 @@ static void BMBTWriteHeader(BMBTContext_t *context)
         char cleanName[12];
         removeNonAscii(name, context->bt->activeDevice.deviceName);
         strncpy(cleanName, name, 11);
-        IBusCommandGTWriteZone(context->ibus, 6, cleanName);
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, cleanName);
     } else {
-        IBusCommandGTWriteZone(context->ibus, 6, "No Device");
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, "No Device");
     }
     if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
-        IBusCommandGTWriteZone(context->ibus, 4, "||");
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
     } else {
-        IBusCommandGTWriteZone(context->ibus, 4, "> ");
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
     }
-    IBusCommandGTWriteZone(context->ibus, 5, "BT");
+    IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "BT  ");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
 }
 
@@ -224,6 +229,9 @@ static void BMBTWriteMenu(BMBTContext_t *context)
     switch (context->menu) {
         case BMBT_MENU_MAIN:
             BMBTMainMenu(context);
+            break;
+        case BMBT_MENU_DASHBOARD:
+            BMBTDashboardMenu(context);
             break;
         case BMBT_MENU_DEVICE_SELECTION:
             BMBTDeviceSelectionMenu(context);
@@ -237,12 +245,13 @@ static void BMBTWriteMenu(BMBTContext_t *context)
     }
 }
 
-static void BMBTWriteMenuInit(BMBTContext_t *context)
+static void BMBTMenuRefresh(BMBTContext_t *context)
 {
-    if (context->menu != BMBT_MENU_MAIN) {
-        BMBTMainMenu(context);
+    if (context->menu != BMBT_MENU_DASHBOARD) {
+        IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
+    } else {
+        IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_STATIC);
     }
-    IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
 }
 
 void BMBTBC127DeviceConnected(void *ctx, unsigned char *data)
@@ -253,22 +262,10 @@ void BMBTBC127DeviceConnected(void *ctx, unsigned char *data)
         char cleanName[12];
         removeNonAscii(name, context->bt->activeDevice.deviceName);
         strncpy(cleanName, name, 11);
-        IBusCommandGTWriteZone(context->ibus, 6, cleanName);
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, cleanName);
         IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
         if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
-            char name[33];
-            removeNonAscii(name, context->bt->activeDevice.deviceName);
-            char cleanText[12];
-            strncpy(cleanText, name, 11);
-            cleanText[11] = '\0';
-            uint8_t startIdx = strlen(cleanText);
-            if (startIdx > 9) {
-                startIdx = 9;
-            }
-            cleanText[startIdx++] = 0x20;
-            cleanText[startIdx++] = 0x2A;
-            IBusCommandGTWriteIndexMk4(context->ibus, context->activelyPairedDevice, cleanText);
-            IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
+            BMBTDeviceSelectionMenu(context);
         }
     }
 }
@@ -277,8 +274,11 @@ void BMBTBC127DeviceDisconnected(void *ctx, unsigned char *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->displayMode == BMBT_DISPLAY_ON) {
-        IBusCommandGTWriteZone(context->ibus, 6, "No Device");
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, "No Device");
         IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
+        if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
+            BMBTDeviceSelectionMenu(context);
+        }
     }
     if (context->selectedPairingDevice != BMBT_PAIRING_DEVICE_NONE) {
         BC127PairedDevice_t *dev = &context->bt->pairedDevices[
@@ -309,9 +309,9 @@ void BMBTBC127PlaybackStatus(void *ctx, unsigned char *tmp)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->displayMode == BMBT_DISPLAY_ON) {
         if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
-            IBusCommandGTWriteZone(context->ibus, 4, "||");
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
         } else {
-            IBusCommandGTWriteZone(context->ibus, 4, "> ");
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
         }
         IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
     }
@@ -320,17 +320,10 @@ void BMBTBC127PlaybackStatus(void *ctx, unsigned char *tmp)
 void BMBTBC127Ready(void *ctx, unsigned char *tmp)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    IBusCommandGTWriteZone(context->ibus, 6, "No Device");
+    IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, "No Device");
     if (context->displayMode == BMBT_DISPLAY_ON) {
         IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
-        if (context->menu == BMBT_MENU_IDX_DEVICE_SELECTION) {
-            if (context->bt->discoverable == BC127_STATE_ON) {
-                IBusCommandGTWriteIndexMk4(context->ibus, 5, "Pairing: Off");
-            } else {
-                IBusCommandGTWriteIndexMk4(context->ibus, 5, "Pairing: On");
-            }
-            IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
-        }
+        // Write the pairing status
     }
 }
 
@@ -347,16 +340,8 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_PlayPause) {
             if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
-                if (context->displayMode == BMBT_DISPLAY_ON) {
-                    IBusCommandGTWriteZone(context->ibus, 4, "||");
-                    IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
-                }
             } else {
                 BC127CommandPlay(context->bt);
-                if (context->displayMode == BMBT_DISPLAY_ON) {
-                    IBusCommandGTWriteZone(context->ibus, 4, "> ");
-                    IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
-                }
             }
         }
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_Knob) {
@@ -370,7 +355,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             ) {
                 context->displayMode = BMBT_DISPLAY_ON;
                 BMBTWriteHeader(context);
-                BMBTWriteMenuInit(context);
+                BMBTWriteMenu(context);
             }
         }
     }
@@ -388,12 +373,15 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
         context->menu = BMBT_MENU_NONE;
         context->mode = BMBT_MODE_OFF;
         context->displayMode = BMBT_DISPLAY_OFF;
+        IBusCommandRADEnableMenu(context->ibus);
+        IBusCommandRADUpdateMenu(context->ibus);
     } else if (changerAction == IBUS_CDC_START_PLAYING) {
         // Start Playing
         if (context->mode == BMBT_MODE_OFF) {
             if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
             }
+            IBusCommandRADDisableMenu(context->ibus);
             context->mode = BMBT_MODE_ACTIVE;
             context->displayMode = BMBT_DISPLAY_ON;
         }
@@ -404,9 +392,9 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     uint8_t selectedIdx = (uint8_t) pkt[6];
+    LogDebug("BMBT: Menu Select ID %d", selectedIdx);
     // The depress action has 0x40 added to the index
-    if (selectedIdx > 10 && context->displayMode == BMBT_DISPLAY_ON) {
-        selectedIdx = selectedIdx - 64;
+    if (selectedIdx < 10 && context->displayMode == BMBT_DISPLAY_ON) {
         if (context->menu == BMBT_MENU_MAIN) {
             if (selectedIdx == 0) {
                 BMBTDashboardMenu(context);
@@ -449,8 +437,6 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                         BC127CommandProfileOpen(context->bt, dev->macId, "AVRCP");
                         BC127CommandProfileOpen(context->bt, dev->macId, "HPF");
                     } else {
-                        char name[33];
-                        removeNonAscii(name, context->bt->activeDevice.deviceName);
                         // Wait until the current device disconnects to
                         // connect the new one
                         BC127CommandClose(
@@ -458,16 +444,6 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                             context->bt->activeDevice.deviceId
                         );
                         context->selectedPairingDevice = selectedIdx;
-                        // Update the device name to reflect the disconnected state
-                        char cleanText[12];
-                        strncpy(cleanText, name, 11);
-                        cleanText[11] = '\0';
-                        IBusCommandGTWriteIndexMk4(
-                            context->ibus,
-                            context->activelyPairedDevice,
-                            cleanText
-                        );
-                        IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
                         context->activelyPairedDevice = selectedIdx;
                     }
                 }
@@ -488,28 +464,28 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     uint8_t pktLen = (uint8_t) pkt[1] + 2;
-    uint8_t textLen = 8;
+    uint8_t textLen = pktLen - 7;
     char text[textLen];
-    if ((textLen + 8) <= pktLen) {
-        uint8_t idx = 0;
-        while (idx < textLen) {
-            text[idx] = pkt[idx + 6];
-            idx++;
-        }
+    uint8_t idx = 0;
+    while (idx < textLen) {
+        text[idx] = pkt[idx + 6];
+        idx++;
+    }
+    idx--;
+    while (text[idx] == 0x20 || text[idx] == 0x00) {
+        text[idx] = '\0';
+        idx--;
     }
     text[textLen - 1] = '\0';
-    // Main area is 'CDC 1-01' or 'NO DISC': write the header and set display mode on
-    if (strcmp("CDC 1-0", text) == 0 || strcmp("NO DISC", text) == 0) {
-        // Since we assume we're playing, the RAD won't tell us otherwise
-        // Run the same code we would if we were told to start playing
+    LogDebug("BMBT: Main Area Text '%s'", text);
+    // Main area is being updated with a CDC Text:
+    //     Rewrite the header and set display mode on
+    if (strcmp("CDC 1-01", text) == 0 || strcmp("TR 01-001", text) == 0) {
         context->mode = BMBT_MODE_ACTIVE;
         context->displayMode = BMBT_DISPLAY_ON;
         BMBTWriteHeader(context);
-        LogDebug("BMBT: Got CDC Text");
-        if (context->menu == BMBT_MENU_NONE) {
-            BMBTWriteMenuInit(context);
-        } else {
-            IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
+        if (context->menu != BMBT_MENU_NONE) {
+            BMBTMenuRefresh(context);
         }
     } else if (pkt[pktLen - 2] == IBUS_RAD_MAIN_AREA_WATERMARK) {
         context->displayMode = BMBT_DISPLAY_ON;
@@ -520,6 +496,7 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
 
 void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
 {
+    LogDebug("BMBT: Screen Mode %02X", pkt[4]);
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[4] == 0x01 || pkt[4] == 0x02) {
         context->displayMode = BMBT_DISPLAY_OFF;
@@ -528,9 +505,11 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
         context->mode == BMBT_MODE_ACTIVE &&
         context->displayMode == BMBT_DISPLAY_ON
     ) {
-        LogDebug("BMBT: Got Screen Clear");
-        // Write the header again and write the current menu back out
-        BMBTWriteHeader(context);
-        BMBTWriteMenu(context);
+        // Write the current menu back out
+        if (context->menu == BMBT_MENU_NONE) {
+            BMBTWriteMenu(context);
+        } else {
+            BMBTMenuRefresh(context);
+        }
     }
 }

@@ -29,6 +29,7 @@ typedef struct HandlerContext_t {
     IBus_t *ibus;
     uint8_t btStartupIsRun;
     uint8_t btConnectionStatus;
+    uint8_t uiMode;
     uint32_t cdChangerLastKeepAlive;
     uint32_t cdChangerLastStatus;
 } HandlerContext_t;

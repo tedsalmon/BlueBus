@@ -6,6 +6,12 @@
  */
 #include "handler.h"
 static HandlerContext_t Context;
+static char *PROFILES[4] = {
+    "A2DP",
+    "AVRCP",
+    "",
+    "HFP"
+};
 
 /**
  * HandlerInit()
@@ -26,6 +32,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     Context.cdChangerLastStatus = TimerGetMillis();
     Context.btStartupIsRun = 0;
     Context.btConnectionStatus = HANDLER_BT_CONN_OFF;
+    Context.uiMode = uiMode;
     EventRegisterCallback(
         BC127Event_DeviceLinkConnected,
         &HandlerBC127DeviceLinkConnected,
@@ -346,18 +353,16 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             BC127CommandPause(context->bt);
         }
         curStatus = IBUS_CDC_NOT_PLAYING;
-    } else if (requestedAction == IBUS_CDC_START_PLAYING ||
-               requestedAction == IBUS_CDC_START_PLAYING_CD43
+    } else if (requestedAction == IBUS_CDC_START_PLAYING_CD53 &&
+               context->uiMode == HANDLER_UI_MODE_CD53
     ) {
-        /*
-         * The action for "Start Playing" can be 0x02 or 0x03 depending on the
-         * type of RAD. The BM5x uses 0x03 to signify "Scan Forward", while the
-         * CD53 uses it to signify "Start Playing". By feeding back the action
-         * we were given, we can support both devices with this code. Since in
-         * both cases, our status should be "Playing" (0x09).
-         */
         curAction = requestedAction;
         curStatus = IBUS_CDC_PLAYING;
+    } else if (requestedAction == IBUS_CDC_START_PLAYING &&
+               context->uiMode == HANDLER_UI_MODE_BMBT
+    ) {
+        curAction = IBUS_CDC_BM53_START_PLAYING;
+        curStatus = IBUS_CDC_BM53_PLAYING;
     } else if (requestedAction == IBUS_CDC_CHANGE_TRACK) {
         curAction = IBUS_CDC_START_PLAYING;
     } else {
@@ -412,8 +417,9 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         // Always assume that we're playing, that way the radio can tell us
         // if we shouldn't be, then we can deduce the system state
         context->ibus->cdChangerStatus = IBUS_CDC_PLAYING;
-        // Set the BT module connectable and discoverable
-        BC127CommandDiscoverable(context->bt, BC127_STATE_ON);
+        // Reset the metadata so we don't display the wrong data
+        BC127ClearMetadata(context->bt);
+        // Set the BT module connectable
         BC127CommandConnectable(context->bt, BC127_STATE_ON);
         // Request BC127 state
         BC127CommandStatus(context->bt);
@@ -489,33 +495,15 @@ void HandlerTimerCDCSendStatus(void *ctx)
 void HandlerTimerOpenProfileErrors(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->bt->activeDevice.deviceId != 0) {
+    if (strlen(context->bt->activeDevice.macId) > 0) {
         uint8_t idx;
         for (idx = 0; idx < BC127_PROFILE_COUNT; idx++) {
             if (context->bt->pairingErrors[idx] == 1) {
-                switch (idx) {
-                    case 0:
-                        BC127CommandProfileOpen(
-                            context->bt,
-                            context->bt->activeDevice.macId,
-                            "A2DP"
-                        );
-                        break;
-                    case 1:
-                        BC127CommandProfileOpen(
-                            context->bt,
-                            context->bt->activeDevice.macId,
-                            "AVRCP"
-                        );
-                        break;
-                    case 3:
-                        BC127CommandProfileOpen(
-                            context->bt,
-                            context->bt->activeDevice.macId,
-                            "HPF"
-                        );
-                        break;
-                }
+                BC127CommandProfileOpen(
+                    context->bt,
+                    context->bt->activeDevice.macId,
+                    PROFILES[idx]
+                );
                 context->bt->pairingErrors[idx] = 0;
             }
         }

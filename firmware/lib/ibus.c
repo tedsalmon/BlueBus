@@ -35,7 +35,6 @@ IBus_t IBusInit()
     ibus.txBufferReadIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
-    ibus.gtHardwareVersion = IBUS_GT_MKI;
     ibus.gtCanDisplayStatic = 0;
     return ibus;
 }
@@ -57,17 +56,18 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
             '\0'
         };
         uint8_t hardwareVersion = strToInt(hwVersion);
+        uint8_t gtHardwareVersion = 0;
         switch (hardwareVersion) {
             case 10:
-                ibus->gtHardwareVersion = IBUS_GT_MKIV;
+                gtHardwareVersion = IBUS_GT_MKIV;
                 break;
             case 11:
-                ibus->gtHardwareVersion = IBUS_GT_MKIII;
+                gtHardwareVersion = IBUS_GT_MKIII;
             case 21:
-                ibus->gtHardwareVersion = IBUS_GT_MKII;
+                gtHardwareVersion = IBUS_GT_MKII;
             // No idea what an MKI reports -- Anything else must be it?
             default:
-                ibus->gtHardwareVersion = IBUS_GT_MKI;
+                gtHardwareVersion = IBUS_GT_MKI;
         }
         char swVersion[3] = {
             (char) pkt[IBUS_GT_SW_ID_OFFSET],
@@ -179,17 +179,14 @@ void IBusProcess(IBus_t *ibus)
             } else if (msgLength == ibus->rxBufferIdx) {
                 uint8_t idx;
                 unsigned char pkt[msgLength];
+                long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+                LogRaw("[%llu] DEBUG: IBus: RX[%d]: ", ts, msgLength);
                 for(idx = 0; idx < msgLength; idx++) {
                     pkt[idx] = ibus->rxBuffer[idx];
+                    LogRaw("%02X ", pkt[idx]);
                 }
+                LogRaw("\r\n");
                 if (IBusValidateChecksum(pkt) == 1) {
-                    LogDebug(
-                        "IBus: RX: %02X -> %02X Action: %02X Length: %d",
-                        pkt[0],
-                        pkt[2],
-                        pkt[3],
-                        (uint8_t) pkt[1]
-                    );
                     unsigned char srcSystem = pkt[0];
                     if (srcSystem == IBUS_DEVICE_BMBT) {
                         IBusHandleBMBTMessage(pkt);
@@ -387,7 +384,7 @@ void IBusCommandCDCStatus(IBus_t *ibus, unsigned char action, unsigned char stat
         action,
         status,
         0x00,
-        0x01,
+        0x3F,
         0x00,
         0x01,
         0x01,
@@ -491,6 +488,7 @@ void IBusCommandGTWriteTitle(IBus_t *ibus, char *message)
     if (length > 11) {
         length = 11;
     }
+    LogDebug("IBus: Write Text '%s'", message);
     // Length + Write Type + Write Area + Size + Watermark
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
@@ -538,7 +536,7 @@ void IBusCommandIKEGetIgnition(IBus_t *ibus)
 {
     LogDebug("IBus: Get Ignition Status");
     unsigned char msg[] = {0x10};
-    IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_IKE, msg, 1);
+    IBusSendCommand(ibus, IBUS_DEVICE_BMBT, IBUS_DEVICE_IKE, msg, 1);
 }
 
 /**
@@ -598,8 +596,8 @@ void IBusCommandRADDisableMenu(IBus_t *ibus)
     unsigned char msg[] = {0x45, 0x02};
     IBusSendCommand(
         ibus,
-        IBUS_DEVICE_RAD,
         IBUS_DEVICE_GT,
+        IBUS_DEVICE_RAD,
         msg,
         sizeof(msg)
     );
@@ -619,8 +617,29 @@ void IBusCommandRADEnableMenu(IBus_t *ibus)
     unsigned char msg[] = {0x45, 0x00};
     IBusSendCommand(
         ibus,
-        IBUS_DEVICE_RAD,
         IBUS_DEVICE_GT,
+        IBUS_DEVICE_RAD,
+        msg,
+        sizeof(msg)
+    );
+}
+
+/**
+ * IBusCommandRADUpdateMenu()
+ *     Description:
+ *        Update the Radio Menu? I have no idea -- taken from an Intravee log
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandRADUpdateMenu(IBus_t *ibus)
+{
+    unsigned char msg[] = {0x45, 0x91};
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_GT,
+        IBUS_DEVICE_RAD,
         msg,
         sizeof(msg)
     );
