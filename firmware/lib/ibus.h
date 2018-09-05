@@ -67,7 +67,7 @@
 #define IBUS_RX_BUFFER_SIZE 256
 #define IBUS_TX_BUFFER_SIZE 48
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
-#define IBUS_TX_BUFFER_WAIT 25 // If we transmit faster, other modules may not hear us
+#define IBUS_TX_BUFFER_WAIT 10 // If we transmit faster, other modules may not hear us
 #include <stdint.h>
 #include <string.h>
 #include "../io_mappings.h"

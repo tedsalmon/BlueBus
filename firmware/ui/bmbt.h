@@ -37,7 +37,8 @@ typedef struct BMBTContext_t {
     uint8_t menu;
     uint8_t mode;
     uint8_t displayMode;
-    uint8_t writtenIndexes;
+    uint8_t writtenIndices;
+    uint8_t nextMenu;
     int8_t selectedPairingDevice;
     int8_t activelyPairedDevice;
 } BMBTContext_t;
@@ -52,4 +53,5 @@ void BMBTIBusCDChangerStatus(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);
 void BMBTRADUpdateMainArea(void *, unsigned char *);
 void BMBTScreenModeUpdate(void *, unsigned char *);
+void BMBTWriteNextMenu(void *);
 #endif /* BMBT_H */

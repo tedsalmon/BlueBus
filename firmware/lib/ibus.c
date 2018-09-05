@@ -384,14 +384,14 @@ void IBusCommandCDCStatus(IBus_t *ibus, unsigned char action, unsigned char stat
         action,
         status,
         0x00,
-        0x3F,
+        0x01, // Disc Count
         0x00,
         0x01,
         0x01,
         0x00,
         0x01,
-        0x01,
-        0x01
+        0x01, // Disc Number
+        0x01 // Track Number
     };
     IBusSendCommand(
         ibus,

@@ -365,6 +365,11 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
         curStatus = IBUS_CDC_BM53_PLAYING;
     } else if (requestedAction == IBUS_CDC_CHANGE_TRACK) {
         curAction = IBUS_CDC_START_PLAYING;
+    } else if (requestedAction == IBUS_CDC_SCAN_FORWARD &&
+               context->uiMode == HANDLER_UI_MODE_BMBT
+    ) {
+        curAction = IBUS_CDC_START_PLAYING;
+        curStatus = IBUS_CDC_PLAYING;
     } else {
         curAction = requestedAction;
     }
