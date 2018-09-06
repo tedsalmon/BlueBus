@@ -15,7 +15,6 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
     Context.mode = BMBT_MODE_OFF;
     Context.displayMode = BMBT_DISPLAY_OFF;
     Context.writtenIndices = 0;
-    Context.nextMenu = BMBT_MENU_NONE;
     Context.selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
     Context.activelyPairedDevice = BMBT_PAIRING_DEVICE_NONE;
     EventRegisterCallback(
@@ -67,11 +66,6 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         IBusEvent_ScreenModeUpdate,
         &BMBTScreenModeUpdate,
         &Context
-    );
-    TimerRegisterScheduledTask(
-        &BMBTWriteNextMenu,
-        &Context,
-        250
     );
 }
 
@@ -281,7 +275,7 @@ void BMBTBC127DeviceDisconnected(void *ctx, unsigned char *data)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->displayMode == BMBT_DISPLAY_ON) {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, "No Device");
-        IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
+        //IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
         if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             BMBTDeviceSelectionMenu(context);
         }
@@ -400,23 +394,22 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
     // We wait until the depress action, otherwise we may run into IBus
     // contention where parts of the screen are being updated while we are
     // still trying to write the screen
-    if (selectedIdx > 10 && context->displayMode == BMBT_DISPLAY_ON) {
+    if (selectedIdx < 10 && context->displayMode == BMBT_DISPLAY_ON) {
         LogDebug("BMBT: Menu Select ID %d", selectedIdx);
-        // The depress action has 0x40 added to the index
-        selectedIdx = selectedIdx - 64;
         if (context->menu == BMBT_MENU_MAIN) {
             if (selectedIdx == BMBT_MENU_IDX_DASHBOARD) {
-                context->nextMenu = BMBT_MENU_DASHBOARD;
+                BMBTDashboardMenu(context);
             } else if (selectedIdx == BMBT_MENU_IDX_DEVICE_SELECTION) {
-                context->nextMenu = BMBT_MENU_DEVICE_SELECTION;
+                BMBTDeviceSelectionMenu(context);
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS) {
+                BMBTSettingsMenu(context);
                 context->nextMenu = BMBT_MENU_SETTINGS;
             }
         } else if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             uint8_t index = context->bt->pairedDevicesCount + 1;
             // Back Button
             if (selectedIdx == index) {
-                context->nextMenu = BMBT_MENU_MAIN;
+                BMBTMainMenu(context);
             } else if (selectedIdx == index - 1) {
                 uint8_t state;
                 if (context->bt->discoverable == BC127_STATE_ON) {
@@ -463,7 +456,7 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_RESET_BT) {
                 BC127CommandReset(context->bt);
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_BACK) {
-                context->nextMenu = BMBT_MENU_MAIN;
+                BMBTMainMenu(context);
             }
         }
     }
@@ -500,7 +493,6 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
         context->mode = BMBT_MODE_ACTIVE;
         context->displayMode = BMBT_DISPLAY_ON;
         IBusCommandGTWriteTitle(context->ibus, "BlueBus");
-        IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
     } else if (pkt[pktLen - 2] == IBUS_RAD_MAIN_AREA_WATERMARK) {
         context->displayMode = BMBT_DISPLAY_ON;
     } else {
@@ -525,27 +517,5 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
         } else {
             BMBTMenuRefresh(context);
         }
-    }
-}
-
-/**
- * BMBTWriteNextMenu()
- *     Description:
- *         Because we cannot immediately write a menu after receiving a "No Disc"
- *         message, and we can't report that all of the Disc slots are loaded
- *         without having the Radio interrupting the music, we must update the
- *         menu using a scheduled task
- *     Params:
- *         void *ctx - The context we passed at Timer registration
- *     Returns:
- *         void
- */
-void BMBTWriteNextMenu(void *ctx)
-{
-    BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->nextMenu != BMBT_MENU_NONE) {
-        context->menu = context->nextMenu;
-        BMBTWriteMenu(context);
-        context->nextMenu = BMBT_MENU_NONE;
     }
 }

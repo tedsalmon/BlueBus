@@ -38,7 +38,6 @@ typedef struct BMBTContext_t {
     uint8_t mode;
     uint8_t displayMode;
     uint8_t writtenIndices;
-    uint8_t nextMenu;
     int8_t selectedPairingDevice;
     int8_t activelyPairedDevice;
 } BMBTContext_t;
