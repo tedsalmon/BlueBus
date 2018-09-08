@@ -107,6 +107,7 @@ void TimerTriggerScheduledTask(uint8_t taskId)
         t->ticks = 0;
     }
 }
+
 /**
  * T1Interrupt
  *     Description:
@@ -122,8 +123,7 @@ void __attribute__((__interrupt__, auto_psv)) _T1Interrupt(void)
     TimerCurrentMillis++;
     uint8_t idx;
     for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
-        volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
-        t->ticks++;
+        TimerRegisteredTasks[idx].ticks++;
     }
     SetTIMERIF(TIMER_INDEX, 0);
 }
