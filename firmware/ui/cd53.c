@@ -124,9 +124,9 @@ void CD53BC127Metadata(void *ctx, unsigned char *metadata)
         text,
         CD53_DISPLAY_TEXT_SIZE,
         "%s - %s on %s",
-        context->bt->activeDevice.title,
-        context->bt->activeDevice.artist,
-        context->bt->activeDevice.album
+        context->bt->title,
+        context->bt->artist,
+        context->bt->album
     );
     char cleanText[CD53_DISPLAY_TEXT_SIZE];
     removeNonAscii(cleanText, text);
@@ -139,7 +139,7 @@ void CD53BC127PlaybackStatus(void *ctx, unsigned char *status)
     CD53Context_t *context = (CD53Context_t *) ctx;
     // Display "Paused" if we're in Bluetooth mode
     if (context->ibus->cdChangerStatus > 0x01) {
-        if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
+        if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
             CD53SetMainDisplayText(context, "Paused", 0);
         } else {
             CD53SetMainDisplayText(context, "Playing", 0);
@@ -150,7 +150,7 @@ void CD53BC127PlaybackStatus(void *ctx, unsigned char *status)
 void CD53IBusClearScreen(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
-    if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+    if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
         // If we're displaying temp text, we need to override the screen
         // state again, since it will now be clear
         if (context->tempDisplay.status == CD53_DISPLAY_STATUS_ON) {
@@ -164,7 +164,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
     unsigned char changerStatus = pkt[4];
-    uint8_t btPlaybackStatus = context->bt->activeDevice.playbackStatus;
+    uint8_t btPlaybackStatus = context->bt->playbackStatus;
     if (changerStatus == 0x01) {
         // Stop Playing
         IBusCommandMIDTextClear(context->ibus);
@@ -297,7 +297,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
                     );
                 }
             }
-            BC127CommandDiscoverable(context->bt, state);
+            BC127CommandBtState(context->bt, context->bt->connectable, state);
         } else {
             // A button was pressed - Push our display text back
             TimerTriggerScheduledTask(context->displayUpdateTaskId);

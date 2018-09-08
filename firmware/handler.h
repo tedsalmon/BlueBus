@@ -22,6 +22,7 @@
 #define HANDLER_CDC_STATUS_INT 1000
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
 #define HANDLER_PROFILE_ERROR_INT 2000
+#define HANDLER_SCAN_INT 60000
 #define HANDLER_UI_MODE_CD53 0
 #define HANDLER_UI_MODE_BMBT 1
 typedef struct HandlerContext_t {
@@ -48,4 +49,5 @@ void HandlerIBusIgnitionStatus(void *, unsigned char *);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
 void HandlerTimerOpenProfileErrors(void *);
+void HandlerTimerScanDevices(void *);
 #endif /* HANDLER_H */

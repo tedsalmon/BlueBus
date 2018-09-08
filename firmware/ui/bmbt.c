@@ -121,11 +121,11 @@ static void BMBTDashboardMenu(BMBTContext_t *context)
     memset(title, 0, BC127_METADATA_FIELD_SIZE);
     memset(artist, 0, BC127_METADATA_FIELD_SIZE);
     memset(album, 0, BC127_METADATA_FIELD_SIZE);
-    removeNonAscii(title, context->bt->activeDevice.title);
-    removeNonAscii(artist, context->bt->activeDevice.artist);
-    removeNonAscii(album, context->bt->activeDevice.album);
+    removeNonAscii(title, context->bt->title);
+    removeNonAscii(artist, context->bt->artist);
+    removeNonAscii(album, context->bt->album);
     if (strlen(title) == 0 &&
-        context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED
+        context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED
     ) {
         strncpy(title, "- Not Playing -", 16);
     }
@@ -215,7 +215,7 @@ static void BMBTWriteHeader(BMBTContext_t *context)
     } else {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, "No Device");
     }
-    if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
+    if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
     } else {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
@@ -308,7 +308,7 @@ void BMBTBC127PlaybackStatus(void *ctx, unsigned char *tmp)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->displayMode == BMBT_DISPLAY_ON) {
-        if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
+        if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
         } else {
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
@@ -338,7 +338,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             BC127CommandBackward(context->bt);
         }
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_PlayPause) {
-            if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+            if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
             } else {
                 BC127CommandPlay(context->bt);
@@ -367,7 +367,7 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     unsigned char changerAction = pkt[4];
     if (changerAction == IBUS_CDC_STOP_PLAYING) {
         // Stop Playing
-        if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+        if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
             BC127CommandPause(context->bt);
         }
         context->menu = BMBT_MENU_NONE;
@@ -377,7 +377,7 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     } else if (changerAction == IBUS_CDC_START_PLAYING) {
         // Start Playing
         if (context->mode == BMBT_MODE_OFF) {
-            if (context->bt->activeDevice.playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+            if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
             }
             IBusCommandRADDisableMenu(context->ibus);
@@ -427,7 +427,7 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                     }
                 }
                 IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
-                BC127CommandDiscoverable(context->bt, state);
+                BC127CommandBtState(context->bt, context->bt->connectable, state);
             } else {
                 BC127PairedDevice_t *dev = &context->bt->pairedDevices[selectedIdx];
                 if (strcmp(dev->macId, context->bt->activeDevice.macId) != 0 &&
