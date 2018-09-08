@@ -14,7 +14,7 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
     Context.menu = BMBT_MENU_NONE;
     Context.mode = BMBT_MODE_OFF;
     Context.displayMode = BMBT_DISPLAY_OFF;
-    Context.writtenIndices = 0;
+    Context.writtenIndices = 3;
     Context.selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
     Context.activelyPairedDevice = BMBT_PAIRING_DEVICE_NONE;
     EventRegisterCallback(
@@ -67,6 +67,11 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &BMBTScreenModeUpdate,
         &Context
     );
+    EventRegisterCallback(
+        IBusEvent_ScreenModeSet,
+        &BMBTScreenModeSet,
+        &Context
+    );
 }
 
 static void BMBTSetStaticScreen(BMBTContext_t *context, char *f1, char *f2, char *f3)
@@ -88,6 +93,7 @@ static void BMBTSetStaticScreen(BMBTContext_t *context, char *f1, char *f2, char
 
 static void BMBTMainMenu(BMBTContext_t *context)
 {
+    IBusCommandGTWriteIndexTitle(context->ibus, "Main Menu");
     IBusCommandGTWriteIndexMk4(
         context->ibus,
         BMBT_MENU_IDX_DASHBOARD,
@@ -104,7 +110,7 @@ static void BMBTMainMenu(BMBTContext_t *context)
         "Settings"
     );
     uint8_t index = 3;
-    while (index <= context->writtenIndices) {
+    while (index < context->writtenIndices) {
         IBusCommandGTWriteIndexMk4(context->ibus, index, " ");
         index++;
     }
@@ -135,6 +141,7 @@ static void BMBTDashboardMenu(BMBTContext_t *context)
 
 static void BMBTDeviceSelectionMenu(BMBTContext_t *context)
 {
+    IBusCommandGTWriteIndexTitle(context->ibus, "Device Selection");
     uint8_t idx;
     uint8_t screenIdx = 0;
     BC127PairedDevice_t *dev = 0;
@@ -167,7 +174,7 @@ static void BMBTDeviceSelectionMenu(BMBTContext_t *context)
     }
     IBusCommandGTWriteIndexMk4(context->ibus, screenIdx++, "Back");
     uint8_t index = screenIdx;
-    while (index <= context->writtenIndices) {
+    while (index < context->writtenIndices) {
         IBusCommandGTWriteIndexMk4(context->ibus, index, " ");
         index++;
     }
@@ -178,6 +185,7 @@ static void BMBTDeviceSelectionMenu(BMBTContext_t *context)
 
 static void BMBTSettingsMenu(BMBTContext_t *context)
 {
+    IBusCommandGTWriteIndexTitle(context->ibus, "Settings");
     IBusCommandGTWriteIndexMk4(
         context->ibus,
         BMBT_MENU_IDX_SETTINGS_SCROLL_META,
@@ -194,7 +202,7 @@ static void BMBTSettingsMenu(BMBTContext_t *context)
         "Back"
     );
     uint8_t index = 3;
-    while (index <= context->writtenIndices) {
+    while (index < context->writtenIndices) {
         IBusCommandGTWriteIndexMk4(context->ibus, index, " ");
         index++;
     }
@@ -354,8 +362,10 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
                 context->displayMode == BMBT_DISPLAY_OFF
             ) {
                 context->displayMode = BMBT_DISPLAY_ON;
-                BMBTWriteHeader(context);
-                BMBTWriteMenu(context);
+                context->menu = BMBT_MENU_NONE;
+                // Maybe this will stop the constant screen clearing when
+                // we enter the menu again?
+                IBusCommandRADDisableMenu(context->ibus);
             }
         }
     }
@@ -391,11 +401,8 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     uint8_t selectedIdx = (uint8_t) pkt[6];
-    // We wait until the depress action, otherwise we may run into IBus
-    // contention where parts of the screen are being updated while we are
-    // still trying to write the screen
-    if (selectedIdx < 10 && context->displayMode == BMBT_DISPLAY_ON) {
-        LogDebug("BMBT: Menu Select ID %d", selectedIdx);
+    if (selectedIdx > 10 && context->displayMode == BMBT_DISPLAY_ON) {
+        selectedIdx = selectedIdx - 64;
         if (context->menu == BMBT_MENU_MAIN) {
             if (selectedIdx == BMBT_MENU_IDX_DASHBOARD) {
                 BMBTDashboardMenu(context);
@@ -403,7 +410,6 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                 BMBTDeviceSelectionMenu(context);
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS) {
                 BMBTSettingsMenu(context);
-                context->nextMenu = BMBT_MENU_SETTINGS;
             }
         } else if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             uint8_t index = context->bt->pairedDevicesCount + 1;
@@ -479,7 +485,6 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
         idx--;
     }
     text[textLen - 1] = '\0';
-    LogDebug("BMBT: Main Area Text '%s'", text);
     // Main area is being updated with a CDC Text:
     //     Rewrite the header and set display mode on
     if (strcmp("CDC 1-01", text) == 0 || strcmp("TR 01-001", text) == 0) {
@@ -502,7 +507,6 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
 
 void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
 {
-    LogDebug("BMBT: Screen Mode %02X", pkt[4]);
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[4] == 0x01 || pkt[4] == 0x02) {
         context->displayMode = BMBT_DISPLAY_OFF;
@@ -517,5 +521,16 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
         } else {
             BMBTMenuRefresh(context);
         }
+    }
+}
+
+void BMBTScreenModeSet(void *ctx, unsigned char *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    // The GT sends this screen mode post-boot to tell the radio it can display
+    // We set the menu to none so that on the next screen clear, we write the
+    // screen
+    if (pkt[4] == 0x10) {
+        context->menu = BMBT_MENU_NONE;
     }
 }

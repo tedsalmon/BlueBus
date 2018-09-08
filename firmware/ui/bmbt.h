@@ -28,6 +28,7 @@
 #define BMBT_MENU_IDX_SETTINGS_SCROLL_META 0
 #define BMBT_MENU_IDX_SETTINGS_RESET_BT 1
 #define BMBT_MENU_IDX_SETTINGS_BACK 2
+#define BMBT_MENU_WRITE_DELAY 300
 #define BMBT_MODE_OFF 0
 #define BMBT_MODE_ACTIVE 1
 #define BMBT_PAIRING_DEVICE_NONE -1
@@ -52,5 +53,5 @@ void BMBTIBusCDChangerStatus(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);
 void BMBTRADUpdateMainArea(void *, unsigned char *);
 void BMBTScreenModeUpdate(void *, unsigned char *);
-void BMBTWriteNextMenu(void *);
+void BMBTScreenModeSet(void *, unsigned char *);
 #endif /* BMBT_H */

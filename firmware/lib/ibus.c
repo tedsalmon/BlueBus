@@ -28,8 +28,8 @@ IBus_t IBusInit()
         UART_PARITY_EVEN
     );
     // Assume we're playing and the key inserted, so device resets are graceful
-    ibus.cdChangerStatus = IBUS_CDC_PLAYING;
-    ibus.ignitionStatus = 0x01;
+    ibus.cdChangerStatus = IBUS_CDC_NOT_PLAYING;
+    ibus.ignitionStatus = 0;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -82,6 +82,8 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
         EventTriggerCallback(IBusEvent_GTDiagResponse, pkt);
     } else if (pkt[3] == IBusAction_GT_MENU_SELECT) {
         EventTriggerCallback(IBusEvent_GTMenuSelect, pkt);
+    } else if (pkt[3] == IBusAction_GT_SCREEN_MODE_SET) {
+        EventTriggerCallback(IBusEvent_ScreenModeSet, pkt);
     }
 }
 
@@ -188,6 +190,9 @@ void IBusProcess(IBus_t *ibus)
                 LogRaw("\r\n");
                 if (IBusValidateChecksum(pkt) == 1) {
                     unsigned char srcSystem = pkt[0];
+                    if (srcSystem == IBUS_DEVICE_RAD) {
+                        IBusHandleRadioMessage(ibus, pkt);
+                    }
                     if (srcSystem == IBUS_DEVICE_BMBT) {
                         IBusHandleBMBTMessage(pkt);
                     }
@@ -196,9 +201,6 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_GT) {
                         IBusHandleGTMessage(ibus, pkt);
-                    }
-                    if (srcSystem == IBUS_DEVICE_RAD) {
-                        IBusHandleRadioMessage(ibus, pkt);
                     }
                 } else {
                     LogError(
@@ -214,35 +216,40 @@ void IBusProcess(IBus_t *ibus)
             }
         }
         ibus->rxLastStamp = TimerGetMillis();
-    } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
-        (TimerGetMillis() - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT
-    ) {
-        uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
-        uint8_t idx;
-        /*
-         * Make sure that the STATUS pin on the TH3122 is low, indicating no
-         * bus activity, before transmitting
-         */
-        if (IBUS_UART_STATUS == 0) {
-            for (idx = 0; idx < msgLen; idx++) {
-                ibus->uart.registers->uxtxreg = ibus->txBuffer[ibus->txBufferReadIdx][idx];
-                // Wait for the data to leave the TX buffer
-                while ((ibus->uart.registers->uxsta & (1 << 9)) != 0);
-            }
-            LogDebug(
-                "IBus: TX: %02X -> %02X",
-                ibus->txBuffer[ibus->txBufferReadIdx][0],
-                ibus->txBuffer[ibus->txBufferReadIdx][2]
-            );
-            // Clear the slot and advance the index
-            memset(ibus->txBuffer[ibus->txBufferReadIdx], 0, msgLen);
-            if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
-                ibus->txBufferReadIdx = 0;
-            } else {
-                ibus->txBufferReadIdx++;
+    }
+
+    // Flush the transmit buffer out to the bus
+    // TODO: Prevent from getting hung up here when the bus is busy
+    while (ibus->txBufferWriteIdx != ibus->txBufferReadIdx) {
+        uint32_t now = TimerGetMillis();
+        if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
+            uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
+            uint8_t idx;
+            /*
+             * Make sure that the STATUS pin on the TH3122 is low, indicating no
+             * bus activity before transmitting
+             */
+            if (IBUS_UART_STATUS == 0) {
+                for (idx = 0; idx < msgLen; idx++) {
+                    ibus->uart.registers->uxtxreg = ibus->txBuffer[ibus->txBufferReadIdx][idx];
+                    // Wait for the data to leave the TX buffer
+                    while ((ibus->uart.registers->uxsta & (1 << 9)) != 0);
+                }
+                LogDebug(
+                    "IBus: TX: %02X -> %02X",
+                    ibus->txBuffer[ibus->txBufferReadIdx][0],
+                    ibus->txBuffer[ibus->txBufferReadIdx][2]
+                );
+                // Clear the slot and advance the index
+                memset(ibus->txBuffer[ibus->txBufferReadIdx], 0, msgLen);
+                if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
+                    ibus->txBufferReadIdx = 0;
+                } else {
+                    ibus->txBufferReadIdx++;
+                }
+                ibus->txLastStamp = TimerGetMillis();
             }
         }
-        ibus->txLastStamp = TimerGetMillis();
     }
 
     // Clear the RX Buffer if it's over the timeout or about to overflow
@@ -437,6 +444,24 @@ void IBusCommandGTWriteIndexMk4(IBus_t *ibus, uint8_t index, char *message) {
         IBusAction_GT_WRITE_MK4,
         IBusAction_GT_WRITE_INDEX
     );
+}
+
+void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
+    uint8_t length = strlen(message);
+    if (length > 20) {
+        length = 20;
+    }
+    const size_t pktLenght = length + 4;
+    unsigned char text[pktLenght];
+    text[0] = 0x21;
+    text[1] = 0x61;
+    text[2] = 0x00;
+    text[3] = 0x09;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 4] = message[idx];
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
 void IBusCommandGTWriteIndex(

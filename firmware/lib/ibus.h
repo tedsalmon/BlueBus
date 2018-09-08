@@ -53,6 +53,35 @@
 #define IBUS_DEVICE_BMBT 0xF0 /* On-board monitor */
 #define IBUS_DEVICE_LOC 0xFF /* Local */
 
+// All buttons presses are triggered on the "Push" message
+#define IBUS_DEVICE_BMBT_Button_Next 0x00
+#define IBUS_DEVICE_BMBT_Button_Prev 0x10
+#define IBUS_DEVICE_BMBT_Button_PlayPause 0x14
+#define IBUS_DEVICE_BMBT_Button_Knob 0x05
+#define IBUS_DEVICE_BMBT_Button_Display 0x30
+
+#define IBusAction_BMBT_BUTTON 0x48
+
+#define IBusAction_CD53_SEEK 0x0A
+#define IBusAction_CD53_CD_SEL 0x06
+
+#define IBusAction_DIAG_DATA 0xA0
+
+#define IBusAction_GT_SCREEN_MODE_SET 0x45
+#define IBusAction_GT_MENU_SELECT 0x31
+#define IBusAction_GT_WRITE_MK4 0x21
+#define IBusAction_GT_WRITE_TITLE 0x23
+// Newer GTs use a different action to write to fields
+#define IBusAction_GT_WRITE_MK2 0xA5
+#define IBusAction_GT_WRITE_INDEX 0x61
+#define IBusAction_GT_WRITE_ZONE 0x62
+#define IBusAction_GT_WRITE_STATIC 0x63
+
+#define IBusAction_IGN_STATUS_REQ 0x11
+
+#define IBusAction_RAD_SCREEN_MODE_UPDATE 0x46
+#define IBusAction_RAD_UPDATE_MAIN_AREA 0x23
+
 #define IBUS_GT_MKI 1
 #define IBUS_GT_MKII 2
 #define IBUS_GT_MKIII 2
@@ -65,7 +94,7 @@
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
 #define IBUS_RX_BUFFER_SIZE 256
-#define IBUS_TX_BUFFER_SIZE 48
+#define IBUS_TX_BUFFER_SIZE 24
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 10 // If we transmit faster, other modules may not hear us
 #include <stdint.h>
@@ -79,35 +108,6 @@
 #include "uart.h"
 #include "utils.h"
 
-
-// All buttons presses are triggered on the "Push" message
-const static unsigned char IBUS_DEVICE_BMBT_Button_Next = 0x00;
-const static unsigned char IBUS_DEVICE_BMBT_Button_Prev = 0x10;
-const static unsigned char IBUS_DEVICE_BMBT_Button_PlayPause = 0x14;
-const static unsigned char IBUS_DEVICE_BMBT_Button_Knob = 0x05;
-const static unsigned char IBUS_DEVICE_BMBT_Button_Display = 0x30;
-
-const static unsigned char IBusAction_BMBT_BUTTON = 0x48;
-
-const static unsigned char IBusAction_CD53_SEEK = 0x0A;
-const static unsigned char IBusAction_CD53_CD_SEL = 0x06;
-
-const static unsigned char IBusAction_DIAG_DATA = 0xA0;
-
-const static unsigned char IBusAction_GT_MENU_SELECT = 0x31;
-const static unsigned char IBusAction_GT_WRITE_MK4 = 0x21;
-const static unsigned char IBusAction_GT_WRITE_TITLE = 0x23;
-// Newer GTs use a different action to write to fields
-const static unsigned char IBusAction_GT_WRITE_MK2 = 0xA5;
-const static unsigned char IBusAction_GT_WRITE_INDEX = 0x60;
-const static unsigned char IBusAction_GT_WRITE_ZONE = 0x62;
-const static unsigned char IBusAction_GT_WRITE_STATIC = 0x63;
-
-const static unsigned char IBusAction_IGN_STATUS_REQ = 0x11;
-
-const static unsigned char IBusAction_RAD_SCREEN_MODE_UPDATE = 0x46;
-const static unsigned char IBusAction_RAD_UPDATE_MAIN_AREA = 0x23;
-
 const static uint8_t IBusEvent_Startup = 33;
 const static uint8_t IBusEvent_CDKeepAlive = 34;
 const static uint8_t IBusEvent_CDStatusRequest = 35;
@@ -118,6 +118,7 @@ const static uint8_t IBusEvent_BMBTButton = 39;
 const static uint8_t IBusEvent_GTMenuSelect = 40;
 const static uint8_t IBusEvent_ScreenModeUpdate = 41;
 const static uint8_t IBusEvent_RADUpdateMainArea = 42;
+const static uint8_t IBusEvent_ScreenModeSet = 44;
 
 const static char IBusMIDSymbolNext = 0xC9;
 const static char IBusMIDSymbolBack = 0xCA;
@@ -151,6 +152,7 @@ void IBusCommandGTGetDiagnostics(IBus_t *);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
 void IBusCommandGTWriteIndexMk2(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteIndexMk4(IBus_t *, uint8_t, char *);
+void IBusCommandGTWriteIndexTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *, unsigned char, unsigned char);
 void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t, char *);
 void IBusCommandGTWriteTitle(IBus_t *ibus, char *);
