@@ -116,10 +116,13 @@ static void UARTRXInterruptHandler(uint8_t moduleIndex)
                 }
             }
         }
+        // Clear the trap immediately so that we don't get more data between
+        // the time we exit the loop and the time we clear the interrupt flag
+        SetUARTRXIF(moduleIndex, 0);
+    } else {
+        // Nothing to do -- Clear the interrupt flag
+        SetUARTRXIF(moduleIndex, 0);
     }
-    // Clear the interrupt flag unconditionally, since we will be recalled to
-    // this handler if there's additional data
-    SetUARTRXIF(moduleIndex, 0);
 }
 
 static void UARTTXInterruptHandler(uint8_t moduleIndex)

@@ -33,9 +33,9 @@ typedef struct CharQueue_t {
 } CharQueue_t;
 
 struct CharQueue_t CharQueueInit();
-void CharQueueAdd(CharQueue_t *, unsigned char);
+void CharQueueAdd(CharQueue_t *, const unsigned char);
 unsigned char CharQueueGet(CharQueue_t *, uint8_t);
 unsigned char CharQueueNext(CharQueue_t *);
 void CharQueueReset(CharQueue_t *);
-uint8_t CharQueueSeek(CharQueue_t *, unsigned char);
+uint8_t CharQueueSeek(CharQueue_t *, const unsigned char);
 #endif /* CHAR_QUEUE_H */

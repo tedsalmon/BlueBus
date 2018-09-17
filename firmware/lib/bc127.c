@@ -525,10 +525,7 @@ uint8_t BC127GetDeviceId(char *str)
  */
 void BC127Process(BC127_t *bt)
 {
-    uint8_t messageLength = CharQueueSeek(
-        &bt->uart.rxQueue,
-        BC127_MSG_END_CHAR
-    );
+    uint8_t messageLength = CharQueueSeek(&bt->uart.rxQueue, BC127_MSG_END_CHAR);
     if (messageLength > 0) {
         char msg[messageLength];
         uint8_t i;

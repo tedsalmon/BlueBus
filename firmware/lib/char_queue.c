@@ -31,14 +31,13 @@ CharQueue_t CharQueueInit()
  *         Adds a byte to the queue. If the queue is full, the byte is discarded.
  *     Params:
  *         CharQueue_t *queue - The queue
- *         unsigned char value - The value to add
+ *         const unsigned char value - The value to add
  *     Returns:
  *         None
  */
-void CharQueueAdd(CharQueue_t *queue, unsigned char value)
+void CharQueueAdd(CharQueue_t *queue, const unsigned char value)
 {
     if (queue->size != CHAR_QUEUE_SIZE) {
-        // Reset the write cursor before it goes out of bounds
         if (queue->writeCursor == CHAR_QUEUE_SIZE) {
             queue->writeCursor = 0;
         }
@@ -118,24 +117,24 @@ void CharQueueReset(CharQueue_t *queue)
  *         characters prior to it.
  *     Params:
  *         CharQueue_t *queue - The queue
- *         unsigned char needle - The character to look for
+ *         const unsigned char needle - The character to look for
  *     Returns:
  *         uint8_t - The length of characters prior to the needle or zero if
  *                   the needle wasn't found
  */
-uint8_t CharQueueSeek(CharQueue_t *queue, unsigned char needle)
+uint8_t CharQueueSeek(CharQueue_t *queue, const unsigned char needle)
 {
-    uint8_t readCursor = (uint8_t) queue->readCursor;
+    uint8_t readCursor = queue->readCursor;
     uint8_t size = queue->size;
-    uint8_t cnt = 0;
+    uint8_t cnt = 1;
     while (size > 0) {
-        cnt++;
-        if (readCursor >= CHAR_QUEUE_SIZE) {
-            readCursor = 0;
-        }
         if (queue->data[readCursor] == needle) {
             return cnt;
         }
+        if (readCursor >= CHAR_QUEUE_SIZE) {
+            readCursor = 0;
+        }
+        cnt++;
         size--;
         readCursor++;
     }
