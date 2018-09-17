@@ -33,6 +33,7 @@ IBus_t IBusInit()
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
+    ibus.txBufferReadbackIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
     ibus.gtCanDisplayStatic = 0;
@@ -187,6 +188,15 @@ void IBusProcess(IBus_t *ibus)
                     pkt[idx] = ibus->rxBuffer[idx];
                     LogRaw("%02X ", pkt[idx]);
                 }
+                if (memcmp(ibus->txBuffer[ibus->txBufferReadbackIdx], pkt, msgLength) == 0) {
+                    LogRaw("[SELF]");
+                    memset(ibus->txBuffer[ibus->txBufferReadbackIdx], 0, msgLength);
+                    if (ibus->txBufferReadbackIdx + 1 == IBUS_TX_BUFFER_SIZE) {
+                        ibus->txBufferReadbackIdx = 0;
+                    } else {
+                        ibus->txBufferReadbackIdx++;
+                    }
+                }
                 LogRaw("\r\n");
                 if (IBusValidateChecksum(pkt) == 1) {
                     unsigned char srcSystem = pkt[0];
@@ -219,8 +229,11 @@ void IBusProcess(IBus_t *ibus)
     }
 
     // Flush the transmit buffer out to the bus
-    // TODO: Prevent from getting hung up here when the bus is busy
-    while (ibus->txBufferWriteIdx != ibus->txBufferReadIdx) {
+    uint8_t txTimeout = 0;
+    uint8_t beginTxTimestamp = TimerGetMillis();
+    while (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
+           txTimeout == IBUS_TX_TIMEOUT_OFF
+    ) {
         uint32_t now = TimerGetMillis();
         if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
             uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
@@ -235,19 +248,17 @@ void IBusProcess(IBus_t *ibus)
                     // Wait for the data to leave the TX buffer
                     while ((ibus->uart.registers->uxsta & (1 << 9)) != 0);
                 }
-                LogDebug(
-                    "IBus: TX: %02X -> %02X",
-                    ibus->txBuffer[ibus->txBufferReadIdx][0],
-                    ibus->txBuffer[ibus->txBufferReadIdx][2]
-                );
-                // Clear the slot and advance the index
-                memset(ibus->txBuffer[ibus->txBufferReadIdx], 0, msgLen);
+                txTimeout = IBUS_TX_TIMEOUT_DATA_SENT;
                 if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
                     ibus->txBufferReadIdx = 0;
                 } else {
                     ibus->txBufferReadIdx++;
                 }
                 ibus->txLastStamp = TimerGetMillis();
+            } else if (txTimeout != IBUS_TX_TIMEOUT_DATA_SENT) {
+                if ((now - beginTxTimestamp) > IBUS_TX_TIMEOUT_WAIT) {
+                    txTimeout = IBUS_TX_TIMEOUT_ON;
+                }
             }
         }
     }
@@ -513,7 +524,6 @@ void IBusCommandGTWriteTitle(IBus_t *ibus, char *message)
     if (length > 11) {
         length = 11;
     }
-    LogDebug("IBus: Write Text '%s'", message);
     // Length + Write Type + Write Area + Size + Watermark
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];

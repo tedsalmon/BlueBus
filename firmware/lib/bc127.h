@@ -46,14 +46,14 @@
 #define BC127_LINK_AVRCP 1
 #define BC127_LINK_HPF 3
 
-const static uint8_t BC127Event_Startup = 0;
-const static uint8_t BC127Event_MetadataChange = 1;
-const static uint8_t BC127Event_PlaybackStatusChange = 2;
-const static uint8_t BC127Event_DeviceConnected = 3;
-const static uint8_t BC127Event_DeviceLinkConnected = 4;
-const static uint8_t BC127Event_DeviceDisconnected = 5;
-const static uint8_t BC127Event_Boot = 6;
-const static uint8_t BC127Event_DeviceFound = 7;
+#define BC127Event_Startup 0
+#define BC127Event_MetadataChange 1
+#define BC127Event_PlaybackStatusChange 2
+#define BC127Event_DeviceConnected 3
+#define BC127Event_DeviceLinkConnected 4
+#define BC127Event_DeviceDisconnected 5
+#define BC127Event_Boot 6
+#define BC127Event_DeviceFound 7
 
 /**
  * BC127PairedDevice_t

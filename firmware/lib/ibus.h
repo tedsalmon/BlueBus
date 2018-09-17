@@ -90,13 +90,34 @@
 #define IBUS_GT_SW_ID_OFFSET 33
 #define IBUS_IGNITION_OFF 0
 #define IBUS_IGNITION_ON 1
+
+#define IBusMIDSymbolNext 0xC9
+#define IBusMIDSymbolBack 0xCA
+
+#define IBUS_TX_TIMEOUT_OFF 0
+#define IBUS_TX_TIMEOUT_ON 1
+#define IBUS_TX_TIMEOUT_DATA_SENT 2
+#define IBUS_TX_TIMEOUT_WAIT 250
+
+#define IBusEvent_Startup 33
+#define IBusEvent_CDKeepAlive 34
+#define IBusEvent_CDStatusRequest 35
+#define IBusEvent_CDClearDisplay 36
+#define IBusEvent_IgnitionStatus 37
+#define IBusEvent_GTDiagResponse 38
+#define IBusEvent_BMBTButton 39
+#define IBusEvent_GTMenuSelect 40
+#define IBusEvent_ScreenModeUpdate 41
+#define IBusEvent_RADUpdateMainArea 42
+#define IBusEvent_ScreenModeSet 44
+
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
 #define IBUS_RX_BUFFER_SIZE 256
 #define IBUS_TX_BUFFER_SIZE 24
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
-#define IBUS_TX_BUFFER_WAIT 10 // If we transmit faster, other modules may not hear us
+#define IBUS_TX_BUFFER_WAIT 5 // If we transmit faster, other modules may not hear us
 #include <stdint.h>
 #include <string.h>
 #include "../io_mappings.h"
@@ -107,21 +128,6 @@
 #include "timer.h"
 #include "uart.h"
 #include "utils.h"
-
-const static uint8_t IBusEvent_Startup = 33;
-const static uint8_t IBusEvent_CDKeepAlive = 34;
-const static uint8_t IBusEvent_CDStatusRequest = 35;
-const static uint8_t IBusEvent_CDClearDisplay = 36;
-const static uint8_t IBusEvent_IgnitionStatus = 37;
-const static uint8_t IBusEvent_GTDiagResponse = 38;
-const static uint8_t IBusEvent_BMBTButton = 39;
-const static uint8_t IBusEvent_GTMenuSelect = 40;
-const static uint8_t IBusEvent_ScreenModeUpdate = 41;
-const static uint8_t IBusEvent_RADUpdateMainArea = 42;
-const static uint8_t IBusEvent_ScreenModeSet = 44;
-
-const static char IBusMIDSymbolNext = 0xC9;
-const static char IBusMIDSymbolBack = 0xCA;
 
 /**
  * IBus_t
@@ -135,6 +141,7 @@ typedef struct IBus_t {
     uint8_t rxBufferIdx;
     uint32_t rxLastStamp;
     unsigned char txBuffer[IBUS_TX_BUFFER_SIZE][IBUS_MAX_MSG_LENGTH];
+    uint8_t txBufferReadbackIdx;
     uint8_t txBufferReadIdx;
     uint8_t txBufferWriteIdx;
     uint32_t txLastStamp;
