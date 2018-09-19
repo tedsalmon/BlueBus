@@ -87,10 +87,8 @@ static void UARTRXInterruptHandler(uint8_t moduleIndex)
 {
     UART_t *uart = UARTModules[moduleIndex];
     if (uart != 0) {
-        // While there's data on the RX buffer
-        while (uart->registers->uxsta & 0x1) {
-            // Reading the byte is sometimes a requirement to clear an error
-            unsigned char byte = uart->registers->uxrxreg;
+        // While there is data in the RX buffer
+        while ((uart->registers->uxsta & 0x1) == 1) {
             // No frame or parity errors
             uint16_t usta = uart->registers->uxsta;
             if ((usta & 0xC) == 0) {
@@ -99,7 +97,7 @@ static void UARTRXInterruptHandler(uint8_t moduleIndex)
                     uart->rxError ^= UART_ERR_OERR;
                     uart->registers->uxsta ^= 0x2;
                 }
-                CharQueueAdd(&uart->rxQueue, byte);
+                CharQueueAdd(&uart->rxQueue, uart->registers->uxrxreg);
             } else {
                 // Set a "General" Error
                 uart->rxError ^= UART_ERR_GERR;
@@ -114,10 +112,11 @@ static void UARTRXInterruptHandler(uint8_t moduleIndex)
                 if (CHECK_BIT(usta, 3) != 0) {
                     uart->rxError ^= UART_ERR_PERR;
                 }
+                // Clear the byte in the RX buffer
+                uart->registers->uxrxreg;
             }
         }
-        // Clear the trap immediately so that we don't get more data between
-        // the time we exit the loop and the time we clear the interrupt flag
+        // Buffer is clear -- immediately clear the interrupt flag
         SetUARTRXIF(moduleIndex, 0);
     } else {
         // Nothing to do -- Clear the interrupt flag
@@ -132,8 +131,7 @@ static void UARTTXInterruptHandler(uint8_t moduleIndex)
         while (uart->txQueue.size > 0) {
             // TXIF is 1 if the queue is empty, set it before pushing data
             SetUARTTXIF(moduleIndex, 0);
-            unsigned char c = CharQueueNext(&uart->txQueue);
-            uart->registers->uxtxreg = c;
+            uart->registers->uxtxreg = CharQueueNext(&uart->txQueue);
             // Wait for the data to leave the tx buffer
             while ((uart->registers->uxsta & (1 << 9)) != 0);
         }
@@ -145,18 +143,21 @@ static void UARTTXInterruptHandler(uint8_t moduleIndex)
 void UARTReportErrors(UART_t *uart)
 {
     if (uart->rxError != 0) {
+        long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+        LogRaw("[%llu] ERROR: UART[%d]: ", ts, uart->moduleIndex + 1);
         if ((uart->rxError & UART_ERR_GERR) != 0) {
-            LogError("UART[%d]: GERR", uart->moduleIndex + 1);
+            LogRaw("GERR ");
         }
         if ((uart->rxError & UART_ERR_OERR) != 0) {
-            LogError("UART[%d]: OERR", uart->moduleIndex + 1);
+            LogRaw("OERR ");
         }
         if ((uart->rxError & UART_ERR_FERR) != 0) {
-            LogError("UART[%d]: FERR", uart->moduleIndex + 1);
+            LogRaw("FERR ");
         }
         if ((uart->rxError & UART_ERR_PERR) != 0) {
-            LogError("UART[%d]: PERR", uart->moduleIndex + 1);
+            LogRaw("PERR ");
         }
+        LogRaw("\r\n");
         uart->rxError = 0;
     }
 }

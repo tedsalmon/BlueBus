@@ -563,7 +563,6 @@ void BC127Process(BC127_t *bt)
                 // Clear Metadata since we're receiving new data
                 BC127ClearMetadata(bt);
                 bt->metadataStatus = BC127_METADATA_STATUS_NEW;
-                bt->metadataTimestamp = TimerGetMillis();
                 strncpy(
                     bt->title,
                     &msg[BC127_METADATA_TITLE_OFFSET],
@@ -596,6 +595,7 @@ void BC127Process(BC127_t *bt)
                     bt->metadataStatus = BC127_METADATA_STATUS_CUR;
                 }
             }
+            bt->metadataTimestamp = TimerGetMillis();
         } else if(strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             if (bt->activeDevice.deviceId == deviceId) {
@@ -771,13 +771,18 @@ void BC127Process(BC127_t *bt)
             }
         }
     }
-    // If the Metadata hasn't been broadcast in the given timeout, send it
-    if (bt->metadataStatus == BC127_METADATA_STATUS_NEW) {
-        uint32_t interval = TimerGetMillis() - bt->metadataTimestamp;
-        if (interval >= BC127_METADATA_TIMEOUT) {
-            EventTriggerCallback(BC127Event_MetadataChange, 0);
-            bt->metadataStatus = BC127_METADATA_STATUS_CUR;
-        }
+    /* Sometimes there is not more than a Title or Album, which does not give
+     * us sufficient information to push a metadata update. Therefore, request
+     * the full metadata if we have partial metadata for more than the specified
+     * timeout value
+     **/
+    uint32_t now = TimerGetMillis();
+    if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT &&
+        bt->metadataStatus == BC127_METADATA_STATUS_NEW &&
+        bt->activeDevice.avrcpLinkId != 0
+    ) {
+        BC127CommandGetMetadata(bt);
+        bt->metadataTimestamp = now;
     }
     UARTReportErrors(&bt->uart);
 }
