@@ -809,20 +809,6 @@ void BC127SendCommand(BC127_t *bt, char *command)
     SetUARTTXIE(bt->uart.moduleIndex, 1);
 }
 
-/**
- * BC127Startup()
- *     Description:
- *         Trigger the callbacks listening for the BC127 Startup
- *     Params:
- *         None
- *     Returns:
- *         Void
- */
-void BC127Startup()
-{
-    EventTriggerCallback(BC127Event_Startup, 0);
-}
-
 /** Begin BC127 Paired Device Implementation **/
 
 /**

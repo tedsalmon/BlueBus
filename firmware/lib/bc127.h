@@ -46,14 +46,13 @@
 #define BC127_LINK_AVRCP 1
 #define BC127_LINK_HPF 3
 
-#define BC127Event_Startup 0
-#define BC127Event_MetadataChange 1
-#define BC127Event_PlaybackStatusChange 2
-#define BC127Event_DeviceConnected 3
-#define BC127Event_DeviceLinkConnected 4
-#define BC127Event_DeviceDisconnected 5
-#define BC127Event_Boot 6
-#define BC127Event_DeviceFound 7
+#define BC127Event_MetadataChange 0
+#define BC127Event_PlaybackStatusChange 1
+#define BC127Event_DeviceConnected 2
+#define BC127Event_DeviceLinkConnected 3
+#define BC127Event_DeviceDisconnected 4
+#define BC127Event_Boot 5
+#define BC127Event_DeviceFound 6
 
 /**
  * BC127PairedDevice_t
@@ -159,7 +158,6 @@ uint8_t BC127GetConnectedDeviceCount(BC127_t *);
 uint8_t BC127GetDeviceId(char *);
 void BC127Process(BC127_t *);
 void BC127SendCommand(BC127_t *, char *);
-void BC127Startup();
 
 void BC127PairedDeviceInit(BC127_t *, char *, char *);
 char *BC127PairedDeviceGetName(BC127_t *, char *);

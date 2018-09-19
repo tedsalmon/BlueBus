@@ -99,25 +99,25 @@
 #define IBUS_TX_TIMEOUT_DATA_SENT 2
 #define IBUS_TX_TIMEOUT_WAIT 250
 
-#define IBusEvent_Startup 33
-#define IBusEvent_CDKeepAlive 34
-#define IBusEvent_CDStatusRequest 35
-#define IBusEvent_CDClearDisplay 36
-#define IBusEvent_IgnitionStatus 37
-#define IBusEvent_GTDiagResponse 38
-#define IBusEvent_BMBTButton 39
-#define IBusEvent_GTMenuSelect 40
-#define IBusEvent_ScreenModeUpdate 41
-#define IBusEvent_RADUpdateMainArea 42
-#define IBusEvent_ScreenModeSet 44
+#define IBusEvent_CDKeepAlive 33
+#define IBusEvent_CDStatusRequest 34
+#define IBusEvent_CDClearDisplay 35
+#define IBusEvent_IgnitionStatus 36
+#define IBusEvent_GTDiagResponse 37
+#define IBusEvent_BMBTButton 38
+#define IBusEvent_GTMenuSelect 39
+#define IBusEvent_ScreenModeUpdate 40
+#define IBusEvent_RADUpdateMainArea 41
+#define IBusEvent_ScreenModeSet 42
+#define IBusEvent_RADDiagResponse 43
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
 #define IBUS_RX_BUFFER_SIZE 256
-#define IBUS_TX_BUFFER_SIZE 24
+#define IBUS_TX_BUFFER_SIZE 16
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
-#define IBUS_TX_BUFFER_WAIT 5 // If we transmit faster, other modules may not hear us
+#define IBUS_TX_BUFFER_WAIT 10 // If we transmit faster, other modules may not hear us
 #include <stdint.h>
 #include <string.h>
 #include "../io_mappings.h"
@@ -128,6 +128,12 @@
 #include "timer.h"
 #include "uart.h"
 #include "utils.h"
+
+#define IBUS_RADIO_TYPE_C43 1
+#define IBUS_RADIO_TYPE_BM53 2
+#define IBUS_RADIO_TYPE_BM54 3
+#define IBUS_RADIO_TYPE_BRCD 4
+#define IBUS_RADIO_TYPE_BRTP 5
 
 /**
  * IBus_t
@@ -151,7 +157,8 @@ typedef struct IBus_t {
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
-void IBusStartup();
+uint8_t IBusGetDeviceManufacturer(const unsigned char);
+uint8_t IBusGetRadioType(uint32_t);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCKeepAlive(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, unsigned char,  unsigned char);
@@ -169,5 +176,6 @@ void IBusCommandMIDText(IBus_t *, char *);
 void IBusCommandMIDTextClear(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
-void IBusCommandRADUpdateMenu(IBus_t *);
+void IBusCommandRADExitMenu(IBus_t *);
+void IBusCommandRADGetDiagnostics(IBus_t *);
 #endif /* IBUS_H */

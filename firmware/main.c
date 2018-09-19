@@ -48,10 +48,6 @@ int main(void)
     // Send the module objects to the application implementation handler
     HandlerInit(&bt, &ibus, HANDLER_UI_MODE_BMBT);
 
-    // Trigger the event callbacks for the module Start Up
-    BC127Startup();
-    IBusStartup();
-
     // Process events
     while (1) {
         BC127Process(&bt);

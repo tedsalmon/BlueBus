@@ -18,8 +18,9 @@
 #include "ui/bmbt.h"
 #define HANDLER_BT_CONN_OFF 0
 #define HANDLER_BT_CONN_ON 1
-#define HANDLER_CDC_ANOUNCE_INT 30000
-#define HANDLER_CDC_STATUS_INT 1000
+#define HANDLER_CDC_ANOUNCE_INT 1000
+#define HANDLER_CDC_ANOUNCE_TIMEOUT 21000
+#define HANDLER_CDC_STATUS_INT 500
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
 #define HANDLER_PROFILE_ERROR_INT 2000
 #define HANDLER_SCAN_INT 60000
@@ -35,16 +36,16 @@ typedef struct HandlerContext_t {
     uint32_t cdChangerLastStatus;
 } HandlerContext_t;
 void HandlerInit(BC127_t *, IBus_t *, uint8_t);
+void HandlerStartup(HandlerContext_t *);
 void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
 void HandlerBC127DeviceDisconnected(void *, unsigned char *);
 void HandlerBC127DeviceFound(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
 void HandlerBC127Ready(void *, unsigned char *);
-void HandlerBC127Startup(void *, unsigned char *);
-void HandlerIBusStartup(void *, unsigned char *);
 void HandlerIBusCDCKeepAlive(void *, unsigned char *);
 void HandlerIBusCDCStatus(void *, unsigned char *);
 void HandlerIBusGTDiagnostics(void *, unsigned char *);
+void HandlerIBusRADDiagnostics(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);

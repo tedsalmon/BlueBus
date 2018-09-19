@@ -59,16 +59,6 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &Context
     );
     EventRegisterCallback(
-        BC127Event_Startup,
-        &HandlerBC127Startup,
-        &Context
-    );
-    EventRegisterCallback(
-        IBusEvent_Startup,
-        &HandlerIBusStartup,
-        &Context
-    );
-    EventRegisterCallback(
         IBusEvent_CDKeepAlive,
         &HandlerIBusCDCKeepAlive,
         &Context
@@ -86,6 +76,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     EventRegisterCallback(
         IBusEvent_GTDiagResponse,
         &HandlerIBusGTDiagnostics,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_RADDiagResponse,
+        &HandlerIBusRADDiagnostics,
         &Context
     );
     TimerRegisterScheduledTask(
@@ -108,6 +103,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &Context,
         HANDLER_SCAN_INT
     );
+    HandlerStartup(&Context);
     switch (uiMode) {
         case HANDLER_UI_MODE_CD53:
             CD53Init(bt, ibus);
@@ -116,6 +112,26 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
             BMBTInit(bt, ibus);
             break;
     }
+}
+
+/**
+ * HandlerStartup()
+ *     Description:
+ *         On application startup, announce that we are a CDC on the IBus. We
+ *         also poll the GT, if it's on the network, for its diagnostics info
+ *         and the IKE for the ignition status. We also setup the BC127's
+ *         connectivity status.
+ *     Params:
+ *         HandlerContext_t *context - The context for the handler
+ *     Returns:
+ *         void
+ */
+void HandlerStartup(HandlerContext_t *context)
+{
+    IBusCommandRADGetDiagnostics(context->ibus);
+    IBusCommandIKEGetIgnition(context->ibus);
+    IBusCommandCDCAnnounce(context->ibus);
+    BC127CommandBtState(context->bt, BC127_STATE_OFF, BC127_STATE_OFF);
 }
 
 /**
@@ -248,45 +264,6 @@ void HandlerBC127Ready(void *ctx, unsigned char *tmp)
 }
 
 /**
- * HandlerBC127Startup()
- *     Description:
- *         Ask for the BC127 device on application startup
- *     Params:
- *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerBC127Startup(void *ctx, unsigned char *tmp)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    // Set it connectable until a connection is found
-    BC127CommandBtState(context->bt, BC127_STATE_ON, BC127_STATE_OFF);
-    BC127CommandStatus(context->bt);
-    BC127CommandList(context->bt);
-}
-
-/**
- * HandlerIBusStartup()
- *     Description:
- *         On application startup, announce that we are a CDC on the IBus. We
- *         also poll the GT, if it's on the network, for its diagnostics info
- *         and the IKE for the ignition status
- *     Params:
- *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerIBusStartup(void *ctx, unsigned char *tmp)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    IBusCommandCDCAnnounce(context->ibus);
-    IBusCommandIKEGetIgnition(context->ibus);
-    IBusCommandGTGetDiagnostics(context->ibus);
-}
-
-/**
  * HandlerIBusCDCKeepAlive()
  *     Description:
  *         Respond to the Radio's "ping" with a "pong"
@@ -377,6 +354,22 @@ void HandlerIBusGTDiagnostics(void *ctx, unsigned char *pkt)
 }
 
 /**
+ * HandlerIBusRADDiagnostics()
+ *     Description:
+ *         Grab the Radio diagnostics info. Here we can identifiy the vehicles
+ *         radio type.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusRADDiagnostics(void *ctx, unsigned char *pkt)
+{
+
+}
+
+/**
  * HandlerIBusIgnitionStatus()
  *     Description:
  *         Track the Ignition state and update the BC127 accordingly. We set
@@ -428,7 +421,7 @@ void HandlerTimerCDCAnnounce(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint32_t now = TimerGetMillis();
-    if ((now - context->cdChangerLastKeepAlive) >= HANDLER_CDC_ANOUNCE_INT &&
+    if ((now - context->cdChangerLastKeepAlive) >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
         context->ibus->ignitionStatus == IBUS_IGNITION_ON
     ) {
         IBusCommandCDCAnnounce(context->ibus);

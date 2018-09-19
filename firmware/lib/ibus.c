@@ -116,6 +116,8 @@ static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
             }
             EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
         }
+    } else if (pkt[2] == IBUS_DEVICE_DIA && pkt[3] == IBusAction_DIAG_DATA) {
+
     } else if (pkt[2] == IBUS_DEVICE_GT) {
         if (pkt[3] == IBusAction_RAD_SCREEN_MODE_UPDATE) {
             EventTriggerCallback(IBusEvent_ScreenModeUpdate, pkt);
@@ -337,18 +339,173 @@ void IBusSendCommand(
     }
 }
 
+uint8_t IBusGetDeviceManufacturer(const unsigned char mfgByte) {
+    uint8_t deviceManufacturer = 0;
+    switch (mfgByte) {
+        case 0x00:
+            //"Siemens"
+            break;
+        case 0x01:
+            //"Reinshagen (Delphi)"
+            break;
+        case 0x02:
+            //"Kostal"
+            break;
+        case 0x03:
+            //"Hella"
+            break;
+        case 0x04:
+            //"Siemens"
+            break;
+        case 0x07:
+            //"Helbako"
+            break;
+        case 0x09:
+            //"Loewe -> Lear"
+            break;
+        case 0x10:
+            //"VDO"
+            break;
+        case 0x14:
+            //"SWF"
+            break;
+        case 0x16:
+            // MK3 "Philips / Siemens VDO" "0103708.21"
+            break;
+        case 0x17:
+            //"Alpine"
+            break;
+        case 0x19:
+            //"Kammerer"
+            break;
+        case 0x20:
+            //"Becker"
+            break;
+        case 0x22:
+            //"Alps"
+            break;
+        case 0x23:
+            //"Continental"
+            break;
+        case 0x24:
+            //"Temic"
+            break;
+        case 0x26:
+            //"MotoMeter"
+            break;
+        case 0x34:
+            //"VDO" 0108788.10" "0145067.10 For Mk4
+            break;
+        case 0x41:
+            //"Megamos"
+            break;
+        case 0x46:
+            //"Gemel"
+            break;
+        case 0x56:
+            //"Siemens VDO Automotive"
+            break;
+        case 0x57:
+            //"Visteon"
+            break;
+        case 0xD9:
+            //"Webasto"
+            break;
+    }
+    return deviceManufacturer;
+}
+
 /**
- * IBusStartup()
+ * IBusGetRadioType()
  *     Description:
- *        Trigger any callbacks listening for our Startup event
+ *        Get the radio type based on the part number
  *     Params:
- *         None
+ *         uint32_t partNumber - The device part number
  *     Returns:
  *         void
  */
-void IBusStartup()
+uint8_t IBusGetRadioType(uint32_t partNumber)
 {
-    EventTriggerCallback(IBusEvent_Startup, 0);
+    uint8_t radioType = 0;
+    switch (partNumber) {
+        case 4160119:
+        case 6924733:
+        case 6924906:
+        case 6927902:
+        case 6961215:
+        case 6961217:
+        case 6932564:
+        case 6933701:
+        case 6921825:
+        case 6935628:
+        case 6932431:
+        case 6939661:
+        case 6943436:
+        case 6976887:
+        case 6921964:
+        case 6927903:
+        case 6941506:
+        case 6915712:
+        case 6919073:
+        case 9124631:
+            // Business Radio CD
+            radioType = IBUS_RADIO_TYPE_BRCD;
+            break;
+        case 6900403:
+        case 6915710:
+        case 6928763:
+        case 6935630:
+        case 6943428:
+        case 6923842:
+        case 6943426:
+            // Business Radio Tape Player
+            radioType = IBUS_RADIO_TYPE_BRTP;
+            break;
+        case 6902718:
+        case 6902719:
+            // Navigation C43
+            radioType = IBUS_RADIO_TYPE_C43;
+            break;
+        case 6904213:
+        case 6904214:
+        case 6919080:
+        case 6919081:
+        case 6922512:
+        case 6922513:
+        case 6933089:
+        case 6933090:
+        case 6927910:
+        case 6927911:
+        case 6943449:
+        case 6943450:
+        case 6964398:
+        case 6964399:
+        case 6972662:
+        case 6972665:
+        case 6976961:
+        case 6976962:
+        case 6988275:
+        case 6988276:
+            // Navigation BM53 (USDM)
+            radioType = IBUS_RADIO_TYPE_BM53;
+            break;
+        case 6919079:
+        case 6922511:
+        case 6933092:
+        case 6934650:
+        case 6941691:
+        case 6943452:
+        case 6964401:
+        case 6972667:
+        case 6976963:
+        case 6976964:
+        case 8385457:
+        case 9185185:
+            // Navigation BM54 (EUDM)
+            radioType = IBUS_RADIO_TYPE_BM54;
+            break;
+    }
+    return radioType;
 }
 
 /**
@@ -362,7 +519,6 @@ void IBusStartup()
  */
 void IBusCommandCDCAnnounce(IBus_t *ibus)
 {
-    LogDebug("IBus: Announce CD Changer");
     const unsigned char cdcAlive[] = {0x02, 0x01};
     IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_LOC, cdcAlive, sizeof(cdcAlive));
 }
@@ -378,7 +534,6 @@ void IBusCommandCDCAnnounce(IBus_t *ibus)
  */
 void IBusCommandCDCKeepAlive(IBus_t *ibus)
 {
-    LogDebug("IBus: Send CD Changer Keep-Alive");
     const unsigned char cdcPing[] = {0x02, 0x00};
     IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_RAD, cdcPing, sizeof(cdcPing));
 }
@@ -395,7 +550,6 @@ void IBusCommandCDCKeepAlive(IBus_t *ibus)
  *         void
  */
 void IBusCommandCDCStatus(IBus_t *ibus, unsigned char action, unsigned char status) {
-    LogDebug("IBus: Send CD Changer Status");
     status = status + 0x80;
     const unsigned char cdcStatus[] = {
         IBUS_COMMAND_CDC_SET_STATUS,
@@ -660,15 +814,15 @@ void IBusCommandRADEnableMenu(IBus_t *ibus)
 }
 
 /**
- * IBusCommandRADUpdateMenu()
+ * IBusCommandRADExitMenu()
  *     Description:
- *        Update the Radio Menu? I have no idea -- taken from an Intravee log
+ *        Exit the radio menu and return to the BMBT home screen
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *     Returns:
  *         void
  */
-void IBusCommandRADUpdateMenu(IBus_t *ibus)
+void IBusCommandRADExitMenu(IBus_t *ibus)
 {
     unsigned char msg[] = {0x45, 0x91};
     IBusSendCommand(
@@ -678,4 +832,19 @@ void IBusCommandRADUpdateMenu(IBus_t *ibus)
         msg,
         sizeof(msg)
     );
+}
+
+/**
+ * IBusCommandRADGetDiagnostics()
+ *     Description:
+ *        Request Diagnostic info from the radio
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandRADGetDiagnostics(IBus_t *ibus)
+{
+    unsigned char msg[] = {0x00};
+    IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_RAD, msg, 1);
 }
