@@ -114,6 +114,7 @@ static void BMBTMainMenu(BMBTContext_t *context)
         IBusCommandGTWriteIndexMk4(context->ibus, index, " ");
         index++;
     }
+    IBusCommandGTWriteIndexMk4(context->ibus, 9, " ");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
     context->writtenIndices = 3;
     context->menu = BMBT_MENU_MAIN;
@@ -172,12 +173,13 @@ static void BMBTDeviceSelectionMenu(BMBTContext_t *context)
     } else {
         IBusCommandGTWriteIndexMk4(context->ibus, screenIdx++, "Pairing: Off");
     }
-    IBusCommandGTWriteIndexMk4(context->ibus, screenIdx++, "Back");
+    IBusCommandGTWriteIndexMk4(context->ibus, BMBT_MENU_IDX_DEVICE_SELECTION_BACK, "Back");
     uint8_t index = screenIdx;
     while (index < context->writtenIndices) {
         IBusCommandGTWriteIndexMk4(context->ibus, index, " ");
         index++;
     }
+    IBusCommandGTWriteIndexMk4(context->ibus, 9, " ");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
     context->writtenIndices = screenIdx;
     context->menu = BMBT_MENU_DEVICE_SELECTION;
@@ -198,6 +200,11 @@ static void BMBTSettingsMenu(BMBTContext_t *context)
     );
     IBusCommandGTWriteIndexMk4(
         context->ibus,
+        BMBT_MENU_IDX_SETTINGS_RESET_PAIRED_DEVICE_LIST,
+        "Reset Paired Device List"
+    );
+    IBusCommandGTWriteIndexMk4(
+        context->ibus,
         BMBT_MENU_IDX_SETTINGS_BACK,
         "Back"
     );
@@ -206,6 +213,7 @@ static void BMBTSettingsMenu(BMBTContext_t *context)
         IBusCommandGTWriteIndexMk4(context->ibus, index, " ");
         index++;
     }
+    IBusCommandGTWriteIndexMk4(context->ibus, 9, " ");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
     context->writtenIndices = index;
     context->menu = BMBT_MENU_SETTINGS;
@@ -213,7 +221,7 @@ static void BMBTSettingsMenu(BMBTContext_t *context)
 
 static void BMBTWriteHeader(BMBTContext_t *context)
 {
-    IBusCommandGTWriteTitle(context->ibus, "BlueBus");
+    IBusCommandGTWriteTitle(context->ibus, "Bluetooth");
     if (context->bt->activeDevice.deviceId != 0) {
         char name[33];
         char cleanName[12];
@@ -283,7 +291,8 @@ void BMBTBC127DeviceDisconnected(void *ctx, unsigned char *data)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->displayMode == BMBT_DISPLAY_ON) {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, "No Device");
-        //IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
+        IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
         if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             BMBTDeviceSelectionMenu(context);
         }
@@ -497,7 +506,7 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
     } else if (strcmp("NO DISC", text) == 0 || strcmp("No Disc", text) == 0) {
         context->mode = BMBT_MODE_ACTIVE;
         context->displayMode = BMBT_DISPLAY_ON;
-        IBusCommandGTWriteTitle(context->ibus, "BlueBus");
+        IBusCommandGTWriteTitle(context->ibus, "Bluetooth");
     } else if (pkt[pktLen - 2] == IBUS_RAD_MAIN_AREA_WATERMARK) {
         context->displayMode = BMBT_DISPLAY_ON;
     } else {

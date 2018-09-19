@@ -12,7 +12,7 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
     Context.bt = bt;
     Context.ibus = ibus;
     Context.mode = CD53_MODE_OFF;
-    Context.mainDisplay = CD53DisplayValueInit("BlueBus");
+    Context.mainDisplay = CD53DisplayValueInit("Bluetooth");
     Context.tempDisplay = CD53DisplayValueInit("");
     Context.btDeviceIndex = CD53_PAIRING_DEVICE_NONE;
     EventRegisterCallback(
@@ -112,7 +112,7 @@ void CD53BC127DeviceReady(void *ctx, unsigned char *tmp)
     context->mainDisplay = CD53DisplayValueInit("");
     // If we're in Bluetooth mode, display our banner
     if (context->ibus->cdChangerStatus > 0x01) {
-        CD53SetMainDisplayText(context, "BlueBus", 0);
+        CD53SetMainDisplayText(context, "Bluetooth", 0);
     }
 }
 
@@ -175,7 +175,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
             if (btPlaybackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
             } else {
-                CD53SetMainDisplayText(context, "BlueBus", 0);
+                CD53SetMainDisplayText(context, "Bluetooth", 0);
             }
             BC127CommandStatus(context->bt);
             context->mode = CD53_MODE_ACTIVE;
@@ -245,7 +245,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
                 }
             } else {
                 CD53SetTempDisplayText(context, "No Device", 4);
-                CD53SetMainDisplayText(context, "BlueBus", 0);
+                CD53SetMainDisplayText(context, "Bluetooth", 0);
             }
         } else if (pkt[5] == 0x05) {
             if (context->bt->pairedDevicesCount == 0) {
