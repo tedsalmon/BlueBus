@@ -83,45 +83,51 @@ UART_t * UARTGetModuleHandler(uint8_t moduleIndex)
     return UARTModules[moduleIndex - 1];
 }
 
-static void UARTRXInterruptHandler(uint8_t moduleIndex)
+static uint8_t UARTRXInterruptHandler(uint8_t moduleIndex)
 {
     UART_t *uart = UARTModules[moduleIndex];
-    if (uart != 0) {
-        // While there is data in the RX buffer
-        while ((uart->registers->uxsta & 0x1) == 1) {
-            // No frame or parity errors
-            uint16_t usta = uart->registers->uxsta;
-            if ((usta & 0xC) == 0) {
-                // Clear the buffer overflow error, if it exists
-                if (CHECK_BIT(usta, 1) != 0) {
-                    uart->rxError ^= UART_ERR_OERR;
-                    uart->registers->uxsta ^= 0x2;
-                }
-                CharQueueAdd(&uart->rxQueue, uart->registers->uxrxreg);
-            } else {
-                // Set a "General" Error
-                uart->rxError ^= UART_ERR_GERR;
-                // Clear the buffer overflow error, if it is set
-                if (CHECK_BIT(usta, 1) != 0) {
-                    uart->rxError ^= UART_ERR_OERR;
-                    uart->registers->uxsta ^= 0x2;
-                }
-                if (CHECK_BIT(usta, 2) != 0) {
-                    uart->rxError ^= UART_ERR_FERR;
-                }
-                if (CHECK_BIT(usta, 3) != 0) {
-                    uart->rxError ^= UART_ERR_PERR;
-                }
-                // Clear the byte in the RX buffer
-                uart->registers->uxrxreg;
-            }
-        }
-        // Buffer is clear -- immediately clear the interrupt flag
-        SetUARTRXIF(moduleIndex, 0);
-    } else {
+    if (uart == 0) {
         // Nothing to do -- Clear the interrupt flag
         SetUARTRXIF(moduleIndex, 0);
+        return 0;
     }
+    // While there is data in the RX buffer
+    while ((uart->registers->uxsta & 0x1) == 1) {
+        // No frame or parity errors
+        uint16_t usta = uart->registers->uxsta;
+        if ((usta & 0xC) == 0) {
+            // Clear the buffer overflow error, if it exists
+            if (CHECK_BIT(usta, 1) != 0) {
+                uart->rxError ^= UART_ERR_OERR;
+                uart->registers->uxsta ^= 0x2;
+            }
+            CharQueueAdd(&uart->rxQueue, uart->registers->uxrxreg);
+        } else {
+            // Set a "General" Error
+            uart->rxError ^= UART_ERR_GERR;
+            // Clear the buffer overflow error, if it is set
+            if (CHECK_BIT(usta, 1) != 0) {
+                uart->rxError ^= UART_ERR_OERR;
+                uart->registers->uxsta ^= 0x2;
+            }
+            if (CHECK_BIT(usta, 2) != 0) {
+                uart->rxError ^= UART_ERR_FERR;
+            }
+            if (CHECK_BIT(usta, 3) != 0) {
+                uart->rxError ^= UART_ERR_PERR;
+            }
+            // Clear the byte in the RX buffer
+            uart->registers->uxrxreg;
+        }
+        if ((uart->registers->uxsta & 0x1) == 0) {
+            // Buffer is clear -- immediately clear the interrupt flag
+            SetUARTRXIF(moduleIndex, 0);
+            return 0;
+        }
+    }
+    SetUARTRXIF(moduleIndex, 0);
+    return 0;
+
 }
 
 static void UARTTXInterruptHandler(uint8_t moduleIndex)

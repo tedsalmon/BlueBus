@@ -15,6 +15,7 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
     Context.mode = BMBT_MODE_OFF;
     Context.displayMode = BMBT_DISPLAY_OFF;
     Context.writtenIndices = 3;
+    Context.timerMenuIntervals = 0;
     Context.selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
     Context.activelyPairedDevice = BMBT_PAIRING_DEVICE_NONE;
     EventRegisterCallback(
@@ -72,6 +73,11 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &BMBTScreenModeSet,
         &Context
     );
+    TimerRegisterScheduledTask(
+        &BMBTTimerMenuWrite,
+        &Context,
+        BMBT_MENU_TIMER_WRITE_INT
+    );
 }
 
 static void BMBTSetStaticScreen(BMBTContext_t *context, char *f1, char *f2, char *f3)
@@ -114,7 +120,7 @@ static void BMBTMainMenu(BMBTContext_t *context)
         IBusCommandGTWriteIndexMk4(context->ibus, index, " ");
         index++;
     }
-    IBusCommandGTWriteIndexMk4(context->ibus, 9, " ");
+    IBusCommandGTWriteIndexMk4(context->ibus, BMBT_MENU_IDX_BACK, " ");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
     context->writtenIndices = 3;
     context->menu = BMBT_MENU_MAIN;
@@ -173,13 +179,12 @@ static void BMBTDeviceSelectionMenu(BMBTContext_t *context)
     } else {
         IBusCommandGTWriteIndexMk4(context->ibus, screenIdx++, "Pairing: Off");
     }
-    IBusCommandGTWriteIndexMk4(context->ibus, BMBT_MENU_IDX_DEVICE_SELECTION_BACK, "Back");
+    IBusCommandGTWriteIndexMk4(context->ibus, BMBT_MENU_IDX_BACK, "Back");
     uint8_t index = screenIdx;
     while (index < context->writtenIndices) {
         IBusCommandGTWriteIndexMk4(context->ibus, index, " ");
         index++;
     }
-    IBusCommandGTWriteIndexMk4(context->ibus, 9, " ");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
     context->writtenIndices = screenIdx;
     context->menu = BMBT_MENU_DEVICE_SELECTION;
@@ -201,19 +206,14 @@ static void BMBTSettingsMenu(BMBTContext_t *context)
     IBusCommandGTWriteIndexMk4(
         context->ibus,
         BMBT_MENU_IDX_SETTINGS_RESET_PAIRED_DEVICE_LIST,
-        "Reset Paired Device List"
+        "Reset BT PDL"
     );
-    IBusCommandGTWriteIndexMk4(
-        context->ibus,
-        BMBT_MENU_IDX_SETTINGS_BACK,
-        "Back"
-    );
+    IBusCommandGTWriteIndexMk4(context->ibus, BMBT_MENU_IDX_BACK, "Back");
     uint8_t index = 3;
     while (index < context->writtenIndices) {
         IBusCommandGTWriteIndexMk4(context->ibus, index, " ");
         index++;
     }
-    IBusCommandGTWriteIndexMk4(context->ibus, 9, " ");
     IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
     context->writtenIndices = index;
     context->menu = BMBT_MENU_SETTINGS;
@@ -422,10 +422,7 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
             }
         } else if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             uint8_t index = context->bt->pairedDevicesCount + 1;
-            // Back Button
-            if (selectedIdx == index) {
-                BMBTMainMenu(context);
-            } else if (selectedIdx == index - 1) {
+            if (selectedIdx == index - 1) {
                 uint8_t state;
                 if (context->bt->discoverable == BC127_STATE_ON) {
                     IBusCommandGTWriteIndexMk4(context->ibus, selectedIdx, "Pairing: Off");
@@ -443,6 +440,9 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                 }
                 IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_INDEX);
                 BC127CommandBtState(context->bt, context->bt->connectable, state);
+            } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
+                // Back Button
+                BMBTMainMenu(context);
             } else {
                 BC127PairedDevice_t *dev = &context->bt->pairedDevices[selectedIdx];
                 if (strcmp(dev->macId, context->bt->activeDevice.macId) != 0 &&
@@ -470,7 +470,7 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                 // Do nothing, yet
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_RESET_BT) {
                 BC127CommandReset(context->bt);
-            } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_BACK) {
+            } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
                 BMBTMainMenu(context);
             }
         }
@@ -498,10 +498,14 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
     //     Rewrite the header and set display mode on
     if (strcmp("CDC 1-01", text) == 0 || strcmp("TR 01-001", text) == 0) {
         context->mode = BMBT_MODE_ACTIVE;
-        context->displayMode = BMBT_DISPLAY_ON;
         BMBTWriteHeader(context);
-        if (context->menu != BMBT_MENU_NONE) {
-            BMBTMenuRefresh(context);
+        if (context->displayMode == BMBT_DISPLAY_ON) {
+            // Write the current menu back out
+            if (context->menu != BMBT_MENU_NONE) {
+                BMBTMenuRefresh(context);
+            }
+        } else {
+            context->displayMode = BMBT_DISPLAY_ON;
         }
     } else if (strcmp("NO DISC", text) == 0 || strcmp("No Disc", text) == 0) {
         context->mode = BMBT_MODE_ACTIVE;
@@ -510,6 +514,7 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
     } else if (pkt[pktLen - 2] == IBUS_RAD_MAIN_AREA_WATERMARK) {
         context->displayMode = BMBT_DISPLAY_ON;
     } else {
+        context->menu = BMBT_MENU_NONE;
         context->displayMode = BMBT_DISPLAY_OFF;
     }
 }
@@ -518,6 +523,7 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[4] == 0x01 || pkt[4] == 0x02) {
+        context->menu = BMBT_MENU_NONE;
         context->displayMode = BMBT_DISPLAY_OFF;
     }
     if (pkt[4] == 0x0C &&
@@ -526,6 +532,7 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
     ) {
         // Write the current menu back out
         if (context->menu == BMBT_MENU_NONE) {
+            IBusCommandRADDisableMenu(context->ibus);
             BMBTWriteMenu(context);
         } else {
             BMBTMenuRefresh(context);
@@ -541,5 +548,26 @@ void BMBTScreenModeSet(void *ctx, unsigned char *pkt)
     // screen
     if (pkt[4] == 0x10) {
         context->menu = BMBT_MENU_NONE;
+    }
+}
+
+/**
+ * If more than the elapsed time has passed since the screen was set to CDC
+ * mode but we haven't gotten a screen clear from the radio, write out the
+ * menu, otherwise we may never write the menu out.
+ */
+void BMBTTimerMenuWrite(void *ctx)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    if (context->menu == BMBT_MENU_NONE && context->displayMode == BMBT_DISPLAY_ON) {
+        uint16_t time = context->timerMenuIntervals * BMBT_MENU_TIMER_WRITE_INT;
+        if (time >= BMBT_MENU_TIMER_WRITE_TIMEOUT) {
+            LogDebug("Writing Menu from Timer");
+            IBusCommandRADDisableMenu(context->ibus);
+            BMBTWriteMenu(context);
+            context->timerMenuIntervals = 0;
+        } else {
+            context->timerMenuIntervals++;
+        }
     }
 }

@@ -48,7 +48,7 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
     Context.displayUpdateTaskId = TimerRegisterScheduledTask(
         &CD53TimerDisplay,
         &Context,
-        500
+        CD53_DISPLAY_TIMER_INT
     );
 }
 
