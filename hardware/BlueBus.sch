@@ -521,7 +521,7 @@ A wide 4.5V to 18V input voltage range allows for single supply operation from i
 <pin name="RF1" x="45.72" y="15.24" length="short" rot="R180"/>
 <pin name="U5CTS/OC6/RF0" x="45.72" y="17.78" length="short" rot="R180"/>
 <pin name="VCAP" x="15.24" y="48.26" length="short" direction="pwr" rot="R270"/>
-<pin name="SCL3/IC5/PMD6/RE6" x="45.72" y="25.4" length="short" direction="nc" rot="R180"/>
+<pin name="SCL3/IC5/PMD6/RE6" x="45.72" y="25.4" length="short" rot="R180"/>
 <pin name="IC4/CTED4/PMD5/RE5" x="45.72" y="27.94" length="short" rot="R180"/>
 <pin name="HLVDIN/CTED8/PMD4/RE4" x="45.72" y="30.48" length="short" rot="R180"/>
 <pin name="CTED9/PMD3/RE3" x="45.72" y="33.02" length="short" rot="R180"/>
@@ -4668,8 +4668,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <library name="Passives">
 <packages>
 <package name="0805" urn="urn:adsk.eagle:footprint:37400/1">
-<description>&lt;p&gt;&lt;b&gt;Generic 2012 (0805) package&lt;/b&gt;&lt;/p&gt;
-&lt;p&gt;0.2mm courtyard excess rounded to nearest 0.05mm.&lt;/p&gt;</description>
+<description>&lt;p&gt;&lt;b&gt;Generic 2012 (0805) package&lt;/b&gt;&lt;/p&gt; &lt;p&gt;0.2mm courtyard excess rounded to nearest 0.05mm.&lt;/p&gt;</description>
 <smd name="1" x="-0.9" y="0" dx="0.8" dy="1.2" layer="1"/>
 <smd name="2" x="0.9" y="0" dx="0.8" dy="1.2" layer="1"/>
 <text x="0" y="0.889" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;NAME</text>
@@ -4709,9 +4708,23 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <wire x1="-3.85" y1="-3.35" x2="-3.85" y2="-2" width="0.127" layer="21"/>
 <wire x1="3.85" y1="-3.35" x2="3.85" y2="-2" width="0.127" layer="21"/>
 </package>
+<package name="EIA7343" urn="urn:adsk.eagle:footprint:37390/1">
+<description>EIA 7343 tantalum capacitor</description>
+<wire x1="-5" y1="2.5" x2="-2" y2="2.5" width="0.2032" layer="21"/>
+<wire x1="-5" y1="2.5" x2="-5" y2="-2.5" width="0.2032" layer="21"/>
+<wire x1="-5" y1="-2.5" x2="-2" y2="-2.5" width="0.2032" layer="21"/>
+<wire x1="2" y1="2.5" x2="4" y2="2.5" width="0.2032" layer="21"/>
+<wire x1="4" y1="2.5" x2="5" y2="1.5" width="0.2032" layer="21"/>
+<wire x1="5" y1="1.5" x2="5" y2="-1.5" width="0.2032" layer="21"/>
+<wire x1="5" y1="-1.5" x2="4" y2="-2.5" width="0.2032" layer="21"/>
+<wire x1="4" y1="-2.5" x2="2" y2="-2.5" width="0.2032" layer="21"/>
+<smd name="C" x="-3.17" y="0" dx="2.55" dy="2.7" layer="1" rot="R180"/>
+<smd name="A" x="3.17" y="0" dx="2.55" dy="2.7" layer="1" rot="R180"/>
+<text x="0" y="2.667" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;Name</text>
+<text x="0" y="-2.667" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;Value</text>
+</package>
 <package name="0603" urn="urn:adsk.eagle:footprint:37386/1">
-<description>&lt;p&gt;&lt;b&gt;Generic 1608 (0603) package&lt;/b&gt;&lt;/p&gt;
-&lt;p&gt;0.2mm courtyard excess rounded to nearest 0.05mm.&lt;/p&gt;</description>
+<description>&lt;p&gt;&lt;b&gt;Generic 1608 (0603) package&lt;/b&gt;&lt;/p&gt; &lt;p&gt;0.2mm courtyard excess rounded to nearest 0.05mm.&lt;/p&gt;</description>
 <wire x1="-1.6" y1="0.7" x2="1.6" y2="0.7" width="0.0508" layer="39"/>
 <wire x1="1.6" y1="0.7" x2="1.6" y2="-0.7" width="0.0508" layer="39"/>
 <wire x1="1.6" y1="-0.7" x2="-1.6" y2="-0.7" width="0.0508" layer="39"/>
@@ -4727,8 +4740,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <rectangle x1="-0.1999" y1="-0.3" x2="0.1999" y2="0.3" layer="35"/>
 </package>
 <package name="1206" urn="urn:adsk.eagle:footprint:37399/1">
-<description>&lt;p&gt;&lt;b&gt;Generic 3216 (1206) package&lt;/b&gt;&lt;/p&gt;
-&lt;p&gt;0.2mm courtyard excess rounded to nearest 0.05mm.&lt;/p&gt;</description>
+<description>&lt;p&gt;&lt;b&gt;Generic 3216 (1206) package&lt;/b&gt;&lt;/p&gt; &lt;p&gt;0.2mm courtyard excess rounded to nearest 0.05mm.&lt;/p&gt;</description>
 <wire x1="-2.4" y1="1.1" x2="2.4" y2="1.1" width="0.0508" layer="39"/>
 <wire x1="2.4" y1="-1.1" x2="-2.4" y2="-1.1" width="0.0508" layer="39"/>
 <wire x1="-2.4" y1="-1.1" x2="-2.4" y2="1.1" width="0.0508" layer="39"/>
@@ -4742,21 +4754,6 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <rectangle x1="-1.7018" y1="-0.8509" x2="-0.9517" y2="0.8491" layer="51"/>
 <rectangle x1="0.9517" y1="-0.8491" x2="1.7018" y2="0.8509" layer="51"/>
 <rectangle x1="-0.1999" y1="-0.4001" x2="0.1999" y2="0.4001" layer="35"/>
-</package>
-<package name="EIA7343" urn="urn:adsk.eagle:footprint:37390/1">
-<description>EIA 7343 tantalum capacitor</description>
-<wire x1="-5" y1="2.5" x2="-2" y2="2.5" width="0.2032" layer="21"/>
-<wire x1="-5" y1="2.5" x2="-5" y2="-2.5" width="0.2032" layer="21"/>
-<wire x1="-5" y1="-2.5" x2="-2" y2="-2.5" width="0.2032" layer="21"/>
-<wire x1="2" y1="2.5" x2="4" y2="2.5" width="0.2032" layer="21"/>
-<wire x1="4" y1="2.5" x2="5" y2="1.5" width="0.2032" layer="21"/>
-<wire x1="5" y1="1.5" x2="5" y2="-1.5" width="0.2032" layer="21"/>
-<wire x1="5" y1="-1.5" x2="4" y2="-2.5" width="0.2032" layer="21"/>
-<wire x1="4" y1="-2.5" x2="2" y2="-2.5" width="0.2032" layer="21"/>
-<smd name="C" x="-3.17" y="0" dx="2.55" dy="2.7" layer="1" rot="R180"/>
-<smd name="A" x="3.17" y="0" dx="2.55" dy="2.7" layer="1" rot="R180"/>
-<text x="0" y="2.667" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;Name</text>
-<text x="0" y="-2.667" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;Value</text>
 </package>
 </packages>
 <symbols>
@@ -4776,8 +4773,7 @@ You are welcome to use this library for commercial purposes. For attribution, we
 <pin name="1" x="-5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1"/>
 </symbol>
 <symbol name="DIODE-SCHOTTKY">
-<description>&lt;h3&gt; Schottky Diode&lt;/h3&gt;
-Diode with low voltage drop</description>
+<description>&lt;h3&gt; Schottky Diode&lt;/h3&gt; Diode with low voltage drop</description>
 <wire x1="1.27" y1="1.27" x2="1.27" y2="0" width="0.1524" layer="94"/>
 <wire x1="1.27" y1="0" x2="1.27" y2="-1.27" width="0.1524" layer="94"/>
 <wire x1="1.27" y1="1.27" x2="1.778" y2="1.27" width="0.1524" layer="94"/>
@@ -4797,8 +4793,7 @@ Diode with low voltage drop</description>
 </polygon>
 </symbol>
 <symbol name="INDUCTOR">
-<description>&lt;h3&gt;Inductors&lt;/h3&gt;
-&lt;p&gt;Resist changes in electrical current. Basically a coil of wire.&lt;/p&gt;</description>
+<description>&lt;h3&gt;Inductors&lt;/h3&gt; &lt;p&gt;Resist changes in electrical current. Basically a coil of wire.&lt;/p&gt;</description>
 <text x="1.27" y="2.54" size="1.778" layer="95" font="vector">&gt;NAME</text>
 <text x="1.27" y="-2.54" size="1.778" layer="96" font="vector" align="top-left">&gt;VALUE</text>
 <pin name="1" x="0" y="5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R270"/>
@@ -4853,6 +4848,8 @@ Diode with low voltage drop</description>
 </connects>
 <technologies>
 <technology name="">
+<attribute name="MFG" value="STMicroelectronics"/>
+<attribute name="PN" value="STPS2H100ZFY"/>
 <attribute name="VALUE" value="2A/30V" constant="no"/>
 </technology>
 </technologies>
@@ -4878,6 +4875,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="0.1UF" prefix="C" uservalue="yes">
+<description>&lt;p&gt;0.1uF capacitor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
 </gates>
@@ -4890,7 +4888,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="0.1uF-0805-25V" constant="no"/>
+<attribute name="MFG" value="Vishay" constant="no"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
+<attribute name="PN" value="VJ0805Y104KXXAC"/>
 <attribute name="VALUE" value="0.1uF" constant="no"/>
 </technology>
 </technologies>
@@ -4898,6 +4898,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="0.47UF" prefix="C" uservalue="yes">
+<description>&lt;p&gt;0.47uF 25VDC 0805 Capacitor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
 </gates>
@@ -4910,7 +4911,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="0.47uF-0805-25V" constant="no"/>
+<attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
+<attribute name="PN" value="CGA4J2X7R1E474K125AA"/>
 <attribute name="VALUE" value="0.47uF" constant="no"/>
 </technology>
 </technologies>
@@ -4930,7 +4933,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="4.7UF-0805-25V" constant="no"/>
+<attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
+<attribute name="PN" value="C2012JB1E475K085AC"/>
 <attribute name="VALUE" value="4.7uF" constant="no"/>
 </technology>
 </technologies>
@@ -4958,6 +4963,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="2.2UF" prefix="C" uservalue="yes">
+<description>&lt;p&gt;2.2uF Capacitor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
 </gates>
@@ -4970,7 +4976,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="2.2uF-0805-25V-10%" constant="no"/>
+<attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
+<attribute name="PN" value="CGB4B1JB1E225K055AC"/>
 <attribute name="VALUE" value="2.2uF" constant="no"/>
 </technology>
 </technologies>
@@ -4978,6 +4986,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="36KOHM" prefix="R" uservalue="yes">
+<description>&lt;p&gt;36K Ohm Resistor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
@@ -5003,7 +5012,8 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="36KOHM-0805-1/8-1%" constant="no"/>
-<attribute name="PN" value="CRCW080536K0FKEA" constant="no"/>
+<attribute name="MFG" value="Panasonic"/>
+<attribute name="PN" value="ERJ-PB6D3602V"/>
 <attribute name="VALUE" value="36k" constant="no"/>
 </technology>
 </technologies>
@@ -5044,6 +5054,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="100KOHM" prefix="R" uservalue="yes">
+<description>&lt;p&gt;100k Ohm Resistor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
@@ -5056,6 +5067,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="100KOHM-0603-1/4W-1%" constant="no"/>
+<attribute name="MFG" value="Panasonic"/>
+<attribute name="PACKAGE" value="0805" constant="no"/>
+<attribute name="PN" value="ERJ-6ENF1003V"/>
 <attribute name="VALUE" value="100K" constant="no"/>
 </technology>
 </technologies>
@@ -5076,6 +5090,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="1KOHM" prefix="R" uservalue="yes">
+<description>&lt;p&gt;1K Ohm Resistor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
@@ -5088,6 +5103,7 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="1KOHM-0805-1/8-1%" constant="no"/>
+<attribute name="MFG" value="Panasonic"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
 <attribute name="PN" value="ERJ-6ENF1001V" constant="no"/>
 <attribute name="VALUE" value="1k" constant="no"/>
@@ -5097,6 +5113,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="10KOHM" prefix="R" uservalue="yes">
+<description>&lt;p&gt;10K Ohm Resistor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
@@ -5109,6 +5126,7 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="10KOHM-0603-1/14-5%" constant="no"/>
+<attribute name="MFG" value="Panasonic"/>
 <attribute name="PACKAGE" value="0603" constant="no"/>
 <attribute name="VALUE" value="10K" constant="no"/>
 </technology>
@@ -5122,8 +5140,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="10KOHM-0805-1/8-1%" constant="no"/>
+<attribute name="MFG" value="Panasonic"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="ERJ-6ENF1002V" constant="no"/>
+<attribute name="PN" value="ERJ-6ENF1002V"/>
 <attribute name="VALUE" value="10k" constant="no"/>
 </technology>
 </technologies>
@@ -5131,6 +5150,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="2KOHM" prefix="R" uservalue="yes">
+<description>&lt;p&gt;2K Ohm Resistor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
@@ -5156,8 +5176,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="2KOHM-0805-1/6-1%" constant="no"/>
+<attribute name="MFG" value="ROHM"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="ESR10EZPF2001" constant="no"/>
+<attribute name="PN" value="ESR10EZPF2001"/>
 <attribute name="VALUE" value="2k" constant="no"/>
 </technology>
 </technologies>
@@ -5177,8 +5198,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="10OHM-0805-1/3-1%" constant="no"/>
+<attribute name="MFG" value="Panasonic"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="SR732ARTTD10R0F" constant="no"/>
+<attribute name="PN" value="ERJ-P6WF10R0V"/>
 <attribute name="VALUE" value="10" constant="no"/>
 </technology>
 </technologies>
@@ -5207,6 +5229,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="240OHM" prefix="R" uservalue="yes">
+<description>&lt;p&gt;240 Ohm Resistor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
@@ -5219,8 +5242,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="240OHM-0805-1/2-1%" constant="no"/>
+<attribute name="MFG" value="Panasonic"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="ERJ-P06F2400V" constant="no"/>
+<attribute name="PN" value="ERJ-P06F2400V"/>
 <attribute name="VALUE" value="240" constant="no"/>
 </technology>
 </technologies>
@@ -5228,6 +5252,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="0.22OHM" prefix="R" uservalue="yes">
+<description>&lt;p&gt;0.22 Ohm Resistor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
@@ -5240,7 +5265,8 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="0.22OHM-0805-1/3-1%" constant="no"/>
-<attribute name="PN" value="WW08PR220FTL" constant="no"/>
+<attribute name="MFG" value="TE Connectivity"/>
+<attribute name="PN" value="1-2176053-6"/>
 <attribute name="VALUE" value="0.22" constant="no"/>
 </technology>
 </technologies>
@@ -5260,15 +5286,17 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="0.75OHM-0805-1/2-1%" constant="no"/>
-<attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="68AC0113" constant="no"/>
-<attribute name="VALUE" value="0.75" constant="no"/>
+<attribute name="MFG" value="Vishay"/>
+<attribute name="PACKAGE" value="0805"/>
+<attribute name="PN" value="RCWH0805R750FKEA"/>
+<attribute name="VALUE" value="0.75"/>
 </technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
 <deviceset name="18PF" prefix="C" uservalue="yes">
+<description>&lt;p&gt;18pF Capacitor 0805 Package&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
 </gates>
@@ -5281,7 +5309,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="18PF-0805-250V" constant="no"/>
+<attribute name="MFG" value="KEMET"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
+<attribute name="PN" value="C0805C180J1GACTU"/>
 <attribute name="VALUE" value="18pF" constant="no"/>
 </technology>
 </technologies>
@@ -5301,6 +5331,7 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="22uF-0805-6.3v-10%" constant="no"/>
+<attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
 <attribute name="PN" value="C2012X5R0J226K125AB"/>
 <attribute name="VALUE" value="22uF" constant="no"/>
@@ -5310,6 +5341,7 @@ Diode with low voltage drop</description>
 </devices>
 </deviceset>
 <deviceset name="10UF" prefix="C" uservalue="yes">
+<description>&lt;p&gt;10uF Capacitor 1206 Package&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="CAP" x="0.655484375" y="-0.524103125"/>
 </gates>
@@ -5322,8 +5354,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="10UF-1206-50V-10%" constant="no"/>
+<attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="1206" constant="no"/>
-<attribute name="PN" value="C3216JB1H106K160AB"/>
+<attribute name="PN" value="C3216X5R1E106K085AC"/>
 <attribute name="VALUE" value="10uF" constant="no"/>
 </technology>
 </technologies>
@@ -5343,8 +5376,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="47KOHM-0805-1/6-1%" constant="no"/>
+<attribute name="MFG" value="Vishay"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="RCS080547K0FKEA" constant="no"/>
+<attribute name="PN" value="RCS080547K0FKEA"/>
 <attribute name="VALUE" value="47k" constant="no"/>
 </technology>
 </technologies>
@@ -5388,8 +5422,9 @@ Diode with low voltage drop</description>
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="100UF-2917-25V-10%" constant="no"/>
+<attribute name="MFG" value="Kemet"/>
 <attribute name="PACKAGE" value="2917" constant="no"/>
-<attribute name="PN" value="T495X107K025ATE150" constant="no"/>
+<attribute name="PN" value="T495X107K025ATE150"/>
 <attribute name="VALUE" value="100uF" constant="no"/>
 </technology>
 </technologies>
@@ -6529,8 +6564,8 @@ Manufacturer: Hirose&lt;br&gt;
 <part name="JP1" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-1X3" device="/90" package3d_urn="urn:adsk.eagle:package:22459/2" value="IBUS/VIN"/>
 <part name="JP2" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-2X3" device="/90" package3d_urn="urn:adsk.eagle:package:22464/2" value="SPKR_OUT"/>
 <part name="D4" library="SparkFun-DiscreteSemi" deviceset="DIODE" device="-BAS16J" value="250mA/100V"/>
-<part name="JP4" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-1X6" device="" package3d_urn="urn:adsk.eagle:package:22472/2" value="BT_FTDI"/>
-<part name="JP5" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-1X6" device="" package3d_urn="urn:adsk.eagle:package:22472/2" value="MCU_PRGM"/>
+<part name="BT_UART" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-1X6" device="" package3d_urn="urn:adsk.eagle:package:22472/2" value="BT_FTDI"/>
+<part name="PICKIT" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-1X6" device="" package3d_urn="urn:adsk.eagle:package:22472/2" value="MCU_PRGM"/>
 <part name="FRAME2" library="Frame" deviceset="FRAME-LETTER" device="" package3d_urn="urn:adsk.eagle:package:37104/1"/>
 <part name="TPA6013A2" library="TPA6017A2" deviceset="TPA6017A2" device="" value="TPA6012A2"/>
 <part name="PIC24FJ1024GA606" library="PIC24FJ1024GA606" deviceset="PIC24FJ1024GA606" device=""/>
@@ -6551,7 +6586,7 @@ Manufacturer: Hirose&lt;br&gt;
 <part name="GND17" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="Y1" library="SparkFun-Clocks" library_urn="urn:adsk.eagle:library:511" deviceset="CRYSTAL-32.768KHZ" device="SMD-3.2X1.5" package3d_urn="urn:adsk.eagle:package:37548/1" value="32.768kHz"/>
 <part name="GND18" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
-<part name="JP6" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-1X2" device="/90" package3d_urn="urn:adsk.eagle:package:22437/2" value="MIC_IN"/>
+<part name="JP3" library="pinhead" library_urn="urn:adsk.eagle:library:325" deviceset="PINHD-1X2" device="/90" package3d_urn="urn:adsk.eagle:package:22437/2" value="MIC_IN"/>
 <part name="C16" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C15" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C14" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
@@ -6604,7 +6639,6 @@ Manufacturer: Hirose&lt;br&gt;
 <part name="SUPPLY3" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
 <part name="SUPPLY7" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
 <part name="SUPPLY15" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
-<part name="SUPPLY18" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="SUPPLY19" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="SUPPLY20" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="SUPPLY21" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
@@ -6622,7 +6656,8 @@ Manufacturer: Hirose&lt;br&gt;
 <part name="C27" library="Passives" deviceset="10UF" device="" value="10uF"/>
 <part name="R7" library="Passives" deviceset="47KOHM" device="" value="47k"/>
 <part name="C11" library="Passives" deviceset="100UF" device="2917" value="100uF"/>
-<part name="USB" library="SparkFun-Connectors" deviceset="USB_MICRO-B" device="_SMT"/>
+<part name="USB" library="SparkFun-Connectors" deviceset="USB_MICRO-B" device="_SMT" value="USB"/>
+<part name="D9" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/30V"/>
 </parts>
 <sheets>
 <sheet>
@@ -6652,8 +6687,8 @@ Manufacturer: Hirose&lt;br&gt;
 <instance part="JP1" gate="A" x="119.38" y="172.72" rot="R90"/>
 <instance part="JP2" gate="A" x="157.48" y="165.1"/>
 <instance part="D4" gate="G$1" x="182.88" y="165.1"/>
-<instance part="JP4" gate="A" x="127" y="152.4" rot="R90"/>
-<instance part="JP5" gate="A" x="149.86" y="147.32" rot="R90"/>
+<instance part="BT_UART" gate="A" x="127" y="152.4" rot="R90"/>
+<instance part="PICKIT" gate="A" x="149.86" y="147.32" rot="R90"/>
 <instance part="FRAME2" gate="G$1" x="0" y="0"/>
 <instance part="FRAME2" gate="V" x="147.32" y="0"/>
 <instance part="TPA6013A2" gate="G$1" x="182.88" y="76.2"/>
@@ -6663,7 +6698,7 @@ Manufacturer: Hirose&lt;br&gt;
 <instance part="R10" gate="G$1" x="154.94" y="93.98"/>
 <instance part="D5" gate="G$1" x="38.1" y="144.78" rot="R90"/>
 <instance part="L1" gate="G$1" x="55.88" y="152.4" rot="R90"/>
-<instance part="JP6" gate="G$1" x="142.24" y="167.64"/>
+<instance part="JP3" gate="G$1" x="142.24" y="167.64"/>
 <instance part="C16" gate="G$1" x="238.76" y="71.12"/>
 <instance part="C15" gate="G$1" x="228.6" y="71.12"/>
 <instance part="C14" gate="G$1" x="142.24" y="86.36" rot="R180"/>
@@ -6707,7 +6742,8 @@ Manufacturer: Hirose&lt;br&gt;
 <instance part="C13" gate="G$1" x="30.48" y="132.08"/>
 <instance part="R7" gate="G$1" x="43.18" y="137.16" rot="R90"/>
 <instance part="C11" gate="G$1" x="177.8" y="152.4"/>
-<instance part="USB" gate="J1" x="124.46" y="129.54" rot="R270"/>
+<instance part="USB" gate="J1" x="124.46" y="127" rot="R270"/>
+<instance part="D9" gate="G$1" x="137.16" y="116.84" rot="R270"/>
 </instances>
 <busses>
 </busses>
@@ -6783,12 +6819,12 @@ Manufacturer: Hirose&lt;br&gt;
 <label x="116.84" y="167.64" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 <segment>
-<pinref part="JP4" gate="A" pin="1"/>
+<pinref part="BT_UART" gate="A" pin="1"/>
 <wire x1="119.38" y1="149.86" x2="119.38" y2="144.78" width="0.1524" layer="91"/>
 <label x="119.38" y="144.78" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 <segment>
-<pinref part="JP5" gate="A" pin="3"/>
+<pinref part="PICKIT" gate="A" pin="3"/>
 <wire x1="147.32" y1="144.78" x2="147.32" y2="139.7" width="0.1524" layer="91"/>
 <label x="147.32" y="139.7" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
@@ -6880,13 +6916,13 @@ Manufacturer: Hirose&lt;br&gt;
 </segment>
 <segment>
 <pinref part="USB" gate="J1" pin="GND"/>
-<wire x1="121.92" y1="124.46" x2="121.92" y2="121.92" width="0.1524" layer="91"/>
-<label x="121.92" y="121.92" size="1.27" layer="95" rot="R270" xref="yes"/>
+<wire x1="121.92" y1="121.92" x2="121.92" y2="119.38" width="0.1524" layer="91"/>
+<label x="121.92" y="119.38" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="3.3V" class="0">
 <segment>
-<pinref part="JP5" gate="A" pin="2"/>
+<pinref part="PICKIT" gate="A" pin="2"/>
 <wire x1="144.78" y1="144.78" x2="144.78" y2="139.7" width="0.1524" layer="91"/>
 <label x="144.78" y="139.7" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
@@ -6921,18 +6957,18 @@ Manufacturer: Hirose&lt;br&gt;
 <pinref part="C6" gate="G$1" pin="1"/>
 </segment>
 <segment>
-<wire x1="88.9" y1="106.68" x2="90.678" y2="106.68" width="0.1524" layer="91"/>
 <pinref part="BC127" gate="G$1" pin="VDD_PADS"/>
 <wire x1="91.44" y1="96.52" x2="91.44" y2="99.06" width="0.1524" layer="91"/>
 <wire x1="91.44" y1="99.06" x2="91.44" y2="106.68" width="0.1524" layer="91"/>
-<wire x1="91.44" y1="106.68" x2="90.678" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="99.06" y1="99.06" x2="109.22" y2="99.06" width="0.1524" layer="91"/>
 <wire x1="99.06" y1="99.06" x2="91.44" y2="99.06" width="0.1524" layer="91"/>
 <junction x="91.44" y="99.06"/>
 <pinref part="R6" gate="G$1" pin="1"/>
-<pinref part="R2" gate="G$1" pin="2"/>
 <wire x1="91.44" y1="106.68" x2="91.44" y2="111.76" width="0.1524" layer="91"/>
 <pinref part="SUPPLY17" gate="G$1" pin="3.3V"/>
+<pinref part="R2" gate="G$1" pin="2"/>
+<wire x1="88.9" y1="106.68" x2="91.44" y2="106.68" width="0.1524" layer="91"/>
+<junction x="91.44" y="106.68"/>
 </segment>
 <segment>
 <wire x1="233.68" y1="86.36" x2="233.68" y2="91.44" width="0.1524" layer="91"/>
@@ -6992,7 +7028,7 @@ Manufacturer: Hirose&lt;br&gt;
 </net>
 <net name="5V" class="0">
 <segment>
-<pinref part="JP4" gate="A" pin="3"/>
+<pinref part="BT_UART" gate="A" pin="3"/>
 <wire x1="124.46" y1="149.86" x2="124.46" y2="144.78" width="0.1524" layer="91"/>
 <label x="124.46" y="144.78" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
@@ -7046,9 +7082,9 @@ Manufacturer: Hirose&lt;br&gt;
 <junction x="73.66" y="144.78"/>
 </segment>
 <segment>
-<pinref part="USB" gate="J1" pin="VBUS"/>
-<wire x1="132.08" y1="124.46" x2="132.08" y2="121.92" width="0.1524" layer="91"/>
-<label x="132.08" y="121.92" size="1.27" layer="95" rot="R270" xref="yes"/>
+<pinref part="D9" gate="G$1" pin="C"/>
+<wire x1="137.16" y1="114.3" x2="139.7" y2="114.3" width="0.1524" layer="91"/>
+<label x="139.7" y="114.3" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="LED0" class="0">
@@ -7103,7 +7139,7 @@ Manufacturer: Hirose&lt;br&gt;
 <label x="109.22" y="73.66" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="JP4" gate="A" pin="4"/>
+<pinref part="BT_UART" gate="A" pin="4"/>
 <wire x1="127" y1="149.86" x2="127" y2="144.78" width="0.1524" layer="91"/>
 <label x="127" y="144.78" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
@@ -7115,7 +7151,7 @@ Manufacturer: Hirose&lt;br&gt;
 <label x="109.22" y="71.12" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="JP4" gate="A" pin="5"/>
+<pinref part="BT_UART" gate="A" pin="5"/>
 <wire x1="129.54" y1="149.86" x2="129.54" y2="144.78" width="0.1524" layer="91"/>
 <label x="129.54" y="144.78" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
@@ -7127,7 +7163,7 @@ Manufacturer: Hirose&lt;br&gt;
 <label x="73.66" y="22.86" size="1.27" layer="95" rot="MR270" xref="yes"/>
 </segment>
 <segment>
-<pinref part="JP6" gate="G$1" pin="1"/>
+<pinref part="JP3" gate="G$1" pin="1"/>
 <wire x1="139.7" y1="170.18" x2="137.16" y2="170.18" width="0.1524" layer="91"/>
 <label x="137.16" y="170.18" size="1.27" layer="95" rot="MR0" xref="yes"/>
 </segment>
@@ -7139,7 +7175,7 @@ Manufacturer: Hirose&lt;br&gt;
 <label x="76.2" y="22.86" size="1.27" layer="95" rot="MR270" xref="yes"/>
 </segment>
 <segment>
-<pinref part="JP6" gate="G$1" pin="2"/>
+<pinref part="JP3" gate="G$1" pin="2"/>
 <wire x1="139.7" y1="167.64" x2="137.16" y2="167.64" width="0.1524" layer="91"/>
 <label x="137.16" y="167.64" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
@@ -7172,7 +7208,7 @@ Manufacturer: Hirose&lt;br&gt;
 <label x="109.22" y="76.2" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="JP4" gate="A" pin="2"/>
+<pinref part="BT_UART" gate="A" pin="2"/>
 <wire x1="121.92" y1="149.86" x2="121.92" y2="144.78" width="0.1524" layer="91"/>
 <label x="121.92" y="144.78" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
@@ -7184,7 +7220,7 @@ Manufacturer: Hirose&lt;br&gt;
 <label x="109.22" y="68.58" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="JP4" gate="A" pin="6"/>
+<pinref part="BT_UART" gate="A" pin="6"/>
 <wire x1="132.08" y1="149.86" x2="132.08" y2="144.78" width="0.1524" layer="91"/>
 <label x="132.08" y="144.78" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
@@ -7228,21 +7264,21 @@ Manufacturer: Hirose&lt;br&gt;
 </net>
 <net name="MCU_MCLR" class="0">
 <segment>
-<pinref part="JP5" gate="A" pin="1"/>
+<pinref part="PICKIT" gate="A" pin="1"/>
 <wire x1="142.24" y1="144.78" x2="142.24" y2="139.7" width="0.1524" layer="91"/>
 <label x="142.24" y="139.7" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="MCU_PGD" class="0">
 <segment>
-<pinref part="JP5" gate="A" pin="4"/>
+<pinref part="PICKIT" gate="A" pin="4"/>
 <wire x1="149.86" y1="144.78" x2="149.86" y2="139.7" width="0.1524" layer="91"/>
 <label x="149.86" y="139.7" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="MCU_PGC" class="0">
 <segment>
-<pinref part="JP5" gate="A" pin="5"/>
+<pinref part="PICKIT" gate="A" pin="5"/>
 <wire x1="152.4" y1="144.78" x2="152.4" y2="139.7" width="0.1524" layer="91"/>
 <label x="152.4" y="139.7" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
@@ -7349,15 +7385,15 @@ Manufacturer: Hirose&lt;br&gt;
 <net name="SYS_USB_DP" class="0">
 <segment>
 <pinref part="USB" gate="J1" pin="D+"/>
-<wire x1="127" y1="124.46" x2="127" y2="121.92" width="0.1524" layer="91"/>
-<label x="127" y="121.92" size="1.27" layer="95" rot="R270" xref="yes"/>
+<wire x1="127" y1="121.92" x2="127" y2="119.38" width="0.1524" layer="91"/>
+<label x="127" y="119.38" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="SYS_USB_DN" class="0">
 <segment>
 <pinref part="USB" gate="J1" pin="D-"/>
-<wire x1="129.54" y1="124.46" x2="129.54" y2="121.92" width="0.1524" layer="91"/>
-<label x="129.54" y="121.92" size="1.27" layer="95" rot="R270" xref="yes"/>
+<wire x1="129.54" y1="121.92" x2="129.54" y2="119.38" width="0.1524" layer="91"/>
+<label x="129.54" y="119.38" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="BS" class="0">
@@ -7475,6 +7511,14 @@ Manufacturer: Hirose&lt;br&gt;
 <wire x1="27.94" y1="81.28" x2="27.94" y2="80.01" width="0.1524" layer="91"/>
 </segment>
 </net>
+<net name="MCP_5V" class="0">
+<segment>
+<pinref part="USB" gate="J1" pin="VBUS"/>
+<wire x1="132.08" y1="121.92" x2="132.08" y2="119.38" width="0.1524" layer="91"/>
+<pinref part="D9" gate="G$1" pin="A"/>
+<wire x1="132.08" y1="119.38" x2="137.16" y2="119.38" width="0.1524" layer="91"/>
+</segment>
+</net>
 </nets>
 </sheet>
 <sheet>
@@ -7516,7 +7560,6 @@ Manufacturer: Hirose&lt;br&gt;
 <instance part="R18" gate="G$1" x="40.64" y="43.18"/>
 <instance part="C28" gate="G$1" x="36.698621875" y="157.48" rot="R180"/>
 <instance part="C29" gate="G$1" x="58.42" y="157.48" rot="R180"/>
-<instance part="SUPPLY18" gate="G$1" x="58.42" y="170.18"/>
 <instance part="SUPPLY19" gate="G$1" x="175.26" y="160.02"/>
 <instance part="SUPPLY20" gate="G$1" x="180.34" y="81.28"/>
 <instance part="SUPPLY21" gate="G$1" x="236.22" y="71.12"/>
@@ -7619,7 +7662,6 @@ Manufacturer: Hirose&lt;br&gt;
 <pinref part="C28" gate="G$1" pin="2"/>
 <wire x1="36.698621875" y1="160.02" x2="58.42" y2="160.02" width="0.1524" layer="91"/>
 <pinref part="C29" gate="G$1" pin="2"/>
-<wire x1="58.42" y1="160.02" x2="63.5" y2="160.02" width="0.1524" layer="91"/>
 <junction x="58.42" y="160.02"/>
 <pinref part="C27" gate="G$1" pin="2"/>
 </segment>
@@ -7806,19 +7848,6 @@ Manufacturer: Hirose&lt;br&gt;
 </net>
 <net name="3.3V" class="0">
 <segment>
-<pinref part="PIC24FJ1024GA606" gate="G$1" pin="VCAP"/>
-<wire x1="88.9" y1="144.78" x2="88.9" y2="167.64" width="0.1524" layer="91"/>
-<wire x1="63.5" y1="167.64" x2="73.66" y2="167.64" width="0.1524" layer="91"/>
-<wire x1="88.9" y1="167.64" x2="73.66" y2="167.64" width="0.1524" layer="91"/>
-<wire x1="63.5" y1="167.64" x2="58.42" y2="167.64" width="0.1524" layer="91"/>
-<wire x1="58.42" y1="167.64" x2="58.42" y2="170.18" width="0.1524" layer="91"/>
-<pinref part="C26" gate="G$1" pin="1"/>
-<junction x="73.66" y="167.64"/>
-<pinref part="SUPPLY18" gate="G$1" pin="3.3V"/>
-<pinref part="C27" gate="G$1" pin="1"/>
-<junction x="63.5" y="167.64"/>
-</segment>
-<segment>
 <pinref part="SUPPLY19" gate="G$1" pin="3.3V"/>
 <wire x1="175.26" y1="142.24" x2="175.26" y2="160.02" width="0.1524" layer="91"/>
 <pinref part="MCP2221A" gate="G$1" pin="VDD"/>
@@ -7961,50 +7990,63 @@ Manufacturer: Hirose&lt;br&gt;
 <label x="20.32" y="83.82" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
+<net name="VCAP" class="0">
+<segment>
+<pinref part="PIC24FJ1024GA606" gate="G$1" pin="VCAP"/>
+<wire x1="88.9" y1="144.78" x2="88.9" y2="167.64" width="0.1524" layer="91"/>
+<wire x1="88.9" y1="167.64" x2="73.66" y2="167.64" width="0.1524" layer="91"/>
+<pinref part="C26" gate="G$1" pin="1"/>
+<pinref part="C27" gate="G$1" pin="1"/>
+<wire x1="73.66" y1="167.64" x2="63.5" y2="167.64" width="0.1524" layer="91"/>
+<junction x="73.66" y="167.64"/>
+</segment>
+</net>
 </nets>
 </sheet>
 </sheets>
 <errors>
-<approved hash="104,1,76.2,144.78,U$6,VIN,5V,,,"/>
-<approved hash="104,1,76.2,139.7,U$6,CE,5V,,,"/>
-<approved hash="104,1,96.52,144.78,U$6,VOUT,3.3V,,,"/>
-<approved hash="104,1,43.18,96.52,U$2,VCHG,3.3V,,,"/>
-<approved hash="204,1,60.96,96.52,U$2,CHG_EXT,,,,"/>
-<approved hash="104,1,68.58,96.52,U$2,VBAT_SENSE,3.3V,,,"/>
-<approved hash="204,1,83.82,96.52,U$2,3V3_USB,,,,"/>
-<approved hash="104,1,91.44,96.52,U$2,VDD_PADS,3.3V,,,"/>
-<approved hash="202,1,35.56,83.82,U$2,CAP_SENSE_1,,,,"/>
-<approved hash="202,1,35.56,81.28,U$2,CAP_SENSE_2,,,,"/>
-<approved hash="202,1,35.56,78.74,U$2,CAP_SENSE_3,,,,"/>
-<approved hash="202,1,35.56,76.2,U$2,CAP_SENSE_4,,,,"/>
-<approved hash="202,1,78.74,25.4,U$2,MIC_RP,,,,"/>
-<approved hash="202,1,81.28,25.4,U$2,MIC_RN,,,,"/>
-<approved hash="202,1,83.82,25.4,U$2,MIC_BIAS,,,,"/>
-<approved hash="104,1,203.2,147.32,U$3,GND1,GND,,,"/>
-<approved hash="104,1,203.2,144.78,U$3,GND2,GND,,,"/>
-<approved hash="104,1,228.6,144.78,U$3,GND3,GND,,,"/>
-<approved hash="104,1,228.6,147.32,U$3,GND4,GND,,,"/>
-<approved hash="104,1,228.6,154.94,U$3,VCC,VTR,,,"/>
-<approved hash="104,1,167.64,76.2,U$4,PVDD,5V,,,"/>
-<approved hash="104,1,198.12,76.2,U$4,PVDD,5V,,,"/>
-<approved hash="104,1,198.12,78.74,U$4,VDD,5V,,,"/>
-<approved hash="104,2,86.36,55.88,U$1,VSS,GND,,,"/>
-<approved hash="104,2,88.9,55.88,U$1,VDD,3.3V,,,"/>
-<approved hash="104,2,78.74,55.88,U$1,AVDD,3.3V,,,"/>
-<approved hash="104,2,76.2,55.88,U$1,AVSS,GND,,,"/>
-<approved hash="104,2,96.52,55.88,U$1,VSS,GND,,,"/>
-<approved hash="104,2,99.06,55.88,U$1,VDD,3.3V,,,"/>
-<approved hash="104,2,109.22,55.88,U$1,VDD,3.3V,,,"/>
-<approved hash="104,2,106.68,55.88,U$1,VSS,GND,,,"/>
-<approved hash="104,2,88.9,144.78,U$1,VCAP,3.3V,,,"/>
-<approved hash="104,2,210.82,139.7,U$7,VSS,GND,,,"/>
-<approved hash="104,2,185.42,139.7,U$7,VDD,3.3V,,,"/>
-<approved hash="104,2,187.96,58.42,U$8,VSS,GND,,,"/>
-<approved hash="104,2,213.36,66.04,U$8,VCC,3.3V,,,"/>
+<approved hash="104,1,76.2,144.78,XC6210,VIN,5V,,,"/>
+<approved hash="104,1,76.2,139.7,XC6210,CE,5V,,,"/>
+<approved hash="104,1,96.52,144.78,XC6210,VOUT,3.3V,,,"/>
+<approved hash="104,1,43.18,96.52,BC127,VCHG,3.3V,,,"/>
+<approved hash="204,1,60.96,96.52,BC127,CHG_EXT,,,,"/>
+<approved hash="104,1,68.58,96.52,BC127,VBAT_SENSE,3.3V,,,"/>
+<approved hash="204,1,83.82,96.52,BC127,3V3_USB,,,,"/>
+<approved hash="104,1,91.44,96.52,BC127,VDD_PADS,3.3V,,,"/>
+<approved hash="202,1,35.56,83.82,BC127,CAP_SENSE_1,,,,"/>
+<approved hash="202,1,35.56,81.28,BC127,CAP_SENSE_2,,,,"/>
+<approved hash="202,1,35.56,78.74,BC127,CAP_SENSE_3,,,,"/>
+<approved hash="202,1,35.56,76.2,BC127,CAP_SENSE_4,,,,"/>
+<approved hash="202,1,78.74,25.4,BC127,MIC_RP,,,,"/>
+<approved hash="202,1,81.28,25.4,BC127,MIC_RN,,,,"/>
+<approved hash="202,1,83.82,25.4,BC127,MIC_BIAS,,,,"/>
+<approved hash="104,1,203.2,154.94,TH3122,VS,VIN,,,"/>
+<approved hash="104,1,203.2,147.32,TH3122,GND1,GND,,,"/>
+<approved hash="104,1,203.2,144.78,TH3122,GND2,GND,,,"/>
+<approved hash="104,1,228.6,144.78,TH3122,GND3,GND,,,"/>
+<approved hash="104,1,228.6,147.32,TH3122,GND4,GND,,,"/>
+<approved hash="104,1,228.6,154.94,TH3122,VCC,VTR,,,"/>
+<approved hash="104,1,167.64,76.2,TPA6013A2,PVDD,5V,,,"/>
+<approved hash="104,1,198.12,76.2,TPA6013A2,PVDD,5V,,,"/>
+<approved hash="104,1,198.12,78.74,TPA6013A2,VDD,5V,,,"/>
+<approved hash="104,2,86.36,55.88,PIC24FJ1024GA606,VSS,GND,,,"/>
+<approved hash="104,2,88.9,55.88,PIC24FJ1024GA606,VDD,3.3V,,,"/>
+<approved hash="104,2,78.74,55.88,PIC24FJ1024GA606,AVDD,3.3V,,,"/>
+<approved hash="104,2,76.2,55.88,PIC24FJ1024GA606,AVSS,GND,,,"/>
+<approved hash="104,2,96.52,55.88,PIC24FJ1024GA606,VSS,GND,,,"/>
+<approved hash="104,2,99.06,55.88,PIC24FJ1024GA606,VDD,3.3V,,,"/>
+<approved hash="104,2,109.22,55.88,PIC24FJ1024GA606,VDD,3.3V,,,"/>
+<approved hash="104,2,106.68,55.88,PIC24FJ1024GA606,VSS,GND,,,"/>
+<approved hash="104,2,210.82,139.7,MCP2221A,VSS,GND,,,"/>
+<approved hash="104,2,185.42,139.7,MCP2221A,VDD,3.3V,,,"/>
+<approved hash="104,2,187.96,58.42,25LC512,VSS,GND,,,"/>
+<approved hash="104,2,213.36,66.04,25LC512,VCC,3.3V,,,"/>
+<approved hash="104,1,132.08,121.92,USB,VBUS,MCP_5V,,,"/>
 <approved hash="206,1,198.12,73.66,SPKR_OUT_NEG,,,,,"/>
 <approved hash="206,1,167.64,71.12,SPKR_OUT_NEG,,,,,"/>
 <approved hash="110,1,43.18,121.92,FB_RES,SW,,,,"/>
 <approved hash="110,1,43.18,121.92,FB_RES,SW,,,,"/>
+<approved hash="115,1,203.2,156.21,VIN,,,,,"/>
 </errors>
 </schematic>
 </drawing>
