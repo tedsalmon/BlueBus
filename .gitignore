@@ -4,3 +4,4 @@
 /firmware/build/default/
 /firmware/dist/default/
 /firmware/disassembly/
+/hardware/BlueBus.*#*
