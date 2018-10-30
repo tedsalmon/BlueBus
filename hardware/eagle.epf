@@ -7,6 +7,7 @@ Desktop="Desktop"
 [Globals]
 AutoSaveProject=1
 UsedLibraryUrn="urn:adsk.eagle:library:294"
+UsedLibraryUrn="urn:adsk.eagle:library:513"
 UsedLibraryUrn="urn:adsk.eagle:library:507"
 
 [Win_1]
