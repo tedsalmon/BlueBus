@@ -9284,9 +9284,9 @@ CONN_06
 <label x="109.22" y="73.66" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
-<pinref part="BT_UART" gate="G$1" pin="4"/>
-<wire x1="122.174" y1="138.176" x2="122.174" y2="135.636" width="0.1524" layer="91"/>
-<label x="122.174" y="135.636" size="1.27" layer="95" rot="R270" xref="yes"/>
+<pinref part="BT_UART" gate="G$1" pin="5"/>
+<wire x1="124.714" y1="138.176" x2="124.714" y2="135.636" width="0.1524" layer="91"/>
+<label x="124.714" y="135.636" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="BT_URX" class="0">
@@ -9303,9 +9303,9 @@ CONN_06
 <wire x1="88.9" y1="66.04" x2="91.44" y2="66.04" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="BT_UART" gate="G$1" pin="5"/>
-<wire x1="124.714" y1="138.176" x2="124.714" y2="135.636" width="0.1524" layer="91"/>
-<label x="124.714" y="135.636" size="1.27" layer="95" rot="R270" xref="yes"/>
+<pinref part="BT_UART" gate="G$1" pin="4"/>
+<wire x1="122.174" y1="138.176" x2="122.174" y2="135.636" width="0.1524" layer="91"/>
+<label x="122.174" y="135.636" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="MIC_LP" class="0">

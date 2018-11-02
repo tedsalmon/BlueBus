@@ -4908,9 +4908,9 @@ design rules under a new name.</description>
 <contactref element="R4" pad="1"/>
 <wire x1="61.1" y1="45.75" x2="61.1" y2="43.5" width="0.3" layer="1"/>
 <wire x1="61.1" y1="43.5" x2="61.1" y2="41" width="0.3" layer="1"/>
-<wire x1="66.69" y1="52.79" x2="61.1" y2="47.2" width="0.3" layer="1"/>
+<wire x1="61.1" y1="47.2" x2="66.49" y2="52.59" width="0.3" layer="1"/>
 <wire x1="61.1" y1="47.2" x2="61.1" y2="45.75" width="0.3" layer="1"/>
-<wire x1="66.69" y1="52.79" x2="80.41" y2="52.79" width="0.3" layer="1"/>
+<wire x1="83.81" y1="52.59" x2="66.49" y2="52.59" width="0.3" layer="1"/>
 <wire x1="48.25" y1="25.1" x2="48.25" y2="26.45" width="0.22" layer="1"/>
 <wire x1="51.1" y1="27.1" x2="48.9" y2="27.1" width="0.22" layer="1"/>
 <wire x1="48.25" y1="26.45" x2="48.9" y2="27.1" width="0.22" layer="1"/>
@@ -4918,16 +4918,15 @@ design rules under a new name.</description>
 <wire x1="61.1" y1="37.1" x2="51.1" y2="27.1" width="0.22" layer="1"/>
 <wire x1="51.8" y1="42.65" x2="60.25" y2="42.65" width="0.3" layer="1"/>
 <wire x1="60.25" y1="42.65" x2="61.1" y2="43.5" width="0.3" layer="1"/>
-<contactref element="BT_UART" pad="4"/>
-<wire x1="80.41" y1="52.79" x2="81.62" y2="51.58" width="0.3" layer="1"/>
-<wire x1="81.62" y1="51.58" x2="81.62" y2="51" width="0.3" layer="1"/>
+<contactref element="BT_UART" pad="5"/>
+<wire x1="84.16" y1="51" x2="84.16" y2="52.24" width="0.3" layer="1"/>
+<wire x1="84.16" y1="52.24" x2="83.81" y2="52.59" width="0.3" layer="1"/>
 </signal>
 <signal name="BT_URX">
 <contactref element="PIC24FJ1024GA606" pad="5"/>
 <contactref element="R5" pad="2"/>
 <contactref element="BC127" pad="42"/>
 <contactref element="R5" pad="1"/>
-<wire x1="66.2" y1="53.3" x2="82.2" y2="53.3" width="0.3" layer="1"/>
 <wire x1="51.8" y1="43.45" x2="53.65" y2="43.45" width="0.3" layer="1"/>
 <wire x1="53.65" y1="43.45" x2="54.8239125" y2="44.65" width="0.3" layer="1"/>
 <wire x1="55.8" y1="44.65" x2="54.8239125" y2="44.65" width="0.3" layer="1"/>
@@ -4943,13 +4942,16 @@ design rules under a new name.</description>
 <via x="59" y="43.6" extent="1-16" drill="0.508"/>
 <wire x1="59" y1="43.6" x2="59" y2="41.3" width="0.3" layer="16"/>
 <via x="59" y="41.3" extent="1-16" drill="0.508"/>
-<wire x1="66.2" y1="53.3" x2="59.7" y2="46.8" width="0.3" layer="1"/>
-<wire x1="59.7" y1="46.8" x2="58.4" y2="46.8" width="0.3" layer="1"/>
+<wire x1="58.4" y1="46.8" x2="59.7" y2="46.8" width="0.3" layer="1"/>
 <wire x1="58.4" y1="46.8" x2="57.6" y2="46" width="0.3" layer="1"/>
 <wire x1="57.6" y1="46" x2="57.6" y2="44.65" width="0.3" layer="1"/>
-<contactref element="BT_UART" pad="5"/>
-<wire x1="82.2" y1="53.3" x2="84.16" y2="51.34" width="0.3" layer="1"/>
-<wire x1="84.16" y1="51.34" x2="84.16" y2="51" width="0.3" layer="1"/>
+<contactref element="BT_UART" pad="4"/>
+<wire x1="68" y1="53.75" x2="66.65" y2="53.75" width="0.3" layer="1"/>
+<via x="68" y="53.75" extent="1-16" drill="0.51"/>
+<wire x1="80.85" y1="53.75" x2="68" y2="53.75" width="0.3" layer="16"/>
+<wire x1="81.62" y1="52.98" x2="81.62" y2="51" width="0.3" layer="16"/>
+<wire x1="59.7" y1="46.8" x2="66.65" y2="53.75" width="0.3" layer="1"/>
+<wire x1="80.85" y1="53.75" x2="81.62" y2="52.98" width="0.3" layer="16"/>
 <wire x1="57.6" y1="44.65" x2="55.8" y2="44.65" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="MIC_LP">

@@ -1,0 +1,26 @@
+Qty Value        Device                       Parts
+12  0.1uF        0.1UF                        C1, C2, C3, C4, C5, C6, C8, C12, C23, C24, C25, C26
+7   0.47uF       0.47UF                       C14, C15, C17, C18, C19, C20, C21
+5   10k          10KOHM0805                   R3, R4, R5, R6, R17
+5   100k         100KOHM0805                  R9, R11, R12, R13, R14
+3   10uF         10UF                         C13, C16, C27
+3   2A/30V       SCHOTTKYDIODE2A30V           D1, D2, D6
+2   GREEN-0805   SMD-LED-CLEAR-GREEN(0805)    D3, D4
+2   1k           1KOHM                        R15, R16
+2   18pF         18PF                         C28, C29
+1   0.22         0.22OHM                      R1
+1   0.75         0.75OHM                      R2
+1   2.2uF        2.2UF                        C9
+1   2k           2KOHM0805                    R20
+1   4.7uF        4.7UF                        C7
+1   4.7uH        MPLC0730L4R7                 L1
+1   5.1k         5.1KOHM0805                  R18
+1   9.09k        9.09KOHM                     R8
+1   10           10OHM                        R10
+1   22uF         22UF                         C22
+1   32.768kHz    CRYSTAL-32.768KHZSMD-3.2X1.5 Y1
+1   36k          36KOHM2012                   R19
+1   47k          47KOHM                       R7
+1   47nF         47NF                         C11
+1   100uF        100UF2917                    C10
+1   RED-0805     SMD-LED-CLEAR-RED(0805)      D5
