@@ -1,7 +1,7 @@
 #include <xc.h>
-
+#include "io_mappings.h"
 // FSEC
-#pragma config BWRP = OFF               //  (Boot Segment may be written)
+#pragma config BWRP = OFF               // Boot Segment may be written
 #pragma config BSS = DISABLED           // Boot Segment Code-Protect Level bits (No Protection (other than BWRP))
 #pragma config BSEN = OFF               // Boot Segment Control bit (No Boot Segment)
 #pragma config GWRP = OFF               // General Segment Write-Protect bit (General Segment may be written)
@@ -16,17 +16,18 @@
 // FSIGN
 
 // FOSCSEL
-#pragma config FNOSC = PRIPLL           // Oscillator Source Selection (Primary Oscillator with PLL module (XT + PLL, HS + PLL, EC + PLL))
+#pragma config FNOSC = FRCPLL           // Oscillator Source Selection (FRC with PLL module)
 #pragma config PLLMODE = PLL96DIV2      // PLL Mode Selection (96 MHz PLL. (8 MHz input))
 #pragma config IESO = OFF               // Two-speed Oscillator Start-up Enable bit (Start up with user-selected oscillator source)
 
 // FOSC
-#pragma config POSCMD = HS              // Primary Oscillator Mode Select bits (HS Crystal Oscillator Mode)
+#pragma config POSCMD = NONE            // Primary Oscillator Mode Select bits (None)
 #pragma config OSCIOFCN = OFF           // OSC2 Pin Function bit (OSC2 is clock output)
-#pragma config SOSCSEL = ON             // SOSC Power Selection Configuration bits (SOSC is used in crystal (SOSCI/SOSCO) mode)
-#pragma config PLLSS = PLL_PRI          // PLL Secondary Selection Configuration bit (PLL is fed by the Primary oscillator)
-#pragma config IOL1WAY = ON             // Peripheral pin select configuration bit (Allow only one reconfiguration)
+#pragma config SOSCSEL = OFF            // SOSC Power Selection Configuration bits (SOSC is not used)
+#pragma config PLLSS = PLL_FRC          // PLL Secondary Selection Configuration bit (PLL is fed by the FRC)
+#pragma config IOL1WAY = OFF            // Peripheral pin select configuration bit (Allow many reconfigurations)
 #pragma config FCKSM = CSDCMD           // Clock Switching Mode bits (Both Clock switching and Fail-safe Clock Monitor are disabled)
+
 
 // FWDT
 #pragma config WDTPS = PS32768          // Watchdog Timer Postscaler bits (1:32,768)
@@ -43,14 +44,14 @@
 #pragma config DNVPEN = ENABLE          // Downside Voltage Protection Enable bit (Downside protection enabled using ZPBOR when BOR is inactive)
 
 // FICD
-#pragma config ICS = PGD2               // ICD Communication Channel Select bits (Communicate on PGEC2 and PGED2)
+#pragma config ICS = PGD1               // ICD Communication Channel Select bits (Communicate on PGEC1 and PGED1)
 #pragma config JTAGEN = OFF             // JTAG Enable bit (JTAG is disabled)
 #pragma config BTSWP = OFF              // BOOTSWP Disable (BOOTSWP instruction disabled)
 
 // FDEVOPT1
 #pragma config ALTCMPI = DISABLE        // Alternate Comparator Input Enable bit (C1INC, C2INC, and C3INC are on their standard pin locations)
 #pragma config TMPRPIN = OFF            // Tamper Pin Enable bit (TMPRN pin function is disabled)
-#pragma config SOSCHP = ON              // SOSC High Power Enable bit (valid only when SOSCSEL = 1 (Enable SOSC high power mode (default))
+#pragma config SOSCHP = OFF             // SOSC High Power Enable bit (valid only when SOSCSEL = 1 (Disable SOSC high power mode)
 #pragma config ALTVREF = ALTVREFDIS     // Alternate Voltage Reference Location Enable bit (VREF+ and CVREF+ on RB0, VREF- and CVREF- on RB1)
 
 // Trap Catches
@@ -63,9 +64,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _OscillatorFail(void)
 {
     //Clear the trap flag
     INTCON1bits.OSCFAIL = 0;
-    LATAbits.LATA7 = 0;
-    TRISAbits.TRISA6 = 0;
-    LATAbits.LATA6 = 1;
+    ON_LED = 0;
     while (1);
 }
 
@@ -73,9 +72,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _AddressError(void)
 {
     //Clear the trap flag
     INTCON1bits.ADDRERR = 0;
-    LATAbits.LATA7 = 0;
-    TRISAbits.TRISA5 = 0;
-    LATAbits.LATA5 = 1;
+    ON_LED = 0;
     while (1);
 }
 
@@ -84,9 +81,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _StackError(void)
 {
     //Clear the trap flag
     INTCON1bits.STKERR = 0;
-    LATAbits.LATA7 = 0;
-    TRISAbits.TRISA4 = 0;
-    LATAbits.LATA4 = 1;
+    ON_LED = 0;
     while (1);
 }
 
@@ -94,8 +89,6 @@ void __attribute__ ((__interrupt__, auto_psv)) _MathError(void)
 {
     //Clear the trap flag
     INTCON1bits.MATHERR = 0;
-    LATAbits.LATA7 = 0;
-    TRISAbits.TRISA3 = 0;
-    LATAbits.LATA3 = 1;
+    ON_LED = 0;
     while (1);
 }

@@ -5,3 +5,4 @@
 /firmware/dist/default/
 /firmware/disassembly/
 /hardware/BlueBus.*#*
+/hardware/BlueBus.bom

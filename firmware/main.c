@@ -39,8 +39,8 @@ int main(void)
     struct IBus_t ibus = IBusInit();
     UARTAddModuleHandler(&ibus.uart);
 
-    TRISAbits.TRISA7 = 0;
-    LATAbits.LATA7 = 1;
+    ON_LED_MODE = 0;
+    ON_LED = 1;
 
     EEPROMInit();
     TimerInit();
