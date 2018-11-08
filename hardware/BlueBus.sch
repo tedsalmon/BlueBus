@@ -4181,40 +4181,7 @@ design, and freeing up board space for other features. Amplifier gain is interna
 <text x="0" y="2.667" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;Name</text>
 <text x="0" y="-2.667" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;Value</text>
 </package>
-<package name="CRYSTAL-SMD-3.2X1.5MM" urn="urn:adsk.eagle:footprint:37491/1" locally_modified="yes">
-<description>&lt;h3&gt;3.2 x 1.5mm SMD Crystal Package&lt;/h3&gt;
-&lt;p&gt;Example: &lt;a href="http://www.sii.co.jp/en/quartz/files/2013/03/file_PRODUCT_MASTER_50812_GRAPHIC03.pdf"&gt;SX-32S&lt;/a&gt;&lt;/p&gt;</description>
-<smd name="P$1" x="-1.5" y="0" dx="1.5" dy="1.8" layer="1"/>
-<smd name="P$2" x="1.5" y="0" dx="1.5" dy="1.8" layer="1"/>
-<wire x1="-1.6" y1="0.75" x2="1.6" y2="0.75" width="0.127" layer="51"/>
-<wire x1="1.6" y1="0.75" x2="1.6" y2="-0.75" width="0.127" layer="51"/>
-<wire x1="1.6" y1="-0.75" x2="-1.6" y2="-0.75" width="0.127" layer="51"/>
-<wire x1="-1.6" y1="-0.75" x2="-1.6" y2="0.75" width="0.127" layer="51"/>
-<wire x1="-0.5" y1="0.85" x2="0.5" y2="0.85" width="0.2032" layer="21"/>
-<wire x1="0.5" y1="-0.85" x2="-0.5" y2="-0.85" width="0.2032" layer="21"/>
-<text x="0" y="1.043" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;Name</text>
-<text x="0" y="-1.043" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;Value</text>
-</package>
-<package name="CRYSTAL-SMD-6.0X3.5MM">
-<wire x1="-3" y1="1.75" x2="-3" y2="-1.75" width="0.2" layer="21"/>
-<wire x1="-3" y1="-1.75" x2="3" y2="-1.75" width="0.2" layer="21"/>
-<wire x1="3" y1="-1.75" x2="3" y2="1.75" width="0.2" layer="21"/>
-<wire x1="3" y1="1.75" x2="-3" y2="1.75" width="0.2" layer="21"/>
-<smd name="P$1" x="-2.5" y="0" dx="2.4" dy="2" layer="1"/>
-<smd name="P$2" x="2.5" y="0" dx="2.4" dy="2" layer="1"/>
-<text x="0" y="2" size="1.143" layer="25" align="bottom-center">&gt;Name</text>
-<text x="0" y="-2" size="1.143" layer="27" align="top-center">&gt;Value</text>
-</package>
 </packages>
-<packages3d>
-<package3d name="CRYSTAL-SMD-3.2X1.5MM" urn="urn:adsk.eagle:package:37548/1" locally_modified="yes" type="box">
-<description>3.2 x 1.5mm SMD Crystal Package
-Example: SX-32S</description>
-<packageinstances>
-<packageinstance name="CRYSTAL-SMD-3.2X1.5MM"/>
-</packageinstances>
-</package3d>
-</packages3d>
 <symbols>
 <symbol name="RESISTOR">
 <wire x1="-2.54" y1="0" x2="-2.159" y2="1.016" width="0.1524" layer="94"/>
@@ -4271,23 +4238,6 @@ Example: SX-32S</description>
 <rectangle x1="-2.032" y1="1.524" x2="2.032" y2="2.032" layer="94"/>
 <pin name="1" x="0" y="5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R270"/>
 <pin name="2" x="0" y="-2.54" visible="off" length="short" direction="pas" swaplevel="1" rot="R90"/>
-</symbol>
-<symbol name="CRYSTAL">
-<description>&lt;h3&gt;Crystal (no ground pin)&lt;/h3&gt;</description>
-<wire x1="1.016" y1="0" x2="2.54" y2="0" width="0.1524" layer="94"/>
-<wire x1="-2.54" y1="0" x2="-1.016" y2="0" width="0.1524" layer="94"/>
-<wire x1="-0.381" y1="1.524" x2="-0.381" y2="-1.524" width="0.254" layer="94"/>
-<wire x1="-0.381" y1="-1.524" x2="0.381" y2="-1.524" width="0.254" layer="94"/>
-<wire x1="0.381" y1="-1.524" x2="0.381" y2="1.524" width="0.254" layer="94"/>
-<wire x1="0.381" y1="1.524" x2="-0.381" y2="1.524" width="0.254" layer="94"/>
-<wire x1="1.016" y1="1.778" x2="1.016" y2="-1.778" width="0.254" layer="94"/>
-<wire x1="-1.016" y1="1.778" x2="-1.016" y2="-1.778" width="0.254" layer="94"/>
-<text x="0" y="2.032" size="1.778" layer="95" font="vector" align="bottom-center">&gt;NAME</text>
-<text x="0" y="-2.032" size="1.778" layer="96" font="vector" align="top-center">&gt;VALUE</text>
-<text x="-2.159" y="-1.143" size="0.8636" layer="93">1</text>
-<text x="1.524" y="-1.143" size="0.8636" layer="93">2</text>
-<pin name="2" x="2.54" y="0" visible="off" length="point" direction="pas" swaplevel="1" rot="R180"/>
-<pin name="1" x="-2.54" y="0" visible="off" length="point" direction="pas" swaplevel="1"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -4707,29 +4657,6 @@ Example: SX-32S</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="18PF" prefix="C" uservalue="yes">
-<description>&lt;p&gt;18pF Capacitor 0805 Package&lt;/p&gt;</description>
-<gates>
-<gate name="G$1" symbol="CAP" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="0805">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="18PF-0805-250V" constant="no"/>
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="C0805C180J1GACTU"/>
-<attribute name="VALUE" value="18pF" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="22UF" prefix="C" uservalue="yes">
 <gates>
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
@@ -4863,32 +4790,6 @@ Example: SX-32S</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="CRYSTAL-32.768KHZ" prefix="Y" uservalue="yes">
-<description>&lt;h3&gt;32.768kHz Crystal&lt;/h3&gt;
-&lt;p&gt;&lt;ul&gt;&lt;li&gt;Frequency: 32.768kHz&lt;/li&gt;
-&lt;li&gt;Frequency Stability: &amp;plusmn;20ppm&lt;/li&gt;
-&lt;li&gt;Load Capacitance: 12.5pF (PTH-2X6 &amp; SMD-3.2X1.5), 6pF (SMD-2X6)&lt;/li&gt;&lt;/ul&gt;&lt;/p&gt;</description>
-<gates>
-<gate name="G$1" symbol="CRYSTAL" x="0" y="0"/>
-</gates>
-<devices>
-<device name="SMD-3.2X1.5" package="CRYSTAL-SMD-3.2X1.5MM">
-<connects>
-<connect gate="G$1" pin="1" pad="P$1"/>
-<connect gate="G$1" pin="2" pad="P$2"/>
-</connects>
-<package3dinstances>
-<package3dinstance package3d_urn="urn:adsk.eagle:package:37548/1"/>
-</package3dinstances>
-<technologies>
-<technology name="">
-<attribute name="PROD_ID" value="XTAL-13062"/>
-<attribute name="VALUE" value="32.768kHz"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="0.01UF" prefix="C">
 <gates>
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
@@ -4933,9 +4834,10 @@ Example: SX-32S</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="24PF" prefix="C">
+<deviceset name="240OHM" prefix="R" uservalue="yes">
+<description>&lt;p&gt;240 Ohm Resistor&lt;/p&gt;</description>
 <gates>
-<gate name="G$1" symbol="CAP" x="0" y="0"/>
+<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
 <devices>
 <device name="" package="0805">
@@ -4945,30 +4847,11 @@ Example: SX-32S</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="24pF-0805-50v-5%" constant="no"/>
-<attribute name="MFG" value="KEMET" constant="no"/>
-<attribute name="PN" value="C0805C240J5GACTU" constant="no"/>
-<attribute name="VALUE" value="24pF" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="CRYSTAL-8MHZ" prefix="Y">
-<gates>
-<gate name="G$1" symbol="CRYSTAL" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="CRYSTAL-SMD-6.0X3.5MM">
-<connects>
-<connect gate="G$1" pin="1" pad="P$1"/>
-<connect gate="G$1" pin="2" pad="P$2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="ECS" constant="no"/>
-<attribute name="PN" value="ECS-080-18-23G-JGN-TR" constant="no"/>
-<attribute name="VALUE" value="8MHz" constant="no"/>
+<attribute name="DEVICE" value="240OHM-0805-1/2-1%" constant="no"/>
+<attribute name="MFG" value="Panasonic"/>
+<attribute name="PACKAGE" value="0805" constant="no"/>
+<attribute name="PN" value="ERJ-P06F2400V"/>
+<attribute name="VALUE" value="240" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -7998,8 +7881,6 @@ CONN_05
 <part name="R8" library="Passives" deviceset="9.09KOHM" device="" value="9.09k"/>
 <part name="R1" library="Passives" deviceset="0.22OHM" device="" value="0.22"/>
 <part name="R2" library="Passives" deviceset="0.75OHM" device="" value="0.75"/>
-<part name="C30" library="Passives" deviceset="18PF" device="" value="18pF"/>
-<part name="C31" library="Passives" deviceset="18PF" device="" value="18pF"/>
 <part name="SUPPLY10" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
 <part name="SUPPLY8" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
 <part name="SUPPLY3" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
@@ -8030,7 +7911,6 @@ CONN_05
 <part name="C16" library="Passives" deviceset="10UF" device="" value="10uF"/>
 <part name="C14" library="Passives" deviceset="0.47UF" device="" value="0.47uF"/>
 <part name="C15" library="Passives" deviceset="0.47UF" device="" value="0.47uF"/>
-<part name="Y2" library="Passives" deviceset="CRYSTAL-32.768KHZ" device="SMD-3.2X1.5" package3d_urn="urn:adsk.eagle:package:37548/1" value="32.768kHz"/>
 <part name="R3" library="Passives" deviceset="10KOHM" device="0805" value="10k"/>
 <part name="R4" library="Passives" deviceset="10KOHM" device="0805" value="10k"/>
 <part name="R5" library="Passives" deviceset="10KOHM" device="0805" value="10k"/>
@@ -8043,10 +7923,11 @@ CONN_05
 <part name="C6" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
 <part name="PICKIT" library="SparkFun-Connectors" library_urn="urn:adsk.eagle:library:513" deviceset="CONN_05" device="" package3d_urn="urn:adsk.eagle:package:38104/1"/>
 <part name="BT_UART" library="SparkFun-Connectors" library_urn="urn:adsk.eagle:library:513" deviceset="CONN_05" device="" package3d_urn="urn:adsk.eagle:package:38104/1"/>
-<part name="C28" library="Passives" deviceset="24PF" device="" value="24pF"/>
-<part name="C29" library="Passives" deviceset="24PF" device="" value="24pF"/>
+<part name="R21" library="Passives" deviceset="10KOHM" device="0805" value="10k"/>
+<part name="C28" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="R22" library="Passives" deviceset="240OHM" device="" value="240"/>
+<part name="SUPPLY2" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="GND11" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
-<part name="Y1" library="Passives" deviceset="CRYSTAL-8MHZ" device="" value="8MHz"/>
 </parts>
 <sheets>
 <sheet>
@@ -9129,14 +9010,6 @@ CONN_05
 <attribute name="NAME" x="30.48" y="54.864" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="30.48" y="51.816" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="C30" gate="G$1" x="53.34" y="33.02" smashed="yes" rot="R180">
-<attribute name="NAME" x="51.816" y="30.099" size="1.778" layer="95" font="vector" rot="R180"/>
-<attribute name="VALUE" x="51.816" y="35.179" size="1.778" layer="96" font="vector" rot="R180"/>
-</instance>
-<instance part="C31" gate="G$1" x="68.58" y="33.02" smashed="yes" rot="R180">
-<attribute name="NAME" x="67.056" y="30.099" size="1.778" layer="95" font="vector" rot="R180"/>
-<attribute name="VALUE" x="67.056" y="35.179" size="1.778" layer="96" font="vector" rot="R180"/>
-</instance>
 <instance part="SUPPLY12" gate="G$1" x="175.26" y="160.02" smashed="yes">
 <attribute name="VALUE" x="175.26" y="162.814" size="1.778" layer="96" align="bottom-center"/>
 </instance>
@@ -9165,24 +9038,23 @@ CONN_05
 <attribute name="NAME" x="65.024" y="165.481" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="65.024" y="160.401" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="Y2" gate="G$1" x="60.96" y="27.94" smashed="yes">
-<attribute name="NAME" x="60.96" y="29.972" size="1.778" layer="95" font="vector" align="bottom-center"/>
-<attribute name="VALUE" x="60.96" y="25.908" size="1.778" layer="96" font="vector" align="top-center"/>
+<instance part="R21" gate="G$1" x="53.34" y="30.48" smashed="yes">
+<attribute name="NAME" x="53.34" y="32.004" size="1.778" layer="95" font="vector" align="bottom-center"/>
+<attribute name="VALUE" x="53.34" y="28.956" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="C28" gate="G$1" x="7.62" y="33.02" smashed="yes" rot="R180">
-<attribute name="NAME" x="6.096" y="30.099" size="1.778" layer="95" font="vector" rot="R180"/>
-<attribute name="VALUE" x="6.096" y="35.179" size="1.778" layer="96" font="vector" rot="R180"/>
+<instance part="C28" gate="G$1" x="63.5" y="20.32" smashed="yes">
+<attribute name="NAME" x="65.024" y="23.241" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="65.024" y="18.161" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C29" gate="G$1" x="25.4" y="33.02" smashed="yes" rot="R180">
-<attribute name="NAME" x="23.876" y="30.099" size="1.778" layer="95" font="vector" rot="R180"/>
-<attribute name="VALUE" x="23.876" y="35.179" size="1.778" layer="96" font="vector" rot="R180"/>
+<instance part="R22" gate="G$1" x="73.66" y="30.48" smashed="yes">
+<attribute name="NAME" x="73.66" y="32.004" size="1.778" layer="95" font="vector" align="bottom-center"/>
+<attribute name="VALUE" x="73.66" y="28.956" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="GND11" gate="1" x="38.1" y="33.02" smashed="yes">
-<attribute name="VALUE" x="35.56" y="30.48" size="1.778" layer="96"/>
+<instance part="SUPPLY2" gate="G$1" x="43.18" y="35.56" smashed="yes">
+<attribute name="VALUE" x="43.18" y="38.354" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="Y1" gate="G$1" x="15.24" y="27.94" smashed="yes">
-<attribute name="NAME" x="15.24" y="29.972" size="1.778" layer="95" font="vector" align="bottom-center"/>
-<attribute name="VALUE" x="15.24" y="25.908" size="1.778" layer="96" font="vector" align="top-center"/>
+<instance part="GND11" gate="1" x="63.5" y="12.7" smashed="yes">
+<attribute name="VALUE" x="60.96" y="10.16" size="1.778" layer="96"/>
 </instance>
 </instances>
 <busses>
@@ -9193,6 +9065,11 @@ CONN_05
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="MCLR"/>
 <wire x1="86.36" y1="144.78" x2="86.36" y2="147.32" width="0.1524" layer="91"/>
 <label x="86.36" y="147.32" size="1.27" layer="95" rot="R90" xref="yes"/>
+</segment>
+<segment>
+<pinref part="R22" gate="G$1" pin="2"/>
+<wire x1="78.74" y1="30.48" x2="81.28" y2="30.48" width="0.1524" layer="91"/>
+<label x="81.28" y="30.48" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="MCU_PGD" class="0">
@@ -9287,17 +9164,8 @@ CONN_05
 </segment>
 <segment>
 <pinref part="C28" gate="G$1" pin="2"/>
-<pinref part="C29" gate="G$1" pin="2"/>
-<wire x1="7.62" y1="35.56" x2="25.4" y2="35.56" width="0.1524" layer="91"/>
+<wire x1="63.5" y1="17.78" x2="63.5" y2="15.24" width="0.1524" layer="91"/>
 <pinref part="GND11" gate="1" pin="GND"/>
-<wire x1="25.4" y1="35.56" x2="38.1" y2="35.56" width="0.1524" layer="91"/>
-<junction x="25.4" y="35.56"/>
-<pinref part="C30" gate="G$1" pin="2"/>
-<wire x1="53.34" y1="35.56" x2="68.58" y2="35.56" width="0.1524" layer="91"/>
-<pinref part="C31" gate="G$1" pin="2"/>
-<wire x1="53.34" y1="35.56" x2="38.1" y2="35.56" width="0.1524" layer="91"/>
-<junction x="53.34" y="35.56"/>
-<junction x="38.1" y="35.56"/>
 </segment>
 </net>
 <net name="SYS_URX" class="0">
@@ -9545,6 +9413,12 @@ CONN_05
 <pinref part="SUPPLY14" gate="G$1" pin="3.3V"/>
 <junction x="236.22" y="71.12"/>
 </segment>
+<segment>
+<pinref part="SUPPLY2" gate="G$1" pin="3.3V"/>
+<wire x1="43.18" y1="35.56" x2="43.18" y2="30.48" width="0.1524" layer="91"/>
+<pinref part="R21" gate="G$1" pin="1"/>
+<wire x1="43.18" y1="30.48" x2="48.26" y2="30.48" width="0.1524" layer="91"/>
+</segment>
 </net>
 <net name="MCP_LED1_RES" class="0">
 <segment>
@@ -9606,21 +9480,6 @@ CONN_05
 <junction x="73.66" y="167.64"/>
 </segment>
 </net>
-<net name="SEC_CRYSTAL_OUT" class="0">
-<segment>
-<pinref part="C30" gate="G$1" pin="1"/>
-<wire x1="53.34" y1="27.94" x2="58.42" y2="27.94" width="0.1524" layer="91"/>
-<pinref part="Y2" gate="G$1" pin="1"/>
-<wire x1="53.34" y1="27.94" x2="48.26" y2="27.94" width="0.1524" layer="91"/>
-<junction x="53.34" y="27.94"/>
-<label x="48.26" y="27.94" size="1.27" layer="95" rot="R270" xref="yes"/>
-</segment>
-<segment>
-<pinref part="PIC24FJ1024GA606" gate="G$1" pin="SOSCO/C3INC/RPI37/PWRLCLK/RC14"/>
-<wire x1="119.38" y1="73.66" x2="121.92" y2="73.66" width="0.1524" layer="91"/>
-<label x="121.92" y="73.66" size="1.27" layer="95" xref="yes"/>
-</segment>
-</net>
 <net name="BT_RESET" class="0">
 <segment>
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="PGED3/AN4/C1INB/RP28/OCM3B/RB4"/>
@@ -9628,49 +9487,15 @@ CONN_05
 <label x="20.32" y="132.08" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="PRI_CRYSTAL_IN" class="0">
+<net name="MCU_MCLR_PULL_UP" class="0">
 <segment>
-<pinref part="PIC24FJ1024GA606" gate="G$1" pin="OSCI/CLKI/RC12"/>
-<wire x1="22.86" y1="99.06" x2="20.32" y2="99.06" width="0.1524" layer="91"/>
-<label x="20.32" y="99.06" size="1.27" layer="95" rot="R180" xref="yes"/>
-</segment>
-<segment>
-<pinref part="C29" gate="G$1" pin="1"/>
-<wire x1="17.78" y1="27.94" x2="25.4" y2="27.94" width="0.1524" layer="91"/>
-<junction x="25.4" y="27.94"/>
-<wire x1="25.4" y1="27.94" x2="30.48" y2="27.94" width="0.1524" layer="91"/>
-<label x="30.48" y="27.94" size="1.27" layer="95" rot="R270" xref="yes"/>
-<pinref part="Y1" gate="G$1" pin="2"/>
-</segment>
-</net>
-<net name="PRI_CRYSTAL_OUT" class="0">
-<segment>
-<pinref part="PIC24FJ1024GA606" gate="G$1" pin="OSCO/CLKO/RC15"/>
-<wire x1="22.86" y1="96.52" x2="20.32" y2="96.52" width="0.1524" layer="91"/>
-<label x="20.32" y="96.52" size="1.27" layer="95" rot="R180" xref="yes"/>
-</segment>
-<segment>
+<pinref part="R21" gate="G$1" pin="2"/>
+<pinref part="R22" gate="G$1" pin="1"/>
+<wire x1="58.42" y1="30.48" x2="63.5" y2="30.48" width="0.1524" layer="91"/>
 <pinref part="C28" gate="G$1" pin="1"/>
-<wire x1="7.62" y1="27.94" x2="12.7" y2="27.94" width="0.1524" layer="91"/>
-<wire x1="7.62" y1="27.94" x2="2.54" y2="27.94" width="0.1524" layer="91"/>
-<junction x="7.62" y="27.94"/>
-<label x="2.54" y="27.94" size="1.27" layer="95" rot="R270" xref="yes"/>
-<pinref part="Y1" gate="G$1" pin="1"/>
-</segment>
-</net>
-<net name="SEC_CRYSTAL_IN" class="0">
-<segment>
-<pinref part="PIC24FJ1024GA606" gate="G$1" pin="SOSCI/C3IND/RC13"/>
-<wire x1="119.38" y1="76.2" x2="121.92" y2="76.2" width="0.1524" layer="91"/>
-<label x="121.92" y="76.2" size="1.27" layer="95" xref="yes"/>
-</segment>
-<segment>
-<pinref part="C31" gate="G$1" pin="1"/>
-<pinref part="Y2" gate="G$1" pin="2"/>
-<wire x1="63.5" y1="27.94" x2="68.58" y2="27.94" width="0.1524" layer="91"/>
-<wire x1="68.58" y1="27.94" x2="73.66" y2="27.94" width="0.1524" layer="91"/>
-<junction x="68.58" y="27.94"/>
-<label x="73.66" y="27.94" size="1.27" layer="95" rot="R270" xref="yes"/>
+<wire x1="63.5" y1="30.48" x2="68.58" y2="30.48" width="0.1524" layer="91"/>
+<wire x1="63.5" y1="30.48" x2="63.5" y2="25.4" width="0.1524" layer="91"/>
+<junction x="63.5" y="30.48"/>
 </segment>
 </net>
 </nets>
