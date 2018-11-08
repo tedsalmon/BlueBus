@@ -4242,6 +4242,7 @@ design, and freeing up board space for other features. Amplifier gain is interna
 </symbols>
 <devicesets>
 <deviceset name="SCHOTTKYDIODE2A30V" prefix="D" uservalue="yes">
+<description>&lt;p&gt;2A / 100v Schottky Diode in SOD123 packaging&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="DIODE-SCHOTTKY" x="0" y="0"/>
 </gates>
@@ -4255,13 +4256,14 @@ design, and freeing up board space for other features. Amplifier gain is interna
 <technology name="">
 <attribute name="MFG" value="STMicroelectronics"/>
 <attribute name="PN" value="STPS2H100ZFY"/>
-<attribute name="VALUE" value="2A/30V" constant="no"/>
+<attribute name="VALUE" value="2A/100V" constant="no"/>
 </technology>
 </technologies>
 </device>
 </devices>
 </deviceset>
 <deviceset name="MPLC0730L4R7" prefix="L" uservalue="yes">
+<description>&lt;p&gt;4.7uH Inductor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="INDUCTOR" x="0" y="0"/>
 </gates>
@@ -4318,7 +4320,7 @@ design, and freeing up board space for other features. Amplifier gain is interna
 <attribute name="DEVICE" value="0.47uF-0805-25V" constant="no"/>
 <attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="CGA4J2X7R1E474K125AA"/>
+<attribute name="PN" value="CGA4J3X8R1E474K125AE"/>
 <attribute name="VALUE" value="0.47uF" constant="no"/>
 </technology>
 </technologies>
@@ -4337,7 +4339,7 @@ design, and freeing up board space for other features. Amplifier gain is interna
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="4.7UF-0805-25V" constant="no"/>
+<attribute name="DEVICE" value="4.7UF-0805-25V-10%" constant="no"/>
 <attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
 <attribute name="PN" value="C2012JB1E475K085AC"/>
@@ -4376,19 +4378,6 @@ design, and freeing up board space for other features. Amplifier gain is interna
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="0603">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="36KOHM-0603-1/4-1%" constant="no"/>
-<attribute name="PACKAGE" value="0603" constant="no"/>
-<attribute name="VALUE" value="36K" constant="no"/>
-</technology>
-</technologies>
-</device>
 <device name="2012" package="0805">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
@@ -4410,19 +4399,6 @@ design, and freeing up board space for other features. Amplifier gain is interna
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="0603">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="5.1kOHM-0603-1/4-1%" constant="no"/>
-<attribute name="PACKAGE" value="0603" constant="no"/>
-<attribute name="VALUE" value="5.1K" constant="no"/>
-</technology>
-</technologies>
-</device>
 <device name="0805" package="0805">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
@@ -4503,20 +4479,6 @@ design, and freeing up board space for other features. Amplifier gain is interna
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="0603">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="10KOHM-0603-1/14-5%" constant="no"/>
-<attribute name="MFG" value="Panasonic"/>
-<attribute name="PACKAGE" value="0603" constant="no"/>
-<attribute name="VALUE" value="10K" constant="no"/>
-</technology>
-</technologies>
-</device>
 <device name="0805" package="0805">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
@@ -4540,19 +4502,6 @@ design, and freeing up board space for other features. Amplifier gain is interna
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="0603">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="2KOHM-0603-1/4-1%" constant="no"/>
-<attribute name="PACKAGE" value="0603" constant="no"/>
-<attribute name="VALUE" value="2K" constant="no"/>
-</technology>
-</technologies>
-</device>
 <device name="0805" package="0805">
 <connects>
 <connect gate="G$1" pin="1" pad="1"/>
@@ -4560,7 +4509,7 @@ design, and freeing up board space for other features. Amplifier gain is interna
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="2KOHM-0805-1/6-1%" constant="no"/>
+<attribute name="DEVICE" value="2KOHM-0805-.4-1%" constant="no"/>
 <attribute name="MFG" value="ROHM"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
 <attribute name="PN" value="ESR10EZPF2001"/>
@@ -4582,7 +4531,7 @@ design, and freeing up board space for other features. Amplifier gain is interna
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="10OHM-0805-1/3-1%" constant="no"/>
+<attribute name="DEVICE" value="10OHM-0805-1/8-1%" constant="no"/>
 <attribute name="MFG" value="Panasonic"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
 <attribute name="PN" value="ERJ-S06F10R0V"/>
@@ -4692,10 +4641,10 @@ design, and freeing up board space for other features. Amplifier gain is interna
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="10UF-1206-50V-10%" constant="no"/>
+<attribute name="DEVICE" value="10UF-1206-25V-10%" constant="no"/>
 <attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="1206" constant="no"/>
-<attribute name="PN" value="C3216X5R1E106K085AC"/>
+<attribute name="PN" value="C2012X5R1E106K085AC"/>
 <attribute name="VALUE" value="10uF" constant="no"/>
 </technology>
 </technologies>
@@ -4703,6 +4652,7 @@ design, and freeing up board space for other features. Amplifier gain is interna
 </devices>
 </deviceset>
 <deviceset name="47KOHM" prefix="R" uservalue="yes">
+<description>&lt;p&gt;47k Ohm Resistor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
 </gates>
@@ -4729,30 +4679,6 @@ design, and freeing up board space for other features. Amplifier gain is interna
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="0603">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="VALUE" value="100uF" constant="no"/>
-</technology>
-</technologies>
-</device>
-<device name="1206" package="1206">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="100UF-1206-6V" constant="no"/>
-<attribute name="PACKAGE" value="1206" constant="no"/>
-<attribute name="VALUE" value="100uF/6v" constant="no"/>
-</technology>
-</technologies>
-</device>
 <device name="2917" package="EIA7343">
 <connects>
 <connect gate="G$1" pin="1" pad="A"/>
@@ -4783,7 +4709,9 @@ design, and freeing up board space for other features. Amplifier gain is interna
 <technologies>
 <technology name="">
 <attribute name="DEVICE" value="47NF-0805-25V" constant="no"/>
+<attribute name="MFG" value="AVX" constant="no"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
+<attribute name="PN" value="08053C473KAT4A" constant="no"/>
 <attribute name="VALUE" value="47nF" constant="no"/>
 </technology>
 </technologies>
@@ -4791,6 +4719,7 @@ design, and freeing up board space for other features. Amplifier gain is interna
 </devices>
 </deviceset>
 <deviceset name="0.01UF" prefix="C">
+<description>&lt;p&gt;0.01uF Capacitor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
 </gates>
@@ -7841,7 +7770,7 @@ CONN_05
 <part name="FRAME3" library="Frame" deviceset="FRAME-LETTER" device="" package3d_urn="urn:adsk.eagle:package:37104/1"/>
 <part name="GND1" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
 <part name="GND10" library="supply1" library_urn="urn:adsk.eagle:library:371" deviceset="GND" device=""/>
-<part name="D2" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/30V"/>
+<part name="D2" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/100V"/>
 <part name="L1" library="Passives" deviceset="MPLC0730L4R7" device="" value="4.7uH"/>
 <part name="MCP2221A" library="ICs" deviceset="MCP2221A" device="" value=""/>
 <part name="25LC512" library="ICs" deviceset="25LC512" device="" value="512kB"/>
@@ -7901,8 +7830,8 @@ CONN_05
 <part name="C27" library="Passives" deviceset="10UF" device="" value="10uF"/>
 <part name="R7" library="Passives" deviceset="47KOHM" device="" value="47k"/>
 <part name="J1" library="SparkFun-Connectors" library_urn="urn:adsk.eagle:library:513" deviceset="USB_MICRO-B" device="_SMT" package3d_urn="urn:adsk.eagle:package:38240/1"/>
-<part name="D6" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/30V"/>
-<part name="D1" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/30V"/>
+<part name="D6" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/100V"/>
+<part name="D1" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/100V"/>
 <part name="C10" library="Passives" deviceset="100UF" device="2917" value="100uF"/>
 <part name="C11" library="Passives" deviceset="47NF" device="" value="47nF"/>
 <part name="R12" library="Passives" deviceset="100KOHM" device="0805" value="100k"/>
