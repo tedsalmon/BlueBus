@@ -56,8 +56,8 @@ UART_t UARTInit(
     // Disable the TX ISR, since we handle it manually and Enable the RX ISR
     SetUARTTXIE(uart.moduleIndex, 0);
     SetUARTRXIE(uart.moduleIndex, 1);
-    // Set the ISR Flag to disabled for TX (as it should be when the hardware
-    // buffers are empty) and enable the RX ISR Flag
+    // Set the ISR Flag to disabled for RX (as it should be when the hardware
+    // buffers are empty) and enable the TX ISR Flag
     SetUARTRXIF(uart.moduleIndex, 0);
     SetUARTTXIF(uart.moduleIndex, 1);
     // Enable UART, keep the module in 3-wire mode

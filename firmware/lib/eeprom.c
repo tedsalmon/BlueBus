@@ -34,10 +34,6 @@ void EEPROMInit()
     SPI1STATLbits.SPIRBF = 0;
     // Unlock the programmable pin register
     __builtin_write_OSCCONL(OSCCON & 0xBF);
-    // Set the ports to Digital
-    EEPROM_SCK_MODE = 0;
-    EEPROM_SDI_MODE = 0;
-    EEPROM_SDO_MODE = 0;
     // Data Input
     _SDI1R = EEPROM_SDI_PIN;
     // Set the SCK Output

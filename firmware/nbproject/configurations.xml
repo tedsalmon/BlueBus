@@ -48,7 +48,6 @@
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>handler.c</itemPath>
-      <itemPath>system.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
