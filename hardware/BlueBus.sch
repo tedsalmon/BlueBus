@@ -4027,20 +4027,14 @@ A wide 4.5V to 18V input voltage range allows for single supply operation from i
 <smd name="11" x="3.2" y="-2.925" dx="1.5" dy="0.4" layer="1"/>
 <text x="0" y="3.5" size="1" layer="25" align="bottom-center">&gt;Name</text>
 <text x="0" y="-4.5" size="1" layer="27" align="bottom-center">&gt;Value</text>
-<wire x1="-1.75" y1="2.5" x2="-1.75" y2="-2.5" width="0.1" layer="29"/>
-<wire x1="-1.75" y1="-2.5" x2="1.75" y2="-2.5" width="0.1" layer="29"/>
-<wire x1="1.75" y1="-2.5" x2="1.75" y2="2.5" width="0.1" layer="29"/>
-<wire x1="1.75" y1="2.5" x2="-1.75" y2="2.5" width="0.1" layer="29"/>
-<wire x1="-1.75" y1="2.5" x2="-1.75" y2="-2.5" width="0.1" layer="30"/>
-<wire x1="-1.75" y1="-2.5" x2="1.75" y2="-2.5" width="0.1" layer="30"/>
-<wire x1="1.75" y1="-2.5" x2="1.75" y2="2.5" width="0.1" layer="30"/>
-<wire x1="1.75" y1="2.5" x2="-1.75" y2="2.5" width="0.1" layer="30"/>
-<pad name="P$1" x="-1" y="1.75" drill="0.55" shape="square"/>
-<pad name="P$2" x="1" y="1.75" drill="0.55" shape="square"/>
-<pad name="P$3" x="1" y="0.05" drill="0.55" shape="square"/>
-<pad name="P$4" x="1" y="-1.75" drill="0.55" shape="square"/>
-<pad name="P$5" x="-1" y="-1.75" drill="0.55" shape="square"/>
-<pad name="P$6" x="-1" y="0.05" drill="0.55" shape="square"/>
+<pad name="P$1" x="-0.625" y="1.25" drill="0.55" shape="square"/>
+<pad name="P$2" x="0.625" y="1.25" drill="0.55" shape="square"/>
+<pad name="P$3" x="0.625" y="0" drill="0.55" shape="square"/>
+<pad name="P$4" x="0.625" y="-1.25" drill="0.55" shape="square"/>
+<pad name="P$5" x="-0.625" y="-1.25" drill="0.55" shape="square"/>
+<pad name="P$6" x="-0.625" y="0" drill="0.55" shape="square"/>
+<rectangle x1="-1.8" y1="-2.55" x2="1.8" y2="2.55" layer="29"/>
+<rectangle x1="-1.8" y1="-2.55" x2="1.8" y2="2.55" layer="30"/>
 </package>
 </packages>
 <symbols>
