@@ -1,4 +1,6 @@
-/firmware/nbproject/Makefile*
+/firmware/nbproject/Makefile-local*
+/firmware/nbproject/Makefile-variables*
+/firmware/nbproject/Makefile-genesis*
 /firmware/nbproject/Package*
 /firmware/nbproject/private/
 /firmware/build/default/
@@ -6,3 +8,7 @@
 /firmware/disassembly/
 /hardware/BlueBus.*#*
 /hardware/BlueBus.bom
+/firmware/build/application/
+/firmware/dist/application/
+/firmware/build/bootloader/
+/firmware/dist/bootloader/
