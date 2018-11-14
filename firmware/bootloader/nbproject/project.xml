@@ -3,8 +3,8 @@
     <type>com.microchip.mplab.nbide.embedded.makeproject</type>
     <configuration>
         <data xmlns="http://www.netbeans.org/ns/make-project/1">
-            <name>BlueBus</name>
-            <creation-uuid>15152161-0492-43ed-abf9-758119db7fd4</creation-uuid>
+            <name>BlueBusBootloader</name>
+            <creation-uuid>52d6c091-13a2-4195-b50c-5b706eaa7e33</creation-uuid>
             <make-project-type>0</make-project-type>
             <c-extensions>c</c-extensions>
             <cpp-extensions/>

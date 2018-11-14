@@ -1,0 +1,22 @@
+/*
+ * IO Mappings for the PIC24
+ */
+#ifndef MAPPINGS_H
+#define MAPPINGS_H
+
+#define SYSTEM_UART_RX_PIN 7
+#define SYSTEM_UART_TX_PIN RPOR3bits.RP6R
+
+#define BOOTLOADER_VERSION "0.1"
+#define BOOTLOADER_PLATFORM "BlueBus_REV_A"
+/* Defined in milliseconds */
+#define BOOTLOADER_TIMEOUT 10000
+
+#define BOOT_MODE_APPLICATION 0
+#define BOOT_MODE_BOOTLOADER 1
+
+#define BOOTLOADER_APPLICATION_START 0x1000
+
+#define ON_LED_MODE TRISEbits.TRISE0
+#define ON_LED LATEbits.LATE0
+#endif /* MAPPINGS_H */

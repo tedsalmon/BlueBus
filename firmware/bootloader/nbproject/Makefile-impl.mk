@@ -24,14 +24,14 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=firmware
+PROJECTNAME=bootloader
 
 # Active Configuration
 DEFAULTCONF=bootloader
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=application bootloader 
+ALLCONFS=bootloader 
 
 
 # build
@@ -45,14 +45,12 @@ ALLCONFS=application bootloader
 
 # clobber
 .clobber-impl: .clobber-pre .depcheck-impl
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=application clean
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=bootloader clean
 
 
 
 # all
 .all-impl: .all-pre .depcheck-impl
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=application build
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=bootloader build
 
 
