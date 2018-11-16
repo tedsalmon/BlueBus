@@ -28,6 +28,9 @@ int main(void)
         TimerUpdate();
         UARTReadData(&uart);
         if (uart.rxQueueSize > 0) {
+            if ((TimerGetMillis() - uart.rxLastTimestamp) > UART_RX_QUEUE_TIMEOUT) {
+                UARTResetRxQueue(&uart);
+            }
             // Process Message
             struct ProtocolPacket_t packet = ProtocolProcessPacket(&uart);
             if (packet.status == PROTOCOL_PACKET_STATUS_OK) {

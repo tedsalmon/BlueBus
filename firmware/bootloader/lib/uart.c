@@ -96,15 +96,32 @@ void UARTReadData(UART_t *uart)
             uart->registers->uxsta ^= 0x2;
         }
         unsigned char byte = uart->registers->uxrxreg;
-        if (uart->rxQueueSize != UART_RX_QUEUE_SIZE) {
+        if (uart->rxQueueSize != (UART_RX_QUEUE_SIZE + 1)) {
             if (uart->rxQueueWriteCursor == UART_RX_QUEUE_SIZE) {
                 uart->rxQueueWriteCursor = 0;
             }
             uart->rxQueue[uart->rxQueueWriteCursor] = byte;
             uart->rxQueueWriteCursor++;
             uart->rxQueueSize++;
+            uart->rxLastTimestamp = TimerGetMillis();
         }
     }
+}
+
+/**
+ * UARTResetRxQueue()
+ *     Description:
+ *         Clear all bytes from the Rx Queue
+ *     Params:
+ *         UART_t *uart - The UART object
+ *     Returns:
+ *         void
+ */
+void UARTResetRxQueue(UART_t *uart)
+{
+    uart->rxQueueSize = 0;
+    uart->rxQueueWriteCursor = 0;
+    uart->rxQueueReadCursor = 0;
 }
 
 /**
