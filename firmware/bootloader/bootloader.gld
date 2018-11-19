@@ -35,10 +35,9 @@
 
  /*
   * Customizations:
-  *     1. program (xr) moved to 0x800 from 0x100
-  *     2. Length set to original length - 0xA00
-  *     3. Updated __CODE_BASE and __CODE_LENGTH
-  *     4. Define __APP_START
+  *     1. Length set to 0xF00
+  *     2. Updated __CODE_BASE and __CODE_LENGTH
+  *     3. Define __APP_START
   */
 
 __APP_START = 0x1000;

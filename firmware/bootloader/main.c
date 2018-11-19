@@ -23,7 +23,7 @@ int main(void)
 
     uint8_t BOOT_MODE = BOOT_MODE_APPLICATION;
     while (TimerGetMillis() <= BOOTLOADER_TIMEOUT || 
-            BOOT_MODE == BOOT_MODE_BOOTLOADER
+           BOOT_MODE == BOOT_MODE_BOOTLOADER
     ) {
         TimerUpdate();
         UARTReadData(&uart);
@@ -63,8 +63,8 @@ int main(void)
                         ProtocolSendPacket(
                             &uart,
                             (unsigned char) PROTOCOL_CMD_START_APP_RESPONSE,
-                            0x00,
-                            1
+                            0,
+                            0
                         );
                         break;
                 }
@@ -72,15 +72,17 @@ int main(void)
                 ProtocolSendPacket(
                     &uart,
                     (unsigned char) PROTOCOL_BAD_PACKET_RESPONSE,
-                    0x00,
-                    1
+                    0,
+                    0
                 );
             }
         }
     }
-    while(1);
+    ON_LED = 1;
     // Jump to the application
-    __asm__("GOTO __APP_START");
+    void (*fptr)(void);
+    fptr = (void (*)(void))BOOTLOADER_APPLICATION_START;
+    fptr();
 
     return 0;
 }

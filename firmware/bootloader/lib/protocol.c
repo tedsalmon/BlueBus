@@ -6,39 +6,68 @@
  */
 #include "protocol.h"
 
+/**
+ * ProtocolFlashWrite()
+ *     Description:
+ *         Take a Flash Write packet and write it out to NVM
+ *     Params:
+ *         UART_t *uart - The UART struct to use for communication
+ *         ProtocolPacket_t *packet - The data packet structure
+ *     Returns:
+ *         void
+ */
 void ProtocolFlashWrite(UART_t *uart, ProtocolPacket_t *packet)
 {
     uint32_t address = (
-        ((uint64_t)0x00 << 32) |
-        ((uint32_t)packet->data[0] << 24) |
-        ((uint32_t)packet->data[0] << 16) |
-        packet->data[1]
+        ((uint32_t) 0 << 24) +
+        ((uint32_t)packet->data[0] << 16) +
+        ((uint32_t)packet->data[1] << 8) +
+        ((uint32_t)packet->data[2])
     );
-    if (address > BOOTLOADER_APPLICATION_START) {
-        uint8_t dataLength = packet->dataSize - 7;
-        uint8_t index = 2;
-        while (index < dataLength) {
+    // Do not allow the IVT or Bootloader to be overwritten
+    if (address >= BOOTLOADER_APPLICATION_START && address > __IVT_BASE) {
+        uint8_t index = 3;
+        uint8_t flashRes = 1;
+        while (index < packet->dataSize && flashRes == 1) {
             uint32_t data = (
-                ((uint64_t)0x00 << 32) | // "Phantom" Byte
-                ((uint32_t)packet->data[index] << 24) |
-                ((uint32_t)packet->data[index + 1] << 16) |
-                packet->data[index + 2]
+                ((uint32_t)0 << 24) + // "Phantom" Byte
+                ((uint32_t)packet->data[index] << 16) +
+                ((uint32_t)packet->data[index + 1] << 8) + 
+                ((uint32_t)packet->data[index + 2])
             );
-            uint8_t flashRes = FlashWriteAddress(address, data);
-            if (!flashRes) {
-                // Abort the write
-                ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR, 0x00, 1);
-                index = dataLength + 1;
-            } else {
-                address = address + 2;
-            }
+            uint32_t data2 = (
+                ((uint32_t)0 << 24) + // "Phantom" Byte
+                ((uint32_t)packet->data[index + 3] << 16) +
+                ((uint32_t)packet->data[index + 4] << 8) + 
+                ((uint32_t)packet->data[index + 5])
+            );
+            // We write two WORDs at a time, so jump the necessary
+            // number of indices and addresses
+            flashRes = FlashWriteDWORDAddress(address, data, data2);
+            index += 6;
+            address += 0x04;
         }
-        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK, 0x00, 1);
+        if (flashRes == 1) {
+            ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK, 0, 0);
+        } else {
+            ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR, 0, 0);
+        }
     } else {
-        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR, 0x00, 1);
+        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK, 0, 0);
     }
 }
 
+/**
+ * ProtocolProcessPacket()
+ *     Description:
+ *         Attempt to create and verify a packet. It will return a bad
+ *         error status if the data in the UART buffer does not align with
+ *         the protocol.
+ *     Params:
+ *         UART_t *uart - The UART struct to use for communication
+ *     Returns:
+ *         ProtocolPacket_t
+ */
 ProtocolPacket_t ProtocolProcessPacket(UART_t *uart)
 {
     struct ProtocolPacket_t packet;
@@ -46,27 +75,46 @@ ProtocolPacket_t ProtocolProcessPacket(UART_t *uart)
     if (uart->rxQueueSize >= 2) {
         if (uart->rxQueueSize == (uint8_t) UARTGetOffsetByte(uart, 1)) {
             packet.command = UARTGetNextByte(uart);
-            packet.dataSize = (uint8_t) UARTGetNextByte(uart);
+            packet.dataSize = (uint8_t) UARTGetNextByte(uart) - PROTOCOL_CONTROL_PACKET_SIZE;
             uint8_t i;
-            for (i = 0; i < packet.dataSize - 1; i++) {
+            for (i = 0; i < packet.dataSize; i++) {
                 if (uart->rxQueueSize > 0) {
                     packet.data[i] = UARTGetNextByte(uart);
                 } else {
                     packet.data[i] = 0x00;
                 }
             }
-            packet.status = ProtocolValidatePacket(&packet);
+            unsigned char validation = UARTGetNextByte(uart);
+            packet.status = ProtocolValidatePacket(&packet, validation);
         }
     }
     return packet;
 }
 
+/**
+ * ProtocolSendPacket()
+ *     Description:
+ *         Generated a packet and send if over UART
+ *     Params:
+ *         UART_t *uart - The UART struct to use for communication
+ *         unsigned char command - The protocol command
+ *         unsigned char *data - The data to send in the packet. Must be at least
+ *             one byte per protocol
+ *         uint8_t dataSize - The number of bytes in the data pointer
+ *     Returns:
+ *         void
+ */
 void ProtocolSendPacket(
     UART_t *uart, 
-        unsigned char command, 
-        unsigned char *data, 
-        uint8_t dataSize
+    unsigned char command, 
+    unsigned char *data,
+    uint8_t dataSize
 ) {
+    uint8_t nullData = 0;
+    if (dataSize == 0) {
+        dataSize = 1;
+        nullData = 1;
+    }
     uint8_t crc = 0;
     uint8_t length = dataSize + 3;
     unsigned char packet[length];
@@ -75,15 +123,31 @@ void ProtocolSendPacket(
     crc = crc ^ (uint8_t) length;
     packet[0] = command;
     packet[1] = length;
-    uint8_t i;
-    for (i = 2; i < length; i++) {
-        packet[i] = data[i - 2];
-        crc = crc ^ (uint8_t) data[i - 2];
+    if (nullData == 1) {
+        // The protocol requires at least one data byte, so throw in a NULL
+        packet[2] = 0x00;
+    } else {
+        uint8_t i;
+        for (i = 2; i < length; i++) {
+            packet[i] = data[i - 2];
+            crc = crc ^ (uint8_t) data[i - 2];
+        }
     }
     packet[length - 1] = (unsigned char) crc;
     UARTSendData(uart, packet, length);
 }
 
+/**
+ * ProtocolSendStringPacket()
+ *     Description:
+ *         Send a given string in a packet with the given command.
+ *     Params:
+ *         UART_t *uart - The UART struct to use for communication
+ *         unsigned char command - The protocol command
+ *         char *string - The string to send
+ *     Returns:
+ *         void
+ */
 void ProtocolSendStringPacket(UART_t *uart, unsigned char command, char *string)
 {
     uint8_t len = 0;
@@ -94,16 +158,26 @@ void ProtocolSendStringPacket(UART_t *uart, unsigned char command, char *string)
     ProtocolSendPacket(uart, command, (unsigned char *) string, len);
 }
 
-uint8_t ProtocolValidatePacket(ProtocolPacket_t *packet)
+/**
+ * ProtocolValidatePacket()
+ *     Description:
+ *         Use the given checksum to validate the data in a given packet
+ *     Params:
+ *         ProtocolPacket_t *packet - The data packet structure
+ *         unsigned char validation - the XOR checksum of the data in packet
+ *     Returns:
+ *         uint8_t - If the packet is valid or not
+ */
+uint8_t ProtocolValidatePacket(ProtocolPacket_t *packet, unsigned char validation)
 {
-    uint8_t chk = 0;
-    chk = chk ^ packet->command;
-    chk = chk ^ packet->dataSize;
-    uint8_t msgSize = packet->dataSize - 2;
+    uint8_t chk = packet->command;
+    chk = chk ^ (packet->dataSize + PROTOCOL_CONTROL_PACKET_SIZE);
+    uint8_t msgSize = packet->dataSize;
     uint8_t idx;
     for (idx = 0; idx < msgSize; idx++) {
         chk = chk ^ packet->data[idx];
     }
+    chk = chk ^ validation;
     if (chk == 0) {
         return PROTOCOL_PACKET_STATUS_OK;
     } else {

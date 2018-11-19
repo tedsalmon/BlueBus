@@ -9,6 +9,6 @@
 #include <stdint.h>
 #include <xc.h>
 
-uint8_t FlashWriteAddress(uint32_t, uint32_t);
+uint8_t FlashWriteDWORDAddress(uint32_t, uint32_t, uint32_t);
 
 #endif /* FLASH_H */

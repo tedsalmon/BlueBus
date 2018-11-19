@@ -12,6 +12,7 @@
 #include "flash.h"
 #include "uart.h"
 #define PROTOCOL_MAX_DATA_SIZE 255
+#define PROTOCOL_CONTROL_PACKET_SIZE 3
 #define PROTOCOL_PACKET_STATUS_BAD 0
 #define PROTOCOL_PACKET_STATUS_INCOMPLETE 1
 #define PROTOCOL_PACKET_STATUS_OK 3
@@ -47,12 +48,12 @@ typedef struct ProtocolPacket_t {
     unsigned char command;
     uint8_t dataSize;
     unsigned char data[PROTOCOL_MAX_DATA_SIZE];
-} ProtocolPacket_t; 
+} ProtocolPacket_t;
 
 void ProtocolFlashWrite(UART_t *, ProtocolPacket_t *);
 ProtocolPacket_t ProtocolProcessPacket(UART_t *);
 void ProtocolSendPacket(UART_t *, unsigned char, unsigned char *, uint8_t);
 void ProtocolSendStringPacket(UART_t *, unsigned char, char *);
-uint8_t ProtocolValidatePacket(ProtocolPacket_t *);
+uint8_t ProtocolValidatePacket(ProtocolPacket_t *, unsigned char);
 
 #endif /* PROTOCOL_H */

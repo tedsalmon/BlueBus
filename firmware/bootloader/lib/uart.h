@@ -13,7 +13,7 @@
 #define UART_BAUD_115200 8
 #define UART_BAUD_9600 103
 #define UART_U1_TX_MODE 3
-#define UART_RX_QUEUE_SIZE 128
+#define UART_RX_QUEUE_SIZE 255
 #define UART_RX_QUEUE_TIMEOUT 1000
 
 /* Check if a bit is set in a byte */
