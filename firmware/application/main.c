@@ -97,3 +97,15 @@ void __attribute__ ((__interrupt__, auto_psv)) _MathError(void)
     ON_LED = 0;
     while (1);
 }
+
+void __attribute__ ((__interrupt__, auto_psv)) _NVMError(void)
+{
+    ON_LED = 0;
+    while (1);
+}
+
+void __attribute__ ((__interrupt__, auto_psv)) _GeneralError(void)
+{
+    ON_LED = 0;
+    while (1);
+}
