@@ -16,9 +16,6 @@
 #define UART_RX_QUEUE_SIZE 255
 #define UART_RX_QUEUE_TIMEOUT 1000
 
-/* Check if a bit is set in a byte */
-#define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
-
 /**
  * UART_t
  *     Description:
@@ -35,6 +32,7 @@ typedef struct UART_t {
 } UART_t;
 
 UART_t UARTInit(uint8_t);
+void UARTDestroy(UART_t *);
 unsigned char UARTGetNextByte(UART_t *);
 unsigned char UARTGetOffsetByte(UART_t *, uint8_t);
 void UARTReadData(UART_t *);

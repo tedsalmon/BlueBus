@@ -16,6 +16,32 @@
  *     Returns:
  *         void
  */
+void ProtocolFlashErase()
+{
+    uint32_t address = 0x00000000;
+    while (address <= BOOTLOADER_APPLICATION_END) {
+         if (address < BOOTLOADER_BOOTLOADER_START ||
+             address >= BOOTLOADER_APPLICATION_START
+        ) {
+            FlashErasePage(address);
+        }
+        address += _FLASH_ROW * 2;
+    }
+    // Reinitialize the reset vector
+    uint32_t bootloaderStart = 0x00040000 + BOOTLOADER_BOOTLOADER_START;
+    FlashWriteDWORDAddress(0x00000000, bootloaderStart, 0x00000000);
+}
+
+/**
+ * ProtocolFlashWrite()
+ *     Description:
+ *         Take a Flash Write packet and write it out to NVM
+ *     Params:
+ *         UART_t *uart - The UART struct to use for communication
+ *         ProtocolPacket_t *packet - The data packet structure
+ *     Returns:
+ *         void
+ */
 void ProtocolFlashWrite(UART_t *uart, ProtocolPacket_t *packet)
 {
     uint32_t address = (
@@ -24,11 +50,21 @@ void ProtocolFlashWrite(UART_t *uart, ProtocolPacket_t *packet)
         ((uint32_t)packet->data[1] << 8) +
         ((uint32_t)packet->data[2])
     );
-    // Do not allow the IVT or Bootloader to be overwritten
-    if (address >= BOOTLOADER_APPLICATION_START && address > __IVT_BASE) {
-        uint8_t index = 3;
-        uint8_t flashRes = 1;
-        while (index < packet->dataSize && flashRes == 1) {
+    if (address == 0x00000000) {
+        ProtocolFlashErase();
+    }
+    uint8_t index = 3;
+    uint8_t flashRes = 1;
+    while (index < packet->dataSize && flashRes == 1) {
+        // Do not allow the RESET or Bootloader to be overwritten
+        if ((address >= BOOTLOADER_BOOTLOADER_START &&
+            address < BOOTLOADER_APPLICATION_START) ||
+            address < 0x04
+        ) {
+            // Skip the current dword, since it overwrites protected memory
+            address += 0x2;
+            index += 3;
+        } else {
             uint32_t data = (
                 ((uint32_t)0 << 24) + // "Phantom" Byte
                 ((uint32_t)packet->data[index] << 16) +
@@ -47,13 +83,11 @@ void ProtocolFlashWrite(UART_t *uart, ProtocolPacket_t *packet)
             index += 6;
             address += 0x04;
         }
-        if (flashRes == 1) {
-            ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK, 0, 0);
-        } else {
-            ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR, 0, 0);
-        }
-    } else {
+    }
+    if (flashRes == 1) {
         ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK, 0, 0);
+    } else {
+        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR, 0, 0);
     }
 }
 
@@ -116,7 +150,7 @@ void ProtocolSendPacket(
         nullData = 1;
     }
     uint8_t crc = 0;
-    uint8_t length = dataSize + 3;
+    uint8_t length = dataSize + PROTOCOL_DATA_INDEX_BEGIN;
     unsigned char packet[length];
 
     crc = crc ^ (uint8_t) command;

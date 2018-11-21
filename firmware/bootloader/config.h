@@ -51,3 +51,6 @@
 #pragma config TMPRPIN = OFF         // Tamper Pin Enable bit (TMPRN pin function is disabled)
 #pragma config SOSCHP = OFF          // SOSC High Power Enable bit (valid only when SOSCSEL = 1 (Disable SOSC high power mode)
 #pragma config ALTVREF = ALTVREFDIS  // Alternate Voltage Reference Location Enable bit (VREF+ and CVREF+ on RB0, VREF- and CVREF- on RB1)
+
+// FBOOT
+#pragma config BTMODE = SINGLE

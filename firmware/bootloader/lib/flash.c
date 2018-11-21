@@ -7,6 +7,32 @@
 #include "flash.h"
 
 /**
+ * FlashErasePage()
+ *     Description:
+ *         Erases a page of NVM
+ *     Params:
+ *         uint32_t address - The beginning address to erase
+ *     Returns:
+ *         uint8_t - If an error occurred while writing flash
+ */
+uint8_t FlashErasePage(uint32_t address)
+{
+    // Initialize NVMCON for erasing a page
+    NVMCON = 0x4003;
+
+    // Set the upper and lower words of the address to be erased
+    NVMADRU = address >> 16;
+    NVMADR = (address & 0xFF00);
+
+    __builtin_disi(5);
+    __builtin_write_NVM();
+    while (NVMCONbits.WR);
+    NVMCONbits.WREN = 0;
+    return NVMCONbits.WRERR == 0;
+}
+
+
+/**
  * FlashWriteDWORDAddress()
  *     Description:
  *         Write a DWORD to flash at the given address
@@ -36,7 +62,7 @@ uint8_t FlashWriteDWORDAddress(uint32_t address, uint32_t data, uint32_t data2)
     // Write the upper byte
     __builtin_tblwth(2, (data2 & 0xffff0000) >> 16);
 
-    __builtin_disi(6);
+    __builtin_disi(5);
     __builtin_write_NVM();
     while (NVMCONbits.WR);
     NVMCONbits.WREN = 0;

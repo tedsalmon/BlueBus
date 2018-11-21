@@ -38,7 +38,7 @@ int main(void)
                 if (BOOT_MODE == 0) {
                     ON_LED_MODE = 0;
                     ON_LED = 1;
-                    BOOT_MODE = 1;
+                    BOOT_MODE = BOOT_MODE_BOOTLOADER;
                 }
                 switch (packet.command) {
                     case PROTOCOL_CMD_PLATFORM_REQUEST:
@@ -78,11 +78,12 @@ int main(void)
             }
         }
     }
-    ON_LED = 1;
-    // Jump to the application
-    void (*fptr)(void);
-    fptr = (void (*)(void))BOOTLOADER_APPLICATION_START;
-    fptr();
+    UARTDestroy(&uart);
+    ON_LED = 0;
+    // Call the application code
+    void (*appptr)(void);
+    appptr = (void (*)(void))BOOTLOADER_APPLICATION_START;
+    appptr();
 
     return 0;
 }
