@@ -7,12 +7,48 @@
 #include "protocol.h"
 
 /**
- * ProtocolFlashWrite()
+ * ProtocolBC127Proxy()
  *     Description:
- *         Take a Flash Write packet and write it out to NVM
+ *         In order to allow the BC127 to be managed directly (including firmware
+ *         upgrades), we proxy all data coming in from the system UART module
+ *         to the BC127. It is not possible to exit this mode gracefully, so a
+ *         hard reset of the device will be required in order to return to the
+ *         regular system.
  *     Params:
- *         UART_t *uart - The UART struct to use for communication
- *         ProtocolPacket_t *packet - The data packet structure
+ *         UART_t *systemUart - The system UART object
+ *         UART_t *btUart - The BC127 UART object
+ *     Returns:
+ *         void
+ */
+void ProtocolBC127Proxy(UART_t *systemUart, UART_t *btUart)
+{
+    while (1) {
+        // While there is data in the system RX buffer
+        while ((systemUart->registers->uxsta & 0x1) == 1) {
+            // Clear the buffer overflow error, if it exists
+            if ((systemUart->registers->uxsta & 0x2) != 0) {
+                systemUart->registers->uxsta ^= 0x2;
+            }
+            btUart->registers->uxtxreg = systemUart->registers->uxrxreg;
+        }
+        // While there is data in the BC127 RX buffer
+        while ((btUart->registers->uxsta & 0x1) == 1) {
+            // Clear the buffer overflow error, if it exists
+            if ((btUart->registers->uxsta & 0x2) != 0) {
+                btUart->registers->uxsta ^= 0x2;
+            }
+            systemUart->registers->uxtxreg = btUart->registers->uxrxreg;
+        }
+    }
+}
+
+/**
+ * ProtocolFlashErase()
+ *     Description:
+ *         Iterate through the writable program space and clear all matching
+ *         pages of memory. This should be done prior to any write operations
+ *     Params:
+ *         void
  *     Returns:
  *         void
  */
@@ -27,7 +63,7 @@ void ProtocolFlashErase()
         }
         address += _FLASH_ROW * 2;
     }
-    // Reinitialize the reset vector
+    // Reinitialize the RESET vector
     uint32_t bootloaderStart = 0x00040000 + BOOTLOADER_BOOTLOADER_START;
     FlashWriteDWORDAddress(0x00000000, bootloaderStart, 0x00000000);
 }
@@ -50,6 +86,7 @@ void ProtocolFlashWrite(UART_t *uart, ProtocolPacket_t *packet)
         ((uint32_t)packet->data[1] << 8) +
         ((uint32_t)packet->data[2])
     );
+    // Clear all available Program space NVM when the first address is pushed in
     if (address == 0x00000000) {
         ProtocolFlashErase();
     }

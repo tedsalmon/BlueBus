@@ -16,6 +16,9 @@
 #define UART_RX_QUEUE_SIZE 255
 #define UART_RX_QUEUE_TIMEOUT 1000
 
+/* Return a programmable output port register */
+#define GET_RPOR(num) (((uint16_t *) &RPOR0) + num)
+
 /**
  * UART_t
  *     Description:
@@ -28,14 +31,17 @@ typedef struct UART_t {
     uint8_t rxQueueSize;
     uint8_t rxQueueWriteCursor;
     uint32_t rxLastTimestamp;
+    uint8_t moduleNumber;
+    uint8_t txPin;
     volatile UART *registers;
 } UART_t;
 
-UART_t UARTInit(uint8_t);
+UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t);
 void UARTDestroy(UART_t *);
 unsigned char UARTGetNextByte(UART_t *);
 unsigned char UARTGetOffsetByte(UART_t *, uint8_t);
 void UARTReadData(UART_t *);
 void UARTResetRxQueue(UART_t *);
 void UARTSendData(UART_t *, unsigned char *, uint8_t);
+void UARTSetRPORMode(uint8_t, uint16_t);
 #endif /* UART_H */

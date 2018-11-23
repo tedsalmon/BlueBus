@@ -35,7 +35,7 @@
 
  /*
   * Customizations:
-  *     1. Length set to 0x1000
+  *     1. Length set to 0x800
   *     2. Code starts at 0x800
   *     3. Updated __CODE_BASE and __CODE_LENGTH
   */
@@ -82,7 +82,7 @@ MEMORY
 #ifndef __DUAL_PARTITION
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
   ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
-  program (xr)   : ORIGIN = 0x800,         LENGTH = 0x1000
+  program (xr)   : ORIGIN = 0x800,         LENGTH = 0x800
   FSEC           : ORIGIN = 0xABF00,       LENGTH = 0x2
   FBSLIM         : ORIGIN = 0xABF10,       LENGTH = 0x2
   FSIGN          : ORIGIN = 0xABF14,       LENGTH = 0x2
@@ -102,7 +102,7 @@ MEMORY
 #ifdef __DUAL_PARTITION
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
   ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
-  program (xr)   : ORIGIN = 0x800,         LENGTH = 0x1000
+  program (xr)   : ORIGIN = 0x800,         LENGTH = 0x800
   FSEC           : ORIGIN = 0x55F00,       LENGTH = 0x2
   FBSLIM         : ORIGIN = 0x55F10,       LENGTH = 0x2
   FSIGN          : ORIGIN = 0x55F14,       LENGTH = 0x2
@@ -139,7 +139,7 @@ __FPOR = 0xABF24;
 __FICD = 0xABF28;
 __FDEVOPT1 = 0xABF2C;
 __CODE_BASE = 0x800;
-__CODE_LENGTH = 0x1000;
+__CODE_LENGTH = 0x800;
 __IVT_BASE  = 0x4;
 #endif
 
@@ -161,7 +161,7 @@ __FICD = 0x55F28;
 __FDEVOPT1 = 0x55F2C;
 __FBTSEQ = 0x55FFC;
 __CODE_BASE = 0x800;
-__CODE_LENGTH = 0x1000;
+__CODE_LENGTH = 0x800;
 __IVT_BASE  = 0x4;
 #endif
 

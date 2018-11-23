@@ -27,8 +27,10 @@
 #define PROTOCOL_CMD_WRITE_DATA_REQUEST 0x04
 #define PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK 0x05
 #define PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR 0x06
-#define PROTOCOL_CMD_START_APP_REQUEST 0x07
-#define PROTOCOL_CMD_START_APP_RESPONSE 0x08
+#define PROTOCOL_CMD_BC127_PROXY_REQUEST 0x07
+#define PROTOCOL_CMD_BC127_PROXY_RESPONSE 0x08
+#define PROTOCOL_CMD_START_APP_REQUEST 0x09
+#define PROTOCOL_CMD_START_APP_RESPONSE 0x0A
 #define PROTOCOL_BAD_PACKET_RESPONSE 0xFF
 
 /**
@@ -50,7 +52,7 @@ typedef struct ProtocolPacket_t {
     uint8_t dataSize;
     unsigned char data[PROTOCOL_MAX_DATA_SIZE];
 } ProtocolPacket_t;
-
+void ProtocolBC127Proxy(UART_t *, UART_t *);
 void ProtocolFlashErase();
 void ProtocolFlashWrite(UART_t *, ProtocolPacket_t *);
 ProtocolPacket_t ProtocolProcessPacket(UART_t *);
