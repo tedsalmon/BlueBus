@@ -1,5 +1,5 @@
 /*
- * File: event.h
+ * File: event.c
  * Author: Ted Salmon <tass2001@gmail.com>
  * Description:
  *     Implement an event system so that modules can interact with each other

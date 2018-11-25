@@ -102,12 +102,14 @@ void removeSubstring(char *string, const char *trash)
  */
 void setRPORMode(uint8_t pin, uint16_t mode)
 {
-    if ((pin) % 2 == 0) {
+    if ((pin % 2) == 0) {
+        uint16_t msb = *ROPR_PINS[pin] >> 8;
         // Set the least significant bits for the even pin number
-        *ROPR_PINS[pin] ^= mode;
+        *ROPR_PINS[pin] = (msb << 8) + mode;
     } else {
+        uint16_t lsb = *ROPR_PINS[pin] & 0xFF;
         // Set the least significant bits of the register for the odd pin number
-        *ROPR_PINS[pin] ^= mode * 256;
+        *ROPR_PINS[pin] = (mode << 8) + lsb;
     }
 }
 

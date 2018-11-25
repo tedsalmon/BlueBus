@@ -48,8 +48,6 @@ UART_t UARTInit(
             _U4RXR = rxPin;
             break;
     }
-    // Reset the TX Pin Mode
-    setRPORMode(txPin, 0);
     // Set the TX Pin Mode
     setRPORMode(txPin, UART_TX_MODES[uart.moduleIndex]);
     __builtin_write_OSCCONL(OSCCON & 0x40);

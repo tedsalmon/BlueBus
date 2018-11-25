@@ -29,7 +29,7 @@ void EEPROMInit()
     // Disable the Module & associated IRQs
     SetSPIIE(spiModuleIndex, 0);
     SetSPITXIE(spiModuleIndex, 0);
-    SetSPITXIE(spiModuleIndex, 0);
+    SetSPIRXIE(spiModuleIndex, 0);
     SPI1CON1L = 0;
     SPI1STATLbits.SPIRBF = 0;
     // Unlock the programmable pin register
