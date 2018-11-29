@@ -1,3 +1,5 @@
+View this project on [CADLAB.io](https://cadlab.io/project/1479). 
+
 # BlueBus
 This project aims to create a Bluetooth interface for vehicles equipped with
 the BMW IBus. It supports A2DP, AVRCP and the HPF protocols. AVRCP Metadata
