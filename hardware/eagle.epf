@@ -6,20 +6,12 @@ Desktop="Desktop"
 
 [Globals]
 AutoSaveProject=1
-UsedLibraryUrn="urn:adsk.eagle:library:325"
-UsedLibraryUrn="urn:adsk.eagle:library:371"
 UsedLibraryUrn="urn:adsk.eagle:library:513"
-UsedLibraryUrn="urn:adsk.eagle:library:472"
-UsedLibraryUrn="urn:adsk.eagle:library:507"
-UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/BC127.lbr"
+UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/Connectors.lbr"
 UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/Frame.lbr"
 UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/ICs.lbr"
-UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/PIC24FJ1024GA606.lbr"
 UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/Passives.lbr"
-UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/TH3122_4.lbr"
-UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/TPA6017A2.lbr"
-UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/XC6210.lbr"
-UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/XRP7659.lbr"
+UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/shorts.lbr"
 
 [Win_1]
 Type="Control Panel"
