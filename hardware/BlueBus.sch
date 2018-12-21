@@ -260,7 +260,7 @@ FRAME-LETTER</description>
 <rectangle x1="-1.2" y1="0.85" x2="-0.7" y2="1.5" layer="51"/>
 <smd name="6" x="-0.95" y="1.45" dx="0.55" dy="1.5" layer="1"/>
 <rectangle x1="-0.25" y1="0.85" x2="0.25" y2="1.5" layer="51"/>
-<circle x="-1.65" y="-1" radius="0.1436" width="0.2032" layer="21"/>
+<circle x="-0.95" y="-0.25" radius="0.2" width="0.1" layer="21"/>
 </package>
 <package name="SOT23-5">
 <description>&lt;b&gt;Small Outline Transistor&lt;/b&gt;</description>
@@ -281,10 +281,8 @@ FRAME-LETTER</description>
 </package>
 <package name="SOIC16DF">
 <description>&lt;p&gt;SMALL OUTLINE INTEGRATED CIRCUIT&lt;/p&gt; &lt;p&gt;16-Pin (300-Mil) SOIC&lt;/p&gt;</description>
-<wire x1="-5.2" y1="3.7" x2="-5.2" y2="-3.7" width="0.2" layer="51"/>
-<wire x1="-5.2" y1="-3.7" x2="5.2" y2="-3.7" width="0.2" layer="51"/>
-<wire x1="5.2" y1="-3.7" x2="5.2" y2="3.7" width="0.2" layer="51"/>
-<wire x1="5.2" y1="3.7" x2="-5.2" y2="3.7" width="0.2" layer="51"/>
+<wire x1="-5.2" y1="4.5" x2="-5.2" y2="-4.5" width="0.2" layer="21"/>
+<wire x1="5.2" y1="-4.5" x2="5.2" y2="4.5" width="0.2" layer="21"/>
 <smd name="16" x="-4.45" y="5" dx="2" dy="0.635" layer="1" rot="R90"/>
 <smd name="15" x="-3.18" y="5" dx="2" dy="0.635" layer="1" rot="R90"/>
 <smd name="14" x="-1.91" y="5" dx="2" dy="0.635" layer="1" rot="R90"/>
@@ -302,7 +300,11 @@ FRAME-LETTER</description>
 <smd name="6" x="1.9" y="-5" dx="2" dy="0.635" layer="1" rot="R90"/>
 <smd name="7" x="3.17" y="-5" dx="2" dy="0.635" layer="1" rot="R90"/>
 <text x="-6" y="0" size="1" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center">&gt;NAME</text>
-<circle x="-4.318" y="-2.54" radius="0.508" width="0.127" layer="51"/>
+<circle x="-4.318" y="-2.54" radius="0.2032" width="0.1016" layer="51"/>
+<wire x1="-5.2" y1="4.5" x2="-5" y2="4.5" width="0.2" layer="21"/>
+<wire x1="-5.2" y1="-4.5" x2="-5" y2="-4.5" width="0.2" layer="21"/>
+<wire x1="5.2" y1="4.5" x2="5" y2="4.5" width="0.2" layer="21"/>
+<wire x1="5.2" y1="-4.5" x2="5" y2="-4.5" width="0.2" layer="21"/>
 </package>
 <package name="TQFP64">
 <description>64-Lead TQFP Plastic Thin Quad Flatpack - 10x10x1mm Body, 2mmFP</description>
@@ -381,13 +383,13 @@ FRAME-LETTER</description>
 </package>
 <package name="SOIC-8">
 <description>8-Pin SOIC 208-mil</description>
-<circle x="-2.032" y="-1.397" radius="0.25" width="0" layer="21"/>
-<wire x1="2.767" y1="-2.767" x2="2.767" y2="2.767" width="0.2032" layer="21"/>
-<wire x1="-2.767" y1="2.767" x2="-2.767" y2="-2.767" width="0.2032" layer="21"/>
-<wire x1="-2.44" y1="2.767" x2="-2.767" y2="2.767" width="0.2032" layer="21"/>
-<wire x1="2.767" y1="2.767" x2="2.44" y2="2.767" width="0.2032" layer="21"/>
-<wire x1="2.44" y1="-2.767" x2="2.767" y2="-2.767" width="0.2032" layer="21"/>
-<wire x1="-2.767" y1="-2.767" x2="-2.44" y2="-2.767" width="0.2032" layer="21"/>
+<circle x="-2.032" y="-1.397" radius="0.2032" width="0.1016" layer="21"/>
+<wire x1="2.767" y1="-2.767" x2="2.767" y2="2.767" width="0.2" layer="21"/>
+<wire x1="-2.767" y1="2.767" x2="-2.767" y2="-2.767" width="0.2" layer="21"/>
+<wire x1="-2.44" y1="2.767" x2="-2.767" y2="2.767" width="0.2" layer="21"/>
+<wire x1="2.767" y1="2.767" x2="2.44" y2="2.767" width="0.2" layer="21"/>
+<wire x1="2.44" y1="-2.767" x2="2.767" y2="-2.767" width="0.2" layer="21"/>
+<wire x1="-2.767" y1="-2.767" x2="-2.44" y2="-2.767" width="0.2" layer="21"/>
 <rectangle x1="-2.0828" y1="-3.95" x2="-1.7272" y2="-2.64" layer="51"/>
 <rectangle x1="-0.8128" y1="-3.95" x2="-0.4572" y2="-2.64" layer="51"/>
 <rectangle x1="0.4572" y1="-3.95" x2="0.8128" y2="-2.64" layer="51"/>
@@ -410,7 +412,7 @@ FRAME-LETTER</description>
 <description>&lt;b&gt;14-Lead Plastic Thin Shrink Small Outline (ST)&lt;/b&gt; - 4.4 mm Body TSSOP &lt;/b&gt;&lt;p&gt; Source: http://ww1.microchip.com/downloads/en/DeviceDoc/40039E.pdf</description>
 <wire x1="-2.455" y1="-2.6" x2="-2.455" y2="2.6" width="0.2" layer="21"/>
 <wire x1="2.455" y1="2.6" x2="2.455" y2="-2.6" width="0.2" layer="21"/>
-<circle x="-1.825" y="-1.525" radius="0.25" width="0" layer="21"/>
+<circle x="-1.825" y="-1.525" radius="0.2032" width="0.1016" layer="21"/>
 <smd name="1" x="-1.95" y="-3.075" dx="0.35" dy="1.5" layer="1"/>
 <smd name="2" x="-1.3" y="-3.075" dx="0.35" dy="1.5" layer="1"/>
 <smd name="3" x="-0.65" y="-3.075" dx="0.35" dy="1.5" layer="1"/>
@@ -3295,11 +3297,9 @@ FRAME-LETTER</description>
 <wire x1="6" y1="-9.1" x2="5.3" y2="-9.1" width="0.2032" layer="21"/>
 </package>
 <package name="TSSOP20">
-<wire x1="-2.3" y1="3.3" x2="2.3" y2="3.3" width="0.1" layer="21"/>
-<wire x1="2.3" y1="3.3" x2="2.3" y2="-3.3" width="0.1" layer="21"/>
-<wire x1="2.3" y1="-3.3" x2="-2.3" y2="-3.3" width="0.1" layer="21"/>
-<wire x1="-2.3" y1="-3.3" x2="-2.3" y2="3.3" width="0.1" layer="21"/>
-<circle x="-1.75" y="2.75" radius="0.25" width="0" layer="21"/>
+<wire x1="-3" y1="3.35" x2="3" y2="3.35" width="0.2" layer="21"/>
+<wire x1="3" y1="-3.35" x2="-3" y2="-3.35" width="0.2" layer="21"/>
+<circle x="-1.75" y="2.75" radius="0.2032" width="0.1016" layer="21"/>
 <smd name="10" x="-3.2" y="-2.925" dx="1.5" dy="0.4" layer="1"/>
 <smd name="9" x="-3.2" y="-2.275" dx="1.5" dy="0.4" layer="1"/>
 <smd name="8" x="-3.2" y="-1.625" dx="1.5" dy="0.4" layer="1"/>
@@ -9239,8 +9239,8 @@ part number 2062-2P from STA</description>
 <part name="R4" library="Passives" deviceset="5.1KOHM" device="" value="5.1k"/>
 <part name="C11" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="BC127" library="ICs" deviceset="BC127" device=""/>
-<part name="R16" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="R17" library="Passives" deviceset="240OHM" device="" value="240"/>
+<part name="R17" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R18" library="Passives" deviceset="240OHM" device="" value="240"/>
 <part name="C30" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C15" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C14" library="Passives" deviceset="10UF" device="" value="10uF"/>
@@ -9268,22 +9268,22 @@ part number 2062-2P from STA</description>
 <part name="GND10" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="R8" library="Passives" deviceset="10KOHM" device="" value="10k"/>
 <part name="R7" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="R19" library="Passives" deviceset="2KOHM" device="" value="2k"/>
+<part name="R20" library="Passives" deviceset="2KOHM" device="" value="2k"/>
 <part name="SUPPLY10" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="R10" library="Passives" deviceset="10KOHM" device="" value="10k"/>
 <part name="C4" library="Passives" deviceset="100UF" device="2917" value="100uF"/>
 <part name="PCM5102A" library="ICs" deviceset="PCM5102A" device=""/>
 <part name="GND11" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="C21" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C23" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C24" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C26" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C28" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="C19" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
+<part name="C22" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
 <part name="C25" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
 <part name="C27" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
 <part name="C29" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
+<part name="C21" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
 <part name="C20" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
-<part name="C23" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
 <part name="SUPPLY11" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="SUPPLY12" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="GND12" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
@@ -9291,9 +9291,9 @@ part number 2062-2P from STA</description>
 <part name="R15" library="Passives" deviceset="470OHM" device="" value="470"/>
 <part name="R14" library="Passives" deviceset="470OHM" device="" value="470"/>
 <part name="C18" library="Passives" deviceset="2.2NF" device="" value="2.2nF"/>
-<part name="C22" library="Passives" deviceset="2.2NF" device="" value="2.2nF"/>
+<part name="C19" library="Passives" deviceset="2.2NF" device="" value="2.2nF"/>
 <part name="SH1" library="shorts" deviceset="SHORT" device="T5"/>
-<part name="R18" library="Passives" deviceset="2OHM" device="" value="2"/>
+<part name="R19" library="Passives" deviceset="2OHM" device="" value="2"/>
 <part name="C31" library="Passives" deviceset="4.7UF" device="" value="4.7uF"/>
 <part name="GND15" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 </parts>
@@ -9452,11 +9452,11 @@ part number 2062-2P from STA</description>
 <attribute name="NAME" x="242.824" y="101.981" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="242.824" y="96.901" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="R16" gate="G$1" x="45.72" y="114.3" smashed="yes">
+<instance part="R17" gate="G$1" x="45.72" y="114.3" smashed="yes">
 <attribute name="NAME" x="45.72" y="115.824" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="45.72" y="112.776" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="R17" gate="G$1" x="63.5" y="114.3" smashed="yes">
+<instance part="R18" gate="G$1" x="63.5" y="114.3" smashed="yes">
 <attribute name="NAME" x="63.5" y="115.824" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="63.5" y="112.776" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
@@ -9915,7 +9915,7 @@ part number 2062-2P from STA</description>
 </segment>
 <segment>
 <pinref part="SUPPLY8" gate="G$1" pin="3.3V"/>
-<pinref part="R16" gate="G$1" pin="1"/>
+<pinref part="R17" gate="G$1" pin="1"/>
 <wire x1="40.64" y1="119.38" x2="40.64" y2="114.3" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -10084,8 +10084,8 @@ part number 2062-2P from STA</description>
 </net>
 <net name="MCU_MCLR_RES" class="5">
 <segment>
-<pinref part="R16" gate="G$1" pin="2"/>
-<pinref part="R17" gate="G$1" pin="1"/>
+<pinref part="R17" gate="G$1" pin="2"/>
+<pinref part="R18" gate="G$1" pin="1"/>
 <wire x1="50.8" y1="114.3" x2="53.34" y2="114.3" width="0.1524" layer="91"/>
 <pinref part="C30" gate="G$1" pin="1"/>
 <wire x1="53.34" y1="114.3" x2="58.42" y2="114.3" width="0.1524" layer="91"/>
@@ -10094,7 +10094,7 @@ part number 2062-2P from STA</description>
 </net>
 <net name="MCU_MCLR" class="5">
 <segment>
-<pinref part="R17" gate="G$1" pin="2"/>
+<pinref part="R18" gate="G$1" pin="2"/>
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="MCLR"/>
 <label x="68.58" y="114.3" size="1.27" layer="95" rot="R90" xref="yes"/>
 <wire x1="68.58" y1="114.3" x2="81.28" y2="114.3" width="0.1524" layer="91"/>
@@ -10356,7 +10356,7 @@ part number 2062-2P from STA</description>
 <attribute name="NAME" x="100.076" y="147.32" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="103.124" y="147.32" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
-<instance part="R19" gate="G$1" x="63.5" y="66.04" smashed="yes">
+<instance part="R20" gate="G$1" x="63.5" y="66.04" smashed="yes">
 <attribute name="NAME" x="63.5" y="67.564" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="63.5" y="64.516" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
@@ -10371,7 +10371,7 @@ part number 2062-2P from STA</description>
 <instance part="GND11" gate="1" x="121.92" y="124.46" smashed="yes">
 <attribute name="VALUE" x="121.92" y="124.206" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="C21" gate="G$1" x="162.56" y="149.86" smashed="yes">
+<instance part="C23" gate="G$1" x="162.56" y="149.86" smashed="yes">
 <attribute name="NAME" x="164.084" y="152.781" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="164.084" y="147.701" size="1.778" layer="96" font="vector"/>
 </instance>
@@ -10387,7 +10387,7 @@ part number 2062-2P from STA</description>
 <attribute name="NAME" x="222.504" y="135.001" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="222.504" y="129.921" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C19" gate="G$1" x="149.86" y="149.86" smashed="yes">
+<instance part="C22" gate="G$1" x="149.86" y="149.86" smashed="yes">
 <attribute name="NAME" x="151.384" y="152.781" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="151.384" y="147.701" size="1.778" layer="96" font="vector"/>
 </instance>
@@ -10403,19 +10403,19 @@ part number 2062-2P from STA</description>
 <attribute name="NAME" x="232.664" y="135.001" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="232.664" y="129.921" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C20" gate="G$1" x="147.32" y="139.7" smashed="yes">
+<instance part="C21" gate="G$1" x="147.32" y="139.7" smashed="yes">
 <attribute name="NAME" x="148.844" y="142.621" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="148.844" y="137.541" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C23" gate="G$1" x="162.56" y="137.16" smashed="yes" rot="R90">
+<instance part="C20" gate="G$1" x="162.56" y="137.16" smashed="yes" rot="R90">
 <attribute name="NAME" x="159.639" y="138.684" size="1.778" layer="95" font="vector" rot="R90"/>
 <attribute name="VALUE" x="164.719" y="138.684" size="1.778" layer="96" font="vector" rot="R90"/>
 </instance>
 <instance part="SUPPLY11" gate="G$1" x="144.78" y="157.48" smashed="yes">
 <attribute name="VALUE" x="144.78" y="160.274" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="SUPPLY12" gate="G$1" x="231.14" y="154.94" smashed="yes">
-<attribute name="VALUE" x="231.14" y="157.734" size="1.778" layer="96" align="bottom-center"/>
+<instance part="SUPPLY12" gate="G$1" x="231.14" y="162.56" smashed="yes">
+<attribute name="VALUE" x="231.14" y="165.354" size="1.778" layer="96" align="bottom-center"/>
 </instance>
 <instance part="GND12" gate="1" x="177.8" y="111.76" smashed="yes" rot="R90">
 <attribute name="VALUE" x="178.054" y="111.76" size="1.778" layer="96" rot="R90" align="top-center"/>
@@ -10435,14 +10435,14 @@ part number 2062-2P from STA</description>
 <attribute name="NAME" x="135.001" y="105.156" size="1.778" layer="95" font="vector" rot="R270"/>
 <attribute name="VALUE" x="129.921" y="105.156" size="1.778" layer="96" font="vector" rot="R270"/>
 </instance>
-<instance part="C22" gate="G$1" x="149.86" y="106.68" smashed="yes" rot="R90">
+<instance part="C19" gate="G$1" x="149.86" y="106.68" smashed="yes" rot="R90">
 <attribute name="NAME" x="146.939" y="108.204" size="1.778" layer="95" font="vector" rot="R90"/>
 <attribute name="VALUE" x="152.019" y="108.204" size="1.778" layer="96" font="vector" rot="R90"/>
 </instance>
 <instance part="SH1" gate="G$1" x="167.64" y="111.76" smashed="yes" rot="R90">
 <attribute name="NAME" x="166.37" y="109.5375" size="1.778" layer="95" rot="R90"/>
 </instance>
-<instance part="R18" gate="G$1" x="40.64" y="172.72" smashed="yes">
+<instance part="R19" gate="G$1" x="40.64" y="172.72" smashed="yes">
 <attribute name="NAME" x="40.64" y="174.244" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="40.64" y="171.196" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
@@ -10504,6 +10504,12 @@ part number 2062-2P from STA</description>
 <junction x="228.6" y="139.7"/>
 <wire x1="238.76" y1="139.7" x2="238.76" y2="134.62" width="0.1524" layer="91"/>
 <junction x="238.76" y="134.62"/>
+<wire x1="238.76" y1="129.54" x2="238.76" y2="116.84" width="0.1524" layer="91"/>
+<junction x="238.76" y="129.54"/>
+<pinref part="PCM5102A" gate="G$1" pin="SCK"/>
+<wire x1="205.74" y1="121.92" x2="210.82" y2="121.92" width="0.1524" layer="91"/>
+<wire x1="210.82" y1="121.92" x2="210.82" y2="116.84" width="0.1524" layer="91"/>
+<wire x1="210.82" y1="116.84" x2="238.76" y2="116.84" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="PCM5102A" gate="G$1" pin="DEMP"/>
@@ -10531,7 +10537,7 @@ part number 2062-2P from STA</description>
 <net name="BT_MIC_BIAS" class="0">
 <segment>
 <pinref part="BC127" gate="G$1" pin="MIC_BIAS"/>
-<pinref part="R19" gate="G$1" pin="2"/>
+<pinref part="R20" gate="G$1" pin="2"/>
 <wire x1="66.04" y1="93.98" x2="68.58" y2="93.98" width="0.1524" layer="91"/>
 <wire x1="68.58" y1="93.98" x2="68.58" y2="66.04" width="0.1524" layer="91"/>
 </segment>
@@ -10564,7 +10570,7 @@ part number 2062-2P from STA</description>
 <segment>
 <pinref part="BC127" gate="G$1" pin="MIC_RP"/>
 <wire x1="60.96" y1="93.98" x2="60.96" y2="91.44" width="0.1524" layer="91"/>
-<pinref part="R19" gate="G$1" pin="1"/>
+<pinref part="R20" gate="G$1" pin="1"/>
 <wire x1="58.42" y1="66.04" x2="58.42" y2="91.44" width="0.1524" layer="91"/>
 <wire x1="58.42" y1="91.44" x2="60.96" y2="91.44" width="0.1524" layer="91"/>
 <wire x1="60.96" y1="91.44" x2="60.96" y2="88.9" width="0.1524" layer="91"/>
@@ -10576,7 +10582,7 @@ part number 2062-2P from STA</description>
 <segment>
 <pinref part="SUPPLY10" gate="G$1" pin="3.3V"/>
 <wire x1="91.44" y1="172.72" x2="101.6" y2="172.72" width="0.1524" layer="91"/>
-<pinref part="R18" gate="G$1" pin="2"/>
+<pinref part="R19" gate="G$1" pin="2"/>
 <wire x1="45.72" y1="172.72" x2="50.8" y2="172.72" width="0.1524" layer="91"/>
 <junction x="91.44" y="172.72"/>
 <pinref part="BC127" gate="G$1" pin="VDD_PADS"/>
@@ -10600,9 +10606,9 @@ part number 2062-2P from STA</description>
 <segment>
 <pinref part="SUPPLY11" gate="G$1" pin="3.3V"/>
 <wire x1="144.78" y1="157.48" x2="144.78" y2="154.94" width="0.1524" layer="91"/>
-<pinref part="C19" gate="G$1" pin="1"/>
+<pinref part="C22" gate="G$1" pin="1"/>
 <wire x1="144.78" y1="154.94" x2="149.86" y2="154.94" width="0.1524" layer="91"/>
-<pinref part="C21" gate="G$1" pin="1"/>
+<pinref part="C23" gate="G$1" pin="1"/>
 <wire x1="149.86" y1="154.94" x2="162.56" y2="154.94" width="0.1524" layer="91"/>
 <junction x="149.86" y="154.94"/>
 <wire x1="162.56" y1="154.94" x2="175.26" y2="154.94" width="0.1524" layer="91"/>
@@ -10627,8 +10633,8 @@ part number 2062-2P from STA</description>
 <segment>
 <pinref part="SUPPLY12" gate="G$1" pin="3.3V"/>
 <pinref part="C27" gate="G$1" pin="1"/>
-<wire x1="231.14" y1="154.94" x2="231.14" y2="152.4" width="0.1524" layer="91"/>
-<wire x1="231.14" y1="152.4" x2="231.14" y2="149.86" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="162.56" x2="231.14" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="154.94" x2="231.14" y2="149.86" width="0.1524" layer="91"/>
 <wire x1="231.14" y1="149.86" x2="231.14" y2="147.32" width="0.1524" layer="91"/>
 <wire x1="231.14" y1="147.32" x2="228.6" y2="147.32" width="0.1524" layer="91"/>
 <pinref part="C26" gate="G$1" pin="1"/>
@@ -10650,20 +10656,20 @@ part number 2062-2P from STA</description>
 <junction x="231.14" y="137.16"/>
 <wire x1="236.22" y1="149.86" x2="231.14" y2="149.86" width="0.1524" layer="91"/>
 <junction x="231.14" y="149.86"/>
-<pinref part="PCM5102A" gate="G$1" pin="FLT"/>
-<wire x1="205.74" y1="119.38" x2="246.38" y2="119.38" width="0.1524" layer="91"/>
-<wire x1="246.38" y1="119.38" x2="246.38" y2="152.4" width="0.1524" layer="91"/>
-<wire x1="246.38" y1="152.4" x2="231.14" y2="152.4" width="0.1524" layer="91"/>
-<junction x="231.14" y="152.4"/>
+<wire x1="231.14" y1="154.94" x2="213.36" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="213.36" y1="154.94" x2="213.36" y2="134.62" width="0.1524" layer="91"/>
+<junction x="231.14" y="154.94"/>
 <pinref part="PCM5102A" gate="G$1" pin="XSMT"/>
-<wire x1="205.74" y1="134.62" x2="210.82" y2="134.62" width="0.1524" layer="91"/>
-<wire x1="210.82" y1="134.62" x2="213.36" y2="134.62" width="0.1524" layer="91"/>
-<wire x1="213.36" y1="134.62" x2="213.36" y2="152.4" width="0.1524" layer="91"/>
-<wire x1="213.36" y1="152.4" x2="231.14" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="213.36" y1="134.62" x2="208.28" y2="134.62" width="0.1524" layer="91"/>
 <pinref part="PCM5102A" gate="G$1" pin="FMT"/>
-<wire x1="205.74" y1="132.08" x2="210.82" y2="132.08" width="0.1524" layer="91"/>
-<wire x1="210.82" y1="132.08" x2="210.82" y2="134.62" width="0.1524" layer="91"/>
-<junction x="210.82" y="134.62"/>
+<wire x1="208.28" y1="134.62" x2="205.74" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="205.74" y1="132.08" x2="208.28" y2="132.08" width="0.1524" layer="91"/>
+<wire x1="208.28" y1="132.08" x2="208.28" y2="134.62" width="0.1524" layer="91"/>
+<junction x="208.28" y="134.62"/>
+<pinref part="PCM5102A" gate="G$1" pin="FLT"/>
+<wire x1="205.74" y1="119.38" x2="243.84" y2="119.38" width="0.1524" layer="91"/>
+<wire x1="243.84" y1="119.38" x2="243.84" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="243.84" y1="154.94" x2="231.14" y2="154.94" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="DAC_CAPP" class="0">
@@ -10672,7 +10678,7 @@ part number 2062-2P from STA</description>
 <wire x1="175.26" y1="139.7" x2="172.72" y2="139.7" width="0.1524" layer="91"/>
 <wire x1="172.72" y1="139.7" x2="172.72" y2="144.78" width="0.1524" layer="91"/>
 <wire x1="172.72" y1="144.78" x2="147.32" y2="144.78" width="0.1524" layer="91"/>
-<pinref part="C20" gate="G$1" pin="1"/>
+<pinref part="C21" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="DAC_OUT_R" class="0">
@@ -10696,7 +10702,7 @@ part number 2062-2P from STA</description>
 </net>
 <net name="DAC_CAPM" class="0">
 <segment>
-<pinref part="C20" gate="G$1" pin="2"/>
+<pinref part="C21" gate="G$1" pin="2"/>
 <wire x1="147.32" y1="137.16" x2="147.32" y2="134.62" width="0.1524" layer="91"/>
 <pinref part="PCM5102A" gate="G$1" pin="CAPM"/>
 <wire x1="175.26" y1="134.62" x2="147.32" y2="134.62" width="0.1524" layer="91"/>
@@ -10715,7 +10721,7 @@ part number 2062-2P from STA</description>
 <net name="SPKR_OUT_R" class="0">
 <segment>
 <pinref part="R15" gate="G$1" pin="1"/>
-<pinref part="C22" gate="G$1" pin="1"/>
+<pinref part="C19" gate="G$1" pin="1"/>
 <wire x1="144.78" y1="114.3" x2="144.78" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="144.78" y1="106.68" x2="144.78" y2="104.14" width="0.1524" layer="91"/>
 <junction x="144.78" y="106.68"/>
@@ -10724,7 +10730,7 @@ part number 2062-2P from STA</description>
 </net>
 <net name="DAC_VNEG" class="0">
 <segment>
-<pinref part="C23" gate="G$1" pin="1"/>
+<pinref part="C20" gate="G$1" pin="1"/>
 <wire x1="157.48" y1="137.16" x2="157.48" y2="132.08" width="0.1524" layer="91"/>
 <pinref part="PCM5102A" gate="G$1" pin="VNEG"/>
 <wire x1="157.48" y1="132.08" x2="175.26" y2="132.08" width="0.1524" layer="91"/>
@@ -10747,7 +10753,7 @@ part number 2062-2P from STA</description>
 <label x="172.72" y="109.22" size="1.27" layer="95" rot="R270" xref="yes"/>
 <pinref part="SH1" gate="G$1" pin="P$2"/>
 <junction x="167.64" y="114.3"/>
-<pinref part="C23" gate="G$1" pin="2"/>
+<pinref part="C20" gate="G$1" pin="2"/>
 <pinref part="PCM5102A" gate="G$1" pin="CPGND"/>
 <wire x1="175.26" y1="137.16" x2="172.72" y2="137.16" width="0.1524" layer="91"/>
 <wire x1="172.72" y1="137.16" x2="170.18" y2="137.16" width="0.1524" layer="91"/>
@@ -10755,14 +10761,14 @@ part number 2062-2P from STA</description>
 <wire x1="172.72" y1="121.92" x2="172.72" y2="137.16" width="0.1524" layer="91"/>
 <junction x="172.72" y="121.92"/>
 <junction x="172.72" y="137.16"/>
-<pinref part="C19" gate="G$1" pin="2"/>
-<pinref part="C21" gate="G$1" pin="2"/>
+<pinref part="C22" gate="G$1" pin="2"/>
+<pinref part="C23" gate="G$1" pin="2"/>
 <wire x1="162.56" y1="147.32" x2="149.86" y2="147.32" width="0.1524" layer="91"/>
 <wire x1="162.56" y1="147.32" x2="170.18" y2="147.32" width="0.1524" layer="91"/>
 <junction x="162.56" y="147.32"/>
 <wire x1="170.18" y1="147.32" x2="170.18" y2="137.16" width="0.1524" layer="91"/>
 <junction x="170.18" y="137.16"/>
-<pinref part="C22" gate="G$1" pin="2"/>
+<pinref part="C19" gate="G$1" pin="2"/>
 <wire x1="157.48" y1="114.3" x2="157.48" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="157.48" y1="106.68" x2="152.4" y2="106.68" width="0.1524" layer="91"/>
 <junction x="157.48" y="114.3"/>
@@ -10772,30 +10778,6 @@ part number 2062-2P from STA</description>
 <wire x1="124.46" y1="86.36" x2="157.48" y2="86.36" width="0.1524" layer="91"/>
 <wire x1="157.48" y1="86.36" x2="157.48" y2="106.68" width="0.1524" layer="91"/>
 <junction x="157.48" y="106.68"/>
-</segment>
-</net>
-<net name="BT_DCLK" class="0">
-<segment>
-<pinref part="BC127" gate="G$1" pin="PCM1_CLK"/>
-<wire x1="88.9" y1="127" x2="91.44" y2="127" width="0.1524" layer="91"/>
-<label x="91.44" y="127" size="1.27" layer="95" xref="yes"/>
-</segment>
-<segment>
-<pinref part="PCM5102A" gate="G$1" pin="BCK"/>
-<wire x1="205.74" y1="124.46" x2="208.28" y2="124.46" width="0.1524" layer="91"/>
-<label x="208.28" y="124.46" size="1.27" layer="95" xref="yes"/>
-</segment>
-</net>
-<net name="BT_DWS" class="0">
-<segment>
-<pinref part="BC127" gate="G$1" pin="PCM1_SYNC"/>
-<wire x1="88.9" y1="129.54" x2="91.44" y2="129.54" width="0.1524" layer="91"/>
-<label x="91.44" y="129.54" size="1.27" layer="95" xref="yes"/>
-</segment>
-<segment>
-<pinref part="PCM5102A" gate="G$1" pin="LRCK"/>
-<wire x1="205.74" y1="129.54" x2="208.28" y2="129.54" width="0.1524" layer="91"/>
-<label x="208.28" y="129.54" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="BT_DOUT" class="0">
@@ -10813,7 +10795,7 @@ part number 2062-2P from STA</description>
 <net name="BT_3V3_FILTER" class="0">
 <segment>
 <pinref part="C31" gate="G$1" pin="1"/>
-<pinref part="R18" gate="G$1" pin="1"/>
+<pinref part="R19" gate="G$1" pin="1"/>
 <wire x1="12.7" y1="172.72" x2="25.4" y2="172.72" width="0.1524" layer="91"/>
 <pinref part="BC127" gate="G$1" pin="VCHG"/>
 <wire x1="25.4" y1="172.72" x2="35.56" y2="172.72" width="0.1524" layer="91"/>
@@ -10833,6 +10815,30 @@ part number 2062-2P from STA</description>
 <pinref part="BC127" gate="G$1" pin="VREGEN"/>
 <wire x1="88.9" y1="157.48" x2="91.44" y2="157.48" width="0.1524" layer="91"/>
 <label x="91.44" y="157.48" size="1.27" layer="95" rot="R90" xref="yes"/>
+</segment>
+</net>
+<net name="BT_LRCK" class="0">
+<segment>
+<pinref part="BC127" gate="G$1" pin="PCM1_SYNC"/>
+<wire x1="88.9" y1="129.54" x2="91.44" y2="129.54" width="0.1524" layer="91"/>
+<label x="91.44" y="129.54" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="PCM5102A" gate="G$1" pin="LRCK"/>
+<wire x1="205.74" y1="129.54" x2="208.28" y2="129.54" width="0.1524" layer="91"/>
+<label x="208.28" y="129.54" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="BT_CLK" class="0">
+<segment>
+<pinref part="PCM5102A" gate="G$1" pin="BCK"/>
+<wire x1="205.74" y1="124.46" x2="208.28" y2="124.46" width="0.1524" layer="91"/>
+<label x="208.28" y="124.46" size="1.27" layer="95" xref="yes"/>
+</segment>
+<segment>
+<pinref part="BC127" gate="G$1" pin="PCM1_CLK"/>
+<wire x1="88.9" y1="127" x2="91.44" y2="127" width="0.1524" layer="91"/>
+<label x="91.44" y="127" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>
