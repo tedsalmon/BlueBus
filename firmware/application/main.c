@@ -39,9 +39,6 @@ int main(void)
     UARTAddModuleHandler(&systemUart);
     LogInfo("***** BlueBus Init *****");
 
-    BC127_RESET_PIN_MODE = 0;
-    BC127_RESET_PIN = 1;
-
     struct BC127_t bt = BC127Init();
     UARTAddModuleHandler(&bt.uart);
 

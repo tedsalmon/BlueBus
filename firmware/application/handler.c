@@ -396,6 +396,13 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         // Always assume that we're playing, that way the radio can tell us
         // if we shouldn't be, then we can deduce the system state
         context->ibus->cdChangerStatus = IBUS_CDC_PLAYING;
+        // Anounce the CDC to the network
+        IBusCommandCDCAnnounce(context->ibus);
+        IBusCommandCDCStatus(
+            context->ibus,
+            IBUS_CDC_START_PLAYING,
+            context->ibus->cdChangerStatus
+        );
         // Reset the metadata so we don't display the wrong data
         BC127ClearMetadata(context->bt);
         // Set the BT module connectable
