@@ -12,10 +12,13 @@ access to their vehicles service data and module information.
 * Firmware upgradable
 * Full integration with CD53 / BoardMonitor
 * User Configurable
-
+* Natively DSP Compatible
 
 # Hardware
 * PIC24FJ1024GA606 16-bit MCU
 * BC127 A2DP / AVRCP Bluetooth Module
 * Melexis TH3122.4 LIN Transceiver
-* TPA6017A2 Stereo Amplifier
+* PCN5102A Line-Level DAC
+* 25LC512 512kB EEPROM
+* MCP2221 UART to USB converter
+* Littleblock 1.5A Fuse
