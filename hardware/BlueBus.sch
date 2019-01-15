@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.2.2">
+<eagle version="9.3.0">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -10634,8 +10634,7 @@ part number 2062-2P from STA</description>
 <pinref part="SUPPLY12" gate="G$1" pin="3.3V"/>
 <pinref part="C27" gate="G$1" pin="1"/>
 <wire x1="231.14" y1="162.56" x2="231.14" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="231.14" y1="154.94" x2="231.14" y2="149.86" width="0.1524" layer="91"/>
-<wire x1="231.14" y1="149.86" x2="231.14" y2="147.32" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="154.94" x2="231.14" y2="147.32" width="0.1524" layer="91"/>
 <wire x1="231.14" y1="147.32" x2="228.6" y2="147.32" width="0.1524" layer="91"/>
 <pinref part="C26" gate="G$1" pin="1"/>
 <wire x1="228.6" y1="147.32" x2="218.44" y2="147.32" width="0.1524" layer="91"/>
@@ -10645,17 +10644,6 @@ part number 2062-2P from STA</description>
 <wire x1="208.28" y1="147.32" x2="208.28" y2="142.24" width="0.1524" layer="91"/>
 <pinref part="PCM5102A" gate="G$1" pin="DVDD"/>
 <wire x1="208.28" y1="142.24" x2="205.74" y2="142.24" width="0.1524" layer="91"/>
-<pinref part="PCM5102A" gate="G$1" pin="LDOO"/>
-<pinref part="C28" gate="G$1" pin="1"/>
-<wire x1="205.74" y1="137.16" x2="220.98" y2="137.16" width="0.1524" layer="91"/>
-<pinref part="C29" gate="G$1" pin="1"/>
-<wire x1="220.98" y1="137.16" x2="231.14" y2="137.16" width="0.1524" layer="91"/>
-<junction x="220.98" y="137.16"/>
-<wire x1="231.14" y1="137.16" x2="236.22" y2="137.16" width="0.1524" layer="91"/>
-<wire x1="236.22" y1="137.16" x2="236.22" y2="149.86" width="0.1524" layer="91"/>
-<junction x="231.14" y="137.16"/>
-<wire x1="236.22" y1="149.86" x2="231.14" y2="149.86" width="0.1524" layer="91"/>
-<junction x="231.14" y="149.86"/>
 <wire x1="231.14" y1="154.94" x2="213.36" y2="154.94" width="0.1524" layer="91"/>
 <wire x1="213.36" y1="154.94" x2="213.36" y2="134.62" width="0.1524" layer="91"/>
 <junction x="231.14" y="154.94"/>
@@ -10839,6 +10827,16 @@ part number 2062-2P from STA</description>
 <pinref part="BC127" gate="G$1" pin="PCM1_CLK"/>
 <wire x1="88.9" y1="127" x2="91.44" y2="127" width="0.1524" layer="91"/>
 <label x="91.44" y="127" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="LDOO" class="2">
+<segment>
+<pinref part="C29" gate="G$1" pin="1"/>
+<pinref part="C28" gate="G$1" pin="1"/>
+<wire x1="220.98" y1="137.16" x2="231.14" y2="137.16" width="0.1524" layer="91"/>
+<junction x="220.98" y="137.16"/>
+<pinref part="PCM5102A" gate="G$1" pin="LDOO"/>
+<wire x1="205.74" y1="137.16" x2="220.98" y2="137.16" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
