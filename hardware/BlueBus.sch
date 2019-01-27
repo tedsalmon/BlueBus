@@ -9715,6 +9715,11 @@ part number 2062-2P from STA</description>
 <wire x1="220.98" y1="55.88" x2="220.98" y2="30.48" width="0.1524" layer="91"/>
 <junction x="220.98" y="30.48"/>
 </segment>
+<segment>
+<pinref part="MIC_IN" gate="G$1" pin="2"/>
+<wire x1="215.9" y1="167.64" x2="215.9" y2="165.1" width="0.1524" layer="91"/>
+<label x="215.9" y="165.1" size="1.27" layer="95" rot="R270" xref="yes"/>
+</segment>
 </net>
 <net name="VIN" class="3">
 <segment>
@@ -10152,18 +10157,11 @@ part number 2062-2P from STA</description>
 <label x="198.12" y="165.1" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
-<net name="BT_MIC_RP" class="0">
+<net name="BT_MIC_IN" class="0">
 <segment>
 <pinref part="MIC_IN" gate="G$1" pin="1"/>
 <wire x1="213.36" y1="167.64" x2="213.36" y2="165.1" width="0.1524" layer="91"/>
 <label x="213.36" y="165.1" size="1.27" layer="95" rot="R270" xref="yes"/>
-</segment>
-</net>
-<net name="BT_MIC_RN" class="0">
-<segment>
-<pinref part="MIC_IN" gate="G$1" pin="2"/>
-<wire x1="215.9" y1="167.64" x2="215.9" y2="165.1" width="0.1524" layer="91"/>
-<label x="215.9" y="165.1" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="BT_URX" class="5">
@@ -10356,9 +10354,9 @@ part number 2062-2P from STA</description>
 <attribute name="NAME" x="100.076" y="147.32" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="103.124" y="147.32" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
-<instance part="R20" gate="G$1" x="63.5" y="66.04" smashed="yes">
-<attribute name="NAME" x="63.5" y="67.564" size="1.778" layer="95" font="vector" align="bottom-center"/>
-<attribute name="VALUE" x="63.5" y="64.516" size="1.778" layer="96" font="vector" align="top-center"/>
+<instance part="R20" gate="G$1" x="50.8" y="78.74" smashed="yes" rot="R270">
+<attribute name="NAME" x="52.324" y="78.74" size="1.778" layer="95" font="vector" rot="R270" align="bottom-center"/>
+<attribute name="VALUE" x="49.276" y="78.74" size="1.778" layer="96" font="vector" rot="R270" align="top-center"/>
 </instance>
 <instance part="SUPPLY10" gate="G$1" x="91.44" y="172.72" smashed="yes">
 <attribute name="VALUE" x="91.44" y="175.514" size="1.778" layer="96" align="bottom-center"/>
@@ -10508,8 +10506,12 @@ part number 2062-2P from STA</description>
 <junction x="238.76" y="129.54"/>
 <pinref part="PCM5102A" gate="G$1" pin="SCK"/>
 <wire x1="205.74" y1="121.92" x2="210.82" y2="121.92" width="0.1524" layer="91"/>
-<wire x1="210.82" y1="121.92" x2="210.82" y2="116.84" width="0.1524" layer="91"/>
+<wire x1="210.82" y1="121.92" x2="210.82" y2="119.38" width="0.1524" layer="91"/>
+<wire x1="210.82" y1="119.38" x2="210.82" y2="116.84" width="0.1524" layer="91"/>
 <wire x1="210.82" y1="116.84" x2="238.76" y2="116.84" width="0.1524" layer="91"/>
+<pinref part="PCM5102A" gate="G$1" pin="FLT"/>
+<wire x1="205.74" y1="119.38" x2="210.82" y2="119.38" width="0.1524" layer="91"/>
+<junction x="210.82" y="119.38"/>
 </segment>
 <segment>
 <pinref part="PCM5102A" gate="G$1" pin="DEMP"/>
@@ -10525,21 +10527,6 @@ part number 2062-2P from STA</description>
 <pinref part="C31" gate="G$1" pin="2"/>
 <wire x1="12.7" y1="165.1" x2="12.7" y2="162.56" width="0.1524" layer="91"/>
 <pinref part="GND15" gate="1" pin="GND"/>
-</segment>
-</net>
-<net name="BT_MIC_RN" class="0">
-<segment>
-<pinref part="BC127" gate="G$1" pin="MIC_RN"/>
-<wire x1="63.5" y1="93.98" x2="63.5" y2="88.9" width="0.1524" layer="91"/>
-<label x="63.5" y="88.9" size="1.27" layer="95" rot="R270" xref="yes"/>
-</segment>
-</net>
-<net name="BT_MIC_BIAS" class="0">
-<segment>
-<pinref part="BC127" gate="G$1" pin="MIC_BIAS"/>
-<pinref part="R20" gate="G$1" pin="2"/>
-<wire x1="66.04" y1="93.98" x2="68.58" y2="93.98" width="0.1524" layer="91"/>
-<wire x1="68.58" y1="93.98" x2="68.58" y2="66.04" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="BT_UTX" class="5">
@@ -10564,18 +10551,6 @@ part number 2062-2P from STA</description>
 <pinref part="R8" gate="G$1" pin="2"/>
 <wire x1="106.68" y1="137.16" x2="109.22" y2="137.16" width="0.1524" layer="91"/>
 <label x="109.22" y="137.16" size="1.27" layer="95" xref="yes"/>
-</segment>
-</net>
-<net name="BT_MIC_RP" class="0">
-<segment>
-<pinref part="BC127" gate="G$1" pin="MIC_RP"/>
-<wire x1="60.96" y1="93.98" x2="60.96" y2="91.44" width="0.1524" layer="91"/>
-<pinref part="R20" gate="G$1" pin="1"/>
-<wire x1="58.42" y1="66.04" x2="58.42" y2="91.44" width="0.1524" layer="91"/>
-<wire x1="58.42" y1="91.44" x2="60.96" y2="91.44" width="0.1524" layer="91"/>
-<wire x1="60.96" y1="91.44" x2="60.96" y2="88.9" width="0.1524" layer="91"/>
-<junction x="60.96" y="91.44"/>
-<label x="60.96" y="88.9" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="3.3V" class="2">
@@ -10654,10 +10629,6 @@ part number 2062-2P from STA</description>
 <wire x1="205.74" y1="132.08" x2="208.28" y2="132.08" width="0.1524" layer="91"/>
 <wire x1="208.28" y1="132.08" x2="208.28" y2="134.62" width="0.1524" layer="91"/>
 <junction x="208.28" y="134.62"/>
-<pinref part="PCM5102A" gate="G$1" pin="FLT"/>
-<wire x1="205.74" y1="119.38" x2="243.84" y2="119.38" width="0.1524" layer="91"/>
-<wire x1="243.84" y1="119.38" x2="243.84" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="243.84" y1="154.94" x2="231.14" y2="154.94" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="DAC_CAPP" class="0">
@@ -10837,6 +10808,29 @@ part number 2062-2P from STA</description>
 <junction x="220.98" y="137.16"/>
 <pinref part="PCM5102A" gate="G$1" pin="LDOO"/>
 <wire x1="205.74" y1="137.16" x2="220.98" y2="137.16" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="MIC_BIAS" class="0">
+<segment>
+<pinref part="BC127" gate="G$1" pin="MIC_BIAS"/>
+<wire x1="66.04" y1="93.98" x2="66.04" y2="73.66" width="0.1524" layer="91"/>
+<wire x1="66.04" y1="73.66" x2="55.88" y2="73.66" width="0.1524" layer="91"/>
+<pinref part="BC127" gate="G$1" pin="MIC_LP"/>
+<wire x1="55.88" y1="93.98" x2="55.88" y2="73.66" width="0.1524" layer="91"/>
+<pinref part="R20" gate="G$1" pin="2"/>
+<wire x1="55.88" y1="73.66" x2="50.8" y2="73.66" width="0.1524" layer="91"/>
+<junction x="55.88" y="73.66"/>
+</segment>
+</net>
+<net name="BT_MIC_IN" class="0">
+<segment>
+<pinref part="BC127" gate="G$1" pin="MIC_LN"/>
+<wire x1="58.42" y1="93.98" x2="58.42" y2="83.82" width="0.1524" layer="91"/>
+<label x="45.72" y="83.82" size="1.27" layer="95" rot="R180" xref="yes"/>
+<pinref part="R20" gate="G$1" pin="1"/>
+<wire x1="58.42" y1="83.82" x2="50.8" y2="83.82" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="83.82" x2="45.72" y2="83.82" width="0.1524" layer="91"/>
+<junction x="50.8" y="83.82"/>
 </segment>
 </net>
 </nets>
