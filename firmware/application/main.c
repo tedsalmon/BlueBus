@@ -9,7 +9,7 @@
 #include <xc.h>
 #include "config.h"
 #include "handler.h"
-#include "io_mappings.h"
+#include "mappings.h"
 #include "lib/bc127.h"
 #include "lib/debug.h"
 #include "lib/eeprom.h"

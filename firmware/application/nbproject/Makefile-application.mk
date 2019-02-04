@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=lib/bc127.c lib/char_queue.c lib/debug.c lib/eeprom.c lib/event.c lib/ibus.c lib/sfr_setters.s lib/timer.c lib/uart.c lib/utils.c ui/bmbt.c ui/cd53.c main.c handler.c
+SOURCEFILES_QUOTED_IF_SPACED=lib/bc127.c lib/char_queue.c lib/cli.c lib/debug.c lib/eeprom.c lib/event.c lib/ibus.c lib/sfr_setters.s lib/timer.c lib/uart.c lib/utils.c ui/bmbt.c ui/cd53.c main.c handler.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/debug.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/ui/bmbt.o ${OBJECTDIR}/ui/cd53.o ${OBJECTDIR}/main.o ${OBJECTDIR}/handler.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/lib/bc127.o.d ${OBJECTDIR}/lib/char_queue.o.d ${OBJECTDIR}/lib/debug.o.d ${OBJECTDIR}/lib/eeprom.o.d ${OBJECTDIR}/lib/event.o.d ${OBJECTDIR}/lib/ibus.o.d ${OBJECTDIR}/lib/sfr_setters.o.d ${OBJECTDIR}/lib/timer.o.d ${OBJECTDIR}/lib/uart.o.d ${OBJECTDIR}/lib/utils.o.d ${OBJECTDIR}/ui/bmbt.o.d ${OBJECTDIR}/ui/cd53.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/handler.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/cli.o ${OBJECTDIR}/lib/debug.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/ui/bmbt.o ${OBJECTDIR}/ui/cd53.o ${OBJECTDIR}/main.o ${OBJECTDIR}/handler.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/lib/bc127.o.d ${OBJECTDIR}/lib/char_queue.o.d ${OBJECTDIR}/lib/cli.o.d ${OBJECTDIR}/lib/debug.o.d ${OBJECTDIR}/lib/eeprom.o.d ${OBJECTDIR}/lib/event.o.d ${OBJECTDIR}/lib/ibus.o.d ${OBJECTDIR}/lib/sfr_setters.o.d ${OBJECTDIR}/lib/timer.o.d ${OBJECTDIR}/lib/uart.o.d ${OBJECTDIR}/lib/utils.o.d ${OBJECTDIR}/ui/bmbt.o.d ${OBJECTDIR}/ui/cd53.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/handler.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/debug.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/ui/bmbt.o ${OBJECTDIR}/ui/cd53.o ${OBJECTDIR}/main.o ${OBJECTDIR}/handler.o
+OBJECTFILES=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/cli.o ${OBJECTDIR}/lib/debug.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/ui/bmbt.o ${OBJECTDIR}/ui/cd53.o ${OBJECTDIR}/main.o ${OBJECTDIR}/handler.o
 
 # Source Files
-SOURCEFILES=lib/bc127.c lib/char_queue.c lib/debug.c lib/eeprom.c lib/event.c lib/ibus.c lib/sfr_setters.s lib/timer.c lib/uart.c lib/utils.c ui/bmbt.c ui/cd53.c main.c handler.c
+SOURCEFILES=lib/bc127.c lib/char_queue.c lib/cli.c lib/debug.c lib/eeprom.c lib/event.c lib/ibus.c lib/sfr_setters.s lib/timer.c lib/uart.c lib/utils.c ui/bmbt.c ui/cd53.c main.c handler.c
 
 
 CFLAGS=
@@ -107,6 +107,13 @@ ${OBJECTDIR}/lib/char_queue.o: lib/char_queue.c  nbproject/Makefile-${CND_CONF}.
 	@${RM} ${OBJECTDIR}/lib/char_queue.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/char_queue.c  -o ${OBJECTDIR}/lib/char_queue.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/char_queue.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/char_queue.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/lib/cli.o: lib/cli.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/lib" 
+	@${RM} ${OBJECTDIR}/lib/cli.o.d 
+	@${RM} ${OBJECTDIR}/lib/cli.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/cli.c  -o ${OBJECTDIR}/lib/cli.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/cli.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/cli.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/lib/debug.o: lib/debug.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
@@ -199,6 +206,13 @@ ${OBJECTDIR}/lib/char_queue.o: lib/char_queue.c  nbproject/Makefile-${CND_CONF}.
 	@${RM} ${OBJECTDIR}/lib/char_queue.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/char_queue.c  -o ${OBJECTDIR}/lib/char_queue.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/char_queue.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/char_queue.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/lib/cli.o: lib/cli.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/lib" 
+	@${RM} ${OBJECTDIR}/lib/cli.o.d 
+	@${RM} ${OBJECTDIR}/lib/cli.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/cli.c  -o ${OBJECTDIR}/lib/cli.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/cli.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/cli.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/lib/debug.o: lib/debug.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 

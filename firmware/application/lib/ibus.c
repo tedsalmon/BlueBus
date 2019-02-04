@@ -29,7 +29,7 @@ IBus_t IBusInit()
     );
     // Assume we're playing and the key inserted, so device resets are graceful
     ibus.cdChangerStatus = IBUS_CDC_NOT_PLAYING;
-    ibus.ignitionStatus = 0;
+    ibus.ignitionStatus = IBUS_IGNITION_OFF;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;

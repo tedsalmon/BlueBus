@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "../io_mappings.h"
+#include "../mappings.h"
 #include "debug.h"
 #include "event.h"
 #include "uart.h"

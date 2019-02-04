@@ -7,6 +7,7 @@
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <itemPath>lib/bc127.h</itemPath>
         <itemPath>lib/char_queue.h</itemPath>
+        <itemPath>lib/cli.h</itemPath>
         <itemPath>lib/debug.h</itemPath>
         <itemPath>lib/eeprom.h</itemPath>
         <itemPath>lib/event.h</itemPath>
@@ -20,9 +21,9 @@
         <itemPath>ui/bmbt.h</itemPath>
         <itemPath>ui/cd53.h</itemPath>
       </logicalFolder>
-      <itemPath>io_mappings.h</itemPath>
       <itemPath>handler.h</itemPath>
       <itemPath>config.h</itemPath>
+      <itemPath>mappings.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -37,6 +38,7 @@
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
         <itemPath>lib/bc127.c</itemPath>
         <itemPath>lib/char_queue.c</itemPath>
+        <itemPath>lib/cli.c</itemPath>
         <itemPath>lib/debug.c</itemPath>
         <itemPath>lib/eeprom.c</itemPath>
         <itemPath>lib/event.c</itemPath>

@@ -8,7 +8,7 @@
 #define DEBUG_H
 #include <stdarg.h>
 #include <stdio.h>
-#include "../io_mappings.h"
+#include "../mappings.h"
 #include "timer.h"
 #include "uart.h"
 void LogMessage(const char *, char *);

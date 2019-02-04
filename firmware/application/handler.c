@@ -44,11 +44,6 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &Context
     );
     EventRegisterCallback(
-        BC127Event_DeviceFound,
-        &HandlerBC127DeviceFound,
-        &Context
-    );
-    EventRegisterCallback(
         BC127Event_PlaybackStatusChange,
         &HandlerBC127PlaybackStatus,
         &Context
@@ -103,7 +98,8 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &Context,
         HANDLER_SCAN_INT
     );
-    HandlerStartup(&Context);
+    // Poll the vehicle for the ignition status so we can configure ourselves
+    IBusCommandIKEGetIgnition(Context.ibus);
     switch (uiMode) {
         case HANDLER_UI_MODE_CD53:
             CD53Init(bt, ibus);
@@ -112,26 +108,6 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
             BMBTInit(bt, ibus);
             break;
     }
-}
-
-/**
- * HandlerStartup()
- *     Description:
- *         On application startup, announce that we are a CDC on the IBus. We
- *         also poll the GT, if it's on the network, for its diagnostics info
- *         and the IKE for the ignition status. We also setup the BC127's
- *         connectivity status.
- *     Params:
- *         HandlerContext_t *context - The context for the handler
- *     Returns:
- *         void
- */
-void HandlerStartup(HandlerContext_t *context)
-{
-    IBusCommandRADGetDiagnostics(context->ibus);
-    IBusCommandIKEGetIgnition(context->ibus);
-    IBusCommandCDCAnnounce(context->ibus);
-    BC127CommandBtState(context->bt, BC127_STATE_OFF, BC127_STATE_OFF);
 }
 
 /**
@@ -153,7 +129,11 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
         if (context->bt->activeDevice.avrcpLinkId != 0 &&
             context->bt->activeDevice.a2dpLinkId != 0
         ) {
-            BC127CommandBtState(context->bt, BC127_STATE_OFF, context->bt->discoverable);
+            BC127CommandBtState(
+                context->bt,
+                BC127_STATE_OFF,
+                context->bt->discoverable
+            );
         }
     } else {
         BC127CommandClose(context->bt, BC127_CLOSE_ALL);
@@ -183,30 +163,6 @@ void HandlerBC127DeviceDisconnected(void *ctx, unsigned char *data)
 }
 
 /**
- * HandlerBC127DeviceFound()
- *     Description:
- *         If a device is found and we are not connected, connect to it
- *     Params:
- *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerBC127DeviceFound(void *ctx, unsigned char *data)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->bt->activeDevice.deviceId == 0 &&
-        context->btConnectionStatus == HANDLER_BT_CONN_OFF &&
-        context->ibus->ignitionStatus == IBUS_IGNITION_ON
-    ) {
-        char *macId = (char *) data;
-        BC127CommandProfileOpen(context->bt, macId, "A2DP");
-        BC127CommandProfileOpen(context->bt, macId, "AVRCP");
-        context->btConnectionStatus = HANDLER_BT_CONN_ON;
-    }
-}
-
-/**
  * HandlerBC127PlaybackStatus()
  *     Description:
  *         If the application is starting, request the BC127 AVRCP Metadata
@@ -221,7 +177,7 @@ void HandlerBC127DeviceFound(void *ctx, unsigned char *data)
 void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    // If this is the first Status update
+    // If this is the first status update
     if (context->btStartupIsRun == 0) {
         if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
             // Request Metadata
@@ -231,7 +187,7 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
     }
     if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING &&
         context->ibus->cdChangerStatus <= IBUS_CDC_NOT_PLAYING
-    ){
+    ) {
         // We're playing but not in Bluetooth mode - stop playback
         BC127CommandPause(context->bt);
     }
@@ -508,6 +464,8 @@ void HandlerTimerOpenProfileErrors(void *ctx)
 void HandlerTimerScanDevices(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    BC127ClearInactivePairedDevices(context->bt);
-    BC127CommandList(context->bt);
+    if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
+        BC127ClearInactivePairedDevices(context->bt);
+        BC127CommandList(context->bt);
+    }
 }

@@ -120,7 +120,7 @@
 #define IBUS_TX_BUFFER_WAIT 10 // If we transmit faster, other modules may not hear us
 #include <stdint.h>
 #include <string.h>
-#include "../io_mappings.h"
+#include "../mappings.h"
 #include "char_queue.h"
 #include "debug.h"
 #include "event.h"
