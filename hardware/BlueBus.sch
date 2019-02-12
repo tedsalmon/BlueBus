@@ -10312,13 +10312,6 @@ part number 2062-2P from STA</description>
 </net>
 <net name="MCU_UTX" class="5">
 <segment>
-<pinref part="PIC24FJ1024GA606" gate="G$1" pin="RP22/ICM7/PMBE0/RD3"/>
-<wire x1="27.94" y1="45.72" x2="25.4" y2="45.72" width="0.1524" layer="91"/>
-<label x="25.4" y="45.72" size="1.27" layer="95" rot="R180" xref="yes"/>
-</segment>
-</net>
-<net name="MCU_URX" class="5">
-<segment>
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="RP24/U5TX/ICM4/RD1"/>
 <wire x1="27.94" y1="50.8" x2="25.4" y2="50.8" width="0.1524" layer="91"/>
 <label x="25.4" y="50.8" size="1.27" layer="95" rot="R180" xref="yes"/>
@@ -10336,6 +10329,13 @@ part number 2062-2P from STA</description>
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="RP23/PMACK1/RD2"/>
 <wire x1="27.94" y1="48.26" x2="25.4" y2="48.26" width="0.1524" layer="91"/>
 <label x="25.4" y="48.26" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="MCU_URX" class="5">
+<segment>
+<pinref part="PIC24FJ1024GA606" gate="G$1" pin="RP22/ICM7/PMBE0/RD3"/>
+<wire x1="27.94" y1="45.72" x2="25.4" y2="45.72" width="0.1524" layer="91"/>
+<label x="25.4" y="45.72" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 </nets>
@@ -11114,7 +11114,7 @@ part number 2062-2P from STA</description>
 <label x="134.62" y="45.72" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="MCU_UTX" class="5">
+<net name="MCU_URX" class="5">
 <segment>
 <pinref part="SN74LVC125A" gate="G$1" pin="4A"/>
 <wire x1="162.56" y1="40.64" x2="203.2" y2="40.64" width="0.1524" layer="91"/>
@@ -11123,7 +11123,7 @@ part number 2062-2P from STA</description>
 <label x="203.2" y="40.64" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="MCU_URX" class="5">
+<net name="MCU_UTX" class="5">
 <segment>
 <pinref part="SN74LVC125A" gate="G$1" pin="3A"/>
 <wire x1="162.56" y1="33.02" x2="210.82" y2="33.02" width="0.1524" layer="91"/>
