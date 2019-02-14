@@ -2,51 +2,35 @@
  * File: protocol.c
  * Author: Ted Salmon <tass2001@gmail.com>
  * Description:
- *     Implement a simple message protocol for the bootloader
+ *     Implement a simple data protocol for the bootloader
  */
 #include "protocol.h"
 
 /**
- * ProtocolBC127Proxy()
+ * ProtocolBC127Mode()
  *     Description:
  *         In order to allow the BC127 to be managed directly (including firmware
- *         upgrades), we proxy all data coming in from the system UART module
- *         to the BC127. It is not possible to exit this mode gracefully, so a
- *         hard reset of the device will be required in order to return to the
- *         regular system.
+ *         upgrades), we set the tri-state buffer mode to pass UART data from the
+ *         BC127 to the FT232R, rather than the MCU. It is not possible to exit
+ *         this mode gracefully, so a hard reset of the device will be required
+ *         in order to return to the regular system.
  *     Params:
- *         UART_t *systemUart - The system UART object
- *         UART_t *btUart - The BC127 UART object
+ *         None
  *     Returns:
  *         void
  */
-void ProtocolBC127Proxy(UART_t *systemUart, UART_t *btUart)
+void ProtocolBC127Mode()
 {
-    while (1) {
-        // While there is data in the system RX buffer
-        while ((systemUart->registers->uxsta & 0x1) == 1) {
-            // Clear the buffer overflow error, if it exists
-            if ((systemUart->registers->uxsta & 0x2) != 0) {
-                systemUart->registers->uxsta ^= 0x2;
-            }
-            btUart->registers->uxtxreg = systemUart->registers->uxrxreg;
-        }
-        // While there is data in the BC127 RX buffer
-        while ((btUart->registers->uxsta & 0x1) == 1) {
-            // Clear the buffer overflow error, if it exists
-            if ((btUart->registers->uxsta & 0x2) != 0) {
-                btUart->registers->uxsta ^= 0x2;
-            }
-            systemUart->registers->uxtxreg = btUart->registers->uxrxreg;
-        }
-    }
+    // Set the UART mode to BC127 after disabling the MCU UART
+    UART_SEL_MCU_MODE = UART_SEL_MODE_DISABLE;
+    UART_SEL_BT_MODE = UART_SEL_MODE_ENABLE;
 }
 
 /**
  * ProtocolFlashErase()
  *     Description:
- *         Iterate through the writable program space and clear all matching
- *         pages of memory. This should be done prior to any write operations
+ *         Iterate through the NVM space and clear all pages of memory.
+ *         This should be done prior to any write operations.
  *     Params:
  *         void
  *     Returns:
@@ -55,17 +39,21 @@ void ProtocolBC127Proxy(UART_t *systemUart, UART_t *btUart)
 void ProtocolFlashErase()
 {
     uint32_t address = 0x00000000;
+    FlashErasePage(address);
+    // Rewrite the RESET vector after clearing the first block
+    uint32_t resetInstruction = 0x40000 + BOOTLOADER_BOOTLOADER_START;
+    FlashWriteDWORDAddress(0x00000000, resetInstruction, 0x00000000);
+    address += _FLASH_ROW * 16;
     while (address <= BOOTLOADER_APPLICATION_END) {
-         if (address < BOOTLOADER_BOOTLOADER_START ||
+        if (address < BOOTLOADER_BOOTLOADER_START ||
              address >= BOOTLOADER_APPLICATION_START
         ) {
             FlashErasePage(address);
         }
-        address += _FLASH_ROW * 2;
+        // Pages are erased in 1024 instruction blocks
+        address += _FLASH_ROW * 16;
     }
-    // Reinitialize the RESET vector
-    uint32_t bootloaderStart = 0x00040000 + BOOTLOADER_BOOTLOADER_START;
-    FlashWriteDWORDAddress(0x00000000, bootloaderStart, 0x00000000);
+
 }
 
 /**
@@ -86,19 +74,19 @@ void ProtocolFlashWrite(UART_t *uart, ProtocolPacket_t *packet)
         ((uint32_t)packet->data[1] << 8) +
         ((uint32_t)packet->data[2])
     );
-    // Clear all available Program space NVM when the first address is pushed in
+    // If this is the first write request, erase all NVM
     if (address == 0x00000000) {
         ProtocolFlashErase();
     }
     uint8_t index = 3;
     uint8_t flashRes = 1;
     while (index < packet->dataSize && flashRes == 1) {
-        // Do not allow the RESET or Bootloader to be overwritten
+        // Do not allow the Bootloader to be overwritten
         if ((address >= BOOTLOADER_BOOTLOADER_START &&
             address < BOOTLOADER_APPLICATION_START) ||
             address < 0x04
         ) {
-            // Skip the current dword, since it overwrites protected memory
+            // Skip the current DWORD, since it overwrites protected memory
             address += 0x2;
             index += 3;
         } else {
@@ -253,5 +241,30 @@ uint8_t ProtocolValidatePacket(ProtocolPacket_t *packet, unsigned char validatio
         return PROTOCOL_PACKET_STATUS_OK;
     } else {
         return PROTOCOL_PACKET_STATUS_BAD;
+    }
+}
+
+/**
+ * ProtocolWriteSerialNumber()
+ *     Description:
+ *         Write the serial number to EEPROM if it's not already set
+ *     Params:
+ *         UART_t *uart - The UART struct to use for communication
+ *         ProtocolPacket_t *packet - The data packet structure
+ *     Returns:
+ *         void
+ */
+void ProtocolWriteSerialNumber(UART_t *uart, ProtocolPacket_t *packet)
+{
+    uint16_t serialNumber = (
+            (EEPROMReadByte(CONFIG_SN_MSB) << 8) | 
+            (EEPROMReadByte(CONFIG_SN_LSB) & 0xFF)
+    );
+    if (serialNumber == 0x0) {
+        EEPROMWriteByte(CONFIG_SN_MSB, packet->data[0]);
+        EEPROMWriteByte(CONFIG_SN_LSB, packet->data[1]);
+        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_SN_RESPONSE_OK, 0, 0);
+    } else {
+        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR, 0, 0);
     }
 }

@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=lib/uart.c lib/flash.c lib/timer.c lib/protocol.c main.c
+SOURCEFILES_QUOTED_IF_SPACED=lib/uart.c lib/flash.c lib/timer.c lib/protocol.c lib/eeprom.c main.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/flash.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/protocol.o ${OBJECTDIR}/main.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/lib/uart.o.d ${OBJECTDIR}/lib/flash.o.d ${OBJECTDIR}/lib/timer.o.d ${OBJECTDIR}/lib/protocol.o.d ${OBJECTDIR}/main.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/flash.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/protocol.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/main.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/lib/uart.o.d ${OBJECTDIR}/lib/flash.o.d ${OBJECTDIR}/lib/timer.o.d ${OBJECTDIR}/lib/protocol.o.d ${OBJECTDIR}/lib/eeprom.o.d ${OBJECTDIR}/main.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/flash.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/protocol.o ${OBJECTDIR}/main.o
+OBJECTFILES=${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/flash.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/protocol.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/main.o
 
 # Source Files
-SOURCEFILES=lib/uart.c lib/flash.c lib/timer.c lib/protocol.c main.c
+SOURCEFILES=lib/uart.c lib/flash.c lib/timer.c lib/protocol.c lib/eeprom.c main.c
 
 
 CFLAGS=
@@ -122,6 +122,13 @@ ${OBJECTDIR}/lib/protocol.o: lib/protocol.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/protocol.c  -o ${OBJECTDIR}/lib/protocol.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/protocol.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_bootloader=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/protocol.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/lib/eeprom.o: lib/eeprom.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/lib" 
+	@${RM} ${OBJECTDIR}/lib/eeprom.o.d 
+	@${RM} ${OBJECTDIR}/lib/eeprom.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/eeprom.c  -o ${OBJECTDIR}/lib/eeprom.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/eeprom.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_bootloader=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/eeprom.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 ${OBJECTDIR}/main.o: main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 
 	@${RM} ${OBJECTDIR}/main.o.d 
@@ -157,6 +164,13 @@ ${OBJECTDIR}/lib/protocol.o: lib/protocol.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/lib/protocol.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/protocol.c  -o ${OBJECTDIR}/lib/protocol.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/protocol.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_bootloader=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/protocol.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/lib/eeprom.o: lib/eeprom.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/lib" 
+	@${RM} ${OBJECTDIR}/lib/eeprom.o.d 
+	@${RM} ${OBJECTDIR}/lib/eeprom.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/eeprom.c  -o ${OBJECTDIR}/lib/eeprom.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/eeprom.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_bootloader=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/eeprom.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/main.o: main.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}" 

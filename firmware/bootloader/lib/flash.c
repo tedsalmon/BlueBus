@@ -22,7 +22,7 @@ uint8_t FlashErasePage(uint32_t address)
 
     // Set the upper and lower words of the address to be erased
     NVMADRU = address >> 16;
-    NVMADR = (address & 0xFF00);
+    NVMADR = address & 0xFFFF;
 
     __builtin_disi(5);
     __builtin_write_NVM();

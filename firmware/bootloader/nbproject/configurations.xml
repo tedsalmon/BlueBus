@@ -9,9 +9,10 @@
         <itemPath>lib/uart.h</itemPath>
         <itemPath>lib/timer.h</itemPath>
         <itemPath>lib/protocol.h</itemPath>
+        <itemPath>lib/eeprom.h</itemPath>
       </logicalFolder>
-      <itemPath>config.h</itemPath>
       <itemPath>mappings.h</itemPath>
+      <itemPath>sysconfig.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -26,6 +27,7 @@
         <itemPath>lib/flash.c</itemPath>
         <itemPath>lib/timer.c</itemPath>
         <itemPath>lib/protocol.c</itemPath>
+        <itemPath>lib/eeprom.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>
