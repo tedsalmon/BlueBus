@@ -111,6 +111,11 @@
 #define IBusEvent_ScreenModeSet 42
 #define IBusEvent_RADDiagResponse 43
 
+#define IBus_UI_CD53 1
+#define IBus_UI_BMBT 2
+#define IBus_CDC_DiscCount1 0x01
+#define IBus_CDC_DiscCount6 0x3F
+
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
@@ -161,7 +166,7 @@ uint8_t IBusGetDeviceManufacturer(const unsigned char);
 uint8_t IBusGetRadioType(uint32_t);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCKeepAlive(IBus_t *);
-void IBusCommandCDCStatus(IBus_t *, unsigned char,  unsigned char);
+void IBusCommandCDCStatus(IBus_t *, unsigned char,  unsigned char, unsigned char);
 void IBusCommandGTGetDiagnostics(IBus_t *);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
 void IBusCommandGTWriteIndexMk2(IBus_t *, uint8_t, char *);

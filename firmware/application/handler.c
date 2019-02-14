@@ -101,10 +101,10 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     // Poll the vehicle for the ignition status so we can configure ourselves
     IBusCommandIKEGetIgnition(Context.ibus);
     switch (uiMode) {
-        case HANDLER_UI_MODE_CD53:
+        case IBus_UI_CD53:
             CD53Init(bt, ibus);
             break;
-        case HANDLER_UI_MODE_BMBT:
+        case IBus_UI_BMBT:
             BMBTInit(bt, ibus);
             break;
     }
@@ -269,26 +269,31 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
         }
         curStatus = IBUS_CDC_NOT_PLAYING;
     } else if (requestedAction == IBUS_CDC_START_PLAYING_CD53 &&
-               context->uiMode == HANDLER_UI_MODE_CD53
+               context->uiMode == IBus_UI_CD53
     ) {
         curAction = requestedAction;
         curStatus = IBUS_CDC_PLAYING;
     } else if (requestedAction == IBUS_CDC_START_PLAYING &&
-               context->uiMode == HANDLER_UI_MODE_BMBT
+               context->uiMode == IBus_UI_BMBT
     ) {
         curAction = IBUS_CDC_BM53_START_PLAYING;
         curStatus = IBUS_CDC_BM53_PLAYING;
     } else if (requestedAction == IBUS_CDC_CHANGE_TRACK) {
         curAction = IBUS_CDC_START_PLAYING;
     } else if (requestedAction == IBUS_CDC_SCAN_FORWARD &&
-               context->uiMode == HANDLER_UI_MODE_BMBT
+               context->uiMode == IBus_UI_BMBT
     ) {
         curAction = IBUS_CDC_START_PLAYING;
         curStatus = IBUS_CDC_PLAYING;
     } else {
         curAction = requestedAction;
     }
-    IBusCommandCDCStatus(context->ibus, curAction, curStatus);
+    IBusCommandCDCStatus(
+        context->ibus,
+        curAction,
+        curStatus,
+        context->uiMode
+    );
     context->cdChangerLastKeepAlive = TimerGetMillis();
     context->cdChangerLastStatus = TimerGetMillis();
 }
@@ -357,7 +362,8 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         IBusCommandCDCStatus(
             context->ibus,
             IBUS_CDC_START_PLAYING,
-            context->ibus->cdChangerStatus
+            context->ibus->cdChangerStatus,
+            context->uiMode
         );
         // Reset the metadata so we don't display the wrong data
         BC127ClearMetadata(context->bt);
@@ -417,7 +423,8 @@ void HandlerTimerCDCSendStatus(void *ctx)
         IBusCommandCDCStatus(
             context->ibus,
             curAction,
-            context->ibus->cdChangerStatus
+            context->ibus->cdChangerStatus,
+            context->uiMode
         );
         context->cdChangerLastStatus = now;
         LogDebug("Handler: Send CDC status preemptively");

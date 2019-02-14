@@ -7,10 +7,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <xc.h>
-#include "config.h"
+#include "sysconfig.h"
 #include "handler.h"
 #include "mappings.h"
 #include "lib/bc127.h"
+#include "lib/cli.h"
+#include "lib/config.h"
 #include "lib/debug.h"
 #include "lib/eeprom.h"
 #include "lib/ibus.h"
@@ -45,20 +47,24 @@ int main(void)
     struct IBus_t ibus = IBusInit();
     UARTAddModuleHandler(&ibus.uart);
 
+    struct CLI_t cli = CLIInit(&systemUart);
+
     ON_LED_MODE = 0;
     ON_LED = 1;
 
     EEPROMInit();
     TimerInit();
 
+    unsigned char UI_MODE = ConfigGetUIMode();
     // Send the module objects to the application implementation handler
-    HandlerInit(&bt, &ibus, HANDLER_UI_MODE_BMBT);
+    HandlerInit(&bt, &ibus, UI_MODE);
 
     // Process events
     while (1) {
         BC127Process(&bt);
         IBusProcess(&ibus);
         TimerProcessScheduledTasks();
+        CLIProcess(&cli);
     }
 
     return 0;

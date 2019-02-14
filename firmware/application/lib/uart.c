@@ -168,6 +168,13 @@ void UARTReportErrors(UART_t *uart)
     }
 }
 
+void UARTSendChar(UART_t *uart, unsigned char data)
+{
+    CharQueueAdd(&uart->txQueue, data);
+    // Set the interrupt flag
+    SetUARTTXIE(uart->moduleIndex, 1);
+}
+
 void UARTSendData(UART_t *uart, unsigned char *data)
 {
     unsigned char c;

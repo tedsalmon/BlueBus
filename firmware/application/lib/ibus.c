@@ -546,17 +546,27 @@ void IBusCommandCDCKeepAlive(IBus_t *ibus)
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         unsigned char action - The current CDC action
  *         unsigned char status - The current CDC status
+ *         unsigned char discCount - The number of Discs to report loaded
  *     Returns:
  *         void
  */
-void IBusCommandCDCStatus(IBus_t *ibus, unsigned char action, unsigned char status) {
+void IBusCommandCDCStatus(
+    IBus_t *ibus,
+    unsigned char action,
+    unsigned char status,
+    unsigned char radType
+) {
     status = status + 0x80;
+    unsigned char discCount = IBus_CDC_DiscCount6;
+    if (radType == IBus_UI_BMBT) {
+        discCount = IBus_CDC_DiscCount1;
+    }
     const unsigned char cdcStatus[] = {
         IBUS_COMMAND_CDC_SET_STATUS,
         action,
         status,
         0x00,
-        0x01, // Disc Count
+        discCount,
         0x00,
         0x01,
         0x01,

@@ -46,6 +46,7 @@ UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 void UARTAddModuleHandler(UART_t *uart);
 UART_t * UARTGetModuleHandler(uint8_t);
 void UARTReportErrors(UART_t *);
+void UARTSendChar(UART_t *, unsigned char);
 void UARTSendData(UART_t *, unsigned char *);
 void UARTSendString(UART_t *, char *);
 #endif /* UART_H */
