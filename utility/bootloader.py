@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import sys
 from argparse import ArgumentParser
 from intelhex import IntelHex
 from serial import Serial
@@ -133,7 +134,7 @@ if __name__ == '__main__':
                                 data_len = len(data)
                                 send_file(data[data_idx])
                             else:
-                                exit(0)
+                                sys.exit(0)
                         if command == PROTOCOL_CMD_BC127_MODE_RESPONSE:
                             print('BC127 Mode Started')
                         if command == PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK:
@@ -149,7 +150,7 @@ if __name__ == '__main__':
                                 start_app()
                         if command == PROTOCOL_CMD_START_APP_RESPONSE:
                             print('App Started')
-                            exit(0)
+                            sys.exit(0)
                         if command == PROTOCOL_BAD_PACKET_RESPONSE:
                             print("ERR: Bad Packet - Please Try again")
                         if command == PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR:
@@ -165,4 +166,4 @@ if __name__ == '__main__':
                 )
                 should_continue = False
     except KeyboardInterrupt:
-        exit(0)
+        sys.exit(0)
