@@ -13,6 +13,8 @@
 #include "../lib/event.h"
 #include "../lib/ibus.h"
 #include "../lib/timer.h"
+#define CD53_DISPLAY_METADATA_ON 1
+#define CD53_DISPLAY_METADATA_OFF 0
 #define CD53_DISPLAY_SCROLL_SPEED 500
 #define CD53_DISPLAY_STATUS_OFF 0
 #define CD53_DISPLAY_STATUS_ON 1
@@ -24,6 +26,9 @@
 #define CD53_MODE_ACTIVE 1
 #define CD53_MODE_DEVICE_SEL 2
 #define CD53_PAIRING_DEVICE_NONE -1
+#define CD53_SEEK_MODE_NONE 0
+#define CD53_SEEK_MODE_FWD 1
+#define CD53_SEEK_MODE_REV 2
 /*
  * CD53DisplayValue_t
  *  This is a struct to hold text values to be displayed
@@ -59,6 +64,8 @@ typedef struct CD53Context_t {
     uint8_t mode;
     uint8_t displayUpdateTaskId;
     int8_t btDeviceIndex;
+    uint8_t seekMode;
+    uint8_t displayMetadata;
     CD53DisplayValue_t mainDisplay;
     CD53DisplayValue_t tempDisplay;
 } CD53Context_t;

@@ -554,13 +554,9 @@ void IBusCommandCDCStatus(
     IBus_t *ibus,
     unsigned char action,
     unsigned char status,
-    unsigned char radType
+    unsigned char discCount
 ) {
     status = status + 0x80;
-    unsigned char discCount = IBus_CDC_DiscCount6;
-    if (radType == IBus_UI_BMBT) {
-        discCount = IBus_CDC_DiscCount1;
-    }
     const unsigned char cdcStatus[] = {
         IBUS_COMMAND_CDC_SET_STATUS,
         action,

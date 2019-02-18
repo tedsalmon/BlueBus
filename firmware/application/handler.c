@@ -44,6 +44,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &Context
     );
     EventRegisterCallback(
+        BC127Event_DeviceFound,
+        &HandlerBC127DeviceFound,
+        &Context
+    );
+    EventRegisterCallback(
         BC127Event_PlaybackStatusChange,
         &HandlerBC127PlaybackStatus,
         &Context
@@ -163,6 +168,31 @@ void HandlerBC127DeviceDisconnected(void *ctx, unsigned char *data)
 }
 
 /**
+ * HandlerBC127DeviceFound()
+ *     Description:
+ *         If a device is found and we are not connected, connect to it
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBC127DeviceFound(void *ctx, unsigned char *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bt->activeDevice.deviceId == 0 &&
+        context->btConnectionStatus == HANDLER_BT_CONN_OFF &&
+        context->ibus->ignitionStatus == IBUS_IGNITION_ON
+    ) {
+        char *macId = (char *) data;
+        BC127CommandProfileOpen(context->bt, macId, "A2DP");
+        BC127CommandProfileOpen(context->bt, macId, "AVRCP");
+        BC127CommandProfileOpen(context->bt, macId, "HFP");
+        context->btConnectionStatus = HANDLER_BT_CONN_ON;
+    }
+}
+
+/**
  * HandlerBC127PlaybackStatus()
  *     Description:
  *         If the application is starting, request the BC127 AVRCP Metadata
@@ -268,32 +298,51 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             BC127CommandPause(context->bt);
         }
         curStatus = IBUS_CDC_NOT_PLAYING;
-    } else if (requestedAction == IBUS_CDC_START_PLAYING_CD53 &&
-               context->uiMode == IBus_UI_CD53
-    ) {
-        curAction = requestedAction;
-        curStatus = IBUS_CDC_PLAYING;
-    } else if (requestedAction == IBUS_CDC_START_PLAYING &&
-               context->uiMode == IBus_UI_BMBT
-    ) {
-        curAction = IBUS_CDC_BM53_START_PLAYING;
-        curStatus = IBUS_CDC_BM53_PLAYING;
     } else if (requestedAction == IBUS_CDC_CHANGE_TRACK) {
         curAction = IBUS_CDC_START_PLAYING;
-    } else if (requestedAction == IBUS_CDC_SCAN_FORWARD &&
-               context->uiMode == IBus_UI_BMBT
-    ) {
-        curAction = IBUS_CDC_START_PLAYING;
-        curStatus = IBUS_CDC_PLAYING;
     } else {
-        curAction = requestedAction;
+        if (context->uiMode == IBus_UI_CD53) {
+            if (requestedAction == IBUS_CDC_START_PLAYING_CD53) {
+                curAction = 0x00;
+                curStatus = IBUS_CDC_PLAYING;
+            } else if (requestedAction == IBUS_CDC_SCAN_MODE) {
+                curAction = 0x00;
+                // The 5th octet in the packet tells the CDC if we should
+                // enable or disable the given mode
+                if (pkt[5] == 0x01) {
+                    curStatus = IBUS_CDC_SCAN_MODE_ACTION;
+                } else {
+                    curStatus = IBUS_CDC_PLAYING;
+                }
+            } else if (requestedAction == IBUS_CDC_RANDOM_MODE) {
+                curAction = 0x00;
+                // The 5th octet in the packet tells the CDC if we should
+                // enable or disable the given mode
+                if (pkt[5] == 0x01) {
+                    curStatus = IBUS_CDC_RANDOM_MODE_ACTION;
+                } else {
+                    curStatus = IBUS_CDC_PLAYING;
+                }
+            } else {
+                curAction = requestedAction;
+            }
+        } else if (context->uiMode == IBus_UI_BMBT) {
+            if (requestedAction == IBUS_CDC_START_PLAYING) {
+                curAction = IBUS_CDC_BM53_START_PLAYING;
+                curStatus = IBUS_CDC_BM53_PLAYING;
+            } else if (requestedAction == IBUS_CDC_SCAN_FORWARD) {
+                curAction = IBUS_CDC_START_PLAYING;
+                curStatus = IBUS_CDC_PLAYING;
+            } else {
+                curAction = requestedAction;
+            }
+        }
     }
-    IBusCommandCDCStatus(
-        context->ibus,
-        curAction,
-        curStatus,
-        context->uiMode
-    );
+    unsigned char discCount = IBus_CDC_DiscCount6;
+    if (context->uiMode == IBus_UI_BMBT) {
+        discCount = IBus_CDC_DiscCount1;
+    }
+    IBusCommandCDCStatus(context->ibus, curAction, curStatus, discCount);
     context->cdChangerLastKeepAlive = TimerGetMillis();
     context->cdChangerLastStatus = TimerGetMillis();
 }

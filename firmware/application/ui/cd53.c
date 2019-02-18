@@ -15,6 +15,8 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
     Context.mainDisplay = CD53DisplayValueInit("Bluetooth");
     Context.tempDisplay = CD53DisplayValueInit("");
     Context.btDeviceIndex = CD53_PAIRING_DEVICE_NONE;
+    Context.seekMode = CD53_SEEK_MODE_NONE;
+    Context.displayMetadata = CD53_DISPLAY_METADATA_ON;
     EventRegisterCallback(
         BC127Event_Boot,
         &CD53BC127DeviceReady,
@@ -179,6 +181,21 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
             }
             BC127CommandStatus(context->bt);
             context->mode = CD53_MODE_ACTIVE;
+        } else {
+            if (context->seekMode == CD53_SEEK_MODE_FWD) {
+                BC127CommandForwardSeekRelease(context->bt);
+            } else if (context->seekMode == CD53_SEEK_MODE_REV) {
+                BC127CommandBackwardSeekRelease(context->bt);
+            }
+            context->seekMode = CD53_SEEK_MODE_NONE;
+        }
+    } else if (changerStatus == 0x04) {
+        if (pkt[5] == 0x00) {
+            context->seekMode = CD53_SEEK_MODE_REV;
+            BC127CommandBackwardSeekPress(context->bt);
+        } else {
+            context->seekMode = CD53_SEEK_MODE_FWD;
+            BC127CommandForwardSeekPress(context->bt);
         }
     } else if (changerStatus == 0x07) {
         if (context->mode == CD53_MODE_ACTIVE) {
@@ -215,6 +232,8 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
     } else if (changerStatus == 0x08) {
         if (btPlaybackStatus == BC127_AVRCP_STATUS_PLAYING) {
             TimerTriggerScheduledTask(context->displayUpdateTaskId);
+        } else {
+            CD53SetMainDisplayText(context, "Bluetooth", 0);
         }
     }
     if (changerStatus == IBusAction_CD53_SEEK) {
@@ -246,6 +265,15 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
             } else {
                 CD53SetTempDisplayText(context, "No Device", 4);
                 CD53SetMainDisplayText(context, "Bluetooth", 0);
+            }
+        } else if (pkt[5] == 0x02) {
+            // Toggle Metadata scrolling
+            if (context->displayMetadata == CD53_DISPLAY_METADATA_ON) {
+                CD53SetTempDisplayText(context, "Bluetooth", 2);
+                context->displayMetadata = CD53_DISPLAY_METADATA_OFF;
+            } else {
+                CD53SetTempDisplayText(context, "Metadata On", 2);
+                context->displayMetadata = CD53_DISPLAY_METADATA_ON;
             }
         } else if (pkt[5] == 0x05) {
             if (context->bt->pairedDevicesCount == 0) {
@@ -308,7 +336,9 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
 void CD53TimerDisplay(void *ctx)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
-    if (context->ibus->cdChangerStatus > 0x01) {
+    if (context->mode == CD53_MODE_ACTIVE &&
+        context->displayMetadata == CD53_DISPLAY_METADATA_ON
+    ) {
         // Display the temp text, if there is any
         if (context->tempDisplay.status > CD53_DISPLAY_STATUS_OFF) {
             if (context->tempDisplay.timeout == 0) {

@@ -13,10 +13,15 @@
 #define IBUS_CDC_STOP_PLAYING 0x01
 #define IBUS_CDC_START_PLAYING 0x02
 #define IBUS_CDC_START_PLAYING_CD53 0x03
+#define IBUS_CDC_SCAN_CD53 0x04
 #define IBUS_CDC_SCAN_FORWARD 0x03
 #define IBUS_CDC_SCAN_BACKWARDS 0x04
 #define IBUS_CDC_SONG_END 0x05
 #define IBUS_CDC_CD_CHANGE 0x06
+#define IBUS_CDC_SCAN_MODE 0x07
+#define IBUS_CDC_SCAN_MODE_ACTION 0x19
+#define IBUS_CDC_RANDOM_MODE 0x08
+#define IBUS_CDC_RANDOM_MODE_ACTION 0x29
 /* Sending this to the BM53 prevents it from clearing the GT as often */
 #define IBUS_CDC_BM53_START_PLAYING 0x01
 #define IBUS_CDC_BM53_PLAYING 0x0C
@@ -116,6 +121,12 @@
 #define IBus_CDC_DiscCount1 0x01
 #define IBus_CDC_DiscCount6 0x3F
 
+#define IBUS_RADIO_TYPE_C43 1
+#define IBUS_RADIO_TYPE_BM53 2
+#define IBUS_RADIO_TYPE_BM54 3
+#define IBUS_RADIO_TYPE_BRCD 4
+#define IBUS_RADIO_TYPE_BRTP 5
+
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
@@ -133,12 +144,6 @@
 #include "timer.h"
 #include "uart.h"
 #include "utils.h"
-
-#define IBUS_RADIO_TYPE_C43 1
-#define IBUS_RADIO_TYPE_BM53 2
-#define IBUS_RADIO_TYPE_BM54 3
-#define IBUS_RADIO_TYPE_BRCD 4
-#define IBUS_RADIO_TYPE_BRTP 5
 
 /**
  * IBus_t

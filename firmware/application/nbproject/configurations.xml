@@ -23,6 +23,7 @@
         <itemPath>ui/cd53.h</itemPath>
       </logicalFolder>
       <itemPath>handler.h</itemPath>
+      <itemPath>config.h</itemPath>
       <itemPath>mappings.h</itemPath>
       <itemPath>sysconfig.h</itemPath>
     </logicalFolder>

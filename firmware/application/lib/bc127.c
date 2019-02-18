@@ -138,6 +138,38 @@ void BC127CommandBackward(BC127_t *bt)
 }
 
 /**
+ * BC127CommandBackwardSeekPress()
+ *     Description:
+ *         Seek backwards on the currently selected A2DP device
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandBackwardSeekPress(BC127_t *bt)
+{
+    char command[19];
+    snprintf(command, 19, "MUSIC %d REV_PRESS", bt->activeDevice.avrcpLinkId);
+    BC127SendCommand(bt, command);
+}
+
+/**
+ * BC127CommandBackwardSeekRelease()
+ *     Description:
+ *         Stop seeking backwards on the currently selected A2DP device
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandBackwardSeekRelease(BC127_t *bt)
+{
+    char command[21];
+    snprintf(command, 21, "MUSIC %d REV_RELEASE", bt->activeDevice.avrcpLinkId);
+    BC127SendCommand(bt, command);
+}
+
+/**
  * BC127CommandClose()
  *     Description:
  *         Close a link ID, device ID or all (255)
@@ -204,6 +236,38 @@ void BC127CommandForward(BC127_t *bt)
 {
     char command[17];
     snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice.avrcpLinkId);
+    BC127SendCommand(bt, command);
+}
+
+/*
+ * BC127CommandForwardSeekPress()
+ *     Description:
+ *         Seek forward on the currently selected A2DP device
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandForwardSeekPress(BC127_t *bt)
+{
+    char command[18];
+    snprintf(command, 18, "MUSIC %d FF_PRESS", bt->activeDevice.avrcpLinkId);
+    BC127SendCommand(bt, command);
+}
+
+/*
+ * BC127CommandForwardSeekRelease()
+ *     Description:
+ *         Stop seeking forward on the currently selected A2DP device
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandForwardSeekRelease(BC127_t *bt)
+{
+    char command[20];
+    snprintf(command, 20, "MUSIC %d FF_RELEASE", bt->activeDevice.avrcpLinkId);
     BC127SendCommand(bt, command);
 }
 
@@ -341,12 +405,38 @@ void BC127CommandReset(BC127_t *bt)
 }
 
 /**
- * BC127CommandSetAutoConnect()
+ * BC127CommandSetAudioDigital()
  *     Description:
- *         Set the time that the device should remain connectable
+ *         Set the digital audio parameters
  *     Params:
  *         BC127_t *bt - A pointer to the module object
- *         uint8_t autoConnect - The time to stay connectable or 0 for forever
+ *         char *format - The format to pass over (0, 1, 2)
+ *         char *rate - The rate in khz
+ *         char *p1 - 12S - BCLK, PCM - Master Clk, SPDIF - N/A
+ *         char *p2 - Mode format
+ *     Returns:
+ *         void
+ */
+void BC127CommandSetAudioDigital(
+    BC127_t *bt,
+    char *format,
+    char *rate,
+    char *p1,
+    char *p2
+) {
+    char command[40];
+    snprintf(command, 40, "SET AUDIO_DIGITAL=%s %s %s %s OFF", format, rate, p1, p2);
+    BC127SendCommand(bt, command);
+    BC127CommandWrite(bt);
+}
+
+/**
+ * BC127CommandSetAutoConnect()
+ *     Description:
+ *         Enable / Disable auto connection at power-on
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         uint8_t autoConnect - Set the parameter to on or off
  *     Returns:
  *         void
  */

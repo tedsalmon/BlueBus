@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "bc127.h"
 #include "char_queue.h"
 #include "config.h"
 #include "ibus.h"
@@ -27,8 +28,9 @@
  */
 typedef struct CLI_t {
     UART_t *uart;
+    BC127_t *bt;
     uint8_t lastChar;
 } CLI_t;
-CLI_t CLIInit(UART_t *);
+CLI_t CLIInit(UART_t *, BC127_t*);
 void CLIProcess(CLI_t *);
 #endif /* CLI_H */
