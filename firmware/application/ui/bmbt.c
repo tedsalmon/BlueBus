@@ -451,7 +451,6 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                     // If we don't have a device connected, connect immediately
                     if (context->bt->activeDevice.deviceId == 0) {
                         BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
-                        BC127CommandProfileOpen(context->bt, dev->macId, "AVRCP");
                         BC127CommandProfileOpen(context->bt, dev->macId, "HPF");
                     } else {
                         // Wait until the current device disconnects to
@@ -470,6 +469,9 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                 // Do nothing, yet
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_RESET_BT) {
                 BC127CommandReset(context->bt);
+            } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_RESET_PAIRED_DEVICE_LIST) {
+                BC127CommandClose(context->bt, BC127_CLOSE_ALL);
+                BC127CommandUnpair(context->bt);
             } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
                 BMBTMainMenu(context);
             }

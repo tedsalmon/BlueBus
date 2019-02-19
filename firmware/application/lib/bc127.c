@@ -149,7 +149,7 @@ void BC127CommandBackward(BC127_t *bt)
 void BC127CommandBackwardSeekPress(BC127_t *bt)
 {
     char command[19];
-    snprintf(command, 19, "MUSIC %d REV_PRESS", bt->activeDevice.avrcpLinkId);
+    snprintf(command, 19, "MUSIC %d REW_PRESS", bt->activeDevice.avrcpLinkId);
     BC127SendCommand(bt, command);
 }
 
@@ -165,7 +165,7 @@ void BC127CommandBackwardSeekPress(BC127_t *bt)
 void BC127CommandBackwardSeekRelease(BC127_t *bt)
 {
     char command[21];
-    snprintf(command, 21, "MUSIC %d REV_RELEASE", bt->activeDevice.avrcpLinkId);
+    snprintf(command, 21, "MUSIC %d REW_RELEASE", bt->activeDevice.avrcpLinkId);
     BC127SendCommand(bt, command);
 }
 
@@ -562,7 +562,7 @@ void BC127CommandSetProfiles(
 /**
  * BC127CommandStatus()
  *     Description:
- *         Play the currently selected A2DP device
+ *         Get the BC127 connectivity status
  *     Params:
  *         BC127_t *bt - A pointer to the module object
  *     Returns:
@@ -570,7 +570,22 @@ void BC127CommandSetProfiles(
  */
 void BC127CommandStatus(BC127_t *bt)
 {
-    char command[8] = "STATUS";
+    char command[7] = "STATUS";
+    BC127SendCommand(bt, command);
+}
+
+/**
+ * BC127CommandStatus()
+ *     Description:
+ *         Play the currently selected A2DP device
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandUnpair(BC127_t *bt)
+{
+    char command[7] = "UNPAIR";
     BC127SendCommand(bt, command);
 }
 

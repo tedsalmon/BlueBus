@@ -22,7 +22,9 @@
 #define HANDLER_CDC_ANOUNCE_TIMEOUT 21000
 #define HANDLER_CDC_STATUS_INT 500
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
-#define HANDLER_PROFILE_ERROR_INT 2000
+#define HANDLER_DEVICE_MAX_RECONN 10
+#define HANDLER_INT_DEVICE_CONN 30000
+#define HANDLER_PROFILE_ERROR_INT 2500
 #define HANDLER_SCAN_INT 60000
 typedef struct HandlerContext_t {
     BC127_t *bt;
@@ -30,6 +32,7 @@ typedef struct HandlerContext_t {
     uint8_t btStartupIsRun;
     uint8_t btConnectionStatus;
     uint8_t uiMode;
+    uint8_t deviceConnRetries;
     uint32_t cdChangerLastKeepAlive;
     uint32_t cdChangerLastStatus;
 } HandlerContext_t;
@@ -47,6 +50,7 @@ void HandlerIBusRADDiagnostics(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
+void HandlerTimerDeviceConnection(void *);
 void HandlerTimerOpenProfileErrors(void *);
 void HandlerTimerScanDevices(void *);
 #endif /* HANDLER_H */

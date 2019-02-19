@@ -188,4 +188,6 @@ void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
 void IBusCommandRADGetDiagnostics(IBus_t *);
+/* Temporary */
+void IBusCommandIgnitionStatus(IBus_t *, unsigned char);
 #endif /* IBUS_H */

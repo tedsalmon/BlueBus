@@ -47,7 +47,7 @@ int main(void)
     struct IBus_t ibus = IBusInit();
     UARTAddModuleHandler(&ibus.uart);
 
-    struct CLI_t cli = CLIInit(&systemUart, &bt);
+    struct CLI_t cli = CLIInit(&systemUart, &bt, &ibus);
 
     ON_LED_MODE = 0;
     ON_LED = 1;

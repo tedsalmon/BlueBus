@@ -121,19 +121,21 @@ void CD53BC127DeviceReady(void *ctx, unsigned char *tmp)
 void CD53BC127Metadata(void *ctx, unsigned char *metadata)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
-    char text[CD53_DISPLAY_TEXT_SIZE];
-    snprintf(
-        text,
-        CD53_DISPLAY_TEXT_SIZE,
-        "%s - %s on %s",
-        context->bt->title,
-        context->bt->artist,
-        context->bt->album
-    );
-    char cleanText[CD53_DISPLAY_TEXT_SIZE];
-    removeNonAscii(cleanText, text);
-    CD53SetMainDisplayText(context, cleanText, 3000 / CD53_DISPLAY_SCROLL_SPEED);
-    TimerTriggerScheduledTask(context->displayUpdateTaskId);
+    if (context->displayMetadata) {
+        char text[CD53_DISPLAY_TEXT_SIZE];
+        snprintf(
+            text,
+            CD53_DISPLAY_TEXT_SIZE,
+            "%s - %s on %s",
+            context->bt->title,
+            context->bt->artist,
+            context->bt->album
+        );
+        char cleanText[CD53_DISPLAY_TEXT_SIZE];
+        removeNonAscii(cleanText, text);
+        CD53SetMainDisplayText(context, cleanText, 3000 / CD53_DISPLAY_SCROLL_SPEED);
+        TimerTriggerScheduledTask(context->displayUpdateTaskId);
+    }
 }
 
 void CD53BC127PlaybackStatus(void *ctx, unsigned char *status)
@@ -269,11 +271,14 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
         } else if (pkt[5] == 0x02) {
             // Toggle Metadata scrolling
             if (context->displayMetadata == CD53_DISPLAY_METADATA_ON) {
-                CD53SetTempDisplayText(context, "Bluetooth", 2);
+                CD53SetMainDisplayText(context, "Bluetooth", 0);
                 context->displayMetadata = CD53_DISPLAY_METADATA_OFF;
             } else {
                 CD53SetTempDisplayText(context, "Metadata On", 2);
                 context->displayMetadata = CD53_DISPLAY_METADATA_ON;
+                // We are sending a null pointer because we don't even need
+                // the second parameter
+                CD53BC127Metadata(ctx, 0x00);
             }
         } else if (pkt[5] == 0x05) {
             if (context->bt->pairedDevicesCount == 0) {
@@ -336,9 +341,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
 void CD53TimerDisplay(void *ctx)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
-    if (context->mode == CD53_MODE_ACTIVE &&
-        context->displayMetadata == CD53_DISPLAY_METADATA_ON
-    ) {
+    if (context->mode == CD53_MODE_ACTIVE) {
         // Display the temp text, if there is any
         if (context->tempDisplay.status > CD53_DISPLAY_STATUS_OFF) {
             if (context->tempDisplay.timeout == 0) {

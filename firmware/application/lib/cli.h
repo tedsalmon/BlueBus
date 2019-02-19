@@ -23,14 +23,16 @@
  *     Description:
  *         This object defines our CLI object
  *     Fields:
- *         uart - The UART Object
- *         lastChar - The index of the last character echoed back to the user
+ *         UART_t *uart - A pointer to the UART module object
+ *         BC127_t *bt - A pointer to the BC127 object
+ *         IBus_t *bt - A pointer to the IBus object
  */
 typedef struct CLI_t {
     UART_t *uart;
     BC127_t *bt;
+    IBus_t *ibus;
     uint8_t lastChar;
 } CLI_t;
-CLI_t CLIInit(UART_t *, BC127_t*);
+CLI_t CLIInit(UART_t *, BC127_t *, IBus_t *);
 void CLIProcess(CLI_t *);
 #endif /* CLI_H */

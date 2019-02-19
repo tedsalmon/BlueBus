@@ -13,14 +13,16 @@
  *     Params:
  *         UART_t *uart - A pointer to the UART module object
  *         BC127_t *bt - A pointer to the BC127 object
+ *         IBus_t *bt - A pointer to the IBus object
  *     Returns:
  *         void
  */
-CLI_t CLIInit(UART_t *uart, BC127_t *bt)
+CLI_t CLIInit(UART_t *uart, BC127_t *bt, IBus_t *ibus)
 {
     CLI_t cli;
     cli.uart = uart;
     cli.bt = bt;
+    cli.ibus = ibus;
     cli.lastChar = 0;
     return cli;
 }
@@ -86,8 +88,10 @@ void CLIProcess(CLI_t *cli)
                 Nop();
             }
             __asm__ volatile ("reset");
-        } else if (strcmp(msgBuf[0], "BTREBOOT") == 0) {
+        } else if (strcmp(msgBuf[0], "BTRESET") == 0) {
             BC127CommandReset(cli->bt);
+        } else if (strcmp(msgBuf[0], "BTRESETPDL") == 0) {
+            BC127CommandUnpair(cli->bt);
         } else if (strcmp(msgBuf[0], "GET") == 0) {
             if (strcmp(msgBuf[1], "UI") == 0) {
                 unsigned char uiMode = ConfigGetUIMode();
@@ -124,24 +128,23 @@ void CLIProcess(CLI_t *cli)
                         msgBuf[5]
                     );
                 }
-            } else if (strcmp(msgBuf[1], "BTAUTOCONN") == 0) {
+            } else if(strcmp(msgBuf[1], "IGN") == 0) {
                 if (strcmp(msgBuf[2], "0") == 0) {
-                    BC127CommandSetAutoConnect(cli->bt, 0);
+                    IBusCommandIgnitionStatus(cli->ibus, 0x00);
                 } else if (strcmp(msgBuf[2], "1") == 0) {
-                    BC127CommandSetAutoConnect(cli->bt, 1);
-                } else {
-                    LogRaw("Invalid AUTOCONN parameter");
+                    IBusCommandIgnitionStatus(cli->ibus, 0x01);
                 }
             }
         } else if (strcmp(msgBuf[0], "HELP") == 0) {
-            LogRaw("BlueBus Firmware version: 1.0.1\r\n");
+            LogRaw("BlueBus Firmware version: 1.0.2\r\n");
             LogRaw("Available Commands:\r\n");
             LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
-            LogRaw("    BTREBOOT - Reboot the BC127\r\n");
+            LogRaw("    BTRESET - Reset the BC127\r\n");
+            LogRaw("    BTRESETPDL - Unpair all devices from the BC127\r\n");
             LogRaw("    GET UI - Get the current UI Mode\r\n");
             LogRaw("    REBOOT - Reboot the device\r\n");
-            LogRaw("    SET BTAUTOCONN <0 for off 1 for on>\r\n");
             LogRaw("    SET BTAUD_DIG <format> <rate> <param1> <param2>\r\n");
+            LogRaw("    SET IGN x - Send the ignition status message [DEBUG ONLY]");
             LogRaw("    SET UI x - Set the UI to x, ");
             LogRaw("where 1 is CD53 and 2 is BMBT\r\n");
         } else {

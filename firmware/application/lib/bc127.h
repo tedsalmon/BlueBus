@@ -158,6 +158,7 @@ void BC127CommandSetModuleName(BC127_t *, char *);
 void BC127CommandSetPin(BC127_t *, char *);
 void BC127CommandSetProfiles(BC127_t *, uint8_t, uint8_t, uint8_t, uint8_t);
 void BC127CommandStatus(BC127_t *);
+void BC127CommandUnpair(BC127_t *);
 void BC127CommandWrite(BC127_t *);
 uint8_t BC127GetConnectedDeviceCount(BC127_t *);
 uint8_t BC127GetDeviceId(char *);

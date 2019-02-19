@@ -8,6 +8,7 @@
         <itemPath>lib/bc127.h</itemPath>
         <itemPath>lib/char_queue.h</itemPath>
         <itemPath>lib/cli.h</itemPath>
+        <itemPath>lib/config.h</itemPath>
         <itemPath>lib/debug.h</itemPath>
         <itemPath>lib/eeprom.h</itemPath>
         <itemPath>lib/event.h</itemPath>
@@ -16,14 +17,12 @@
         <itemPath>lib/timer.h</itemPath>
         <itemPath>lib/uart.h</itemPath>
         <itemPath>lib/utils.h</itemPath>
-        <itemPath>lib/config.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
         <itemPath>ui/bmbt.h</itemPath>
         <itemPath>ui/cd53.h</itemPath>
       </logicalFolder>
       <itemPath>handler.h</itemPath>
-      <itemPath>config.h</itemPath>
       <itemPath>mappings.h</itemPath>
       <itemPath>sysconfig.h</itemPath>
     </logicalFolder>

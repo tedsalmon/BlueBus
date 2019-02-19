@@ -33,6 +33,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     Context.btStartupIsRun = 0;
     Context.btConnectionStatus = HANDLER_BT_CONN_OFF;
     Context.uiMode = uiMode;
+    Context.deviceConnRetries = 0;
     EventRegisterCallback(
         BC127Event_DeviceLinkConnected,
         &HandlerBC127DeviceLinkConnected,
@@ -94,6 +95,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         HANDLER_CDC_STATUS_INT
     );
     TimerRegisterScheduledTask(
+        &HandlerTimerDeviceConnection,
+        &Context,
+        HANDLER_INT_DEVICE_CONN
+    );
+    TimerRegisterScheduledTask(
         &HandlerTimerOpenProfileErrors,
         &Context,
         HANDLER_PROFILE_ERROR_INT
@@ -132,8 +138,10 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
     if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
         // Once A2DP and AVRCP are connected, we can disable connectability
         if (context->bt->activeDevice.avrcpLinkId != 0 &&
-            context->bt->activeDevice.a2dpLinkId != 0
+            context->bt->activeDevice.a2dpLinkId != 0 &&
+            context->bt->activeDevice.hfpLinkId != 0
         ) {
+            LogDebug("Handler: Disable connectability");
             BC127CommandBtState(
                 context->bt,
                 BC127_STATE_OFF,
@@ -185,9 +193,8 @@ void HandlerBC127DeviceFound(void *ctx, unsigned char *data)
         context->ibus->ignitionStatus == IBUS_IGNITION_ON
     ) {
         char *macId = (char *) data;
+        LogDebug("Handler: No open connection -- Attempting to connect");
         BC127CommandProfileOpen(context->bt, macId, "A2DP");
-        BC127CommandProfileOpen(context->bt, macId, "AVRCP");
-        BC127CommandProfileOpen(context->bt, macId, "HFP");
         context->btConnectionStatus = HANDLER_BT_CONN_ON;
     }
 }
@@ -408,11 +415,15 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         context->ibus->cdChangerStatus = IBUS_CDC_PLAYING;
         // Anounce the CDC to the network
         IBusCommandCDCAnnounce(context->ibus);
+        unsigned char discCount = IBus_CDC_DiscCount6;
+        if (context->uiMode == IBus_UI_BMBT) {
+            discCount = IBus_CDC_DiscCount1;
+        }
         IBusCommandCDCStatus(
             context->ibus,
             IBUS_CDC_START_PLAYING,
             context->ibus->cdChangerStatus,
-            context->uiMode
+            discCount
         );
         // Reset the metadata so we don't display the wrong data
         BC127ClearMetadata(context->bt);
@@ -469,11 +480,15 @@ void HandlerTimerCDCSendStatus(void *ctx)
         if (context->ibus->cdChangerStatus == IBUS_CDC_PLAYING) {
             curAction = 0x02;
         }
+        unsigned char discCount = IBus_CDC_DiscCount6;
+        if (context->uiMode == IBus_UI_BMBT) {
+            discCount = IBus_CDC_DiscCount1;
+        }
         IBusCommandCDCStatus(
             context->ibus,
             curAction,
             context->ibus->cdChangerStatus,
-            context->uiMode
+            discCount
         );
         context->cdChangerLastStatus = now;
         LogDebug("Handler: Send CDC status preemptively");
@@ -481,7 +496,42 @@ void HandlerTimerCDCSendStatus(void *ctx)
 }
 
 /**
- * HandlerTimerMetadataRequest()
+ * HandlerTimerDeviceConnection()
+ *     Description:
+ *         Monitor the BT connection and ensure it stays connected
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+
+void HandlerTimerDeviceConnection(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (strlen(context->bt->activeDevice.macId) > 0 &&
+        context->bt->activeDevice.a2dpLinkId == 0
+    ) {
+        if (context->deviceConnRetries <= HANDLER_DEVICE_MAX_RECONN) {
+            LogDebug("Handler: No open connection -- Attempting to connect");
+            BC127CommandProfileOpen(
+                context->bt,
+                context->bt->activeDevice.macId,
+                "A2DP"
+            );
+            context->deviceConnRetries += 1;
+        } else {
+            LogError("Handler: Giving up on BT connection");
+            context->deviceConnRetries = 0;
+            BC127ClearPairedDevices(context->bt);
+            BC127CommandClose(context->bt, BC127_CLOSE_ALL);
+        }
+    } else if (context->deviceConnRetries > 0) {
+        context->deviceConnRetries = 0;
+    }
+}
+
+/**
+ * HandlerTimerOpenProfileErrors()
  *     Description:
  *         If there are any profile open errors, request the profile
  *         be opened again
@@ -497,6 +547,7 @@ void HandlerTimerOpenProfileErrors(void *ctx)
         uint8_t idx;
         for (idx = 0; idx < BC127_PROFILE_COUNT; idx++) {
             if (context->bt->pairingErrors[idx] == 1) {
+                LogDebug("Handler: Attempting to resolve pairing error");
                 BC127CommandProfileOpen(
                     context->bt,
                     context->bt->activeDevice.macId,

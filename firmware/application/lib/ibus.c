@@ -854,3 +854,10 @@ void IBusCommandRADGetDiagnostics(IBus_t *ibus)
     unsigned char msg[] = {0x00};
     IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_RAD, msg, 1);
 }
+
+/* Temporary Commands for debugging */
+void IBusCommandIgnitionStatus(IBus_t *ibus, unsigned char status)
+{
+    unsigned char statusMessage[2] = {0x11, status};
+    IBusSendCommand(ibus, IBUS_DEVICE_IKE, IBUS_DEVICE_GLO, statusMessage, 2);
+}
