@@ -9,7 +9,7 @@
 #define _ADDED_C_LIB 1
 #include <stdio.h>
 #include "lib/bc127.h"
-#include "lib/debug.h"
+#include "lib/log.h"
 #include "lib/event.h"
 #include "lib/ibus.h"
 #include "lib/timer.h"
@@ -37,7 +37,7 @@ typedef struct HandlerContext_t {
     uint32_t cdChangerLastStatus;
 } HandlerContext_t;
 void HandlerInit(BC127_t *, IBus_t *, uint8_t);
-void HandlerStartup(HandlerContext_t *);
+void HandlerBC127CallStatus(void *, unsigned char *);
 void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
 void HandlerBC127DeviceDisconnected(void *, unsigned char *);
 void HandlerBC127DeviceFound(void *, unsigned char *);
@@ -45,7 +45,6 @@ void HandlerBC127PlaybackStatus(void *, unsigned char *);
 void HandlerBC127Ready(void *, unsigned char *);
 void HandlerIBusCDCKeepAlive(void *, unsigned char *);
 void HandlerIBusCDCStatus(void *, unsigned char *);
-void HandlerIBusGTDiagnostics(void *, unsigned char *);
 void HandlerIBusRADDiagnostics(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
 void HandlerTimerCDCAnnounce(void *);

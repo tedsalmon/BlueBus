@@ -234,9 +234,13 @@ void BC127CommandBtState(BC127_t *bt, uint8_t connectable, uint8_t discoverable)
  */
 void BC127CommandForward(BC127_t *bt)
 {
-    char command[17];
-    snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice.avrcpLinkId);
-    BC127SendCommand(bt, command);
+    if (bt->activeDevice.avrcpLinkId != 0) {
+        char command[17];
+        snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to FORWARD - AVRCP link unopened");
+    }
 }
 
 /*
@@ -250,9 +254,13 @@ void BC127CommandForward(BC127_t *bt)
  */
 void BC127CommandForwardSeekPress(BC127_t *bt)
 {
-    char command[18];
-    snprintf(command, 18, "MUSIC %d FF_PRESS", bt->activeDevice.avrcpLinkId);
-    BC127SendCommand(bt, command);
+    if (bt->activeDevice.avrcpLinkId != 0) {
+        char command[18];
+        snprintf(command, 18, "MUSIC %d FF_PRESS", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to SEEK FORWARD - AVRCP link unopened");
+    }
 }
 
 /*
@@ -266,9 +274,13 @@ void BC127CommandForwardSeekPress(BC127_t *bt)
  */
 void BC127CommandForwardSeekRelease(BC127_t *bt)
 {
-    char command[20];
-    snprintf(command, 20, "MUSIC %d FF_RELEASE", bt->activeDevice.avrcpLinkId);
-    BC127SendCommand(bt, command);
+    if (bt->activeDevice.avrcpLinkId != 0) {
+        char command[20];
+        snprintf(command, 20, "MUSIC %d FF_RELEASE", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to SEEK FORWARD - AVRCP link unopened");
+    }
 }
 
 /**
@@ -299,9 +311,13 @@ void BC127CommandGetDeviceName(BC127_t *bt, char *macId)
  */
 void BC127CommandGetMetadata(BC127_t *bt)
 {
-    char command[19];
-    snprintf(command, 19, "AVRCP_META_DATA %d", bt->activeDevice.avrcpLinkId);
-    BC127SendCommand(bt, command);
+    if (bt->activeDevice.avrcpLinkId != 0) {
+        char command[19];
+        snprintf(command, 19, "AVRCP_META_DATA %d", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to get Metadata - AVRCP link unopened");
+    }
 }
 
 /**
@@ -331,9 +347,13 @@ void BC127CommandList(BC127_t *bt)
  */
 void BC127CommandPause(BC127_t *bt)
 {
-    char command[16];
-    snprintf(command, 16, "MUSIC %d PAUSE", bt->activeDevice.avrcpLinkId);
-    BC127SendCommand(bt, command);
+    if (bt->activeDevice.avrcpLinkId != 0) {
+        char command[16];
+        snprintf(command, 16, "MUSIC %d PAUSE", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to PAUSE - AVRCP link unopened");
+    }
 }
 
 /**
@@ -347,9 +367,13 @@ void BC127CommandPause(BC127_t *bt)
  */
 void BC127CommandPlay(BC127_t *bt)
 {
-    char command[15];
-    snprintf(command, 15, "MUSIC %d PLAY", bt->activeDevice.avrcpLinkId);
-    BC127SendCommand(bt, command);
+    if (bt->activeDevice.avrcpLinkId != 0) {
+        char command[15];
+        snprintf(command, 15, "MUSIC %d PLAY", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to PLAY - AVRCP link unopened");
+    }
 }
 
 /**
@@ -575,6 +599,27 @@ void BC127CommandStatus(BC127_t *bt)
 }
 
 /**
+ * BC127CommandToggleVR()
+ *     Description:
+ *         Toggle the voice recognition agent
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandToggleVR(BC127_t *bt)
+{
+    if (bt->activeDevice.hfpLinkId != 0) {
+        char command[13];
+        snprintf(command, 16, "TOGGLE_VR %d", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to TOGGLE_VR - AVRCP link unopened");
+    }
+}
+
+
+/**
  * BC127CommandStatus()
  *     Description:
  *         Play the currently selected A2DP device
@@ -659,7 +704,7 @@ void BC127Process(BC127_t *bt)
             msgBuf[i++] = p;
             p = strtok(NULL, " ");
         }
-        LogDebug("BT: %s", msg);
+        LogDebug(LOG_SOURCE_BT, "BT: %s", msg);
 
         if (strcmp(msgBuf[0], "AVRCP_MEDIA") == 0) {
             // Always copy size of buffer minus one to make sure we're always
@@ -688,7 +733,7 @@ void BC127Process(BC127_t *bt)
                     );
                 }
                 if (bt->metadataStatus == BC127_METADATA_STATUS_NEW) {
-                    LogDebug(
+                    LogDebug(LOG_SOURCE_BT, 
                         "BT: title=%s,artist=%s,album=%s",
                         bt->title,
                         bt->artist,
@@ -708,33 +753,37 @@ void BC127Process(BC127_t *bt)
                 // to the new metadata
                 BC127ClearMetadata(bt);
                 bt->playbackStatus = BC127_AVRCP_STATUS_PLAYING;
-                LogDebug("BT: Playing");
+                LogDebug(LOG_SOURCE_BT, "BT: Playing");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
         } else if(strcmp(msgBuf[0], "AVRCP_PAUSE") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             if (bt->activeDevice.deviceId == deviceId) {
                 bt->playbackStatus = BC127_AVRCP_STATUS_PAUSED;
-                LogDebug("BT: Paused");
+                LogDebug(LOG_SOURCE_BT, "BT: Paused");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
         } else if(strcmp(msgBuf[0], "A2DP_STREAM_START") == 0) {
             if (bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
                 bt->playbackStatus = BC127_AVRCP_STATUS_PLAYING;
-                LogDebug("BT: Playing [A2DP Stream Start]");
+                LogDebug(LOG_SOURCE_BT, "BT: Playing [A2DP Stream Start]");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
-        } else if(strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
-            if (bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-                bt->playbackStatus = BC127_AVRCP_STATUS_PAUSED;
-                LogDebug("BT: Playing [A2DP Stream Suspend]");
-                EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
-            }
+        } else if(strcmp(msgBuf[0], "CALL_END") == 0) {
+            EventTriggerCallback(BC127Event_CallEnd, BC127_CALL_END);
+        } else if(strcmp(msgBuf[0], "CALL_INCOMING") == 0 ||
+                  strcmp(msgBuf[0], "CALL_OUTGOING") == 0
+        ) {
+            EventTriggerCallback(
+                BC127Event_CallStart,
+                (unsigned char *) BC127_CALL_START
+            );
         } else if(strcmp(msgBuf[0], "LINK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             uint8_t isNew = 0;
             // No active device is configured
             if (bt->activeDevice.deviceId == 0) {
+                LogDebug(LOG_SOURCE_BT, "BT: New Active Device");
                 bt->activeDevice.deviceId = deviceId;
                 strncpy(bt->activeDevice.macId, msgBuf[4], 12);
                 char *deviceName = BC127PairedDeviceGetName(bt, msgBuf[4]);
@@ -744,8 +793,8 @@ void BC127Process(BC127_t *bt)
                     BC127CommandGetDeviceName(bt, msgBuf[4]);
                 }
                 isNew = 1;
-                bt->discoverable = BC127_STATE_OFF;
-                bt->connectable = BC127_STATE_OFF;
+            } else {
+                LogDebug(LOG_SOURCE_BT, "BT: Found device but already have active");
             }
             if (bt->activeDevice.deviceId == deviceId) {
                 uint8_t linkId = strToInt(msgBuf[1]);
@@ -759,7 +808,6 @@ void BC127Process(BC127_t *bt)
                     }
                     EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
                 }
-                LogDebug("BT: Link: %s connected on %s", msgBuf[3], msgBuf[1]);
                 EventTriggerCallback(
                     BC127Event_DeviceLinkConnected,
                     (unsigned char *) msgBuf[1]
@@ -771,7 +819,7 @@ void BC127Process(BC127_t *bt)
         } else if(strcmp(msgBuf[0], "LIST") == 0) {
             // Request the device name. Note that the name will only be returned
             // if the device is in range
-            LogDebug("BT: Paired Device %s", msgBuf[1]);
+            LogDebug(LOG_SOURCE_BT, "BT: Paired Device %s", msgBuf[1]);
             BC127CommandGetDeviceName(bt, msgBuf[1]);
         } else if(strcmp(msgBuf[0], "CLOSE_OK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
@@ -787,7 +835,7 @@ void BC127Process(BC127_t *bt)
                     EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
                     EventTriggerCallback(BC127Event_DeviceDisconnected, 0);
                 }
-                LogDebug("BT: Closed link %s", msgBuf[1]);
+                LogDebug(LOG_SOURCE_BT, "BT: Closed link %s", msgBuf[1]);
             }
         } else if (strcmp(msgBuf[0], "OPEN_OK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
@@ -814,7 +862,7 @@ void BC127Process(BC127_t *bt)
                 bt->pairingErrors[BC127_LINK_HPF] = 0;
             }
             BC127ConnectionOpenProfile(&bt->activeDevice, msgBuf[2], linkId);
-            LogDebug("BT: Open %s for ID %s", msgBuf[2], msgBuf[1]);
+            LogDebug(LOG_SOURCE_BT, "BT: Open %s for ID %s", msgBuf[2], msgBuf[1]);
             EventTriggerCallback(
                 BC127Event_DeviceLinkConnected,
                 (unsigned char *) msgBuf[1]
@@ -845,18 +893,16 @@ void BC127Process(BC127_t *bt)
             if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
                 memset(bt->activeDevice.deviceName, 0, 33);
                 strncpy(bt->activeDevice.deviceName, deviceName, 32);
-                bt->discoverable = BC127_STATE_OFF;
-                bt->connectable = BC127_STATE_OFF;
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
             BC127PairedDeviceInit(bt, msgBuf[1], deviceName);
             EventTriggerCallback(BC127Event_DeviceFound, (unsigned char *) msgBuf[1]);
-            LogDebug("BT: New Pairing Profile %s -> %s", msgBuf[1], deviceName);
+            LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s -> %s", msgBuf[1], deviceName);
         } else if(strcmp(msgBuf[0], "Build:") == 0) {
             // The device sometimes resets without sending the "Ready" message
             // so we instead watch for the build string
             bt->activeDevice = BC127ConnectionInit();
-            LogDebug("BT: Boot Complete");
+            LogDebug(LOG_SOURCE_BT, "BT: Boot Complete");
             EventTriggerCallback(BC127Event_Boot, 0);
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
         } else if (strcmp(msgBuf[0], "STATE") == 0) {
@@ -872,7 +918,7 @@ void BC127Process(BC127_t *bt)
                 } else if (strcmp(msgBuf[3], "DISCOVERABLE[OFF]") == 0) {
                     bt->discoverable = BC127_STATE_OFF;
                 }
-                LogDebug("BT: Got Status %s %s", msgBuf[2], msgBuf[3]);
+                LogDebug(LOG_SOURCE_BT, "BT: Got Status %s %s", msgBuf[2], msgBuf[3]);
             }
         }
     }
@@ -904,7 +950,7 @@ void BC127Process(BC127_t *bt)
  */
 void BC127SendCommand(BC127_t *bt, char *command)
 {
-    LogDebug("BT: Send Command '%s'", command);
+    LogDebug(LOG_SOURCE_BT, "BT: Send Command '%s'", command);
     uint8_t idx = 0;
     for (idx = 0; idx < strlen(command); idx++) {
         CharQueueAdd(&bt->uart.txQueue, command[idx]);

@@ -12,13 +12,15 @@
 #include <string.h>
 #include <stdio.h>
 #include "../mappings.h"
-#include "debug.h"
+#include "log.h"
 #include "event.h"
 #include "uart.h"
 #include "utils.h"
 
 #define BC127_AVRCP_STATUS_PAUSED 0
 #define BC127_AVRCP_STATUS_PLAYING 1
+#define BC127_CALL_END 0
+#define BC127_CALL_START 1
 #define BC127_CLOSE_ALL 255
 #define BC127_CONFIG_STATE_NEVER "0"
 #define BC127_CONFIG_STATE_ALWAYS "1"
@@ -53,7 +55,8 @@
 #define BC127Event_DeviceDisconnected 4
 #define BC127Event_Boot 5
 #define BC127Event_DeviceFound 6
-
+#define BC127Event_CallStart 7
+#define BC127Event_CallEnd 8
 /**
  * BC127PairedDevice_t
  *     Description:

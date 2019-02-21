@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <xc.h>
 #include "char_queue.h"
-#include "debug.h"
+#include "log.h"
 #include "sfr_setters.h"
 #include "utils.h"
 #define UART_BAUD_115200 8

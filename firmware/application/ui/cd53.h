@@ -9,7 +9,7 @@
 #define _ADDED_C_LIB 1
 #include <stdio.h>
 #include "../lib/bc127.h"
-#include "../lib/debug.h"
+#include "../lib/log.h"
 #include "../lib/event.h"
 #include "../lib/ibus.h"
 #include "../lib/timer.h"

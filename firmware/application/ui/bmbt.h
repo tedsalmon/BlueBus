@@ -14,6 +14,7 @@
 #include "../lib/timer.h"
 #define BMBT_DISPLAY_OFF 0
 #define BMBT_DISPLAY_ON 1
+#define BMBT_GT_CLEAR_SCREEN 0x0C
 #define BMBT_HEADER_BT 1
 #define BMBT_HEADER_PB_STAT 2
 #define BMBT_HEADER_DEV_NAME 6
@@ -34,6 +35,7 @@
 #define BMBT_MENU_TIMER_WRITE_TIMEOUT 500
 #define BMBT_MODE_OFF 0
 #define BMBT_MODE_ACTIVE 1
+#define BMBT_NAV_BOOT 0x10
 #define BMBT_PAIRING_DEVICE_NONE -1
 typedef struct BMBTContext_t {
     BC127_t *bt;
@@ -54,6 +56,7 @@ void BMBTBC127PlaybackStatus(void *, unsigned char *);
 void BMBTBC127Ready(void *, unsigned char *);
 void BMBTIBusBMBTButtonPress(void *, unsigned char *);
 void BMBTIBusCDChangerStatus(void *, unsigned char *);
+void BMBTIBusGTDiagnostics(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);
 void BMBTRADUpdateMainArea(void *, unsigned char *);
 void BMBTScreenModeUpdate(void *, unsigned char *);

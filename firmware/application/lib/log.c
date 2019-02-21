@@ -1,10 +1,10 @@
 /*
- * File:   debug.c
+ * File:   log.c
  * Author: Ted Salmon <tass2001@gmail.com>
  * Description:
  *     Implementation of logging mechanisms that we can use throughout the project
  */
-#include "debug.h"
+#include "log.h"
 
 /**
  * LogMessage()
@@ -51,23 +51,51 @@ void LogRaw(const char *format, ...)
 }
 
 /**
+ * LogRawDebug()
+ *     Description:
+ *         Sends the given data over to the debug UART.
+ *     Params:
+ *         uint8_t source - The source system
+ *         char *data
+ *         va_args ...
+ *     Returns:
+ *         void
+ */
+void LogRawDebug(uint8_t source, const char *format, ...)
+{
+    UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
+    unsigned char canLog = ConfigGetLog(source);
+    if (debugger != 0 && canLog != 0) {
+        char buffer[255];
+        va_list args;
+        va_start(args, format);
+        vsprintf(buffer, format, args);
+        UARTSendString(debugger, buffer);
+    }
+}
+
+/**
  * LogDebug()
  *     Description:
  *         Send a debug message over the system UART
  *     Params:
+ *         uint8_t source - The source system
  *         const char *format
  *         va_args ...
  *     Returns:
  *         void
  */
-void LogDebug(const char *format, ...)
+void LogDebug(uint8_t source, const char *format, ...)
 {
-    char buffer[255];
-    va_list args;
-    va_start(args, format);
-    vsprintf(buffer, format, args);
-    va_end(args);
-    LogMessage("DEBUG", buffer);
+    unsigned char canLog = ConfigGetLog(source);
+    if (canLog != 0) {
+        char buffer[255];
+        va_list args;
+        va_start(args, format);
+        vsprintf(buffer, format, args);
+        va_end(args);
+        LogMessage("DEBUG", buffer);
+    }
 }
 
 /**
@@ -77,6 +105,7 @@ void LogDebug(const char *format, ...)
  *         va_args ...
  *     Params:
  *         const char *format
+ *         va_args ...
  *     Returns:
  *         void
  */
@@ -96,18 +125,23 @@ void LogError(const char *format, ...)
  *         Send an info message over the system UART
  *         va_args ...
  *     Params:
+ *         uint8_t source - The source system
  *         const char *format
+ *         va_args ...
  *     Returns:
  *         void
  */
-void LogInfo(const char *format, ...)
+void LogInfo(uint8_t source, const char *format, ...)
 {
-    char buffer[255];
-    va_list args;
-    va_start(args, format);
-    vsprintf(buffer, format, args);
-    va_end(args);
-    LogMessage("INFO", buffer);
+    unsigned char canLog = ConfigGetLog(source);
+    if (canLog != 0) {
+        char buffer[255];
+        va_list args;
+        va_start(args, format);
+        vsprintf(buffer, format, args);
+        va_end(args);
+        LogMessage("INFO", buffer);
+    }
 }
 
 /**

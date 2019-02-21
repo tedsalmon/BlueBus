@@ -13,7 +13,7 @@
 #include "lib/bc127.h"
 #include "lib/cli.h"
 #include "lib/config.h"
-#include "lib/debug.h"
+#include "lib/log.h"
 #include "lib/eeprom.h"
 #include "lib/ibus.h"
 #include "lib/timer.h"
@@ -39,7 +39,7 @@ int main(void)
     // All UART handler registrations need to be done at
     // this level to maintain a global scope
     UARTAddModuleHandler(&systemUart);
-    LogInfo("***** BlueBus Init *****");
+    LogMessage("", "***** BlueBus *****");
 
     struct BC127_t bt = BC127Init();
     UARTAddModuleHandler(&bt.uart);

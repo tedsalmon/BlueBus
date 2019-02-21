@@ -54,6 +54,11 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBusEvent_GTDiagResponse,
+        &BMBTIBusGTDiagnostics,
+        &Context
+    );
+    EventRegisterCallback(
         IBusEvent_GTMenuSelect,
         &BMBTIBusMenuSelect,
         &Context
@@ -303,8 +308,6 @@ void BMBTBC127DeviceDisconnected(void *ctx, unsigned char *data)
         ];
         if (strlen(dev->macId) > 0) {
             BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
-            BC127CommandProfileOpen(context->bt, dev->macId, "AVRCP");
-            BC127CommandProfileOpen(context->bt, dev->macId, "HPF");
         }
         context->selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
     }
@@ -341,6 +344,11 @@ void BMBTBC127Ready(void *ctx, unsigned char *tmp)
     if (context->displayMode == BMBT_DISPLAY_ON) {
         IBusCommandGTUpdate(context->ibus, IBusAction_GT_WRITE_ZONE);
         // Write the pairing status
+        //if (context->bt->discoverable == BC127_STATE_ON) {
+        //    IBusCommandGTWriteIndexMk4(context->ibus, selectedIdx, "Pairing: Off");
+        //} else {
+        //    IBusCommandGTWriteIndexMk4(context->ibus, selectedIdx, "Pairing: On");
+        //}
     }
 }
 
@@ -372,8 +380,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             ) {
                 context->displayMode = BMBT_DISPLAY_ON;
                 context->menu = BMBT_MENU_NONE;
-                // Maybe this will stop the constant screen clearing when
-                // we enter the menu again?
+                // Stop the constant screen clearing when re-entering the menu
                 IBusCommandRADDisableMenu(context->ibus);
             }
         }
@@ -404,6 +411,11 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
             context->displayMode = BMBT_DISPLAY_ON;
         }
     }
+}
+
+void BMBTIBusGTDiagnostics(void *ctx, unsigned char *pkt)
+{
+    //BMBTContext_t *context = (BMBTContext_t *) ctx;
 }
 
 void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
@@ -451,7 +463,6 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                     // If we don't have a device connected, connect immediately
                     if (context->bt->activeDevice.deviceId == 0) {
                         BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
-                        BC127CommandProfileOpen(context->bt, dev->macId, "HPF");
                     } else {
                         // Wait until the current device disconnects to
                         // connect the new one
@@ -528,13 +539,12 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
         context->menu = BMBT_MENU_NONE;
         context->displayMode = BMBT_DISPLAY_OFF;
     }
-    if (pkt[4] == 0x0C &&
+    if (pkt[4] == BMBT_GT_CLEAR_SCREEN &&
         context->mode == BMBT_MODE_ACTIVE &&
         context->displayMode == BMBT_DISPLAY_ON
     ) {
         // Write the current menu back out
         if (context->menu == BMBT_MENU_NONE) {
-            IBusCommandRADDisableMenu(context->ibus);
             BMBTWriteMenu(context);
         } else {
             BMBTMenuRefresh(context);
@@ -548,7 +558,7 @@ void BMBTScreenModeSet(void *ctx, unsigned char *pkt)
     // The GT sends this screen mode post-boot to tell the radio it can display
     // We set the menu to none so that on the next screen clear, we write the
     // screen
-    if (pkt[4] == 0x10) {
+    if (pkt[4] == BMBT_NAV_BOOT) {
         context->menu = BMBT_MENU_NONE;
     }
 }
@@ -561,10 +571,12 @@ void BMBTScreenModeSet(void *ctx, unsigned char *pkt)
 void BMBTTimerMenuWrite(void *ctx)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->menu == BMBT_MENU_NONE && context->displayMode == BMBT_DISPLAY_ON) {
+    if (context->menu == BMBT_MENU_NONE &&
+        context->displayMode == BMBT_DISPLAY_ON &&
+        context->ibus->ignitionStatus == IBUS_IGNITION_ON
+    ) {
         uint16_t time = context->timerMenuIntervals * BMBT_MENU_TIMER_WRITE_INT;
         if (time >= BMBT_MENU_TIMER_WRITE_TIMEOUT) {
-            LogDebug("Writing Menu from Timer");
             IBusCommandRADDisableMenu(context->ibus);
             BMBTWriteMenu(context);
             context->timerMenuIntervals = 0;

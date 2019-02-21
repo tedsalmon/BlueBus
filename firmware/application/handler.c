@@ -35,6 +35,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     Context.uiMode = uiMode;
     Context.deviceConnRetries = 0;
     EventRegisterCallback(
+        BC127Event_CallEnd,
+        &HandlerBC127CallStatus,
+        &Context
+    );
+    EventRegisterCallback(
         BC127Event_DeviceLinkConnected,
         &HandlerBC127DeviceLinkConnected,
         &Context
@@ -72,11 +77,6 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     EventRegisterCallback(
         IBusEvent_IgnitionStatus,
         &HandlerIBusIgnitionStatus,
-        &Context
-    );
-    EventRegisterCallback(
-        IBusEvent_GTDiagResponse,
-        &HandlerIBusGTDiagnostics,
         &Context
     );
     EventRegisterCallback(
@@ -121,6 +121,17 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
     }
 }
 
+void HandlerBC127CallStatus(void *ctx, unsigned char *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // If we were playing before the call, try to resume playback
+    if (data == BC127_CALL_END &&
+        context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING
+    ) {
+        BC127CommandPlay(context->bt);
+    }
+}
+
 /**
  * HandlerBC127DeviceLinkConnected()
  *     Description:
@@ -141,7 +152,7 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
             context->bt->activeDevice.a2dpLinkId != 0 &&
             context->bt->activeDevice.hfpLinkId != 0
         ) {
-            LogDebug("Handler: Disable connectability");
+            LogDebug(LOG_SOURCE_SYSTEM, "Handler: Disable connectability");
             BC127CommandBtState(
                 context->bt,
                 BC127_STATE_OFF,
@@ -193,7 +204,7 @@ void HandlerBC127DeviceFound(void *ctx, unsigned char *data)
         context->ibus->ignitionStatus == IBUS_IGNITION_ON
     ) {
         char *macId = (char *) data;
-        LogDebug("Handler: No open connection -- Attempting to connect");
+        LogDebug(LOG_SOURCE_SYSTEM, "Handler: No open connection -- Attempting to connect");
         BC127CommandProfileOpen(context->bt, macId, "A2DP");
         context->btConnectionStatus = HANDLER_BT_CONN_ON;
     }
@@ -252,6 +263,7 @@ void HandlerBC127Ready(void *ctx, unsigned char *tmp)
         // Set the connectable and discoverable states to what they were
         BC127CommandBtState(context->bt, BC127_STATE_ON, context->bt->discoverable);
     }
+    BC127ClearPairedDevices(context->bt);
     BC127CommandStatus(context->bt);
     BC127CommandList(context->bt);
 }
@@ -352,22 +364,6 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
     IBusCommandCDCStatus(context->ibus, curAction, curStatus, discCount);
     context->cdChangerLastKeepAlive = TimerGetMillis();
     context->cdChangerLastStatus = TimerGetMillis();
-}
-
-/**
- * HandlerIBusGTDiagnostics()
- *     Description:
- *         Track the GT diagnostics info. Here we can define what device versions
- *         are installed in the vehicle.
- *     Params:
- *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerIBusGTDiagnostics(void *ctx, unsigned char *pkt)
-{
-
 }
 
 /**
@@ -491,7 +487,7 @@ void HandlerTimerCDCSendStatus(void *ctx)
             discCount
         );
         context->cdChangerLastStatus = now;
-        LogDebug("Handler: Send CDC status preemptively");
+        LogDebug(LOG_SOURCE_SYSTEM, "Handler: Send CDC status preemptively");
     }
 }
 
@@ -512,7 +508,10 @@ void HandlerTimerDeviceConnection(void *ctx)
         context->bt->activeDevice.a2dpLinkId == 0
     ) {
         if (context->deviceConnRetries <= HANDLER_DEVICE_MAX_RECONN) {
-            LogDebug("Handler: No open connection -- Attempting to connect");
+            LogDebug(
+                LOG_SOURCE_SYSTEM,
+                "Handler: A2DP link closed -- Attempting to connect"
+            );
             BC127CommandProfileOpen(
                 context->bt,
                 context->bt->activeDevice.macId,
@@ -547,7 +546,7 @@ void HandlerTimerOpenProfileErrors(void *ctx)
         uint8_t idx;
         for (idx = 0; idx < BC127_PROFILE_COUNT; idx++) {
             if (context->bt->pairingErrors[idx] == 1) {
-                LogDebug("Handler: Attempting to resolve pairing error");
+                LogDebug(LOG_SOURCE_SYSTEM, "Handler: Attempting to resolve pairing error");
                 BC127CommandProfileOpen(
                     context->bt,
                     context->bt->activeDevice.macId,

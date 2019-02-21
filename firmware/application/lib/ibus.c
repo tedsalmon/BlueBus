@@ -79,7 +79,7 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
         if (softwareVersion == 0 || softwareVersion >= 40) {
             ibus->gtCanDisplayStatic = 1;
         }
-        LogDebug("IBus: Got GT HW %d SW %d", hardwareVersion, softwareVersion);
+        LogDebug(LOG_SOURCE_IBUS, "IBus: Got GT HW %d SW %d", hardwareVersion, softwareVersion);
         EventTriggerCallback(IBusEvent_GTDiagResponse, pkt);
     } else if (pkt[3] == IBusAction_GT_MENU_SELECT) {
         EventTriggerCallback(IBusEvent_GTMenuSelect, pkt);
@@ -91,16 +91,31 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
 static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[3] == IBusAction_IGN_STATUS_REQ) {
-        if (pkt[4] == 0x00 && ibus->ignitionStatus == IBUS_IGNITION_ON) {
+        uint8_t ignitionStatus;
+        if (pkt[4] == IBUS_IGNITION_OFF) {
             // Implied that the CDC should not be playing with the ignition off
             ibus->cdChangerStatus = 0;
-            ibus->ignitionStatus = IBUS_IGNITION_OFF;
-            EventTriggerCallback(IBusEvent_IgnitionStatus, pkt);
-        } else if (ibus->ignitionStatus == IBUS_IGNITION_OFF) {
-            ibus->ignitionStatus = IBUS_IGNITION_ON;
+            ignitionStatus = IBUS_IGNITION_OFF;
+        } else {
+            ignitionStatus = IBUS_IGNITION_ON;
+        }
+        if (ibus->ignitionStatus != ignitionStatus) {
+            ibus->ignitionStatus = ignitionStatus;
             EventTriggerCallback(IBusEvent_IgnitionStatus, pkt);
         }
     }
+}
+
+static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
+{
+    /*
+    50 04 68 3B 21 26 <next> release
+    50 04 68 3B 28 2F <previous> release
+    50 04 C8 3B 80 27 <R/T>
+    50 04 C8 3B 90 37 <voice> hold
+    50 04 C8 3B A0 07 <voice> release
+    */
+    //if (pkt[4] == IBUS_MFL_BTN_EVENT)
 }
 
 static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
@@ -167,7 +182,8 @@ void IBusProcess(IBus_t *ibus)
             // Make sure we do not read more than the maximum packet length
             if (msgLength > IBUS_MAX_MSG_LENGTH) {
                 long long unsigned int ts = (long long unsigned int) TimerGetMillis();
-                LogRaw(
+                LogRawDebug(
+                    LOG_SOURCE_IBUS,
                     "[%llu] ERROR: IBus: RX Invalid Length [%d - %02X]: ",
                     ts,
                     msgLength,
@@ -175,9 +191,9 @@ void IBusProcess(IBus_t *ibus)
                 );
                 uint8_t idx;
                 for (idx = 0; idx < ibus->rxBufferIdx; idx++) {
-                    LogRaw("%02X ", ibus->rxBuffer[idx]);
+                    LogRawDebug(LOG_SOURCE_IBUS, "%02X ", ibus->rxBuffer[idx]);
                 }
-                LogRaw("\r\n");
+                LogRawDebug(LOG_SOURCE_IBUS, "\r\n");
                 ibus->rxBufferIdx = 0;
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
                 CharQueueReset(&ibus->uart.rxQueue);
@@ -185,13 +201,13 @@ void IBusProcess(IBus_t *ibus)
                 uint8_t idx;
                 unsigned char pkt[msgLength];
                 long long unsigned int ts = (long long unsigned int) TimerGetMillis();
-                LogRaw("[%llu] DEBUG: IBus: RX[%d]: ", ts, msgLength);
+                LogRawDebug(LOG_SOURCE_IBUS, "[%llu] DEBUG: IBus: RX[%d]: ", ts, msgLength);
                 for(idx = 0; idx < msgLength; idx++) {
                     pkt[idx] = ibus->rxBuffer[idx];
-                    LogRaw("%02X ", pkt[idx]);
+                    LogRawDebug(LOG_SOURCE_IBUS, "%02X ", pkt[idx]);
                 }
                 if (memcmp(ibus->txBuffer[ibus->txBufferReadbackIdx], pkt, msgLength) == 0) {
-                    LogRaw("[SELF]");
+                    LogRawDebug(LOG_SOURCE_IBUS, "[SELF]");
                     memset(ibus->txBuffer[ibus->txBufferReadbackIdx], 0, msgLength);
                     if (ibus->txBufferReadbackIdx + 1 == IBUS_TX_BUFFER_SIZE) {
                         ibus->txBufferReadbackIdx = 0;
@@ -199,7 +215,7 @@ void IBusProcess(IBus_t *ibus)
                         ibus->txBufferReadbackIdx++;
                     }
                 }
-                LogRaw("\r\n");
+                LogRawDebug(LOG_SOURCE_IBUS, "\r\n");
                 if (IBusValidateChecksum(pkt) == 1) {
                     unsigned char srcSystem = pkt[0];
                     if (srcSystem == IBUS_DEVICE_RAD) {
@@ -272,16 +288,17 @@ void IBusProcess(IBus_t *ibus)
             (ibus->rxBufferIdx + 1) == IBUS_RX_BUFFER_SIZE
         ) {
             long long unsigned int ts = (long long unsigned int) TimerGetMillis();
-            LogRaw(
+            LogRawDebug(
+                LOG_SOURCE_IBUS,
                 "[%llu] ERROR: IBus: RX Buffer Timeout [%d]: ",
                 ts,
                 ibus->rxBufferIdx
             );
             uint8_t idx;
             for (idx = 0; idx < ibus->rxBufferIdx; idx++) {
-                LogRaw("%02X ", ibus->rxBuffer[idx]);
+                LogRawDebug(LOG_SOURCE_IBUS, "%02X ", ibus->rxBuffer[idx]);
             }
-            LogRaw("\r\n");
+            LogRawDebug(LOG_SOURCE_IBUS, "\r\n");
             ibus->rxBufferIdx = 0;
             memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
         }
@@ -729,7 +746,7 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
  */
 void IBusCommandIKEGetIgnition(IBus_t *ibus)
 {
-    LogDebug("IBus: Get Ignition Status");
+    LogDebug(LOG_SOURCE_IBUS, "IBus: Get Ignition Status");
     unsigned char msg[] = {0x10};
     IBusSendCommand(ibus, IBUS_DEVICE_BMBT, IBUS_DEVICE_IKE, msg, 1);
 }

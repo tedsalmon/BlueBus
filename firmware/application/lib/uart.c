@@ -150,20 +150,25 @@ void UARTReportErrors(UART_t *uart)
 {
     if (uart->rxError != 0) {
         long long unsigned int ts = (long long unsigned int) TimerGetMillis();
-        LogRaw("[%llu] ERROR: UART[%d]: ", ts, uart->moduleIndex + 1);
+        LogRawDebug(
+            LOG_SOURCE_SYSTEM,
+            "[%llu] ERROR: UART[%d]: ",
+            ts,
+            uart->moduleIndex + 1
+        );
         if ((uart->rxError & UART_ERR_GERR) != 0) {
-            LogRaw("GERR ");
+            LogRawDebug(LOG_SOURCE_SYSTEM, "GERR ");
         }
         if ((uart->rxError & UART_ERR_OERR) != 0) {
-            LogRaw("OERR ");
+            LogRawDebug(LOG_SOURCE_SYSTEM, "OERR ");
         }
         if ((uart->rxError & UART_ERR_FERR) != 0) {
-            LogRaw("FERR ");
+            LogRawDebug(LOG_SOURCE_SYSTEM, "FERR ");
         }
         if ((uart->rxError & UART_ERR_PERR) != 0) {
-            LogRaw("PERR ");
+            LogRawDebug(LOG_SOURCE_SYSTEM, "PERR ");
         }
-        LogRaw("\r\n");
+        LogRawDebug(LOG_SOURCE_SYSTEM, "\r\n");
         uart->rxError = 0;
     }
 }

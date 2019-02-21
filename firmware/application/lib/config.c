@@ -6,6 +6,39 @@
  */
 #include "config.h"
 
+unsigned char CONFIG_CACHE[CONFIG_CACHE_VALUES] = {};
+
+/**
+ * ConfigGetLog()
+ *     Description:
+ *         Get the log level for different systems
+ *     Params:
+ *         unsigned char system - The system to get the log mode for
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetLog(unsigned char system)
+{
+    unsigned char currentSetting = CONFIG_CACHE[
+        CONFIG_DEVICE_LOG_SETTINGS_ADDRESS
+    ];
+    if (currentSetting == 0x00 && currentSetting != 0xFF) {
+        unsigned char currentSetting = EEPROMReadByte(
+            CONFIG_DEVICE_LOG_SETTINGS_ADDRESS
+        );
+        if (currentSetting == 0x00) {
+            // Prevent from re-reading the byte
+            currentSetting = 0xFF;
+        }
+        CONFIG_CACHE[CONFIG_DEVICE_LOG_SETTINGS_ADDRESS] = currentSetting;
+    }
+    // The value is fully unset, so default to on
+    if (currentSetting == 0xFF) {
+        return 1;
+    }
+    return (currentSetting >> system) & 1;
+}
+
 /**
  * ConfigGetUIMode()
  *     Description:
@@ -13,17 +46,15 @@
  *     Params:
  *         None
  *     Returns:
- *         void
+ *         unsigned char
  */
 unsigned char ConfigGetUIMode()
 {
-    unsigned char value = EEPROMReadByte(CONFIG_UI_MODE_ADDRESS);
-    if (value == IBus_UI_CD53) {
-        return IBus_UI_CD53;
-    } else if (value == IBus_UI_BMBT) {
-        return IBus_UI_BMBT;
+    unsigned char value = CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS];
+    if (value == 0x00) {
+        value = EEPROMReadByte(CONFIG_UI_MODE_ADDRESS);
     }
-    return 0;
+    return value;
 }
 
 /**
@@ -41,6 +72,29 @@ void ConfigSetBootloaderMode(unsigned char bootloaderMode)
 }
 
 /**
+ * ConfigSetLog()
+ *     Description:
+ *         Set the log level for different systems
+ *     Params:
+ *         unsigned char system - The system to set the log mode for
+ *         unsigned char mode - The mode
+ *     Returns:
+ *         void
+ */
+void ConfigSetLog(unsigned char system, unsigned char mode)
+{
+    unsigned char currentSetting = EEPROMReadByte(
+        CONFIG_DEVICE_LOG_SETTINGS_ADDRESS
+    );
+    unsigned char currentVal = (currentSetting >> system) & 1;
+    if (mode != currentVal) {
+        currentSetting ^= 1 << system;
+    }
+    EEPROMWriteByte(CONFIG_DEVICE_LOG_SETTINGS_ADDRESS, currentSetting);
+    CONFIG_CACHE[CONFIG_DEVICE_LOG_SETTINGS_ADDRESS] = currentSetting;
+}
+
+/**
  * ConfigSetUIMode()
  *     Description:
  *         Set the UI mode
@@ -51,5 +105,6 @@ void ConfigSetBootloaderMode(unsigned char bootloaderMode)
  */
 void ConfigSetUIMode(unsigned char uiMode)
 {
+    CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS] = uiMode;
     EEPROMWriteByte(CONFIG_UI_MODE_ADDRESS, uiMode);
 }

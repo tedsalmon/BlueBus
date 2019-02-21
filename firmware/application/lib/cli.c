@@ -134,9 +134,34 @@ void CLIProcess(CLI_t *cli)
                 } else if (strcmp(msgBuf[2], "1") == 0) {
                     IBusCommandIgnitionStatus(cli->ibus, 0x01);
                 }
+            } else if (strcmp(msgBuf[1], "LOG") == 0) {
+                unsigned char system = 0xFF;
+                unsigned char value = 0xFF;
+                // Get the system
+                if (strcmp(msgBuf[2], "BT") == 0) {
+                    system = CONFIG_DEVICE_LOG_BT;
+                } else if (strcmp(msgBuf[2], "IBUS") == 0) {
+                    system = CONFIG_DEVICE_LOG_IBUS;
+                } else if (strcmp(msgBuf[2], "SYS") == 0) {
+                    system = CONFIG_DEVICE_LOG_SYSTEM;
+                } else if (strcmp(msgBuf[2], "UI") == 0) {
+                    system = CONFIG_DEVICE_LOG_UI;
+                }
+                // Get the value
+                if (strcmp(msgBuf[3], "0") == 0) {
+                    value = 0;
+                } else if (strcmp(msgBuf[3], "1") == 0) {
+                    value = 1;
+                }
+                if (system != 0xFF && value != 0xFF) {
+                    ConfigSetLog(system, value);
+                    LogRaw("Ok\r\n");
+                } else {
+                    LogRaw("Invalid Parameters for SET LOG\r\n");
+                }
             }
-        } else if (strcmp(msgBuf[0], "HELP") == 0) {
-            LogRaw("BlueBus Firmware version: 1.0.2\r\n");
+        } else if (strcmp(msgBuf[0], "HELP") == 0 || strlen(msgBuf[0]) == 0) {
+            LogRaw("BlueBus Firmware version: 1.0.2.1\r\n");
             LogRaw("Available Commands:\r\n");
             LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
             LogRaw("    BTRESET - Reset the BC127\r\n");
@@ -144,7 +169,9 @@ void CLIProcess(CLI_t *cli)
             LogRaw("    GET UI - Get the current UI Mode\r\n");
             LogRaw("    REBOOT - Reboot the device\r\n");
             LogRaw("    SET BTAUD_DIG <format> <rate> <param1> <param2>\r\n");
-            LogRaw("    SET IGN x - Send the ignition status message [DEBUG ONLY]");
+            LogRaw("    SET IGN x - Send the ignition status message [DEBUG]\r\n");
+            LogRaw("    SET LOG x y - Change logging for x (BT, IBUS, SYS, UI)");
+            LogRaw("to y (1 = On, 0 = Off)\r\n");
             LogRaw("    SET UI x - Set the UI to x, ");
             LogRaw("where 1 is CD53 and 2 is BMBT\r\n");
         } else {

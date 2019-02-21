@@ -9,10 +9,10 @@
         <itemPath>lib/char_queue.h</itemPath>
         <itemPath>lib/cli.h</itemPath>
         <itemPath>lib/config.h</itemPath>
-        <itemPath>lib/debug.h</itemPath>
         <itemPath>lib/eeprom.h</itemPath>
         <itemPath>lib/event.h</itemPath>
         <itemPath>lib/ibus.h</itemPath>
+        <itemPath>lib/log.h</itemPath>
         <itemPath>lib/sfr_setters.h</itemPath>
         <itemPath>lib/timer.h</itemPath>
         <itemPath>lib/uart.h</itemPath>
@@ -40,10 +40,10 @@
         <itemPath>lib/bc127.c</itemPath>
         <itemPath>lib/char_queue.c</itemPath>
         <itemPath>lib/cli.c</itemPath>
-        <itemPath>lib/debug.c</itemPath>
         <itemPath>lib/eeprom.c</itemPath>
         <itemPath>lib/event.c</itemPath>
         <itemPath>lib/ibus.c</itemPath>
+        <itemPath>lib/log.c</itemPath>
         <itemPath>lib/sfr_setters.s</itemPath>
         <itemPath>lib/timer.c</itemPath>
         <itemPath>lib/uart.c</itemPath>
@@ -63,6 +63,9 @@
       <itemPath>Makefile</itemPath>
     </logicalFolder>
   </logicalFolder>
+  <sourceRootList>
+    <Elem>lib</Elem>
+  </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
     <conf name="application" type="2">
