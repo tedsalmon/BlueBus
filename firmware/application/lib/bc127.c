@@ -21,6 +21,7 @@ BC127_t BC127Init()
     bt.activeDevice = BC127ConnectionInit();
     bt.connectable = BC127_STATE_ON;
     bt.discoverable = BC127_STATE_ON;
+    bt.callStatus = BC127_CALL_INACTIVE;
     bt.metadataStatus = BC127_METADATA_STATUS_NEW;
     bt.pairedDevicesCount = 0;
     memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
@@ -770,10 +771,12 @@ void BC127Process(BC127_t *bt)
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
         } else if(strcmp(msgBuf[0], "CALL_END") == 0) {
+            bt->callStatus = BC127_CALL_INACTIVE;
             EventTriggerCallback(BC127Event_CallEnd, BC127_CALL_END);
         } else if(strcmp(msgBuf[0], "CALL_INCOMING") == 0 ||
                   strcmp(msgBuf[0], "CALL_OUTGOING") == 0
         ) {
+            bt->callStatus = BC127_CALL_ACTIVE;
             EventTriggerCallback(
                 BC127Event_CallStart,
                 (unsigned char *) BC127_CALL_START

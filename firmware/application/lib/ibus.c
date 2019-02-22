@@ -79,7 +79,23 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
         if (softwareVersion == 0 || softwareVersion >= 40) {
             ibus->gtCanDisplayStatic = 1;
         }
-        LogDebug(LOG_SOURCE_IBUS, "IBus: Got GT HW %d SW %d", hardwareVersion, softwareVersion);
+        LogRaw(
+            "IBus: GT Data: Part Number: %c%c%c%c%c%c%c \
+HW: %d SW: %d Build Week: %c%c Year: %c%c \r\n",
+            pkt[4],
+            pkt[5],
+            pkt[6],
+            pkt[7],
+            pkt[8],
+            pkt[9],
+            pkt[10],
+            hardwareVersion,
+            softwareVersion,
+            pkt[19],
+            pkt[20],
+            pkt[21],
+            pkt[22]
+        );
         EventTriggerCallback(IBusEvent_GTDiagResponse, pkt);
     } else if (pkt[3] == IBusAction_GT_MENU_SELECT) {
         EventTriggerCallback(IBusEvent_GTMenuSelect, pkt);
@@ -108,14 +124,9 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 
 static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    /*
-    50 04 68 3B 21 26 <next> release
-    50 04 68 3B 28 2F <previous> release
-    50 04 C8 3B 80 27 <R/T>
-    50 04 C8 3B 90 37 <voice> hold
-    50 04 C8 3B A0 07 <voice> release
-    */
-    //if (pkt[4] == IBUS_MFL_BTN_EVENT)
+    if (pkt[3] == IBUS_MFL_BTN_EVENT) {
+        EventTriggerCallback(IBusEvent_MFLButton, pkt);
+    }
 }
 
 static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
@@ -132,6 +143,25 @@ static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
             EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
         }
     } else if (pkt[2] == IBUS_DEVICE_DIA && pkt[3] == IBusAction_DIAG_DATA) {
+        LogRaw(
+            "IBus: Radio Data: Part Number: %d%d%d%d%d%d%d \
+HW: %02d SW: %d%d Build Week: %d%d Year: %d%d \r\n",
+            pkt[4] & 0x0F,
+            (pkt[5] & 0xF0) >> 4,
+            pkt[5] & 0x0F,
+            (pkt[6] & 0xF0) >> 4,
+            pkt[6] & 0x0F,
+            (pkt[7] & 0xF0) >> 4,
+            pkt[7] & 0x0F,
+            pkt[8],
+            (pkt[15] & 0xF0) >> 4,
+            pkt[15] & 0x0F,
+            (pkt[12] & 0xF0) >> 4,
+            pkt[12] & 0x0F,
+            (pkt[13] & 0xF0) >> 4,
+            pkt[13] & 0x0F
+        );
+        EventTriggerCallback(IBusEvent_GTDiagResponse, pkt);
 
     } else if (pkt[2] == IBUS_DEVICE_GT) {
         if (pkt[3] == IBusAction_RAD_SCREEN_MODE_UPDATE) {
@@ -229,6 +259,9 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_GT) {
                         IBusHandleGTMessage(ibus, pkt);
+                    }
+                    if (srcSystem == IBUS_DEVICE_MFL) {
+                        IBusHandleMFLMessage(ibus, pkt);
                     }
                 } else {
                     LogError(

@@ -17,10 +17,14 @@
 #include "uart.h"
 #include "utils.h"
 
+#define BC127_AUDIO_I2S "0"
+#define BC127_AUDIO_SPDIF "2"
 #define BC127_AVRCP_STATUS_PAUSED 0
 #define BC127_AVRCP_STATUS_PLAYING 1
 #define BC127_CALL_END 0
 #define BC127_CALL_START 1
+#define BC127_CALL_ACTIVE 1
+#define BC127_CALL_INACTIVE 0
 #define BC127_CLOSE_ALL 255
 #define BC127_CONFIG_STATE_NEVER "0"
 #define BC127_CONFIG_STATE_ALWAYS "1"
@@ -122,6 +126,7 @@ typedef struct BC127_t {
     uint8_t discoverable;
     uint8_t pairedDevicesCount;
     uint8_t pairingErrors[BC127_PROFILE_COUNT];
+    uint8_t callStatus;
     uint8_t metadataStatus;
     uint8_t playbackStatus;
     char title[BC127_METADATA_FIELD_SIZE];
@@ -161,6 +166,7 @@ void BC127CommandSetModuleName(BC127_t *, char *);
 void BC127CommandSetPin(BC127_t *, char *);
 void BC127CommandSetProfiles(BC127_t *, uint8_t, uint8_t, uint8_t, uint8_t);
 void BC127CommandStatus(BC127_t *);
+void BC127CommandToggleVR(BC127_t *);
 void BC127CommandUnpair(BC127_t *);
 void BC127CommandWrite(BC127_t *);
 uint8_t BC127GetConnectedDeviceCount(BC127_t *);

@@ -115,7 +115,7 @@
 #define IBusEvent_RADUpdateMainArea 41
 #define IBusEvent_ScreenModeSet 42
 #define IBusEvent_RADDiagResponse 43
-#define IBusEvent_MFLButtonRelease 44
+#define IBusEvent_MFLButton 44
 
 #define IBus_UI_CD53 1
 #define IBus_UI_BMBT 2
@@ -127,6 +127,13 @@
 #define IBUS_RADIO_TYPE_BM54 3
 #define IBUS_RADIO_TYPE_BRCD 4
 #define IBUS_RADIO_TYPE_BRTP 5
+
+#define IBUS_MFL_BTN_EVENT 0x3B
+#define IBusMFLButtonNextRelease 0x21
+#define IBusMFLButtonPrevRelease 0x28
+#define IBusMFLButtonRT 0x80
+#define IBusMFLButtonVoiceRelease 0xA0
+#define IBusMFLButtonVoiceHold 0x90
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR

@@ -47,6 +47,7 @@ void HandlerIBusCDCKeepAlive(void *, unsigned char *);
 void HandlerIBusCDCStatus(void *, unsigned char *);
 void HandlerIBusRADDiagnostics(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
+void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
 void HandlerTimerDeviceConnection(void *);

@@ -80,6 +80,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus, uint8_t uiMode)
         &Context
     );
     EventRegisterCallback(
+        IBusEvent_MFLButton,
+        &HandlerIBusMFLButton,
+        &Context
+    );
+    EventRegisterCallback(
         IBusEvent_RADDiagResponse,
         &HandlerIBusRADDiagnostics,
         &Context
@@ -428,6 +433,39 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         // Request BC127 state
         BC127CommandStatus(context->bt);
         BC127CommandList(context->bt);
+    }
+}
+
+/**
+ * HandlerIBusMFLButton()
+ *     Description:
+ *         Act upon MFL button presses when in CD Changer mode (when BT is active)
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *pkt - The packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->ibus->cdChangerStatus == IBUS_CDC_PLAYING) {
+        unsigned char mflButton = pkt[4];
+        if (mflButton == IBusMFLButtonNextRelease) {
+            BC127CommandForward(context->bt);
+        } else if (mflButton == IBusMFLButtonPrevRelease) {
+            BC127CommandBackward(context->bt);
+        } else if (mflButton == IBusMFLButtonRT) {
+            if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+                BC127CommandPause(context->bt);
+            } else {
+                BC127CommandPlay(context->bt);
+            }
+        } else if (mflButton == IBusMFLButtonVoiceRelease) {
+            
+        } else if (mflButton == IBusMFLButtonVoiceHold) {
+            BC127CommandToggleVR(context->bt);
+        }
     }
 }
 

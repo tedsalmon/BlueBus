@@ -509,7 +509,10 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
     text[textLen - 1] = '\0';
     // Main area is being updated with a CDC Text:
     //     Rewrite the header and set display mode on
-    if (strcmp("CDC 1-01", text) == 0 || strcmp("TR 01-001", text) == 0) {
+    if (strcmp("CDC 1-01", text) == 0 ||
+        strcmp("TR 01-001", text) == 0 ||
+        strcmp("CD 1-01", text) == 0
+    ) {
         context->mode = BMBT_MODE_ACTIVE;
         BMBTWriteHeader(context);
         if (context->displayMode == BMBT_DISPLAY_ON) {
