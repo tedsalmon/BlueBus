@@ -1,4 +1,5 @@
 #!/usr/bin/python
+from __future__ import print_function
 import sys
 from argparse import ArgumentParser
 from intelhex import IntelHex
@@ -140,7 +141,10 @@ if __name__ == '__main__':
                         if command == PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK:
                             if data_idx == 0:
                                 print('Flash Erase Complete')
-                            print('Write Ok: %d of %d' % (data_idx, data_len))
+                            percent = 0
+                            if data_idx > 0:
+                                percent = data_len / data_idx
+                            print('\rWriting Flash Block %d of %d' % (data_idx, data_len), end='\r')
                             data_idx += 1
                             if (data_idx < data_len):
                                 send_file(data[data_idx])
