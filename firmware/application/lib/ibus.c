@@ -36,7 +36,6 @@ IBus_t IBusInit()
     ibus.txBufferReadbackIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
-    ibus.gtCanDisplayStatic = 0;
     return ibus;
 }
 
@@ -51,34 +50,8 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[2] == IBUS_DEVICE_DIA && pkt[3] == IBusAction_DIAG_DATA) {
         // Decode the software and hardware versions
-        char hwVersion[3] = {
-            pkt[IBUS_GT_HW_ID_OFFSET],
-            pkt[IBUS_GT_HW_ID_OFFSET + 1],
-            '\0'
-        };
-        uint8_t hardwareVersion = strToInt(hwVersion);
-        uint8_t gtHardwareVersion = 0;
-        switch (hardwareVersion) {
-            case 10:
-                gtHardwareVersion = IBUS_GT_MKIV;
-                break;
-            case 11:
-                gtHardwareVersion = IBUS_GT_MKIII;
-            case 21:
-                gtHardwareVersion = IBUS_GT_MKII;
-            // No idea what an MKI reports -- Anything else must be it?
-            default:
-                gtHardwareVersion = IBUS_GT_MKI;
-        }
-        char swVersion[3] = {
-            (char) pkt[IBUS_GT_SW_ID_OFFSET],
-            (char) pkt[IBUS_GT_SW_ID_OFFSET + 1],
-            '\0'
-        };
-        uint8_t softwareVersion = strToInt(swVersion);
-        if (softwareVersion == 0 || softwareVersion >= 40) {
-            ibus->gtCanDisplayStatic = 1;
-        }
+        uint8_t hardwareVersion = IBusGetNavHWVersion(pkt);
+        uint8_t softwareVersion = IBusGetNavSWVersion(pkt);
         LogRaw(
             "IBus: GT Data: Part Number: %c%c%c%c%c%c%c \
 HW: %d SW: %d Build Week: %c%c Year: %c%c \r\n",
@@ -124,7 +97,9 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 
 static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[3] == IBUS_MFL_BTN_EVENT) {
+    if (pkt[3] == IBUS_MFL_BTN_EVENT ||
+        (pkt[2] == IBUS_DEVICE_TEL && pkt[3] == 0x01)
+    ) {
         EventTriggerCallback(IBusEvent_MFLButton, pkt);
     }
 }
@@ -170,9 +145,17 @@ HW: %02d SW: %d%d Build Week: %d%d Year: %d%d \r\n",
         if (pkt[3] == IBusAction_RAD_UPDATE_MAIN_AREA) {
             EventTriggerCallback(IBusEvent_RADUpdateMainArea, pkt);
         }
+        if (pkt[3] == IBusAction_RAD_C43_SCREEN_UPDATE &&
+            pkt[4] == IBusAction_RAD_C43_SET_MENU_MODE
+        ) {
+            EventTriggerCallback(IBusEvent_RADC43ScreenModeUpdate, pkt);
+        }
     } else if (pkt[2] == IBUS_DEVICE_LOC) {
         if (pkt[3] == 0x3B) {
             EventTriggerCallback(IBusEvent_CDClearDisplay, pkt);
+        }
+        if (pkt[3] == IBusAction_RAD_UPDATE_MAIN_AREA) {
+            EventTriggerCallback(IBusEvent_RADUpdateMainArea, pkt);
         }
     }
 }
@@ -479,6 +462,7 @@ uint8_t IBusGetRadioType(uint32_t partNumber)
     uint8_t radioType = 0;
     switch (partNumber) {
         case 4160119:
+        case 6915711:
         case 6924733:
         case 6924906:
         case 6927902:
@@ -556,6 +540,81 @@ uint8_t IBusGetRadioType(uint32_t partNumber)
             break;
     }
     return radioType;
+}
+
+/**
+ * IBusGetNavHWVersion()
+ *     Description:
+ *        Get the nav type hardware version
+ *     Params:
+ *         unsigned char *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - The nav hardware version
+ */
+uint8_t IBusGetNavHWVersion(unsigned char *packet)
+{
+    char hwVersion[3] = {
+        packet[IBUS_GT_HW_ID_OFFSET],
+        packet[IBUS_GT_HW_ID_OFFSET + 1],
+        '\0'
+    };
+    return strToInt(hwVersion);
+}
+
+/**
+ * IBusGetNavHWVersion()
+ *     Description:
+ *        Get the nav type software version
+ *     Params:
+ *         unsigned char *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - The nav software version
+ */
+uint8_t IBusGetNavSWVersion(unsigned char *packet)
+{
+    char swVersion[3] = {
+        (char) packet[IBUS_GT_SW_ID_OFFSET],
+        (char) packet[IBUS_GT_SW_ID_OFFSET + 1],
+        '\0'
+    };
+    return strToInt(swVersion);
+}
+
+/**
+ * IBusGetRadioType()
+ *     Description:
+ *        Get the nav type based on the hardware and software versions
+ *     Params:
+ *         unsigned char *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - The nav type
+ */
+uint8_t IBusGetNavType(unsigned char *packet)
+{
+    uint8_t hardwareVersion = IBusGetNavHWVersion(packet);
+    uint8_t navType = 0;
+    switch (hardwareVersion) {
+        case 10:
+            navType = IBUS_GT_MKIV;
+            break;
+        case 11:
+            navType = IBUS_GT_MKIII;
+            break;
+        case 21:
+            navType = IBUS_GT_MKII;
+            break;
+        // No idea what an MKI reports -- Anything else must be it?
+        default:
+            navType = IBUS_GT_MKI;
+            break;
+    }
+    uint8_t softwareVersion = IBusGetNavSWVersion(packet);
+    if (navType == IBUS_GT_MKIV &&
+        (softwareVersion == 0 || softwareVersion >= 40)
+    ) {
+        navType = IBUS_GT_MKIV_STATIC;
+    }
+    return navType;
 }
 
 /**
@@ -647,23 +706,64 @@ void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, msg, 4);
 }
 
-void IBusCommandGTWriteIndexMk2(IBus_t *ibus, uint8_t index, char *message) {
-    IBusCommandGTWriteIndex(
+static void IBusInternalCommandGTWriteIndex(
+    IBus_t *ibus,
+    uint8_t index,
+    char *message,
+    unsigned char navVersion,
+    unsigned char indexMode
+) {
+    unsigned char command;
+    if (navVersion == IBUS_GT_MKI || navVersion == IBUS_GT_MKII) {
+        command = IBusAction_GT_WRITE_MK2;
+        indexMode = IBusAction_GT_WRITE_ZONE;
+    } else {
+        command = IBusAction_GT_WRITE_MK4;
+    }
+    uint8_t length = strlen(message);
+    if (length > 20) {
+        length = 20;
+    }
+    const size_t pktLenght = length + 4;
+    unsigned char text[pktLenght];
+    text[0] = command;
+    text[1] = indexMode;
+    text[2] = 0x00;
+    text[3] = 0x40 + (unsigned char) index;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 4] = message[idx];
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
+}
+
+void IBusCommandGTWriteIndex(
+    IBus_t *ibus,
+    uint8_t index,
+    char *message,
+    unsigned char navVersion
+) {
+    IBusInternalCommandGTWriteIndex(
         ibus,
         index,
         message,
-        IBusAction_GT_WRITE_MK2,
-        IBusAction_GT_WRITE_ZONE
+        navVersion,
+        IBusAction_GT_WRITE_INDEX
     );
 }
 
-void IBusCommandGTWriteIndexMk4(IBus_t *ibus, uint8_t index, char *message) {
-    IBusCommandGTWriteIndex(
+void IBusCommandGTWriteIndexTMC(
+    IBus_t *ibus,
+    uint8_t index,
+    char *message,
+    unsigned char navVersion
+) {
+    IBusInternalCommandGTWriteIndex(
         ibus,
         index,
         message,
-        IBusAction_GT_WRITE_MK4,
-        IBusAction_GT_WRITE_INDEX
+        navVersion,
+        IBusAction_GT_WRITE_INDEX_TMC
     );
 }
 
@@ -678,30 +778,6 @@ void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     text[1] = 0x61;
     text[2] = 0x00;
     text[3] = 0x09;
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 4] = message[idx];
-    }
-    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
-}
-
-void IBusCommandGTWriteIndex(
-    IBus_t *ibus,
-    uint8_t index,
-    char *message,
-    unsigned char command,
-    unsigned char mode
-) {
-    uint8_t length = strlen(message);
-    if (length > 20) {
-        length = 20;
-    }
-    const size_t pktLenght = length + 4;
-    unsigned char text[pktLenght];
-    text[0] = command;
-    text[1] = mode;
-    text[2] = 0x00;
-    text[3] = 0x40 + (unsigned char) index;
     uint8_t idx;
     for (idx = 0; idx < length; idx++) {
         text[idx + 4] = message[idx];
@@ -744,6 +820,35 @@ void IBusCommandGTWriteTitle(IBus_t *ibus, char *message)
     for (idx = 0; idx < length; idx++) {
         text[idx + 3] = message[idx];
     }
+    // "Watermark" Any update we send, so we know that it was us
+    text[idx + 3] = IBUS_RAD_MAIN_AREA_WATERMARK;
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
+}
+
+void IBusCommandGTWriteTitleC43(IBus_t *ibus, char *message)
+{
+    uint8_t length = strlen(message);
+    if (length > 11) {
+        length = 11;
+    }
+    // Length + Write Type + Write Area + Size + Watermark
+    const size_t pktLenght = length + 8;
+    unsigned char text[pktLenght];
+    text[0] = IBusAction_GT_WRITE_TITLE;
+    text[1] = 0x40;
+    text[2] = 0x20;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 3] = message[idx];
+    }
+    text[idx + 3] = 0x04;
+    idx++;
+    text[idx + 3] = 0x20;
+    idx++;
+    text[idx + 3] = 0x20;
+    idx++;
+    text[idx + 3] = 0x20;
+    idx++;
     // "Watermark" Any update we send, so we know that it was us
     text[idx + 3] = IBUS_RAD_MAIN_AREA_WATERMARK;
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
@@ -825,6 +930,56 @@ void IBusCommandMIDText(IBus_t *ibus, char *message)
 void IBusCommandMIDTextClear(IBus_t *ibus)
 {
     IBusCommandMIDText(ibus, 0);
+}
+
+/**
+ * IBusCommandRADC43ScreenModeSet()
+ *     Description:
+ *        Send the command that the C43 sends to update the screen mode
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         unsigned char mode - The mode to broadcast
+ *     Returns:
+ *         void
+ */
+void IBusCommandRADC43ScreenModeSet(IBus_t *ibus, unsigned char mode)
+{
+    unsigned char msg[4] = {
+        IBusAction_RAD_C43_SCREEN_UPDATE,
+        IBusAction_RAD_C43_SET_MENU_MODE,
+        0x00,
+        mode
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_GT,
+        msg,
+        sizeof(msg)
+    );
+}
+
+/**
+ * IBusCommandRADClearMenu()
+ *     Description:
+ *        Clear the Radio Menu. The first bit here tells the GT to clear the
+ *        screen. We're using 0x0B to attempt to keep certain radios from
+ *        realizing that the screen has been cleared
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandRADClearMenu(IBus_t *ibus)
+{
+    unsigned char msg[] = {0x46, 0x0B};
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_GT,
+        msg,
+        sizeof(msg)
+    );
 }
 
 /**

@@ -78,7 +78,8 @@
 #define IBusAction_GT_WRITE_TITLE 0x23
 // Newer GTs use a different action to write to fields
 #define IBusAction_GT_WRITE_MK2 0xA5
-#define IBusAction_GT_WRITE_INDEX 0x61
+#define IBusAction_GT_WRITE_INDEX 0x60
+#define IBusAction_GT_WRITE_INDEX_TMC 0x61
 #define IBusAction_GT_WRITE_ZONE 0x62
 #define IBusAction_GT_WRITE_STATIC 0x63
 
@@ -86,13 +87,19 @@
 
 #define IBusAction_RAD_SCREEN_MODE_UPDATE 0x46
 #define IBusAction_RAD_UPDATE_MAIN_AREA 0x23
+#define IBusAction_RAD_C43_SCREEN_UPDATE 0x21
+#define IBusAction_RAD_C43_SET_MENU_MODE 0xC0
 
 #define IBUS_GT_MKI 1
 #define IBUS_GT_MKII 2
-#define IBUS_GT_MKIII 2
+#define IBUS_GT_MKIII 3
 #define IBUS_GT_MKIV 4
+// MKIV Nav systems with version >= 40 support static screens
+#define IBUS_GT_MKIV_STATIC 5
 #define IBUS_GT_HW_ID_OFFSET 11
 #define IBUS_GT_SW_ID_OFFSET 33
+#define IBUS_GT_TONE_SELECT_MENU_OFF 0x0C
+#define IBUS_GT_RADIO_SCREEN_OFF 0x02
 #define IBUS_IGNITION_OFF 0
 #define IBUS_IGNITION_ON 1
 
@@ -116,11 +123,14 @@
 #define IBusEvent_ScreenModeSet 42
 #define IBusEvent_RADDiagResponse 43
 #define IBusEvent_MFLButton 44
+#define IBusEvent_RADC43ScreenModeUpdate 45
 
 #define IBus_UI_CD53 1
 #define IBus_UI_BMBT 2
 #define IBus_CDC_DiscCount1 0x01
 #define IBus_CDC_DiscCount6 0x3F
+
+#define IBUS_C43_TITLE_MODE 0xC4
 
 #define IBUS_RADIO_TYPE_C43 1
 #define IBUS_RADIO_TYPE_BM53 2
@@ -131,7 +141,8 @@
 #define IBUS_MFL_BTN_EVENT 0x3B
 #define IBusMFLButtonNextRelease 0x21
 #define IBusMFLButtonPrevRelease 0x28
-#define IBusMFLButtonRT 0x80
+#define IBusMFLButtonRTPress 0x40
+#define IBusMFLButtonRTRelease 0x00
 #define IBusMFLButtonVoiceRelease 0xA0
 #define IBusMFLButtonVoiceHold 0x90
 
@@ -171,27 +182,31 @@ typedef struct IBus_t {
     uint32_t txLastStamp;
     unsigned char cdChangerStatus;
     unsigned char ignitionStatus;
-    unsigned char gtCanDisplayStatic;
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
 uint8_t IBusGetDeviceManufacturer(const unsigned char);
 uint8_t IBusGetRadioType(uint32_t);
+uint8_t IBusGetNavHWVersion(unsigned char *);
+uint8_t IBusGetNavSWVersion(unsigned char *);
+uint8_t IBusGetNavType(unsigned char *);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCKeepAlive(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, unsigned char,  unsigned char, unsigned char);
 void IBusCommandGTGetDiagnostics(IBus_t *);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
-void IBusCommandGTWriteIndexMk2(IBus_t *, uint8_t, char *);
-void IBusCommandGTWriteIndexMk4(IBus_t *, uint8_t, char *);
+void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *, unsigned char);
+void IBusCommandGTWriteIndexTMC(IBus_t *, uint8_t, char *, unsigned char);
 void IBusCommandGTWriteIndexTitle(IBus_t *, char *);
-void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *, unsigned char, unsigned char);
-void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t, char *);
+void IBusCommandGTWriteIndexStatic(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteTitle(IBus_t *ibus, char *);
-void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t, char *);
+void IBusCommandGTWriteTitleC43(IBus_t *ibus, char *);
+void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnition(IBus_t *);
 void IBusCommandMIDText(IBus_t *, char *);
 void IBusCommandMIDTextClear(IBus_t *);
+void IBusCommandRADC43ScreenModeSet(IBus_t *, unsigned char);
+void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);

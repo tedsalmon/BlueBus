@@ -171,6 +171,54 @@ void BC127CommandBackwardSeekRelease(BC127_t *bt)
 }
 
 /**
+ * BC127CommandCallAnswer()
+ *     Description:
+ *         Answer the incoming call
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandCallAnswer(BC127_t *bt)
+{
+    char command[15];
+    snprintf(command, 15, "CALL %d ANSWER", bt->activeDevice.hfpLinkId);
+    BC127SendCommand(bt, command);
+}
+
+/**
+ * BC127CommandCallAnswer()
+ *     Description:
+ *         End the active call
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandCallEnd(BC127_t *bt)
+{
+    char command[12];
+    snprintf(command, 12, "CALL %d END", bt->activeDevice.hfpLinkId);
+    BC127SendCommand(bt, command);
+}
+
+/**
+ * BC127CommandCallReject()
+ *     Description:
+ *         Reject the incoming call
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandCallReject(BC127_t *bt)
+{
+    char command[15];
+    snprintf(command, 15, "CALL %d REJECT", bt->activeDevice.hfpLinkId);
+    BC127SendCommand(bt, command);
+}
+
+/**
  * BC127CommandClose()
  *     Description:
  *         Close a link ID, device ID or all (255)
@@ -430,6 +478,58 @@ void BC127CommandReset(BC127_t *bt)
 }
 
 /**
+ * BC127CommandSetAudio()
+ *     Description:
+ *         Set the audio parameters
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         uint8_t input - Input Analog / Digital (0 = Analog)
+ *         uint8_t output - Output Analog / Digital (0 = Analog)
+ *     Returns:
+ *         void
+ */
+void BC127CommandSetAudio(BC127_t *bt, uint8_t input, uint8_t output) {
+    char command[14];
+    snprintf(command, 14, "SET AUDIO=%d %d", input, output);
+    BC127SendCommand(bt, command);
+    BC127CommandWrite(bt);
+}
+
+/**
+ * BC127CommandSetAudioAnalog()
+ *     Description:
+ *         Set the analog audio parameters
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         char *inputGain - The microphone/line in gain. Default: 15
+ *         char *outputGain - The output gain. Default: 15
+ *         char *micBias - The Mic Bias setting. Default On with audio (1)
+ *         char *enablePreamp - Enable a 20dB gain on the input. Default: Off
+ *     Returns:
+ *         void
+ */
+void BC127CommandSetAudioAnalog(
+    BC127_t *bt,
+    char *inputGain,
+    char *outputGain,
+    char *micBias,
+    char *enablePreamp
+) {
+    char command[29];
+    snprintf(
+        command,
+        29,
+        "SET AUDIO_ANALOG=%s %s %s %s",
+        inputGain,
+        outputGain,
+        micBias,
+        enablePreamp
+    );
+    BC127SendCommand(bt, command);
+    BC127CommandWrite(bt);
+}
+
+/**
  * BC127CommandSetAudioDigital()
  *     Description:
  *         Set the digital audio parameters
@@ -490,11 +590,29 @@ void BC127CommandSetAutoConnect(BC127_t *bt, uint8_t autoConnect)
   */
 void BC127CommandSetBtState(
     BC127_t *bt,
-    char *connectMode,
-    char *discoverMode
+    uint8_t connectMode,
+    uint8_t discoverMode
 ) {
     char command[24];
-    snprintf(command, 24, "SET BT_STATE_CONFIG=%s %s", connectMode, discoverMode);
+    snprintf(command, 24, "SET BT_STATE_CONFIG=%d %d", connectMode, discoverMode);
+    BC127SendCommand(bt, command);
+    BC127CommandWrite(bt);
+}
+
+ /**
+  * BC127CommandSetCodec()
+  *     Description:
+  *         Set the codec confiuration value
+  *     Params:
+  *         BC127_t *bt - A pointer to the module object
+  *         uint8_t bitmask - The codec bitmask
+  *        char *talkback - The A2DP Talk back mode (on / off)
+  *     Returns:
+  *         void
+  */
+void BC127CommandSetCodec(BC127_t *bt, uint8_t bitmask, char *talkback) {
+    char command[17];
+    snprintf(command, 17, "SET CODEC=%d %s", bitmask, talkback);
     BC127SendCommand(bt, command);
     BC127CommandWrite(bt);
 }
@@ -568,14 +686,14 @@ void BC127CommandSetProfiles(
     uint8_t a2dp,
     uint8_t avrcp,
     uint8_t ble,
-    uint8_t hpf
+    uint8_t hfp
 ) {
     char command[37];
     snprintf(
         command,
         37,
         "SET PROFILES=%d 0 %d 0 %d %d 1 1 0 0 1 0",
-        hpf,
+        hfp,
         a2dp,
         avrcp,
         ble
@@ -612,10 +730,10 @@ void BC127CommandToggleVR(BC127_t *bt)
 {
     if (bt->activeDevice.hfpLinkId != 0) {
         char command[13];
-        snprintf(command, 16, "TOGGLE_VR %d", bt->activeDevice.avrcpLinkId);
+        snprintf(command, 16, "TOGGLE_VR %d", bt->activeDevice.hfpLinkId);
         BC127SendCommand(bt, command);
     } else {
-        LogWarning("BT: Unable to TOGGLE_VR - AVRCP link unopened");
+        LogWarning("BT: Unable to TOGGLE_VR - HFP link unopened");
     }
 }
 
@@ -770,16 +888,29 @@ void BC127Process(BC127_t *bt)
                 LogDebug(LOG_SOURCE_BT, "BT: Playing [A2DP Stream Start]");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
-        } else if(strcmp(msgBuf[0], "CALL_END") == 0) {
-            bt->callStatus = BC127_CALL_INACTIVE;
-            EventTriggerCallback(BC127Event_CallEnd, BC127_CALL_END);
-        } else if(strcmp(msgBuf[0], "CALL_INCOMING") == 0 ||
-                  strcmp(msgBuf[0], "CALL_OUTGOING") == 0
-        ) {
+        } else if(strcmp(msgBuf[0], "CALL_ACTIVE") == 0) {
             bt->callStatus = BC127_CALL_ACTIVE;
             EventTriggerCallback(
-                BC127Event_CallStart,
-                (unsigned char *) BC127_CALL_START
+                BC127Event_CallStatus,
+                (unsigned char *) BC127_CALL_ACTIVE
+            );
+        } else if(strcmp(msgBuf[0], "CALL_END") == 0) {
+            bt->callStatus = BC127_CALL_INACTIVE;
+            EventTriggerCallback(
+                BC127Event_CallStatus,
+                (unsigned char *) BC127_CALL_INACTIVE
+            );
+        } else if(strcmp(msgBuf[0], "CALL_INCOMING") == 0) {
+            bt->callStatus = BC127_CALL_INCOMING;
+            EventTriggerCallback(
+                BC127Event_CallStatus,
+                (unsigned char *) BC127_CALL_INCOMING
+            );
+        } else if (strcmp(msgBuf[0], "CALL_OUTGOING") == 0) {
+            bt->callStatus = BC127_CALL_OUTGOING;
+            EventTriggerCallback(
+                BC127Event_CallStatus,
+                (unsigned char *) BC127_CALL_OUTGOING
             );
         } else if(strcmp(msgBuf[0], "LINK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
@@ -835,6 +966,8 @@ void BC127Process(BC127_t *bt)
                 if (status == BC127_CONN_STATE_DISCONNECTED) {
                     bt->playbackStatus = BC127_AVRCP_STATUS_PAUSED;
                     // Notify the world that the device disconnected
+                    memset(&bt->activeDevice, 0, sizeof(bt->activeDevice));
+                    bt->activeDevice = BC127ConnectionInit();
                     EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
                     EventTriggerCallback(BC127Event_DeviceDisconnected, 0);
                 }
@@ -861,8 +994,8 @@ void BC127Process(BC127_t *bt)
             if (strcmp(msgBuf[2], "AVRCP") == 0) {
                 bt->pairingErrors[BC127_LINK_AVRCP] = 0;
             }
-            if (strcmp(msgBuf[2], "HPF") == 0) {
-                bt->pairingErrors[BC127_LINK_HPF] = 0;
+            if (strcmp(msgBuf[2], "HFP") == 0) {
+                bt->pairingErrors[BC127_LINK_HFP] = 0;
             }
             BC127ConnectionOpenProfile(&bt->activeDevice, msgBuf[2], linkId);
             LogDebug(LOG_SOURCE_BT, "BT: Open %s for ID %s", msgBuf[2], msgBuf[1]);
@@ -877,8 +1010,8 @@ void BC127Process(BC127_t *bt)
             if (strcmp(msgBuf[1], "AVRCP") == 0) {
                 bt->pairingErrors[BC127_LINK_AVRCP] = 1;
             }
-            if (strcmp(msgBuf[1], "HPF") == 0) {
-                bt->pairingErrors[BC127_LINK_HPF] = 1;
+            if (strcmp(msgBuf[1], "HFP") == 0) {
+                bt->pairingErrors[BC127_LINK_HFP] = 1;
             }
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
             char deviceName[33];
@@ -904,12 +1037,15 @@ void BC127Process(BC127_t *bt)
         } else if(strcmp(msgBuf[0], "Build:") == 0) {
             // The device sometimes resets without sending the "Ready" message
             // so we instead watch for the build string
+            memset(&bt->activeDevice, 0, sizeof(bt->activeDevice));
             bt->activeDevice = BC127ConnectionInit();
+            bt->callStatus = BC127_CALL_INACTIVE;
+            bt->metadataStatus = BC127_METADATA_STATUS_NEW;
             LogDebug(LOG_SOURCE_BT, "BT: Boot Complete");
             EventTriggerCallback(BC127Event_Boot, 0);
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
         } else if (strcmp(msgBuf[0], "STATE") == 0) {
-            // Make sure the state is not "off"
+            // Make sure the state is not "OFF", like when module first boots
             if (strcmp(msgBuf[1], "OFF") != 0) {
                 if (strcmp(msgBuf[2], "CONNECTABLE[ON]") == 0) {
                     bt->connectable = BC127_STATE_ON;
@@ -922,6 +1058,9 @@ void BC127Process(BC127_t *bt)
                     bt->discoverable = BC127_STATE_OFF;
                 }
                 LogDebug(LOG_SOURCE_BT, "BT: Got Status %s %s", msgBuf[2], msgBuf[3]);
+            } else {
+                // The BT Radio is off, likely meaning a reboot
+                EventTriggerCallback(BC127Event_BootStatus, 0);
             }
         }
     }
@@ -1059,7 +1198,7 @@ uint8_t BC127ConnectionCloseProfile(BC127Connection_t *conn, char *profile)
         conn->a2dpLinkId = 0;
     } else if (strcmp(profile, "AVRCP") == 0) {
         conn->avrcpLinkId = 0;
-    } else if (strcmp(profile, "HPF") == 0) {
+    } else if (strcmp(profile, "HFP") == 0) {
         conn->hfpLinkId = 0;
     }
     // Clear the connection once all the links are closed
@@ -1088,7 +1227,7 @@ void BC127ConnectionOpenProfile(BC127Connection_t *conn, char *profile, uint8_t 
         conn->a2dpLinkId = linkId;
     } else if (strcmp(profile, "AVRCP") == 0) {
         conn->avrcpLinkId = linkId;
-    } else if (strcmp(profile, "HPF") == 0) {
+    } else if (strcmp(profile, "HFP") == 0) {
         conn->hfpLinkId = linkId;
     }
 }

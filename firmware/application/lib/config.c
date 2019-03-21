@@ -19,24 +19,62 @@ unsigned char CONFIG_CACHE[CONFIG_CACHE_VALUES] = {};
  */
 unsigned char ConfigGetLog(unsigned char system)
 {
-    unsigned char currentSetting = CONFIG_CACHE[
-        CONFIG_DEVICE_LOG_SETTINGS_ADDRESS
-    ];
+    unsigned char currentSetting = CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS];
     if (currentSetting == 0x00 && currentSetting != 0xFF) {
         unsigned char currentSetting = EEPROMReadByte(
-            CONFIG_DEVICE_LOG_SETTINGS_ADDRESS
+            CONFIG_SETTING_LOG_ADDRESS
         );
         if (currentSetting == 0x00) {
             // Prevent from re-reading the byte
             currentSetting = 0xFF;
         }
-        CONFIG_CACHE[CONFIG_DEVICE_LOG_SETTINGS_ADDRESS] = currentSetting;
+        CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS] = currentSetting;
     }
     // The value is fully unset, so default to on
     if (currentSetting == 0xFF) {
         return 1;
     }
     return (currentSetting >> system) & 1;
+}
+
+/**
+ * ConfigGetNavType()
+ *     Description:
+ *         Get the Nav Type discovered
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetNavType()
+{
+    unsigned char value = CONFIG_CACHE[CONFIG_NAV_TYPE_ADDRESS];
+    if (value == 0x00) {
+        value = EEPROMReadByte(CONFIG_NAV_TYPE_ADDRESS);
+    }
+    return value;
+}
+
+/**
+ * ConfigGetSetting()
+ *     Description:
+ *         Get a given setting from the EEPROM
+ *     Params:
+ *         unsigned char setting - The setting to set
+ *     Returns:
+ *         unsigned char - The value
+ */
+unsigned char ConfigGetSetting(unsigned char setting)
+{
+    unsigned char value = 0x00;
+    // Catch invalid setting addresses
+    if (setting >= 0x0A && setting <= 0x14) {
+        value = CONFIG_CACHE[setting];
+        if (value == 0x00) {
+            value = EEPROMReadByte(setting);
+        }
+    }
+    return value;
 }
 
 /**
@@ -83,15 +121,48 @@ void ConfigSetBootloaderMode(unsigned char bootloaderMode)
  */
 void ConfigSetLog(unsigned char system, unsigned char mode)
 {
-    unsigned char currentSetting = EEPROMReadByte(
-        CONFIG_DEVICE_LOG_SETTINGS_ADDRESS
-    );
+    unsigned char currentSetting = EEPROMReadByte(CONFIG_SETTING_LOG_ADDRESS);
     unsigned char currentVal = (currentSetting >> system) & 1;
     if (mode != currentVal) {
         currentSetting ^= 1 << system;
     }
-    EEPROMWriteByte(CONFIG_DEVICE_LOG_SETTINGS_ADDRESS, currentSetting);
-    CONFIG_CACHE[CONFIG_DEVICE_LOG_SETTINGS_ADDRESS] = currentSetting;
+    EEPROMWriteByte(CONFIG_SETTING_LOG_ADDRESS, currentSetting);
+    CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS] = currentSetting;
+}
+
+
+/**
+ * ConfigSetNavType()
+ *     Description:
+ *         Set the Nav Type discovered
+ *     Params:
+ *         unsigned char version
+ *     Returns:
+ *         void
+ */
+void ConfigSetNavType(unsigned char type)
+{
+    CONFIG_CACHE[CONFIG_NAV_TYPE_ADDRESS] = type;
+    EEPROMWriteByte(CONFIG_NAV_TYPE_ADDRESS, type);
+}
+
+/**
+ * ConfigSetSetting()
+ *     Description:
+ *         Set a given setting into the EEPROM
+ *     Params:
+ *         unsigned char setting - The setting to set
+ *         unsigned char value - The value to set
+ *     Returns:
+ *         void
+ */
+void ConfigSetSetting(unsigned char setting, unsigned char value)
+{
+    // Catch invalid setting addresses
+    if (setting >= 0x0A && setting <= 0x14) {
+        CONFIG_CACHE[setting] = value;
+        EEPROMWriteByte(setting, value);
+    }
 }
 
 /**

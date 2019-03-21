@@ -25,10 +25,19 @@
 #define CD53_MODE_OFF 0
 #define CD53_MODE_ACTIVE 1
 #define CD53_MODE_DEVICE_SEL 2
+#define CD53_MODE_SETTINGS 3
 #define CD53_PAIRING_DEVICE_NONE -1
 #define CD53_SEEK_MODE_NONE 0
 #define CD53_SEEK_MODE_FWD 1
 #define CD53_SEEK_MODE_REV 2
+#define CD53_SETTING_IDX_HFP 0
+#define CD53_SETTING_IDX_METADATA_MODE 1
+#define CD53_SETTING_IDX_AUTOPLAY 2
+#define CD53_SETTING_IDX_PAIRINGS 3
+#define CD53_SETTING_MODE_SCROLL_SETTINGS 1
+#define CD53_SETTING_MODE_SCROLL_VALUES 2
+#define CD53_METADATA_MODE_PARTY 0x01
+#define CD53_METADATA_MODE_CHUNK 0x02
 /*
  * CD53DisplayValue_t
  *  This is a struct to hold text values to be displayed
@@ -66,6 +75,9 @@ typedef struct CD53Context_t {
     int8_t btDeviceIndex;
     uint8_t seekMode;
     uint8_t displayMetadata;
+    uint8_t settingIdx;
+    uint8_t settingValue;
+    uint8_t settingMode;
     CD53DisplayValue_t mainDisplay;
     CD53DisplayValue_t tempDisplay;
 } CD53Context_t;
@@ -73,7 +85,7 @@ void CD53Init(BC127_t *, IBus_t *);
 CD53DisplayValue_t CD53DisplayValueInit(char *);
 void CD53BC127DeviceDisconnected(void *, unsigned char *);
 void CD53BC127DeviceReady(void *, unsigned char *);
-void CD53BC127Metadata(void *, unsigned char *);
+void CD53BC127Metadata(CD53Context_t *, unsigned char *);
 void CD53BC127PlaybackStatus(void *, unsigned char *);
 void CD53IBusClearScreen(void *, unsigned char *);
 void CD53IBusCDChangerStatus(void *, unsigned char *);

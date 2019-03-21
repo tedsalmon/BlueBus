@@ -9,12 +9,12 @@
 #define _ADDED_C_LIB 1
 #include <stdio.h>
 #include "../lib/bc127.h"
+#include "../lib/config.h"
 #include "../lib/event.h"
 #include "../lib/ibus.h"
 #include "../lib/timer.h"
 #define BMBT_DISPLAY_OFF 0
 #define BMBT_DISPLAY_ON 1
-#define BMBT_GT_CLEAR_SCREEN 0x0C
 #define BMBT_HEADER_BT 1
 #define BMBT_HEADER_PB_STAT 2
 #define BMBT_HEADER_DEV_NAME 6
@@ -27,12 +27,16 @@
 #define BMBT_MENU_IDX_DASHBOARD 0
 #define BMBT_MENU_IDX_DEVICE_SELECTION 1
 #define BMBT_MENU_IDX_SETTINGS 2
-#define BMBT_MENU_IDX_SETTINGS_SCROLL_META 0
-#define BMBT_MENU_IDX_SETTINGS_RESET_BT 1
-#define BMBT_MENU_IDX_SETTINGS_RESET_PAIRED_DEVICE_LIST 2
+#define BMBT_MENU_IDX_SETTINGS_HFP 0
+#define BMBT_MENU_IDX_SETTINGS_METADATA_MODE 1
+#define BMBT_MENU_IDX_SETTINGS_AUTOPLAY 2
+#define BMBT_MENU_IDX_SETTINGS_RESET_PAIRINGS 3
 #define BMBT_MENU_WRITE_DELAY 300
 #define BMBT_MENU_TIMER_WRITE_INT 100
 #define BMBT_MENU_TIMER_WRITE_TIMEOUT 500
+#define BMBT_METADATA_MODE_OFF 0x00
+#define BMBT_METADATA_MODE_PARTY 0x01
+#define BMBT_METADATA_MODE_CHUNK 0x02
 #define BMBT_MODE_OFF 0
 #define BMBT_MODE_ACTIVE 1
 #define BMBT_NAV_BOOT 0x10
@@ -43,6 +47,9 @@ typedef struct BMBTContext_t {
     uint8_t menu;
     uint8_t mode;
     uint8_t displayMode;
+    uint8_t navType;
+    uint8_t navIndexType;
+    uint8_t radType;
     uint8_t writtenIndices;
     uint8_t timerMenuIntervals;
     int8_t selectedPairingDevice;
@@ -58,6 +65,7 @@ void BMBTIBusBMBTButtonPress(void *, unsigned char *);
 void BMBTIBusCDChangerStatus(void *, unsigned char *);
 void BMBTIBusGTDiagnostics(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);
+void BMBTRADC43ScreenModeUpdate(void *, unsigned char *);
 void BMBTRADUpdateMainArea(void *, unsigned char *);
 void BMBTScreenModeUpdate(void *, unsigned char *);
 void BMBTScreenModeSet(void *, unsigned char *);

@@ -25,7 +25,7 @@
 #define HANDLER_DEVICE_MAX_RECONN 10
 #define HANDLER_INT_DEVICE_CONN 30000
 #define HANDLER_PROFILE_ERROR_INT 2500
-#define HANDLER_SCAN_INT 60000
+#define HANDLER_SCAN_INT 5000
 typedef struct HandlerContext_t {
     BC127_t *bt;
     IBus_t *ibus;
@@ -33,19 +33,20 @@ typedef struct HandlerContext_t {
     uint8_t btConnectionStatus;
     uint8_t uiMode;
     uint8_t deviceConnRetries;
+    uint8_t scanIntervals;
     uint32_t cdChangerLastKeepAlive;
     uint32_t cdChangerLastStatus;
 } HandlerContext_t;
-void HandlerInit(BC127_t *, IBus_t *, uint8_t);
+void HandlerInit(BC127_t *, IBus_t *);
+void HandlerBC127Boot(void *, unsigned char *);
+void HandlerBC127BootStatus(void *, unsigned char *);
 void HandlerBC127CallStatus(void *, unsigned char *);
 void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
 void HandlerBC127DeviceDisconnected(void *, unsigned char *);
 void HandlerBC127DeviceFound(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
-void HandlerBC127Ready(void *, unsigned char *);
 void HandlerIBusCDCKeepAlive(void *, unsigned char *);
 void HandlerIBusCDCStatus(void *, unsigned char *);
-void HandlerIBusRADDiagnostics(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerTimerCDCAnnounce(void *);

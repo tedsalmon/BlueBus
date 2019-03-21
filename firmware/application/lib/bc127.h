@@ -21,10 +21,10 @@
 #define BC127_AUDIO_SPDIF "2"
 #define BC127_AVRCP_STATUS_PAUSED 0
 #define BC127_AVRCP_STATUS_PLAYING 1
-#define BC127_CALL_END 0
-#define BC127_CALL_START 1
 #define BC127_CALL_ACTIVE 1
 #define BC127_CALL_INACTIVE 0
+#define BC127_CALL_INCOMING 2
+#define BC127_CALL_OUTGOING 3
 #define BC127_CLOSE_ALL 255
 #define BC127_CONFIG_STATE_NEVER "0"
 #define BC127_CONFIG_STATE_ALWAYS "1"
@@ -50,7 +50,7 @@
 #define BC127_PROFILE_COUNT 4
 #define BC127_LINK_A2DP 0
 #define BC127_LINK_AVRCP 1
-#define BC127_LINK_HPF 3
+#define BC127_LINK_HFP 3
 
 #define BC127Event_MetadataChange 0
 #define BC127Event_PlaybackStatusChange 1
@@ -59,8 +59,8 @@
 #define BC127Event_DeviceDisconnected 4
 #define BC127Event_Boot 5
 #define BC127Event_DeviceFound 6
-#define BC127Event_CallStart 7
-#define BC127Event_CallEnd 8
+#define BC127Event_CallStatus 7
+#define BC127Event_BootStatus 8
 /**
  * BC127PairedDevice_t
  *     Description:
@@ -146,6 +146,9 @@ void BC127CommandBackward(BC127_t *);
 void BC127CommandBackwardSeekPress(BC127_t *);
 void BC127CommandBackwardSeekRelease(BC127_t *);
 void BC127CommandBtState(BC127_t *, uint8_t, uint8_t);
+void BC127CommandCallAnswer(BC127_t *);
+void BC127CommandCallEnd(BC127_t *);
+void BC127CommandCallReject(BC127_t *);
 void BC127CommandClose(BC127_t *, uint8_t);
 void BC127CommandForward(BC127_t *);
 void BC127CommandForwardSeekPress(BC127_t *);
@@ -158,9 +161,12 @@ void BC127CommandPlay(BC127_t *);
 void BC127CommandProfileClose(BC127_t *, uint8_t);
 void BC127CommandProfileOpen(BC127_t *, char *, char *);
 void BC127CommandReset(BC127_t *);
+void BC127CommandSetAudio(BC127_t *, uint8_t, uint8_t);
+void BC127CommandSetAudioAnalog(BC127_t *, char *, char *, char *, char *);
 void BC127CommandSetAudioDigital(BC127_t *, char *,char *, char *, char *);
 void BC127CommandSetAutoConnect(BC127_t *, uint8_t);
-void BC127CommandSetBtState(BC127_t *, char *, char *);
+void BC127CommandSetBtState(BC127_t *, uint8_t, uint8_t);
+void BC127CommandSetCodec(BC127_t *, uint8_t, char *);
 void BC127CommandSetMetadata(BC127_t *, uint8_t);
 void BC127CommandSetModuleName(BC127_t *, char *);
 void BC127CommandSetPin(BC127_t *, char *);

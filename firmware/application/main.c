@@ -55,9 +55,7 @@ int main(void)
     EEPROMInit();
     TimerInit();
 
-    unsigned char UI_MODE = ConfigGetUIMode();
-    // Send the module objects to the application implementation handler
-    HandlerInit(&bt, &ibus, UI_MODE);
+    HandlerInit(&bt, &ibus);
 
     // Process events
     while (1) {
