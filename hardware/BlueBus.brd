@@ -4188,7 +4188,7 @@ design rules under a new name.</description>
 </element>
 <element name="D1" library="Passives" package="SOD123" value="2A/100V" x="7" y="11.1" smashed="yes" rot="R270">
 <attribute name="MFG" value="STMicroelectronics" x="-50.15" y="-29.54" size="1.778" layer="27" rot="R270" display="off"/>
-<attribute name="NAME" x="8" y="11.1" size="0.75" layer="25" font="vector" ratio="15" rot="R270" align="bottom-center"/>
+<attribute name="NAME" x="7" y="8" size="0.75" layer="25" font="vector" ratio="15" align="top-center"/>
 <attribute name="PN" value="STPS2H100ZFY" x="-50.15" y="-29.54" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" x="6" y="11.1" size="0.5" layer="27" font="vector" ratio="15" rot="R270" align="top-center"/>
 </element>
@@ -4272,10 +4272,10 @@ design rules under a new name.</description>
 <element name="R12" library="Passives" package="0805" value="1k" x="79" y="29.5" smashed="yes" rot="R180">
 <attribute name="DEVICE" value="1KOHM-0805-1/8-1%" x="21.85" y="99.35" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="MFG" value="Panasonic" x="21.85" y="99.35" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="79" y="28.5" size="0.75" layer="25" font="vector" ratio="15" rot="R180" align="bottom-center"/>
+<attribute name="NAME" x="79" y="30.5" size="0.75" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
 <attribute name="PACKAGE" value="0805" x="21.85" y="99.35" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="PN" value="ERJ-6ENF1001V" x="21.85" y="99.35" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="VALUE" x="79" y="30.5" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
+<attribute name="VALUE" x="79" y="28.5" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="bottom-center"/>
 </element>
 <element name="R14" library="Passives" package="0805" value="1k" x="22.1" y="38" smashed="yes" rot="R180">
 <attribute name="DEVICE" value="1KOHM-0805-1/8-1%" x="-38.86" y="107.85" size="1.778" layer="27" rot="R180" display="off"/>
@@ -4407,18 +4407,18 @@ design rules under a new name.</description>
 <element name="R11" library="Passives" package="0805" value="1k" x="79" y="26" smashed="yes" rot="R180">
 <attribute name="DEVICE" value="1KOHM-0805-1/8-1%" x="44.71" y="95.85" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="MFG" value="Panasonic" x="44.71" y="95.85" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="79" y="25" size="0.75" layer="25" font="vector" ratio="15" rot="R180" align="bottom-center"/>
+<attribute name="NAME" x="79" y="27" size="0.75" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
 <attribute name="PACKAGE" value="0805" x="44.71" y="95.85" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="PN" value="ERJ-6ENF1001V" x="44.71" y="95.85" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="VALUE" x="79" y="27" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
+<attribute name="VALUE" x="79" y="25" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="bottom-center"/>
 </element>
 <element name="R10" library="Passives" package="0805" value="1k" x="79" y="22.5" smashed="yes" rot="R180">
 <attribute name="DEVICE" value="1KOHM-0805-1/8-1%" x="40.9" y="92.35" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="MFG" value="Panasonic" x="40.9" y="92.35" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="79" y="21.5" size="0.75" layer="25" font="vector" ratio="15" rot="R180" align="bottom-center"/>
+<attribute name="NAME" x="79" y="23.5" size="0.75" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
 <attribute name="PACKAGE" value="0805" x="40.9" y="92.35" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="PN" value="ERJ-6ENF1001V" x="40.9" y="92.35" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="VALUE" x="79" y="23.5" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
+<attribute name="VALUE" x="79" y="21.5" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="bottom-center"/>
 </element>
 <element name="R23" library="Passives" package="0805" value="10k" x="69" y="33.7" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="10KOHM-0805-1/8-1%" x="138.85" y="75.61" size="1.778" layer="27" rot="R90" display="off"/>
@@ -4700,7 +4700,8 @@ design rules under a new name.</description>
 <wire x1="25.6" y1="25.95" x2="28.55" y2="25.95" width="0.55" layer="1"/>
 <wire x1="18.05" y1="23.55" x2="18.05" y2="21.5" width="0.55" layer="1"/>
 <wire x1="25.6" y1="20.3" x2="25.6" y2="21.5" width="0.55" layer="1"/>
-<wire x1="25.6" y1="21.5" x2="25.6" y2="24" width="0.55" layer="1"/>
+<wire x1="25.6" y1="21.5" x2="25.6" y2="22.8" width="0.55" layer="1"/>
+<wire x1="25.6" y1="22.8" x2="25.6" y2="24" width="0.55" layer="1"/>
 <wire x1="25.6" y1="24" x2="25.6" y2="25.95" width="0.55" layer="1"/>
 <wire x1="28.55" y1="24.05" x2="25.65" y2="24.05" width="0.55" layer="1"/>
 <wire x1="25.65" y1="24.05" x2="25.6" y2="24" width="0.55" layer="1"/>
@@ -4714,9 +4715,6 @@ design rules under a new name.</description>
 <wire x1="20" y1="21.5" x2="25.6" y2="21.5" width="0.5" layer="1"/>
 <wire x1="19.95" y1="23.55" x2="19.95" y2="21.55" width="0.5" layer="1"/>
 <wire x1="19.95" y1="21.55" x2="20" y2="21.5" width="0.5" layer="1"/>
-<wire x1="31" y1="20.25" x2="35.35" y2="20.25" width="0.35" layer="1"/>
-<wire x1="35.35" y1="20.25" x2="35.4" y2="20.2" width="0.35" layer="1"/>
-<via x="35.4" y="20.2" extent="1-16" drill="0.51"/>
 <wire x1="73.75665625" y1="1.4718" x2="74.28485625" y2="2" width="0.35" layer="1"/>
 <wire x1="74.28485625" y1="2" x2="76.1" y2="2" width="0.35" layer="1"/>
 <wire x1="62.7882" y1="2.6118" x2="63.9282" y2="1.4718" width="0.35" layer="1"/>
@@ -4726,6 +4724,10 @@ design rules under a new name.</description>
 <via x="60" y="20.2" extent="1-16" drill="0.51"/>
 <wire x1="60" y1="20.2" x2="35.4" y2="20.2" width="0.35" layer="16"/>
 <wire x1="57.6" y1="20.2" x2="60" y2="20.2" width="0.3" layer="1"/>
+<wire x1="25.6" y1="22.8" x2="25.7" y2="22.7" width="0.4" layer="1"/>
+<wire x1="25.7" y1="22.7" x2="32.9" y2="22.7" width="0.4" layer="1"/>
+<wire x1="32.9" y1="22.7" x2="35.4" y2="20.2" width="0.4" layer="1"/>
+<via x="35.4" y="20.2" extent="1-16" drill="0.51"/>
 </signal>
 <signal name="5VREG_EN">
 <contactref element="XRP7659" pad="4"/>
