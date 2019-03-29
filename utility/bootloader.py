@@ -53,8 +53,8 @@ def generate_packet(command, data):
     packet.append(chk)
     return packet
 
-def request_bc127_proxy():
-    for i in generate_packet(PROTOCOL_CMD_BC127_PROXY_REQUEST, [0x00]):
+def request_bc127_mode():
+    for i in generate_packet(PROTOCOL_CMD_BC127_MODE_REQUEST, [0x00]):
         tx_buffer.append(i)
 
 def request_platform():
@@ -106,6 +106,11 @@ if __name__ == '__main__':
             metavar='hexfile',
             help='The path to the firmware file to upload to the device',
         )
+        parser.add_argument(
+            '--btmode',
+            help='Switch UART to the BC127',
+            action='store_true',
+        )
         args = parser.parse_args()
         serial = Serial(args.port, 115200)
         request_platform()
@@ -127,17 +132,21 @@ if __name__ == '__main__':
                             print('Got Platform: %s' % ''.join(rx_buffer))
                             has_response = True
                             if args.firmware:
-                                print('====Begin Firmware Update====')
+                                print('==== Begin Firmware Update ====')
                                 print(
                                     'Erasing Flash - DO NOT unplug the device'
                                 )
                                 data = read_hexfile(args.firmware)
                                 data_len = len(data)
                                 send_file(data[data_idx])
+                            elif args.btmode:
+                                print('==== Requesting BC127 Mode ====')
+                                request_bc127_mode();
                             else:
                                 sys.exit(0)
                         if command == PROTOCOL_CMD_BC127_MODE_RESPONSE:
                             print('BC127 Mode Started')
+                            exit(0)
                         if command == PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK:
                             if data_idx == 0:
                                 print('Flash Erase Complete')
