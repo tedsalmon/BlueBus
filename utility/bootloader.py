@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 from intelhex import IntelHex
 from serial import Serial
 from struct import pack
-from time import sleep, time
+from time import time, sleep
 
 PROTOCOL_CMD_PLATFORM_REQUEST = 0x00
 PROTOCOL_CMD_PLATFORM_RESPONSE = 0x01
@@ -22,6 +22,7 @@ PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR = 0x0B
 PROTOCOL_BAD_PACKET_RESPONSE = 0xFF
 rx_buffer = []
 tx_buffer = []
+last_tx = []
 TIMEOUT = 10
 
 def bitwise_not(n, width=32):
@@ -165,12 +166,13 @@ if __name__ == '__main__':
                             print('App Started')
                             sys.exit(0)
                         if command == PROTOCOL_BAD_PACKET_RESPONSE:
-                            print("ERR: Bad Packet - Please Try again")
+                            tx_buffer = list(last_tx)
                         if command == PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR:
                             print("ERR: Write Failed - Please try again")
                         rx_buffer = []
             if len(tx_buffer):
                 serial.write(tx_buffer)
+                last_tx = list(tx_buffer)
                 tx_buffer = []
             if not has_response and int(time()) - start > TIMEOUT:
                 print(
