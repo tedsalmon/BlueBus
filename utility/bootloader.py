@@ -158,13 +158,12 @@ if __name__ == '__main__':
                             percent = 0
                             if data_idx > 0:
                                 percent = data_len / data_idx
-                            print('\rWriting Flash Block %d of %d' % (data_idx, data_len), end='\r')
+                            print('\rWriting Flash Block %d of %d' % (data_idx, data_len - 1), end='\r')
                             data_idx += 1
                             if (data_idx < data_len):
                                 send_file(data[data_idx])
                             else:
-                                print('Write Complete')
-                                print ('Starting App...')
+                                print ('\nDone')
                                 start_app()
                         if command == PROTOCOL_CMD_START_APP_RESPONSE:
                             print('App Started')
