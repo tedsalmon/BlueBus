@@ -9,16 +9,18 @@ from time import time, sleep
 
 PROTOCOL_CMD_PLATFORM_REQUEST = 0x00
 PROTOCOL_CMD_PLATFORM_RESPONSE = 0x01
-PROTOCOL_CMD_WRITE_DATA_REQUEST = 0x02
-PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK = 0x03
-PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR = 0x04
-PROTOCOL_CMD_BC127_MODE_REQUEST = 0x05
-PROTOCOL_CMD_BC127_MODE_RESPONSE = 0x06
-PROTOCOL_CMD_START_APP_REQUEST = 0x07
-PROTOCOL_CMD_START_APP_RESPONSE = 0x08
-PROTOCOL_CMD_WRITE_SN_REQUEST = 0x09
-PROTOCOL_CMD_WRITE_SN_RESPONSE_OK = 0x0A
-PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR = 0x0B
+PROTOCOL_CMD_ERASE_FLASH_REQUEST = 0x02
+PROTOCOL_CMD_ERASE_FLASH_RESPONSE = 0x03
+PROTOCOL_CMD_WRITE_DATA_REQUEST = 0x04
+PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK = 0x05
+PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR = 0x06
+PROTOCOL_CMD_BC127_MODE_REQUEST = 0x07
+PROTOCOL_CMD_BC127_MODE_RESPONSE = 0x08
+PROTOCOL_CMD_START_APP_REQUEST = 0x09
+PROTOCOL_CMD_START_APP_RESPONSE = 0x0A
+PROTOCOL_CMD_WRITE_SN_REQUEST = 0x0B
+PROTOCOL_CMD_WRITE_SN_RESPONSE_OK = 0x0C
+PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR = 0x0D
 PROTOCOL_BAD_PACKET_RESPONSE = 0xFF
 rx_buffer = []
 tx_buffer = []
@@ -62,13 +64,17 @@ def request_platform():
     for i in generate_packet(PROTOCOL_CMD_PLATFORM_REQUEST, [0x00]):
         tx_buffer.append(i)
 
+def request_erase_flash():
+    for i in generate_packet(PROTOCOL_CMD_ERASE_FLASH_REQUEST, [0x00]):
+        tx_buffer.append(i)
+
 def start_app():
     for i in generate_packet(PROTOCOL_CMD_START_APP_REQUEST, [0x00]):
         tx_buffer.append(i)
 
 def read_hexfile(filename):
     hp = HexParser(filename)
-    address = 0
+    address = 0x1800
     data = []
     while address < (0x55e00 - 0x400) & bitwise_not(0x400 - 1):
         row_data = []
@@ -113,7 +119,7 @@ if __name__ == '__main__':
             action='store_true',
         )
         args = parser.parse_args()
-        serial = Serial(args.port, 115200)
+        serial = Serial(args.port, 111000)
         request_platform()
         should_continue = True
         data = None
@@ -133,24 +139,22 @@ if __name__ == '__main__':
                             print('Got Platform: %s' % ''.join(rx_buffer))
                             has_response = True
                             if args.firmware:
-                                print('==== Begin Firmware Update ====')
-                                print(
-                                    'Erasing Flash - DO NOT unplug the device'
-                                )
                                 data = read_hexfile(args.firmware)
                                 data_len = len(data)
-                                send_file(data[data_idx])
+                                print('==== Begin Firmware Update ====')
+                                print('Erasing Flash...')
+                                request_erase_flash()
                             elif args.btmode:
                                 print('==== Requesting BC127 Mode ====')
-                                request_bc127_mode();
+                                request_bc127_mode()
                             else:
                                 sys.exit(0)
                         if command == PROTOCOL_CMD_BC127_MODE_RESPONSE:
                             print('BC127 Mode Started')
-                            exit(0)
+                            sys.exit(0)
+                        if command == PROTOCOL_CMD_ERASE_FLASH_RESPONSE:
+                            send_file(data[data_idx])
                         if command == PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK:
-                            if data_idx == 0:
-                                print('Flash Erase Complete')
                             percent = 0
                             if data_idx > 0:
                                 percent = data_len / data_idx
