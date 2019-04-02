@@ -14,6 +14,9 @@
 
 int main(void)
 {
+    // Set the IVT mode to regular
+    IVT_MODE = IVT_MODE_BOOT;
+
     // Set all used ports to digital mode
     ANSB = 0;
     ANSD = 0;
@@ -21,11 +24,29 @@ int main(void)
     ANSG = 0;
 
     // Set the UART mode to MCU by default
-    // UART_SEL_BT_MODE = UART_SEL_MODE_DISABLE;
-    // UART_SEL_MCU_MODE = UART_SEL_MODE_ENABLE;
-    // Set the LED mode
+    UART_SEL_MODE = 0;
+    UART_SEL = UART_SEL_MCU;
+
     ON_LED_MODE = 0;
-    struct UART_t systemUart = UARTInit(UART_BAUD_115200);
+    struct UART_t systemUart = UARTInit(
+        SYSTEM_UART_MODULE,
+        SYSTEM_UART_RX_PIN,
+        SYSTEM_UART_TX_PIN,
+        UART_BAUD_111000
+    );
+
+    struct UART_t btUart = UARTInit(
+        BC127_UART_MODULE,
+        BC127_UART_RX_PIN,
+        BC127_UART_TX_PIN,
+        UART_BAUD_115200
+    );
+
+    // Register the module handlers at a global scope
+    UARTAddModuleHandler(&systemUart);
+    UARTAddModuleHandler(&btUart);
+
+    // Release the UART
     TimerInit();
     EEPROMInit();
 
@@ -36,82 +57,32 @@ int main(void)
         EEPROMWriteByte(CONFIG_BOOTLOADER_MODE, 0x00);
         ON_LED = 1;
     }
+
     while ((TimerGetMillis() <= BOOTLOADER_TIMEOUT || 
            BOOT_MODE == BOOT_MODE_BOOTLOADER) &&
            BOOT_MODE != BOOT_MODE_NOW
     ) {
-        TimerUpdate();
         UARTReadData(&systemUart);
         if (systemUart.rxQueueSize > 0) {
-            if ((TimerGetMillis() - systemUart.rxLastTimestamp) > UART_RX_QUEUE_TIMEOUT) {
-                UARTResetRxQueue(&systemUart);
-            }
-            // Process Message
-            struct ProtocolPacket_t packet = ProtocolProcessPacket(&systemUart);
-            if (packet.status == PROTOCOL_PACKET_STATUS_OK) {
-                // Lock the device in the bootloader since we have a good packet
-                if (BOOT_MODE == 0) {
-                    ON_LED = 1;
-                    BOOT_MODE = BOOT_MODE_BOOTLOADER;
-                }
-                switch (packet.command) {
-                    case PROTOCOL_CMD_PLATFORM_REQUEST:
-                        ProtocolSendStringPacket(
-                            &systemUart,
-                            (unsigned char) PROTOCOL_CMD_PLATFORM_RESPONSE,
-                            (char *) BOOTLOADER_PLATFORM
-                        );
-                        break;
-                    case PROTOCOL_CMD_WRITE_DATA_REQUEST:
-                        ProtocolFlashWrite(&systemUart, &packet);
-                        break;
-                    case PROTOCOL_CMD_BC127_MODE_REQUEST:
-                        ProtocolSendPacket(
-                            &systemUart,
-                            (unsigned char) PROTOCOL_CMD_BC127_MODE_RESPONSE,
-                            0,
-                            0
-                        );
-                        ProtocolBC127Mode();
-                        break;
-                    case PROTOCOL_CMD_START_APP_REQUEST:
-                        ProtocolSendPacket(
-                            &systemUart,
-                            (unsigned char) PROTOCOL_CMD_START_APP_RESPONSE,
-                            0,
-                            0
-                        );
-                        // Nop() So the packet makes it to the receiver
-                        uint16_t i = 0;
-                        while (i < NOP_COUNT) {
-                            Nop();
-                            i++;
-                        }
-                        BOOT_MODE = BOOT_MODE_NOW;
-                        break;
-                    case PROTOCOL_CMD_WRITE_SN_REQUEST:
-                        ProtocolWriteSerialNumber(&systemUart, &packet);
-                        break;
-                }
-            } else if (packet.status == PROTOCOL_PACKET_STATUS_BAD) {
-                ProtocolSendPacket(
-                    &systemUart,
-                    (unsigned char) PROTOCOL_BAD_PACKET_RESPONSE,
-                    0,
-                    0
-                );
-            }
+            ProtocolProcessMessage(&systemUart, &BOOT_MODE);
+        }
+        UARTReadData(&btUart);
+        if (btUart.rxQueueSize > 0) {
+            ProtocolProcessMessage(&btUart, &BOOT_MODE);
         }
     }
+    // Set the IVT mode to regular
+    IVT_MODE = IVT_MODE_APP;
 
-    // Close the UART module so the application can utilize it
-    UARTDestroy(&systemUart);
+    // Close the UART modules so the application can utilize it
+    UARTDestroy(SYSTEM_UART_MODULE);
+    UARTDestroy(BC127_UART_MODULE);
     // Close the EEPROM (SPI module) so that the application can utilize it
     EEPROMDestroy();
     ON_LED = 0;
     // Call the application code
     void (*appptr)(void);
-    appptr = (void (*)(void))BOOTLOADER_APPLICATION_START;
+    appptr = (void (*)(void))BOOTLOADER_APPLICATION_VECTOR;
     appptr();
 
     return 0;

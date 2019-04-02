@@ -5,11 +5,13 @@
                    displayName="Header Files"
                    projectFiles="true">
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
-        <itemPath>lib/flash.h</itemPath>
-        <itemPath>lib/uart.h</itemPath>
-        <itemPath>lib/timer.h</itemPath>
-        <itemPath>lib/protocol.h</itemPath>
         <itemPath>lib/eeprom.h</itemPath>
+        <itemPath>lib/flash.h</itemPath>
+        <itemPath>lib/protocol.h</itemPath>
+        <itemPath>lib/sfr_setters.h</itemPath>
+        <itemPath>lib/timer.h</itemPath>
+        <itemPath>lib/uart.h</itemPath>
+        <itemPath>lib/utils.h</itemPath>
       </logicalFolder>
       <itemPath>mappings.h</itemPath>
       <itemPath>sysconfig.h</itemPath>
@@ -23,11 +25,13 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
-        <itemPath>lib/uart.c</itemPath>
-        <itemPath>lib/flash.c</itemPath>
-        <itemPath>lib/timer.c</itemPath>
-        <itemPath>lib/protocol.c</itemPath>
         <itemPath>lib/eeprom.c</itemPath>
+        <itemPath>lib/flash.c</itemPath>
+        <itemPath>lib/protocol.c</itemPath>
+        <itemPath>lib/sfr_setters.s</itemPath>
+        <itemPath>lib/timer.c</itemPath>
+        <itemPath>lib/uart.c</itemPath>
+        <itemPath>lib/utils.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
     </logicalFolder>

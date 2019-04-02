@@ -14,12 +14,15 @@
 #define GATED_TIME_DISABLED 0x0000
 #define TIMER_16BIT_MODE 0x0000
 #define TIMER_PRESCALER 0x0000
+#define TIMER_INTERRUPT_PRIORITY 0x0002
 #define CLOCK_DIVIDER TIMER_PRESCALER
-#define PR_SETTING (SYS_CLOCK / 1000)
+#define PR1_SETTING (SYS_CLOCK / 1000 / 1)
+#define TIMER_TASKS_MAX 16
+#define TIMER_INDEX 0
 #include <stdint.h>
 #include <xc.h>
+#include "sfr_setters.h"
 
 void TimerInit();
-void TimerUpdate();
 uint32_t TimerGetMillis();
 #endif /* TIMER_H */

@@ -7,11 +7,18 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+#define _ADDED_C_LIB 1
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 #include "../mappings.h"
 #include "eeprom.h"
 #include "flash.h"
 #include "uart.h"
+#define PROTOCOL_BC127_MSG_END_CHAR 0x0D
+#define PROTOCOL_BC127_MSG_LF_CHAR 0x0A
+#define PROTOCOL_BC127_MSG_DELIMETER 0x20
 #define PROTOCOL_MAX_DATA_SIZE 255
 #define PROTOCOL_CONTROL_PACKET_SIZE 3
 #define PROTOCOL_DATA_INDEX_BEGIN 2
@@ -23,16 +30,18 @@
  */
 #define PROTOCOL_CMD_PLATFORM_REQUEST 0x00
 #define PROTOCOL_CMD_PLATFORM_RESPONSE 0x01
-#define PROTOCOL_CMD_WRITE_DATA_REQUEST 0x02
-#define PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK 0x03
-#define PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR 0x04
-#define PROTOCOL_CMD_BC127_MODE_REQUEST 0x05
-#define PROTOCOL_CMD_BC127_MODE_RESPONSE 0x06
-#define PROTOCOL_CMD_START_APP_REQUEST 0x07
-#define PROTOCOL_CMD_START_APP_RESPONSE 0x08
-#define PROTOCOL_CMD_WRITE_SN_REQUEST 0x09
-#define PROTOCOL_CMD_WRITE_SN_RESPONSE_OK 0x0A
-#define PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR 0x0B
+#define PROTOCOL_CMD_ERASE_FLASH_REQUEST 0x02
+#define PROTOCOL_CMD_ERASE_FLASH_RESPONSE 0x03
+#define PROTOCOL_CMD_WRITE_DATA_REQUEST 0x04
+#define PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK 0x05
+#define PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR 0x06
+#define PROTOCOL_CMD_BC127_MODE_REQUEST 0x07
+#define PROTOCOL_CMD_BC127_MODE_RESPONSE 0x08
+#define PROTOCOL_CMD_START_APP_REQUEST 0x09
+#define PROTOCOL_CMD_START_APP_RESPONSE 0x0A
+#define PROTOCOL_CMD_WRITE_SN_REQUEST 0x0B
+#define PROTOCOL_CMD_WRITE_SN_RESPONSE_OK 0x0C
+#define PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR 0x0D
 #define PROTOCOL_BAD_PACKET_RESPONSE 0xFF
 
 /**
@@ -56,7 +65,9 @@ typedef struct ProtocolPacket_t {
 } ProtocolPacket_t;
 void ProtocolBC127Mode();
 void ProtocolFlashErase();
-void ProtocolFlashWrite(UART_t *, ProtocolPacket_t *);
+uint8_t ProtocolFlashWrite(ProtocolPacket_t *);
+void ProtocolProcessMessage(UART_t *, uint8_t *);
+ProtocolPacket_t ProtocolProcessPacketBC127(UART_t *);
 ProtocolPacket_t ProtocolProcessPacket(UART_t *);
 void ProtocolSendPacket(UART_t *, unsigned char, unsigned char *, uint8_t);
 void ProtocolSendStringPacket(UART_t *, unsigned char, char *);

@@ -6,7 +6,7 @@
  *     time events in the application. Implement a scheduled task queue.
  */
 #include "timer.h"
-uint32_t TimerCurrentMillis = 0;
+volatile uint32_t TimerCurrentMillis = 0;
 
 /**
  * TimerInit()
@@ -21,26 +21,10 @@ void TimerInit()
 {
     T1CON = 0;
     T1CON = TIMER_ON | STOP_TIMER_IN_IDLE_MODE | TIMER_SOURCE_INTERNAL | GATED_TIME_DISABLED | TIMER_16BIT_MODE | CLOCK_DIVIDER;
-}
-
-/**
- * TimerUpdate()
- *     Description:
- *         Since TMR1 increments every cycle, we use the PR_SETTING (16,000)
- *         as the basis of 1ms. If TMR1 is >= PR_SETTING, then 1ms has passed.
- *         This allows us to get away without having to use an ISR to track
- *         elapsed time.
- *     Params:
- *         None
- *     Returns:
- *         None
- */
-void TimerUpdate()
-{
-    if (TMR1 >= PR_SETTING) {
-        TMR1 = 0;
-        TimerCurrentMillis++;
-    }
+    PR1 = PR1_SETTING;
+    SetTIMERIP(TIMER_INDEX, TIMER_INTERRUPT_PRIORITY);
+    SetTIMERIF(TIMER_INDEX, 0);
+    SetTIMERIE(TIMER_INDEX, 1);
 }
 
 /**
@@ -54,5 +38,21 @@ void TimerUpdate()
  */
 uint32_t TimerGetMillis()
 {
-    return TimerCurrentMillis;
+    return (uint32_t) TimerCurrentMillis;
+}
+
+/**
+ * T1Interrupt
+ *     Description:
+ *         Update the milliseconds since boot. Iterate through the scheduled
+ *         tasks and update their ticks.
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+void __attribute__((__interrupt__, auto_psv)) _T1Interrupt(void)
+{
+    TimerCurrentMillis++;
+    SetTIMERIF(TIMER_INDEX, 0);
 }

@@ -7,25 +7,38 @@
  */
 #include "uart.h"
 
-/**
- * UARTInit()
- *     Description:
- *         Generate a UART module to work with
- *     Params:
- *         uint8_t baudRate - The calculated baud rate to run at
- *     Returns:
- *         UART_t
- */
-UART_t UARTInit(uint8_t baudRate) {
+static UART_t *UARTModules[UART_MODULES_COUNT];
+
+// These values constitute the TX mode for each UART module
+static const uint8_t UART_TX_MODES[] = {3, 5};
+
+UART_t UARTInit(
+    uint8_t uartModule,
+    uint8_t rxPin,
+    uint8_t txPin,
+    uint8_t baudRate
+) {
     UART_t uart;
+    uart.moduleIndex = uartModule - 1;
+    uart.txPin = txPin;
+    UARTResetRxQueue(&uart);
     // Unlock the reprogrammable pin register
     __builtin_write_OSCCONL(OSCCON & 0xBF);
     // Set the RX Pin and register. The register comes from the PIC24FJ header
     // It's a pointer that Microchip gives you for easy access.
-    uart.registers = (volatile UART *) &U1MODE;
-    _U1RXR = SYSTEM_UART_RX_PIN;
+    switch (uartModule) {
+        case 1:
+            uart.registers = (volatile UART *) &U1MODE;
+            _U1RXR = rxPin;
+            break;
+        case 2:
+            uart.registers = (volatile UART *) &U2MODE;
+            _U2RXR = rxPin;
+            break;
+    }
     // Set the TX Pin Mode
-    SYSTEM_UART_TX_PIN = SYSTEM_UART_TX_MODE;
+    UtilsSetRPORMode(txPin, UART_TX_MODES[uart.moduleIndex]);
+    __builtin_write_OSCCONL(OSCCON & 0x40);
     //Set the BAUD Rate
     uart.registers->uxbrg = baudRate;
     // Enable UART, keep the module in 3-wire mode
@@ -35,20 +48,38 @@ UART_t UARTInit(uint8_t baudRate) {
     return uart;
 }
 
+void UARTAddModuleHandler(UART_t *uart)
+{
+    UARTModules[uart->moduleIndex] = uart;
+}
+
+UART_t * UARTGetModuleHandler(uint8_t moduleIndex)
+{
+    return UARTModules[moduleIndex - 1];
+}
+
 /**
  * UARTDestroy()
  *     Description:
  *         Reset the UART module that was used by the code
  *     Params:
- *         UART_t uart - The uart module object
+ *         uint8_t uartModule - The UART Module Number
  *     Returns:
  *         void
  */
-void UARTDestroy(UART_t *uart) {
+void UARTDestroy(uint8_t uartModule) {
+    UART_t *uart = UARTGetModuleHandler(uartModule);
     // Unlock the reprogrammable pin register and set the pins to zero
     __builtin_write_OSCCONL(OSCCON & 0xBF);
-    _U1RXR = 0;
-    SYSTEM_UART_TX_PIN = 0;
+    switch (uartModule) {
+        case 1:
+            _U1RXR = 0;
+            break;
+        case 2:
+            _U2RXR = 0;
+            break;
+    }
+    UtilsSetRPORMode(uart->txPin, 0);
     __builtin_write_OSCCONL(OSCCON & 0x40);
     //Set the BAUD Rate back to 0
     uart->registers->uxbrg = 0;
@@ -95,9 +126,9 @@ unsigned char UARTGetNextByte(UART_t *uart)
  *     Returns:
  *         unsigned char
  */
-unsigned char UARTGetOffsetByte(UART_t *uart, uint8_t offset)
+unsigned char UARTGetOffsetByte(UART_t *uart, uint16_t offset)
 {
-    uint8_t cursor = uart->rxQueueReadCursor;
+    uint16_t cursor = uart->rxQueueReadCursor;
     while (offset) {
         cursor++;
         if (cursor >= UART_RX_QUEUE_SIZE) {
@@ -154,6 +185,37 @@ void UARTResetRxQueue(UART_t *uart)
     uart->rxQueueSize = 0;
     uart->rxQueueWriteCursor = 0;
     uart->rxQueueReadCursor = 0;
+}
+
+/**
+ * UARTRxQueueSeek()
+ *     Description:
+ *         Checks if a given byte is in the queue and return the length of
+ *         characters prior to it.
+ *     Params:
+ *         CharQueue_t *queue - The queue
+ *         const unsigned char needle - The character to look for
+ *     Returns:
+ *         uint16_t - The length of characters prior to the needle or zero if
+ *                   the needle wasn't found
+ */
+uint16_t UARTRxQueueSeek(UART_t *uart, const unsigned char needle)
+{
+    uint16_t readCursor = uart->rxQueueReadCursor;
+    uint16_t size = uart->rxQueueSize;
+    uint16_t cnt = 1;
+    while (size > 0) {
+        if (uart->rxQueue[readCursor] == needle) {
+            return cnt;
+        }
+        if (readCursor >= UART_RX_QUEUE_SIZE) {
+            readCursor = 0;
+        }
+        cnt++;
+        size--;
+        readCursor++;
+    }
+    return 0;
 }
 
 /**

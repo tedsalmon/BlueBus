@@ -21,9 +21,10 @@
  */
 void ProtocolBC127Mode()
 {
+    // Release the UART
+    UARTDestroy(BC127_UART_MODULE);
     // Set the UART mode to BC127 after disabling the MCU UART
-    UART_SEL_MCU_MODE = UART_SEL_MODE_DISABLE;
-    UART_SEL_BT_MODE = UART_SEL_MODE_ENABLE;
+    UART_SEL = UART_SEL_BT;
 }
 
 /**
@@ -38,22 +39,14 @@ void ProtocolBC127Mode()
  */
 void ProtocolFlashErase()
 {
-    uint32_t address = 0x00000000;
-    FlashErasePage(address);
-    // Rewrite the RESET vector after clearing the first block
-    uint32_t resetInstruction = 0x40000 + BOOTLOADER_BOOTLOADER_START;
-    FlashWriteDWORDAddress(0x00000000, resetInstruction, 0x00000000);
-    address += _FLASH_ROW * 16;
-    while (address <= BOOTLOADER_APPLICATION_END) {
-        if (address < BOOTLOADER_BOOTLOADER_START ||
-             address >= BOOTLOADER_APPLICATION_START
-        ) {
-            FlashErasePage(address);
-        }
+    uint32_t address = BOOTLOADER_APPLICATION_START;
+    while (address >= BOOTLOADER_APPLICATION_START &&
+           address < BOOTLOADER_APPLICATION_END
+    ) {
+        FlashErasePage(address);
         // Pages are erased in 1024 instruction blocks
         address += _FLASH_ROW * 16;
     }
-
 }
 
 /**
@@ -61,12 +54,11 @@ void ProtocolFlashErase()
  *     Description:
  *         Take a Flash Write packet and write it out to NVM
  *     Params:
- *         UART_t *uart - The UART struct to use for communication
  *         ProtocolPacket_t *packet - The data packet structure
  *     Returns:
- *         void
+ *         uint8_t - The result of the write operation
  */
-void ProtocolFlashWrite(UART_t *uart, ProtocolPacket_t *packet)
+uint8_t ProtocolFlashWrite(ProtocolPacket_t *packet)
 {
     uint32_t address = (
         ((uint32_t) 0 << 24) +
@@ -74,18 +66,11 @@ void ProtocolFlashWrite(UART_t *uart, ProtocolPacket_t *packet)
         ((uint32_t)packet->data[1] << 8) +
         ((uint32_t)packet->data[2])
     );
-    // If this is the first write request, erase all NVM
-    if (address == 0x00000000) {
-        ProtocolFlashErase();
-    }
     uint8_t index = 3;
     uint8_t flashRes = 1;
     while (index < packet->dataSize && flashRes == 1) {
         // Do not allow the Bootloader to be overwritten
-        if ((address >= BOOTLOADER_BOOTLOADER_START &&
-            address < BOOTLOADER_APPLICATION_START) ||
-            address < 0x04
-        ) {
+        if (address < BOOTLOADER_APPLICATION_START) {
             // Skip the current DWORD, since it overwrites protected memory
             address += 0x2;
             index += 3;
@@ -109,10 +94,115 @@ void ProtocolFlashWrite(UART_t *uart, ProtocolPacket_t *packet)
             address += 0x04;
         }
     }
-    if (flashRes == 1) {
-        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK, 0, 0);
+    return flashRes;
+}
+
+/**
+ * ProtocolProcessMessage()
+ *     Description:
+ *         Execute the packet data
+ *     Params:
+ *         UART_t *uart - The UART struct to use for communication
+ *         uint8_t *BOOT_MODE - The bootload mode flag
+ *     Returns:
+ *         ProtocolPacket_t
+ */
+void ProtocolProcessMessage(
+    UART_t *uart,
+    uint8_t *BOOT_MODE
+) {
+    if ((TimerGetMillis() - uart->rxLastTimestamp) > UART_RX_QUEUE_TIMEOUT) {
+        UARTResetRxQueue(uart);
+        ProtocolSendPacket(
+            uart,
+            (unsigned char) PROTOCOL_BAD_PACKET_RESPONSE,
+            0,
+            0
+        );
+    }
+    // Process Message
+    struct ProtocolPacket_t packet;
+    if (uart->moduleIndex == (BC127_UART_MODULE - 1)) {
+        packet = ProtocolProcessPacketBC127(uart);
     } else {
-        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR, 0, 0);
+        packet = ProtocolProcessPacket(uart);
+    }
+    if (packet.status == PROTOCOL_PACKET_STATUS_OK) {
+        // Lock the device in the bootloader since we have a good packet
+        if (*BOOT_MODE == 0) {
+            ON_LED = 1;
+            *BOOT_MODE = BOOT_MODE_BOOTLOADER;
+        }
+        if (packet.command == PROTOCOL_CMD_PLATFORM_REQUEST) {
+            ProtocolSendStringPacket(
+                uart,
+                (unsigned char) PROTOCOL_CMD_PLATFORM_RESPONSE,
+                (char *) BOOTLOADER_PLATFORM
+            );
+        } else if (packet.command == PROTOCOL_CMD_ERASE_FLASH_REQUEST) {
+            ProtocolFlashErase();
+            ProtocolSendPacket(
+                uart,
+                (unsigned char) PROTOCOL_CMD_ERASE_FLASH_RESPONSE,
+                0,
+                0
+            );
+        } else if (packet.command == PROTOCOL_CMD_WRITE_DATA_REQUEST) {
+            uint8_t writeResult = ProtocolFlashWrite(&packet);
+            if (writeResult == 1) {
+                ProtocolSendPacket(
+                    uart,
+                    PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK,
+                    0,
+                    0
+                );
+            } else {
+                ProtocolSendPacket(
+                    uart,
+                    PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR,
+                    0,
+                    0
+                );
+            }
+        } else if (packet.command == PROTOCOL_CMD_BC127_MODE_REQUEST) {
+            ProtocolSendPacket(
+                uart,
+                (unsigned char) PROTOCOL_CMD_BC127_MODE_RESPONSE,
+                0,
+                0
+            );
+            // Nop() So the packet makes it to the receiver
+            uint16_t i = 0;
+            while (i < NOP_COUNT) {
+                Nop();
+                i++;
+            }
+            ProtocolBC127Mode();
+        } else if (packet.command == PROTOCOL_CMD_START_APP_REQUEST) {
+            ProtocolSendPacket(
+                uart,
+                (unsigned char) PROTOCOL_CMD_START_APP_RESPONSE,
+                0,
+                0
+            );
+            // Nop() So the packet makes it to the receiver
+            uint16_t i = 0;
+            while (i < NOP_COUNT) {
+                Nop();
+                i++;
+            }
+            *BOOT_MODE = BOOT_MODE_NOW;
+        } else if (packet.command == PROTOCOL_CMD_WRITE_SN_REQUEST) {
+            ProtocolWriteSerialNumber(uart, &packet);
+        }
+    } else if (packet.status == PROTOCOL_PACKET_STATUS_BAD) {
+        UARTResetRxQueue(uart);
+        ProtocolSendPacket(
+            uart,
+            (unsigned char) PROTOCOL_BAD_PACKET_RESPONSE,
+            0,
+            0
+        );
     }
 }
 
@@ -144,6 +234,72 @@ ProtocolPacket_t ProtocolProcessPacket(UART_t *uart)
                 }
             }
             unsigned char validation = UARTGetNextByte(uart);
+            packet.status = ProtocolValidatePacket(&packet, validation);
+        }
+    }
+    return packet;
+}
+
+ProtocolPacket_t ProtocolProcessPacketBC127(UART_t *uart)
+{
+    struct ProtocolPacket_t packet;
+    packet.status = PROTOCOL_PACKET_STATUS_INCOMPLETE;
+    uint8_t messageLength = UARTRxQueueSeek(uart, PROTOCOL_BC127_MSG_END_CHAR);
+    if (messageLength > 0) {
+        char msg[messageLength];
+        uint8_t i;
+        uint8_t delimCount = 1;
+        for (i = 0; i < messageLength; i++) {
+            char c = UARTGetNextByte(uart);
+            if (c == PROTOCOL_BC127_MSG_DELIMETER) {
+                delimCount++;
+            }
+            if (c != PROTOCOL_BC127_MSG_END_CHAR) {
+                msg[i] = c;
+            } else {
+                // The protocol states that 0x0D delimits messages,
+                // so we change it to a null terminator instead
+                msg[i] = '\0';
+            }
+        }
+        // Copy the message, since strtok adds a null terminator after the first
+        // occurence of the delimiter, causes issues with any functions used going forward
+        char tmpMsg[messageLength];
+        strcpy(tmpMsg, msg);
+        char *msgBuf[delimCount];
+        char *p = strtok(tmpMsg, " ");
+        i = 0;
+        while (p != NULL) {
+            msgBuf[i++] = p;
+            p = strtok(NULL, " ");
+        }
+        if (strcmp(msgBuf[0], "RECV") == 0) {
+            delimCount = 0;
+            uint16_t j = 0;
+            uint16_t k = 0;
+            unsigned char data[PROTOCOL_MAX_DATA_SIZE];
+            // Extract our packet from the message
+            while (j < messageLength - 1) {
+                if (msg[j] == 0x20) {
+                    delimCount++;
+                }
+                if (delimCount >= 3) {
+                    data[k] = msg[j];
+                    k++;
+                }
+                j++;
+            }
+            packet.command = data[0];
+            packet.dataSize = (uint8_t) data[1] - PROTOCOL_CONTROL_PACKET_SIZE;
+            uint8_t i;
+            for (i = 0; i < packet.dataSize; i++) {
+                if (i < sizeof(data)) {
+                    packet.data[i] = data[i + 2];
+                } else {
+                    packet.data[i] = 0x00;
+                }
+            }
+            unsigned char validation = data[i + 2];
             packet.status = ProtocolValidatePacket(&packet, validation);
         }
     }
