@@ -68,7 +68,7 @@ int main(void)
         }
         UARTReadData(&btUart);
         if (btUart.rxQueueSize > 0) {
-            ProtocolProcessMessage(&btUart, &BOOT_MODE);
+            ProtocolProcessMessage(&systemUart, &BOOT_MODE);
         }
     }
     // Set the IVT mode to regular

@@ -10,8 +10,8 @@
  * ProtocolBC127Mode()
  *     Description:
  *         In order to allow the BC127 to be managed directly (including firmware
- *         upgrades), we set the tri-state buffer mode to pass UART data from the
- *         BC127 to the FT232R, rather than the MCU. It is not possible to exit
+ *         upgrades), we set the switch to push UART data from the BC127 to the
+ *         FT232RL, rather than the MCU. It is not possible to exit
  *         this mode gracefully, so a hard reset of the device will be required
  *         in order to return to the regular system.
  *     Params:
@@ -234,72 +234,6 @@ ProtocolPacket_t ProtocolProcessPacket(UART_t *uart)
                 }
             }
             unsigned char validation = UARTGetNextByte(uart);
-            packet.status = ProtocolValidatePacket(&packet, validation);
-        }
-    }
-    return packet;
-}
-
-ProtocolPacket_t ProtocolProcessPacketBC127(UART_t *uart)
-{
-    struct ProtocolPacket_t packet;
-    packet.status = PROTOCOL_PACKET_STATUS_INCOMPLETE;
-    uint8_t messageLength = UARTRxQueueSeek(uart, PROTOCOL_BC127_MSG_END_CHAR);
-    if (messageLength > 0) {
-        char msg[messageLength];
-        uint8_t i;
-        uint8_t delimCount = 1;
-        for (i = 0; i < messageLength; i++) {
-            char c = UARTGetNextByte(uart);
-            if (c == PROTOCOL_BC127_MSG_DELIMETER) {
-                delimCount++;
-            }
-            if (c != PROTOCOL_BC127_MSG_END_CHAR) {
-                msg[i] = c;
-            } else {
-                // The protocol states that 0x0D delimits messages,
-                // so we change it to a null terminator instead
-                msg[i] = '\0';
-            }
-        }
-        // Copy the message, since strtok adds a null terminator after the first
-        // occurence of the delimiter, causes issues with any functions used going forward
-        char tmpMsg[messageLength];
-        strcpy(tmpMsg, msg);
-        char *msgBuf[delimCount];
-        char *p = strtok(tmpMsg, " ");
-        i = 0;
-        while (p != NULL) {
-            msgBuf[i++] = p;
-            p = strtok(NULL, " ");
-        }
-        if (strcmp(msgBuf[0], "RECV") == 0) {
-            delimCount = 0;
-            uint16_t j = 0;
-            uint16_t k = 0;
-            unsigned char data[PROTOCOL_MAX_DATA_SIZE];
-            // Extract our packet from the message
-            while (j < messageLength - 1) {
-                if (msg[j] == 0x20) {
-                    delimCount++;
-                }
-                if (delimCount >= 3) {
-                    data[k] = msg[j];
-                    k++;
-                }
-                j++;
-            }
-            packet.command = data[0];
-            packet.dataSize = (uint8_t) data[1] - PROTOCOL_CONTROL_PACKET_SIZE;
-            uint8_t i;
-            for (i = 0; i < packet.dataSize; i++) {
-                if (i < sizeof(data)) {
-                    packet.data[i] = data[i + 2];
-                } else {
-                    packet.data[i] = 0x00;
-                }
-            }
-            unsigned char validation = data[i + 2];
             packet.status = ProtocolValidatePacket(&packet, validation);
         }
     }

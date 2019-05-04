@@ -16,9 +16,6 @@
 #include "eeprom.h"
 #include "flash.h"
 #include "uart.h"
-#define PROTOCOL_BC127_MSG_END_CHAR 0x0D
-#define PROTOCOL_BC127_MSG_LF_CHAR 0x0A
-#define PROTOCOL_BC127_MSG_DELIMETER 0x20
 #define PROTOCOL_MAX_DATA_SIZE 255
 #define PROTOCOL_CONTROL_PACKET_SIZE 3
 #define PROTOCOL_DATA_INDEX_BEGIN 2
@@ -67,7 +64,6 @@ void ProtocolBC127Mode();
 void ProtocolFlashErase();
 uint8_t ProtocolFlashWrite(ProtocolPacket_t *);
 void ProtocolProcessMessage(UART_t *, uint8_t *);
-ProtocolPacket_t ProtocolProcessPacketBC127(UART_t *);
 ProtocolPacket_t ProtocolProcessPacket(UART_t *);
 void ProtocolSendPacket(UART_t *, unsigned char, unsigned char *, uint8_t);
 void ProtocolSendStringPacket(UART_t *, unsigned char, char *);
