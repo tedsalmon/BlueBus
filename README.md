@@ -10,7 +10,7 @@ access to their vehicles service data and module information.
 
 # Features
 * Firmware upgradable
-* Full integration with CD53 / BoardMonitor
+* Full integration with CD53 / BoardMonitor / Multi-Information Display
 * User Configurable
 * Natively DSP Compatible
 
@@ -18,7 +18,8 @@ access to their vehicles service data and module information.
 * PIC24FJ1024GA606 16-bit MCU
 * BC127 Bluetooth Module
 * Melexis TH3122.4 LIN Transceiver
-* PCM5102A Line-Level DAC
+* PCM5122 Line-Level DAC / 2.1v RMS / 113 dB SNR
 * 25LC512 512kB EEPROM
-* MCP2221 UART to USB converter (FT232RQ on Production Boards)
+* FT232RL USB to UART converter
+* TMUX154E SPDT IC Switch to change the FT232RL source from MCU to BC127
 * Littleblock 1.5A Fuse
