@@ -14,24 +14,34 @@
 #include "lib/ibus.h"
 #include "lib/timer.h"
 #include "lib/utils.h"
-#include "ui/cd53.h"
 #include "ui/bmbt.h"
+#include "ui/cd53.h"
+#include "ui/mid.h"
+#define HANDLER_BLINKER_OFF 0
+#define HANDLER_BLINKER_DRV 1
+#define HANDLER_BLINKER_PSG 2
 #define HANDLER_BT_CONN_OFF 0
 #define HANDLER_BT_CONN_ON 1
 #define HANDLER_CDC_ANOUNCE_INT 1000
 #define HANDLER_CDC_ANOUNCE_TIMEOUT 21000
+#define HANDLER_CDC_SEEK_MODE_NONE 0
+#define HANDLER_CDC_SEEK_MODE_FWD 1
+#define HANDLER_CDC_SEEK_MODE_REV 2
 #define HANDLER_CDC_STATUS_INT 500
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
 #define HANDLER_DEVICE_MAX_RECONN 10
 #define HANDLER_INT_DEVICE_CONN 30000
 #define HANDLER_PROFILE_ERROR_INT 2500
-#define HANDLER_SCAN_INT 5000
+#define HANDLER_SCAN_INT 10000
 typedef struct HandlerContext_t {
     BC127_t *bt;
     IBus_t *ibus;
     uint8_t btStartupIsRun;
     uint8_t btConnectionStatus;
     uint8_t uiMode;
+    uint8_t seekMode;
+    uint8_t blinkerStatus;
+    uint8_t blinkerCount;
     uint8_t deviceConnRetries;
     uint8_t scanIntervals;
     uint32_t cdChangerLastKeepAlive;
@@ -48,9 +58,11 @@ void HandlerBC127PlaybackStatus(void *, unsigned char *);
 void HandlerIBusCDCKeepAlive(void *, unsigned char *);
 void HandlerIBusCDCStatus(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
+void HandlerIBusLightStatus(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
+void HandlerTimerDACKeepalive(void *);
 void HandlerTimerDeviceConnection(void *);
 void HandlerTimerOpenProfileErrors(void *);
 void HandlerTimerScanDevices(void *);

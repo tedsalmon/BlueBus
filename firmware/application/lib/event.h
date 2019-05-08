@@ -6,7 +6,7 @@
  */
 #ifndef EVENT_H
 #define EVENT_H
-#define EVENT_MAX_CALLBACKS 128
+#define EVENT_MAX_CALLBACKS 192
 #include <stdint.h>
 typedef struct Event_t {
     uint8_t type;

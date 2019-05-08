@@ -24,6 +24,7 @@ BC127_t BC127Init()
     bt.callStatus = BC127_CALL_INACTIVE;
     bt.metadataStatus = BC127_METADATA_STATUS_NEW;
     bt.pairedDevicesCount = 0;
+    bt.playbackStatus = BC127_AVRCP_STATUS_PAUSED;
     memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
     // Make sure that we initialize the char arrays to all zeros
     BC127ClearMetadata(&bt);
@@ -600,6 +601,40 @@ void BC127CommandSetBtState(
 }
 
  /**
+  * BC127CommandSetBtVolConfig()
+  *     Description:
+  *         Set the A2DP/HFP Volume configuration
+  *     Params:
+  *         BC127_t *bt - A pointer to the module object
+  *             uint8_t hfpVolume - The default HFP volume
+  *             uint8_t a2dpVolume  - The default A2DP volume
+  *             uint8_t a2dpSteps - Number of steps for A2DP volume
+  *             uint8_t volumeScaling - 0 = Hardware, 1 = DSP
+  *     Returns:
+  *         void
+  */
+void BC127CommandSetBtVolConfig(
+    BC127_t *bt,
+    uint8_t hfpVolume,
+    uint8_t a2dpVolume,
+    uint8_t a2dpSteps,
+    uint8_t volumeScaling
+) {
+    char command[30];
+    snprintf(
+        command,
+        30,
+        "SET BT_VOL_CONFIG=%X %d %d %d",
+        hfpVolume,
+        a2dpVolume,
+        a2dpSteps,
+        volumeScaling
+    );
+    BC127SendCommand(bt, command);
+    BC127CommandWrite(bt);
+}
+
+ /**
   * BC127CommandSetCodec()
   *     Description:
   *         Set the codec confiuration value
@@ -703,6 +738,39 @@ void BC127CommandSetProfiles(
 }
 
 /**
+ * BC127CommandSetUART()
+ *     Description:
+ *         Configure the BC127 UART module
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         uint32_t baudRate
+ *         char *flowControl
+ *         uint8_t parity
+ *     Returns:
+ *         void
+ */
+void BC127CommandSetUART(
+    BC127_t *bt,
+    uint32_t baudRate,
+    char *flowControl,
+    uint8_t parity
+) {
+    long long unsigned int baud = (long long unsigned int) baudRate;
+    char command[29];
+    snprintf(
+        command,
+        29,
+        "SET UART_CONFIG=%llu %s %d",
+        baud,
+        flowControl,
+        parity
+    );
+    BC127SendCommand(bt, command);
+    BC127CommandWrite(bt);
+}
+
+
+/**
  * BC127CommandStatus()
  *     Description:
  *         Get the BC127 connectivity status
@@ -729,7 +797,7 @@ void BC127CommandStatus(BC127_t *bt)
 void BC127CommandToggleVR(BC127_t *bt)
 {
     if (bt->activeDevice.hfpLinkId != 0) {
-        char command[13];
+        char command[16];
         snprintf(command, 16, "TOGGLE_VR %d", bt->activeDevice.hfpLinkId);
         BC127SendCommand(bt, command);
     } else {
@@ -737,11 +805,28 @@ void BC127CommandToggleVR(BC127_t *bt)
     }
 }
 
+/**
+ * BC127CommandTone()
+ *     Description:
+ *         Play an audible tone
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         char *params - The tone paramters
+ *     Returns:
+ *         void
+ */
+void BC127CommandTone(BC127_t *bt, char *params)
+{
+    char command[64];
+    snprintf(command, 64, "TONE %s", params);
+    BC127SendCommand(bt, command);
+}
+
 
 /**
  * BC127CommandStatus()
  *     Description:
- *         Play the currently selected A2DP device
+ *         Unpair all devices from the PDL
  *     Params:
  *         BC127_t *bt - A pointer to the module object
  *     Returns:
@@ -752,6 +837,25 @@ void BC127CommandUnpair(BC127_t *bt)
     char command[7] = "UNPAIR";
     BC127SendCommand(bt, command);
 }
+
+/**
+ * BC127CommandStatus()
+ *     Description:
+ *         Set the volume on the given link ID
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         uint8_t linkId - The Link ID to set the volume for
+ *         uint8_t volume - The hexadecimal value to set the volume to (0-F)
+ *     Returns:
+ *         void
+ */
+void BC127CommandVolume(BC127_t *bt, uint8_t linkId, uint8_t volume)
+{
+    char command[14];
+    snprintf(command, 14, "VOLUME %d %X", linkId, volume);
+    BC127SendCommand(bt, command);
+}
+
 
 /**
  * BC127CommandWrite()
@@ -780,7 +884,7 @@ void BC127CommandWrite(BC127_t *bt)
 uint8_t BC127GetDeviceId(char *str)
 {
     char deviceIdStr[2] = {str[0], '\0'};
-    return strToInt(deviceIdStr);
+    return UtilsStrToInt(deviceIdStr);
 }
 
 /**
@@ -888,6 +992,12 @@ void BC127Process(BC127_t *bt)
                 LogDebug(LOG_SOURCE_BT, "BT: Playing [A2DP Stream Start]");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
+        } else if(strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
+            if (bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+                bt->playbackStatus = BC127_AVRCP_STATUS_PAUSED;
+                LogDebug(LOG_SOURCE_BT, "BT: Paused [A2DP Stream Suspend]");
+                EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
+            }
         } else if(strcmp(msgBuf[0], "CALL_ACTIVE") == 0) {
             bt->callStatus = BC127_CALL_ACTIVE;
             EventTriggerCallback(
@@ -927,11 +1037,9 @@ void BC127Process(BC127_t *bt)
                     BC127CommandGetDeviceName(bt, msgBuf[4]);
                 }
                 isNew = 1;
-            } else {
-                LogDebug(LOG_SOURCE_BT, "BT: Found device but already have active");
             }
             if (bt->activeDevice.deviceId == deviceId) {
-                uint8_t linkId = strToInt(msgBuf[1]);
+                uint8_t linkId = UtilsStrToInt(msgBuf[1]);
                 BC127ConnectionOpenProfile(&bt->activeDevice, msgBuf[3], linkId);
                 // Set the playback status
                 if (strcmp(msgBuf[3], "AVRCP") == 0) {
@@ -966,7 +1074,7 @@ void BC127Process(BC127_t *bt)
                 if (status == BC127_CONN_STATE_DISCONNECTED) {
                     bt->playbackStatus = BC127_AVRCP_STATUS_PAUSED;
                     // Notify the world that the device disconnected
-                    memset(&bt->activeDevice, 0, sizeof(bt->activeDevice));
+                    memset(&bt->activeDevice, 0, sizeof(BC127Connection_t));
                     bt->activeDevice = BC127ConnectionInit();
                     EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
                     EventTriggerCallback(BC127Event_DeviceDisconnected, 0);
@@ -975,7 +1083,7 @@ void BC127Process(BC127_t *bt)
             }
         } else if (strcmp(msgBuf[0], "OPEN_OK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
-            uint8_t linkId = strToInt(msgBuf[1]);
+            uint8_t linkId = UtilsStrToInt(msgBuf[1]);
             if (bt->activeDevice.deviceId != deviceId) {
                 bt->activeDevice.deviceId = deviceId;
                 strncpy(bt->activeDevice.macId, msgBuf[3], 12);
@@ -1037,7 +1145,7 @@ void BC127Process(BC127_t *bt)
         } else if(strcmp(msgBuf[0], "Build:") == 0) {
             // The device sometimes resets without sending the "Ready" message
             // so we instead watch for the build string
-            memset(&bt->activeDevice, 0, sizeof(bt->activeDevice));
+            memset(&bt->activeDevice, 0, sizeof(BC127Connection_t));
             bt->activeDevice = BC127ConnectionInit();
             bt->callStatus = BC127_CALL_INACTIVE;
             bt->metadataStatus = BC127_METADATA_STATUS_NEW;
@@ -1203,8 +1311,6 @@ uint8_t BC127ConnectionCloseProfile(BC127Connection_t *conn, char *profile)
     }
     // Clear the connection once all the links are closed
     if (conn->a2dpLinkId == 0 && conn->avrcpLinkId == 0 && conn->hfpLinkId == 0) {
-        memset(conn->macId, 0, 13);
-        memset(conn->deviceName, 0, 33);
         conn->deviceId = 0;
         return BC127_CONN_STATE_DISCONNECTED;
     }

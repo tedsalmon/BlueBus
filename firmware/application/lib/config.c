@@ -51,6 +51,7 @@ unsigned char ConfigGetNavType()
     unsigned char value = CONFIG_CACHE[CONFIG_NAV_TYPE_ADDRESS];
     if (value == 0x00) {
         value = EEPROMReadByte(CONFIG_NAV_TYPE_ADDRESS);
+        CONFIG_CACHE[CONFIG_NAV_TYPE_ADDRESS] = value;
     }
     return value;
 }
@@ -72,6 +73,7 @@ unsigned char ConfigGetSetting(unsigned char setting)
         value = CONFIG_CACHE[setting];
         if (value == 0x00) {
             value = EEPROMReadByte(setting);
+            CONFIG_CACHE[setting] = value;
         }
     }
     return value;
@@ -91,6 +93,26 @@ unsigned char ConfigGetUIMode()
     unsigned char value = CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS];
     if (value == 0x00) {
         value = EEPROMReadByte(CONFIG_UI_MODE_ADDRESS);
+        CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS] = value;
+    }
+    return value;
+}
+
+/**
+ * ConfigGetVehicleType()
+ *     Description:
+ *         Get the vehicle type
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetVehicleType()
+{
+    unsigned char value = CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
+    if (value == 0x00) {
+        value = EEPROMReadByte(CONFIG_VEHICLE_TYPE_ADDRESS);
+        CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
     }
     return value;
 }
@@ -178,4 +200,19 @@ void ConfigSetUIMode(unsigned char uiMode)
 {
     CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS] = uiMode;
     EEPROMWriteByte(CONFIG_UI_MODE_ADDRESS, uiMode);
+}
+
+/**
+ * ConfigSetUIMode()
+ *     Description:
+ *         Set the vehicle type
+ *     Params:
+ *         unsigned char vehicleType - The vehicle type
+ *     Returns:
+ *         void
+ */
+void ConfigSetVehicleType(unsigned char vehicleType)
+{
+    CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = vehicleType;
+    EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, vehicleType);
 }

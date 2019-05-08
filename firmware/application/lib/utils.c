@@ -48,22 +48,39 @@ static uint16_t *ROPR_PINS[] = {
     GET_RPOR(18)
 };
 
+UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
+{
+    UtilsAbstractDisplayValue_t value;
+    strncpy(value.text, text, UTILS_DISPLAY_TEXT_SIZE - 1);
+    value.index = 0;
+    value.timeout = 0;
+    value.status = status;
+    return value;
+}
+
 /**
- * removeNonAscii()
+ * UtilsRemoveNonAscii()
  *     Description:
- *         Ignore non-ASCII characters from input and put the rest into string
+ *         Ignore non-ASCII characters from input and put the rest into string.
+ *         Additionally, unescape characters in the string before conversion
  *     Params:
  *         char *string - The subject
  *         const char *input - The string to copy from
  *     Returns:
  *         void
  */
-void removeNonAscii(char *string, const char *input)
+void UtilsRemoveNonAscii(char *string, const char *input)
 {
     uint16_t idx;
     uint16_t strIdx = 0;
     for (idx = 0; idx < strlen(input); idx++) {
         char c = input[idx];
+        if (c == 0x5C) {
+            // Create an array containing 0x<Bytes>\0
+            char buf[] = {0x30, 0x78, input[idx + 1], input[idx + 2], 0};
+            c = (char) strtol(buf, 0, 0);
+            idx = idx + 2;
+        }
         if (c >= 0x20 && c <= 0x7E) {
             string[strIdx] = c;
             strIdx++;
@@ -73,7 +90,7 @@ void removeNonAscii(char *string, const char *input)
 }
 
 /**
- * removeSubstring()
+ * UtilsRemoveSubstring()
  *     Description:
  *         Remove the given substring from the given subject
  *     Params:
@@ -82,7 +99,7 @@ void removeNonAscii(char *string, const char *input)
  *     Returns:
  *         void
  */
-void removeSubstring(char *string, const char *trash)
+void UtilsRemoveSubstring(char *string, const char *trash)
 {
     uint16_t removeLength = strlen(trash);
     while((string = strstr(string, trash) )){
@@ -91,7 +108,7 @@ void removeSubstring(char *string, const char *trash)
 }
 
 /**
- * setRPORMode()
+ * UtilsSetRPORMode()
  *     Description:
  *         Set the mode of a programmable output pin
  *     Params:
@@ -100,7 +117,7 @@ void removeSubstring(char *string, const char *trash)
  *     Returns:
  *         void
  */
-void setRPORMode(uint8_t pin, uint16_t mode)
+void UtilsSetRPORMode(uint8_t pin, uint16_t mode)
 {
     if ((pin % 2) == 0) {
         uint16_t msb = *ROPR_PINS[pin] >> 8;
@@ -114,7 +131,7 @@ void setRPORMode(uint8_t pin, uint16_t mode)
 }
 
 /**
- * strToInt()
+ * UtilsStrToInt()
  *     Description:
  *         Convert a string to an integer
  *     Params:
@@ -122,7 +139,7 @@ void setRPORMode(uint8_t pin, uint16_t mode)
  *     Returns:
  *         uint8_t The Unsigned 8-bit integer representation
  */
-uint8_t strToInt(char *string)
+uint8_t UtilsStrToInt(char *string)
 {
     char *ptr;
     return (uint8_t) strtol(string, &ptr, 10);

@@ -11,8 +11,10 @@
         <itemPath>lib/config.h</itemPath>
         <itemPath>lib/eeprom.h</itemPath>
         <itemPath>lib/event.h</itemPath>
+        <itemPath>lib/i2c.h</itemPath>
         <itemPath>lib/ibus.h</itemPath>
         <itemPath>lib/log.h</itemPath>
+        <itemPath>lib/pcm51xx.h</itemPath>
         <itemPath>lib/sfr_setters.h</itemPath>
         <itemPath>lib/timer.h</itemPath>
         <itemPath>lib/uart.h</itemPath>
@@ -21,6 +23,7 @@
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
         <itemPath>ui/bmbt.h</itemPath>
         <itemPath>ui/cd53.h</itemPath>
+        <itemPath>ui/mid.h</itemPath>
       </logicalFolder>
       <itemPath>handler.h</itemPath>
       <itemPath>mappings.h</itemPath>
@@ -43,7 +46,9 @@
         <itemPath>lib/eeprom.c</itemPath>
         <itemPath>lib/event.c</itemPath>
         <itemPath>lib/ibus.c</itemPath>
+        <itemPath>lib/i2c.c</itemPath>
         <itemPath>lib/log.c</itemPath>
+        <itemPath>lib/pcm51xx.c</itemPath>
         <itemPath>lib/sfr_setters.s</itemPath>
         <itemPath>lib/timer.c</itemPath>
         <itemPath>lib/uart.c</itemPath>
@@ -53,6 +58,7 @@
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
         <itemPath>ui/bmbt.c</itemPath>
         <itemPath>ui/cd53.c</itemPath>
+        <itemPath>ui/mid.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>handler.c</itemPath>
@@ -76,7 +82,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>pk4hybrid</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.35</languageToolchainVersion>
+        <languageToolchainVersion>1.36</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <packs>

@@ -13,14 +13,14 @@
 #include "../lib/event.h"
 #include "../lib/ibus.h"
 #include "../lib/timer.h"
+#include "../lib/utils.h"
 #define CD53_DISPLAY_METADATA_ON 1
 #define CD53_DISPLAY_METADATA_OFF 0
-#define CD53_DISPLAY_SCROLL_SPEED 500
+#define CD53_DISPLAY_SCROLL_SPEED 750
 #define CD53_DISPLAY_STATUS_OFF 0
 #define CD53_DISPLAY_STATUS_ON 1
 #define CD53_DISPLAY_STATUS_NEW 2
 #define CD53_DISPLAY_TIMER_INT 500
-#define CD53_DISPLAY_TEXT_SIZE 255
 #define CD53_DISPLAY_TEMP_TEXT_SIZE 11
 #define CD53_MODE_OFF 0
 #define CD53_MODE_ACTIVE 1
@@ -33,27 +33,14 @@
 #define CD53_SETTING_IDX_HFP 0
 #define CD53_SETTING_IDX_METADATA_MODE 1
 #define CD53_SETTING_IDX_AUTOPLAY 2
-#define CD53_SETTING_IDX_PAIRINGS 3
+#define CD53_SETTING_IDX_VEH_TYPE 3
+#define CD53_SETTING_IDX_BLINKERS 4
+#define CD53_SETTING_IDX_PAIRINGS 5
 #define CD53_SETTING_MODE_SCROLL_SETTINGS 1
 #define CD53_SETTING_MODE_SCROLL_VALUES 2
 #define CD53_METADATA_MODE_PARTY 0x01
 #define CD53_METADATA_MODE_CHUNK 0x02
-/*
- * CD53DisplayValue_t
- *  This is a struct to hold text values to be displayed
- *  text: The text to display
- *  index: A variable to track what the last displayed index of text was
- *  length: The length of the text
- *  status: 0 for inactive and 1 for active
- *  timeout: The amount of iterations to display the text for. -1 is indefinite
- */
-typedef struct CD53DisplayValue_t {
-    char text[CD53_DISPLAY_TEXT_SIZE];
-    uint8_t index;
-    uint8_t length;
-    uint8_t status;
-    int8_t timeout;
-} CD53DisplayValue_t;
+
 /*
  * CD53Context_t
  *  This is a struct to hold the context of the CD53 UI implementation
@@ -78,11 +65,10 @@ typedef struct CD53Context_t {
     uint8_t settingIdx;
     uint8_t settingValue;
     uint8_t settingMode;
-    CD53DisplayValue_t mainDisplay;
-    CD53DisplayValue_t tempDisplay;
+    UtilsAbstractDisplayValue_t mainDisplay;
+    UtilsAbstractDisplayValue_t tempDisplay;
 } CD53Context_t;
 void CD53Init(BC127_t *, IBus_t *);
-CD53DisplayValue_t CD53DisplayValueInit(char *);
 void CD53BC127DeviceDisconnected(void *, unsigned char *);
 void CD53BC127DeviceReady(void *, unsigned char *);
 void CD53BC127Metadata(CD53Context_t *, unsigned char *);

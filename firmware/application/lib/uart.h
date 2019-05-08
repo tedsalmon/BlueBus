@@ -21,12 +21,7 @@
 #define UART_MODULES_COUNT 4
 #define UART_PARITY_NONE 0
 #define UART_PARITY_EVEN 1
-#define UART_STATE_IDLE 0
-#define UART_STATE_RX 1
-#define UART_STATE_TX 2
 
-/* Check if a bit is set in a byte */
-#define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
 
 /**
  * UART_t

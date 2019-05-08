@@ -21,11 +21,19 @@
 
 int main(void)
 {
+    // Set the IVT mode
+    IVT_MODE = IVT_MODE_APP;
+
     // Set all used ports to digital mode
     ANSB = 0;
     ANSD = 0;
     ANSE = 0;
     ANSG = 0;
+
+    // Set the UART mode to MCU for the remainder of this application code
+    UART_SEL_MODE = 0;
+    UART_SEL = UART_SEL_MCU;
+
     // Initialize the system UART first, since we needed it for debug
     struct UART_t systemUart = UARTInit(
         SYSTEM_UART_MODULE,
@@ -39,7 +47,7 @@ int main(void)
     // All UART handler registrations need to be done at
     // this level to maintain a global scope
     UARTAddModuleHandler(&systemUart);
-    LogMessage("", "***** BlueBus *****");
+    LogMessage("", "**** BlueBus ****");
 
     struct BC127_t bt = BC127Init();
     UARTAddModuleHandler(&bt.uart);
@@ -51,10 +59,8 @@ int main(void)
 
     ON_LED_MODE = 0;
     ON_LED = 1;
-
     EEPROMInit();
     TimerInit();
-
     HandlerInit(&bt, &ibus);
 
     // Process events
@@ -69,7 +75,7 @@ int main(void)
 }
 
 // Trap Catches
-void __attribute__ ((__interrupt__, auto_psv)) _OscillatorFail(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltOscillatorFail(void)
 {
     // Clear the trap flag
     INTCON1bits.OSCFAIL = 0;
@@ -77,7 +83,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _OscillatorFail(void)
     while (1);
 }
 
-void __attribute__ ((__interrupt__, auto_psv)) _AddressError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltAddressError(void)
 {
     // Clear the trap flag
     INTCON1bits.ADDRERR = 0;
@@ -86,7 +92,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _AddressError(void)
 }
 
 
-void __attribute__ ((__interrupt__, auto_psv)) _StackError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltStackError(void)
 {
     // Clear the trap flag
     INTCON1bits.STKERR = 0;
@@ -94,7 +100,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _StackError(void)
     while (1);
 }
 
-void __attribute__ ((__interrupt__, auto_psv)) _MathError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltMathError(void)
 {
     // Clear the trap flag
     INTCON1bits.MATHERR = 0;
@@ -102,13 +108,13 @@ void __attribute__ ((__interrupt__, auto_psv)) _MathError(void)
     while (1);
 }
 
-void __attribute__ ((__interrupt__, auto_psv)) _NVMError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltNVMError(void)
 {
     ON_LED = 0;
     while (1);
 }
 
-void __attribute__ ((__interrupt__, auto_psv)) _GeneralError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltGeneralError(void)
 {
     ON_LED = 0;
     while (1);

@@ -30,6 +30,28 @@ void TimerInit()
 }
 
 /**
+ * TimerDelayMicroseconds()
+ *     Description:
+ *         Block for the given amount of microseconds. You really should not
+ *         block the application for more than 10us at a time.
+ *     Params:
+ *         None
+ *     Returns:
+ *         void
+ */
+void TimerDelayMicroseconds(uint16_t delay)
+{
+    TMR2 = 0;
+    // Set the delay to delay * 16 (ticks per microsecond)
+    PR2 = delay * 16;
+    // Reset interrupt flag
+    SetTIMERIF(2, 0);
+    T2CONbits.TON = 1;
+    while (!IFS0bits.T2IF);
+    T2CONbits.TON = 0;
+}
+
+/**
  * TimerGetMillis()
  *     Description:
  *         Return the number of elapsed milliseconds since boot
@@ -118,7 +140,7 @@ void TimerTriggerScheduledTask(uint8_t taskId)
  *     Returns:
  *         void
  */
-void __attribute__((__interrupt__, auto_psv)) _T1Interrupt(void)
+void __attribute__((__interrupt__, auto_psv)) _AltT1Interrupt(void)
 {
     TimerCurrentMillis++;
     uint8_t idx;

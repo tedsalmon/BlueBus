@@ -37,9 +37,9 @@ void EEPROMInit()
     // Data Input
     _SDI1R = EEPROM_SDI_PIN;
     // Set the SCK Output
-    setRPORMode(EEPROM_SCK_PIN, SPI_SCK_MODES[spiModuleIndex]);
+    UtilsSetRPORMode(EEPROM_SCK_PIN, SPI_SCK_MODES[spiModuleIndex]);
     // Set the SDO Output
-    setRPORMode(EEPROM_SDO_PIN, SPI_SDO_MODES[spiModuleIndex]);
+    UtilsSetRPORMode(EEPROM_SDO_PIN, SPI_SDO_MODES[spiModuleIndex]);
     // Lock the programmable pin register
     __builtin_write_OSCCONL(OSCCON & 0x40);
     SPI1BRGL = EEPROM_BRG;

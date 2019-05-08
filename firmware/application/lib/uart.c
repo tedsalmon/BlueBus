@@ -49,7 +49,7 @@ UART_t UARTInit(
             break;
     }
     // Set the TX Pin Mode
-    setRPORMode(txPin, UART_TX_MODES[uart.moduleIndex]);
+    UtilsSetRPORMode(txPin, UART_TX_MODES[uart.moduleIndex]);
     __builtin_write_OSCCONL(OSCCON & 0x40);
     //Set the BAUD Rate
     uart.registers->uxbrg = baudRate;
@@ -207,35 +207,35 @@ void UARTSendString(UART_t *uart, char *data)
  * Define the interrupt handlers that will pass off to our
  * handlers above.
  */
-void __attribute__((__interrupt__, auto_psv)) _U1RXInterrupt()
+void __attribute__((__interrupt__, auto_psv)) _AltU1RXInterrupt()
 {
     UARTRXInterruptHandler(0);
 }
-void __attribute__((__interrupt__, auto_psv)) _U1TXInterrupt()
+void __attribute__((__interrupt__, auto_psv)) _AltU1TXInterrupt()
 {
     UARTTXInterruptHandler(0);
 }
-void __attribute__((__interrupt__, auto_psv)) _U2RXInterrupt()
+void __attribute__((__interrupt__, auto_psv)) _AltU2RXInterrupt()
 {
     UARTRXInterruptHandler(1);
 }
-void __attribute__((__interrupt__, auto_psv)) _U2TXInterrupt()
+void __attribute__((__interrupt__, auto_psv)) _AltU2TXInterrupt()
 {
     UARTTXInterruptHandler(1);
 }
-void __attribute__((__interrupt__, auto_psv)) _U3RXInterrupt()
+void __attribute__((__interrupt__, auto_psv)) _AltU3RXInterrupt()
 {
     UARTRXInterruptHandler(2);
 }
-void __attribute__((__interrupt__, auto_psv)) _U3TXInterrupt()
+void __attribute__((__interrupt__, auto_psv)) _AltU3TXInterrupt()
 {
     UARTTXInterruptHandler(2);
 }
-void __attribute__((__interrupt__, auto_psv)) _U4RXInterrupt()
+void __attribute__((__interrupt__, auto_psv)) _AltU4RXInterrupt()
 {
     UARTRXInterruptHandler(3);
 }
-void __attribute__((__interrupt__, auto_psv)) _U4TXInterrupt()
+void __attribute__((__interrupt__, auto_psv)) _AltU4TXInterrupt()
 {
     UARTTXInterruptHandler(3);
 }

@@ -88,18 +88,33 @@ void CLIProcess(CLI_t *cli)
             BC127CommandReset(cli->bt);
         } else if (strcmp(msgBuf[0], "BTRESETPDL") == 0) {
             BC127CommandUnpair(cli->bt);
+        } else if (strcmp(msgBuf[0], "BTWRITE") == 0) {
+            BC127CommandWrite(cli->bt);
         } else if (strcmp(msgBuf[0], "GET") == 0) {
             if (strcmp(msgBuf[1], "BTCFG") == 0) {
                 BC127SendCommand(cli->bt, "CONFIG");
-            } else if (strcmp(msgBuf[1], "IBUSD") == 0) {
-                IBusCommandGTGetDiagnostics(cli->ibus);
-                IBusCommandRADGetDiagnostics(cli->ibus);
+            } else if (strcmp(msgBuf[1], "IBUS") == 0) {
+                IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_GT);
+                IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_RAD);
+                IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_LCM);
+            } else if (strcmp(msgBuf[1], "IBUSC") == 0) {
+                IBusCommandDIAGetCodingData(cli->ibus, IBUS_DEVICE_GT, 0x00);
+            } else if (strcmp(msgBuf[1], "HFP") == 0) {
+                if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                    LogRaw("HFP: On\r\n");
+                } else {
+                    LogRaw("HFP: Off\r\n");
+                }
             } else if (strcmp(msgBuf[1], "UI") == 0) {
                 unsigned char uiMode = ConfigGetUIMode();
                 if (uiMode == IBus_UI_CD53) {
                     LogRaw("UI Mode: CD53\r\n");
                 } else if (uiMode == IBus_UI_BMBT) {
                     LogRaw("UI Mode: BMBT\r\n");
+                } else if (uiMode == IBus_UI_MID) {
+                    LogRaw("UI Mode: MID\r\n");
+                } else if (uiMode == IBus_UI_MID_BMBT) {
+                    LogRaw("UI Mode: MID / BMBT\r\n");
                 } else {
                     LogRaw("UI Mode: Not set or Invalid\r\n");
                 }
@@ -134,20 +149,30 @@ void CLIProcess(CLI_t *cli)
             } else if (strcmp(msgBuf[1], "BCINIT") == 0) {
                 BC127CommandSetAudio(cli->bt, 0, 1);
                 BC127CommandSetAudioAnalog(cli->bt, "11", "15", "1", "OFF");
+                BC127CommandSetAudioDigital(
+                    cli->bt,
+                    BC127_AUDIO_I2S,
+                    "44100",
+                    "64",
+                    "100800"
+                );
                 BC127CommandSetBtState(cli->bt, 2, 2);
                 BC127CommandSetCodec(cli->bt, 1, "OFF");
                 BC127CommandSetMetadata(cli->bt, 1);
                 BC127CommandSetModuleName(cli->bt, "BlueBus");
                 BC127CommandSetProfiles(cli->bt, 1, 1, 0, 1);
+                BC127CommandSetUART(cli->bt, 9600, "OFF", 0);
             } else if (strcmp(msgBuf[1], "HFP") == 0) {
                 if (strcmp(msgBuf[2], "ON") == 0) {
-                    BC127CommandSetAudioAnalog(cli->bt, "11", "15", "1", "OFF");
+                    ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                     BC127CommandSetProfiles(cli->bt, 1, 1, 0, 1);
                 } else if (strcmp(msgBuf[2], "OFF") == 0) {
+                    ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
                     BC127CommandSetProfiles(cli->bt, 1, 1, 0, 0);
                 } else {
                     cmdSuccess = 0;
                 }
+                LogRaw("HFP Toggled: Reset BT to complete\r\n");
             } else if (strcmp(msgBuf[1], "UI") == 0) {
                 if (strcmp(msgBuf[2], "1") == 0) {
                     ConfigSetUIMode(IBus_UI_CD53);
@@ -155,6 +180,12 @@ void CLIProcess(CLI_t *cli)
                 } else if (strcmp(msgBuf[2], "2") == 0) {
                     ConfigSetUIMode(IBus_UI_BMBT);
                     LogRaw("UI Mode: BMBT\r\n");
+                } else if (strcmp(msgBuf[2], "3") == 0) {
+                    ConfigSetUIMode(IBus_UI_MID);
+                    LogRaw("UI Mode: MID\r\n");
+                } else if (strcmp(msgBuf[2], "4") == 0) {
+                    ConfigSetUIMode(IBus_UI_MID_BMBT);
+                    LogRaw("UI Mode: MID / BMBT\r\n");
                 } else {
                     LogRaw("Invalid UI Mode specified\r\n");
                 }
@@ -167,6 +198,16 @@ void CLIProcess(CLI_t *cli)
                     IBusCommandIgnitionStatus(cli->ibus, 0x01);
                     cli->ibus->ignitionStatus = 1;
                     EventTriggerCallback(IBusEvent_IgnitionStatus, 0x00);
+                } else {
+                    cmdSuccess = 0;
+                }
+            } else if (strcmp(msgBuf[1], "LIGHT") == 0) {
+                if (strcmp(msgBuf[2], "OFF") == 0) {
+                    IBusCommandDIATerminateDiag(cli->ibus, IBUS_DEVICE_LCM);
+                } else if (strcmp(msgBuf[2], "TR") == 0) {
+                    IBusCommandLCMEnableBlinker(cli->ibus, 0x40);
+                } else if (strcmp(msgBuf[2], "TL") == 0) {
+                    IBusCommandLCMEnableBlinker(cli->ibus, 0x80);
                 } else {
                     cmdSuccess = 0;
                 }
@@ -206,13 +247,15 @@ void CLIProcess(CLI_t *cli)
                 cmdSuccess = 0;
             }
         } else if (strcmp(msgBuf[0], "HELP") == 0 || strlen(msgBuf[0]) == 0) {
-            LogRaw("BlueBus Firmware version: 1.0.5\r\n");
+            LogRaw("BlueBus Firmware version: 1.0.7\r\n");
             LogRaw("Available Commands:\r\n");
             LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
             LogRaw("    BTREBOOT - Reboot the BC127\r\n");
             LogRaw("    BTRESETPDL - Unpair all devices from the BC127\r\n");
-            LogRaw("    GET UI - Get the current UI Mode\r\n");
             LogRaw("    GET BTCFG - Get the BC127 Configuration\r\n");
+            LogRaw("    GET HFP - Get the current HFP mode\r\n");
+            LogRaw("    GET IBUS - Get debug info from the IBus\r\n");
+            LogRaw("    GET UI - Get the current UI Mode\r\n");
             LogRaw("    REBOOT - Reboot the device\r\n");
             LogRaw("    SET AUDIO x - Set the audio output where x is ANALOG");
             LogRaw(" or DIGITAL. DIGITAL is the coax output.\r\n");
@@ -221,7 +264,8 @@ void CLIProcess(CLI_t *cli)
             LogRaw("    SET LOG x y - Change logging for x (BT, IBUS, SYS, UI)");
             LogRaw(" to ON or OFF\r\n");
             LogRaw("    SET UI x - Set the UI to x, ");
-            LogRaw("where 1 is CD53 and 2 is BMBT\r\n");
+            LogRaw("where 1 is CD53 (Business Radio), 2 is BMBT (Nav) ");
+            LogRaw("3 is MID (Multi-Info Display) and 4 is BMBT / MID\r\n");
         } else {
             cmdSuccess = 0;
         }

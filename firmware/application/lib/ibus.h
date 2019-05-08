@@ -16,6 +16,7 @@
 #define IBUS_CDC_SCAN_CD53 0x04
 #define IBUS_CDC_SCAN_FORWARD 0x03
 #define IBUS_CDC_SCAN_BACKWARDS 0x04
+#define IBUS_CDC_MANUAL_MODE 0x04
 #define IBUS_CDC_SONG_END 0x05
 #define IBUS_CDC_CD_CHANGE 0x06
 #define IBUS_CDC_SCAN_MODE 0x07
@@ -65,30 +66,33 @@
 #define IBUS_DEVICE_BMBT_Button_Knob 0x05
 #define IBUS_DEVICE_BMBT_Button_Display 0x30
 
-#define IBusAction_BMBT_BUTTON 0x48
+#define IBUS_CMD_BMBT_BUTTON 0x48
 
-#define IBusAction_CD53_SEEK 0x0A
-#define IBusAction_CD53_CD_SEL 0x06
+#define IBUS_CMD_CD53_CD_SEL 0x06
 
-#define IBusAction_DIAG_DATA 0xA0
+#define IBUS_CMD_DIAG_IDENTITY 0xA0
 
-#define IBusAction_GT_SCREEN_MODE_SET 0x45
-#define IBusAction_GT_MENU_SELECT 0x31
-#define IBusAction_GT_WRITE_MK4 0x21
-#define IBusAction_GT_WRITE_TITLE 0x23
+#define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
+#define IBUS_CMD_GT_MENU_SELECT 0x31
+#define IBUS_CMD_GT_WRITE_MK4 0x21
+#define IBUS_CMD_GT_WRITE_TITLE 0x23
 // Newer GTs use a different action to write to fields
-#define IBusAction_GT_WRITE_MK2 0xA5
-#define IBusAction_GT_WRITE_INDEX 0x60
-#define IBusAction_GT_WRITE_INDEX_TMC 0x61
-#define IBusAction_GT_WRITE_ZONE 0x62
-#define IBusAction_GT_WRITE_STATIC 0x63
+#define IBUS_CMD_GT_WRITE_MK2 0xA5
+#define IBUS_CMD_GT_WRITE_INDEX 0x60
+#define IBUS_CMD_GT_WRITE_INDEX_TMC 0x61
+#define IBUS_CMD_GT_WRITE_ZONE 0x62
+#define IBUS_CMD_GT_WRITE_STATIC 0x63
 
-#define IBusAction_IGN_STATUS_REQ 0x11
+#define IBUS_CMD_GT_DISPLAY_RADIO_MENU 0x37
 
-#define IBusAction_RAD_SCREEN_MODE_UPDATE 0x46
-#define IBusAction_RAD_UPDATE_MAIN_AREA 0x23
-#define IBusAction_RAD_C43_SCREEN_UPDATE 0x21
-#define IBusAction_RAD_C43_SET_MENU_MODE 0xC0
+#define IBUS_CMD_IGN_STATUS_REQ 0x11
+
+#define IBUS_CMD_RAD_SCREEN_MODE_UPDATE 0x46
+#define IBUS_CMD_RAD_UPDATE_MAIN_AREA 0x23
+#define IBUS_CMD_RAD_C43_SCREEN_UPDATE 0x21
+#define IBUS_CMD_RAD_C43_SET_MENU_MODE 0xC0
+#define IBUS_CMD_RAD_WRITE_MID_DISPLAY 0x23
+#define IBUS_CMD_RAD_WRITE_MID_MENU 0x21
 
 #define IBUS_GT_MKI 1
 #define IBUS_GT_MKII 2
@@ -105,6 +109,10 @@
 
 #define IBusMIDSymbolNext 0xC9
 #define IBusMIDSymbolBack 0xCA
+
+#define IBus_MID_MAX_CHARS 23
+#define IBus_MID_TITLE_MAX_CHARS 11
+#define IBus_MID_MENU_MAX_CHARS 4
 
 #define IBUS_TX_TIMEOUT_OFF 0
 #define IBUS_TX_TIMEOUT_ON 1
@@ -124,9 +132,15 @@
 #define IBusEvent_RADDiagResponse 43
 #define IBusEvent_MFLButton 44
 #define IBusEvent_RADC43ScreenModeUpdate 45
+#define IBusEvent_RADDisplayMenu 46
+#define IBusEvent_RADMIDDisplayText 47
+#define IBusEvent_RADMIDDisplayMenu 48
+#define IBusEvent_LightStatus 49
 
 #define IBus_UI_CD53 1
 #define IBus_UI_BMBT 2
+#define IBus_UI_MID 3
+#define IBus_UI_MID_BMBT 4
 #define IBus_CDC_DiscCount1 0x01
 #define IBus_CDC_DiscCount6 0x3F
 
@@ -138,6 +152,17 @@
 #define IBUS_RADIO_TYPE_BRCD 4
 #define IBUS_RADIO_TYPE_BRTP 5
 
+#define IBUS_LCM_LIGHT_STATUS 0x5B
+#define IBUS_LCM_E46_DRV_SIG_BIT 5
+#define IBUS_LCM_E46_PSG_SIG_BIT 6
+#define IBUS_LCM_E46_BLINKER_DRV 0x50
+#define IBUS_LCM_E46_BLINKER_PSG 0x80
+
+#define IBUS_LCM_DRV_SIG_BIT 5
+#define IBUS_LCM_PSG_SIG_BIT 6
+#define IBUS_LCM_BLINKER_DRV 0x80
+#define IBUS_LCM_BLINKER_PSG 0x40
+
 #define IBUS_MFL_BTN_EVENT 0x3B
 #define IBusMFLButtonNextRelease 0x21
 #define IBusMFLButtonPrevRelease 0x28
@@ -145,6 +170,11 @@
 #define IBusMFLButtonRTRelease 0x00
 #define IBusMFLButtonVoiceRelease 0xA0
 #define IBusMFLButtonVoiceHold 0x90
+
+#define IBUS_VEHICLE_TYPE_E38_E39_E53 0x01
+#define IBUS_VEHICLE_TYPE_E39_LATE 0x02
+#define IBUS_VEHICLE_TYPE_E46 0x03
+#define IBUS_VEHICLE_TYPE_E46_LCI_Z4 0x04
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -185,6 +215,7 @@ typedef struct IBus_t {
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
+void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, const size_t);
 uint8_t IBusGetDeviceManufacturer(const unsigned char);
 uint8_t IBusGetRadioType(uint32_t);
 uint8_t IBusGetNavHWVersion(unsigned char *);
@@ -192,25 +223,33 @@ uint8_t IBusGetNavSWVersion(unsigned char *);
 uint8_t IBusGetNavType(unsigned char *);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCKeepAlive(IBus_t *);
-void IBusCommandCDCStatus(IBus_t *, unsigned char,  unsigned char, unsigned char);
-void IBusCommandGTGetDiagnostics(IBus_t *);
+void IBusCommandCDCStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
+void IBusCommandDIAGetCodingData(IBus_t *, unsigned char, unsigned char);
+void IBusCommandDIAGetIdentity(IBus_t *, unsigned char);
+void IBusCommandDIAGetIOStatus(IBus_t *, unsigned char);
+void IBusCommandDIATerminateDiag(IBus_t *, unsigned char);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
 void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *, unsigned char);
 void IBusCommandGTWriteIndexTMC(IBus_t *, uint8_t, char *, unsigned char);
 void IBusCommandGTWriteIndexTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndexStatic(IBus_t *, uint8_t, char *);
-void IBusCommandGTWriteTitle(IBus_t *ibus, char *);
-void IBusCommandGTWriteTitleC43(IBus_t *ibus, char *);
+void IBusCommandGTWriteTitle(IBus_t *, char *);
+void IBusCommandGTWriteTitleC43(IBus_t *, char *);
 void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnition(IBus_t *);
-void IBusCommandMIDText(IBus_t *, char *);
-void IBusCommandMIDTextClear(IBus_t *);
+void IBusCommandIKEText(IBus_t *, char *);
+void IBusCommandIKETextClear(IBus_t *);
+void IBusCommandLCMEnableBlinker(IBus_t *, unsigned char);
+void IBusCommandMIDDisplayTitleText(IBus_t *, char *);
+void IBusCommandMIDDisplayText(IBus_t *, char *);
+void IBusCommandMIDMenuText(IBus_t *, uint8_t, char *);
 void IBusCommandRADC43ScreenModeSet(IBus_t *, unsigned char);
 void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
-void IBusCommandRADGetDiagnostics(IBus_t *);
 /* Temporary */
 void IBusCommandIgnitionStatus(IBus_t *, unsigned char);
+void IBusCommandLCMTurnLeft(IBus_t *);
+void IBusCommandLCMTurnRight(IBus_t *);
 #endif /* IBUS_H */
