@@ -1088,9 +1088,10 @@ void IBusCommandLCMEnableBlinker(IBus_t *ibus, unsigned char blinker)
         ioStatus3 = 0x80;
     } else if (vehicleType == IBUS_VEHICLE_TYPE_E46) {
         lightStatus = 0xFF;
-        if (blinker == IBUS_LCM_BLINKER_PSG) {
-            // The bit is different for the E46
-            blinker = 0x50;
+        if (blinker == IBUS_LCM_BLINKER_DRV) {
+            blinker = IBUS_LCM_BLINKER_DRV_E46;
+        } else if (blinker == IBUS_LCM_BLINKER_PSG) {
+            blinker = IBUS_LCM_BLINKER_PSG_E46;
         }
         lightStatus2 = blinker;
         ioStatus = 0x80;
@@ -1098,9 +1099,10 @@ void IBusCommandLCMEnableBlinker(IBus_t *ibus, unsigned char blinker)
         ioStatus3 = 0x80;
     } else if (vehicleType == IBUS_VEHICLE_TYPE_E46_LCI_Z4) {
         lightStatus = 0xFF;
-        if (blinker == IBUS_LCM_BLINKER_PSG) {
-            // The bit is different for the E46
-            blinker = 0x50;
+        if (blinker == IBUS_LCM_BLINKER_DRV) {
+            blinker = IBUS_LCM_BLINKER_DRV_E46;
+        } else if (blinker == IBUS_LCM_BLINKER_PSG) {
+            blinker = IBUS_LCM_BLINKER_PSG_E46;
         }
         lightStatus2 = blinker;
         ioStatus = 0x80;
