@@ -121,12 +121,7 @@ void ProtocolProcessMessage(
         );
     }
     // Process Message
-    struct ProtocolPacket_t packet;
-    if (uart->moduleIndex == (BC127_UART_MODULE - 1)) {
-        packet = ProtocolProcessPacketBC127(uart);
-    } else {
-        packet = ProtocolProcessPacket(uart);
-    }
+    struct ProtocolPacket_t packet = ProtocolProcessPacket(uart);
     if (packet.status == PROTOCOL_PACKET_STATUS_OK) {
         // Lock the device in the bootloader since we have a good packet
         if (*BOOT_MODE == 0) {
