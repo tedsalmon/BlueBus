@@ -1,12 +1,15 @@
 [Eagle]
-Version="09 03 02"
+Version="09 04 02"
 Platform="Linux"
 Globals="Globals"
 Desktop="Desktop"
 
 [Globals]
 AutoSaveProject=1
+UsedLibraryUrn="urn:adsk.eagle:library:237"
 UsedLibraryUrn="urn:adsk.eagle:library:513"
+UsedLibraryUrn="urn:adsk.eagle:library:514"
+UsedLibraryUrn="urn:adsk.eagle:library:530"
 UsedLibraryUrn="urn:adsk.eagle:library:507"
 UsedLibraryUrn="urn:adsk.eagle:library:521"
 UsedLibrary="/home/tsalmon/Documents/EAGLE/libraries/Connectors.lbr"
@@ -20,5 +23,5 @@ Type="Control Panel"
 Number=0
 
 [Desktop]
-Screen="6144 1528"
+Screen="7168 1440"
 Window="Win_1"
