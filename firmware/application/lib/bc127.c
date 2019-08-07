@@ -34,7 +34,7 @@ BC127_t BC127Init()
         BC127_UART_TX_PIN,
         BC127_UART_RX_PRIORITY,
         BC127_UART_TX_PRIORITY,
-        UART_BAUD_9600,
+        UART_BAUD_115200,
         UART_PARITY_NONE
     );
     return bt;
@@ -817,8 +817,8 @@ void BC127CommandToggleVR(BC127_t *bt)
  */
 void BC127CommandTone(BC127_t *bt, char *params)
 {
-    char command[64];
-    snprintf(command, 64, "TONE %s", params);
+    char command[128];
+    snprintf(command, 128, "TONE %s", params);
     BC127SendCommand(bt, command);
 }
 
@@ -1173,12 +1173,21 @@ void BC127Process(BC127_t *bt)
         }
     }
     /* Sometimes there is not more than a Title or Album, which does not give
-     * us sufficient information to push a metadata update. Therefore, request
-     * the full metadata if we have partial metadata for more than the specified
-     * timeout value
+     * us sufficient information to push a metadata update. Sometimes, this is
+     * because the data is stuck in a buffer, and other times it's because it's
+     * not available. Therefore, we send a blank command to try to push data
+     * out of the buffer. Otherwise, request the full metadata if we have
+     * partial metadata for more than the specified timeout value.
      **/
     uint32_t now = TimerGetMillis();
-    if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT &&
+    if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT_STAGE_1 &&
+        bt->metadataStatus == BC127_METADATA_STATUS_NEW &&
+        bt->activeDevice.avrcpLinkId != 0
+    ) {
+        BC127SendCommandEmpty(bt);
+    }
+
+    if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT_STAGE_2 &&
         bt->metadataStatus == BC127_METADATA_STATUS_NEW &&
         bt->activeDevice.avrcpLinkId != 0
     ) {
@@ -1205,6 +1214,22 @@ void BC127SendCommand(BC127_t *bt, char *command)
     for (idx = 0; idx < strlen(command); idx++) {
         CharQueueAdd(&bt->uart.txQueue, command[idx]);
     }
+    CharQueueAdd(&bt->uart.txQueue, BC127_MSG_END_CHAR);
+    // Set the interrupt flag
+    SetUARTTXIE(bt->uart.moduleIndex, 1);
+}
+
+/**
+ * BC127SendCommandEmpty()
+ *     Description:
+ *         Send a carriage return over UART
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127SendCommandEmpty(BC127_t *bt)
+{
     CharQueueAdd(&bt->uart.txQueue, BC127_MSG_END_CHAR);
     // Set the interrupt flag
     SetUARTTXIE(bt->uart.moduleIndex, 1);

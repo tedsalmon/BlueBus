@@ -48,7 +48,10 @@ static void IBusHandleBMBTMessage(unsigned char *pkt)
 
 static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[2] == IBUS_DEVICE_DIA && pkt[3] == IBUS_CMD_DIAG_IDENTITY) {
+    if (pkt[1] == 0x22 &&
+        pkt[2] == IBUS_DEVICE_DIA &&
+        pkt[3] == IBUS_CMD_DIAG_IDENTITY
+    ) {
         // Decode the software and hardware versions
         uint8_t hardwareVersion = IBusGetNavHWVersion(pkt);
         uint8_t softwareVersion = IBusGetNavSWVersion(pkt);
@@ -547,6 +550,7 @@ uint8_t IBusGetRadioType(uint32_t partNumber)
             break;
         case 6919079:
         case 6922511:
+        case 6932812:
         case 6933092:
         case 6934650:
         case 6941691:
@@ -854,6 +858,34 @@ static void IBusInternalCommandGTWriteIndex(
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
+/**
+ * IBusCommandGTWriteBusinessNavTitle()
+ *     Description:
+ *        Write the single line available to write to on the Business Nav system
+ *        It supports a maximum of 11 characters
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         unsigned char system - The system to target
+ *     Returns:
+ *         void
+ */
+void IBusCommandGTWriteBusinessNavTitle(IBus_t *ibus, char *message) {
+    uint8_t length = strlen(message);
+    if (length > 11) {
+        length = 11;
+    }
+    const size_t pktLenght = length + 3;
+    unsigned char text[pktLenght];
+    text[0] = 0x23;
+    text[1] = 0xC4;
+    text[2] = 0x30;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 3] = message[idx];
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
+}
+
 void IBusCommandGTWriteIndex(
     IBus_t *ibus,
     uint8_t index,
@@ -1068,11 +1100,16 @@ void IBusCommandIKETextClear(IBus_t *ibus)
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         unsigned char blinker - The byte containing the bits of which bulb
  *             to illuminate
+ *         unsigned char dimmerStatus - The bute containing the dimmer status
+ *             which is only relevant for E46 models
  *     Returns:
  *         void
  */
-void IBusCommandLCMEnableBlinker(IBus_t *ibus, unsigned char blinker)
-{
+void IBusCommandLCMEnableBlinker(
+    IBus_t *ibus,
+    unsigned char blinker,
+    unsigned char dimmerStatus
+) {
     unsigned char vehicleType = ConfigGetVehicleType();
     unsigned char lightStatus = 0x00;
     unsigned char lightStatus2 = 0x00;
@@ -1095,8 +1132,13 @@ void IBusCommandLCMEnableBlinker(IBus_t *ibus, unsigned char blinker)
         }
         lightStatus2 = blinker;
         ioStatus = 0x80;
-        ioStatus2 = 0x80;
-        ioStatus3 = 0x80;
+        if (dimmerStatus == 0x00) {
+            ioStatus2 = 0x2A;
+            ioStatus3 = 0x00;
+        } else {
+            ioStatus2 = 0x80;
+            ioStatus3 = 0x80;
+        }
     } else if (vehicleType == IBUS_VEHICLE_TYPE_E46_LCI_Z4) {
         lightStatus = 0xFF;
         if (blinker == IBUS_LCM_BLINKER_DRV) {

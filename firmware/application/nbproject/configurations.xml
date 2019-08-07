@@ -14,11 +14,11 @@
         <itemPath>lib/i2c.h</itemPath>
         <itemPath>lib/ibus.h</itemPath>
         <itemPath>lib/log.h</itemPath>
-        <itemPath>lib/pcm51xx.h</itemPath>
         <itemPath>lib/sfr_setters.h</itemPath>
         <itemPath>lib/timer.h</itemPath>
         <itemPath>lib/uart.h</itemPath>
         <itemPath>lib/utils.h</itemPath>
+        <itemPath>lib/wm88xx.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
         <itemPath>ui/bmbt.h</itemPath>
@@ -48,12 +48,12 @@
         <itemPath>lib/ibus.c</itemPath>
         <itemPath>lib/i2c.c</itemPath>
         <itemPath>lib/log.c</itemPath>
-        <itemPath>lib/pcm51xx.c</itemPath>
         <itemPath>lib/sfr_setters.s</itemPath>
         <itemPath>lib/timer.c</itemPath>
         <itemPath>lib/uart.c</itemPath>
         <itemPath>lib/utils.c</itemPath>
         <itemPath>lib/config.c</itemPath>
+        <itemPath>lib/wm88xx.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
         <itemPath>ui/bmbt.c</itemPath>

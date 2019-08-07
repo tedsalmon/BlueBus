@@ -39,6 +39,7 @@
 #define CONFIG_SETTING_BMBT_DEFAULT_MENU CONFIG_SETTING_BMBT_DEFAULT_MENU_ADDRESS
 #define CONFIG_SETTING_OT_BLINKERS CONFIG_SETTING_OT_BLINKERS_ADDRESS
 
+unsigned char ConfigGetByte(unsigned char);
 unsigned char ConfigGetLog(unsigned char);
 unsigned char ConfigGetNavType();
 unsigned char ConfigGetSetting(unsigned char);

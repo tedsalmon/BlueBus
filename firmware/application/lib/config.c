@@ -9,6 +9,24 @@
 unsigned char CONFIG_CACHE[CONFIG_CACHE_VALUES] = {};
 
 /**
+ * ConfigGetByte()
+ *     Description:
+ *         Pull a byte from the EEPROM. If that byte is 0xFF, assume it's 0x00
+ *     Params:
+ *         unsigned char address - The address to read from
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetByte(unsigned char address)
+{
+    unsigned char value = ConfigGetByte(address);
+    if (value == 0xFF) {
+        value = 0x00;
+    }
+    return value;
+}
+
+/**
  * ConfigGetLog()
  *     Description:
  *         Get the log level for different systems
@@ -21,7 +39,7 @@ unsigned char ConfigGetLog(unsigned char system)
 {
     unsigned char currentSetting = CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS];
     if (currentSetting == 0x00 && currentSetting != 0xFF) {
-        unsigned char currentSetting = EEPROMReadByte(
+        unsigned char currentSetting = ConfigGetByte(
             CONFIG_SETTING_LOG_ADDRESS
         );
         if (currentSetting == 0x00) {
@@ -50,7 +68,7 @@ unsigned char ConfigGetNavType()
 {
     unsigned char value = CONFIG_CACHE[CONFIG_NAV_TYPE_ADDRESS];
     if (value == 0x00) {
-        value = EEPROMReadByte(CONFIG_NAV_TYPE_ADDRESS);
+        value = ConfigGetByte(CONFIG_NAV_TYPE_ADDRESS);
         CONFIG_CACHE[CONFIG_NAV_TYPE_ADDRESS] = value;
     }
     return value;
@@ -72,7 +90,7 @@ unsigned char ConfigGetSetting(unsigned char setting)
     if (setting >= 0x0A && setting <= 0x14) {
         value = CONFIG_CACHE[setting];
         if (value == 0x00) {
-            value = EEPROMReadByte(setting);
+            value = ConfigGetByte(setting);
             CONFIG_CACHE[setting] = value;
         }
     }
@@ -91,8 +109,8 @@ unsigned char ConfigGetSetting(unsigned char setting)
 unsigned char ConfigGetUIMode()
 {
     unsigned char value = CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS];
-    if (value == 0x00) {
-        value = EEPROMReadByte(CONFIG_UI_MODE_ADDRESS);
+    if (value == 0x00 || 1) {
+        value = ConfigGetByte(CONFIG_UI_MODE_ADDRESS);
         CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS] = value;
     }
     return value;
@@ -111,7 +129,7 @@ unsigned char ConfigGetVehicleType()
 {
     unsigned char value = CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
     if (value == 0x00) {
-        value = EEPROMReadByte(CONFIG_VEHICLE_TYPE_ADDRESS);
+        value = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);
         CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
     }
     return value;
@@ -143,7 +161,7 @@ void ConfigSetBootloaderMode(unsigned char bootloaderMode)
  */
 void ConfigSetLog(unsigned char system, unsigned char mode)
 {
-    unsigned char currentSetting = EEPROMReadByte(CONFIG_SETTING_LOG_ADDRESS);
+    unsigned char currentSetting = ConfigGetByte(CONFIG_SETTING_LOG_ADDRESS);
     unsigned char currentVal = (currentSetting >> system) & 1;
     if (mode != currentVal) {
         currentSetting ^= 1 << system;

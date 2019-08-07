@@ -109,11 +109,6 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         HANDLER_CDC_STATUS_INT
     );
     TimerRegisterScheduledTask(
-        &HandlerTimerDACKeepalive,
-        &Context,
-        1000
-    );
-    TimerRegisterScheduledTask(
         &HandlerTimerDeviceConnection,
         &Context,
         HANDLER_INT_DEVICE_CONN
@@ -131,7 +126,9 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     // Poll the vehicle for the ignition status so we can configure ourselves
     IBusCommandIKEGetIgnition(Context.ibus);
     BC127CommandStatus(Context.bt);
-    if (Context.uiMode == IBus_UI_CD53) {
+    if (Context.uiMode == IBus_UI_CD53 ||
+        Context.uiMode == IBus_UI_BUSINESS_NAV
+    ) {
         CD53Init(bt, ibus);
     } else if (Context.uiMode == IBus_UI_BMBT) {
         BMBTInit(bt, ibus);
@@ -198,6 +195,7 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
     if (context->bt->callStatus == BC127_CALL_ACTIVE) {
         // Set the HFP volume to max when a call comes in
         BC127CommandVolume(context->bt, 13, 15);
+        
     }
 }
 
@@ -227,6 +225,11 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
                 context->bt->activeDevice.hfpLinkId != 0
             )
         ) {
+            // Play a tone so the end user knows the device is connected
+            BC127CommandTone(
+                context->bt,
+                "TE 400 V 255 TI 0 N C5 L 8 N R0 L 32 N E5 L 8 N R0 L 32 N G5 L 8 N R0 L 32 N B5 L 4 N R0 L 1"
+            );
             LogDebug(LOG_SOURCE_SYSTEM, "Handler: Disable connectability");
             BC127CommandBtState(
                 context->bt,
@@ -293,6 +296,9 @@ void HandlerBC127DeviceFound(void *ctx, unsigned char *data)
         char *macId = (char *) data;
         LogDebug(LOG_SOURCE_SYSTEM, "Handler: No Device -- Attempt connection");
         BC127CommandProfileOpen(context->bt, macId, "A2DP");
+        if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+            BC127CommandProfileOpen(context->bt, macId, "HFP");
+        }
         context->btConnectionStatus = HANDLER_BT_CONN_ON;
     } else {
         LogDebug(
@@ -430,7 +436,6 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             if (requestedAction == IBUS_CDC_START_PLAYING_CD53) {
                 curAction = 0x00;
                 curStatus = IBUS_CDC_PLAYING;
-                HandlerTimerDACKeepalive(ctx);
                 if (context->seekMode == HANDLER_CDC_SEEK_MODE_FWD) {
                     BC127CommandForwardSeekRelease(context->bt);
                     context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
@@ -444,10 +449,11 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
         } else if (context->uiMode == IBus_UI_BMBT ||
                    context->uiMode == IBus_UI_MID_BMBT
         ) {
-            if (requestedAction == IBUS_CDC_START_PLAYING) {
+            if (requestedAction == IBUS_CDC_START_PLAYING ||
+                requestedAction == IBUS_CDC_START_PLAYING_BM54
+            ) {
                 curAction = IBUS_CDC_BM53_START_PLAYING;
                 curStatus = IBUS_CDC_BM53_PLAYING;
-                HandlerTimerDACKeepalive(ctx);
                 if (context->seekMode == HANDLER_CDC_SEEK_MODE_FWD) {
                     BC127CommandForwardSeekRelease(context->bt);
                     context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
@@ -538,18 +544,27 @@ void HandlerIBusLightStatus(void *ctx, unsigned char *pkt)
     if (blinkCount != 0x00 && blinkCount != 0xFF) {
         HandlerContext_t *context = (HandlerContext_t *) ctx;
         unsigned char lightStatus = pkt[4];
+        unsigned char dimmerStatus = pkt[7];
         if (context->blinkerStatus == HANDLER_BLINKER_OFF) {
             context->blinkerCount = 2;
             if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) != 0 &&
                 CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) == 0
             ) {
                 context->blinkerStatus = HANDLER_BLINKER_DRV;
-                IBusCommandLCMEnableBlinker(context->ibus, IBUS_LCM_BLINKER_DRV);
+                IBusCommandLCMEnableBlinker(
+                    context->ibus,
+                    IBUS_LCM_BLINKER_DRV,
+                    dimmerStatus
+                );
             } else if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) != 0 &&
                 CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) == 0
             ) {
                 context->blinkerStatus = HANDLER_BLINKER_PSG;
-                IBusCommandLCMEnableBlinker(context->ibus, IBUS_LCM_BLINKER_PSG);
+                IBusCommandLCMEnableBlinker(
+                    context->ibus,
+                    IBUS_LCM_BLINKER_PSG,
+                    dimmerStatus
+                );
             }
         } else if (context->blinkerStatus == HANDLER_BLINKER_DRV) {
             if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) != 0 ||
@@ -604,12 +619,9 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
             }
         } else if (mflButton == IBusMFLButtonVoiceHold) {
             BC127CommandToggleVR(context->bt);
-        } else if ((pkt[2] == IBUS_DEVICE_TEL && pkt[3] == 0x01) ||
-                   mflButton == IBusMFLButtonRTPress ||
+        } else if (mflButton == IBusMFLButtonRTPress ||
                    mflButton == IBusMFLButtonRTRelease
         ) {
-            // R/T Button Press asks for the TEL status if the TEL
-            // is not installed or has actions 0x40 and 0x00
             if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
             } else {
@@ -677,33 +689,6 @@ void HandlerTimerCDCSendStatus(void *ctx)
 }
 
 /**
- * HandlerTimerDACKeepalive()
- *     Description:
- *         Play a volumeless tone periodically to keep the DAC active
- *         Before you ask: "Why!?" the answer is simple: Without driving
- *         the audio channels, there is excessive noise from the IBus.
- *         An analog mute circuit requires that we use a voltage divider
- *         on the circuit, which makes the noise prevalent when music is
- *         playing
- *     Params:
- *         void *ctx - The context provided at registration
- *     Returns:
- *         void
- */
-void HandlerTimerDACKeepalive(void *ctx)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->ibus->ignitionStatus == IBUS_IGNITION_ON &&
-        context->ibus->cdChangerStatus == IBUS_CDC_PLAYING &&
-        context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED &&
-        context->bt->callStatus != BC127_CALL_ACTIVE
-    ) {
-        //BC127CommandTone(context->bt, "V 0 N C6 L 4");
-    }
-}
-
-
-/**
  * HandlerTimerDeviceConnection()
  *     Description:
  *         Monitor the BT connection and ensure it stays connected
@@ -712,7 +697,6 @@ void HandlerTimerDACKeepalive(void *ctx)
  *     Returns:
  *         void
  */
-
 void HandlerTimerDeviceConnection(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;

@@ -541,12 +541,6 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->mode == BMBT_MODE_ACTIVE) {
-        if (pkt[4] == IBUS_DEVICE_BMBT_Button_Next) {
-            BC127CommandForward(context->bt);
-        }
-        if (pkt[4] == IBUS_DEVICE_BMBT_Button_Prev) {
-            BC127CommandBackward(context->bt);
-        }
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_PlayPause) {
             if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
@@ -589,17 +583,18 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
         context->menu = BMBT_MENU_NONE;
         context->mode = BMBT_MODE_OFF;
         context->displayMode = BMBT_DISPLAY_OFF;
+        BMBTSetMainDisplayText(context, "Bluetooth", 0, 0);
         IBusCommandRADEnableMenu(context->ibus);
-    } else if (changerAction == IBUS_CDC_START_PLAYING) {
+    } else if (changerAction == IBUS_CDC_START_PLAYING ||
+               changerAction == IBUS_CDC_START_PLAYING_BM54
+    ) {
         // Start Playing
         if (context->mode == BMBT_MODE_OFF) {
-            if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-                BC127CommandPause(context->bt);
-            }
             if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON) {
                 BC127CommandPlay(context->bt);
+            } else if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+                BC127CommandPause(context->bt);
             }
-            IBusCommandRADDisableMenu(context->ibus);
             context->mode = BMBT_MODE_ACTIVE;
             context->displayMode = BMBT_DISPLAY_ON;
         }
@@ -863,7 +858,8 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
     if (strcmp("CDC 1-01", text) == 0 ||
         strcmp("TR 01-001", text) == 0 ||
         strcmp("TR 001-001", text) == 0 ||
-        strcmp("CD 1-01", text) == 0
+        strcmp("CD 1-01", text) == 0 ||
+        strcmp("CDC 1-0", text) == 0
     ) {
         context->mode = BMBT_MODE_ACTIVE;
         BMBTWriteHeader(context);
@@ -881,6 +877,9 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
                 BMBTWriteMenu(context);
             }
         } else {
+            // Disable the radio's menu alterations
+            // after the screen has been written to so that we're not ignored
+            IBusCommandRADDisableMenu(context->ibus);
             context->displayMode = BMBT_DISPLAY_ON;
         }
     } else if (strcmp("NO DISC", text) == 0 || strcmp("No Disc", text) == 0) {

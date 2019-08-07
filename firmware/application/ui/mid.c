@@ -80,11 +80,11 @@ void MIDIBusCDChangerStatus(void *ctx, unsigned char *pkt)
             IBusCommandMIDDisplayTitleText(context->ibus, "Bluetooth");
             IBusCommandMIDDisplayText(context->ibus, "                    ");
             if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-                IBusCommandMIDMenuText(context->ibus, 0, "  >");
+                IBusCommandMIDMenuText(context->ibus, 0, ">  ");
             } else {
                 IBusCommandMIDMenuText(context->ibus, 0, "|| ");
             }
-        IBusCommandMIDMenuText(context->ibus, 1, "Dis");
+        IBusCommandMIDMenuText(context->ibus, 1, "Meta");
         IBusCommandMIDMenuText(context->ibus, 2, "Sett");
         IBusCommandMIDMenuText(context->ibus, 3, "ings");
         IBusCommandMIDMenuText(context->ibus, 4, "Devi");
@@ -103,11 +103,11 @@ void MIDIIBusRADMIDDisplayText(void *ctx, unsigned char *pkt)
     if (context->mode != MID_MODE_OFF && context->screenUpdated == 1) {
         IBusCommandMIDDisplayTitleText(context->ibus, "Bluetooth");
         if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-            IBusCommandMIDMenuText(context->ibus, 0, " >");
+            IBusCommandMIDMenuText(context->ibus, 0, ">  ");
         } else {
-            IBusCommandMIDMenuText(context->ibus, 0, "||");
+            IBusCommandMIDMenuText(context->ibus, 0, "|| ");
         }
-        IBusCommandMIDMenuText(context->ibus, 1, "Dis");
+        IBusCommandMIDMenuText(context->ibus, 1, "Meta");
         IBusCommandMIDMenuText(context->ibus, 2, "Sett");
         IBusCommandMIDMenuText(context->ibus, 3, "ings");
         IBusCommandMIDMenuText(context->ibus, 4, "Devi");

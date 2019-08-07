@@ -36,6 +36,7 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
     Context.settingIdx = CD53_SETTING_IDX_HFP;
     Context.settingValue = CONFIG_SETTING_OFF;
     Context.settingMode = CD53_SETTING_MODE_SCROLL_SETTINGS;
+    Context.radioType = ConfigGetUIMode();
     EventRegisterCallback(
         BC127Event_Boot,
         &CD53BC127DeviceReady,
@@ -167,9 +168,9 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         ) {
             uint8_t nextMenu = 0;
             if (context->settingIdx == CD53_SETTING_IDX_HFP && direction != 0x00) {
-                nextMenu = SETTINGS_MENU[4];
+                nextMenu = SETTINGS_MENU[CD53_SETTING_IDX_PAIRINGS];
             } else if(context->settingIdx == CD53_SETTING_IDX_PAIRINGS && direction == 0x00) {
-                nextMenu = SETTINGS_MENU[0];
+                nextMenu = SETTINGS_MENU[CD53_SETTING_IDX_HFP];
             } else {
                 if (direction == 0x00) {
                     nextMenu = SETTINGS_MENU[context->settingIdx + 1];
@@ -279,7 +280,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                 }
             }
             if (context->settingIdx == CD53_SETTING_IDX_VEH_TYPE) {
-                if (context->settingValue == IBUS_VEHICLE_TYPE_E46_LCI_Z4) {
+                if (context->settingValue == 0x00 ||
+                    context->settingValue == 0xFF ||
+                    context->settingValue == IBUS_VEHICLE_TYPE_E46_LCI_Z4
+                ) {
                     CD53SetMainDisplayText(context, "Car: E38/E39/E53", 0);
                     context->settingValue = IBUS_VEHICLE_TYPE_E38_E39_E53;
                 } else if (context->settingValue == IBUS_VEHICLE_TYPE_E38_E39_E53) {
@@ -350,20 +354,27 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         } else if (context->mode == CD53_MODE_SETTINGS) {
             // Use as "Okay" button
             if (context->settingMode == CD53_SETTING_MODE_SCROLL_SETTINGS) {
+                if (context->settingIdx != CD53_SETTING_IDX_PAIRINGS) {
+                    CD53SetTempDisplayText(context, "Edit", 1);
+                }
                 context->settingMode = CD53_SETTING_MODE_SCROLL_VALUES;
             } else {
                 context->settingMode = CD53_SETTING_MODE_SCROLL_SETTINGS;
                 if (context->settingIdx == CD53_SETTING_IDX_PAIRINGS) {
                     if (context->settingValue == 1) {
                         BC127CommandUnpair(context->bt);
+                        CD53SetTempDisplayText(context, "Unpaired", 1);
+                        CD53SetMainDisplayText(context, "Clear Pairings", 0);
                     }
                 } else if (context->settingIdx == CD53_SETTING_IDX_VEH_TYPE) {
                     ConfigSetVehicleType(context->settingValue);
+                    CD53SetTempDisplayText(context, "Saved", 1);
                 } else {
                     ConfigSetSetting(
                         SETTINGS_TO_MENU[context->settingIdx],
                         context->settingValue
                     );
+                    CD53SetTempDisplayText(context, "Saved", 1);
                     if (context->settingIdx == CD53_SETTING_IDX_HFP) {
                         BC127CommandSetProfiles(context->bt, 1, 1, 0, 0);
                         BC127CommandReset(context->bt);
@@ -551,13 +562,11 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
     } else if (changerStatus == 0x03) {
         // Start Playing
         if (context->mode == CD53_MODE_OFF) {
-            if (btPlaybackStatus == BC127_AVRCP_STATUS_PLAYING) {
-                BC127CommandPause(context->bt);
-            } else {
-                CD53SetMainDisplayText(context, "Bluetooth", 0);
-            }
+            CD53SetMainDisplayText(context, "Bluetooth", 0);
             if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON) {
                 BC127CommandPlay(context->bt);
+            } else if (btPlaybackStatus == BC127_AVRCP_STATUS_PLAYING) {
+                BC127CommandPause(context->bt);
             }
             BC127CommandStatus(context->bt);
             context->mode = CD53_MODE_ACTIVE;
@@ -596,10 +605,14 @@ void CD53TimerDisplay(void *ctx)
                 context->tempDisplay.status = CD53_DISPLAY_STATUS_OFF;
             }
             if (context->tempDisplay.status == CD53_DISPLAY_STATUS_NEW) {
-                IBusCommandIKEText(
-                    context->ibus,
-                    context->tempDisplay.text
-                );
+                if (context->radioType == IBus_UI_CD53) {
+                    IBusCommandIKEText(
+                        context->ibus,
+                        context->tempDisplay.text
+                    );
+                } else if (context->radioType == IBus_UI_BUSINESS_NAV) {
+                    IBusCommandGTWriteBusinessNavTitle(context->ibus, context->tempDisplay.text);
+                }
                 context->tempDisplay.status = CD53_DISPLAY_STATUS_ON;
             }
             if (context->mainDisplay.length <= 11) {
@@ -618,7 +631,11 @@ void CD53TimerDisplay(void *ctx)
                         11
                     );
                     text[11] = '\0';
-                    IBusCommandIKEText(context->ibus, text);
+                    if (context->radioType == IBus_UI_CD53) {
+                        IBusCommandIKEText(context->ibus, text);
+                    } else if (context->radioType == IBus_UI_BUSINESS_NAV) {
+                        IBusCommandGTWriteBusinessNavTitle(context->ibus, text);
+                    }
                     // Pause at the beginning of the text
                     if (context->mainDisplay.index == 0) {
                         context->mainDisplay.timeout = 5;

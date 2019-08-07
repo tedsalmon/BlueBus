@@ -20,6 +20,10 @@
 #define HANDLER_BLINKER_OFF 0
 #define HANDLER_BLINKER_DRV 1
 #define HANDLER_BLINKER_PSG 2
+#define HANDLER_BT_OFF 0
+#define HANDLER_BT_TURN_OFF 1
+#define HANDLER_BT_TURN_ON 2
+#define HANDLER_BT_ON 3
 #define HANDLER_BT_CONN_OFF 0
 #define HANDLER_BT_CONN_ON 1
 #define HANDLER_CDC_ANOUNCE_INT 1000
@@ -36,6 +40,8 @@
 typedef struct HandlerContext_t {
     BC127_t *bt;
     IBus_t *ibus;
+    uint8_t btStatus;
+    uint8_t btStatusCount;
     uint8_t btStartupIsRun;
     uint8_t btConnectionStatus;
     uint8_t uiMode;
@@ -62,7 +68,7 @@ void HandlerIBusLightStatus(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
-void HandlerTimerDACKeepalive(void *);
+void HandlerTimerBTStatus(void *);
 void HandlerTimerDeviceConnection(void *);
 void HandlerTimerOpenProfileErrors(void *);
 void HandlerTimerScanDevices(void *);

@@ -80,7 +80,6 @@ static void EEPROMEnableWrite()
     EEPROM_CS_PIN = 0;
     EEPROMSend(EEPROM_COMMAND_WREN);
     EEPROM_CS_PIN = 1;
-    EEPROM_CS_PIN = 0;
 }
 
 /**
@@ -95,6 +94,7 @@ static void EEPROMEnableWrite()
 void EEPROMErase()
 {
     EEPROMEnableWrite();
+    EEPROM_CS_PIN = 0;
     EEPROMSend(EEPROM_COMMAND_CE);
     EEPROM_CS_PIN = 1;
 }
@@ -129,18 +129,18 @@ void EEPROMIsReady()
  *     Returns:
  *         unsigned char - The byte at the given address
  */
-unsigned char EEPROMReadByte(unsigned char address)
+unsigned char EEPROMReadByte(uint32_t address)
 {
     EEPROMIsReady();
     EEPROM_CS_PIN = 0;
     EEPROMSend(EEPROM_COMMAND_READ);
     // Address must be 16-bits but we're transferring it in two 8-bit sessions
-    EEPROMSend(address >> 8);
-    EEPROMSend(address);
+    EEPROMSend(address >> 8 && 0xFF);
+    EEPROMSend(address & 0xFF);
     // Cast return of EEPROM send to an 8-bit byte, since the returned register
     // is always 16 bits
-    unsigned char data = (unsigned char) ((uint8_t) EEPROMSend(EEPROM_COMMAND_GET));
-    EEPROM_CS_PIN = 1; // Release EEPROM
+    unsigned char data = (unsigned char)((uint8_t )EEPROMSend(EEPROM_COMMAND_GET));
+    EEPROM_CS_PIN = 1;
     return data;
 }
 
@@ -155,13 +155,14 @@ unsigned char EEPROMReadByte(unsigned char address)
  *     Returns:
  *         void
  */
-void EEPROMWriteByte(unsigned char address, unsigned char data)
+void EEPROMWriteByte(uint32_t address, unsigned char data)
 {
     EEPROMEnableWrite();
+    EEPROM_CS_PIN = 0;
     EEPROMSend(EEPROM_COMMAND_WRITE);
     // Address must be 16-bits but we're transferring it in two 8-bit sessions
-    EEPROMSend(address >> 8);
-    EEPROMSend(address);
+    EEPROMSend(address >> 8 && 0xFF);
+    EEPROMSend(address & 0xFF);
     EEPROMSend(data);
     EEPROM_CS_PIN = 1;
 }

@@ -40,7 +40,8 @@
 #define BC127_METADATA_ALBUM_OFFSET 22
 #define BC127_METADATA_STATUS_NEW 1
 #define BC127_METADATA_STATUS_CUR 2
-#define BC127_METADATA_TIMEOUT 750
+#define BC127_METADATA_TIMEOUT_STAGE_1 500
+#define BC127_METADATA_TIMEOUT_STAGE_2 750
 #define BC127_MSG_END_CHAR 0x0D
 #define BC127_MSG_LF_CHAR 0x0A
 #define BC127_MSG_DELIMETER 0x20
@@ -183,6 +184,7 @@ uint8_t BC127GetConnectedDeviceCount(BC127_t *);
 uint8_t BC127GetDeviceId(char *);
 void BC127Process(BC127_t *);
 void BC127SendCommand(BC127_t *, char *);
+void BC127SendCommandEmpty(BC127_t *);
 
 void BC127PairedDeviceInit(BC127_t *, char *, char *);
 char *BC127PairedDeviceGetName(BC127_t *, char *);

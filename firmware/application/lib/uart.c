@@ -26,6 +26,7 @@ UART_t UARTInit(
     uart.rxQueue = CharQueueInit();
     uart.moduleIndex = uartModule - 1;
     uart.rxError = 0;
+    uart.txPin = txPin;
     // Unlock the reprogrammable pin register
     __builtin_write_OSCCONL(OSCCON & 0xBF);
     // Set the RX Pin and register. The register comes from the PIC24FJ header
@@ -64,6 +65,12 @@ UART_t UARTInit(
     uart.registers->uxmode ^= 0b1000000000000000;
     if (parity == UART_PARITY_EVEN) {
         uart.registers->uxmode ^= 0b0000000000000010;
+    } else if (parity == UART_PARITY_ODD) {
+        uart.registers->uxmode ^= 0b0000000000000100;
+    }
+    if (baudRate == UART_BAUD_115200) {
+        // Set high baud rate to enabled
+        uart.registers->uxmode ^= 0b0000000000001000;
     }
     // Enable transmit and receive on the module
     uart.registers->uxsta ^= 0b0001010000000000;
@@ -76,6 +83,43 @@ UART_t UARTInit(
 void UARTAddModuleHandler(UART_t *uart)
 {
     UARTModules[uart->moduleIndex] = uart;
+}
+
+/**
+ * UARTDestroy()
+ *     Description:
+ *         Reset the UART module that was used by the code
+ *     Params:
+ *         uint8_t uartModule - The UART Module Number
+ *     Returns:
+ *         void
+ */
+void UARTDestroy(uint8_t uartModule) {
+    UART_t *uart = UARTGetModuleHandler(uartModule);
+    // Unlock the reprogrammable pin register and set the pins to zero
+    __builtin_write_OSCCONL(OSCCON & 0xBF);
+    switch (uartModule) {
+        case 1:
+            _U1RXR = 0;
+            break;
+        case 2:
+            _U2RXR = 0;
+            break;
+        case 3:
+            _U3RXR = 0;
+            break;
+        case 4:
+            _U4RXR = 0;
+            break;
+    }
+    UtilsSetRPORMode(uart->txPin, 0);
+    __builtin_write_OSCCONL(OSCCON & 0x40);
+    //Set the BAUD Rate back to 0
+    uart->registers->uxbrg = 0;
+    // Disable UART
+    uart->registers->uxmode = 0;
+    // Disable transmit and receive on the module
+    uart->registers->uxsta = 0;
 }
 
 UART_t * UARTGetModuleHandler(uint8_t moduleIndex)

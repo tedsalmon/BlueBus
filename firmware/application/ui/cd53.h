@@ -65,6 +65,7 @@ typedef struct CD53Context_t {
     uint8_t settingIdx;
     uint8_t settingValue;
     uint8_t settingMode;
+    uint8_t radioType;
     UtilsAbstractDisplayValue_t mainDisplay;
     UtilsAbstractDisplayValue_t tempDisplay;
 } CD53Context_t;

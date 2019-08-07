@@ -10,9 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "../mappings.h"
 #include "bc127.h"
 #include "char_queue.h"
 #include "config.h"
+#include "i2c.h"
 #include "ibus.h"
 #include "uart.h"
 

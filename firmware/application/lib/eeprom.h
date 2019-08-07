@@ -8,6 +8,7 @@
 #define EEPROM_H
 #include <xc.h>
 #include "../mappings.h"
+#include "log.h"
 #include "sfr_setters.h"
 #include "utils.h"
 /* 16000000 / (2 * (0 + 1)) = 8,000,000 or 8Mhz */
@@ -25,6 +26,6 @@
 void EEPROMInit();
 void EEPROMErase();
 void EEPROMIsReady();
-unsigned char EEPROMReadByte(unsigned char);
-void EEPROMWriteByte(unsigned char, unsigned char);
+unsigned char EEPROMReadByte(uint32_t);
+void EEPROMWriteByte(uint32_t, unsigned char);
 #endif /* EEPROM_H */

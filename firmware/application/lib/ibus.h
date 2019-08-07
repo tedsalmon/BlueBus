@@ -12,6 +12,7 @@
 #define IBUS_CDC_CHANGE_TRACK 0x0A
 #define IBUS_CDC_STOP_PLAYING 0x01
 #define IBUS_CDC_START_PLAYING 0x02
+#define IBUS_CDC_START_PLAYING_BM54 0x03
 #define IBUS_CDC_START_PLAYING_CD53 0x03
 #define IBUS_CDC_SCAN_CD53 0x04
 #define IBUS_CDC_SCAN_FORWARD 0x03
@@ -141,6 +142,7 @@
 #define IBus_UI_BMBT 2
 #define IBus_UI_MID 3
 #define IBus_UI_MID_BMBT 4
+#define IBus_UI_BUSINESS_NAV 5
 #define IBus_CDC_DiscCount1 0x01
 #define IBus_CDC_DiscCount6 0x3F
 
@@ -231,6 +233,7 @@ void IBusCommandDIAGetIdentity(IBus_t *, unsigned char);
 void IBusCommandDIAGetIOStatus(IBus_t *, unsigned char);
 void IBusCommandDIATerminateDiag(IBus_t *, unsigned char);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
+void IBusCommandGTWriteBusinessNavTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *, unsigned char);
 void IBusCommandGTWriteIndexTMC(IBus_t *, uint8_t, char *, unsigned char);
 void IBusCommandGTWriteIndexTitle(IBus_t *, char *);
@@ -241,7 +244,7 @@ void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnition(IBus_t *);
 void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
-void IBusCommandLCMEnableBlinker(IBus_t *, unsigned char);
+void IBusCommandLCMEnableBlinker(IBus_t *, unsigned char, unsigned char);
 void IBusCommandMIDDisplayTitleText(IBus_t *, char *);
 void IBusCommandMIDDisplayText(IBus_t *, char *);
 void IBusCommandMIDMenuText(IBus_t *, uint8_t, char *);

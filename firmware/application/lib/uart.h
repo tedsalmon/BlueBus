@@ -12,7 +12,7 @@
 #include "log.h"
 #include "sfr_setters.h"
 #include "utils.h"
-#define UART_BAUD_115200 8
+#define UART_BAUD_115200 34
 #define UART_BAUD_9600 103
 #define UART_ERR_GERR 0x1
 #define UART_ERR_OERR 0x2
@@ -21,6 +21,7 @@
 #define UART_MODULES_COUNT 4
 #define UART_PARITY_NONE 0
 #define UART_PARITY_EVEN 1
+#define UART_PARITY_ODD 2
 
 
 /**
@@ -33,12 +34,14 @@ typedef struct UART_t {
     CharQueue_t rxQueue;
     CharQueue_t txQueue;
     uint8_t moduleIndex;
+    uint8_t txPin;
     volatile uint16_t rxError;
     volatile UART *registers;
 } UART_t;
 
 UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 void UARTAddModuleHandler(UART_t *uart);
+void UARTDestroy(uint8_t);
 UART_t * UARTGetModuleHandler(uint8_t);
 void UARTReportErrors(UART_t *);
 void UARTSendChar(UART_t *, unsigned char);
