@@ -16,7 +16,8 @@ UART_t UARTInit(
     uint8_t uartModule,
     uint8_t rxPin,
     uint8_t txPin,
-    uint8_t baudRate
+    uint8_t baudRate,
+    uint8_t parity
 ) {
     UART_t uart;
     uart.moduleIndex = uartModule - 1;
@@ -43,6 +44,15 @@ UART_t UARTInit(
     uart.registers->uxbrg = baudRate;
     // Enable UART, keep the module in 3-wire mode
     uart.registers->uxmode ^= 0b1000000000000000;
+    if (parity == UART_PARITY_EVEN) {
+        uart.registers->uxmode ^= 0b0000000000000010;
+    } else if (parity == UART_PARITY_ODD) {
+        uart.registers->uxmode ^= 0b0000000000000100;
+    }
+    if (baudRate == UART_BAUD_115200) {
+        // Set high baud rate to enabled
+        uart.registers->uxmode ^= 0b0000000000001000;
+    }
     // Enable transmit and receive on the module
     uart.registers->uxsta ^= 0b0001010000000000;
     return uart;
@@ -51,11 +61,6 @@ UART_t UARTInit(
 void UARTAddModuleHandler(UART_t *uart)
 {
     UARTModules[uart->moduleIndex] = uart;
-}
-
-UART_t * UARTGetModuleHandler(uint8_t moduleIndex)
-{
-    return UARTModules[moduleIndex - 1];
 }
 
 /**
@@ -84,9 +89,14 @@ void UARTDestroy(uint8_t uartModule) {
     //Set the BAUD Rate back to 0
     uart->registers->uxbrg = 0;
     // Disable UART
-    uart->registers->uxmode ^= 0b1000000000000000;
+    uart->registers->uxmode = 0;
     // Disable transmit and receive on the module
     uart->registers->uxsta = 0;
+}
+
+UART_t * UARTGetModuleHandler(uint8_t moduleIndex)
+{
+    return UARTModules[moduleIndex - 1];
 }
 
 

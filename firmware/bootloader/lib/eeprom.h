@@ -11,7 +11,7 @@
 
 /* 16000000 / (2 * (0 + 1)) = 8,000,000 or 8Mhz */
 #define EEPROM_BRG 0
-// 25LC512 EEPROM instructions
+// 25LC1024 EEPROM instructions
 #define EEPROM_COMMAND_WREN 0x06 // Write enable
 #define EEPROM_COMMAND_WRDI 0x04 // Write disable
 #define EEPROM_COMMAND_WRITE 0x02 // Initialize start of write sequence
@@ -23,6 +23,6 @@
 void EEPROMInit();
 void EEPROMDestroy();
 void EEPROMIsReady();
-unsigned char EEPROMReadByte(unsigned char);
-void EEPROMWriteByte(unsigned char, unsigned char);
+unsigned char EEPROMReadByte(uint32_t);
+void EEPROMWriteByte(uint32_t, unsigned char);
 #endif /* EEPROM_H */

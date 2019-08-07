@@ -12,12 +12,14 @@
 #include "sfr_setters.h"
 #include "timer.h"
 #include "utils.h"
-#define UART_BAUD_9600 103
-#define UART_BAUD_111000 8
-#define UART_BAUD_115200 8
+#define UART_BAUD_9600 103 
+#define UART_BAUD_115200 34
 #define UART_MODULES_COUNT 2
 #define UART_RX_QUEUE_SIZE 512
-#define UART_RX_QUEUE_TIMEOUT 500
+#define UART_RX_QUEUE_TIMEOUT 100
+#define UART_PARITY_NONE 0
+#define UART_PARITY_EVEN 1
+#define UART_PARITY_ODD 2
 
 /**
  * UART_t
@@ -36,7 +38,7 @@ typedef struct UART_t {
     volatile UART *registers;
 } UART_t;
 
-UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t);
+UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 void UARTAddModuleHandler(UART_t *uart);
 UART_t * UARTGetModuleHandler(uint8_t);
 void UARTDestroy(uint8_t);
