@@ -13,16 +13,27 @@
 #define TIMER_ON 0x8000
 #define GATED_TIME_DISABLED 0x0000
 #define TIMER_16BIT_MODE 0x0000
+#define TIMER_32BIT_MODE 0x0008
 #define TIMER_PRESCALER 0x0000
-#define TIMER_INTERRUPT_PRIORITY 0x0002
+#define TIMER_PRESCALER_256 0x0030
+#define TIMER_1_INTERRUPT_PRIORITY 0x0002
+#define TIMER_2_INTERRUPT_PRIORITY 0x0001
 #define CLOCK_DIVIDER TIMER_PRESCALER
 #define PR1_SETTING (SYS_CLOCK / 1000 / 1)
-#define TIMER_TASKS_MAX 16
-#define TIMER_INDEX 0
+// 500ms with a 1:256 pre-scaler
+#define PR2_SETTING ((SYS_CLOCK / 1000) / 256) * 500
+#define TIMER_1_INDEX 0
+#define TIMER_2_INDEX 1
+#define TIMER_LED_DISABLED 0
+#define TIMER_LED_ON 1
+#define TIMER_LED_OFF 2
 #include <stdint.h>
 #include <xc.h>
+#include "../mappings.h"
 #include "sfr_setters.h"
 
 void TimerInit();
+void TimerDestroy();
+void TimerEnableLED();
 uint32_t TimerGetMillis();
 #endif /* TIMER_H */

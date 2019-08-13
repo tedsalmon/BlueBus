@@ -25,6 +25,7 @@ int main(void)
     ANSG = 0;
 
     // Set the pin modes
+    ON_LED_MODE = 0;
     UART_SEL_MODE = 0;
     RECOVERY_MODE = 1;
     BT_DATA_SEL_MODE = 0;
@@ -32,30 +33,14 @@ int main(void)
     // Set the UART mode to MCU by default
     UART_SEL = UART_SEL_MCU;
 
-    ON_LED_MODE = 0;
-    struct UART_t systemUart = UARTInit(
-        SYSTEM_UART_MODULE,
-        SYSTEM_UART_RX_PIN,
-        SYSTEM_UART_TX_PIN,
-        UART_BAUD_115200,
-        UART_PARITY_ODD
-    );
+    // Ensure the Pwr LED is off
+    ON_LED = 0;
 
-    struct UART_t btUart = UARTInit(
-        BC127_UART_MODULE,
-        BC127_UART_RX_PIN,
-        BC127_UART_TX_PIN,
-        UART_BAUD_115200,
-        UART_PARITY_NONE
-    );
-
-    // Register the module handlers at a global scope
-    UARTAddModuleHandler(&systemUart);
-    UARTAddModuleHandler(&btUart);
-
+    // Init the timer interrupt and the SPI module for the EEPROM
     TimerInit();
     EEPROMInit();
 
+    UART_t systemUart;
     uint8_t BOOT_MODE = BOOT_MODE_APPLICATION;
     unsigned char configuredBootmode = EEPROMReadByte(CONFIG_BOOTLOADER_MODE);
     // If the bootloader flag is set in the EEPROM or the recovery pin
@@ -63,8 +48,30 @@ int main(void)
     if (configuredBootmode != 0x00 || RECOVERY_STATUS == 1) {
         BOOT_MODE = BOOT_MODE_BOOTLOADER;
         EEPROMWriteByte(CONFIG_BOOTLOADER_MODE, 0x00);
-        ON_LED = 1;
-        BT_DATA_SEL = 1;
+        TimerEnableLED();
+        // We listen for firmware from a single UART based on the value stored
+        // in the EEPROM. This makes recovery from the BT module impossible
+        // but that is okay. If we listen on both UARTs, things get messy.
+        if (configuredBootmode == BOOT_SOURCE_BC127) {
+            BT_DATA_SEL = 1;
+            systemUart = UARTInit(
+                SYSTEM_UART_MODULE,
+                BC127_UART_RX_PIN,
+                BC127_UART_TX_PIN,
+                UART_BAUD_115200,
+                UART_PARITY_NONE
+            );
+        } else {
+            systemUart = UARTInit(
+                SYSTEM_UART_MODULE,
+                SYSTEM_UART_RX_PIN,
+                SYSTEM_UART_TX_PIN,
+                UART_BAUD_115200,
+                UART_PARITY_ODD
+            );
+        }
+        // Register the module handlers at a global scope
+        UARTAddModuleHandler(&systemUart);
     }
 
     while (BOOT_MODE == BOOT_MODE_BOOTLOADER && BOOT_MODE != BOOT_MODE_NOW) {
@@ -72,17 +79,13 @@ int main(void)
         if (systemUart.rxQueueSize > 0) {
             ProtocolProcessMessage(&systemUart, &BOOT_MODE);
         }
-        UARTReadData(&btUart);
-        if (btUart.rxQueueSize > 0) {
-            ProtocolProcessMessage(&systemUart, &BOOT_MODE);
-        }
     }
-    // Set the IVT mode to regular
-    IVT_MODE = IVT_MODE_APP;
+    
+    // Close the UART module so the application can utilize it
+    if (BOOT_MODE == BOOT_MODE_NOW) {
+        UARTDestroy(SYSTEM_UART_MODULE);
+    }
 
-    // Close the UART modules so the application can utilize it
-    UARTDestroy(SYSTEM_UART_MODULE);
-    UARTDestroy(BC127_UART_MODULE);
     // Close the EEPROM (SPI module) so that the application can utilize it
     EEPROMDestroy();
 
@@ -93,6 +96,12 @@ int main(void)
     // Wait until the specified timeout so that the rest of the board
     // has a chance to power up before we start configuring it in the application
     while (TimerGetMillis() <= BOOTLOADER_TIMEOUT);
+
+    // Disable the timers we set up
+    TimerDestroy();
+
+    // Set the IVT mode to regular
+    IVT_MODE = IVT_MODE_APP;
 
     // Call the application code
     void (*appptr)(void);

@@ -21,8 +21,6 @@
  */
 void ProtocolBC127Mode()
 {
-    // Release the UART
-    UARTDestroy(BC127_UART_MODULE);
     // Set the UART mode to BC127 after disabling the MCU UART
     UART_SEL = UART_SEL_BT;
 }

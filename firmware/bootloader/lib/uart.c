@@ -42,6 +42,8 @@ UART_t UARTInit(
     __builtin_write_OSCCONL(OSCCON & 0x40);
     //Set the BAUD Rate
     uart.registers->uxbrg = baudRate;
+    // Set the initial UART state
+    uart.registers->uxmode = 0;
     // Enable UART, keep the module in 3-wire mode
     uart.registers->uxmode ^= 0b1000000000000000;
     if (parity == UART_PARITY_EVEN) {
