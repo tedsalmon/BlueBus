@@ -28,12 +28,13 @@
  *         UART_t *uart - A pointer to the UART module object
  *         BC127_t *bt - A pointer to the BC127 object
  *         IBus_t *bt - A pointer to the IBus object
+ *         uint16_t lastChar - The last character
  */
 typedef struct CLI_t {
     UART_t *uart;
     BC127_t *bt;
     IBus_t *ibus;
-    uint8_t lastChar;
+    uint16_t lastChar;
 } CLI_t;
 CLI_t CLIInit(UART_t *, BC127_t *, IBus_t *);
 void CLIProcess(CLI_t *);

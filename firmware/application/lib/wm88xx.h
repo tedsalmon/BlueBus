@@ -9,7 +9,7 @@
 #include "log.h"
 
 #define WM88XX_I2C_ADDR 0x3A
-#define WM88XX_POLL_INT 1000
+#define WM88XX_POLL_INT 5000
 #define WM88XX_REGISTER_PLL_K_3 3
 #define WM88XX_REGISTER_PLL_K_2 4
 #define WM88XX_REGISTER_PLL_K_1 5

@@ -100,6 +100,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltOscillatorFail(void)
 {
     // Clear the trap flag
     INTCON1bits.OSCFAIL = 0;
+    ConfigSetTrapIncrement(CONFIG_TRAP_OSC);
     ON_LED = 0;
     while (1);
 }
@@ -108,6 +109,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltAddressError(void)
 {
     // Clear the trap flag
     INTCON1bits.ADDRERR = 0;
+    ConfigSetTrapIncrement(CONFIG_TRAP_ADDR);
     ON_LED = 0;
     while (1);
 }
@@ -117,6 +119,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltStackError(void)
 {
     // Clear the trap flag
     INTCON1bits.STKERR = 0;
+    ConfigSetTrapIncrement(CONFIG_TRAP_STACK);
     ON_LED = 0;
     while (1);
 }
@@ -125,18 +128,21 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltMathError(void)
 {
     // Clear the trap flag
     INTCON1bits.MATHERR = 0;
+    ConfigSetTrapIncrement(CONFIG_TRAP_MATH);
     ON_LED = 0;
     while (1);
 }
 
 void __attribute__ ((__interrupt__, auto_psv)) _AltNVMError(void)
 {
+    ConfigSetTrapIncrement(CONFIG_TRAP_NVM);
     ON_LED = 0;
     while (1);
 }
 
 void __attribute__ ((__interrupt__, auto_psv)) _AltGeneralError(void)
 {
+    ConfigSetTrapIncrement(CONFIG_TRAP_GEN);
     ON_LED = 0;
     while (1);
 }

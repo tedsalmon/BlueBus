@@ -26,7 +26,7 @@ void I2CInit()
     I2C3_SCL = 0;
     I2C3CONL = 0;
     I2C3CONLbits.I2CEN = 0;
-    I2C3BRG = I2C_BRG_100;
+    I2C3BRG = I2C_BRG_400;
     // Enable Slew Mode
     I2C3CONLbits.DISSLW = 0;
     SetI2CMAEV(2, 0);
@@ -149,11 +149,10 @@ int8_t I2CPoll(unsigned char deviceAddress)
             return I2C_ERR_Hardware;
         }
     }
-    if(I2CStart() == I2C_STATUS_OK) {
+    if (I2CStart() == I2C_STATUS_OK) {
         retval = I2CWriteByte((char)slaveAddress);
-        if(I2CStop() == I2C_STATUS_OK) {
-            // Even if we have an error sending, try to close I2C
-            if(retval == I2C_ACK) {
+        if (I2CStop() == I2C_STATUS_OK) {
+            if (retval == I2C_ACK) {
                 return I2C_STATUS_OK;
             } else if (retval == I2C_ERR_NAK) {
                 return I2C_ERR_BadAddr;
@@ -162,6 +161,7 @@ int8_t I2CPoll(unsigned char deviceAddress)
             }
         }
     }
+    // Set the error flag again since something bad happened
     I2CStatus = I2C_STATUS_ERR;
     return I2C_ERR_CommFail;
 }
@@ -186,11 +186,10 @@ int8_t I2CRead(
     unsigned char slaveAddress;
     unsigned char retval;
     if (I2CStatus == I2C_STATUS_ERR) {
-        //Ignore requests until Poll cmd is called to fix err.
         return I2C_ERR_BusDirty;
     }
     if (I2CStart() != I2C_STATUS_OK) {
-        //Failed to open bus
+        // Failed to open bus
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
     }
@@ -240,7 +239,7 @@ int8_t I2CRead(
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
     }
-    return retval;
+    return I2C_STATUS_OK;
 }
 
 /**
@@ -254,7 +253,7 @@ int8_t I2CRead(
  */
 int8_t I2CRecoverBus()
 {
-    int8_t status = 0;
+    int8_t status = I2C_STATUS_OK;
     uint8_t i = 0;
 
     // Disable the bus and pull both lines high
@@ -290,6 +289,7 @@ int8_t I2CRecoverBus()
         }
     }
     if (status < 0) {
+        LogError("I2C Error - Status is %d", status);
         return I2C_ERR_Hardware;
     }
     I2C3CONLbits.I2CEN = 1;
@@ -378,14 +378,13 @@ int8_t I2CStop()
 {
     I2C3CONLbits.PEN = 1;
     Nop();
-    // Check for a Bus Collision
     if (I2C3STATbits.BCL) {
         I2C3STATbits.BCL = 0;
         return I2C_ERR_BCL;
     }
     // Ensure that the stop condition is cleared, otherwise timeout
     uint16_t cycles = 0;
-    while (I2C3CONLbits.SEN) {
+    while (I2C3CONLbits.PEN) {
         if (cycles > I2C_SCL_TIMEOUT) {
             return I2C_ERR_SCLLow;
         }
@@ -417,7 +416,7 @@ int8_t I2CWrite(
         return I2C_ERR_BusDirty;
     }
     if (I2CStart() != 0) {
-        //Failed to open bus
+        // Failed to open bus
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
     }
@@ -425,7 +424,7 @@ int8_t I2CWrite(
     slaveAddress = (deviceAddress << 1) | 0; 
     retval = I2CWriteByte((char)slaveAddress);
     if (retval == I2C_ERR_NAK) {
-        //Bad Slave Address or I2C slave device stopped responding
+        // Bad Slave Address or I2C slave device stopped responding
         I2CStop();
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_BadAddr;
@@ -440,13 +439,13 @@ int8_t I2CWrite(
         return I2C_ERR_CommFail;
     }
     if (I2CWriteByte(data) != I2C_ACK) {
-        //Error while writing byte.  Close connection and set error flag.
+        // Error while writing byte.  Close connection and set error flag.
         I2CStop();
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
     }
     if(I2CStop() != I2C_STATUS_OK) {
-        //Failed to close bus
+        // Failed to close bus
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
     }

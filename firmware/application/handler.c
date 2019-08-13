@@ -114,6 +114,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         HANDLER_INT_DEVICE_CONN
     );
     TimerRegisterScheduledTask(
+        &HandlerTimerPoweroff,
+        &Context,
+        1000
+    );
+    TimerRegisterScheduledTask(
         &HandlerTimerOpenProfileErrors,
         &Context,
         HANDLER_PROFILE_ERROR_INT
@@ -751,6 +756,30 @@ void HandlerTimerOpenProfileErrors(void *ctx)
                 context->bt->pairingErrors[idx] = 0;
             }
         }
+    }
+}
+
+/**
+ * HandlerTimerPoweroff()
+ *     Description:
+ *         Track the time since the last IBus message and see if we need to
+ *         power off.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerPoweroff(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    unsigned char powerTimeout = ConfigGetPoweroffTimeout();
+    uint8_t lastRxMinutes = (TimerGetMillis() - context->ibus->rxLastStamp) / 60000;
+    if (powerTimeout != 0 && lastRxMinutes >= powerTimeout) {
+        LogInfo(LOG_SOURCE_SYSTEM, "System Power Down!");
+        // Destroy the UART module for IBus
+        UARTDestroy(IBUS_UART_MODULE);
+        // Disable the TH3122
+        IBUS_EN = 0;
     }
 }
 

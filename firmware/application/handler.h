@@ -70,6 +70,7 @@ void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
 void HandlerTimerBTStatus(void *);
 void HandlerTimerDeviceConnection(void *);
+void HandlerTimerPoweroff(void *);
 void HandlerTimerOpenProfileErrors(void *);
 void HandlerTimerScanDevices(void *);
 #endif /* HANDLER_H */

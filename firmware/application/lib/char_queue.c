@@ -58,7 +58,7 @@ void CharQueueAdd(CharQueue_t *queue, const unsigned char value)
  *     Returns:
  *         unsigned char
  */
-unsigned char CharQueueGet(CharQueue_t *queue, uint8_t idx)
+unsigned char CharQueueGet(CharQueue_t *queue, uint16_t idx)
 {
     if (idx >= CHAR_QUEUE_SIZE) {
         return 0x00;
@@ -119,14 +119,14 @@ void CharQueueReset(CharQueue_t *queue)
  *         CharQueue_t *queue - The queue
  *         const unsigned char needle - The character to look for
  *     Returns:
- *         uint8_t - The length of characters prior to the needle or zero if
+ *         uint16_t - The length of characters prior to the needle or zero if
  *                   the needle wasn't found
  */
-uint8_t CharQueueSeek(CharQueue_t *queue, const unsigned char needle)
+uint16_t CharQueueSeek(CharQueue_t *queue, const unsigned char needle)
 {
-    uint8_t readCursor = queue->readCursor;
-    uint8_t size = queue->size;
-    uint8_t cnt = 1;
+    uint16_t readCursor = queue->readCursor;
+    uint16_t size = queue->size;
+    uint16_t cnt = 1;
     while (size > 0) {
         if (queue->data[readCursor] == needle) {
             return cnt;

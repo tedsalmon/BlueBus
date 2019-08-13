@@ -19,7 +19,7 @@ unsigned char CONFIG_CACHE[CONFIG_CACHE_VALUES] = {};
  */
 unsigned char ConfigGetByte(unsigned char address)
 {
-    unsigned char value = ConfigGetByte(address);
+    unsigned char value = EEPROMReadByte(address);
     if (value == 0xFF) {
         value = 0x00;
     }
@@ -75,6 +75,20 @@ unsigned char ConfigGetNavType()
 }
 
 /**
+ * ConfigGetPoweroffTimeout()
+ *     Description:
+ *         Get the time in minutes that we should wait before powering off
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+unsigned char ConfigGetPoweroffTimeout()
+{
+    return ConfigGetByte(CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS);
+}
+
+/**
  * ConfigGetSetting()
  *     Description:
  *         Get a given setting from the EEPROM
@@ -87,7 +101,7 @@ unsigned char ConfigGetSetting(unsigned char setting)
 {
     unsigned char value = 0x00;
     // Catch invalid setting addresses
-    if (setting >= 0x0A && setting <= 0x14) {
+    if (setting >= 0x0F && setting <= 0x19) {
         value = CONFIG_CACHE[setting];
         if (value == 0x00) {
             value = ConfigGetByte(setting);
@@ -95,6 +109,34 @@ unsigned char ConfigGetSetting(unsigned char setting)
         }
     }
     return value;
+}
+
+/**
+ * ConfigGetTrapCount()
+ *     Description:
+ *         Get the number of times a trap has been triggered
+ *     Params:
+ *         unsigned char trap - The trap
+ *     Returns:
+ *         void
+ */
+unsigned char ConfigGetTrapCount(unsigned char trap)
+{
+    return ConfigGetByte(trap);
+}
+
+/**
+ * ConfigGetTrapLast()
+ *     Description:
+ *         Get the last raised trap
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+unsigned char ConfigGetTrapLast()
+{
+    return ConfigGetByte(CONFIG_TRAP_LAST_ERR);
 }
 
 /**
@@ -187,6 +229,20 @@ void ConfigSetNavType(unsigned char type)
 }
 
 /**
+ * ConfigSetPoweroffTimeout()
+ *     Description:
+ *         Set the time in minutes that we should wait before powering off
+ *     Params:
+ *         unsigned char timeout - The timeout
+ *     Returns:
+ *         void
+ */
+void ConfigSetPoweroffTimeout(unsigned char timeout)
+{
+    EEPROMWriteByte(CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS, timeout);
+}
+
+/**
  * ConfigSetSetting()
  *     Description:
  *         Set a given setting into the EEPROM
@@ -203,6 +259,55 @@ void ConfigSetSetting(unsigned char setting, unsigned char value)
         CONFIG_CACHE[setting] = value;
         EEPROMWriteByte(setting, value);
     }
+}
+
+/**
+ * ConfigSetTrapCount()
+ *     Description:
+ *         Set the trap count for the given trap
+ *     Params:
+ *         unsigned char trap - The trap triggered
+ *         uint8_t count - The number 
+ *     Returns:
+ *         void
+ */
+void ConfigSetTrapCount(unsigned char trap, unsigned char count)
+{
+    if (count >= 0xFE) {
+        // Reset the count so we don't overflow
+        count = 1;
+    }
+    EEPROMWriteByte(trap, count);
+}
+
+/**
+ * ConfigSetTrapIncrement()
+ *     Description:
+ *         Increment the trap count for the given trap
+ *     Params:
+ *         unsigned char trap - The trap triggered
+ *     Returns:
+ *         void
+ */
+void ConfigSetTrapIncrement(unsigned char trap)
+{
+    unsigned char count = ConfigGetTrapCount(trap);
+    ConfigSetTrapCount(trap, count + 1);
+    ConfigSetTrapLast(trap);
+}
+
+/**
+ * ConfigSetTrapLast()
+ *     Description:
+ *         Set the last trap that was raised
+ *     Params:
+ *         unsigned char trap - The trap triggered
+ *     Returns:
+ *         void
+ */
+void ConfigSetTrapLast(unsigned char trap)
+{
+    EEPROMWriteByte(CONFIG_TRAP_LAST_ERR, trap);
 }
 
 /**

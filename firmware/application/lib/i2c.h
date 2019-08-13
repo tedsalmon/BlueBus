@@ -2,12 +2,13 @@
  * File:   i2c.h
  * Author: Ted Salmon <tass2001@gmail.com>
  * Description:
- *     Logging mechanisms that we can use throughout the project
+ *     Implementation of the I2C Bus. Currently only I2C3 is implemented
  */
 #ifndef I2C_H
 #define I2C_H
 #include <xc.h>
 #include "../mappings.h"
+#include "log.h"
 #include "sfr_setters.h"
 #include "timer.h"
 

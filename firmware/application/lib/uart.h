@@ -43,6 +43,7 @@ UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 void UARTAddModuleHandler(UART_t *uart);
 void UARTDestroy(uint8_t);
 UART_t * UARTGetModuleHandler(uint8_t);
+void UARTRXQueueReset(UART_t *);
 void UARTReportErrors(UART_t *);
 void UARTSendChar(UART_t *, unsigned char);
 void UARTSendData(UART_t *, unsigned char *);

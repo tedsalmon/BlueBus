@@ -41,18 +41,18 @@ void CLIProcess(CLI_t *cli)
 {
     while (cli->lastChar != cli->uart->rxQueue.writeCursor) {
         UARTSendChar(cli->uart, CharQueueGet(&cli->uart->rxQueue, cli->lastChar));
-        if (cli->lastChar >= 255) {
+        if (cli->lastChar >= (CHAR_QUEUE_SIZE - 1)) {
             cli->lastChar = 0;
         } else {
             cli->lastChar++;
         }
     }
-    uint8_t messageLength = CharQueueSeek(&cli->uart->rxQueue, CLI_MSG_END_CHAR);
+    uint16_t messageLength = CharQueueSeek(&cli->uart->rxQueue, CLI_MSG_END_CHAR);
     if (messageLength > 0) {
         // Send a newline to keep the CLI pretty
         UARTSendChar(cli->uart, 0x0A);
         char msg[messageLength];
-        uint8_t i;
+        uint16_t i;
         uint8_t delimCount = 1;
         for (i = 0; i < messageLength; i++) {
             char c = CharQueueNext(&cli->uart->rxQueue);
@@ -94,6 +94,16 @@ void CLIProcess(CLI_t *cli)
             } else if (strcmp(msgBuf[1], "IBUS") == 0) {
                 IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_GT);
                 IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_RAD);
+            } else if (strcmp(msgBuf[1], "ERR") == 0) {
+                // Errors
+                LogRaw("Trap Counts: \r\n");
+                LogRaw("    Oscilator Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_OSC));
+                LogRaw("    Address Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_ADDR));
+                LogRaw("    Stack Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_STACK));
+                LogRaw("    Math Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_MATH));
+                LogRaw("    NVM Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_NVM));
+                LogRaw("    General Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_GEN));
+                LogRaw("    Last Trap: %02x\r\n", ConfigGetTrapLast());
             } else if (strcmp(msgBuf[1], "HFP") == 0) {
                 if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
                     LogRaw("HFP: On\r\n");
@@ -134,6 +144,17 @@ void CLIProcess(CLI_t *cli)
             }
         } else if (strcmp(msgBuf[0], "REBOOT") == 0) {
             __asm__ volatile ("reset");
+        } else if (strcmp(msgBuf[0], "RESET") == 0) {
+            if (strcmp(msgBuf[1], "TRAPS") == 0) {
+                ConfigSetTrapCount(CONFIG_TRAP_OSC, 0);
+                ConfigSetTrapCount(CONFIG_TRAP_ADDR, 0);
+                ConfigSetTrapCount(CONFIG_TRAP_STACK, 0);
+                ConfigSetTrapCount(CONFIG_TRAP_MATH, 0);
+                ConfigSetTrapCount(CONFIG_TRAP_NVM, 0);
+                ConfigSetTrapCount(CONFIG_TRAP_GEN, 0);
+            } else {
+                cmdSuccess = 0;
+            }
         } else if (strcmp(msgBuf[0], "SET") == 0) {
             if (strcmp(msgBuf[1], "BCINIT") == 0) {
                 BC127CommandSetAudio(cli->bt, 0, 1);
@@ -235,16 +256,9 @@ void CLIProcess(CLI_t *cli)
                     PAM_SHDN = 0;
                     TEL_MUTE = 0;
                 }
-            } else if (strcmp(msgBuf[1], "PWR") == 0) {
-                if (strcmp(msgBuf[2], "OFF") == 0) {
-                    // Destroy the UART module for IBus
-                    UARTDestroy(IBUS_UART_MODULE);
-                    // Disable the TH3122
-                    IBUS_EN = 0;
-                } else if (strcmp(msgBuf[2], "ON") == 0) {
-                    // Enable the TH3122
-                    IBUS_EN = 1;
-                }
+            } else if (strcmp(msgBuf[1], "PWROFF") == 0) {
+                unsigned char timeout = (unsigned char) UtilsStrToInt(msgBuf[2]);
+                ConfigSetPoweroffTimeout(timeout);
             } else {
                 cmdSuccess = 0;
             }
@@ -255,6 +269,7 @@ void CLIProcess(CLI_t *cli)
             LogRaw("    BTREBOOT - Reboot the BC127\r\n");
             LogRaw("    BTUNPAIR - Unpair all devices from the BC127\r\n");
             LogRaw("    GET BTCFG - Get the BC127 Configuration\r\n");
+            LogRaw("    GET ERR - Get the Error counter\r\n");
             LogRaw("    GET HFP - Get the current HFP mode\r\n");
             LogRaw("    GET IBUS - Get debug info from the IBus\r\n");
             LogRaw("    GET UI - Get the current UI Mode\r\n");
@@ -263,9 +278,9 @@ void CLIProcess(CLI_t *cli)
             LogRaw("    SET HFP ON/OFF - Enable or Disable HFP.\r\n");
             LogRaw("    SET IGN ON/OFF - Send the ignition status message [DEBUG]\r\n");
             LogRaw("    SET LOG x ON/OFF - Change logging for x (BT, IBUS, SYS, UI)\r\n");
-            LogRaw("    SET PWR ON/OFF - Turn the regulator on or off\r\n");
+            LogRaw("    SET PWROFF x - Set the time in minutes that we should wait before powering off\r\n");
             LogRaw("    SET TEL ON/OFF - Enable/Disable output as the TCU\r\n");
-            LogRaw("    SET UI x - Set the UI to x, where x: ");
+            LogRaw("    SET UI x - Set the UI to x, where x:\r\n");
             LogRaw("        x = 1. CD53 (Business Radio)\r\n");
             LogRaw("        x = 2. BMBT (Navigation)\r\n");
             LogRaw("        x = 3. MID (Multi-Info Display)\r\n");

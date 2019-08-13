@@ -25,6 +25,7 @@ BC127_t BC127Init()
     bt.metadataStatus = BC127_METADATA_STATUS_NEW;
     bt.pairedDevicesCount = 0;
     bt.playbackStatus = BC127_AVRCP_STATUS_PAUSED;
+    bt.rxQueueAge = 0;
     memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
     // Make sure that we initialize the char arrays to all zeros
     BC127ClearMetadata(&bt);
@@ -898,11 +899,11 @@ uint8_t BC127GetDeviceId(char *str)
  */
 void BC127Process(BC127_t *bt)
 {
-    uint8_t messageLength = CharQueueSeek(&bt->uart.rxQueue, BC127_MSG_END_CHAR);
+    uint16_t messageLength = CharQueueSeek(&bt->uart.rxQueue, BC127_MSG_END_CHAR);
     if (messageLength > 0) {
         char msg[messageLength];
-        uint8_t i;
-        uint8_t delimCount = 1;
+        uint16_t i;
+        uint16_t delimCount = 1;
         for (i = 0; i < messageLength; i++) {
             char c = CharQueueNext(&bt->uart.rxQueue);
             if (c == BC127_MSG_DELIMETER) {
@@ -1171,6 +1172,18 @@ void BC127Process(BC127_t *bt)
                 EventTriggerCallback(BC127Event_BootStatus, 0);
             }
         }
+        // Reset the age of the Rx queue
+        bt->rxQueueAge = 0;
+    } else if (bt->uart.rxQueue.size > 0) {
+        if (bt->rxQueueAge == 0) {
+            bt->rxQueueAge = TimerGetMillis();
+        } else {
+            if ((TimerGetMillis() - bt->rxQueueAge) > BC127_RX_QUEUE_TIMEOUT) {
+                UARTRXQueueReset(&bt->uart);
+                bt->rxQueueAge = 0;
+                LogInfo(LOG_SOURCE_BT, "BT: RX Queue Timeout");
+            }
+        }
     }
     /* Sometimes there is not more than a Title or Album, which does not give
      * us sufficient information to push a metadata update. Sometimes, this is
@@ -1180,14 +1193,7 @@ void BC127Process(BC127_t *bt)
      * partial metadata for more than the specified timeout value.
      **/
     uint32_t now = TimerGetMillis();
-    if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT_STAGE_1 &&
-        bt->metadataStatus == BC127_METADATA_STATUS_NEW &&
-        bt->activeDevice.avrcpLinkId != 0
-    ) {
-        BC127SendCommandEmpty(bt);
-    }
-
-    if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT_STAGE_2 &&
+    if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT &&
         bt->metadataStatus == BC127_METADATA_STATUS_NEW &&
         bt->activeDevice.avrcpLinkId != 0
     ) {

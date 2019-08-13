@@ -217,6 +217,11 @@ void UARTReportErrors(UART_t *uart)
     }
 }
 
+void UARTRXQueueReset(UART_t *uart)
+{
+    CharQueueReset(&uart->rxQueue);
+}
+
 void UARTSendChar(UART_t *uart, unsigned char data)
 {
     CharQueueAdd(&uart->txQueue, data);

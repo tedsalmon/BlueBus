@@ -22,20 +22,7 @@ void WM88XXInit()
         LogError("WM88XX Responded with %d during initialization", status);
     } else {
         LogDebug(LOG_SOURCE_SYSTEM, "WM88XX Responded to Poll");
-        /**
-         * Register 7 - PLL_MODE
-         * bit 7:6 - always 0
-         * bit 5:4 - CLKOUTDIV - 00 = 512fs, 01 = 256fs, 10 = 128fs, 11 = 64fs
-         * bit   3 - MCLKDIV - See table 23 for PLL User Mode or 28 for reciever
-         * bit   2 - FRACEN - Fractional 1 or integer PLL 0
-         * bit 1:0 - FREQMODE - Automatically set by the S/PDIF receiver, so always 00
-         */
-        // MCLK Set to 1, so 128fs CLK2 & CLKOUTDIV to 512fs
-        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLLMODE, 0b00001100);
-        if (status != 0x00) {
-            LogError("WM88XX failed to set PLLMODE");
-        }
-
+        
         /**
          * Register 8 - PLL_CLK
          * bit   7 - MCLKSRC - CLK2 0 or OSCCLK 1
@@ -45,10 +32,10 @@ void WM88XXInit()
          * bit   3 - CLKOUTSRC - CLK1 0 or OSCCLK 1
          * bit 2:0 - always 0
          */
-        // Output to CLK1 & Fill data to all zeros
-        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLLCLK, 0b00110000);
+        // Fill data to all zeros
+        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLLCLK, 0b00111000);
         if (status != 0x00) {
-            LogError("WM88XX failed to set PLLCLK");
+            LogError("WM88XX failed to set PLLCLK [%d]", status);
         }
 
         /**
@@ -61,9 +48,9 @@ void WM88XXInit()
          */
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_AIFTX, 0b00001010);
         if (status != 0x00) {
-            LogError("WM88XX failed to set AIFTX");
+            LogError("WM88XX failed to set AIFTX [%d]", status);
         }
-
+        
         /**
          * Register 28 - AIFRX
          * bit   7 - Keep BLCK/LRCK Enabled always - 0 is no or 1 yes
@@ -75,7 +62,7 @@ void WM88XXInit()
          */
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_AIFRX, 0b01001010);
         if (status != 0x00) {
-            LogError("WM88XX failed to set AIFRX");
+            LogError("WM88XX failed to set AIFRX [%d]", status);
         }
         
         /**
@@ -90,19 +77,19 @@ void WM88XXInit()
          */
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLL_N, 7);
         if (status != 0x00) {
-            LogError("WM88XX failed to set PLL_N");
+            LogError("WM88XX failed to set PLL_N [%d]", status);
         }
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLL_K_1, 0x36);
         if (status != 0x00) {
-            LogError("WM88XX failed to set first bit of PLL_K");
+            LogError("WM88XX failed to set first bit of PLL_K [%d]", status);
         }
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLL_K_2, 0xFD);
         if (status != 0x00) {
-            LogError("WM88XX failed to set second bit of PLL_K");
+            LogError("WM88XX failed to set second bit of PLL_K [%d]", status);
         }
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLL_K_3, 0x21);
         if (status != 0x00) {
-            LogError("WM88XX failed to set third bit of PLL_K");
+            LogError("WM88XX failed to set third bit of PLL_K [%d]", status);
         }
         
         /**
@@ -117,12 +104,12 @@ void WM88XXInit()
         // Set the receiver to disable 192khz streams
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_SPDRX1, 0);
         if (status != 0x00) {
-            LogError("WM88XX failed to set SPDRX1");
+            LogError("WM88XX failed to set SPDRX1 [%d]", status);
         }
         // Power the device up
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PWR, 0);
         if (status != 0x00) {
-            LogError("WM88XX failed to power on");
+            LogError("WM88XX failed to power on [%d]", status);
         }
         TimerRegisterScheduledTask(&WM88XXPollTimer, 0, WM88XX_POLL_INT);
     }
@@ -142,7 +129,5 @@ void WM88XXPollTimer(void *ctx)
     int8_t status = I2CPoll(WM88XX_I2C_ADDR);
     if (status != 0x00) {
         LogError("WM88XX Responded with %d", status);
-    } else {
-        LogDebug(LOG_SOURCE_SYSTEM, "WM88XX Responded to Poll");
     }
 }

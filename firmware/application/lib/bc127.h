@@ -40,8 +40,7 @@
 #define BC127_METADATA_ALBUM_OFFSET 22
 #define BC127_METADATA_STATUS_NEW 1
 #define BC127_METADATA_STATUS_CUR 2
-#define BC127_METADATA_TIMEOUT_STAGE_1 500
-#define BC127_METADATA_TIMEOUT_STAGE_2 750
+#define BC127_METADATA_TIMEOUT 500
 #define BC127_MSG_END_CHAR 0x0D
 #define BC127_MSG_LF_CHAR 0x0A
 #define BC127_MSG_DELIMETER 0x20
@@ -49,6 +48,7 @@
 #define BC127_STATE_OFF 0
 #define BC127_STATE_ON 1
 #define BC127_PROFILE_COUNT 4
+#define BC127_RX_QUEUE_TIMEOUT 375
 #define BC127_LINK_A2DP 0
 #define BC127_LINK_AVRCP 1
 #define BC127_LINK_HFP 3
@@ -130,6 +130,7 @@ typedef struct BC127_t {
     uint8_t callStatus;
     uint8_t metadataStatus;
     uint8_t playbackStatus;
+    uint32_t rxQueueAge;
     char title[BC127_METADATA_FIELD_SIZE];
     char artist[BC127_METADATA_FIELD_SIZE];
     char album[BC127_METADATA_FIELD_SIZE];
