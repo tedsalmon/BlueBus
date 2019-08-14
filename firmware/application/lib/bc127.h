@@ -179,6 +179,7 @@ void BC127CommandStatus(BC127_t *);
 void BC127CommandToggleVR(BC127_t *);
 void BC127CommandTone(BC127_t *, char *);
 void BC127CommandUnpair(BC127_t *);
+void BC127CommandVersion(BC127_t *);
 void BC127CommandVolume(BC127_t *, uint8_t, uint8_t);
 void BC127CommandWrite(BC127_t *);
 uint8_t BC127GetConnectedDeviceCount(BC127_t *);

@@ -197,10 +197,17 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
     ) {
         BC127CommandPlay(context->bt);
     }
-    if (context->bt->callStatus == BC127_CALL_ACTIVE) {
-        // Set the HFP volume to max when a call comes in
-        BC127CommandVolume(context->bt, 13, 15);
-        
+    if (context->bt->callStatus == BC127_CALL_INCOMING ||
+        context->bt->callStatus == BC127_CALL_OUTGOING
+    ) {
+        // Enable the amp and mute the radio
+        PAM_SHDN = 1;
+        TEL_MUTE = 1;
+    }
+    if (context->bt->callStatus == BC127_CALL_INACTIVE) {
+        // Disable the amp and unmute the radio
+        PAM_SHDN = 0;
+        TEL_MUTE = 0;
     }
 }
 
@@ -774,7 +781,7 @@ void HandlerTimerPoweroff(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char powerTimeout = ConfigGetPoweroffTimeout();
     uint8_t lastRxMinutes = (TimerGetMillis() - context->ibus->rxLastStamp) / 60000;
-    if (powerTimeout != 0 && lastRxMinutes >= powerTimeout) {
+    if (powerTimeout != 0 && lastRxMinutes >= powerTimeout && IBUS_EN_STATUS == 1) {
         LogInfo(LOG_SOURCE_SYSTEM, "System Power Down!");
         // Destroy the UART module for IBus
         UARTDestroy(IBUS_UART_MODULE);

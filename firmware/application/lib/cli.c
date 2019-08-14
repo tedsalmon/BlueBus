@@ -84,14 +84,63 @@ void CLIProcess(CLI_t *cli)
             LogRaw("Rebooting into bootloader\r\n");
             ConfigSetBootloaderMode(0x01);
             __asm__ volatile ("reset");
-        } else if (strcmp(msgBuf[0], "BTREBOOT") == 0) {
-            BC127CommandReset(cli->bt);
-        } else if (strcmp(msgBuf[0], "BTUNPAIR") == 0) {
-            BC127CommandUnpair(cli->bt);
-        } else if (strcmp(msgBuf[0], "GET") == 0) {
-            if (strcmp(msgBuf[1], "BTCFG") == 0) {
+        } else if (strcmp(msgBuf[0], "BT") == 0) {
+            if (strcmp(msgBuf[1], "CONFIG") == 0) {
                 BC127SendCommand(cli->bt, "CONFIG");
-            } else if (strcmp(msgBuf[1], "IBUS") == 0) {
+            } else if (strcmp(msgBuf[1], "CVC") == 0) {
+                if (strcmp(msgBuf[2], "ON") == 0) {
+                    BC127SendCommand(cli->bt, "SET HFP_CONFIG=ON ON OFF ON OFF OFF");
+                } else if (strcmp(msgBuf[2], "OFF") == 0) {
+                    BC127SendCommand(cli->bt, "SET HFP_CONFIG=OFF ON OFF OFF OFF OFF");
+                }
+                BC127CommandWrite(cli->bt);
+            } else if (strcmp(msgBuf[1], "INIT") == 0) {
+                BC127CommandSetAudio(cli->bt, 0, 1);
+                BC127CommandSetAudioAnalog(cli->bt, "11", "15", "1", "OFF");
+                BC127CommandSetAudioDigital(
+                    cli->bt,
+                    BC127_AUDIO_SPDIF,
+                    "44100",
+                    "0",
+                    "0"
+                );
+                BC127CommandSetBtState(cli->bt, 2, 2);
+                BC127CommandSetCodec(cli->bt, 1, "OFF");
+                BC127CommandSetMetadata(cli->bt, 1);
+                BC127CommandSetModuleName(cli->bt, "BlueBus");
+                BC127CommandSetProfiles(cli->bt, 1, 1, 0, 1);
+                BC127CommandSetUART(cli->bt, 115200, "OFF", 0);
+            } else if (strcmp(msgBuf[1], "HFP") == 0) {
+                if (delimCount == 2) {
+                    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                        LogRaw("HFP: On\r\n");
+                    } else {
+                        LogRaw("HFP: Off\r\n");
+                    }
+                } else {
+                    if (strcmp(msgBuf[2], "ON") == 0) {
+                        ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
+                        BC127CommandSetProfiles(cli->bt, 1, 1, 0, 1);
+                    } else if (strcmp(msgBuf[2], "OFF") == 0) {
+                        ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
+                        BC127CommandSetProfiles(cli->bt, 1, 1, 0, 0);
+                    } else {
+                        cmdSuccess = 0;
+                    }
+                }
+            } else if (strcmp(msgBuf[1], "REBOOT") == 0) {
+                BC127CommandReset(cli->bt);
+            } else if (strcmp(msgBuf[1], "PAIR") == 0) {
+                BC127CommandBtState(cli->bt, BC127_STATE_ON, BC127_STATE_ON);
+            } else if (strcmp(msgBuf[1], "UNPAIR") == 0) {
+                BC127CommandUnpair(cli->bt);
+            } else if (strcmp(msgBuf[1], "VERSION") == 0) {
+                BC127CommandVersion(cli->bt);
+            } else {
+                cmdSuccess = 0;
+            }
+        } else if (strcmp(msgBuf[0], "GET") == 0) {
+            if (strcmp(msgBuf[1], "IBUS") == 0) {
                 IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_GT);
                 IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_RAD);
             } else if (strcmp(msgBuf[1], "ERR") == 0) {
@@ -104,12 +153,6 @@ void CLIProcess(CLI_t *cli)
                 LogRaw("    NVM Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_NVM));
                 LogRaw("    General Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_GEN));
                 LogRaw("    Last Trap: %02x\r\n", ConfigGetTrapLast());
-            } else if (strcmp(msgBuf[1], "HFP") == 0) {
-                if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-                    LogRaw("HFP: On\r\n");
-                } else {
-                    LogRaw("HFP: Off\r\n");
-                }
             } else if (strcmp(msgBuf[1], "UI") == 0) {
                 unsigned char uiMode = ConfigGetUIMode();
                 if (uiMode == IBus_UI_CD53) {
@@ -156,34 +199,7 @@ void CLIProcess(CLI_t *cli)
                 cmdSuccess = 0;
             }
         } else if (strcmp(msgBuf[0], "SET") == 0) {
-            if (strcmp(msgBuf[1], "BCINIT") == 0) {
-                BC127CommandSetAudio(cli->bt, 0, 1);
-                BC127CommandSetAudioAnalog(cli->bt, "11", "15", "1", "OFF");
-                BC127CommandSetAudioDigital(
-                    cli->bt,
-                    BC127_AUDIO_SPDIF,
-                    "44100",
-                    "0",
-                    "0"
-                );
-                BC127CommandSetBtState(cli->bt, 2, 2);
-                BC127CommandSetCodec(cli->bt, 1, "OFF");
-                BC127CommandSetMetadata(cli->bt, 1);
-                BC127CommandSetModuleName(cli->bt, "BlueBus");
-                BC127CommandSetProfiles(cli->bt, 1, 1, 0, 1);
-                BC127CommandSetUART(cli->bt, 115200, "OFF", 0);
-            } else if (strcmp(msgBuf[1], "HFP") == 0) {
-                if (strcmp(msgBuf[2], "ON") == 0) {
-                    ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
-                    BC127CommandSetProfiles(cli->bt, 1, 1, 0, 1);
-                } else if (strcmp(msgBuf[2], "OFF") == 0) {
-                    ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
-                    BC127CommandSetProfiles(cli->bt, 1, 1, 0, 0);
-                } else {
-                    cmdSuccess = 0;
-                }
-                LogRaw("HFP Toggled: Reset BT to complete\r\n");
-            } else if (strcmp(msgBuf[1], "UI") == 0) {
+            if (strcmp(msgBuf[1], "UI") == 0) {
                 if (strcmp(msgBuf[2], "1") == 0) {
                     ConfigSetUIMode(IBus_UI_CD53);
                     LogRaw("UI Mode: CD53\r\n");
@@ -238,14 +254,6 @@ void CLIProcess(CLI_t *cli)
                 } else {
                     LogRaw("Invalid Parameters for SET LOG\r\n");
                 }
-            } else if (strcmp(msgBuf[1], "CVC") == 0) {
-                if (strcmp(msgBuf[2], "ON") == 0) {
-                    BC127SendCommand(cli->bt, "SET HFP_CONFIG=ON ON OFF ON OFF OFF");
-                } else if (strcmp(msgBuf[2], "OFF") == 0) {
-                    BC127SendCommand(cli->bt, "SET HFP_CONFIG=OFF ON OFF OFF OFF OFF");
-                }
-                BC127CommandWrite(cli->bt);
-                BC127CommandReset(cli->bt);
             } else if (strcmp(msgBuf[1], "TEL") == 0) {
                 if (strcmp(msgBuf[2], "ON") == 0) {
                     // Enable the amp and mute the radio
@@ -266,16 +274,17 @@ void CLIProcess(CLI_t *cli)
             LogRaw("BlueBus Firmware version: 1.0.8\r\n");
             LogRaw("Available Commands:\r\n");
             LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
-            LogRaw("    BTREBOOT - Reboot the BC127\r\n");
-            LogRaw("    BTUNPAIR - Unpair all devices from the BC127\r\n");
-            LogRaw("    GET BTCFG - Get the BC127 Configuration\r\n");
+            LogRaw("    BT CONFIG - Get the BC127 Configuration\r\n");
+            LogRaw("    BT CVC ON/OFF - Enable or Disable CVC.\r\n");
+            LogRaw("    BT HFP ON/OFF - Enable or Disable HFP. Get the HFP Status without a param.\r\n");
+            LogRaw("    BT PAIR - Enable pairing mode\r\n");
+            LogRaw("    BT REBOOT - Reboot the BC127\r\n");
+            LogRaw("    BT UNPAIR - Unpair all devices from the BC127\r\n");
+            LogRaw("    BT VERSION - Get the BC127 Version Info\r\n");
             LogRaw("    GET ERR - Get the Error counter\r\n");
-            LogRaw("    GET HFP - Get the current HFP mode\r\n");
             LogRaw("    GET IBUS - Get debug info from the IBus\r\n");
             LogRaw("    GET UI - Get the current UI Mode\r\n");
             LogRaw("    REBOOT - Reboot the device\r\n");
-            LogRaw("    SET CVC ON/OFF - Enable or Disable CVC.\r\n");
-            LogRaw("    SET HFP ON/OFF - Enable or Disable HFP.\r\n");
             LogRaw("    SET IGN ON/OFF - Send the ignition status message [DEBUG]\r\n");
             LogRaw("    SET LOG x ON/OFF - Change logging for x (BT, IBUS, SYS, UI)\r\n");
             LogRaw("    SET PWROFF x - Set the time in minutes that we should wait before powering off\r\n");

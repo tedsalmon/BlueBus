@@ -52,6 +52,7 @@
 #define IVT_MODE_BOOT 0
 
 #define IBUS_EN_MODE TRISFbits.TRISF1
+#define IBUS_EN_STATUS PORTFbits.RF1
 #define IBUS_EN LATFbits.LATF1
 
 #define PAM_SHDN_MODE TRISEbits.TRISE3

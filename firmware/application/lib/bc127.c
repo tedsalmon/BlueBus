@@ -840,6 +840,21 @@ void BC127CommandUnpair(BC127_t *bt)
 }
 
 /**
+ * BC127CommandVersion()
+ *     Description:
+ *         Get the version info from the BC127
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandVersion(BC127_t *bt)
+{
+    char command[8] = "VERSION";
+    BC127SendCommand(bt, command);
+}
+
+/**
  * BC127CommandStatus()
  *     Description:
  *         Set the volume on the given link ID
