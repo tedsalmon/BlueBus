@@ -3,7 +3,7 @@ from __future__ import print_function
 import sys
 from argparse import ArgumentParser
 from intelhex import IntelHex
-from serial import Serial
+from serial import Serial, PARITY_ODD
 from struct import pack
 from time import time, sleep
 
@@ -25,7 +25,7 @@ PROTOCOL_BAD_PACKET_RESPONSE = 0xFF
 rx_buffer = []
 tx_buffer = []
 last_tx = []
-TIMEOUT = 10
+TIMEOUT = 5
 
 def bitwise_not(n, width=32):
     return (1 << width) - 1 - n
@@ -119,14 +119,20 @@ if __name__ == '__main__':
             action='store_true',
         )
         args = parser.parse_args()
-        serial = Serial(args.port, 111000)
-        request_platform()
+        serial = Serial(args.port, 115200, parity=PARITY_ODD)
         should_continue = True
         data = None
         data_len = 0
         data_idx = 0
+        if args.firmware:
+            data = read_hexfile(args.firmware)
+            if not data:
+                print('ERR: Could not read firmware file')
+                exit(0)
+            data_len = len(data)
         start = int(time())
         has_response = False
+        request_platform()
         while should_continue:
             while serial.in_waiting:
                 rx_buffer.append(serial.read())
@@ -139,8 +145,6 @@ if __name__ == '__main__':
                             print('Got Platform: %s' % ''.join(rx_buffer))
                             has_response = True
                             if args.firmware:
-                                data = read_hexfile(args.firmware)
-                                data_len = len(data)
                                 print('==== Begin Firmware Update ====')
                                 print('Erasing Flash...')
                                 request_erase_flash()
@@ -169,6 +173,7 @@ if __name__ == '__main__':
                             print('App Started')
                             sys.exit(0)
                         if command == PROTOCOL_BAD_PACKET_RESPONSE:
+                            print("ERR: Please try again")
                             tx_buffer = list(last_tx)
                         if command == PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR:
                             print("ERR: Write Failed - Please try again")
@@ -179,7 +184,7 @@ if __name__ == '__main__':
                 tx_buffer = []
             if not has_response and int(time()) - start > TIMEOUT:
                 print(
-                    'ERR: Failed to get a response from the device within 10 '
+                    'ERR: Failed to get a response from the device within 5 '
                     'seconds. Is the device in bootloader mode?'
                 )
                 should_continue = False
