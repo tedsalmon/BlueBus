@@ -3503,7 +3503,7 @@ FRAME-LETTER</description>
 <pin name="MCLK" x="17.78" y="-10.16" length="short" rot="R180"/>
 <pin name="TXO" x="17.78" y="-17.78" length="short" direction="out" rot="R180"/>
 </symbol>
-<symbol name="SST25VF020B">
+<symbol name="25LC1024">
 <description>&lt;p&gt;The 25LC512 is a SPI-based 512kB EEPROM&lt;/p&gt;</description>
 <wire x1="-10.16" y1="7.62" x2="-10.16" y2="-5.08" width="0.254" layer="94"/>
 <wire x1="-10.16" y1="-5.08" x2="10.16" y2="-5.08" width="0.254" layer="94"/>
@@ -3884,9 +3884,9 @@ FRAME-LETTER</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="SST25VF020B">
+<deviceset name="25LC1024" prefix="U">
 <gates>
-<gate name="G$1" symbol="SST25VF020B" x="0" y="0"/>
+<gate name="G$1" symbol="25LC1024" x="0" y="0"/>
 </gates>
 <devices>
 <device name="" package="SOIC-8">
@@ -4733,7 +4733,7 @@ Switches electrical signals</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="2.2uF-0805-25v-10%"/>
+<attribute name="DEVICE" value="1uF-0805-25v-10%"/>
 <attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="0805"/>
 <attribute name="PN" value="CGA4J3X7R1E105K125AB" constant="no"/>
@@ -6218,7 +6218,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <part name="GND17" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="GND18" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="WM8804" library="ICs" deviceset="WM8804" device=""/>
-<part name="SST25VF020B" library="ICs" deviceset="SST25VF020B" device=""/>
+<part name="25LC1024" library="ICs" deviceset="25LC1024" device=""/>
 <part name="SUPPLY17" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="SUPPLY21" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="GND19" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
@@ -6441,7 +6441,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND17" gate="1" x="190.5" y="142.24" smashed="yes">
 <attribute name="VALUE" x="190.5" y="141.986" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="SST25VF020B" gate="G$1" x="119.38" y="38.1" smashed="yes">
+<instance part="25LC1024" gate="G$1" x="119.38" y="38.1" smashed="yes">
 <attribute name="NAME" x="119.38" y="46.99" size="1.778" layer="95" font="vector" align="bottom-center"/>
 </instance>
 <instance part="TH3122" gate="G$1" x="53.34" y="40.64" smashed="yes">
@@ -6603,7 +6603,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="144.78" y1="40.64" x2="144.78" y2="27.94" width="0.1524" layer="91"/>
 <wire x1="144.78" y1="27.94" x2="119.38" y2="27.94" width="0.1524" layer="91"/>
 <junction x="119.38" y="27.94"/>
-<pinref part="SST25VF020B" gate="G$1" pin="VSS"/>
+<pinref part="25LC1024" gate="G$1" pin="VSS"/>
 </segment>
 <segment>
 <wire x1="96.52" y1="101.6" x2="96.52" y2="99.06" width="0.1524" layer="91"/>
@@ -6908,9 +6908,9 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="142.24" y1="50.8" x2="132.08" y2="50.8" width="0.1524" layer="91"/>
 <junction x="142.24" y="50.8"/>
 <wire x1="132.08" y1="50.8" x2="132.08" y2="43.18" width="0.1524" layer="91"/>
-<pinref part="SST25VF020B" gate="G$1" pin="WP"/>
-<pinref part="SST25VF020B" gate="G$1" pin="VDD"/>
-<pinref part="SST25VF020B" gate="G$1" pin="HOLD"/>
+<pinref part="25LC1024" gate="G$1" pin="WP"/>
+<pinref part="25LC1024" gate="G$1" pin="VDD"/>
+<pinref part="25LC1024" gate="G$1" pin="HOLD"/>
 <pinref part="R4" gate="G$1" pin="2"/>
 </segment>
 <segment>
@@ -6963,7 +6963,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <wire x1="106.68" y1="43.18" x2="101.6" y2="43.18" width="0.1524" layer="91"/>
 <label x="101.6" y="43.18" size="1.27" layer="95" rot="R180" xref="yes"/>
-<pinref part="SST25VF020B" gate="G$1" pin="CE"/>
+<pinref part="25LC1024" gate="G$1" pin="CE"/>
 <pinref part="R4" gate="G$1" pin="1"/>
 </segment>
 </net>
@@ -6971,21 +6971,21 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <wire x1="106.68" y1="40.64" x2="101.6" y2="40.64" width="0.1524" layer="91"/>
 <label x="101.6" y="40.64" size="1.27" layer="95" rot="R180" xref="yes"/>
-<pinref part="SST25VF020B" gate="G$1" pin="SO"/>
+<pinref part="25LC1024" gate="G$1" pin="SO"/>
 </segment>
 </net>
 <net name="EE_SCK" class="5">
 <segment>
 <wire x1="132.08" y1="38.1" x2="134.62" y2="38.1" width="0.1524" layer="91"/>
 <label x="134.62" y="38.1" size="1.27" layer="95" xref="yes"/>
-<pinref part="SST25VF020B" gate="G$1" pin="SCK"/>
+<pinref part="25LC1024" gate="G$1" pin="SCK"/>
 </segment>
 </net>
 <net name="EE_SI" class="5">
 <segment>
 <wire x1="132.08" y1="35.56" x2="134.62" y2="35.56" width="0.1524" layer="91"/>
 <label x="134.62" y="35.56" size="1.27" layer="95" xref="yes"/>
-<pinref part="SST25VF020B" gate="G$1" pin="SI"/>
+<pinref part="25LC1024" gate="G$1" pin="SI"/>
 </segment>
 </net>
 <net name="BT_DOUT" class="0">
@@ -7340,21 +7340,21 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="SUPPLY13" gate="G$1" x="5.08" y="53.34" smashed="yes">
 <attribute name="VALUE" x="5.08" y="56.134" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="RX" gate="G$1" x="83.82" y="43.18" smashed="yes">
-<attribute name="NAME" x="80.391" y="38.608" size="1.778" layer="95" font="vector" rot="R90"/>
-<attribute name="VALUE" x="85.725" y="38.608" size="1.778" layer="96" font="vector" rot="R90" align="top-left"/>
-</instance>
-<instance part="TX" gate="G$1" x="73.66" y="43.18" smashed="yes">
+<instance part="RX" gate="G$1" x="73.66" y="43.18" smashed="yes">
 <attribute name="NAME" x="70.231" y="38.608" size="1.778" layer="95" font="vector" rot="R90"/>
 <attribute name="VALUE" x="75.565" y="38.608" size="1.778" layer="96" font="vector" rot="R90" align="top-left"/>
 </instance>
-<instance part="R14" gate="G$1" x="83.82" y="53.34" smashed="yes" rot="R90">
-<attribute name="NAME" x="82.296" y="53.34" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
-<attribute name="VALUE" x="85.344" y="53.34" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
+<instance part="TX" gate="G$1" x="83.82" y="43.18" smashed="yes">
+<attribute name="NAME" x="80.391" y="38.608" size="1.778" layer="95" font="vector" rot="R90"/>
+<attribute name="VALUE" x="85.725" y="38.608" size="1.778" layer="96" font="vector" rot="R90" align="top-left"/>
 </instance>
-<instance part="R13" gate="G$1" x="73.66" y="53.34" smashed="yes" rot="R90">
+<instance part="R14" gate="G$1" x="73.66" y="53.34" smashed="yes" rot="R90">
 <attribute name="NAME" x="72.136" y="53.34" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="75.184" y="53.34" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
+</instance>
+<instance part="R13" gate="G$1" x="83.82" y="53.34" smashed="yes" rot="R90">
+<attribute name="NAME" x="82.296" y="53.34" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
+<attribute name="VALUE" x="85.344" y="53.34" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
 <instance part="SUPPLY14" gate="G$1" x="78.74" y="63.5" smashed="yes">
 <attribute name="VALUE" x="78.74" y="66.294" size="1.778" layer="96" align="bottom-center"/>
@@ -7656,12 +7656,12 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="BC127" gate="G$1" pin="VDD_PADS"/>
 </segment>
 <segment>
-<pinref part="R13" gate="G$1" pin="2"/>
+<pinref part="SUPPLY14" gate="G$1" pin="3.3V"/>
+<wire x1="78.74" y1="63.5" x2="78.74" y2="58.42" width="0.1524" layer="91"/>
 <pinref part="R14" gate="G$1" pin="2"/>
 <wire x1="73.66" y1="58.42" x2="78.74" y2="58.42" width="0.1524" layer="91"/>
-<pinref part="SUPPLY14" gate="G$1" pin="3.3V"/>
+<pinref part="R13" gate="G$1" pin="2"/>
 <wire x1="78.74" y1="58.42" x2="83.82" y2="58.42" width="0.1524" layer="91"/>
-<wire x1="78.74" y1="63.5" x2="78.74" y2="58.42" width="0.1524" layer="91"/>
 <junction x="78.74" y="58.42"/>
 </segment>
 <segment>
@@ -7795,7 +7795,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <wire x1="132.08" y1="96.52" x2="104.14" y2="96.52" width="0.1524" layer="91"/>
 <pinref part="R9" gate="G$1" pin="1"/>
-<label x="106.68" y="96.52" size="1.27" layer="95" rot="R270" xref="yes"/>
+<label x="104.14" y="96.52" size="1.27" layer="95" rot="R270" xref="yes"/>
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="RP23/PMACK1/RD2"/>
 </segment>
 </net>
@@ -7827,37 +7827,23 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="SUPPLY13" gate="G$1" pin="5V"/>
 </segment>
 </net>
-<net name="RX_LED" class="0">
+<net name="TX_LED" class="0">
 <segment>
 <pinref part="FT232RL" gate="G$1" pin="RXLED"/>
 <wire x1="63.5" y1="20.32" x2="68.58" y2="20.32" width="0.1524" layer="91"/>
-<pinref part="RX" gate="G$1" pin="C"/>
-<wire x1="83.82" y1="38.1" x2="83.82" y2="35.56" width="0.1524" layer="91"/>
 <wire x1="83.82" y1="35.56" x2="68.58" y2="35.56" width="0.1524" layer="91"/>
 <wire x1="68.58" y1="35.56" x2="68.58" y2="20.32" width="0.1524" layer="91"/>
+<pinref part="TX" gate="G$1" pin="C"/>
+<wire x1="83.82" y1="38.1" x2="83.82" y2="35.56" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="TX_LED" class="0">
+<net name="RX_LED" class="0">
 <segment>
 <pinref part="FT232RL" gate="G$1" pin="TXLED"/>
 <wire x1="63.5" y1="22.86" x2="66.04" y2="22.86" width="0.1524" layer="91"/>
 <wire x1="66.04" y1="22.86" x2="66.04" y2="38.1" width="0.1524" layer="91"/>
-<pinref part="TX" gate="G$1" pin="C"/>
+<pinref part="RX" gate="G$1" pin="C"/>
 <wire x1="66.04" y1="38.1" x2="73.66" y2="38.1" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="RX_LED_RES" class="0">
-<segment>
-<pinref part="RX" gate="G$1" pin="A"/>
-<wire x1="83.82" y1="45.72" x2="83.82" y2="48.26" width="0.1524" layer="91"/>
-<pinref part="R14" gate="G$1" pin="1"/>
-</segment>
-</net>
-<net name="TX_LED_RES" class="0">
-<segment>
-<pinref part="TX" gate="G$1" pin="A"/>
-<wire x1="73.66" y1="45.72" x2="73.66" y2="48.26" width="0.1524" layer="91"/>
-<pinref part="R13" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="MCU_UTX" class="5">
@@ -8102,6 +8088,20 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="SDA3/IC6/PMD7/RE7"/>
 <wire x1="228.6" y1="129.54" x2="231.14" y2="129.54" width="0.1524" layer="91"/>
 <label x="231.14" y="129.54" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="TX_LED_RES" class="0">
+<segment>
+<pinref part="R13" gate="G$1" pin="1"/>
+<pinref part="TX" gate="G$1" pin="A"/>
+<wire x1="83.82" y1="48.26" x2="83.82" y2="45.72" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="RX_LED_RES" class="0">
+<segment>
+<pinref part="R14" gate="G$1" pin="1"/>
+<pinref part="RX" gate="G$1" pin="A"/>
+<wire x1="73.66" y1="48.26" x2="73.66" y2="45.72" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
