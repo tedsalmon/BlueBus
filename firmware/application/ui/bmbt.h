@@ -14,8 +14,10 @@
 #include "../lib/ibus.h"
 #include "../lib/timer.h"
 #include "../lib/utils.h"
-#define BMBT_DISPLAY_OFF 0
-#define BMBT_DISPLAY_ON 1
+#define BMBT_DISPLAY_OFF 0x00
+#define BMBT_DISPLAY_TONE_SEL 0x01
+#define BMBT_DISPLAY_INFO 0x02
+#define BMBT_DISPLAY_ON 0x03
 #define BMBT_HEADER_BT 1
 #define BMBT_HEADER_PB_STAT 2
 #define BMBT_HEADER_DEV_NAME 6
@@ -42,7 +44,7 @@
 #define BMBT_METADATA_MODE_OFF 0x00
 #define BMBT_METADATA_MODE_PARTY 0x01
 #define BMBT_METADATA_MODE_CHUNK 0x02
-#define BMBT_MODE_OFF 0
+#define BMBT_MODE_INACTIVE 0
 #define BMBT_MODE_ACTIVE 1
 #define BMBT_NAV_BOOT 0x10
 #define BMBT_PAIRING_DEVICE_NONE -1

@@ -16,10 +16,14 @@
 #include "config.h"
 #include "i2c.h"
 #include "ibus.h"
+#include "timer.h"
 #include "uart.h"
 
+// Banner timeout is in seconds
+#define CLI_BANNER_TIMEOUT 300
 #define CLI_MSG_END_CHAR 0x0D
 #define CLI_MSG_DELIMETER 0x20
+#define CLI_MSG_DELETE_CHAR 0x7F
 /**
  * CLI_t
  *     Description:
@@ -35,6 +39,7 @@ typedef struct CLI_t {
     BC127_t *bt;
     IBus_t *ibus;
     uint16_t lastChar;
+    uint32_t lastRxTimestamp;
 } CLI_t;
 CLI_t CLIInit(UART_t *, BC127_t *, IBus_t *);
 void CLIProcess(CLI_t *);

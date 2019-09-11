@@ -32,6 +32,7 @@ struct CharQueue_t CharQueueInit();
 void CharQueueAdd(CharQueue_t *, const unsigned char);
 unsigned char CharQueueGet(CharQueue_t *, uint16_t);
 unsigned char CharQueueNext(CharQueue_t *);
+void CharQueueRemoveLast(CharQueue_t *);
 void CharQueueReset(CharQueue_t *);
 uint16_t CharQueueSeek(CharQueue_t *, const unsigned char);
 #endif /* CHAR_QUEUE_H */

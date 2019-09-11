@@ -144,3 +144,26 @@ uint8_t UtilsStrToInt(char *string)
     char *ptr;
     return (uint8_t) strtol(string, &ptr, 10);
 }
+
+/**
+ * UtilsStricmp()
+ *     Description:
+ *         Case-Insensitive string comparison 
+ *     Params:
+ *         const char *string - The subject
+ *         const char *compare - The string to compare the subject against
+ *     Returns:
+ *         int8_t -
+ *             Negative 1 when string is less than compare
+ *             Zero when string matches compare
+ *             Positive 1 when string is greater than compare
+ */
+int8_t UtilsStricmp(const char *string, const char *compare)
+{
+    int8_t result;
+    while(!(result = toupper(*string) - toupper(*compare)) && *string) {
+        string++;
+        compare++;
+    }
+    return result;
+}

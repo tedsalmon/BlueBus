@@ -93,6 +93,27 @@ unsigned char CharQueueNext(CharQueue_t *queue)
 }
 
 /**
+ * CharQueueRemoveLast()
+ *     Description:
+ *         Remove the last character in the buffer
+ *     Params:
+ *         CharQueue_t queue - The queue
+ *     Returns:
+ *         void
+ */
+void CharQueueRemoveLast(CharQueue_t *queue)
+{
+    if (queue->size > 0) {
+        queue->size--;
+        if (queue->writeCursor == 0) {
+            queue->writeCursor = CHAR_QUEUE_SIZE - 1;
+        } else {
+            queue->writeCursor--;
+        }
+    }
+}
+
+/**
  * CharQueueReset()
  *     Description:
  *         Empty a char queue
@@ -101,7 +122,6 @@ unsigned char CharQueueNext(CharQueue_t *queue)
  *     Returns:
  *         void
  */
-
 void CharQueueReset(CharQueue_t *queue)
 {
     memset(queue->data, 0, CHAR_QUEUE_SIZE);

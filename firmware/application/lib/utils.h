@@ -6,6 +6,7 @@
  */
 #ifndef UTILS_H
 #define UTILS_H
+#include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,4 +37,5 @@ void UtilsRemoveNonAscii(char *, const char *);
 void UtilsRemoveSubstring(char *, const char *);
 void UtilsSetRPORMode(uint8_t, uint16_t);
 uint8_t UtilsStrToInt(char *);
+int8_t UtilsStricmp(const char *, const char *);
 #endif /* UTILS_H */

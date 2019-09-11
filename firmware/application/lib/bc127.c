@@ -25,6 +25,7 @@ BC127_t BC127Init()
     bt.metadataStatus = BC127_METADATA_STATUS_NEW;
     bt.pairedDevicesCount = 0;
     bt.playbackStatus = BC127_AVRCP_STATUS_PAUSED;
+    bt.scoStatus = BC127_CALL_SCO_CLOSE;
     bt.rxQueueAge = 0;
     memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
     // Make sure that we initialize the char arrays to all zeros
@@ -240,6 +241,80 @@ void BC127CommandClose(BC127_t *bt, uint8_t id)
         snprintf(command, 9, "CLOSE %d", id);
         BC127SendCommand(bt, command);
     }
+}
+
+/**
+ * BC127CommandCVC()
+ *     Description:
+ *         Get / Set the CVC Configuration values. Pass zero to length
+ *         to read the values for the given index
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         char *band - Whether to set the narrow-band or wide-band config
+ *         uint8_t index - The Index
+ *         uint8_t length - The length to write or 0 to read
+ *     Returns:
+ *         void
+ */
+void BC127CommandCVC(BC127_t *bt, char *band, uint8_t index, uint8_t length)
+{
+    char command[16];
+    if (length == 0) {        
+        snprintf(command, 16, "CVC_CFG %s", band);
+    } else {
+        snprintf(command, 16, "CVC_CFG %s %d %d", band, index, length);
+    }
+    BC127SendCommand(bt, command);
+}
+
+/**
+ * BC127CommandCVCParams()
+ *     Description:
+ *         Write the given parameters to the CVC Config
+ *         CVC Parameters:
+ *         228Z 0000 1A00 8000 0000 XXYY 0000 0000 0000 0000 0000 0020 0000 XXYY
+ *         Where:
+ *             Z = 0 for Narrow-Band
+ *             Z = 4 for Wide-Band
+ *         Where XXYY is the Microphone configuration:
+ *             XX - Enable/disable 21 dB Pre-Amp
+ *                 00 = disabled
+ *                 80 = enabled
+ *             YY - Gain in dB. Possible values are:
+ *                 C0: -27
+ *                 C1: -23.5
+ *                 C2: -21
+ *                 C3: -17.5
+ *                 C4: -15
+ *                 C5: -11
+ *                 C6: -9
+ *                 C7: -5.5
+ *                 C8: -3
+ *                 C9: 0
+ *                 CA: 3
+ *                 CB: 6
+ *                 CC: 9
+ *                 CD: 12
+ *                 CE: 15
+ *                 CF: 18
+ *                 D0: 21.5
+ *                 D1: 24
+ *                 D2: 27.5
+ *                 D3: 30
+ *                 D4: 33.5
+ *                 D5: 36
+ *                 D6: 39.5
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         char *params - The parameters
+ *     Returns:
+ *         void
+ */
+void BC127CommandCVCParams(BC127_t *bt, char *params)
+{
+    char command[255];
+    snprintf(command, 255, "%s", params);
+    BC127SendCommand(bt, command);
 }
 
  /**
@@ -770,7 +845,6 @@ void BC127CommandSetUART(
     BC127CommandWrite(bt);
 }
 
-
 /**
  * BC127CommandStatus()
  *     Description:
@@ -861,14 +935,14 @@ void BC127CommandVersion(BC127_t *bt)
  *     Params:
  *         BC127_t *bt - A pointer to the module object
  *         uint8_t linkId - The Link ID to set the volume for
- *         uint8_t volume - The hexadecimal value to set the volume to (0-F)
+ *         char *volume - The value to set the volume to
  *     Returns:
  *         void
  */
-void BC127CommandVolume(BC127_t *bt, uint8_t linkId, uint8_t volume)
+void BC127CommandVolume(BC127_t *bt, uint8_t linkId, char *volume)
 {
-    char command[14];
-    snprintf(command, 14, "VOLUME %d %X", linkId, volume);
+    char command[15];
+    snprintf(command, 15, "VOLUME %d %s", linkId, volume);
     BC127SendCommand(bt, command);
 }
 
@@ -1168,6 +1242,18 @@ void BC127Process(BC127_t *bt)
             LogDebug(LOG_SOURCE_BT, "BT: Boot Complete");
             EventTriggerCallback(BC127Event_Boot, 0);
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
+        } else if(strcmp(msgBuf[0], "SCO_OPEN") == 0) {
+            bt->scoStatus = BC127_CALL_SCO_OPEN;
+            EventTriggerCallback(
+                BC127Event_CallStatus,
+                (unsigned char *) BC127_CALL_SCO_OPEN
+            );
+        } else if (strcmp(msgBuf[0], "SCO_CLOSE") == 0) {
+            bt->scoStatus = BC127_CALL_SCO_CLOSE;
+            EventTriggerCallback(
+                BC127Event_CallStatus,
+                (unsigned char *) BC127_CALL_SCO_CLOSE
+            );
         } else if (strcmp(msgBuf[0], "STATE") == 0) {
             // Make sure the state is not "OFF", like when module first boots
             if (strcmp(msgBuf[1], "OFF") != 0) {

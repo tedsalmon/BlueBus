@@ -28,7 +28,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
 {
     Context.bt = bt;
     Context.ibus = ibus;
-    Context.cdChangerLastKeepAlive = TimerGetMillis();
+    Context.cdChangerLastPoll = TimerGetMillis();
     Context.cdChangerLastStatus = TimerGetMillis();
     Context.btStartupIsRun = 0;
     Context.btConnectionStatus = HANDLER_BT_CONN_OFF;
@@ -74,8 +74,8 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_CDKeepAlive,
-        &HandlerIBusCDCKeepAlive,
+        IBusEvent_CDPoll,
+        &HandlerIBusCDCPoll,
         &Context
     );
     EventRegisterCallback(
@@ -89,13 +89,23 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_LightStatus,
-        &HandlerIBusLightStatus,
+        IBusEvent_LCMLightStatus,
+        &HandlerIBusLCMLightStatus,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_LCMDimmerStatus,
+        &HandlerIBusLCMDimmerStatus,
         &Context
     );
     EventRegisterCallback(
         IBusEvent_MFLButton,
         &HandlerIBusMFLButton,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_MFLVolume,
+        &HandlerIBusMFLVolume,
         &Context
     );
     TimerRegisterScheduledTask(
@@ -143,6 +153,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         MIDInit(bt, ibus);
         BMBTInit(bt, ibus);
     }
+    // Set the CVC Parameters
+    BC127CommandCVC(Context.bt, "NB", 0, 14);
+    BC127CommandCVCParams(Context.bt, "2280 0000 1A00 8000 0000 00C1 0000 0000 0000 0000 0000 0020 0000 00C1");
+    BC127CommandCVC(Context.bt, "WB", 0, 14);
+    BC127CommandCVCParams(Context.bt, "2284 0000 1A00 8000 0000 00C1 0000 0000 0000 0000 0000 0020 0000 00C1");
 }
 
 /**
@@ -197,13 +212,15 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
     ) {
         BC127CommandPlay(context->bt);
     }
-    if (context->bt->callStatus == BC127_CALL_INCOMING ||
-        context->bt->callStatus == BC127_CALL_OUTGOING
+    if ((context->bt->callStatus == BC127_CALL_INCOMING ||
+        context->bt->callStatus == BC127_CALL_OUTGOING) &&
+        context->bt->scoStatus == BC127_CALL_SCO_OPEN
     ) {
         // Enable the amp and mute the radio
         PAM_SHDN = 1;
         TEL_MUTE = 1;
     }
+    // Close the call immediately, without waiting for SCO to close
     if (context->bt->callStatus == BC127_CALL_INACTIVE) {
         // Disable the amp and unmute the radio
         PAM_SHDN = 0;
@@ -231,27 +248,27 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
         // If HFP is enabled, do not disable connectability until the
         // profile opens
         if (context->bt->activeDevice.avrcpLinkId != 0 &&
-            context->bt->activeDevice.a2dpLinkId != 0 &&
-            (
-                ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF ||
-                context->bt->activeDevice.hfpLinkId != 0
-            )
+            context->bt->activeDevice.a2dpLinkId != 0
         ) {
-            // Play a tone so the end user knows the device is connected
-            BC127CommandTone(
-                context->bt,
-                "TE 400 V 255 TI 0 N C5 L 8 N R0 L 32 N E5 L 8 N R0 L 32 N G5 L 8 N R0 L 32 N B5 L 4 N R0 L 1"
-            );
-            LogDebug(LOG_SOURCE_SYSTEM, "Handler: Disable connectability");
-            BC127CommandBtState(
-                context->bt,
-                BC127_STATE_OFF,
-                context->bt->discoverable
-            );
-            if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
-                context->ibus->cdChangerStatus == IBUS_CDC_PLAYING
+            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF ||
+                context->bt->activeDevice.hfpLinkId != 0
             ) {
-                BC127CommandPlay(context->bt);
+                LogDebug(LOG_SOURCE_SYSTEM, "Handler: Disable connectability");
+                BC127CommandBtState(
+                    context->bt,
+                    BC127_STATE_OFF,
+                    context->bt->discoverable
+                );
+                if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
+                    context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
+                ) {
+                    BC127CommandPlay(context->bt);
+                }
+            } else if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
+                       context->bt->activeDevice.hfpLinkId == 0
+            ) {
+                char *macId = (char *) context->bt->activeDevice.macId;
+                BC127CommandProfileOpen(context->bt, macId, "HFP");
             }
         }
     } else {
@@ -347,7 +364,7 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
         context->btStartupIsRun = 1;
     }
     if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING &&
-        context->ibus->cdChangerStatus <= IBUS_CDC_NOT_PLAYING
+        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING
     ) {
         // We're playing but not in Bluetooth mode - stop playback
         BC127CommandPause(context->bt);
@@ -355,7 +372,7 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
 }
 
 /**
- * HandlerIBusCDCKeepAlive()
+ * HandlerIBusCDCPoll()
  *     Description:
  *         Respond to the Radio's "ping" with a "pong"
  *     Params:
@@ -364,11 +381,11 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
  *     Returns:
  *         void
  */
-void HandlerIBusCDCKeepAlive(void *ctx, unsigned char *pkt)
+void HandlerIBusCDCPoll(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    IBusCommandCDCKeepAlive(context->ibus);
-    context->cdChangerLastKeepAlive = TimerGetMillis();
+    IBusCommandCDCPollResponse(context->ibus);
+    context->cdChangerLastPoll = TimerGetMillis();
 }
 
 /**
@@ -387,26 +404,22 @@ void HandlerIBusCDCKeepAlive(void *ctx, unsigned char *pkt)
 void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    unsigned char curAction = 0x00;
     unsigned char curStatus = 0x00;
-    unsigned char requestedAction = pkt[4];
-    if (requestedAction == IBUS_CDC_GET_STATUS) {
-        curStatus = context->ibus->cdChangerStatus;
-        if (curStatus == IBUS_CDC_PLAYING) {
-            /*
-             * The BM53 will pingback action 0x02 ("Start Playing") unless
-             * we proactively report that as our "Playing" action.
-             */
-            curAction = IBUS_CDC_START_PLAYING;
+    unsigned char curFunction = 0x00;
+    unsigned char requestedCommand = pkt[4];
+    if (requestedCommand == IBUS_CDC_CMD_GET_STATUS) {
+        curFunction = context->ibus->cdChangerFunction;
+        if (curFunction == IBUS_CDC_FUNC_PLAYING) {
+            curStatus = IBUS_CDC_STAT_PLAYING;
         }
-    } else if (requestedAction == IBUS_CDC_STOP_PLAYING) {
+    } else if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
         if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
             BC127CommandPause(context->bt);
         }
-        curStatus = IBUS_CDC_NOT_PLAYING;
-    } else if (requestedAction == IBUS_CDC_CHANGE_TRACK) {
-        curStatus = context->ibus->cdChangerStatus;
-        curAction = IBUS_CDC_START_PLAYING;
+        curStatus = IBUS_CDC_STAT_STOP;
+    } else if (requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK) {
+        curFunction = context->ibus->cdChangerFunction;
+        curStatus = IBUS_CDC_STAT_PLAYING;
         // Do not go backwards/forwards if the UI is CD53 because
         // those actions can be used to use the UI
         if (context->uiMode != IBus_UI_CD53) {
@@ -416,7 +429,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
                 BC127CommandBackward(context->bt);
             }
         }
-    } else if (requestedAction == IBUS_CDC_MANUAL_MODE) {
+    } else if (requestedCommand == IBUS_CDC_CMD_SEEK) {
         if (pkt[5] == 0x00) {
             context->seekMode = HANDLER_CDC_SEEK_MODE_REV;
             BC127CommandBackwardSeekPress(context->bt);
@@ -424,69 +437,48 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             context->seekMode = HANDLER_CDC_SEEK_MODE_FWD;
             BC127CommandForwardSeekPress(context->bt);
         }
-        curAction = IBUS_CDC_MANUAL_MODE;
-    } else if (requestedAction == IBUS_CDC_SCAN_MODE) {
-        curAction = 0x00;
+        curStatus = IBUS_CDC_STAT_FAST_REV;
+    } else if (requestedCommand == IBUS_CDC_CMD_SCAN) {
+        curStatus = 0x00;
         // The 5th octet in the packet tells the CDC if we should
         // enable or disable the given mode
         if (pkt[5] == 0x01) {
-            curStatus = IBUS_CDC_SCAN_MODE_ACTION;
+            curFunction = IBUS_CDC_FUNC_SCAN_MODE;
         } else {
-            curStatus = IBUS_CDC_PLAYING;
+            curFunction = IBUS_CDC_FUNC_PLAYING;
         }
-    } else if (requestedAction == IBUS_CDC_RANDOM_MODE) {
-        curAction = 0x00;
+    } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE) {
+        curStatus = 0x00;
         // The 5th octet in the packet tells the CDC if we should
         // enable or disable the given mode
         if (pkt[5] == 0x01) {
-            curStatus = IBUS_CDC_RANDOM_MODE_ACTION;
+            curFunction = IBUS_CDC_FUNC_RANDOM_MODE;
         } else {
-            curStatus = IBUS_CDC_PLAYING;
+            curFunction = IBUS_CDC_FUNC_PLAYING;
         }
     } else {
-        if (context->uiMode == IBus_UI_CD53 || context->uiMode == IBus_UI_MID) {
-            if (requestedAction == IBUS_CDC_START_PLAYING_CD53) {
-                curAction = 0x00;
-                curStatus = IBUS_CDC_PLAYING;
-                if (context->seekMode == HANDLER_CDC_SEEK_MODE_FWD) {
-                    BC127CommandForwardSeekRelease(context->bt);
-                    context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
-                } else if (context->seekMode == HANDLER_CDC_SEEK_MODE_REV) {
-                    BC127CommandBackwardSeekRelease(context->bt);
-                    context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
-                }
-            } else {
-                curAction = requestedAction;
-            }
-        } else if (context->uiMode == IBus_UI_BMBT ||
-                   context->uiMode == IBus_UI_MID_BMBT
+        if (requestedCommand == IBUS_CDC_CMD_PAUSE_PLAYING ||
+            requestedCommand == IBUS_CDC_CMD_START_PLAYING
         ) {
-            if (requestedAction == IBUS_CDC_START_PLAYING ||
-                requestedAction == IBUS_CDC_START_PLAYING_BM54
-            ) {
-                curAction = IBUS_CDC_BM53_START_PLAYING;
-                curStatus = IBUS_CDC_BM53_PLAYING;
-                if (context->seekMode == HANDLER_CDC_SEEK_MODE_FWD) {
-                    BC127CommandForwardSeekRelease(context->bt);
-                    context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
-                } else if (context->seekMode == HANDLER_CDC_SEEK_MODE_REV) {
-                    BC127CommandBackwardSeekRelease(context->bt);
-                    context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
-                }
-            } else if (requestedAction == IBUS_CDC_SCAN_FORWARD) {
-                curAction = IBUS_CDC_START_PLAYING;
-                curStatus = IBUS_CDC_PLAYING;
-            } else {
-                curAction = requestedAction;
+            curStatus = IBUS_CDC_STAT_PLAYING;
+            curFunction = IBUS_CDC_FUNC_PLAYING;
+            if (context->seekMode == HANDLER_CDC_SEEK_MODE_FWD) {
+                BC127CommandForwardSeekRelease(context->bt);
+                context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
+            } else if (context->seekMode == HANDLER_CDC_SEEK_MODE_REV) {
+                BC127CommandBackwardSeekRelease(context->bt);
+                context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
             }
+        } else {
+            curStatus = requestedCommand;
         }
     }
-    unsigned char discCount = IBus_CDC_DiscCount6;
+    unsigned char discCount = IBUS_CDC_DISC_COUNT_6;
     if (context->uiMode == IBus_UI_BMBT) {
-        discCount = IBus_CDC_DiscCount1;
+        discCount = IBUS_CDC_DISC_COUNT_1;
     }
-    IBusCommandCDCStatus(context->ibus, curAction, curStatus, discCount);
-    context->cdChangerLastKeepAlive = TimerGetMillis();
+    IBusCommandCDCStatus(context->ibus, curStatus, curFunction, discCount);
+    context->cdChangerLastPoll = TimerGetMillis();
     context->cdChangerLastStatus = TimerGetMillis();
 }
 
@@ -516,17 +508,17 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         IBusCommandCDCAnnounce(context->ibus);
         // Always assume that we're playing, that way the radio can tell us
         // if we shouldn't be, then we can deduce the system state
-        context->ibus->cdChangerStatus = IBUS_CDC_PLAYING;
+        context->ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
         // Anounce the CDC to the network
         IBusCommandCDCAnnounce(context->ibus);
-        unsigned char discCount = IBus_CDC_DiscCount6;
+        unsigned char discCount = IBUS_CDC_DISC_COUNT_6;
         if (context->uiMode == IBus_UI_BMBT) {
-            discCount = IBus_CDC_DiscCount1;
+            discCount = IBUS_CDC_DISC_COUNT_1;
         }
         IBusCommandCDCStatus(
             context->ibus,
-            IBUS_CDC_START_PLAYING,
-            context->ibus->cdChangerStatus,
+            IBUS_CDC_STAT_PLAYING,
+            context->ibus->cdChangerFunction,
             discCount
         );
         // Reset the metadata so we don't display the wrong data
@@ -536,6 +528,10 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         // Request BC127 state
         BC127CommandStatus(context->bt);
         BC127CommandList(context->bt);
+        // Ask the LCM for the I/O Status of all lamps
+        if (ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E46_Z4) {
+            IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+        }
     }
 }
 
@@ -550,33 +546,24 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
  *     Returns:
  *         void
  */
-void HandlerIBusLightStatus(void *ctx, unsigned char *pkt)
+void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
 {
     uint8_t blinkCount = ConfigGetSetting(CONFIG_SETTING_OT_BLINKERS);
     if (blinkCount != 0x00 && blinkCount != 0xFF) {
         HandlerContext_t *context = (HandlerContext_t *) ctx;
         unsigned char lightStatus = pkt[4];
-        unsigned char dimmerStatus = pkt[7];
         if (context->blinkerStatus == HANDLER_BLINKER_OFF) {
             context->blinkerCount = 2;
             if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) != 0 &&
                 CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) == 0
             ) {
                 context->blinkerStatus = HANDLER_BLINKER_DRV;
-                IBusCommandLCMEnableBlinker(
-                    context->ibus,
-                    IBUS_LCM_BLINKER_DRV,
-                    dimmerStatus
-                );
+                IBusCommandLCMEnableBlinker(context->ibus, IBUS_LCM_BLINKER_DRV);
             } else if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) != 0 &&
                 CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) == 0
             ) {
                 context->blinkerStatus = HANDLER_BLINKER_PSG;
-                IBusCommandLCMEnableBlinker(
-                    context->ibus,
-                    IBUS_LCM_BLINKER_PSG,
-                    dimmerStatus
-                );
+                IBusCommandLCMEnableBlinker(context->ibus, IBUS_LCM_BLINKER_PSG);
             }
         } else if (context->blinkerStatus == HANDLER_BLINKER_DRV) {
             if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) != 0 ||
@@ -607,6 +594,27 @@ void HandlerIBusLightStatus(void *ctx, unsigned char *pkt)
 }
 
 /**
+ * HandlerIBusLCMDimmerStatus()
+ *     Description:
+ *         Track the Dimmer Status messages so we can correctly set the dash
+ *         dimming
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusLCMDimmerStatus(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->ibus->lcmDimmerState == IBUS_LCM_DIMMER_ON &&
+        ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E46_Z4
+    ) {
+        IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+    }
+}
+
+/**
  * HandlerIBusMFLButton()
  *     Description:
  *         Act upon MFL button presses when in CD Changer mode (when BT is active)
@@ -619,7 +627,9 @@ void HandlerIBusLightStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->ibus->cdChangerStatus == IBUS_CDC_PLAYING) {
+    if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING ||
+        ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON
+    ) {
         unsigned char mflButton = pkt[4];
         if (mflButton == IBusMFLButtonVoiceRelease) {
             if (context->bt->callStatus == BC127_CALL_ACTIVE) {
@@ -631,14 +641,38 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
             }
         } else if (mflButton == IBusMFLButtonVoiceHold) {
             BC127CommandToggleVR(context->bt);
-        } else if (mflButton == IBusMFLButtonRTPress ||
-                   mflButton == IBusMFLButtonRTRelease
+        }
+        if ((mflButton == IBusMFLButtonRTPress ||
+            mflButton == IBusMFLButtonRTRelease) &&
+            context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
         ) {
             if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 BC127CommandPause(context->bt);
             } else {
                 BC127CommandPlay(context->bt);
             }
+        }
+    }
+}
+
+/**
+ * HandlerIBusMFLButton()
+ *     Description:
+ *         Act upon MFL Volume commands to control call volume
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *pkt - The packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusMFLVolume(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bt->callStatus != BC127_CALL_INACTIVE) {
+        if (pkt[4] == IBusMFLVolUp) {
+            BC127CommandVolume(context->bt, 13, "UP");
+        } else if (pkt[4] == IBusMFLVolDown) {
+            BC127CommandVolume(context->bt, 13, "DOWN");
         }
     }
 }
@@ -658,11 +692,11 @@ void HandlerTimerCDCAnnounce(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint32_t now = TimerGetMillis();
-    if ((now - context->cdChangerLastKeepAlive) >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
+    if ((now - context->cdChangerLastPoll) >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
         context->ibus->ignitionStatus == IBUS_IGNITION_ON
     ) {
         IBusCommandCDCAnnounce(context->ibus);
-        context->cdChangerLastKeepAlive = now;
+        context->cdChangerLastPoll = now;
     }
 }
 
@@ -685,15 +719,15 @@ void HandlerTimerCDCSendStatus(void *ctx)
         context->ibus->ignitionStatus == IBUS_IGNITION_ON &&
         (context->uiMode == IBus_UI_BMBT || context->uiMode == IBus_UI_MID_BMBT)
     ) {
-        unsigned char curAction = 0x00;
-        if (context->ibus->cdChangerStatus == IBUS_CDC_PLAYING) {
-            curAction = 0x02;
+        unsigned char curStatus = 0x00;
+        if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+            curStatus = IBUS_CDC_STAT_PLAYING;
         }
         IBusCommandCDCStatus(
             context->ibus,
-            curAction,
-            context->ibus->cdChangerStatus,
-            IBus_CDC_DiscCount1
+            curStatus,
+            context->ibus->cdChangerFunction,
+            IBUS_CDC_DISC_COUNT_1
         );
         context->cdChangerLastStatus = now;
         LogDebug(LOG_SOURCE_SYSTEM, "Handler: Send CDC status preemptively");

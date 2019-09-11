@@ -27,9 +27,11 @@ IBus_t IBusInit()
         UART_BAUD_9600,
         UART_PARITY_EVEN
     );
-    // Assume we're playing and the key inserted, so device resets are graceful
-    ibus.cdChangerStatus = IBUS_CDC_NOT_PLAYING;
+    ibus.cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
     ibus.ignitionStatus = IBUS_IGNITION_OFF;
+    ibus.lcmDimmerState = IBUS_LCM_DIMMER_OFF;
+    ibus.lcmDimmerStatus1 = 0x80;
+    ibus.lcmDimmerStatus2 = 0x80;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -41,16 +43,18 @@ IBus_t IBusInit()
 
 static void IBusHandleBMBTMessage(unsigned char *pkt)
 {
-    if (pkt[3] == IBUS_CMD_BMBT_BUTTON) {
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON0 ||
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON1
+    ) {
         EventTriggerCallback(IBusEvent_BMBTButton, pkt);
     }
 }
 
 static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[1] == 0x22 &&
-        pkt[2] == IBUS_DEVICE_DIA &&
-        pkt[3] == IBUS_CMD_DIAG_IDENTITY
+    if (pkt[IBUS_PKT_LEN] == 0x22 &&
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_DIAG_RESPONSE
     ) {
         // Decode the software and hardware versions
         uint8_t hardwareVersion = IBusGetNavHWVersion(pkt);
@@ -73,20 +77,20 @@ HW: %d SW: %d Build Week: %c%c Year: %c%c \r\n",
             pkt[22]
         );
         EventTriggerCallback(IBusEvent_GTDiagResponse, pkt);
-    } else if (pkt[3] == IBUS_CMD_GT_MENU_SELECT) {
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MENU_SELECT) {
         EventTriggerCallback(IBusEvent_GTMenuSelect, pkt);
-    } else if (pkt[3] == IBUS_CMD_GT_SCREEN_MODE_SET) {
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_SCREEN_MODE_SET) {
         EventTriggerCallback(IBusEvent_ScreenModeSet, pkt);
     }
 }
 
 static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[3] == IBUS_CMD_IGN_STATUS_REQ) {
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IGN_STATUS_REQ) {
         uint8_t ignitionStatus;
         if (pkt[4] == IBUS_IGNITION_OFF) {
             // Implied that the CDC should not be playing with the ignition off
-            ibus->cdChangerStatus = 0;
+            ibus->cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
             ignitionStatus = IBUS_IGNITION_OFF;
         } else {
             ignitionStatus = IBUS_IGNITION_ON;
@@ -100,35 +104,55 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 
 static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[2] == IBUS_DEVICE_GLO && pkt[3] == IBUS_LCM_LIGHT_STATUS) {
-        EventTriggerCallback(IBusEvent_LightStatus, pkt);
+    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO && pkt[IBUS_PKT_CMD] == IBUS_LCM_LIGHT_STATUS) {
+        EventTriggerCallback(IBusEvent_LCMLightStatus, pkt);
+        if (pkt[IBUS_PKT_LEN] == 0x08) {
+            if ((pkt[8] & 1 << 0) == 0) {
+                ibus->lcmDimmerState = IBUS_LCM_DIMMER_OFF;
+            } else {
+                ibus->lcmDimmerState = IBUS_LCM_DIMMER_ON;
+            }
+        }
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO && pkt[IBUS_PKT_CMD] == IBUS_LCM_DIMMER_STATUS) {
+        EventTriggerCallback(IBusEvent_LCMDimmerStatus, pkt);
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIAG_RESPONSE &&
+               pkt[IBUS_PKT_LEN] == 0x23
+    ) {
+        ibus->lcmDimmerStatus1 = pkt[19];
+        ibus->lcmDimmerStatus2 = pkt[20];
     }
 }
 
 
 static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[3] == IBUS_MFL_BTN_EVENT ||
-        (pkt[2] == IBUS_DEVICE_TEL && pkt[3] == 0x01)
+    if (pkt[IBUS_PKT_CMD] == IBUS_MFL_BTN_EVENT ||
+        (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL && pkt[IBUS_PKT_CMD] == 0x01)
     ) {
         EventTriggerCallback(IBusEvent_MFLButton, pkt);
+    }
+    if (pkt[IBUS_PKT_CMD] == IBUS_MFL_BTN_VOL) {
+        EventTriggerCallback(IBusEvent_MFLVolume, pkt);
     }
 }
 
 static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[2] == IBUS_DEVICE_CDC) {
-        if (pkt[3] == IBUS_COMMAND_CDC_ALIVE) {
-            EventTriggerCallback(IBusEvent_CDKeepAlive, pkt);
-        } else if(pkt[3] == IBUS_COMMAND_CDC_GET_STATUS) {
-            if (pkt[4] == IBUS_CDC_STOP_PLAYING) {
-                ibus->cdChangerStatus = IBUS_CDC_NOT_PLAYING;
-            } else if (pkt[4] == 0x02 || pkt[4] == 0x03) {
-                ibus->cdChangerStatus = IBUS_CDC_PLAYING;
+    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_CDC) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_POLL) {
+            EventTriggerCallback(IBusEvent_CDPoll, pkt);
+        } else if(pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_GET_STATUS) {
+            if (pkt[4] == IBUS_CDC_CMD_STOP_PLAYING) {
+                ibus->cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
+            } else if (pkt[4] == IBUS_CDC_CMD_PAUSE_PLAYING ||
+                       pkt[4] == IBUS_CDC_CMD_START_PLAYING
+            ) {
+                ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
             }
             EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
         }
-    } else if (pkt[2] == IBUS_DEVICE_DIA && pkt[3] == IBUS_CMD_DIAG_IDENTITY) {
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA && pkt[IBUS_PKT_CMD] == IBUS_CMD_DIAG_RESPONSE) {
         LogRaw(
             "IBus: Radio Data: Part Number: %d%d%d%d%d%d%d \
 HW: %02d SW: %d%d Build Week: %d%d Year: %d%d \r\n",
@@ -147,36 +171,34 @@ HW: %02d SW: %d%d Build Week: %d%d Year: %d%d \r\n",
             (pkt[13] & 0xF0) >> 4,
             pkt[13] & 0x0F
         );
-        EventTriggerCallback(IBusEvent_GTDiagResponse, pkt);
-
-    } else if (pkt[2] == IBUS_DEVICE_GT) {
-        if (pkt[3] == IBUS_CMD_RAD_SCREEN_MODE_UPDATE) {
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GT) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_SCREEN_MODE_UPDATE) {
             EventTriggerCallback(IBusEvent_ScreenModeUpdate, pkt);
         }
-        if (pkt[3] == IBUS_CMD_RAD_UPDATE_MAIN_AREA) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_UPDATE_MAIN_AREA) {
             EventTriggerCallback(IBusEvent_RADUpdateMainArea, pkt);
         }
-        if (pkt[3] == IBUS_CMD_RAD_C43_SCREEN_UPDATE &&
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_C43_SCREEN_UPDATE &&
             pkt[4] == IBUS_CMD_RAD_C43_SET_MENU_MODE
         ) {
             EventTriggerCallback(IBusEvent_RADC43ScreenModeUpdate, pkt);
         }
-        if (pkt[3] == IBUS_CMD_GT_DISPLAY_RADIO_MENU) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_DISPLAY_RADIO_MENU) {
             EventTriggerCallback(IBusEvent_RADDisplayMenu, pkt);
         }
-    } else if (pkt[2] == IBUS_DEVICE_LOC) {
-        if (pkt[3] == 0x3B) {
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_LOC) {
+        if (pkt[IBUS_PKT_CMD] == 0x3B) {
             EventTriggerCallback(IBusEvent_CDClearDisplay, pkt);
         }
-        if (pkt[3] == IBUS_CMD_RAD_UPDATE_MAIN_AREA) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_UPDATE_MAIN_AREA) {
             EventTriggerCallback(IBusEvent_RADUpdateMainArea, pkt);
         }
-    } else if (pkt[2] == IBUS_DEVICE_MID) {
-        if (pkt[3] == IBUS_CMD_RAD_WRITE_MID_DISPLAY) {
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_MID) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_WRITE_MID_DISPLAY) {
             if (pkt[4] == 0xC0) {
                 EventTriggerCallback(IBusEvent_RADMIDDisplayText, pkt);
             }
-        } else if (pkt[3] == IBUS_CMD_RAD_WRITE_MID_MENU) {
+        } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_WRITE_MID_MENU) {
             EventTriggerCallback(IBusEvent_RADMIDDisplayMenu, pkt);
         }
     }
@@ -275,9 +297,9 @@ void IBusProcess(IBus_t *ibus)
                     LogError(
                         "IBus: %02X -> %02X Length: %d - Invalid Checksum",
                         pkt[0],
-                        pkt[2],
+                        pkt[IBUS_PKT_DST],
                         msgLength,
-                        (uint8_t) pkt[1]
+                        (uint8_t) pkt[IBUS_PKT_LEN]
                     );
                 }
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
@@ -659,7 +681,7 @@ void IBusCommandCDCAnnounce(IBus_t *ibus)
 }
 
 /**
- * IBusCommandCDCKeepAlive()
+ * IBusCommandCDCPollResponse()
  *     Description:
  *        Respond to the Radio's "Ping" with our "Pong"
  *     Params:
@@ -667,7 +689,7 @@ void IBusCommandCDCAnnounce(IBus_t *ibus)
  *     Returns:
  *         void
  */
-void IBusCommandCDCKeepAlive(IBus_t *ibus)
+void IBusCommandCDCPollResponse(IBus_t *ibus)
 {
     const unsigned char cdcPing[] = {0x02, 0x00};
     IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_RAD, cdcPing, sizeof(cdcPing));
@@ -679,31 +701,31 @@ void IBusCommandCDCKeepAlive(IBus_t *ibus)
  *        Respond to the Radio's status request
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char action - The current CDC action
  *         unsigned char status - The current CDC status
+ *         unsigned char function - The current CDC function
  *         unsigned char discCount - The number of discs to report loaded
  *     Returns:
  *         void
  */
 void IBusCommandCDCStatus(
     IBus_t *ibus,
-    unsigned char action,
     unsigned char status,
+    unsigned char function,
     unsigned char discCount
 ) {
-    status = status + 0x80;
+    function = function + 0x80;
     const unsigned char cdcStatus[] = {
         IBUS_COMMAND_CDC_SET_STATUS,
-        action,
         status,
-        0x00,
+        function,
+        0x00, // Errors
         discCount,
         0x00,
         0x01,
         0x01,
         0x00,
         0x01,
-        0x01, // Disc Number
+        0x01,// Disc Number
         0x01 // Track Number
     };
     IBusSendCommand(
@@ -959,18 +981,17 @@ void IBusCommandGTWriteTitle(IBus_t *ibus, char *message)
     if (length > 9) {
         length = 9;
     }
-    // Length + Write Type + Write Area + Size + Watermark
+    // Length + Write Type + Write Area + Write Index + Size
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
-    text[0] = IBUS_CMD_GT_WRITE_TITLE;
+    text[0] = IBUS_CMD_GT_WRITE_MK4;
     text[1] = IBUS_CMD_GT_WRITE_ZONE;
-    text[2] = 0x10;
+    text[2] = 0x01;
+    text[3] = 0x40;
     uint8_t idx;
     for (idx = 0; idx < length; idx++) {
-        text[idx + 3] = message[idx];
+        text[idx + 4] = message[idx];
     }
-    // "Watermark" Any update we send, so we know that it was us
-    text[idx + 3] = IBUS_RAD_MAIN_AREA_WATERMARK;
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
@@ -1090,26 +1111,17 @@ void IBusCommandIKETextClear(IBus_t *ibus)
  *            // E39 Turn Left / Right
  *            3F 0F D0 0C 00 00 40 00 00 00 00 00 00 80 80 00 AC
  *            3F 0F D0 0C 00 00 80 00 00 00 00 00 00 80 80 00 6C
- *            // E46 Left / Right
+ *            // E46/Z4 Left / Right
  *            3F 0F D0 0C 00 00 FF 50 00 00 00 80 00 80 80 00 C3
  *            3F 0F D0 0C 00 00 FF 80 00 00 00 80 00 80 80 00 13
- *            // E46 Type II / Z4 Left / Right
- *            3F 0F D0 0C 00 00 FF 50 00 00 00 80 00 FF FF 00 C3
- *            3F 0F D0 0C 00 00 FF 80 00 00 00 80 00 FF FF 00 13
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         unsigned char blinker - The byte containing the bits of which bulb
  *             to illuminate
- *         unsigned char dimmerStatus - The bute containing the dimmer status
- *             which is only relevant for E46 models
  *     Returns:
  *         void
  */
-void IBusCommandLCMEnableBlinker(
-    IBus_t *ibus,
-    unsigned char blinker,
-    unsigned char dimmerStatus
-) {
+void IBusCommandLCMEnableBlinker(IBus_t *ibus, unsigned char blinker) {
     unsigned char vehicleType = ConfigGetVehicleType();
     unsigned char lightStatus = 0x00;
     unsigned char lightStatus2 = 0x00;
@@ -1123,7 +1135,7 @@ void IBusCommandLCMEnableBlinker(
         lightStatus = blinker;
         ioStatus2 = 0x80;
         ioStatus3 = 0x80;
-    } else if (vehicleType == IBUS_VEHICLE_TYPE_E46) {
+    } else if (vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
         lightStatus = 0xFF;
         if (blinker == IBUS_LCM_BLINKER_DRV) {
             blinker = IBUS_LCM_BLINKER_DRV_E46;
@@ -1132,24 +1144,8 @@ void IBusCommandLCMEnableBlinker(
         }
         lightStatus2 = blinker;
         ioStatus = 0x80;
-        if (dimmerStatus == 0x00) {
-            ioStatus2 = 0x2A;
-            ioStatus3 = 0x00;
-        } else {
-            ioStatus2 = 0x80;
-            ioStatus3 = 0x80;
-        }
-    } else if (vehicleType == IBUS_VEHICLE_TYPE_E46_LCI_Z4) {
-        lightStatus = 0xFF;
-        if (blinker == IBUS_LCM_BLINKER_DRV) {
-            blinker = IBUS_LCM_BLINKER_DRV_E46;
-        } else if (blinker == IBUS_LCM_BLINKER_PSG) {
-            blinker = IBUS_LCM_BLINKER_PSG_E46;
-        }
-        lightStatus2 = blinker;
-        ioStatus = 0x80;
-        ioStatus2 = 0xFF;
-        ioStatus3 = 0xFF;
+        ioStatus2 = ibus->lcmDimmerStatus1;
+        ioStatus3 = ibus->lcmDimmerStatus2;
     }
     // Only fire the command if the light status byte is set
     if (lightStatus != 0x00) {

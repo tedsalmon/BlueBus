@@ -6,31 +6,7 @@
  */
 #ifndef IBUS_H
 #define IBUS_H
-#define IBUS_CDC_GET_STATUS 0x00
-#define IBUS_CDC_PLAYING 0x09
-#define IBUS_CDC_NOT_PLAYING 0x02
-#define IBUS_CDC_CHANGE_TRACK 0x0A
-#define IBUS_CDC_STOP_PLAYING 0x01
-#define IBUS_CDC_START_PLAYING 0x02
-#define IBUS_CDC_START_PLAYING_BM54 0x03
-#define IBUS_CDC_START_PLAYING_CD53 0x03
-#define IBUS_CDC_SCAN_CD53 0x04
-#define IBUS_CDC_SCAN_FORWARD 0x03
-#define IBUS_CDC_SCAN_BACKWARDS 0x04
-#define IBUS_CDC_MANUAL_MODE 0x04
-#define IBUS_CDC_SONG_END 0x05
-#define IBUS_CDC_CD_CHANGE 0x06
-#define IBUS_CDC_SCAN_MODE 0x07
-#define IBUS_CDC_SCAN_MODE_ACTION 0x19
-#define IBUS_CDC_RANDOM_MODE 0x08
-#define IBUS_CDC_RANDOM_MODE_ACTION 0x29
-/* Sending this to the BM53 prevents it from clearing the GT as often */
-#define IBUS_CDC_BM53_START_PLAYING 0x01
-#define IBUS_CDC_BM53_PLAYING 0x0C
-// Commands
-#define IBUS_COMMAND_CDC_ALIVE 0x01
-#define IBUS_COMMAND_CDC_GET_STATUS 0x38
-#define IBUS_COMMAND_CDC_SET_STATUS 0x39
+
 // Devices
 #define IBUS_DEVICE_GM 0x00 /* Body module */
 #define IBUS_DEVICE_CDC 0x18 /* CD Changer */
@@ -60,22 +36,64 @@
 #define IBUS_DEVICE_BMBT 0xF0 /* On-board monitor */
 #define IBUS_DEVICE_LOC 0xFF /* Local */
 
+// IBus Packet Indices
+#define IBUS_PKT_SRC 0
+#define IBUS_PKT_LEN 1
+#define IBUS_PKT_DST 2
+#define IBUS_PKT_CMD 3
+
+// IBus Commands
+#define IBUS_COMMAND_CDC_GET_STATUS 0x38
+#define IBUS_COMMAND_CDC_SET_STATUS 0x39
+#define IBUS_COMMAND_CDC_POLL 0x01
+
+// CDC Commands
+#define IBUS_CDC_CMD_GET_STATUS 0x00
+#define IBUS_CDC_CMD_STOP_PLAYING 0x01
+#define IBUS_CDC_CMD_PAUSE_PLAYING 0x02
+#define IBUS_CDC_CMD_START_PLAYING 0x03
+#define IBUS_CDC_CMD_CHANGE_TRACK 0x0A
+#define IBUS_CDC_CMD_SEEK 0x04
+#define IBUS_CDC_CMD_CD_CHANGE 0x06
+#define IBUS_CDC_CMD_SCAN 0x07
+#define IBUS_CDC_CMD_RANDOM_MODE 0x08
+// CDC Status
+#define IBUS_CDC_STAT_STOP 0x00
+#define IBUS_CDC_STAT_PAUSE 0x01
+#define IBUS_CDC_STAT_PLAYING 0x02
+#define IBUS_CDC_STAT_FAST_FWD 0x03
+#define IBUS_CDC_STAT_FAST_REV 0x04
+#define IBUS_CDC_STAT_END 0x07
+#define IBUS_CDC_STAT_LOADING 0x08
+// CDC Function
+#define IBUS_CDC_FUNC_NOT_PLAYING 0x02
+#define IBUS_CDC_FUNC_PLAYING 0x09
+#define IBUS_CDC_FUNC_SCAN_MODE 0x19
+#define IBUS_CDC_FUNC_RANDOM_MODE 0x29
+// CDC Disc Count
+#define IBUS_CDC_DISC_COUNT_1 0x01
+#define IBUS_CDC_DISC_COUNT_6 0x3F
+
 // All buttons presses are triggered on the "Push" message
 #define IBUS_DEVICE_BMBT_Button_Next 0x00
 #define IBUS_DEVICE_BMBT_Button_Prev 0x10
+#define IBUS_DEVICE_BMBT_Button_Mode 0x23
 #define IBUS_DEVICE_BMBT_Button_PlayPause 0x14
 #define IBUS_DEVICE_BMBT_Button_Knob 0x05
 #define IBUS_DEVICE_BMBT_Button_Display 0x30
+#define IBUS_DEVICE_BMBT_Button_Info 0x38
+#define IBUS_DEVICE_BMBT_Button_SEL 0x0F
+#define IBUS_DEVICE_BMBT_Button_Num1 0x11
 
-#define IBUS_CMD_BMBT_BUTTON 0x48
+#define IBUS_CMD_BMBT_BUTTON0 0x47
+#define IBUS_CMD_BMBT_BUTTON1 0x48
 
-#define IBUS_CMD_CD53_CD_SEL 0x06
-
-#define IBUS_CMD_DIAG_IDENTITY 0xA0
+#define IBUS_CMD_DIAG_RESPONSE 0xA0
 
 #define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
 #define IBUS_CMD_GT_MENU_SELECT 0x31
 #define IBUS_CMD_GT_WRITE_MK4 0x21
+#define IBUS_CMD_GT_WRITE_RESPONSE 0x22
 #define IBUS_CMD_GT_WRITE_TITLE 0x23
 // Newer GTs use a different action to write to fields
 #define IBUS_CMD_GT_WRITE_MK2 0xA5
@@ -103,7 +121,9 @@
 #define IBUS_GT_MKIV_STATIC 5
 #define IBUS_GT_HW_ID_OFFSET 11
 #define IBUS_GT_SW_ID_OFFSET 33
-#define IBUS_GT_TONE_SELECT_MENU_OFF 0x0C
+#define IBUS_GT_TONE_MENU_OFF 0x08
+#define IBUS_GT_SEL_MENU_OFF 0x04
+#define IBUS_GT_MENU_CLEAR 0xC
 #define IBUS_GT_RADIO_SCREEN_OFF 0x02
 #define IBUS_IGNITION_OFF 0
 #define IBUS_IGNITION_ON 1
@@ -120,7 +140,7 @@
 #define IBUS_TX_TIMEOUT_DATA_SENT 2
 #define IBUS_TX_TIMEOUT_WAIT 250
 
-#define IBusEvent_CDKeepAlive 33
+#define IBusEvent_CDPoll 33
 #define IBusEvent_CDStatusRequest 34
 #define IBusEvent_CDClearDisplay 35
 #define IBusEvent_IgnitionStatus 36
@@ -136,15 +156,16 @@
 #define IBusEvent_RADDisplayMenu 46
 #define IBusEvent_RADMIDDisplayText 47
 #define IBusEvent_RADMIDDisplayMenu 48
-#define IBusEvent_LightStatus 49
+#define IBusEvent_LCMLightStatus 49
+#define IBusEvent_LCMDimmerStatus 50
+#define IBusEvent_GTWriteResponse 51
+#define IBusEvent_MFLVolume 52
 
 #define IBus_UI_CD53 1
 #define IBus_UI_BMBT 2
 #define IBus_UI_MID 3
 #define IBus_UI_MID_BMBT 4
 #define IBus_UI_BUSINESS_NAV 5
-#define IBus_CDC_DiscCount1 0x01
-#define IBus_CDC_DiscCount6 0x3F
 
 #define IBUS_C43_TITLE_MODE 0xC4
 
@@ -155,10 +176,14 @@
 #define IBUS_RADIO_TYPE_BRTP 5
 
 #define IBUS_LCM_LIGHT_STATUS 0x5B
+#define IBUS_LCM_DIMMER_STATUS 0x5C
+#define IBUS_LCM_IO_STATUS 0x90
 #define IBUS_LCM_E46_DRV_SIG_BIT 5
 #define IBUS_LCM_E46_PSG_SIG_BIT 6
 #define IBUS_LCM_E46_BLINKER_DRV 0x50
 #define IBUS_LCM_E46_BLINKER_PSG 0x80
+#define IBUS_LCM_DIMMER_OFF 0
+#define IBUS_LCM_DIMMER_ON 1
 
 #define IBUS_LCM_DRV_SIG_BIT 5
 #define IBUS_LCM_PSG_SIG_BIT 6
@@ -175,10 +200,13 @@
 #define IBusMFLButtonVoiceRelease 0xA0
 #define IBusMFLButtonVoiceHold 0x90
 
+#define IBUS_MFL_BTN_VOL 0x32
+#define IBusMFLVolUp 0x11
+#define IBusMFLVolDown 0x10
+
 #define IBUS_VEHICLE_TYPE_E38_E39_E53 0x01
 #define IBUS_VEHICLE_TYPE_E39_LATE 0x02
-#define IBUS_VEHICLE_TYPE_E46 0x03
-#define IBUS_VEHICLE_TYPE_E46_LCI_Z4 0x04
+#define IBUS_VEHICLE_TYPE_E46_Z4 0x03
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -214,8 +242,11 @@ typedef struct IBus_t {
     uint8_t txBufferReadIdx;
     uint8_t txBufferWriteIdx;
     uint32_t txLastStamp;
-    unsigned char cdChangerStatus;
+    unsigned char cdChangerFunction;
     unsigned char ignitionStatus;
+    unsigned char lcmDimmerState;
+    unsigned char lcmDimmerStatus1;
+    unsigned char lcmDimmerStatus2;
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
@@ -226,7 +257,7 @@ uint8_t IBusGetNavHWVersion(unsigned char *);
 uint8_t IBusGetNavSWVersion(unsigned char *);
 uint8_t IBusGetNavType(unsigned char *);
 void IBusCommandCDCAnnounce(IBus_t *);
-void IBusCommandCDCKeepAlive(IBus_t *);
+void IBusCommandCDCPollResponse(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
 void IBusCommandDIAGetCodingData(IBus_t *, unsigned char, unsigned char);
 void IBusCommandDIAGetIdentity(IBus_t *, unsigned char);
@@ -244,7 +275,7 @@ void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnition(IBus_t *);
 void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
-void IBusCommandLCMEnableBlinker(IBus_t *, unsigned char, unsigned char);
+void IBusCommandLCMEnableBlinker(IBus_t *, unsigned char);
 void IBusCommandMIDDisplayTitleText(IBus_t *, char *);
 void IBusCommandMIDDisplayText(IBus_t *, char *);
 void IBusCommandMIDMenuText(IBus_t *, uint8_t, char *);

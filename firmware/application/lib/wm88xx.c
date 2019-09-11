@@ -39,6 +39,28 @@ void WM88XXInit()
         }
 
         /**
+         * Register 8 - SPDMODE
+         * bit   0 - SPDIF Input Mode - 0 CMOS or 1 A/C
+         */
+        // Set the S/PDIF input to CMOS
+        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_SPDMODE, 0b00000000);
+        if (status != 0x00) {
+            LogError("WM88XX failed to set SPDMODE [%d]", status);
+        }
+
+        /**
+         * Register 21 - TXSRC
+         * bit   7 - Transmit Channel Status Source - 0 receiver or 1 transmit
+         * bit   6 - TXSRC - Transmitter source - 0 is SPDIF 1 is AIF
+         * bit 5:4 - CLKACU - Clock accuracy of transmitted clock
+         * bit 3:0 - Freq - Indicated sampling frequency
+         */
+        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_TXSRC, 0b00110001);
+        if (status != 0x00) {
+            LogError("WM88XX failed to set TXSRC [%d]", status);
+        }
+    
+        /**
          * Register 27 - AIFTX
          * bit 7:6 - always 0
          * bit   5 - LRCLK polarity - 0 normal or 1 Inverted

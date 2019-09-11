@@ -21,10 +21,12 @@
 #define BC127_AUDIO_SPDIF "2"
 #define BC127_AVRCP_STATUS_PAUSED 0
 #define BC127_AVRCP_STATUS_PLAYING 1
-#define BC127_CALL_ACTIVE 1
 #define BC127_CALL_INACTIVE 0
+#define BC127_CALL_ACTIVE 1
 #define BC127_CALL_INCOMING 2
 #define BC127_CALL_OUTGOING 3
+#define BC127_CALL_SCO_CLOSE 4
+#define BC127_CALL_SCO_OPEN 5
 #define BC127_CLOSE_ALL 255
 #define BC127_CONFIG_STATE_NEVER "0"
 #define BC127_CONFIG_STATE_ALWAYS "1"
@@ -119,6 +121,13 @@ typedef struct BC127Connection_t {
  *         pairingErrors - The key indicates the profile in error and the value
  *             in error. This is used to track what profiles we need to re-attempt
  *             a connection with.
+ *         callStatus - The call status
+ *         metadataStatus - Tracks the state of the metadata through the process
+ *             of gathering it from the device
+ *         playbackStatus - If we're paused or playing
+ *         scoStatus - If the SCO channel is open or closed
+ *         rxQueueAge - Used to track how long data has been sitting on the
+ *            RX queue without getting a MSG_END_CHAR.
  */
 typedef struct BC127_t {
     BC127Connection_t activeDevice;
@@ -130,6 +139,7 @@ typedef struct BC127_t {
     uint8_t callStatus;
     uint8_t metadataStatus;
     uint8_t playbackStatus;
+    uint8_t scoStatus;
     uint32_t rxQueueAge;
     char title[BC127_METADATA_FIELD_SIZE];
     char artist[BC127_METADATA_FIELD_SIZE];
@@ -152,6 +162,8 @@ void BC127CommandCallAnswer(BC127_t *);
 void BC127CommandCallEnd(BC127_t *);
 void BC127CommandCallReject(BC127_t *);
 void BC127CommandClose(BC127_t *, uint8_t);
+void BC127CommandCVC(BC127_t *, char *, uint8_t, uint8_t);
+void BC127CommandCVCParams(BC127_t *, char *);
 void BC127CommandForward(BC127_t *);
 void BC127CommandForwardSeekPress(BC127_t *);
 void BC127CommandForwardSeekRelease(BC127_t *);
@@ -180,7 +192,7 @@ void BC127CommandToggleVR(BC127_t *);
 void BC127CommandTone(BC127_t *, char *);
 void BC127CommandUnpair(BC127_t *);
 void BC127CommandVersion(BC127_t *);
-void BC127CommandVolume(BC127_t *, uint8_t, uint8_t);
+void BC127CommandVolume(BC127_t *, uint8_t, char *);
 void BC127CommandWrite(BC127_t *);
 uint8_t BC127GetConnectedDeviceCount(BC127_t *);
 uint8_t BC127GetDeviceId(char *);
