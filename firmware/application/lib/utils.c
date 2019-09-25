@@ -131,6 +131,22 @@ void UtilsSetRPORMode(uint8_t pin, uint16_t mode)
 }
 
 /**
+ * UtilsStrToHex()
+ *     Description:
+ *         Convert a string to a octal
+ *     Params:
+ *         char *string - The subject
+ *     Returns:
+ *         uint8_t The unsigned char
+ */
+unsigned char UtilsStrToHex(char *string)
+{
+    char *ptr;
+    return (unsigned char) strtol(string, &ptr, 16);
+}
+
+
+/**
  * UtilsStrToInt()
  *     Description:
  *         Convert a string to an integer

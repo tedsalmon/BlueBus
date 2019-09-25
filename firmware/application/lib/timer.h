@@ -45,5 +45,6 @@ void TimerDelayMicroseconds(uint16_t);
 uint32_t TimerGetMillis();
 void TimerProcessScheduledTasks();
 uint8_t TimerRegisterScheduledTask(void *, void *, uint16_t);
+void TimerResetScheduledTask(uint8_t);
 void TimerTriggerScheduledTask(uint8_t);
 #endif /* TIMER_H */

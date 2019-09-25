@@ -37,10 +37,15 @@
 #define BMBT_MENU_IDX_SETTINGS_DEFAULT_MENU 3
 #define BMBT_MENU_IDX_SETTINGS_VEHICLE_TYPE 4
 #define BMBT_MENU_IDX_SETTINGS_BLINKERS 5
-#define BMBT_MENU_IDX_SETTINGS_RESET_PAIRINGS 6
+#define BMBT_MENU_IDX_SETTINGS_TCU_MODE 6
+#define BMBT_MENU_IDX_PAIRING_MODE 0
+#define BMBT_MENU_IDX_CLEAR_PAIRING 1
 #define BMBT_MENU_WRITE_DELAY 300
 #define BMBT_MENU_TIMER_WRITE_INT 100
 #define BMBT_MENU_TIMER_WRITE_TIMEOUT 500
+#define BMBT_HEADER_TIMER_WRITE_INT 50
+#define BMBT_HEADER_TIMER_WRITE_TIMEOUT 100
+#define BMBT_MENU_HEADER_TIMER_OFF 255
 #define BMBT_METADATA_MODE_OFF 0x00
 #define BMBT_METADATA_MODE_PARTY 0x01
 #define BMBT_METADATA_MODE_CHUNK 0x02
@@ -61,10 +66,13 @@ typedef struct BMBTContext_t {
     uint8_t navIndexType;
     uint8_t radType;
     uint8_t writtenIndices;
+    uint8_t timerHeaderIntervals;
     uint8_t timerMenuIntervals;
     int8_t selectedPairingDevice;
     int8_t activelyPairedDevice;
     uint8_t displayUpdateTaskId;
+    uint8_t headerWriteTaskId;
+    uint8_t menuWriteTaskId;
     UtilsAbstractDisplayValue_t mainDisplay;
 } BMBTContext_t;
 void BMBTInit(BC127_t *, IBus_t *);
@@ -77,11 +85,11 @@ void BMBTIBusBMBTButtonPress(void *, unsigned char *);
 void BMBTIBusCDChangerStatus(void *, unsigned char *);
 void BMBTIBusGTDiagnostics(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);
-void BMBTRADC43ScreenModeUpdate(void *, unsigned char *);
 void BMBTRADDisplayMenu(void *, unsigned char *);
 void BMBTRADUpdateMainArea(void *, unsigned char *);
 void BMBTScreenModeUpdate(void *, unsigned char *);
 void BMBTScreenModeSet(void *, unsigned char *);
+void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);
 void BMBTTimerScrollDisplay(void *);
 #endif /* BMBT_H */

@@ -13,6 +13,7 @@ uint8_t SETTINGS_MENU[] = {
     CD53_SETTING_IDX_AUTOPLAY,
     CD53_SETTING_IDX_VEH_TYPE,
     CD53_SETTING_IDX_BLINKERS,
+    CD53_SETTING_IDX_TCU_MODE,
     CD53_SETTING_IDX_PAIRINGS,
 };
 
@@ -21,7 +22,8 @@ uint8_t SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_METADATA_MODE,
     CONFIG_SETTING_AUTOPLAY,
     CONFIG_VEHICLE_TYPE_ADDRESS,
-    CONFIG_SETTING_OT_BLINKERS
+    CONFIG_SETTING_OT_BLINKERS,
+    CONFIG_SETTING_TCU_MODE
 };
 
 void CD53Init(BC127_t *bt, IBus_t *ibus)
@@ -216,14 +218,12 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             if (nextMenu == CD53_SETTING_IDX_VEH_TYPE) {
                 unsigned char vehicleType = ConfigGetVehicleType();
                 context->settingValue = vehicleType;
-                if (vehicleType == 0x00 || vehicleType == 0xFF) {
-                    CD53SetMainDisplayText(context, "Car: Unset", 0);
-                } else if (vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+                if (vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
                     CD53SetMainDisplayText(context, "Car: E38/E39/E53", 0);
-                } else if (vehicleType == IBUS_VEHICLE_TYPE_E39_LATE) {
-                    CD53SetMainDisplayText(context, "Car: 03+ E39", 0);
                 } else if (vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
                     CD53SetMainDisplayText(context, "Car: E46/Z4", 0);
+                } else {
+                    CD53SetMainDisplayText(context, "Car: Unset", 0);
                 }
                 context->settingIdx = CD53_SETTING_IDX_VEH_TYPE;
             }
@@ -240,6 +240,17 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                     context->settingValue = CONFIG_SETTING_OFF;
                 }
                 context->settingIdx = CD53_SETTING_IDX_BLINKERS;
+            }
+            if (nextMenu == CD53_SETTING_IDX_TCU_MODE) {
+                unsigned char tcuMode = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
+                if (tcuMode == CONFIG_SETTING_OFF) {
+                    CD53SetMainDisplayText(context, "TCU Mode: Always", 0);
+                    context->settingValue = CONFIG_SETTING_OFF;
+                } else {
+                    CD53SetMainDisplayText(context, "TCU Mode: Out of BT", 0);
+                    context->settingValue = CONFIG_SETTING_ON;
+                }
+                context->settingIdx = CD53_SETTING_IDX_TCU_MODE;
             }
             if (nextMenu== CD53_SETTING_IDX_PAIRINGS) {
                 CD53SetMainDisplayText(context, "Clear Pairings", 0);
@@ -284,10 +295,7 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                 ) {
                     CD53SetMainDisplayText(context, "Car: E38/E39/E53", 0);
                     context->settingValue = IBUS_VEHICLE_TYPE_E38_E39_E53;
-                } else if (context->settingValue == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-                    CD53SetMainDisplayText(context, "Car: 03+ E39", 0);
-                    context->settingValue = IBUS_VEHICLE_TYPE_E39_LATE;
-                } else if (context->settingValue == IBUS_VEHICLE_TYPE_E39_LATE) {
+                } else {
                     CD53SetMainDisplayText(context, "Car: E46/Z4", 0);
                     context->settingValue = IBUS_VEHICLE_TYPE_E46_Z4;
                 }
@@ -301,6 +309,15 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                     context->settingValue = 0x05;
                 } else {
                     CD53SetMainDisplayText(context, "OT Blink: 1", 0);
+                    context->settingValue = CONFIG_SETTING_OFF;
+                }
+            }
+            if (context->settingIdx == CD53_SETTING_IDX_TCU_MODE) {
+                if (context->settingValue == CONFIG_SETTING_ON) {
+                    CD53SetMainDisplayText(context, "TCU Mode: Out of BT", 0);
+                    context->settingValue = CONFIG_SETTING_ON;
+                } else {
+                    CD53SetMainDisplayText(context, "TCU Mode: Always", 0);
                     context->settingValue = CONFIG_SETTING_OFF;
                 }
             }
@@ -355,10 +372,9 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             } else {
                 context->settingMode = CD53_SETTING_MODE_SCROLL_SETTINGS;
                 if (context->settingIdx == CD53_SETTING_IDX_PAIRINGS) {
-                    if (context->settingValue == 1) {
+                    if (context->settingValue == CONFIG_SETTING_ON) {
                         BC127CommandUnpair(context->bt);
                         CD53SetTempDisplayText(context, "Unpaired", 1);
-                        CD53SetMainDisplayText(context, "Clear Pairings", 0);
                     }
                 } else if (context->settingIdx == CD53_SETTING_IDX_VEH_TYPE) {
                     ConfigSetVehicleType(context->settingValue);

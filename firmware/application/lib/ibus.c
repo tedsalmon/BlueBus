@@ -29,7 +29,6 @@ IBus_t IBusInit()
     );
     ibus.cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
     ibus.ignitionStatus = IBUS_IGNITION_OFF;
-    ibus.lcmDimmerState = IBUS_LCM_DIMMER_OFF;
     ibus.lcmDimmerStatus1 = 0x80;
     ibus.lcmDimmerStatus2 = 0x80;
     ibus.rxBufferIdx = 0;
@@ -104,16 +103,13 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 
 static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO && pkt[IBUS_PKT_CMD] == IBUS_LCM_LIGHT_STATUS) {
+    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO &&
+        pkt[IBUS_PKT_CMD] == IBUS_LCM_LIGHT_STATUS
+    ) {
         EventTriggerCallback(IBusEvent_LCMLightStatus, pkt);
-        if (pkt[IBUS_PKT_LEN] == 0x08) {
-            if ((pkt[8] & 1 << 0) == 0) {
-                ibus->lcmDimmerState = IBUS_LCM_DIMMER_OFF;
-            } else {
-                ibus->lcmDimmerState = IBUS_LCM_DIMMER_ON;
-            }
-        }
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO && pkt[IBUS_PKT_CMD] == IBUS_LCM_DIMMER_STATUS) {
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO &&
+               pkt[IBUS_PKT_CMD] == IBUS_LCM_DIMMER_STATUS
+    ) {
         EventTriggerCallback(IBusEvent_LCMDimmerStatus, pkt);
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
                pkt[IBUS_PKT_CMD] == IBUS_CMD_DIAG_RESPONSE &&
@@ -177,11 +173,6 @@ HW: %02d SW: %d%d Build Week: %d%d Year: %d%d \r\n",
         }
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_UPDATE_MAIN_AREA) {
             EventTriggerCallback(IBusEvent_RADUpdateMainArea, pkt);
-        }
-        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_C43_SCREEN_UPDATE &&
-            pkt[4] == IBUS_CMD_RAD_C43_SET_MENU_MODE
-        ) {
-            EventTriggerCallback(IBusEvent_RADC43ScreenModeUpdate, pkt);
         }
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_DISPLAY_RADIO_MENU) {
             EventTriggerCallback(IBusEvent_RADDisplayMenu, pkt);
@@ -657,6 +648,9 @@ uint8_t IBusGetNavType(unsigned char *packet)
             break;
     }
     uint8_t softwareVersion = IBusGetNavSWVersion(packet);
+    if (navType == IBUS_GT_MKIII && softwareVersion > 40) {
+        navType = IBUS_GT_MKIII_NEW_UI;
+    }
     if (navType == IBUS_GT_MKIV &&
         (softwareVersion == 0 || softwareVersion >= 40)
     ) {
@@ -975,7 +969,46 @@ void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
-void IBusCommandGTWriteTitle(IBus_t *ibus, char *message)
+/**
+ * IBusCommandGTWriteTitleArea()
+ *     Description:
+ *        Write the title using the "old" UI "Area" update message
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *message - The text
+ *     Returns:
+ *         void
+ */
+void IBusCommandGTWriteTitleArea(IBus_t *ibus, char *message)
+{
+    uint8_t length = strlen(message);
+    if (length > 9) {
+        length = 9;
+    }
+    // Length + Write Type + Write Area + Size
+    const size_t pktLenght = length + 3;
+    unsigned char text[pktLenght];
+    text[0] = IBUS_CMD_GT_WRITE_TITLE;
+    text[1] = IBUS_CMD_GT_WRITE_ZONE;
+    text[2] = 0x30;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 3] = message[idx];
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
+}
+
+/**
+ * IBusCommandGTWriteTitleIndex()
+ *     Description:
+ *        Write the title using the "new" UI "Index" update message.
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *message - The text
+ *     Returns:
+ *         void
+ */
+void IBusCommandGTWriteTitleIndex(IBus_t *ibus, char *message)
 {
     uint8_t length = strlen(message);
     if (length > 9) {
@@ -1108,9 +1141,6 @@ void IBusCommandIKETextClear(IBus_t *ibus)
  *            // E38/E39/E53/Range Rover Left / Right
  *            3F 0F D0 0C 00 00 40 00 00 00 00 00 00 FF FF 00 AC
  *            3F 0F D0 0C 00 00 80 00 00 00 00 00 00 FF FF 00 6C
- *            // E39 Turn Left / Right
- *            3F 0F D0 0C 00 00 40 00 00 00 00 00 00 80 80 00 AC
- *            3F 0F D0 0C 00 00 80 00 00 00 00 00 00 80 80 00 6C
  *            // E46/Z4 Left / Right
  *            3F 0F D0 0C 00 00 FF 50 00 00 00 80 00 80 80 00 C3
  *            3F 0F D0 0C 00 00 FF 80 00 00 00 80 00 80 80 00 13
@@ -1131,10 +1161,6 @@ void IBusCommandLCMEnableBlinker(IBus_t *ibus, unsigned char blinker) {
 
     if (vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
         lightStatus = blinker;
-    } else if (vehicleType == IBUS_VEHICLE_TYPE_E39_LATE) {
-        lightStatus = blinker;
-        ioStatus2 = 0x80;
-        ioStatus3 = 0x80;
     } else if (vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
         lightStatus = 0xFF;
         if (blinker == IBUS_LCM_BLINKER_DRV) {
@@ -1318,7 +1344,7 @@ void IBusCommandRADC43ScreenModeSet(IBus_t *ibus, unsigned char mode)
  */
 void IBusCommandRADClearMenu(IBus_t *ibus)
 {
-    unsigned char msg[] = {0x46, 0x0B};
+    unsigned char msg[] = {0x46, 0x0A};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_RAD,

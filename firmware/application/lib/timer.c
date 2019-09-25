@@ -110,6 +110,23 @@ uint8_t TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
 }
 
 /**
+ * TimerResetScheduledTask()
+ *     Description:
+ *         Reset the ticks on a given task
+ *     Params:
+ *         uint8_t - The index of the scheduled task in the tasks array
+ *     Returns:
+ *         void
+ */
+void TimerResetScheduledTask(uint8_t taskId)
+{
+    volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
+    if (t != 0) {
+        t->ticks = 0;
+    }
+}
+
+/**
  * TimerTriggerScheduledTask()
  *     Description:
  *         Call a given scheduled task immediately and reset the interval count

@@ -116,9 +116,11 @@
 #define IBUS_GT_MKI 1
 #define IBUS_GT_MKII 2
 #define IBUS_GT_MKIII 3
-#define IBUS_GT_MKIV 4
+// MVIII Nav systems got the new UI at version 40
+#define IBUS_GT_MKIII_NEW_UI 4
+#define IBUS_GT_MKIV 5
 // MKIV Nav systems with version >= 40 support static screens
-#define IBUS_GT_MKIV_STATIC 5
+#define IBUS_GT_MKIV_STATIC 6
 #define IBUS_GT_HW_ID_OFFSET 11
 #define IBUS_GT_SW_ID_OFFSET 33
 #define IBUS_GT_TONE_MENU_OFF 0x08
@@ -152,14 +154,13 @@
 #define IBusEvent_ScreenModeSet 42
 #define IBusEvent_RADDiagResponse 43
 #define IBusEvent_MFLButton 44
-#define IBusEvent_RADC43ScreenModeUpdate 45
-#define IBusEvent_RADDisplayMenu 46
-#define IBusEvent_RADMIDDisplayText 47
-#define IBusEvent_RADMIDDisplayMenu 48
-#define IBusEvent_LCMLightStatus 49
-#define IBusEvent_LCMDimmerStatus 50
-#define IBusEvent_GTWriteResponse 51
-#define IBusEvent_MFLVolume 52
+#define IBusEvent_RADDisplayMenu 45
+#define IBusEvent_RADMIDDisplayText 46
+#define IBusEvent_RADMIDDisplayMenu 47
+#define IBusEvent_LCMLightStatus 48
+#define IBusEvent_LCMDimmerStatus 49
+#define IBusEvent_GTWriteResponse 50
+#define IBusEvent_MFLVolume 51
 
 #define IBus_UI_CD53 1
 #define IBus_UI_BMBT 2
@@ -182,8 +183,6 @@
 #define IBUS_LCM_E46_PSG_SIG_BIT 6
 #define IBUS_LCM_E46_BLINKER_DRV 0x50
 #define IBUS_LCM_E46_BLINKER_PSG 0x80
-#define IBUS_LCM_DIMMER_OFF 0
-#define IBUS_LCM_DIMMER_ON 1
 
 #define IBUS_LCM_DRV_SIG_BIT 5
 #define IBUS_LCM_PSG_SIG_BIT 6
@@ -205,8 +204,7 @@
 #define IBusMFLVolDown 0x10
 
 #define IBUS_VEHICLE_TYPE_E38_E39_E53 0x01
-#define IBUS_VEHICLE_TYPE_E39_LATE 0x02
-#define IBUS_VEHICLE_TYPE_E46_Z4 0x03
+#define IBUS_VEHICLE_TYPE_E46_Z4 0x02
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -269,7 +267,8 @@ void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *, unsigned char);
 void IBusCommandGTWriteIndexTMC(IBus_t *, uint8_t, char *, unsigned char);
 void IBusCommandGTWriteIndexTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndexStatic(IBus_t *, uint8_t, char *);
-void IBusCommandGTWriteTitle(IBus_t *, char *);
+void IBusCommandGTWriteTitleArea(IBus_t *, char *);
+void IBusCommandGTWriteTitleIndex(IBus_t *, char *);
 void IBusCommandGTWriteTitleC43(IBus_t *, char *);
 void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnition(IBus_t *);

@@ -134,7 +134,6 @@ void CLIProcess(CLI_t *cli)
                     BC127CommandSetCodec(cli->bt, 1, "OFF");
                     BC127CommandSetMetadata(cli->bt, 1);
                     BC127CommandSetModuleName(cli->bt, "BlueBus");
-                    BC127CommandSetProfiles(cli->bt, 1, 1, 0, 1);
                     BC127CommandSetUART(cli->bt, 115200, "OFF", 0);
                 } else if (UtilsStricmp(msgBuf[1], "HFP") == 0) {
                     if (delimCount == 2) {
@@ -152,6 +151,19 @@ void CLIProcess(CLI_t *cli)
                             BC127CommandSetProfiles(cli->bt, 1, 1, 0, 0);
                         } else {
                             cmdSuccess = 0;
+                        }
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "MGAIN") == 0) {
+                    if (delimCount == 2) {
+                        unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+                        LogRaw("BT Mic Gain Set to: %02X\r\n", micGain);
+                    } else {
+                        unsigned char micGain = UtilsStrToHex(msgBuf[2]);
+                        if (micGain < 0xC0 || micGain > 0xD6) {
+                            LogRaw("Mic Gain '%02X' out of range: C0 - D6\r\n", micGain);
+                        } else {
+                            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
+                            BC127CommandSetMicGain(cli->bt, micGain);
                         }
                     }
                 } else if (UtilsStricmp(msgBuf[1], "REBOOT") == 0) {
@@ -210,16 +222,6 @@ void CLIProcess(CLI_t *cli)
                     LogRaw("WM8804: SPDSTAT %02X (0x0C) [%d]\r\n", buffer, status);
                     status = I2CRead(0x3A, 0x0B, &buffer);
                     LogRaw("WM8804: INTSTAT %02X (0x0B) [%d]\r\n", buffer, status);
-                    status = I2CRead(0x3A, 0x0D, &buffer);
-                    LogRaw("WM8804: RXCHAN1 %02X (0x0D) [%d]\r\n", buffer, status);
-                    status = I2CRead(0x3A, 0x0E, &buffer);
-                    LogRaw("WM8804: RXCHAN2 %02X (0x0E) [%d]\r\n", buffer, status);
-                    status = I2CRead(0x3A, 0x0F, &buffer);
-                    LogRaw("WM8804: RXCHAN3 %02X (0x0F) [%d]\r\n", buffer, status);
-                    status = I2CRead(0x3A, 0x10, &buffer);
-                    LogRaw("WM8804: RXCHAN4 %02X (0x10) [%d]\r\n", buffer, status);
-                    status = I2CRead(0x3A, 0x11, &buffer);
-                    LogRaw("WM8804: RXCHAN5 %02X (0x11) [%d]\r\n", buffer, status);
                 } else {
                     cmdSuccess = 0;
                 }
@@ -309,13 +311,14 @@ void CLIProcess(CLI_t *cli)
                     cmdSuccess = 0;
                 }
             } else if (UtilsStricmp(msgBuf[0], "VERSION") == 0) {
-                LogRaw("BlueBus\r\nFirmware Version: 1.0.9\r\nHardware Revision: C\r\n");
+                LogRaw("BlueBus\r\nFirmware Version: 1.0.9.3\r\nHardware Revision: C\r\n");
             } else if (UtilsStricmp(msgBuf[0], "HELP") == 0 || UtilsStricmp(msgBuf[0], "?") == 0) {
                 LogRaw("Available Commands:\r\n");
                 LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
                 LogRaw("    BT CONFIG - Get the BC127 Configuration\r\n");
                 LogRaw("    BT CVC ON/OFF - Enable or Disable CVC.\r\n");
                 LogRaw("    BT HFP ON/OFF - Enable or Disable HFP. Get the HFP Status without a param.\r\n");
+                LogRaw("    BT MGAIN x - Set the Mic gain to x where x is octal C0-D6\r\n");
                 LogRaw("    BT PAIR - Enable pairing mode\r\n");
                 LogRaw("    BT REBOOT - Reboot the BC127\r\n");
                 LogRaw("    BT UNPAIR - Unpair all devices from the BC127\r\n");
@@ -349,7 +352,7 @@ void CLIProcess(CLI_t *cli)
                 cli->lastRxTimestamp == 0
             ) {
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
-                LogRaw("BlueBus Firmware: 1.0.9\r\n");
+                LogRaw("BlueBus Firmware: 1.0.9.3\r\n");
                 LogRaw("Try HELP or ?\r\n");
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
             }

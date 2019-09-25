@@ -153,11 +153,12 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         MIDInit(bt, ibus);
         BMBTInit(bt, ibus);
     }
+    unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
     // Set the CVC Parameters
-    BC127CommandCVC(Context.bt, "NB", 0, 14);
-    BC127CommandCVCParams(Context.bt, "2280 0000 1A00 8000 0000 00C1 0000 0000 0000 0000 0000 0020 0000 00C1");
-    BC127CommandCVC(Context.bt, "WB", 0, 14);
-    BC127CommandCVCParams(Context.bt, "2284 0000 1A00 8000 0000 00C1 0000 0000 0000 0000 0000 0020 0000 00C1");
+    if (micGain == 0x00) {
+        micGain = 0xC4; // Default
+    }
+    BC127CommandSetMicGain(Context.bt, micGain);
 }
 
 /**
@@ -212,19 +213,23 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
     ) {
         BC127CommandPlay(context->bt);
     }
-    if ((context->bt->callStatus == BC127_CALL_INCOMING ||
-        context->bt->callStatus == BC127_CALL_OUTGOING) &&
-        context->bt->scoStatus == BC127_CALL_SCO_OPEN
+    if (ConfigGetSetting(CONFIG_SETTING_TCU_MODE) == CONFIG_SETTING_OFF ||
+        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING
     ) {
-        // Enable the amp and mute the radio
-        PAM_SHDN = 1;
-        TEL_MUTE = 1;
-    }
-    // Close the call immediately, without waiting for SCO to close
-    if (context->bt->callStatus == BC127_CALL_INACTIVE) {
-        // Disable the amp and unmute the radio
-        PAM_SHDN = 0;
-        TEL_MUTE = 0;
+        if ((context->bt->callStatus == BC127_CALL_INCOMING ||
+            context->bt->callStatus == BC127_CALL_OUTGOING) &&
+            context->bt->scoStatus == BC127_CALL_SCO_OPEN
+        ) {
+            // Enable the amp and mute the radio
+            PAM_SHDN = 1;
+            TEL_MUTE = 1;
+        }
+        // Close the call immediately, without waiting for SCO to close
+        if (context->bt->callStatus == BC127_CALL_INACTIVE) {
+            // Disable the amp and unmute the radio
+            PAM_SHDN = 0;
+            TEL_MUTE = 0;
+        }
     }
 }
 
@@ -243,7 +248,6 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
-        
         // Once A2DP and AVRCP are connected, we can disable connectability
         // If HFP is enabled, do not disable connectability until the
         // profile opens
@@ -417,6 +421,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             BC127CommandPause(context->bt);
         }
         curStatus = IBUS_CDC_STAT_STOP;
+        curFunction = IBUS_CDC_FUNC_NOT_PLAYING;
     } else if (requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK) {
         curFunction = context->ibus->cdChangerFunction;
         curStatus = IBUS_CDC_STAT_PLAYING;
@@ -596,8 +601,8 @@ void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
 /**
  * HandlerIBusLCMDimmerStatus()
  *     Description:
- *         Track the Dimmer Status messages so we can correctly set the dash
- *         dimming
+ *         Track the Dimmer Status messages so we can correctly set the
+ *         dimming state when messing with the lighting
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *tmp - Any event data
@@ -607,9 +612,7 @@ void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusLCMDimmerStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->ibus->lcmDimmerState == IBUS_LCM_DIMMER_ON &&
-        ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E46_Z4
-    ) {
+    if (ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E46_Z4) {
         IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
     }
 }
@@ -627,10 +630,8 @@ void HandlerIBusLCMDimmerStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING ||
-        ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON
-    ) {
-        unsigned char mflButton = pkt[4];
+    unsigned char mflButton = pkt[4];
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         if (mflButton == IBusMFLButtonVoiceRelease) {
             if (context->bt->callStatus == BC127_CALL_ACTIVE) {
                 BC127CommandCallEnd(context->bt);
@@ -642,15 +643,15 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
         } else if (mflButton == IBusMFLButtonVoiceHold) {
             BC127CommandToggleVR(context->bt);
         }
-        if ((mflButton == IBusMFLButtonRTPress ||
-            mflButton == IBusMFLButtonRTRelease) &&
-            context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
-        ) {
-            if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-                BC127CommandPause(context->bt);
-            } else {
-                BC127CommandPlay(context->bt);
-            }
+    }
+    if ((mflButton == IBusMFLButtonRTPress ||
+        mflButton == IBusMFLButtonRTRelease) &&
+        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
+    ) {
+        if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+            BC127CommandPause(context->bt);
+        } else {
+            BC127CommandPlay(context->bt);
         }
     }
 }
@@ -814,13 +815,25 @@ void HandlerTimerPoweroff(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char powerTimeout = ConfigGetPoweroffTimeout();
-    uint8_t lastRxMinutes = (TimerGetMillis() - context->ibus->rxLastStamp) / 60000;
-    if (powerTimeout != 0 && lastRxMinutes >= powerTimeout && IBUS_EN_STATUS == 1) {
-        LogInfo(LOG_SOURCE_SYSTEM, "System Power Down!");
-        // Destroy the UART module for IBus
-        UARTDestroy(IBUS_UART_MODULE);
-        // Disable the TH3122
-        IBUS_EN = 0;
+    if (powerTimeout != 0) {
+        uint8_t lastRxMinutes = (TimerGetMillis() - context->ibus->rxLastStamp) / 60000;
+        if (lastRxMinutes >= powerTimeout) {
+            // Destroy the UART module for IBus
+            UARTDestroy(IBUS_UART_MODULE);
+        }
+        // Wait one cycle (second) until this Timer is called again before
+        // pulling the EN line low. This ensures that we are not
+        if (lastRxMinutes >= (powerTimeout + 1)) {
+            if (IBUS_EN_STATUS == 1) {
+                LogInfo(LOG_SOURCE_SYSTEM, "System Power Down!");
+                // Disable the TH3122
+                IBUS_EN = 0;
+            } else {
+                // Re-enable the TH3122 EN line so we can try pulling it,
+                // and the regulator low again
+                IBUS_EN = 1;
+            }
+        }
     }
 }
 

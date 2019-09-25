@@ -20,8 +20,6 @@ void I2CInit()
 {
     I2C3_SDA_MODE = 1;
     I2C3_SCL_MODE = 1;
-    I2C3_SDA_DC = 1;
-    I2C3_SCL_DC = 1;
     I2C3_SDA = 0;
     I2C3_SCL = 0;
     I2C3CONL = 0;

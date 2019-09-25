@@ -717,7 +717,7 @@ void BC127CommandSetBtVolConfig(
   *     Params:
   *         BC127_t *bt - A pointer to the module object
   *         uint8_t bitmask - The codec bitmask
-  *        char *talkback - The A2DP Talk back mode (on / off)
+  *         char *talkback - The A2DP Talk back mode (on / off)
   *     Returns:
   *         void
   */
@@ -728,7 +728,16 @@ void BC127CommandSetCodec(BC127_t *bt, uint8_t bitmask, char *talkback) {
     BC127CommandWrite(bt);
 }
 
-
+ /**
+  * BC127CommandSetMetadata()
+  *     Description:
+  *         Enable/Disable the music metadata
+  *     Params:
+  *         BC127_t *bt - A pointer to the module object
+  *         uint8_t value - Metadata mode (on / off)
+  *     Returns:
+  *         void
+  */
 void BC127CommandSetMetadata(BC127_t *bt, uint8_t value)
 {
     if (value == 0) {
@@ -739,6 +748,27 @@ void BC127CommandSetMetadata(BC127_t *bt, uint8_t value)
         BC127SendCommand(bt, command);
     }
     BC127CommandWrite(bt);
+}
+
+ /**
+  * BC127CommandSetMicGain()
+  *     Description:
+  *         Set the microphone gain
+  *     Params:
+  *         BC127_t *bt - A pointer to the module object
+  *         unsigned char gain - The gain to set
+  *     Returns:
+  *         void
+  */
+void BC127CommandSetMicGain(BC127_t *bt, unsigned char gain)
+{
+    BC127CommandCVC(bt, "NB", 0, 14);
+    char params[70];
+    snprintf(params, 70, "2280 0000 1A00 8000 0000 00%02X 0000 0000 0000 0000 0000 0020 0000 00%02X", gain, gain);
+    BC127CommandCVCParams(bt, params);
+    BC127CommandCVC(bt, "WB", 0, 14);
+    snprintf(params, 70, "2284 0000 1A00 8000 0000 00%02X 0000 0000 0000 0000 0000 0020 0000 00%02X", gain, gain);
+    BC127CommandCVCParams(bt, params);
 }
 
 /**
