@@ -173,9 +173,18 @@ static void BMBTTriggerWriteHeader(BMBTContext_t *context)
  */
 static void BMBTTriggerWriteMenu(BMBTContext_t *context)
 {
-    if (context->timerMenuIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
-        TimerResetScheduledTask(context->menuWriteTaskId);
-        context->timerMenuIntervals = 0;
+    // If we can refresh the last menu back onto the screen,
+    // do so immediately. Otherwise, trigger the menu write timer
+    if (context->menu == BMBT_MENU_NONE ||
+        context->menu == BMBT_MENU_DASHBOARD_FRESH ||
+        context->navType < IBUS_GT_MKIII_NEW_UI
+    ) {
+        if (context->timerMenuIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
+            TimerResetScheduledTask(context->menuWriteTaskId);
+            context->timerMenuIntervals = 0;
+        }
+    } else {
+        BMBTMenuRefresh(context);
     }
 }
 
@@ -516,41 +525,6 @@ static void BMBTMenuSettings(BMBTContext_t *context)
 }
 
 /**
- * BMBTMenuWrite()
- *     Description:
- *         Write the appropriate menu back out
- *     Params:
- *         BMBTContext_t *context - The BMBT context
- *     Returns:
- *         void
- */
-static void BMBTMenuWrite(BMBTContext_t *context)
-{
-    switch (context->menu) {
-        case BMBT_MENU_MAIN:
-            BMBTMenuMain(context);
-            break;
-        case BMBT_MENU_DASHBOARD:
-        case BMBT_MENU_DASHBOARD_FRESH:
-            BMBTMenuDashboard(context);
-            break;
-        case BMBT_MENU_DEVICE_SELECTION:
-            BMBTMenuDeviceSelection(context);
-            break;
-        case BMBT_MENU_SETTINGS:
-            BMBTMenuSettings(context);
-            break;
-        case BMBT_MENU_NONE:
-            if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x01) {
-                BMBTMenuDashboard(context);
-            } else {
-                BMBTMenuMain(context);
-            }
-            break;
-    }
-}
-
-/**
  * BMBTBC127DeviceConnected()
  *     Description:
  *         Handle screen updates when a device connects
@@ -768,9 +742,7 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
         context->displayMode = BMBT_DISPLAY_OFF;
         BMBTSetMainDisplayText(context, "Bluetooth", 0, 0);
         IBusCommandRADEnableMenu(context->ibus);
-    } else if (
-        (requestedCommand == IBUS_CDC_CMD_PAUSE_PLAYING ||
-         requestedCommand == IBUS_CDC_CMD_START_PLAYING) ||
+    } else if (requestedCommand == IBUS_CDC_CMD_START_PLAYING ||
         (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
          context->mode == BMBT_MODE_INACTIVE)
     ) {
@@ -783,8 +755,8 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
             }
             IBusCommandRADDisableMenu(context->ibus);
             context->mode = BMBT_MODE_ACTIVE;
-            context->timerMenuIntervals = 0;
-            TimerResetScheduledTask(context->menuWriteTaskId);
+            BMBTTriggerWriteHeader(context);
+            BMBTTriggerWriteMenu(context);
         }
     }
 }
@@ -1033,9 +1005,6 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
         text[textLen - 1] = '\0';
         if (UtilsStricmp("NO DISC", text) == 0) {
             if (context->displayMode == BMBT_DISPLAY_OFF) {
-                // Disable the radio's menu alterations
-                // after the screen has been written to so that we're not ignored
-                IBusCommandRADDisableMenu(context->ibus);
                 context->displayMode = BMBT_DISPLAY_ON;
             }
             if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
@@ -1051,13 +1020,9 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
             context->displayMode = BMBT_DISPLAY_OFF;
         } else {
             if (context->displayMode == BMBT_DISPLAY_OFF) {
-                // Disable the radio's menu alterations
-                // after the screen has been written to so that we're not ignored
                 context->displayMode = BMBT_DISPLAY_ON;
-                IBusCommandRADDisableMenu(context->ibus);
             } else if (context->displayMode == BMBT_DISPLAY_ON) {
-                // Clear the radio display if we have a C43 in a "new ui"
-                // nav
+                // Clear the radio display if we have a C43 in a "new UI" nav
                 if (pkt[4] == IBUS_C43_TITLE_MODE &&
                     context->navType >= IBUS_GT_MKIII_NEW_UI
                 ) {
@@ -1174,14 +1139,27 @@ void BMBTTimerMenuWrite(void *ctx)
         if (context->timerMenuIntervals != BMBT_MENU_HEADER_TIMER_OFF) {
             uint16_t time = context->timerMenuIntervals * BMBT_MENU_TIMER_WRITE_INT;
             if (time == BMBT_MENU_TIMER_WRITE_TIMEOUT) {
-                // Write the current menu back out
-                if (context->menu == BMBT_MENU_NONE ||
-                    context->menu == BMBT_MENU_DASHBOARD_FRESH ||
-                    context->navType < IBUS_GT_MKIII_NEW_UI
-                ) {
-                    BMBTMenuWrite(context);
-                } else {
-                    BMBTMenuRefresh(context);
+                switch (context->menu) {
+                    case BMBT_MENU_MAIN:
+                        BMBTMenuMain(context);
+                        break;
+                    case BMBT_MENU_DASHBOARD:
+                    case BMBT_MENU_DASHBOARD_FRESH:
+                        BMBTMenuDashboard(context);
+                        break;
+                    case BMBT_MENU_DEVICE_SELECTION:
+                        BMBTMenuDeviceSelection(context);
+                        break;
+                    case BMBT_MENU_SETTINGS:
+                        BMBTMenuSettings(context);
+                        break;
+                    case BMBT_MENU_NONE:
+                        if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x01) {
+                            BMBTMenuDashboard(context);
+                        } else {
+                            BMBTMenuMain(context);
+                        }
+                        break;
                 }
                 // Increment the intervals so we aren't called again
                 context->timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;

@@ -141,9 +141,9 @@ static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
         } else if(pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_GET_STATUS) {
             if (pkt[4] == IBUS_CDC_CMD_STOP_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
-            } else if (pkt[4] == IBUS_CDC_CMD_PAUSE_PLAYING ||
-                       pkt[4] == IBUS_CDC_CMD_START_PLAYING
-            ) {
+            } else if (pkt[4] == IBUS_CDC_CMD_PAUSE_PLAYING) {
+                ibus->cdChangerFunction = IBUS_CDC_FUNC_PAUSE;
+            } else if (pkt[4] == IBUS_CDC_CMD_START_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
             }
             EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);

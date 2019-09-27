@@ -415,6 +415,8 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
         curFunction = context->ibus->cdChangerFunction;
         if (curFunction == IBUS_CDC_FUNC_PLAYING) {
             curStatus = IBUS_CDC_STAT_PLAYING;
+        } else if (curFunction == IBUS_CDC_FUNC_PAUSE) {
+            curStatus = IBUS_CDC_STAT_PAUSE;
         }
     } else if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
         if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
@@ -462,9 +464,10 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             curFunction = IBUS_CDC_FUNC_PLAYING;
         }
     } else {
-        if (requestedCommand == IBUS_CDC_CMD_PAUSE_PLAYING ||
-            requestedCommand == IBUS_CDC_CMD_START_PLAYING
-        ) {
+        if (requestedCommand == IBUS_CDC_CMD_PAUSE_PLAYING) {
+            curStatus = IBUS_CDC_STAT_PAUSE;
+            curFunction = IBUS_CDC_FUNC_PAUSE;
+        } else if (requestedCommand == IBUS_CDC_CMD_START_PLAYING) {
             curStatus = IBUS_CDC_STAT_PLAYING;
             curFunction = IBUS_CDC_FUNC_PLAYING;
             if (context->seekMode == HANDLER_CDC_SEEK_MODE_FWD) {

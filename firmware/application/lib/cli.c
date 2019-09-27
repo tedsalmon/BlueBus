@@ -311,7 +311,7 @@ void CLIProcess(CLI_t *cli)
                     cmdSuccess = 0;
                 }
             } else if (UtilsStricmp(msgBuf[0], "VERSION") == 0) {
-                LogRaw("BlueBus\r\nFirmware Version: 1.0.9.3\r\nHardware Revision: C\r\n");
+                LogRaw("BlueBus\r\nFirmware Version: 1.0.9.4\r\nHardware Revision: C\r\n");
             } else if (UtilsStricmp(msgBuf[0], "HELP") == 0 || UtilsStricmp(msgBuf[0], "?") == 0) {
                 LogRaw("Available Commands:\r\n");
                 LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
@@ -352,7 +352,7 @@ void CLIProcess(CLI_t *cli)
                 cli->lastRxTimestamp == 0
             ) {
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
-                LogRaw("BlueBus Firmware: 1.0.9.3\r\n");
+                LogRaw("BlueBus Firmware: 1.0.9.4\r\n");
                 LogRaw("Try HELP or ?\r\n");
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
             }
