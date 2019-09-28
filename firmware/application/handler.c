@@ -220,12 +220,14 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
             context->bt->callStatus == BC127_CALL_OUTGOING) &&
             context->bt->scoStatus == BC127_CALL_SCO_OPEN
         ) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Call: TCU Mode Begin");
             // Enable the amp and mute the radio
             PAM_SHDN = 1;
             TEL_MUTE = 1;
         }
         // Close the call immediately, without waiting for SCO to close
         if (context->bt->callStatus == BC127_CALL_INACTIVE) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Call: TCU Mode End");
             // Disable the amp and unmute the radio
             PAM_SHDN = 0;
             TEL_MUTE = 0;

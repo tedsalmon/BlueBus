@@ -177,7 +177,8 @@ static void BMBTTriggerWriteMenu(BMBTContext_t *context)
     // do so immediately. Otherwise, trigger the menu write timer
     if (context->menu == BMBT_MENU_NONE ||
         context->menu == BMBT_MENU_DASHBOARD_FRESH ||
-        context->navType < IBUS_GT_MKIII_NEW_UI
+        context->navType < IBUS_GT_MKIII_NEW_UI ||
+        context->radType == IBUS_RADIO_TYPE_C43
     ) {
         if (context->timerMenuIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
             TimerResetScheduledTask(context->menuWriteTaskId);
