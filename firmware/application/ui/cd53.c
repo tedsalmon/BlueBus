@@ -570,9 +570,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
         // Stop Playing
         IBusCommandIKETextClear(context->ibus);
         context->mode = CD53_MODE_OFF;
-    } else if (requestedCommand == IBUS_CDC_CMD_PAUSE_PLAYING ||
-               requestedCommand == IBUS_CDC_CMD_START_PLAYING
-    ) {
+    } else if (requestedCommand == IBUS_CDC_CMD_START_PLAYING) {
         // Start Playing
         if (context->mode == CD53_MODE_OFF) {
             CD53SetMainDisplayText(context, "Bluetooth", 0);
@@ -596,7 +594,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
     if (requestedCommand == IBUS_CDC_CMD_CD_CHANGE ||
         requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK
     ) {
-        CD53HandleUIButtons (context, pkt);
+        CD53HandleUIButtons(context, pkt);
     }
 }
 

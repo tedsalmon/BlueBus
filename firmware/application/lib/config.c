@@ -255,7 +255,7 @@ void ConfigSetPoweroffTimeout(unsigned char timeout)
 void ConfigSetSetting(unsigned char setting, unsigned char value)
 {
     // Catch invalid setting addresses
-    if (setting >= 0x0A && setting <= 0x14) {
+    if (setting >= 0x0F && setting <= 0x19) {
         CONFIG_CACHE[setting] = value;
         EEPROMWriteByte(setting, value);
     }

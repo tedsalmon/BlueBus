@@ -836,10 +836,7 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                     } else {
                         // Wait until the current device disconnects to
                         // connect the new one
-                        BC127CommandClose(
-                            context->bt,
-                            context->bt->activeDevice.deviceId
-                        );
+                        BC127CommandClose(context->bt, BC127_CLOSE_ALL);
                         context->selectedPairingDevice = selectedIdx;
                         context->activelyPairedDevice = selectedIdx;
                     }

@@ -122,7 +122,7 @@ void CLIProcess(CLI_t *cli)
                     }
                 } else if (UtilsStricmp(msgBuf[1], "INIT") == 0) {
                     BC127CommandSetAudio(cli->bt, 0, 1);
-                    BC127CommandSetAudioAnalog(cli->bt, "11", "15", "1", "OFF");
+                    BC127CommandSetAudioAnalog(cli->bt, "11", "15", "0", "OFF");
                     BC127CommandSetAudioDigital(
                         cli->bt,
                         BC127_AUDIO_SPDIF,
@@ -164,6 +164,18 @@ void CLIProcess(CLI_t *cli)
                         } else {
                             ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
                             BC127CommandSetMicGain(cli->bt, micGain);
+                        }
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "MBIAS") == 0) {
+                    if (delimCount == 2) {
+                        LogRaw("Set the Mic Bias Generator");
+                    } else {
+                        if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                            BC127CommandSetAudioAnalog(cli->bt, "11", "15", "1", "OFF");
+                        } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                            BC127CommandSetAudioAnalog(cli->bt, "11", "15", "0", "OFF");
+                        } else {
+                            cmdSuccess = 0;
                         }
                     }
                 } else if (UtilsStricmp(msgBuf[1], "REBOOT") == 0) {
@@ -311,7 +323,7 @@ void CLIProcess(CLI_t *cli)
                     cmdSuccess = 0;
                 }
             } else if (UtilsStricmp(msgBuf[0], "VERSION") == 0) {
-                LogRaw("BlueBus\r\nFirmware Version: 1.0.9.4\r\nHardware Revision: C\r\n");
+                LogRaw("BlueBus\r\nFirmware Version: 1.0.9.5\r\nHardware Revision: C\r\n");
             } else if (UtilsStricmp(msgBuf[0], "HELP") == 0 || UtilsStricmp(msgBuf[0], "?") == 0) {
                 LogRaw("Available Commands:\r\n");
                 LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
@@ -352,7 +364,7 @@ void CLIProcess(CLI_t *cli)
                 cli->lastRxTimestamp == 0
             ) {
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
-                LogRaw("BlueBus Firmware: 1.0.9.4\r\n");
+                LogRaw("BlueBus Firmware: 1.0.9.5\r\n");
                 LogRaw("Try HELP or ?\r\n");
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
             }

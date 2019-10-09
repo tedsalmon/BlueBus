@@ -137,6 +137,7 @@
 #define IBus_MID_MAX_CHARS 23
 #define IBus_MID_TITLE_MAX_CHARS 11
 #define IBus_MID_MENU_MAX_CHARS 4
+#define IBis_MID_Button_Press 0x31
 
 #define IBUS_TX_TIMEOUT_OFF 0
 #define IBUS_TX_TIMEOUT_ON 1
@@ -162,6 +163,7 @@
 #define IBusEvent_LCMDimmerStatus 49
 #define IBusEvent_GTWriteResponse 50
 #define IBusEvent_MFLVolume 51
+#define IBusEvent_MIDButtonPress 52
 
 #define IBus_UI_CD53 1
 #define IBus_UI_BMBT 2

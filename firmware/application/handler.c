@@ -823,13 +823,10 @@ void HandlerTimerPoweroff(void *ctx)
     if (powerTimeout != 0) {
         uint8_t lastRxMinutes = (TimerGetMillis() - context->ibus->rxLastStamp) / 60000;
         if (lastRxMinutes >= powerTimeout) {
-            // Destroy the UART module for IBus
-            UARTDestroy(IBUS_UART_MODULE);
-        }
-        // Wait one cycle (second) until this Timer is called again before
-        // pulling the EN line low. This ensures that we are not
-        if (lastRxMinutes >= (powerTimeout + 1)) {
             if (IBUS_EN_STATUS == 1) {
+                // Destroy the UART module for IBus
+                UARTDestroy(IBUS_UART_MODULE);
+                TimerDelayMicroseconds(100);
                 LogInfo(LOG_SOURCE_SYSTEM, "System Power Down!");
                 // Disable the TH3122
                 IBUS_EN = 0;

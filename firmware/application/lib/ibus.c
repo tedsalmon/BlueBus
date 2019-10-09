@@ -133,6 +133,15 @@ static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
+static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
+{
+    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD) {
+        if(pkt[IBUS_PKT_CMD] == IBis_MID_Button_Press) {
+            EventTriggerCallback(IBusEvent_MIDButtonPress, pkt);
+        }
+    }
+}
+
 static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_CDC) {
@@ -280,6 +289,9 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_LCM) {
                         IBusHandleLCMMessage(ibus, pkt);
+                    }
+                    if (srcSystem == IBUS_DEVICE_MID) {
+                        IBusHandleMIDMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_MFL) {
                         IBusHandleMFLMessage(ibus, pkt);
