@@ -404,12 +404,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             if (strcmp(dev->macId, context->bt->activeDevice.macId) != 0) {
                 // Immediately connect if there isn't an active device
                 if (context->bt->activeDevice.deviceId == 0) {
-                    BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
-                } else {
-                    // Close the current connection then open the new one
-                    BC127CommandClose(
-                        context->bt,
-                        context->bt->activeDevice.deviceId
+                    // Trigger device selection event
+                    EventTriggerCallback(
+                        UIEvent_InitiateConnection,
+                        (unsigned char *)&context->btDeviceIndex
                     );
                     CD53SetTempDisplayText(context, "Connecting", 2);
                 }
@@ -471,10 +469,7 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             state = BC127_STATE_ON;
             if (context->bt->activeDevice.deviceId != 0) {
                 // To pair a new device, we must disconnect the active one
-                BC127CommandClose(
-                    context->bt,
-                    context->bt->activeDevice.deviceId
-                );
+                EventTriggerCallback(UIEvent_CloseConnection, 0x00);
             }
         }
         BC127CommandBtState(context->bt, context->bt->connectable, state);
@@ -491,14 +486,8 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
 void CD53BC127DeviceDisconnected(void *ctx, unsigned char *tmp)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
-    if (context->btDeviceIndex != CD53_PAIRING_DEVICE_NONE) {
-        BC127PairedDevice_t *dev = &context->bt->pairedDevices[
-            context->btDeviceIndex
-        ];
-        if (strlen(dev->macId) > 0) {
-            BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
-        }
-        context->btDeviceIndex = CD53_PAIRING_DEVICE_NONE;
+    if (context->mode == CD53_MODE_ACTIVE) {
+        CD53SetMainDisplayText(context, "Bluetooth", 0);
     }
 }
 

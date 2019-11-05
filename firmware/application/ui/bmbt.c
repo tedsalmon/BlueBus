@@ -14,14 +14,13 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
     Context.menu = BMBT_MENU_NONE;
     Context.mode = BMBT_MODE_INACTIVE;
     Context.displayMode = BMBT_DISPLAY_OFF;
+    Context.navState = BMBT_NAV_STATE_ON;
     Context.navType = (uint8_t) ConfigGetNavType();
     Context.navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
     Context.radType = IBUS_RADIO_TYPE_BM53;
     Context.writtenIndices = 3;
     Context.timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     Context.timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;
-    Context.selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
-    Context.activelyPairedDevice = BMBT_PAIRING_DEVICE_NONE;
     Context.mainDisplay = UtilsDisplayValueInit("Bluetooth", BMBT_DISPLAY_OFF);
     EventRegisterCallback(
         BC127Event_DeviceConnected,
@@ -570,15 +569,6 @@ void BMBTBC127DeviceDisconnected(void *ctx, unsigned char *data)
             BMBTMenuDeviceSelection(context);
         }
     }
-    if (context->selectedPairingDevice != BMBT_PAIRING_DEVICE_NONE) {
-        BC127PairedDevice_t *dev = &context->bt->pairedDevices[
-            context->selectedPairingDevice
-        ];
-        if (strlen(dev->macId) > 0) {
-            BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
-        }
-        context->selectedPairingDevice = BMBT_PAIRING_DEVICE_NONE;
-    }
 }
 
 /**
@@ -684,6 +674,46 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
                 BC127CommandPlay(context->bt);
             }
         }
+        // Set the DAC Volume
+        if (pkt[4] == IBUS_DEVICE_BMBT_Button_Num3) {
+            unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
+            if (currentVolume > 0x00) {
+                currentVolume -= 1;
+            }
+            ConfigSetSetting(CONFIG_SETTING_DAC_VOL, currentVolume);
+            PCM51XXSetVolume(currentVolume);
+        }
+        if (pkt[4] == IBUS_DEVICE_BMBT_Button_Num6) {
+            unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
+            if (currentVolume < 0xCF) {
+                currentVolume += 1;
+            }
+            ConfigSetSetting(CONFIG_SETTING_DAC_VOL, currentVolume);
+            PCM51XXSetVolume(currentVolume);
+        }
+        // Set the Microphone Gain
+        if (pkt[4] == IBUS_DEVICE_BMBT_Button_Num2) {
+            unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+            if (micGain == 0x00) {
+                micGain = 0xC0;
+            }
+            if (micGain < 0xC0) {
+                micGain = 0xC0;
+            }
+            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
+            BC127CommandSetMicGain(context->bt, micGain);
+        }
+        if (pkt[4] == IBUS_DEVICE_BMBT_Button_Num5) {
+            unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+            if (micGain == 0x00) {
+                micGain = 0xC0;
+            }
+            if (micGain > 0xD4) {
+                micGain = 0xD4;
+            }
+            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
+            BC127CommandSetMicGain(context->bt, micGain);
+        }
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_Knob) {
             if (context->displayMode == BMBT_DISPLAY_ON &&
                 context->menu == BMBT_MENU_DASHBOARD &&
@@ -747,18 +777,16 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
         (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
          context->mode == BMBT_MODE_INACTIVE)
     ) {
-        // Start Playing
-        if (context->mode == BMBT_MODE_INACTIVE) {
-            if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON) {
-                BC127CommandPlay(context->bt);
-            } else if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-                BC127CommandPause(context->bt);
-            }
-            IBusCommandRADDisableMenu(context->ibus);
-            context->mode = BMBT_MODE_ACTIVE;
-            BMBTTriggerWriteHeader(context);
-            BMBTTriggerWriteMenu(context);
+        BMBTSetMainDisplayText(context, "Bluetooth", 0, 0);
+        if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON) {
+            BC127CommandPlay(context->bt);
+        } else if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+            BC127CommandPause(context->bt);
         }
+        IBusCommandRADDisableMenu(context->ibus);
+        context->mode = BMBT_MODE_ACTIVE;
+        BMBTTriggerWriteHeader(context);
+        BMBTTriggerWriteMenu(context);
     }
 }
 
@@ -777,7 +805,9 @@ void BMBTIBusGTDiagnostics(void *ctx, unsigned char *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     uint8_t navType = IBusGetNavType(pkt);
-    if (navType != context->navType) {
+    if (navType != context->navType &&
+        navType != IBUS_GT_DETECT_ERROR
+    ) {
         // Write it to the EEPROM
         ConfigSetNavType(navType);
         context->navType = navType;
@@ -810,10 +840,7 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                     state = BC127_STATE_ON;
                     if (context->bt->activeDevice.deviceId != 0) {
                         // To pair a new device, we must disconnect the active one
-                        BC127CommandClose(
-                            context->bt,
-                            context->bt->activeDevice.deviceId
-                        );
+                        EventTriggerCallback(UIEvent_CloseConnection, 0x00);
                     }
                 }
                 IBusCommandGTUpdate(context->ibus, context->navIndexType);
@@ -826,20 +853,16 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                 // Back Button
                 BMBTMenuMain(context);
             } else {
-                BC127PairedDevice_t *dev = &context->bt->pairedDevices[selectedIdx];
+                uint8_t deviceId = selectedIdx - BMBT_MENU_IDX_FIRST_DEVICE;
+                BC127PairedDevice_t *dev = &context->bt->pairedDevices[deviceId];
                 if (strcmp(dev->macId, context->bt->activeDevice.macId) != 0 &&
                     dev != 0
                 ) {
-                    // If we don't have a device connected, connect immediately
-                    if (context->bt->activeDevice.deviceId == 0) {
-                        BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
-                    } else {
-                        // Wait until the current device disconnects to
-                        // connect the new one
-                        BC127CommandClose(context->bt, BC127_CLOSE_ALL);
-                        context->selectedPairingDevice = selectedIdx;
-                        context->activelyPairedDevice = selectedIdx;
-                    }
+                    // Trigger device selection event
+                    EventTriggerCallback(
+                        UIEvent_InitiateConnection,
+                        (unsigned char *)&deviceId
+                    );
                 }
             }
         } else if (context->menu == BMBT_MENU_SETTINGS) {
@@ -1001,9 +1024,24 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
             idx--;
         }
         text[textLen - 1] = '\0';
-        if (UtilsStricmp("NO DISC", text) == 0) {
+        if (UtilsStricmp("NO TAPE", text) == 0 ||
+            UtilsStricmp("NO CD", text) == 0
+        ) {
+            context->displayMode = BMBT_DISPLAY_OFF;
+        } else {
             if (context->displayMode == BMBT_DISPLAY_OFF) {
                 context->displayMode = BMBT_DISPLAY_ON;
+            } else {
+                // Clear the radio display if we have a C43 in a "new UI" nav
+                if (pkt[4] == IBUS_C43_TITLE_MODE &&
+                    context->navType >= IBUS_GT_MKIII_NEW_UI
+                ) {
+                    context->radType = IBUS_RADIO_TYPE_C43;
+                    IBusCommandRADClearMenu(context->ibus);
+                }
+                if (UtilsStricmp("NO DISC", text) == 0) {
+                    BMBTTriggerWriteMenu(context);
+                }
             }
             if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
                 context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED
@@ -1012,24 +1050,7 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
             } else {
                 TimerTriggerScheduledTask(context->displayUpdateTaskId);
             }
-        } else if (UtilsStricmp("NO TAPE", text) == 0 ||
-                   UtilsStricmp("NO CD", text) == 0
-        ) {
-            context->displayMode = BMBT_DISPLAY_OFF;
-        } else {
-            if (context->displayMode == BMBT_DISPLAY_OFF) {
-                context->displayMode = BMBT_DISPLAY_ON;
-            } else if (context->displayMode == BMBT_DISPLAY_ON) {
-                // Clear the radio display if we have a C43 in a "new UI" nav
-                if (pkt[4] == IBUS_C43_TITLE_MODE &&
-                    context->navType >= IBUS_GT_MKIII_NEW_UI
-                ) {
-                    context->radType = IBUS_RADIO_TYPE_C43;
-                    IBusCommandRADClearMenu(context->ibus);
-                }
-                BMBTTriggerWriteHeader(context);
-                BMBTTriggerWriteMenu(context);
-            }
+            BMBTTriggerWriteHeader(context);
         }
     }
 }
@@ -1057,6 +1078,14 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
         context->displayMode = BMBT_DISPLAY_OFF;
     }
     if (pkt[4] == IBUS_GT_MENU_CLEAR &&
+        context->navState == BMBT_NAV_STATE_OFF
+    ) {
+        if (context->mode == BMBT_MODE_ACTIVE) {
+            IBusCommandRADDisableMenu(context->ibus);
+        }
+        context->navState = BMBT_NAV_STATE_ON;
+    }
+    if (pkt[4] == IBUS_GT_MENU_CLEAR &&
         context->mode == BMBT_MODE_ACTIVE &&
         (context->displayMode == BMBT_DISPLAY_ON ||
          context->displayMode == BMBT_DISPLAY_INFO)
@@ -1074,7 +1103,9 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
  *     Description:
  *         The GT sends this screen mode post-boot to tell the radio it can
  *         display to the UI. We set the menu to none so that on the next
- *         screen clear, we know to write the UI
+ *         screen clear, we know to write the UI. Set the nav state to "off"
+ *         so we know that we need to disable the radio updates on next
+ *         screen clear
  *     Params:
  *         void *ctx - The context
  *         unsigned char *pkt - The IBus Message received
@@ -1086,6 +1117,9 @@ void BMBTScreenModeSet(void *ctx, unsigned char *pkt)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[4] == BMBT_NAV_BOOT) {
         context->menu = BMBT_MENU_NONE;
+        if (context->mode == BMBT_MODE_ACTIVE) {
+            context->navState = BMBT_NAV_STATE_OFF;
+        }
     }
 }
 

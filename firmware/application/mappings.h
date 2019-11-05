@@ -56,9 +56,16 @@
 #define PAM_SHDN_MODE TRISEbits.TRISE3
 #define PAM_SHDN LATEbits.LATE3
 
+#define SYS_DTR_MODE TRISDbits.TRISD4
+#define SYS_DTR_STATUS PORTDbits.RD4
+
 #define TEL_ON_MODE TRISBbits.TRISB7
 #define TEL_ON LATBbits.LATB7
 
 #define TEL_MUTE_MODE TRISEbits.TRISE2
 #define TEL_MUTE LATEbits.LATE2
+
+// UI Events
+#define UIEvent_InitiateConnection 64
+#define UIEvent_CloseConnection 65
 #endif /* IO_MAPPINGS_H */

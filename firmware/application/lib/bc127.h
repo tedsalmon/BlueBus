@@ -149,6 +149,7 @@ typedef struct BC127_t {
 } BC127_t;
 
 BC127_t BC127Init();
+void BC127ClearActiveDevice(BC127_t *);
 void BC127ClearConnections(BC127_t *);
 void BC127ClearMetadata(BC127_t *);
 void BC127ClearPairedDevices(BC127_t *);

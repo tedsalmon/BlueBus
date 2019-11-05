@@ -73,12 +73,13 @@ void UtilsRemoveNonAscii(char *string, const char *input)
 {
     uint16_t idx;
     uint16_t strIdx = 0;
-    for (idx = 0; idx < strlen(input); idx++) {
+    uint16_t strLength = strlen(input);
+    for (idx = 0; idx < strLength; idx++) {
         char c = input[idx];
         if (c == 0x5C) {
-            // Create an array containing 0x<Bytes>\0
-            char buf[] = {0x30, 0x78, input[idx + 1], input[idx + 2], 0};
-            c = (char) strtol(buf, 0, 0);
+            // Create an array containing <Bytes>\0
+            char buf[] = {input[idx + 1], input[idx + 2], '\0'};
+            c = (char) UtilsStrToHex(buf);
             idx = idx + 2;
         }
         if (c >= 0x20 && c <= 0x7E) {
@@ -102,9 +103,23 @@ void UtilsRemoveNonAscii(char *string, const char *input)
 void UtilsRemoveSubstring(char *string, const char *trash)
 {
     uint16_t removeLength = strlen(trash);
-    while((string = strstr(string, trash) )){
+    while ((string = strstr(string, trash))) {
         memmove(string, string + removeLength, 1 + strlen(string + removeLength));
     }
+}
+
+/**
+ * UtilsReset()
+ *     Description:
+ *         Reset the MCU
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+void UtilsReset()
+{
+    __asm__ volatile ("RESET");
 }
 
 /**

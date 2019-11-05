@@ -21,9 +21,9 @@ void LogMessage(const char *type, char *data)
 {
     UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
     if (debugger != 0) {
-        char output[255];
+        char output[LOG_MESSAGE_SIZE];
         long long unsigned int ts = (long long unsigned int) TimerGetMillis();
-        sprintf(output, "[%llu] %s: %s\r\n", ts, type, data);
+        snprintf(output, LOG_MESSAGE_SIZE -1 , "[%llu] %s: %s\r\n", ts, type, data);
         UARTSendString(debugger, output);
     }
 }
@@ -42,10 +42,10 @@ void LogRaw(const char *format, ...)
 {
     UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
     if (debugger != 0) {
-        char buffer[255];
+        char buffer[LOG_MESSAGE_SIZE];
         va_list args;
         va_start(args, format);
-        vsprintf(buffer, format, args);
+        vsnprintf(buffer, LOG_MESSAGE_SIZE - 1, format, args);
         UARTSendString(debugger, buffer);
     }
 }
@@ -66,10 +66,10 @@ void LogRawDebug(uint8_t source, const char *format, ...)
     UART_t *debugger = UARTGetModuleHandler(SYSTEM_UART_MODULE);
     unsigned char canLog = ConfigGetLog(source);
     if (debugger != 0 && canLog != 0) {
-        char buffer[255];
+        char buffer[LOG_MESSAGE_SIZE];
         va_list args;
         va_start(args, format);
-        vsprintf(buffer, format, args);
+        vsnprintf(buffer, LOG_MESSAGE_SIZE - 1, format, args);
         UARTSendString(debugger, buffer);
     }
 }
@@ -89,10 +89,10 @@ void LogDebug(uint8_t source, const char *format, ...)
 {
     unsigned char canLog = ConfigGetLog(source);
     if (canLog != 0) {
-        char buffer[255];
+        char buffer[LOG_MESSAGE_SIZE];
         va_list args;
         va_start(args, format);
-        vsprintf(buffer, format, args);
+        vsnprintf(buffer, LOG_MESSAGE_SIZE - 1, format, args);
         va_end(args);
         LogMessage("DEBUG", buffer);
     }
@@ -111,10 +111,10 @@ void LogDebug(uint8_t source, const char *format, ...)
  */
 void LogError(const char *format, ...)
 {
-    char buffer[255];
+    char buffer[LOG_MESSAGE_SIZE];
     va_list args;
     va_start(args, format);
-    vsprintf(buffer, format, args);
+    vsnprintf(buffer, LOG_MESSAGE_SIZE - 1, format, args);
     va_end(args);
     LogMessage("ERROR", buffer);
 }
@@ -135,10 +135,10 @@ void LogInfo(uint8_t source, const char *format, ...)
 {
     unsigned char canLog = ConfigGetLog(source);
     if (canLog != 0) {
-        char buffer[255];
+        char buffer[LOG_MESSAGE_SIZE];
         va_list args;
         va_start(args, format);
-        vsprintf(buffer, format, args);
+        vsnprintf(buffer, LOG_MESSAGE_SIZE - 1, format, args);
         va_end(args);
         LogMessage("INFO", buffer);
     }
@@ -156,10 +156,10 @@ void LogInfo(uint8_t source, const char *format, ...)
  */
 void LogWarning(const char *format, ...)
 {
-    char buffer[255];
+    char buffer[LOG_MESSAGE_SIZE];
     va_list args;
     va_start(args, format);
-    vsprintf(buffer, format, args);
+    vsnprintf(buffer, LOG_MESSAGE_SIZE - 1, format, args);
     va_end(args);
     LogMessage("WARNING", buffer);
 }

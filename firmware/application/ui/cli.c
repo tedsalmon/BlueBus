@@ -6,6 +6,8 @@
  */
 #include "cli.h"
 
+static CLI_t cli;
+
 /**
  * CLIInit()
  *     Description:
@@ -17,15 +19,19 @@
  *     Returns:
  *         void
  */
-CLI_t CLIInit(UART_t *uart, BC127_t *bt, IBus_t *ibus)
+void CLIInit(UART_t *uart, BC127_t *bt, IBus_t *ibus)
 {
-    CLI_t cli;
     cli.uart = uart;
     cli.bt = bt;
     cli.ibus = ibus;
+    cli.terminalReady = 0;
+    cli.terminalReadyTaskId = TimerRegisterScheduledTask(
+        &CLITimerTerminalReady,
+        &cli,
+        250
+    );
     cli.lastChar = 0;
     cli.lastRxTimestamp = 0;
-    return cli;
 }
 
 /**
@@ -33,49 +39,56 @@ CLI_t CLIInit(UART_t *uart, BC127_t *bt, IBus_t *ibus)
  *     Description:
  *         Read the RX queue and process the messages into meaningful data
  *     Params:
- *         UART_t *uart - A pointer to the UART module object
+ *         void
  *     Returns:
  *         void
  */
-void CLIProcess(CLI_t *cli)
+void CLIProcess()
 {
-    while (cli->lastChar != cli->uart->rxQueue.writeCursor) {
-        unsigned char nextChar = CharQueueGet(&cli->uart->rxQueue, cli->lastChar);
-        UARTSendChar(cli->uart, nextChar);
-        if (cli->lastChar >= (CHAR_QUEUE_SIZE - 1)) {
-            cli->lastChar = 0;
+    while (cli.lastChar != cli.uart->rxQueue.writeCursor) {
+        unsigned char nextChar = CharQueueGet(&cli.uart->rxQueue, cli.lastChar);
+        UARTSendChar(cli.uart, nextChar);
+        if (cli.lastChar >= (CHAR_QUEUE_SIZE - 1)) {
+            cli.lastChar = 0;
         } else {
-            cli->lastChar++;
+            cli.lastChar++;
         }
+    }
+    if (cli.terminalReady == 0 && SYS_DTR_STATUS == 0) {
+        cli.terminalReady = 1;
+        TimerResetScheduledTask(cli.terminalReadyTaskId);
+    }
+    if (cli.terminalReady == 2 && SYS_DTR_STATUS == 1) {
+        cli.terminalReady = 0;
     }
     // Check for the backspace character
-    uint16_t backspaceLegnth = CharQueueSeek(&cli->uart->rxQueue, CLI_MSG_DELETE_CHAR);
+    uint16_t backspaceLegnth = CharQueueSeek(&cli.uart->rxQueue, CLI_MSG_DELETE_CHAR);
     if (backspaceLegnth > 0) {
-        if (cli->lastChar < 2) {
-            cli->lastChar = CHAR_QUEUE_SIZE - (3 - cli->lastChar);
+        if (cli.lastChar < 2) {
+            cli.lastChar = CHAR_QUEUE_SIZE - (3 - cli.lastChar);
         } else {
-            cli->lastChar = cli->lastChar - 2;
+            cli.lastChar = cli.lastChar - 2;
         }
         // Remove the backspace character
-        CharQueueRemoveLast(&cli->uart->rxQueue);
+        CharQueueRemoveLast(&cli.uart->rxQueue);
         // Send the "back one" character, space character and then back one again
-        if (cli->uart->rxQueue.size > 0) {
-            UARTSendChar(cli->uart, '\b');
-            UARTSendChar(cli->uart, ' ');
-            UARTSendChar(cli->uart, '\b');
+        if (cli.uart->rxQueue.size > 0) {
+            UARTSendChar(cli.uart, '\b');
+            UARTSendChar(cli.uart, ' ');
+            UARTSendChar(cli.uart, '\b');
         }
         // Remove the character before it
-        CharQueueRemoveLast(&cli->uart->rxQueue);
+        CharQueueRemoveLast(&cli.uart->rxQueue);
     }
-    uint16_t messageLength = CharQueueSeek(&cli->uart->rxQueue, CLI_MSG_END_CHAR);
+    uint16_t messageLength = CharQueueSeek(&cli.uart->rxQueue, CLI_MSG_END_CHAR);
     if (messageLength > 0) {
         // Send a newline to keep the CLI pretty
-        UARTSendChar(cli->uart, 0x0A);
+        UARTSendChar(cli.uart, 0x0A);
         char msg[messageLength];
         uint16_t i;
         uint8_t delimCount = 1;
         for (i = 0; i < messageLength; i++) {
-            char c = CharQueueNext(&cli->uart->rxQueue);
+            char c = CharQueueNext(&cli.uart->rxQueue);
             if (c == CLI_MSG_DELIMETER) {
                 delimCount++;
             }
@@ -104,37 +117,37 @@ void CLIProcess(CLI_t *cli)
             if (UtilsStricmp(msgBuf[0], "BOOTLOADER") == 0) {
                 LogRaw("Rebooting into bootloader\r\n");
                 ConfigSetBootloaderMode(0x01);
-                __asm__ volatile ("reset");
+                UtilsReset();
             } else if (UtilsStricmp(msgBuf[0], "BT") == 0) {
                 if (UtilsStricmp(msgBuf[1], "CONFIG") == 0) {
-                    BC127SendCommand(cli->bt, "CONFIG");
+                    BC127SendCommand(cli.bt, "CONFIG");
                 } else if (UtilsStricmp(msgBuf[1], "CVC") == 0) {
                     if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                        BC127SendCommand(cli->bt, "SET HFP_CONFIG=ON ON ON ON OFF OFF");
-                        BC127CommandWrite(cli->bt);
+                        BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON OFF OFF");
+                        BC127CommandWrite(cli.bt);
                     } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                        BC127SendCommand(cli->bt, "SET HFP_CONFIG=OFF ON ON OFF OFF OFF");
-                        BC127CommandWrite(cli->bt);
+                        BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF OFF OFF");
+                        BC127CommandWrite(cli.bt);
                     } else if (UtilsStricmp(msgBuf[2], "NB") == 0) {
-                        BC127CommandCVC(cli->bt, "NB", 0, 0);
+                        BC127CommandCVC(cli.bt, "NB", 0, 0);
                     } else if (UtilsStricmp(msgBuf[2], "WB") == 0) {
-                        BC127CommandCVC(cli->bt, "WB", 0, 0);
+                        BC127CommandCVC(cli.bt, "WB", 0, 0);
                     }
                 } else if (UtilsStricmp(msgBuf[1], "INIT") == 0) {
-                    BC127CommandSetAudio(cli->bt, 0, 1);
-                    BC127CommandSetAudioAnalog(cli->bt, "11", "15", "0", "OFF");
+                    BC127CommandSetAudio(cli.bt, 0, 1);
+                    BC127CommandSetAudioAnalog(cli.bt, "11", "15", "0", "OFF");
                     BC127CommandSetAudioDigital(
-                        cli->bt,
+                        cli.bt,
                         BC127_AUDIO_SPDIF,
                         "44100",
                         "0",
                         "0"
                     );
-                    BC127CommandSetBtState(cli->bt, 2, 2);
-                    BC127CommandSetCodec(cli->bt, 1, "OFF");
-                    BC127CommandSetMetadata(cli->bt, 1);
-                    BC127CommandSetModuleName(cli->bt, "BlueBus");
-                    BC127CommandSetUART(cli->bt, 115200, "OFF", 0);
+                    BC127CommandSetBtState(cli.bt, 2, 2);
+                    BC127CommandSetCodec(cli.bt, 1, "OFF");
+                    BC127CommandSetMetadata(cli.bt, 1);
+                    BC127CommandSetModuleName(cli.bt, "BlueBus");
+                    BC127CommandSetUART(cli.bt, 115200, "OFF", 0);
                 } else if (UtilsStricmp(msgBuf[1], "HFP") == 0) {
                     if (delimCount == 2) {
                         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
@@ -145,10 +158,10 @@ void CLIProcess(CLI_t *cli)
                     } else {
                         if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                             ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
-                            BC127CommandSetProfiles(cli->bt, 1, 1, 0, 1);
+                            BC127CommandSetProfiles(cli.bt, 1, 1, 0, 1);
                         } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                             ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
-                            BC127CommandSetProfiles(cli->bt, 1, 1, 0, 0);
+                            BC127CommandSetProfiles(cli.bt, 1, 1, 0, 0);
                         } else {
                             cmdSuccess = 0;
                         }
@@ -163,7 +176,7 @@ void CLIProcess(CLI_t *cli)
                             LogRaw("Mic Gain '%02X' out of range: C0 - D6\r\n", micGain);
                         } else {
                             ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
-                            BC127CommandSetMicGain(cli->bt, micGain);
+                            BC127CommandSetMicGain(cli.bt, micGain);
                         }
                     }
                 } else if (UtilsStricmp(msgBuf[1], "MBIAS") == 0) {
@@ -171,30 +184,30 @@ void CLIProcess(CLI_t *cli)
                         LogRaw("Set the Mic Bias Generator");
                     } else {
                         if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                            BC127CommandSetAudioAnalog(cli->bt, "11", "15", "1", "OFF");
+                            BC127CommandSetAudioAnalog(cli.bt, "11", "15", "1", "OFF");
                         } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                            BC127CommandSetAudioAnalog(cli->bt, "11", "15", "0", "OFF");
+                            BC127CommandSetAudioAnalog(cli.bt, "11", "15", "0", "OFF");
                         } else {
                             cmdSuccess = 0;
                         }
                     }
                 } else if (UtilsStricmp(msgBuf[1], "REBOOT") == 0) {
-                    BC127CommandReset(cli->bt);
+                    BC127CommandReset(cli.bt);
                 } else if (UtilsStricmp(msgBuf[1], "PAIR") == 0) {
-                    BC127CommandBtState(cli->bt, BC127_STATE_ON, BC127_STATE_ON);
+                    BC127CommandBtState(cli.bt, BC127_STATE_ON, BC127_STATE_ON);
                 } else if (UtilsStricmp(msgBuf[1], "UNPAIR") == 0) {
-                    BC127CommandUnpair(cli->bt);
+                    BC127CommandUnpair(cli.bt);
                 } else if (UtilsStricmp(msgBuf[1], "VERSION") == 0) {
-                    BC127CommandVersion(cli->bt);
+                    BC127CommandVersion(cli.bt);
                 } else {
                     cmdSuccess = 0;
                 }
             } else if (UtilsStricmp(msgBuf[0], "GET") == 0) {
                 if (UtilsStricmp(msgBuf[1], "IBUS") == 0) {
-                    IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_GT);
-                    IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_RAD);
+                    IBusCommandDIAGetIdentity(cli.ibus, IBUS_DEVICE_GT);
+                    IBusCommandDIAGetIdentity(cli.ibus, IBUS_DEVICE_RAD);
                 } else if (UtilsStricmp(msgBuf[1], "LCM") == 0) {
-                    IBusCommandDIAGetIdentity(cli->ibus, IBUS_DEVICE_LCM);
+                    IBusCommandDIAGetIdentity(cli.ibus, IBUS_DEVICE_LCM);
                 } else if (UtilsStricmp(msgBuf[1], "ERR") == 0) {
                     // Errors
                     LogRaw("Trap Counts: \r\n");
@@ -220,6 +233,13 @@ void CLIProcess(CLI_t *cli)
                     } else {
                         LogRaw("UI Mode: Not set or Invalid\r\n");
                     }
+                } else if (UtilsStricmp(msgBuf[1], "DAC") == 0) {
+                    int8_t status;
+                    unsigned char buffer;
+                    status = I2CRead(0x4C, 0x5E, &buffer);
+                    LogRaw("PCM5122: I2SSTAT %02X (0x5E) [%d]\r\n", buffer, status);
+                    status = I2CRead(0x4C, 0x76, &buffer);
+                    LogRaw("PCM5122: PWRSTAT %02X (0x76) [%d]\r\n", buffer, status);
                 } else if (UtilsStricmp(msgBuf[1], "I2S") == 0) {
                     int8_t status;
                     unsigned char buffer;
@@ -238,7 +258,7 @@ void CLIProcess(CLI_t *cli)
                     cmdSuccess = 0;
                 }
             } else if (UtilsStricmp(msgBuf[0], "REBOOT") == 0) {
-                __asm__ volatile ("reset");
+                UtilsReset();
             } else if (UtilsStricmp(msgBuf[0], "RESET") == 0) {
                 if (UtilsStricmp(msgBuf[1], "TRAPS") == 0) {
                     ConfigSetTrapCount(CONFIG_TRAP_OSC, 0);
@@ -249,6 +269,30 @@ void CLIProcess(CLI_t *cli)
                     ConfigSetTrapCount(CONFIG_TRAP_GEN, 0);
                 } else {
                     cmdSuccess = 0;
+                }
+            } else if (UtilsStricmp(msgBuf[0], "SEND") == 0) {
+                if (UtilsStricmp(msgBuf[1], "IBUS") == 0) {
+                    uint8_t idx = 2;
+                    unsigned char message[delimCount - 4];
+                    unsigned char src = 0x00;
+                    unsigned char dst = 0x00;
+                    size_t size = 0;
+                    while (idx < delimCount) {
+                        if (idx == 2) {
+                            src = UtilsStrToHex(msgBuf[idx]);
+                        } else if (idx == 3) {
+                            // Ignore the size
+                        } else if (idx == 4) {
+                            dst = UtilsStrToHex(msgBuf[idx]);
+                        } else if (idx != (delimCount - 1)) {
+                            message[size] = UtilsStrToHex(msgBuf[idx]);
+                            size++;
+                        }
+                        idx++;
+                    }
+                    if (size > 0) {
+                        IBusSendCommand(cli.ibus, src, dst, message, size);
+                    }
                 }
             } else if (UtilsStricmp(msgBuf[0], "SET") == 0) {
                 if (UtilsStricmp(msgBuf[1], "UI") == 0) {
@@ -270,14 +314,16 @@ void CLIProcess(CLI_t *cli)
                     } else {
                         LogRaw("Invalid UI Mode specified\r\n");
                     }
+                }  else if(UtilsStricmp(msgBuf[1], "ID") == 0) {
+                    LogRaw("BlueBus\r\n");
                 } else if(UtilsStricmp(msgBuf[1], "IGN") == 0) {
                     if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                        IBusCommandIgnitionStatus(cli->ibus, 0x00);
-                        cli->ibus->ignitionStatus = 0;
+                        IBusCommandIgnitionStatus(cli.ibus, 0x00);
+                        cli.ibus->ignitionStatus = 0;
                         EventTriggerCallback(IBusEvent_IgnitionStatus, 0x00);
                     } else if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                        IBusCommandIgnitionStatus(cli->ibus, 0x01);
-                        cli->ibus->ignitionStatus = 1;
+                        IBusCommandIgnitionStatus(cli.ibus, 0x01);
+                        cli.ibus->ignitionStatus = 1;
                         EventTriggerCallback(IBusEvent_IgnitionStatus, 0x00);
                     } else {
                         cmdSuccess = 0;
@@ -310,11 +356,12 @@ void CLIProcess(CLI_t *cli)
                     if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                         // Enable the amp and mute the radio
                         PAM_SHDN = 1;
-                        TEL_MUTE = 1;
+                        //TEL_MUTE = 1;
                     } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         // Disable the amp and unmute the radio
                         PAM_SHDN = 0;
-                        TEL_MUTE = 0;
+                        //TimerDelayMicroseconds(250);
+                        //TEL_MUTE = 0;
                     }
                 } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
                     unsigned char timeout = (unsigned char) UtilsStrToInt(msgBuf[2]);
@@ -323,7 +370,7 @@ void CLIProcess(CLI_t *cli)
                     cmdSuccess = 0;
                 }
             } else if (UtilsStricmp(msgBuf[0], "VERSION") == 0) {
-                LogRaw("BlueBus\r\nFirmware Version: 1.0.9.5\r\nHardware Revision: C\r\n");
+                LogRaw(CLI_VERSION_BANNER);
             } else if (UtilsStricmp(msgBuf[0], "HELP") == 0 || UtilsStricmp(msgBuf[0], "?") == 0) {
                 LogRaw("Available Commands:\r\n");
                 LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
@@ -360,17 +407,38 @@ void CLIProcess(CLI_t *cli)
                 LogRaw("OK\r\n# ");
             }
         } else {
-            if (((TimerGetMillis() - cli->lastRxTimestamp) / 1000) > CLI_BANNER_TIMEOUT ||
-                cli->lastRxTimestamp == 0
+            if (((TimerGetMillis() - cli.lastRxTimestamp) / 1000) > CLI_BANNER_TIMEOUT ||
+                cli.lastRxTimestamp == 0
             ) {
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
-                LogRaw("BlueBus Firmware: 1.0.9.5\r\n");
+                LogRaw(CLI_VERSION_BANNER);
                 LogRaw("Try HELP or ?\r\n");
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
             }
             LogRaw("# ");
-
         }
-        cli->lastRxTimestamp = TimerGetMillis();
+        cli.lastRxTimestamp = TimerGetMillis();
+    }
+}
+
+/**
+ * CLITimerTerminalReady()
+ *     Description:
+ *         Read the RX queue and process the messages into meaningful data
+ *     Params:
+ *         void *ctx - Pointer to the CLI context
+ *     Returns:
+ *         void
+ */
+void CLITimerTerminalReady(void *ctx)
+{
+    if (cli.terminalReady == 1) {
+        cli.terminalReady = 2;
+        LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
+        LogRaw(CLI_VERSION_BANNER);
+        LogRaw("Try HELP or ?\r\n");
+        LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
+        LogRaw("# ");
+        cli.lastRxTimestamp = TimerGetMillis();
     }
 }

@@ -85,6 +85,11 @@
 #define IBUS_DEVICE_BMBT_Button_Info 0x38
 #define IBUS_DEVICE_BMBT_Button_SEL 0x0F
 #define IBUS_DEVICE_BMBT_Button_Num1 0x11
+#define IBUS_DEVICE_BMBT_Button_Num2 0x01
+#define IBUS_DEVICE_BMBT_Button_Num3 0x12
+#define IBUS_DEVICE_BMBT_Button_Num4 0x02
+#define IBUS_DEVICE_BMBT_Button_Num5 0x13
+#define IBUS_DEVICE_BMBT_Button_Num6 0x03
 
 #define IBUS_CMD_BMBT_BUTTON0 0x47
 #define IBUS_CMD_BMBT_BUTTON1 0x48
@@ -114,6 +119,7 @@
 #define IBUS_CMD_RAD_WRITE_MID_DISPLAY 0x23
 #define IBUS_CMD_RAD_WRITE_MID_MENU 0x21
 
+#define IBUS_GT_DETECT_ERROR 0
 #define IBUS_GT_MKI 1
 #define IBUS_GT_MKII 2
 #define IBUS_GT_MKIII 3
@@ -237,15 +243,14 @@ typedef struct IBus_t {
     UART_t uart;
     unsigned char rxBuffer[IBUS_RX_BUFFER_SIZE];
     uint8_t rxBufferIdx;
-    uint32_t rxLastStamp;
     unsigned char txBuffer[IBUS_TX_BUFFER_SIZE][IBUS_MAX_MSG_LENGTH];
     uint8_t txBufferReadbackIdx;
     uint8_t txBufferReadIdx;
     uint8_t txBufferWriteIdx;
+    uint32_t rxLastStamp;
     uint32_t txLastStamp;
     unsigned char cdChangerFunction;
     unsigned char ignitionStatus;
-    unsigned char lcmDimmerState;
     unsigned char lcmDimmerStatus1;
     unsigned char lcmDimmerStatus2;
 } IBus_t;
@@ -260,7 +265,7 @@ uint8_t IBusGetNavType(unsigned char *);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCPollResponse(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
-void IBusCommandDIAGetCodingData(IBus_t *, unsigned char, unsigned char);
+void IBusCommandDIAGetCodingData(IBus_t *, unsigned char, unsigned char, unsigned char);
 void IBusCommandDIAGetIdentity(IBus_t *, unsigned char);
 void IBusCommandDIAGetIOStatus(IBus_t *, unsigned char);
 void IBusCommandDIATerminateDiag(IBus_t *, unsigned char);

@@ -59,6 +59,20 @@ void BC127ClearMetadata(BC127_t *bt)
 }
 
 /**
+ * BC127ClearActiveDevice()
+ *     Description:
+ *        Clear the active device
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127ClearActiveDevice(BC127_t *bt)
+{
+    bt->activeDevice = BC127ConnectionInit();
+}
+
+/**
  * BC127ClearPairedDevices()
  *     Description:
  *        Clear the paired devices list
@@ -1076,7 +1090,8 @@ void BC127Process(BC127_t *bt)
                     );
                 }
                 if (bt->metadataStatus == BC127_METADATA_STATUS_NEW) {
-                    LogDebug(LOG_SOURCE_BT, 
+                    LogDebug(
+                        LOG_SOURCE_BT, 
                         "BT: title=%s,artist=%s,album=%s",
                         bt->title,
                         bt->artist,

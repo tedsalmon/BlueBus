@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=lib/bc127.c lib/char_queue.c lib/cli.c lib/eeprom.c lib/event.c lib/ibus.c lib/i2c.c lib/log.c lib/sfr_setters.s lib/timer.c lib/uart.c lib/utils.c lib/config.c lib/wm88xx.c ui/bmbt.c ui/cd53.c ui/mid.c main.c handler.c
+SOURCEFILES_QUOTED_IF_SPACED=lib/bc127.c lib/char_queue.c lib/config.c lib/eeprom.c lib/event.c lib/i2c.c lib/ibus.c lib/log.c lib/pcm51xx.c lib/sfr_setters.s lib/timer.c lib/uart.c lib/utils.c lib/wm88xx.c ui/bmbt.c ui/cli.c ui/cd53.c ui/mid.c main.c handler.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/cli.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/i2c.o ${OBJECTDIR}/lib/log.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/lib/config.o ${OBJECTDIR}/lib/wm88xx.o ${OBJECTDIR}/ui/bmbt.o ${OBJECTDIR}/ui/cd53.o ${OBJECTDIR}/ui/mid.o ${OBJECTDIR}/main.o ${OBJECTDIR}/handler.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/lib/bc127.o.d ${OBJECTDIR}/lib/char_queue.o.d ${OBJECTDIR}/lib/cli.o.d ${OBJECTDIR}/lib/eeprom.o.d ${OBJECTDIR}/lib/event.o.d ${OBJECTDIR}/lib/ibus.o.d ${OBJECTDIR}/lib/i2c.o.d ${OBJECTDIR}/lib/log.o.d ${OBJECTDIR}/lib/sfr_setters.o.d ${OBJECTDIR}/lib/timer.o.d ${OBJECTDIR}/lib/uart.o.d ${OBJECTDIR}/lib/utils.o.d ${OBJECTDIR}/lib/config.o.d ${OBJECTDIR}/lib/wm88xx.o.d ${OBJECTDIR}/ui/bmbt.o.d ${OBJECTDIR}/ui/cd53.o.d ${OBJECTDIR}/ui/mid.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/handler.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/config.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/lib/i2c.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/log.o ${OBJECTDIR}/lib/pcm51xx.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/lib/wm88xx.o ${OBJECTDIR}/ui/bmbt.o ${OBJECTDIR}/ui/cli.o ${OBJECTDIR}/ui/cd53.o ${OBJECTDIR}/ui/mid.o ${OBJECTDIR}/main.o ${OBJECTDIR}/handler.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/lib/bc127.o.d ${OBJECTDIR}/lib/char_queue.o.d ${OBJECTDIR}/lib/config.o.d ${OBJECTDIR}/lib/eeprom.o.d ${OBJECTDIR}/lib/event.o.d ${OBJECTDIR}/lib/i2c.o.d ${OBJECTDIR}/lib/ibus.o.d ${OBJECTDIR}/lib/log.o.d ${OBJECTDIR}/lib/pcm51xx.o.d ${OBJECTDIR}/lib/sfr_setters.o.d ${OBJECTDIR}/lib/timer.o.d ${OBJECTDIR}/lib/uart.o.d ${OBJECTDIR}/lib/utils.o.d ${OBJECTDIR}/lib/wm88xx.o.d ${OBJECTDIR}/ui/bmbt.o.d ${OBJECTDIR}/ui/cli.o.d ${OBJECTDIR}/ui/cd53.o.d ${OBJECTDIR}/ui/mid.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/handler.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/cli.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/i2c.o ${OBJECTDIR}/lib/log.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/lib/config.o ${OBJECTDIR}/lib/wm88xx.o ${OBJECTDIR}/ui/bmbt.o ${OBJECTDIR}/ui/cd53.o ${OBJECTDIR}/ui/mid.o ${OBJECTDIR}/main.o ${OBJECTDIR}/handler.o
+OBJECTFILES=${OBJECTDIR}/lib/bc127.o ${OBJECTDIR}/lib/char_queue.o ${OBJECTDIR}/lib/config.o ${OBJECTDIR}/lib/eeprom.o ${OBJECTDIR}/lib/event.o ${OBJECTDIR}/lib/i2c.o ${OBJECTDIR}/lib/ibus.o ${OBJECTDIR}/lib/log.o ${OBJECTDIR}/lib/pcm51xx.o ${OBJECTDIR}/lib/sfr_setters.o ${OBJECTDIR}/lib/timer.o ${OBJECTDIR}/lib/uart.o ${OBJECTDIR}/lib/utils.o ${OBJECTDIR}/lib/wm88xx.o ${OBJECTDIR}/ui/bmbt.o ${OBJECTDIR}/ui/cli.o ${OBJECTDIR}/ui/cd53.o ${OBJECTDIR}/ui/mid.o ${OBJECTDIR}/main.o ${OBJECTDIR}/handler.o
 
 # Source Files
-SOURCEFILES=lib/bc127.c lib/char_queue.c lib/cli.c lib/eeprom.c lib/event.c lib/ibus.c lib/i2c.c lib/log.c lib/sfr_setters.s lib/timer.c lib/uart.c lib/utils.c lib/config.c lib/wm88xx.c ui/bmbt.c ui/cd53.c ui/mid.c main.c handler.c
+SOURCEFILES=lib/bc127.c lib/char_queue.c lib/config.c lib/eeprom.c lib/event.c lib/i2c.c lib/ibus.c lib/log.c lib/pcm51xx.c lib/sfr_setters.s lib/timer.c lib/uart.c lib/utils.c lib/wm88xx.c ui/bmbt.c ui/cli.c ui/cd53.c ui/mid.c main.c handler.c
 
 
 CFLAGS=
@@ -108,12 +108,12 @@ ${OBJECTDIR}/lib/char_queue.o: lib/char_queue.c  nbproject/Makefile-${CND_CONF}.
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/char_queue.c  -o ${OBJECTDIR}/lib/char_queue.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/char_queue.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/char_queue.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
-${OBJECTDIR}/lib/cli.o: lib/cli.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/lib/config.o: lib/config.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
-	@${RM} ${OBJECTDIR}/lib/cli.o.d 
-	@${RM} ${OBJECTDIR}/lib/cli.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/cli.c  -o ${OBJECTDIR}/lib/cli.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/cli.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
-	@${FIXDEPS} "${OBJECTDIR}/lib/cli.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	@${RM} ${OBJECTDIR}/lib/config.o.d 
+	@${RM} ${OBJECTDIR}/lib/config.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/config.c  -o ${OBJECTDIR}/lib/config.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/config.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/config.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/lib/eeprom.o: lib/eeprom.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
@@ -129,13 +129,6 @@ ${OBJECTDIR}/lib/event.o: lib/event.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/event.c  -o ${OBJECTDIR}/lib/event.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/event.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/event.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
-${OBJECTDIR}/lib/ibus.o: lib/ibus.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}/lib" 
-	@${RM} ${OBJECTDIR}/lib/ibus.o.d 
-	@${RM} ${OBJECTDIR}/lib/ibus.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/ibus.c  -o ${OBJECTDIR}/lib/ibus.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/ibus.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
-	@${FIXDEPS} "${OBJECTDIR}/lib/ibus.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
-	
 ${OBJECTDIR}/lib/i2c.o: lib/i2c.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
 	@${RM} ${OBJECTDIR}/lib/i2c.o.d 
@@ -143,12 +136,26 @@ ${OBJECTDIR}/lib/i2c.o: lib/i2c.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/i2c.c  -o ${OBJECTDIR}/lib/i2c.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/i2c.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/i2c.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/lib/ibus.o: lib/ibus.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/lib" 
+	@${RM} ${OBJECTDIR}/lib/ibus.o.d 
+	@${RM} ${OBJECTDIR}/lib/ibus.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/ibus.c  -o ${OBJECTDIR}/lib/ibus.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/ibus.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/ibus.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 ${OBJECTDIR}/lib/log.o: lib/log.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
 	@${RM} ${OBJECTDIR}/lib/log.o.d 
 	@${RM} ${OBJECTDIR}/lib/log.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/log.c  -o ${OBJECTDIR}/lib/log.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/log.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/log.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/lib/pcm51xx.o: lib/pcm51xx.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/lib" 
+	@${RM} ${OBJECTDIR}/lib/pcm51xx.o.d 
+	@${RM} ${OBJECTDIR}/lib/pcm51xx.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/pcm51xx.c  -o ${OBJECTDIR}/lib/pcm51xx.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/pcm51xx.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/pcm51xx.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/lib/timer.o: lib/timer.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
@@ -171,13 +178,6 @@ ${OBJECTDIR}/lib/utils.o: lib/utils.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/utils.c  -o ${OBJECTDIR}/lib/utils.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/utils.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/utils.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
-${OBJECTDIR}/lib/config.o: lib/config.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}/lib" 
-	@${RM} ${OBJECTDIR}/lib/config.o.d 
-	@${RM} ${OBJECTDIR}/lib/config.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/config.c  -o ${OBJECTDIR}/lib/config.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/config.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
-	@${FIXDEPS} "${OBJECTDIR}/lib/config.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
-	
 ${OBJECTDIR}/lib/wm88xx.o: lib/wm88xx.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
 	@${RM} ${OBJECTDIR}/lib/wm88xx.o.d 
@@ -191,6 +191,13 @@ ${OBJECTDIR}/ui/bmbt.o: ui/bmbt.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/ui/bmbt.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  ui/bmbt.c  -o ${OBJECTDIR}/ui/bmbt.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/ui/bmbt.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/ui/bmbt.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/ui/cli.o: ui/cli.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/ui" 
+	@${RM} ${OBJECTDIR}/ui/cli.o.d 
+	@${RM} ${OBJECTDIR}/ui/cli.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ui/cli.c  -o ${OBJECTDIR}/ui/cli.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/ui/cli.o.d"      -g -D__DEBUG   -mno-eds-warn  -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/ui/cli.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/ui/cd53.o: ui/cd53.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/ui" 
@@ -235,12 +242,12 @@ ${OBJECTDIR}/lib/char_queue.o: lib/char_queue.c  nbproject/Makefile-${CND_CONF}.
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/char_queue.c  -o ${OBJECTDIR}/lib/char_queue.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/char_queue.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/char_queue.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
-${OBJECTDIR}/lib/cli.o: lib/cli.c  nbproject/Makefile-${CND_CONF}.mk
+${OBJECTDIR}/lib/config.o: lib/config.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
-	@${RM} ${OBJECTDIR}/lib/cli.o.d 
-	@${RM} ${OBJECTDIR}/lib/cli.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/cli.c  -o ${OBJECTDIR}/lib/cli.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/cli.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
-	@${FIXDEPS} "${OBJECTDIR}/lib/cli.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	@${RM} ${OBJECTDIR}/lib/config.o.d 
+	@${RM} ${OBJECTDIR}/lib/config.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/config.c  -o ${OBJECTDIR}/lib/config.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/config.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/config.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/lib/eeprom.o: lib/eeprom.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
@@ -256,13 +263,6 @@ ${OBJECTDIR}/lib/event.o: lib/event.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/event.c  -o ${OBJECTDIR}/lib/event.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/event.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/event.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
-${OBJECTDIR}/lib/ibus.o: lib/ibus.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}/lib" 
-	@${RM} ${OBJECTDIR}/lib/ibus.o.d 
-	@${RM} ${OBJECTDIR}/lib/ibus.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/ibus.c  -o ${OBJECTDIR}/lib/ibus.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/ibus.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
-	@${FIXDEPS} "${OBJECTDIR}/lib/ibus.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
-	
 ${OBJECTDIR}/lib/i2c.o: lib/i2c.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
 	@${RM} ${OBJECTDIR}/lib/i2c.o.d 
@@ -270,12 +270,26 @@ ${OBJECTDIR}/lib/i2c.o: lib/i2c.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/i2c.c  -o ${OBJECTDIR}/lib/i2c.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/i2c.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/i2c.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
+${OBJECTDIR}/lib/ibus.o: lib/ibus.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/lib" 
+	@${RM} ${OBJECTDIR}/lib/ibus.o.d 
+	@${RM} ${OBJECTDIR}/lib/ibus.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/ibus.c  -o ${OBJECTDIR}/lib/ibus.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/ibus.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/ibus.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
 ${OBJECTDIR}/lib/log.o: lib/log.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
 	@${RM} ${OBJECTDIR}/lib/log.o.d 
 	@${RM} ${OBJECTDIR}/lib/log.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/log.c  -o ${OBJECTDIR}/lib/log.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/log.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/log.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/lib/pcm51xx.o: lib/pcm51xx.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/lib" 
+	@${RM} ${OBJECTDIR}/lib/pcm51xx.o.d 
+	@${RM} ${OBJECTDIR}/lib/pcm51xx.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/pcm51xx.c  -o ${OBJECTDIR}/lib/pcm51xx.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/pcm51xx.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/lib/pcm51xx.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/lib/timer.o: lib/timer.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
@@ -298,13 +312,6 @@ ${OBJECTDIR}/lib/utils.o: lib/utils.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/utils.c  -o ${OBJECTDIR}/lib/utils.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/utils.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/lib/utils.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
-${OBJECTDIR}/lib/config.o: lib/config.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} "${OBJECTDIR}/lib" 
-	@${RM} ${OBJECTDIR}/lib/config.o.d 
-	@${RM} ${OBJECTDIR}/lib/config.o 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  lib/config.c  -o ${OBJECTDIR}/lib/config.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/lib/config.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
-	@${FIXDEPS} "${OBJECTDIR}/lib/config.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
-	
 ${OBJECTDIR}/lib/wm88xx.o: lib/wm88xx.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/lib" 
 	@${RM} ${OBJECTDIR}/lib/wm88xx.o.d 
@@ -318,6 +325,13 @@ ${OBJECTDIR}/ui/bmbt.o: ui/bmbt.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/ui/bmbt.o 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  ui/bmbt.c  -o ${OBJECTDIR}/ui/bmbt.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/ui/bmbt.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
 	@${FIXDEPS} "${OBJECTDIR}/ui/bmbt.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
+	
+${OBJECTDIR}/ui/cli.o: ui/cli.c  nbproject/Makefile-${CND_CONF}.mk
+	@${MKDIR} "${OBJECTDIR}/ui" 
+	@${RM} ${OBJECTDIR}/ui/cli.o.d 
+	@${RM} ${OBJECTDIR}/ui/cli.o 
+	${MP_CC} $(MP_EXTRA_CC_PRE)  ui/cli.c  -o ${OBJECTDIR}/ui/cli.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/ui/cli.o.d"      -mno-eds-warn  -g -omf=elf -DXPRJ_application=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -O1 -msmart-io=1 -Wall -msfr-warn=off  
+	@${FIXDEPS} "${OBJECTDIR}/ui/cli.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/ui/cd53.o: ui/cd53.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} "${OBJECTDIR}/ui" 

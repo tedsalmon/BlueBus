@@ -6,12 +6,16 @@
  */
 #ifndef LOG_H
 #define LOG_H
+#define _ADDED_C_LIB 1
+#include <stdint.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include "../mappings.h"
 #include "config.h"
 #include "timer.h"
 #include "uart.h"
+#define LOG_MESSAGE_SIZE 416
 #define LOG_SOURCE_BT CONFIG_DEVICE_LOG_BT
 #define LOG_SOURCE_IBUS CONFIG_DEVICE_LOG_IBUS
 #define LOG_SOURCE_SYSTEM CONFIG_DEVICE_LOG_SYSTEM

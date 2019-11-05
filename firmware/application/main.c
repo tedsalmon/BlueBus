@@ -11,15 +11,17 @@
 #include "handler.h"
 #include "mappings.h"
 #include "lib/bc127.h"
-#include "lib/cli.h"
 #include "lib/config.h"
 #include "lib/eeprom.h"
 #include "lib/log.h"
 #include "lib/i2c.h"
 #include "lib/ibus.h"
+#include "lib/pcm51xx.h"
 #include "lib/timer.h"
 #include "lib/uart.h"
+#include "lib/utils.h"
 #include "lib/wm88xx.h"
+#include "ui/cli.h"
 
 int main(void)
 {
@@ -38,6 +40,7 @@ int main(void)
     UART_SEL_MODE = 0;
     IBUS_EN_MODE = 0;
     PAM_SHDN_MODE = 0;
+    SYS_DTR_MODE = 1;
     TEL_ON_MODE = 0;
     TEL_MUTE_MODE = 0;
     
@@ -73,7 +76,7 @@ int main(void)
     struct IBus_t ibus = IBusInit();
     UARTAddModuleHandler(&ibus.uart);
 
-    struct CLI_t cli = CLIInit(&systemUart, &bt, &ibus);
+    CLIInit(&systemUart, &bt, &ibus);
 
     ON_LED = 1;
     EEPROMInit();
@@ -89,7 +92,7 @@ int main(void)
         BC127Process(&bt);
         IBusProcess(&ibus);
         TimerProcessScheduledTasks();
-        CLIProcess(&cli);
+        CLIProcess();
     }
 
     return 0;
@@ -102,7 +105,13 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltOscillatorFail(void)
     INTCON1bits.OSCFAIL = 0;
     ConfigSetTrapIncrement(CONFIG_TRAP_OSC);
     ON_LED = 0;
-    while (1);
+    // Wait five seconds before resetting
+    uint16_t sleepCount = 0;
+    while (sleepCount < 50000) {
+        TimerDelayMicroseconds(1000);
+        sleepCount++;
+    }
+    UtilsReset();
 }
 
 void __attribute__ ((__interrupt__, auto_psv)) _AltAddressError(void)
@@ -111,7 +120,13 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltAddressError(void)
     INTCON1bits.ADDRERR = 0;
     ConfigSetTrapIncrement(CONFIG_TRAP_ADDR);
     ON_LED = 0;
-    while (1);
+    // Wait five seconds before resetting
+    uint16_t sleepCount = 0;
+    while (sleepCount < 50000) {
+        TimerDelayMicroseconds(1000);
+        sleepCount++;
+    }
+    UtilsReset();
 }
 
 
@@ -121,7 +136,13 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltStackError(void)
     INTCON1bits.STKERR = 0;
     ConfigSetTrapIncrement(CONFIG_TRAP_STACK);
     ON_LED = 0;
-    while (1);
+    // Wait five seconds before resetting
+    uint16_t sleepCount = 0;
+    while (sleepCount < 50000) {
+        TimerDelayMicroseconds(1000);
+        sleepCount++;
+    }
+    UtilsReset();
 }
 
 void __attribute__ ((__interrupt__, auto_psv)) _AltMathError(void)
@@ -130,19 +151,37 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltMathError(void)
     INTCON1bits.MATHERR = 0;
     ConfigSetTrapIncrement(CONFIG_TRAP_MATH);
     ON_LED = 0;
-    while (1);
+    // Wait five seconds before resetting
+    uint16_t sleepCount = 0;
+    while (sleepCount < 50000) {
+        TimerDelayMicroseconds(1000);
+        sleepCount++;
+    }
+    UtilsReset();
 }
 
 void __attribute__ ((__interrupt__, auto_psv)) _AltNVMError(void)
 {
     ConfigSetTrapIncrement(CONFIG_TRAP_NVM);
     ON_LED = 0;
-    while (1);
+    // Wait five seconds before resetting
+    uint16_t sleepCount = 0;
+    while (sleepCount < 50000) {
+        TimerDelayMicroseconds(1000);
+        sleepCount++;
+    }
+    UtilsReset();
 }
 
 void __attribute__ ((__interrupt__, auto_psv)) _AltGeneralError(void)
 {
     ConfigSetTrapIncrement(CONFIG_TRAP_GEN);
     ON_LED = 0;
-    while (1);
+    // Wait five seconds before resetting
+    uint16_t sleepCount = 0;
+    while (sleepCount < 50000) {
+        TimerDelayMicroseconds(1000);
+        sleepCount++;
+    }
+    UtilsReset();
 }

@@ -114,6 +114,11 @@ void UARTDestroy(uint8_t uartModule) {
     }
     UtilsSetRPORMode(uart->txPin, 0);
     __builtin_write_OSCCONL(OSCCON & 0x40);
+    // Disable ISRs for the module
+    SetUARTTXIE(uart->moduleIndex, 0);
+    SetUARTRXIE(uart->moduleIndex, 0);
+    SetUARTRXIF(uart->moduleIndex, 0);
+    SetUARTTXIF(uart->moduleIndex, 0);
     //Set the BAUD Rate back to 0
     uart->registers->uxbrg = 0;
     // Disable UART

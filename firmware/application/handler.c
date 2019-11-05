@@ -30,13 +30,15 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     Context.ibus = ibus;
     Context.cdChangerLastPoll = TimerGetMillis();
     Context.cdChangerLastStatus = TimerGetMillis();
+    Context.btDeviceConnRetries = 0;
     Context.btStartupIsRun = 0;
     Context.btConnectionStatus = HANDLER_BT_CONN_OFF;
+    Context.btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
     Context.uiMode = ConfigGetUIMode();
     Context.seekMode = HANDLER_CDC_SEEK_MODE_NONE;
     Context.blinkerCount = 0;
     Context.blinkerStatus = HANDLER_BLINKER_OFF;
-    Context.deviceConnRetries = 0;
+    Context.powerStatus = HANDLER_POWER_ON;
     Context.scanIntervals = 0;
     EventRegisterCallback(
         BC127Event_Boot,
@@ -71,6 +73,16 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         BC127Event_PlaybackStatusChange,
         &HandlerBC127PlaybackStatus,
+        &Context
+    );
+    EventRegisterCallback(
+        UIEvent_CloseConnection,
+        &HandlerUICloseConnection,
+        &Context
+    );
+    EventRegisterCallback(
+        UIEvent_InitiateConnection,
+        &HandlerUIInitiateConnection,
         &Context
     );
     EventRegisterCallback(
@@ -156,7 +168,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
     // Set the CVC Parameters
     if (micGain == 0x00) {
-        micGain = 0xC4; // Default
+        micGain = 0xC0; // Default
     }
     BC127CommandSetMicGain(Context.bt, micGain);
 }
@@ -220,16 +232,15 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
             context->bt->callStatus == BC127_CALL_OUTGOING) &&
             context->bt->scoStatus == BC127_CALL_SCO_OPEN
         ) {
-            LogInfo(LOG_SOURCE_SYSTEM, "Call: TCU Mode Begin");
             // Enable the amp and mute the radio
             PAM_SHDN = 1;
             TEL_MUTE = 1;
         }
         // Close the call immediately, without waiting for SCO to close
         if (context->bt->callStatus == BC127_CALL_INACTIVE) {
-            LogInfo(LOG_SOURCE_SYSTEM, "Call: TCU Mode End");
             // Disable the amp and unmute the radio
             PAM_SHDN = 0;
+            TimerDelayMicroseconds(250);
             TEL_MUTE = 0;
         }
     }
@@ -296,7 +307,6 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
 void HandlerBC127DeviceDisconnected(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    context->btConnectionStatus = HANDLER_BT_CONN_OFF;
     // Reset the metadata so we don't display the wrong data
     BC127ClearMetadata(context->bt);
     BC127ClearPairingErrors(context->bt);
@@ -306,9 +316,20 @@ void HandlerBC127DeviceDisconnected(void *ctx, unsigned char *data)
             BC127_STATE_ON,
             context->bt->discoverable
         );
-        BC127CommandList(context->bt);
+        if (context->btConnectionStatus == HANDLER_BT_CONN_CHANGE) {
+            BC127PairedDevice_t *dev = &context->bt->pairedDevices[
+                context->btSelectedDevice
+            ];
+            BC127CommandProfileOpen(context->bt, dev->macId, "A2DP");
+            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                BC127CommandProfileOpen(context->bt, dev->macId, "HFP");
+            }
+            context->btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
+        } else {
+            BC127CommandList(context->bt);
+        }
     }
-
+    context->btConnectionStatus = HANDLER_BT_CONN_OFF;
 }
 
 /**
@@ -378,12 +399,55 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
 }
 
 /**
+ * HandlerUICloseConnection()
+ *     Description:
+ *         Close the active connection and dissociate ourselves from it
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerUICloseConnection(void *ctx, unsigned char *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // Reset the metadata so we don't display the wrong data
+    BC127ClearMetadata(context->bt);
+    // Clear the actively paired device
+    BC127ClearActiveDevice(context->bt);
+    // Enable connectivity
+    BC127CommandBtState(context->bt, BC127_STATE_ON, context->bt->discoverable);
+    BC127CommandClose(context->bt, BC127_CLOSE_ALL);
+
+}
+
+/**
+ * HandlerUIInitiateConnection()
+ *     Description:
+ *         Handle the connection when a new device is selected in the UI
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerUIInitiateConnection(void *ctx, unsigned char *deviceId)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bt->activeDevice.deviceId != 0) {
+        BC127CommandClose(context->bt, BC127_CLOSE_ALL);
+    }
+    context->btSelectedDevice = (int8_t) *deviceId;
+    context->btConnectionStatus = HANDLER_BT_CONN_CHANGE;
+}
+
+/**
  * HandlerIBusCDCPoll()
  *     Description:
  *         Respond to the Radio's "ping" with a "pong"
  *     Params:
  *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
+ *         unsigned char *pkt - The IBus packet
  *     Returns:
  *         void
  */
@@ -515,10 +579,8 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
         BC127CommandClose(context->bt, BC127_CLOSE_ALL);
         BC127ClearPairedDevices(context->bt);
     } else if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
-        IBusCommandCDCAnnounce(context->ibus);
-        // Always assume that we're playing, that way the radio can tell us
-        // if we shouldn't be, then we can deduce the system state
-        context->ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
+        // Play a tone to awaken the WM8804 / PCM5122
+        BC127CommandTone(Context.bt, "V 0 N C6 L 4");
         // Anounce the CDC to the network
         IBusCommandCDCAnnounce(context->ibus);
         unsigned char discCount = IBUS_CDC_DISC_COUNT_6;
@@ -755,7 +817,7 @@ void HandlerTimerDeviceConnection(void *ctx)
     if (strlen(context->bt->activeDevice.macId) > 0 &&
         context->bt->activeDevice.a2dpLinkId == 0
     ) {
-        if (context->deviceConnRetries <= HANDLER_DEVICE_MAX_RECONN) {
+        if (context->btDeviceConnRetries <= HANDLER_DEVICE_MAX_RECONN) {
             LogDebug(
                 LOG_SOURCE_SYSTEM,
                 "Handler: A2DP link closed -- Attempting to connect"
@@ -765,15 +827,17 @@ void HandlerTimerDeviceConnection(void *ctx)
                 context->bt->activeDevice.macId,
                 "A2DP"
             );
-            context->deviceConnRetries += 1;
+            context->btDeviceConnRetries += 1;
         } else {
             LogError("Handler: Giving up on BT connection");
-            context->deviceConnRetries = 0;
+            context->btDeviceConnRetries = 0;
+            // Enable connectivity
+            BC127CommandBtState(context->bt, BC127_STATE_ON, context->bt->discoverable);
             BC127ClearPairedDevices(context->bt);
             BC127CommandClose(context->bt, BC127_CLOSE_ALL);
         }
-    } else if (context->deviceConnRetries > 0) {
-        context->deviceConnRetries = 0;
+    } else if (context->btDeviceConnRetries > 0) {
+        context->btDeviceConnRetries = 0;
     }
 }
 
@@ -822,18 +886,20 @@ void HandlerTimerPoweroff(void *ctx)
     unsigned char powerTimeout = ConfigGetPoweroffTimeout();
     if (powerTimeout != 0) {
         uint8_t lastRxMinutes = (TimerGetMillis() - context->ibus->rxLastStamp) / 60000;
-        if (lastRxMinutes >= powerTimeout) {
-            if (IBUS_EN_STATUS == 1) {
+        if (lastRxMinutes > powerTimeout) {
+            if (context->powerStatus == HANDLER_POWER_ON) {
                 // Destroy the UART module for IBus
                 UARTDestroy(IBUS_UART_MODULE);
-                TimerDelayMicroseconds(100);
+                TimerDelayMicroseconds(500);
                 LogInfo(LOG_SOURCE_SYSTEM, "System Power Down!");
+                context->powerStatus = HANDLER_POWER_OFF;
                 // Disable the TH3122
                 IBUS_EN = 0;
             } else {
                 // Re-enable the TH3122 EN line so we can try pulling it,
                 // and the regulator low again
                 IBUS_EN = 1;
+                context->powerStatus = HANDLER_POWER_ON;
             }
         }
     }

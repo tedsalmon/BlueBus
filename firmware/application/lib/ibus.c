@@ -40,6 +40,15 @@ IBus_t IBusInit()
     return ibus;
 }
 
+/**
+ * IBusHandleBMBTMessage()
+ *     Description:
+ *         Handle any messages received from the BMBT (Board Monitor)
+ *     Params:
+ *         unsigned char *pkt - The frame received on the IBus
+ *     Returns:
+ *         None
+ */
 static void IBusHandleBMBTMessage(unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON0 ||
@@ -49,6 +58,15 @@ static void IBusHandleBMBTMessage(unsigned char *pkt)
     }
 }
 
+/**
+ * IBusHandleGTMessage()
+ *     Description:
+ *         Handle any messages received from the GT (Graphics Terminal)
+ *     Params:
+ *         unsigned char *pkt - The frame received on the IBus
+ *     Returns:
+ *         None
+ */
 static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_LEN] == 0x22 &&
@@ -58,24 +76,26 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
         // Decode the software and hardware versions
         uint8_t hardwareVersion = IBusGetNavHWVersion(pkt);
         uint8_t softwareVersion = IBusGetNavSWVersion(pkt);
-        LogRaw(
-            "IBus: GT Data: Part Number: %c%c%c%c%c%c%c \
-HW: %d SW: %d Build Week: %c%c Year: %c%c \r\n",
-            pkt[4],
-            pkt[5],
-            pkt[6],
-            pkt[7],
-            pkt[8],
-            pkt[9],
-            pkt[10],
-            hardwareVersion,
-            softwareVersion,
-            pkt[19],
-            pkt[20],
-            pkt[21],
-            pkt[22]
-        );
-        EventTriggerCallback(IBusEvent_GTDiagResponse, pkt);
+        uint8_t navType = IBusGetNavType(pkt);
+        if (navType != IBUS_GT_DETECT_ERROR) {
+            LogRaw(
+                "IBus: GT P/N: %c%c%c%c%c%c%c HW: %d SW: %d Build: %c%c/%c%c\r\n",
+                pkt[4],
+                pkt[5],
+                pkt[6],
+                pkt[7],
+                pkt[8],
+                pkt[9],
+                pkt[10],
+                hardwareVersion,
+                softwareVersion,
+                pkt[19],
+                pkt[20],
+                pkt[21],
+                pkt[22]
+            );
+            EventTriggerCallback(IBusEvent_GTDiagResponse, pkt);
+        }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MENU_SELECT) {
         EventTriggerCallback(IBusEvent_GTMenuSelect, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_SCREEN_MODE_SET) {
@@ -83,6 +103,15 @@ HW: %d SW: %d Build Week: %c%c Year: %c%c \r\n",
     }
 }
 
+/**
+ * IBusHandleIKEMessage()
+ *     Description:
+ *         Handle any messages received from the IKE (Instrument Cluster)
+ *     Params:
+ *         unsigned char *pkt - The frame received on the IBus
+ *     Returns:
+ *         None
+ */
 static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IGN_STATUS_REQ) {
@@ -101,6 +130,15 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
+/**
+ * IBusHandleLCMMessage()
+ *     Description:
+ *         Handle any messages received from the LCM (Lighting Control Module)
+ *     Params:
+ *         unsigned char *pkt - The frame received on the IBus
+ *     Returns:
+ *         None
+ */
 static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO &&
@@ -157,10 +195,12 @@ static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
             }
             EventTriggerCallback(IBusEvent_CDStatusRequest, pkt);
         }
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA && pkt[IBUS_PKT_CMD] == IBUS_CMD_DIAG_RESPONSE) {
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+               pkt[IBUS_PKT_LEN] > 8 &&
+               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIAG_RESPONSE
+    ) {
         LogRaw(
-            "IBus: Radio Data: Part Number: %d%d%d%d%d%d%d \
-HW: %02d SW: %d%d Build Week: %d%d Year: %d%d \r\n",
+            "IBus: RAD P/N: %d%d%d%d%d%d%d HW: %02d SW: %d%d Build: %d%d/%d%d\r\n",
             pkt[4] & 0x0F,
             (pkt[5] & 0xF0) >> 4,
             pkt[5] & 0x0F,
@@ -613,7 +653,7 @@ uint8_t IBusGetNavHWVersion(unsigned char *packet)
 }
 
 /**
- * IBusGetNavHWVersion()
+ * IBusGetNavSWVersion()
  *     Description:
  *        Get the nav type software version
  *     Params:
@@ -654,9 +694,12 @@ uint8_t IBusGetNavType(unsigned char *packet)
         case 21:
             navType = IBUS_GT_MKII;
             break;
-        // No idea what an MKI reports -- Anything else must be it?
-        default:
+        case 50:
+        case 53:
             navType = IBUS_GT_MKI;
+            break;
+        default:
+            navType = IBUS_GT_DETECT_ERROR;
             break;
     }
     uint8_t softwareVersion = IBusGetNavSWVersion(packet);
@@ -753,14 +796,15 @@ void IBusCommandCDCStatus(
  *     Returns:
  *         void
  */
-void IBusCommandDIAGetCodingData(IBus_t *ibus, unsigned char system, unsigned char oct)
-{
-    // The last octet controls how many bytes we want to read back
-    // unsigned char msg[] = {0x08, 0x00, oct, 0x20};
-    unsigned char msg[] = {0x11};
+void IBusCommandDIAGetCodingData(
+    IBus_t *ibus,
+    unsigned char system,
+    unsigned char addr,
+    unsigned char offset
+) {
+    unsigned char msg[] = {0x08, 0x00, addr, offset};
     IBusSendCommand(ibus, IBUS_DEVICE_DIA, system, msg, 1);
 }
-
 
 /**
  * IBusCommandDIAGetIdentity()

@@ -12,6 +12,7 @@
 #include "../lib/config.h"
 #include "../lib/event.h"
 #include "../lib/ibus.h"
+#include "../lib/pcm51xx.h"
 #include "../lib/timer.h"
 #include "../lib/utils.h"
 #define BMBT_DISPLAY_OFF 0x00
@@ -40,6 +41,7 @@
 #define BMBT_MENU_IDX_SETTINGS_TCU_MODE 6
 #define BMBT_MENU_IDX_PAIRING_MODE 0
 #define BMBT_MENU_IDX_CLEAR_PAIRING 1
+#define BMBT_MENU_IDX_FIRST_DEVICE 2
 #define BMBT_MENU_WRITE_DELAY 300
 #define BMBT_MENU_TIMER_WRITE_INT 100
 #define BMBT_MENU_TIMER_WRITE_TIMEOUT 500
@@ -52,7 +54,8 @@
 #define BMBT_MODE_INACTIVE 0
 #define BMBT_MODE_ACTIVE 1
 #define BMBT_NAV_BOOT 0x10
-#define BMBT_PAIRING_DEVICE_NONE -1
+#define BMBT_NAV_STATE_OFF 0
+#define BMBT_NAV_STATE_ON 1
 #define BMBT_SCROLL_TEXT_SIZE 255
 #define BMBT_SCROLL_TEXT_SPEED 750
 #define BMBT_SCROLL_TEXT_TIMER 500
@@ -62,14 +65,13 @@ typedef struct BMBTContext_t {
     uint8_t menu;
     uint8_t mode;
     uint8_t displayMode;
+    uint8_t navState;
     uint8_t navType;
     uint8_t navIndexType;
     uint8_t radType;
     uint8_t writtenIndices;
     uint8_t timerHeaderIntervals;
     uint8_t timerMenuIntervals;
-    int8_t selectedPairingDevice;
-    int8_t activelyPairedDevice;
     uint8_t displayUpdateTaskId;
     uint8_t headerWriteTaskId;
     uint8_t menuWriteTaskId;

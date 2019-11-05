@@ -35,6 +35,7 @@ typedef struct UtilsAbstractDisplayValue_t {
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *, uint8_t);
 void UtilsRemoveNonAscii(char *, const char *);
 void UtilsRemoveSubstring(char *, const char *);
+void UtilsReset();
 void UtilsSetRPORMode(uint8_t, uint16_t);
 unsigned char UtilsStrToHex(char *);
 uint8_t UtilsStrToInt(char *);

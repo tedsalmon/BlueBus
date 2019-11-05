@@ -140,7 +140,7 @@ void WM88XXInit()
 /**
  * WM88XXPollTimer()
  *     Description:
- *         Initialize our WM88XX module by writing the requisite registers
+ *         Periodically poll the WM88XX module
  *     Params:
  *         void *ctx - The context provided at registration
  *     Returns:

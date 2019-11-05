@@ -30,7 +30,7 @@
  *     Fields:
  *         (*task)(void *) - The pointer to the function to execute
  *         *context - A pointer to the context to pass to the function pointer
- *         interval - The number of ticks to let pass before executing (millseconds)
+ *         interval - The number of ticks to let pass before executing (milliseconds)
  *         ticks - The amount of ticks that have passed since the last call
  */
 typedef struct TimerScheduledTask_t {

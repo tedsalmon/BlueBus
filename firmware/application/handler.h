@@ -20,12 +20,10 @@
 #define HANDLER_BLINKER_OFF 0
 #define HANDLER_BLINKER_DRV 1
 #define HANDLER_BLINKER_PSG 2
-#define HANDLER_BT_OFF 0
-#define HANDLER_BT_TURN_OFF 1
-#define HANDLER_BT_TURN_ON 2
-#define HANDLER_BT_ON 3
 #define HANDLER_BT_CONN_OFF 0
 #define HANDLER_BT_CONN_ON 1
+#define HANDLER_BT_CONN_CHANGE 2
+#define HANDLER_BT_SELECTED_DEVICE_NONE -1
 #define HANDLER_CDC_ANOUNCE_INT 1000
 #define HANDLER_CDC_ANOUNCE_TIMEOUT 21000
 #define HANDLER_CDC_SEEK_MODE_NONE 0
@@ -35,11 +33,16 @@
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
 #define HANDLER_DEVICE_MAX_RECONN 10
 #define HANDLER_INT_DEVICE_CONN 30000
+#define HANDLER_POWER_OFF 0
+#define HANDLER_POWER_ON 1
 #define HANDLER_PROFILE_ERROR_INT 2500
 #define HANDLER_SCAN_INT 10000
+
 typedef struct HandlerContext_t {
     BC127_t *bt;
     IBus_t *ibus;
+    uint8_t btDeviceConnRetries;
+    int8_t btSelectedDevice;
     uint8_t btStatus;
     uint8_t btStatusCount;
     uint8_t btStartupIsRun;
@@ -48,7 +51,7 @@ typedef struct HandlerContext_t {
     uint8_t seekMode;
     uint8_t blinkerStatus;
     uint8_t blinkerCount;
-    uint8_t deviceConnRetries;
+    uint8_t powerStatus;
     uint8_t scanIntervals;
     uint32_t cdChangerLastPoll;
     uint32_t cdChangerLastStatus;
@@ -61,6 +64,8 @@ void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
 void HandlerBC127DeviceDisconnected(void *, unsigned char *);
 void HandlerBC127DeviceFound(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
+void HandlerUICloseConnection(void *, unsigned char *);
+void HandlerUIInitiateConnection(void *, unsigned char *);
 void HandlerIBusCDCPoll(void *, unsigned char *);
 void HandlerIBusCDCStatus(void *, unsigned char *);
 void HandlerIBusIgnitionStatus(void *, unsigned char *);
