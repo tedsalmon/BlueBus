@@ -24,14 +24,25 @@ int main(void)
     ANSF = 0;
     ANSG = 0;
 
-    // Set the pin modes
+    // Set the I/O port directions
     ON_LED_MODE = 0;
+    BT_DATA_SEL_MODE = 0;
     UART_SEL_MODE = 0;
     RECOVERY_MODE = 1;
-    BT_DATA_SEL_MODE = 0;
-
+    IBUS_EN_MODE = 0;
+    PAM_SHDN_MODE = 0;
+    TEL_ON_MODE = 0;
+    TEL_MUTE_MODE = 0;
+    
     // Set the UART mode to MCU by default
     UART_SEL = UART_SEL_MCU;
+    // Enable the IBus Regulator
+    IBUS_EN = 1;
+    // Turn the PAM8406 off until it's required
+    PAM_SHDN = 0;
+    // Keep the system unmuted but enable the TEL_ON signal
+    TEL_ON = 1;
+    TEL_MUTE = 0;
 
     // Ensure the Pwr LED is off
     ON_LED = 0;
@@ -44,8 +55,8 @@ int main(void)
     uint8_t BOOT_MODE = BOOT_MODE_APPLICATION;
     unsigned char configuredBootmode = EEPROMReadByte(CONFIG_BOOTLOADER_MODE);
     // If the bootloader flag is set in the EEPROM or the recovery pin
-    // has been pulled, then lock into bootloader mode
-    if (configuredBootmode != 0x00 || RECOVERY_STATUS == 1) {
+    // is set, then lock into bootloader mode
+    if (configuredBootmode != 0x00 || RECOVERY_STATUS == 0) {
         BOOT_MODE = BOOT_MODE_BOOTLOADER;
         EEPROMWriteByte(CONFIG_BOOTLOADER_MODE, 0x00);
         TimerEnableLED();

@@ -55,8 +55,21 @@
 #define IVT_MODE_APP 1
 #define IVT_MODE_BOOT 0
 
+#define IBUS_EN_MODE TRISFbits.TRISF1
+#define IBUS_EN_STATUS PORTFbits.RF1
+#define IBUS_EN LATFbits.LATF1
+
+#define PAM_SHDN_MODE TRISEbits.TRISE3
+#define PAM_SHDN LATEbits.LATE3
+
 #define RECOVERY_MODE TRISDbits.TRISD5 
 #define RECOVERY_STATUS PORTDbits.RD5
+
+#define TEL_ON_MODE TRISBbits.TRISB7
+#define TEL_ON LATBbits.LATB7
+
+#define TEL_MUTE_MODE TRISEbits.TRISE2
+#define TEL_MUTE LATEbits.LATE2
 
 #define NOP_COUNT 1024
 #endif /* MAPPINGS_H */
