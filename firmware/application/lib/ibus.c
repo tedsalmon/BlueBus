@@ -114,7 +114,7 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
  */
 static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IGN_STATUS_REQ) {
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IGN_STATUS_RESP) {
         uint8_t ignitionStatus;
         if (pkt[4] == IBUS_IGNITION_OFF) {
             // Implied that the CDC should not be playing with the ignition off
@@ -123,10 +123,14 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         } else {
             ignitionStatus = IBUS_IGNITION_ON;
         }
-        if (ibus->ignitionStatus != ignitionStatus) {
-            ibus->ignitionStatus = ignitionStatus;
-            EventTriggerCallback(IBusEvent_IgnitionStatus, pkt);
-        }
+        // The order of the items below should not be changed,
+        // otherwise listeners will not know if the ignition status
+        // has changed
+        EventTriggerCallback(
+            IBusEvent_IgnitionStatus,
+            &ignitionStatus
+        );
+        ibus->ignitionStatus = ignitionStatus;
     }
 }
 
@@ -1143,7 +1147,7 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
  */
 void IBusCommandIKEGetIgnition(IBus_t *ibus)
 {
-    unsigned char msg[] = {0x10};
+    unsigned char msg[] = {IBUS_CMD_IGN_STATUS_REQ};
     IBusSendCommand(ibus, IBUS_DEVICE_BMBT, IBUS_DEVICE_IKE, msg, 1);
 }
 

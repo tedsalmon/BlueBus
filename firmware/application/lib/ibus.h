@@ -90,6 +90,9 @@
 #define IBUS_DEVICE_BMBT_Button_Num4 0x02
 #define IBUS_DEVICE_BMBT_Button_Num5 0x13
 #define IBUS_DEVICE_BMBT_Button_Num6 0x03
+#define IBUS_DEVICE_BMBT_Button_TEL_Press
+#define IBUS_DEVICE_BMBT_Button_TEL_Hold 0x48
+#define IBUS_DEVICE_BMBT_Button_TEL_Release 0x88
 
 #define IBUS_CMD_BMBT_BUTTON0 0x47
 #define IBUS_CMD_BMBT_BUTTON1 0x48
@@ -110,7 +113,8 @@
 
 #define IBUS_CMD_GT_DISPLAY_RADIO_MENU 0x37
 
-#define IBUS_CMD_IGN_STATUS_REQ 0x11
+#define IBUS_CMD_IGN_STATUS_REQ 0x10
+#define IBUS_CMD_IGN_STATUS_RESP 0x11
 
 #define IBUS_CMD_RAD_SCREEN_MODE_UPDATE 0x46
 #define IBUS_CMD_RAD_UPDATE_MAIN_AREA 0x23
@@ -205,8 +209,9 @@
 #define IBusMFLButtonPrevRelease 0x28
 #define IBusMFLButtonRTPress 0x40
 #define IBusMFLButtonRTRelease 0x00
-#define IBusMFLButtonVoiceRelease 0xA0
+#define IBusMFLButtonVoicePress 0x80
 #define IBusMFLButtonVoiceHold 0x90
+#define IBusMFLButtonVoiceRelease 0xA0
 
 #define IBUS_MFL_BTN_VOL 0x32
 #define IBusMFLVolUp 0x11

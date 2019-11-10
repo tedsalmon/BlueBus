@@ -197,6 +197,18 @@ void CLIProcess()
                     BC127CommandBtState(cli.bt, BC127_STATE_ON, BC127_STATE_ON);
                 } else if (UtilsStricmp(msgBuf[1], "UNPAIR") == 0) {
                     BC127CommandUnpair(cli.bt);
+                } else if (UtilsStricmp(msgBuf[1], "NAME") == 0) {
+                    if (strlen(msgBuf[2]) <= 32) {
+                        BC127CommandSetModuleName(cli.bt, msgBuf[2]);
+                    } else {
+                        cmdSuccess = 0;
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "PIN") == 0) {
+                    if (strlen(msgBuf[2]) == 4) {
+                        BC127CommandSetPin(cli.bt, msgBuf[2]);
+                    } else {
+                        cmdSuccess = 0;
+                    }
                 } else if (UtilsStricmp(msgBuf[1], "VERSION") == 0) {
                     BC127CommandVersion(cli.bt);
                 } else {
@@ -240,6 +252,7 @@ void CLIProcess()
                     LogRaw("PCM5122: I2SSTAT %02X (0x5E) [%d]\r\n", buffer, status);
                     status = I2CRead(0x4C, 0x76, &buffer);
                     LogRaw("PCM5122: PWRSTAT %02X (0x76) [%d]\r\n", buffer, status);
+                    LogRaw("PCM5122: Volume configured to %02X\r\n", ConfigGetSetting(CONFIG_SETTING_DAC_VOL));
                 } else if (UtilsStricmp(msgBuf[1], "I2S") == 0) {
                     int8_t status;
                     unsigned char buffer;
@@ -257,6 +270,8 @@ void CLIProcess()
                 } else {
                     cmdSuccess = 0;
                 }
+            }  else if(UtilsStricmp(msgBuf[0], "ID") == 0) {
+                    LogRaw("BlueBus\r\n");
             } else if (UtilsStricmp(msgBuf[0], "REBOOT") == 0) {
                 UtilsReset();
             } else if (UtilsStricmp(msgBuf[0], "RESET") == 0) {
@@ -295,7 +310,15 @@ void CLIProcess()
                     }
                 }
             } else if (UtilsStricmp(msgBuf[0], "SET") == 0) {
-                if (UtilsStricmp(msgBuf[1], "UI") == 0) {
+                if (UtilsStricmp(msgBuf[1], "DAC") == 0) {
+                    if (UtilsStricmp(msgBuf[2], "GAIN") == 0) {
+                        unsigned char currentVolume = UtilsStrToHex(msgBuf[3]);
+                        ConfigSetSetting(CONFIG_SETTING_DAC_VOL, currentVolume);
+                        PCM51XXSetVolume(currentVolume);
+                    } else {
+                        cmdSuccess = 0;
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "UI") == 0) {
                     if (UtilsStricmp(msgBuf[2], "1") == 0) {
                         ConfigSetUIMode(IBus_UI_CD53);
                         LogRaw("UI Mode: CD53\r\n");
@@ -314,17 +337,19 @@ void CLIProcess()
                     } else {
                         LogRaw("Invalid UI Mode specified\r\n");
                     }
-                }  else if(UtilsStricmp(msgBuf[1], "ID") == 0) {
-                    LogRaw("BlueBus\r\n");
                 } else if(UtilsStricmp(msgBuf[1], "IGN") == 0) {
                     if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         IBusCommandIgnitionStatus(cli.ibus, 0x00);
-                        cli.ibus->ignitionStatus = 0;
-                        EventTriggerCallback(IBusEvent_IgnitionStatus, 0x00);
+                        //EventTriggerCallback(IBusEvent_IgnitionStatus, 0x00);
+                        //cli.ibus->ignitionStatus = 0;
                     } else if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                        IBusCommandIgnitionStatus(cli.ibus, 0x01);
-                        cli.ibus->ignitionStatus = 1;
-                        EventTriggerCallback(IBusEvent_IgnitionStatus, 0x00);
+                        unsigned char ignitionStatus = 0x01;
+                        IBusCommandIgnitionStatus(cli.ibus, ignitionStatus);
+                        //EventTriggerCallback(
+                        //    IBusEvent_IgnitionStatus,
+                        //    (unsigned char *)&ignitionStatus
+                        //);
+                        //cli.ibus->ignitionStatus = 1;
                     } else {
                         cmdSuccess = 0;
                     }
@@ -356,12 +381,12 @@ void CLIProcess()
                     if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                         // Enable the amp and mute the radio
                         PAM_SHDN = 1;
-                        //TEL_MUTE = 1;
+                        TEL_MUTE = 1;
                     } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         // Disable the amp and unmute the radio
                         PAM_SHDN = 0;
-                        //TimerDelayMicroseconds(250);
-                        //TEL_MUTE = 0;
+                        TimerDelayMicroseconds(250);
+                        TEL_MUTE = 0;
                     }
                 } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
                     unsigned char timeout = (unsigned char) UtilsStrToInt(msgBuf[2]);
@@ -379,14 +404,19 @@ void CLIProcess()
                 LogRaw("    BT HFP ON/OFF - Enable or Disable HFP. Get the HFP Status without a param.\r\n");
                 LogRaw("    BT MGAIN x - Set the Mic gain to x where x is octal C0-D6\r\n");
                 LogRaw("    BT PAIR - Enable pairing mode\r\n");
+                LogRaw("    BT NAME <name> - Set the module name, up to 32 chars\r\n");
+                LogRaw("    BT PIN <pin> - Set the module pin, up to 4 digits\r\n");
                 LogRaw("    BT REBOOT - Reboot the BC127\r\n");
                 LogRaw("    BT UNPAIR - Unpair all devices from the BC127\r\n");
                 LogRaw("    BT VERSION - Get the BC127 Version Info\r\n");
+                LogRaw("    GET DAC - Get info from the PCM5122 DAC\r\n");
                 LogRaw("    GET ERR - Get the Error counter\r\n");
                 LogRaw("    GET IBUS - Get debug info from the IBus\r\n");
                 LogRaw("    GET UI - Get the current UI Mode\r\n");
                 LogRaw("    GET I2S - Read the WM8804 INT/SPD Status registers\r\n");
+                LogRaw("    ID - Print 'BlueBus' to the terminal\r\n");
                 LogRaw("    REBOOT - Reboot the device\r\n");
+                LogRaw("    SET DAC GAIN xx - Set the PCM5122 gain from 0x00 - 0xCF (higher is lower)\r\n");
                 LogRaw("    SET IGN ON/OFF - Send the ignition status message [DEBUG]\r\n");
                 LogRaw("    SET LOG x ON/OFF - Change logging for x (BT, IBUS, SYS, UI)\r\n");
                 LogRaw("    SET PWROFF x - Set the time in minutes that we should wait before powering off\r\n");

@@ -25,6 +25,7 @@
 #define MID_BUTTON_DEVICES_L 4
 #define MID_BUTTON_DEVICES_R 5
 #define MID_BUTTON_PAIR 8
+#define MID_BUTTON_MODE 0x0B
 
 #define MID_DISPLAY_NONE 0
 #define MID_DISPLAY_REWRITE 1
@@ -36,13 +37,25 @@
 #define MID_DISPLAY_TEXT_SIZE 20
 #define MID_DISPLAY_TIMER_INT 500
 
-#define MID_METADATA_MODE_PARTY 0x01
-#define MID_METADATA_MODE_CHUNK 0x02
-
 #define MID_MODE_OFF 0
-#define MID_MODE_ACTIVE 1
-#define MID_MODE_SETTINGS 2
-#define MID_MODE_DEVICES 3
+#define MID_MODE_DISPLAY_OFF 1
+#define MID_MODE_ACTIVE 2
+#define MID_MODE_SETTINGS 3
+#define MID_MODE_DEVICES 4
+
+#define MID_PAIRING_DEVICE_NONE -1
+
+#define MID_SETTING_IDX_HFP 0
+#define MID_SETTING_IDX_METADATA_MODE 1
+#define MID_SETTING_IDX_AUTOPLAY 2
+#define MID_SETTING_IDX_VEH_TYPE 3
+#define MID_SETTING_IDX_BLINKERS 4
+#define MID_SETTING_IDX_TCU_MODE 5
+#define MID_SETTING_IDX_PAIRINGS 6
+#define MID_SETTING_MODE_SCROLL_SETTINGS 1
+#define MID_SETTING_MODE_SCROLL_VALUES 2
+#define MID_SETTING_METADATA_MODE_PARTY 0x01
+#define MID_SETTING_METADATA_MODE_CHUNK 0x02
 
 
 /*
@@ -59,6 +72,9 @@ typedef struct MIDContext_t {
     int8_t btDeviceIndex;
     uint8_t mode;
     uint8_t displayUpdate;
+    uint8_t settingIdx;
+    uint8_t settingValue;
+    uint8_t settingMode;
     UtilsAbstractDisplayValue_t mainDisplay;
     UtilsAbstractDisplayValue_t tempDisplay;
     uint8_t displayUpdateTaskId;

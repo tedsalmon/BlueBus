@@ -16,6 +16,7 @@
 #include "../lib/config.h"
 #include "../lib/i2c.h"
 #include "../lib/ibus.h"
+#include "../lib/pcm51xx.h"
 #include "../lib/timer.h"
 #include "../lib/uart.h"
 
@@ -24,7 +25,7 @@
 #define CLI_MSG_END_CHAR 0x0D
 #define CLI_MSG_DELIMETER 0x20
 #define CLI_MSG_DELETE_CHAR 0x7F
-#define CLI_VERSION_BANNER "BlueBus Firmware: 1.0.9.11\r\n"
+#define CLI_VERSION_BANNER "BlueBus Firmware: 1.0.9.14\r\n"
 /**
  * CLI_t
  *     Description:

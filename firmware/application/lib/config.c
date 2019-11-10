@@ -38,19 +38,16 @@ unsigned char ConfigGetByte(unsigned char address)
 unsigned char ConfigGetLog(unsigned char system)
 {
     unsigned char currentSetting = CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS];
-    if (currentSetting == 0x00 && currentSetting != 0x01) {
+    if (currentSetting == 0x00) {
         unsigned char currentSetting = ConfigGetByte(
             CONFIG_SETTING_LOG_ADDRESS
         );
         if (currentSetting == 0x00) {
             // Prevent from re-reading the byte
             currentSetting = 0x01;
+            EEPROMWriteByte(CONFIG_SETTING_LOG_ADDRESS, currentSetting);
         }
         CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS] = currentSetting;
-    }
-    // The value is fully unset, so default to on
-    if (currentSetting == 0x01) {
-        return 1;
     }
     return (currentSetting >> system) & 1;
 }

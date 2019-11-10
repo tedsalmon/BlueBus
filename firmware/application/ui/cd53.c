@@ -321,6 +321,16 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                     context->settingValue = CONFIG_SETTING_OFF;
                 }
             }
+            //if (context->settingIdx == CD53_SETTING_IDX_DAC_GAIN) {
+            //    unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
+            //    if (context->settingValue == CONFIG_SETTING_ON) {
+            //        CD53SetMainDisplayText(context, "TCU Mode: Out of BT", 0);
+            //        context->settingValue = CONFIG_SETTING_ON;
+            //    } else {
+            //        CD53SetMainDisplayText(context, "TCU Mode: Always", 0);
+            //        context->settingValue = CONFIG_SETTING_OFF;
+            //    }
+            //}
             if (context->settingIdx == CD53_SETTING_IDX_PAIRINGS) {
                 if (context->settingValue == CONFIG_SETTING_OFF) {
                     CD53SetMainDisplayText(context, "Press Ok", 0);
@@ -417,6 +427,22 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             CD53RedisplayText(context);
         }
     } else if (pkt[3] == 0x03) {
+        if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+            uint32_t now = TimerGetMillis();
+            if (context->bt->callStatus == BC127_CALL_ACTIVE) {
+                BC127CommandCallEnd(context->bt);
+            } else if (context->bt->callStatus == BC127_CALL_INCOMING) {
+                BC127CommandCallAnswer(context->bt);
+            } else if (context->bt->callStatus == BC127_CALL_OUTGOING) {
+                BC127CommandCallEnd(context->bt);
+            }
+            if ((now - context->lastTelephoneButtonPress) <= CD53_VR_TOGGLE_TIME &&
+                context->bt->callStatus == BC127_CALL_INACTIVE
+            ) {
+                BC127CommandToggleVR(context->bt);
+            }
+        }
+        context->lastTelephoneButtonPress = TimerGetMillis();
         CD53RedisplayText(context);
     } else if (pkt[5] == 0x04) {
         // Settings Menu
@@ -509,14 +535,34 @@ void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
         strlen(context->bt->title) > 0
     ) {
         char text[UTILS_DISPLAY_TEXT_SIZE];
-        snprintf(
-            text,
-            UTILS_DISPLAY_TEXT_SIZE,
-            "%s - %s on %s",
-            context->bt->title,
-            context->bt->artist,
-            context->bt->album
-        );
+        if (strlen(context->bt->artist) > 0 && strlen(context->bt->album) > 0) {
+            snprintf(
+                text,
+                UTILS_DISPLAY_TEXT_SIZE,
+                "%s - %s on %s",
+                context->bt->title,
+                context->bt->artist,
+                context->bt->album
+            );
+        } else if (strlen(context->bt->artist) > 0) {
+            snprintf(
+                text,
+                UTILS_DISPLAY_TEXT_SIZE,
+                "%s - %s",
+                context->bt->title,
+                context->bt->artist
+            );
+        } else if (strlen(context->bt->album) > 0) {
+            snprintf(
+                text,
+                UTILS_DISPLAY_TEXT_SIZE,
+                "%s on %s",
+                context->bt->title,
+                context->bt->album
+            );
+        } else {
+            snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
+        }
         char cleanText[UTILS_DISPLAY_TEXT_SIZE];
         UtilsRemoveNonAscii(cleanText, text);
         CD53SetMainDisplayText(context, cleanText, 3000 / CD53_DISPLAY_SCROLL_SPEED);

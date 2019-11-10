@@ -802,7 +802,7 @@ void BC127CommandSetModuleName(BC127_t *bt, char *name)
     BC127SendCommand(bt, nameSetCommand);
     // Set the "short" name
     char nameShortSetCommand[23];
-    char shortName[8];
+    char shortName[9];
     strncpy(shortName, name, BC127_SHORT_NAME_MAX_LEN);
     snprintf(nameShortSetCommand, 23, "SET NAME_SHORT=%s", shortName);
     BC127SendCommand(bt, nameShortSetCommand);
@@ -824,6 +824,7 @@ void BC127CommandSetPin(BC127_t *bt, char *pin)
     char command[13];
     snprintf(command, 13, "SET PIN=%s", pin);
     BC127SendCommand(bt, command);
+    BC127CommandWrite(bt);
 }
 
 /**

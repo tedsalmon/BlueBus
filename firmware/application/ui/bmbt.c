@@ -677,16 +677,16 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
         // Set the DAC Volume
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_Num3) {
             unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
-            if (currentVolume > 0x00) {
-                currentVolume -= 1;
+            if (currentVolume < 0xCF) {
+                currentVolume += 1;
             }
             ConfigSetSetting(CONFIG_SETTING_DAC_VOL, currentVolume);
             PCM51XXSetVolume(currentVolume);
         }
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_Num6) {
             unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
-            if (currentVolume < 0xCF) {
-                currentVolume += 1;
+            if (currentVolume > 0x00) {
+                currentVolume -= 1;
             }
             ConfigSetSetting(CONFIG_SETTING_DAC_VOL, currentVolume);
             PCM51XXSetVolume(currentVolume);
@@ -736,6 +736,21 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
         }
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_Mode) {
             context->mode = BMBT_MODE_INACTIVE;
+        }
+        if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+            if (pkt[4] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
+                if (context->bt->callStatus == BC127_CALL_ACTIVE) {
+                    BC127CommandCallEnd(context->bt);
+                } else if (context->bt->callStatus == BC127_CALL_INCOMING) {
+                    BC127CommandCallAnswer(context->bt);
+                } else if (context->bt->callStatus == BC127_CALL_OUTGOING) {
+                    BC127CommandCallEnd(context->bt);
+                }
+            } else if (context->bt->callStatus == BC127_CALL_INACTIVE &&
+                       pkt[4] == IBUS_DEVICE_BMBT_Button_TEL_Hold
+            ) {
+                BC127CommandToggleVR(context->bt);
+            }
         }
         // Handle the SEL and Info buttons gracefully
         if (pkt[3] == IBUS_CMD_BMBT_BUTTON0 && pkt[1] == 0x05) {
@@ -1051,6 +1066,7 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
                 TimerTriggerScheduledTask(context->displayUpdateTaskId);
             }
             BMBTTriggerWriteHeader(context);
+            BMBTTriggerWriteMenu(context);
         }
     }
 }

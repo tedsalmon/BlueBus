@@ -41,6 +41,7 @@
 #define CD53_SETTING_MODE_SCROLL_VALUES 2
 #define CD53_METADATA_MODE_PARTY 0x01
 #define CD53_METADATA_MODE_CHUNK 0x02
+#define CD53_VR_TOGGLE_TIME 500
 
 /*
  * CD53Context_t
@@ -67,6 +68,7 @@ typedef struct CD53Context_t {
     uint8_t settingValue;
     uint8_t settingMode;
     uint8_t radioType;
+    uint32_t lastTelephoneButtonPress;
     UtilsAbstractDisplayValue_t mainDisplay;
     UtilsAbstractDisplayValue_t tempDisplay;
 } CD53Context_t;

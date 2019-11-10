@@ -38,6 +38,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     Context.seekMode = HANDLER_CDC_SEEK_MODE_NONE;
     Context.blinkerCount = 0;
     Context.blinkerStatus = HANDLER_BLINKER_OFF;
+    Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
     Context.powerStatus = HANDLER_POWER_ON;
     Context.scanIntervals = 0;
     EventRegisterCallback(
@@ -474,8 +475,8 @@ void HandlerIBusCDCPoll(void *ctx, unsigned char *pkt)
 void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    unsigned char curStatus = 0x00;
-    unsigned char curFunction = 0x00;
+    unsigned char curStatus = IBUS_CDC_STAT_STOP;
+    unsigned char curFunction = IBUS_CDC_FUNC_NOT_PLAYING;
     unsigned char requestedCommand = pkt[4];
     if (requestedCommand == IBUS_CDC_CMD_GET_STATUS) {
         curFunction = context->ibus->cdChangerFunction;
@@ -571,38 +572,36 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    // If the first bit is set, the key is in position 1 at least, otherwise
-    // the ignition is off
-    if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
-        // Set the BT module not connectable/discoverable. Disconnect all devices
-        BC127CommandBtState(context->bt, BC127_STATE_OFF, BC127_STATE_OFF);
-        BC127CommandClose(context->bt, BC127_CLOSE_ALL);
-        BC127ClearPairedDevices(context->bt);
-    } else if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
-        // Play a tone to awaken the WM8804 / PCM5122
-        BC127CommandTone(Context.bt, "V 0 N C6 L 4");
-        // Anounce the CDC to the network
-        IBusCommandCDCAnnounce(context->ibus);
-        unsigned char discCount = IBUS_CDC_DISC_COUNT_6;
-        if (context->uiMode == IBus_UI_BMBT) {
-            discCount = IBUS_CDC_DISC_COUNT_1;
+    unsigned char ignitionStatus = pkt[0];
+    // If the ignition status has changed
+    if (ignitionStatus != context->ibus->ignitionStatus) {
+        // If the first bit is set, the key is in position 1 at least, otherwise
+        // the ignition is off
+        if (ignitionStatus == IBUS_IGNITION_OFF) {
+            // Set the BT module not connectable/discoverable. Disconnect all devices
+            BC127CommandBtState(context->bt, BC127_STATE_OFF, BC127_STATE_OFF);
+            BC127CommandClose(context->bt, BC127_CLOSE_ALL);
+            BC127ClearPairedDevices(context->bt);
+        } else if (ignitionStatus == IBUS_IGNITION_ON) {
+            // Play a tone to awaken the WM8804 / PCM5122
+            BC127CommandTone(Context.bt, "V 0 N C6 L 4");
+            // Anounce the CDC to the network
+            HandlerIBusSendCDCStatus(context);
+            // Reset the metadata so we don't display the wrong data
+            BC127ClearMetadata(context->bt);
+            // Set the BT module connectable
+            BC127CommandBtState(context->bt, BC127_STATE_ON, BC127_STATE_OFF);
+            // Request BC127 state
+            BC127CommandStatus(context->bt);
+            BC127CommandList(context->bt);
+            // Ask the LCM for the I/O Status of all lamps
+            if (ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E46_Z4) {
+                IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+            }
         }
-        IBusCommandCDCStatus(
-            context->ibus,
-            IBUS_CDC_STAT_PLAYING,
-            context->ibus->cdChangerFunction,
-            discCount
-        );
-        // Reset the metadata so we don't display the wrong data
-        BC127ClearMetadata(context->bt);
-        // Set the BT module connectable
-        BC127CommandBtState(context->bt, BC127_STATE_ON, BC127_STATE_OFF);
-        // Request BC127 state
-        BC127CommandStatus(context->bt);
-        BC127CommandList(context->bt);
-        // Ask the LCM for the I/O Status of all lamps
-        if (ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E46_Z4) {
-            IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+    } else {
+        if (ignitionStatus == IBUS_IGNITION_ON) {
+            HandlerIBusSendCDCStatus(context);
         }
     }
 }
@@ -699,26 +698,38 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char mflButton = pkt[4];
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-        if (mflButton == IBusMFLButtonVoiceRelease) {
+        if (mflButton == IBusMFLButtonVoicePress) {
+            context->mflButtonStatus = HANDLER_MFL_STATUS_OFF;
+        }
+        if (mflButton == IBusMFLButtonVoiceRelease &&
+            context->mflButtonStatus == HANDLER_MFL_STATUS_OFF
+        ) {
             if (context->bt->callStatus == BC127_CALL_ACTIVE) {
                 BC127CommandCallEnd(context->bt);
             } else if (context->bt->callStatus == BC127_CALL_INCOMING) {
                 BC127CommandCallAnswer(context->bt);
             } else if (context->bt->callStatus == BC127_CALL_OUTGOING) {
                 BC127CommandCallEnd(context->bt);
+            } else if(context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+                if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+                    BC127CommandPause(context->bt);
+                } else {
+                    BC127CommandPlay(context->bt);
+                }
             }
         } else if (mflButton == IBusMFLButtonVoiceHold) {
+            context->mflButtonStatus = HANDLER_MFL_STATUS_SPEAK_HOLD;
             BC127CommandToggleVR(context->bt);
         }
-    }
-    if ((mflButton == IBusMFLButtonRTPress ||
-        mflButton == IBusMFLButtonRTRelease) &&
-        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
-    ) {
-        if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-            BC127CommandPause(context->bt);
-        } else {
-            BC127CommandPlay(context->bt);
+    } else {
+        if (mflButton == IBusMFLButtonVoiceRelease) {
+            if(context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+                if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+                    BC127CommandPause(context->bt);
+                } else {
+                    BC127CommandPlay(context->bt);
+                }
+            }
         }
     }
 }
@@ -743,6 +754,36 @@ void HandlerIBusMFLVolume(void *ctx, unsigned char *pkt)
             BC127CommandVolume(context->bt, 13, "DOWN");
         }
     }
+}
+
+/**
+ * HandlerIBusSendCDCStatus()
+ *     Description:
+ *         Wrapper to send the CDC Status
+ *     Params:
+ *         HandlerContext_t *context - The handler context
+ *     Returns:
+ *         void
+ */
+void HandlerIBusSendCDCStatus(HandlerContext_t *context)
+{
+    unsigned char curStatus = IBUS_CDC_STAT_STOP;
+    if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PAUSE) {
+        curStatus = IBUS_CDC_FUNC_PAUSE;
+    } else if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+        curStatus = IBUS_CDC_STAT_PLAYING;
+    }
+    unsigned char discCount = IBUS_CDC_DISC_COUNT_6;
+    if (context->uiMode == IBus_UI_BMBT) {
+        discCount = IBUS_CDC_DISC_COUNT_1;
+    }
+    IBusCommandCDCStatus(
+        context->ibus,
+        curStatus,
+        context->ibus->cdChangerFunction,
+        discCount
+    );
+    context->cdChangerLastStatus = TimerGetMillis();
 }
 
 /**
@@ -787,17 +828,7 @@ void HandlerTimerCDCSendStatus(void *ctx)
         context->ibus->ignitionStatus == IBUS_IGNITION_ON &&
         (context->uiMode == IBus_UI_BMBT || context->uiMode == IBus_UI_MID_BMBT)
     ) {
-        unsigned char curStatus = 0x00;
-        if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
-            curStatus = IBUS_CDC_STAT_PLAYING;
-        }
-        IBusCommandCDCStatus(
-            context->ibus,
-            curStatus,
-            context->ibus->cdChangerFunction,
-            IBUS_CDC_DISC_COUNT_1
-        );
-        context->cdChangerLastStatus = now;
+        HandlerIBusSendCDCStatus(context);
         LogDebug(LOG_SOURCE_SYSTEM, "Handler: Send CDC status preemptively");
     }
 }
@@ -885,8 +916,10 @@ void HandlerTimerPoweroff(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char powerTimeout = ConfigGetPoweroffTimeout();
     if (powerTimeout != 0) {
-        uint8_t lastRxMinutes = (TimerGetMillis() - context->ibus->rxLastStamp) / 60000;
-        if (lastRxMinutes > powerTimeout) {
+        // Convert the timeout from minutes to seconds and add one second
+        uint16_t timeoutSeconds = (powerTimeout * 60) + 1;
+        uint16_t lastRxSeconds = (TimerGetMillis() - context->ibus->rxLastStamp) / 1000;
+        if (lastRxSeconds >= timeoutSeconds) {
             if (context->powerStatus == HANDLER_POWER_ON) {
                 // Destroy the UART module for IBus
                 UARTDestroy(IBUS_UART_MODULE);
