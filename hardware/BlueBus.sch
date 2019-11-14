@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE eagle SYSTEM "eagle.dtd">
-<eagle version="9.5.0">
+<eagle version="9.5.1">
 <drawing>
 <settings>
 <setting alwaysvectorfont="no"/>
@@ -9,20 +9,6 @@
 <grid distance="0.1" unitdist="inch" unit="inch" style="lines" multiple="1" display="no" altdistance="0.01" altunitdist="inch" altunit="inch"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="no" active="no"/>
-<layer number="2" name="Route2" color="1" fill="3" visible="no" active="no"/>
-<layer number="3" name="Route3" color="4" fill="3" visible="no" active="no"/>
-<layer number="4" name="Route4" color="1" fill="4" visible="no" active="no"/>
-<layer number="5" name="Route5" color="4" fill="4" visible="no" active="no"/>
-<layer number="6" name="Route6" color="1" fill="8" visible="no" active="no"/>
-<layer number="7" name="Route7" color="4" fill="8" visible="no" active="no"/>
-<layer number="8" name="Route8" color="1" fill="2" visible="no" active="no"/>
-<layer number="9" name="Route9" color="4" fill="2" visible="no" active="no"/>
-<layer number="10" name="Route10" color="1" fill="7" visible="no" active="no"/>
-<layer number="11" name="Route11" color="4" fill="7" visible="no" active="no"/>
-<layer number="12" name="Route12" color="1" fill="5" visible="no" active="no"/>
-<layer number="13" name="Route13" color="4" fill="5" visible="no" active="no"/>
-<layer number="14" name="Route14" color="1" fill="6" visible="no" active="no"/>
-<layer number="15" name="Route15" color="4" fill="6" visible="no" active="no"/>
 <layer number="16" name="Bottom" color="1" fill="1" visible="no" active="no"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="no" active="no"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="no" active="no"/>
@@ -4199,17 +4185,6 @@ FRAME-LETTER</description>
 <text x="0" y="3.746" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
 <text x="0" y="-3.746" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
 </package>
-<package name="LITTLEFUSE">
-<wire x1="-2.515" y1="4.865" x2="-2.515" y2="-4.865" width="0.1" layer="21"/>
-<wire x1="2.515" y1="4.865" x2="2.515" y2="-4.865" width="0.1" layer="21"/>
-<wire x1="-2.515" y1="4.865" x2="2.515" y2="4.865" width="0.1" layer="21"/>
-<wire x1="-2.515" y1="-4.865" x2="2.515" y2="-4.865" width="0.1" layer="21"/>
-<smd name="OUT" x="0" y="-3.1515" dx="3.81" dy="4.2418" layer="1"/>
-<smd name="IN" x="0" y="3.1515" dx="3.81" dy="4.2418" layer="1"/>
-<text x="3" y="0" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center">&gt;VALUE</text>
-<text x="-3" y="0" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center">&gt;NAME</text>
-<rectangle x1="-2.515" y1="-4.865" x2="2.515" y2="4.865" layer="39"/>
-</package>
 <package name="SOD123">
 <description>&lt;b&gt;Diode&lt;/b&gt;</description>
 <smd name="C" x="-1.9" y="0" dx="1.4" dy="1.4" layer="1"/>
@@ -4221,22 +4196,6 @@ FRAME-LETTER</description>
 <wire x1="0.2" y1="0.4" x2="0.2" y2="-0.4" width="0.1" layer="21"/>
 <wire x1="0.2" y1="0.4" x2="-0.3" y2="0" width="0.1" layer="21"/>
 <wire x1="-0.3" y1="0" x2="0.2" y2="-0.4" width="0.1" layer="21"/>
-</package>
-<package name="1206">
-<description>&lt;p&gt;&lt;b&gt;Generic 3216 (1206) package&lt;/b&gt;&lt;/p&gt; &lt;p&gt;0.2mm courtyard excess rounded to nearest 0.05mm.&lt;/p&gt;</description>
-<wire x1="-2.4" y1="1.1" x2="2.4" y2="1.1" width="0.0508" layer="39"/>
-<wire x1="2.4" y1="-1.1" x2="-2.4" y2="-1.1" width="0.0508" layer="39"/>
-<wire x1="-2.4" y1="-1.1" x2="-2.4" y2="1.1" width="0.0508" layer="39"/>
-<wire x1="2.4" y1="1.1" x2="2.4" y2="-1.1" width="0.0508" layer="39"/>
-<wire x1="-0.965" y1="0.787" x2="0.965" y2="0.787" width="0.1016" layer="51"/>
-<wire x1="-0.965" y1="-0.787" x2="0.965" y2="-0.787" width="0.1016" layer="51"/>
-<smd name="1" x="-1.4" y="0" dx="1.6" dy="1.8" layer="1"/>
-<smd name="2" x="1.4" y="0" dx="1.6" dy="1.8" layer="1"/>
-<text x="0" y="1.25" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
-<text x="0" y="-1.25" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
-<rectangle x1="-1.7018" y1="-0.8509" x2="-0.9517" y2="0.8491" layer="51"/>
-<rectangle x1="0.9517" y1="-0.8491" x2="1.7018" y2="0.8509" layer="51"/>
-<rectangle x1="-0.1999" y1="-0.4001" x2="0.1999" y2="0.4001" layer="35"/>
 </package>
 <package name="LED-0805">
 <wire x1="-0.1905" y1="0.508" x2="-0.1905" y2="0.254" width="0.127" layer="21"/>
@@ -4288,10 +4247,38 @@ FRAME-LETTER</description>
 <package name="HC49">
 <smd name="1" x="-4.8" y="0" dx="5.5" dy="2" layer="1"/>
 <smd name="2" x="4.8" y="0" dx="5.5" dy="2" layer="1"/>
-<wire x1="-6.7" y1="2.45" x2="6.7" y2="2.45" width="0.1" layer="21"/>
-<wire x1="6.7" y1="2.45" x2="6.7" y2="-2.45" width="0.1" layer="21"/>
-<wire x1="6.7" y1="-2.45" x2="-6.7" y2="-2.45" width="0.1" layer="21"/>
-<wire x1="-6.7" y1="-2.45" x2="-6.7" y2="2.45" width="0.1" layer="21"/>
+<wire x1="-5.7" y1="2.45" x2="5.7" y2="2.45" width="0.1" layer="21"/>
+<wire x1="5.7" y1="2.45" x2="5.7" y2="-2.45" width="0.1" layer="21"/>
+<wire x1="5.7" y1="-2.45" x2="-5.7" y2="-2.45" width="0.1" layer="21"/>
+<wire x1="-5.7" y1="-2.45" x2="-5.7" y2="2.45" width="0.1" layer="21"/>
+</package>
+<package name="1812">
+<smd name="1" x="-2.5" y="0" dx="4.4" dy="2" layer="1" rot="R90"/>
+<smd name="2" x="2.5" y="0" dx="4.4" dy="2" layer="1" rot="R90"/>
+<text x="0" y="2.25" size="0.75" layer="25" ratio="18" align="bottom-center">&gt;NAME</text>
+</package>
+<package name="LITTLEFUSE">
+<wire x1="-2.515" y1="4.865" x2="-2.515" y2="-4.865" width="0.1" layer="21"/>
+<wire x1="2.515" y1="4.865" x2="2.515" y2="-4.865" width="0.1" layer="21"/>
+<wire x1="-2.515" y1="4.865" x2="2.515" y2="4.865" width="0.1" layer="21"/>
+<wire x1="-2.515" y1="-4.865" x2="2.515" y2="-4.865" width="0.1" layer="21"/>
+<smd name="OUT" x="0" y="-3.1515" dx="3.81" dy="4.2418" layer="1"/>
+<smd name="IN" x="0" y="3.1515" dx="3.81" dy="4.2418" layer="1"/>
+<text x="3" y="0" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center">&gt;VALUE</text>
+<text x="-3" y="0" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center">&gt;NAME</text>
+<rectangle x1="-2.515" y1="-4.865" x2="2.515" y2="4.865" layer="39"/>
+</package>
+<package name="1206">
+<description>&lt;p&gt;&lt;b&gt;Generic 3216 (1206) package&lt;/b&gt;&lt;/p&gt; &lt;p&gt;0.2mm courtyard excess rounded to nearest 0.05mm.&lt;/p&gt;</description>
+<wire x1="-2.4" y1="1.1" x2="2.4" y2="1.1" width="0.0508" layer="39"/>
+<wire x1="2.4" y1="-1.1" x2="-2.4" y2="-1.1" width="0.0508" layer="39"/>
+<wire x1="-2.4" y1="-1.1" x2="-2.4" y2="1.1" width="0.0508" layer="39"/>
+<wire x1="2.4" y1="1.1" x2="2.4" y2="-1.1" width="0.0508" layer="39"/>
+<smd name="1" x="-1.4" y="0" dx="1.6" dy="1.8" layer="1"/>
+<smd name="2" x="1.4" y="0" dx="1.6" dy="1.8" layer="1"/>
+<text x="0" y="1.25" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
+<text x="0" y="-1.25" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
+<rectangle x1="-0.1999" y1="-0.4001" x2="0.1999" y2="0.4001" layer="35"/>
 </package>
 </packages>
 <symbols>
@@ -4330,20 +4317,6 @@ FRAME-LETTER</description>
 <rectangle x1="-2.032" y1="1.524" x2="2.032" y2="2.032" layer="94"/>
 <pin name="1" x="0" y="5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R270"/>
 <pin name="2" x="0" y="-2.54" visible="off" length="short" direction="pas" swaplevel="1" rot="R90"/>
-</symbol>
-<symbol name="FUSE">
-<description>&lt;h3&gt;A Fuse&lt;/h3&gt;</description>
-<wire x1="-2.54" y1="7.62" x2="-2.54" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="-2.54" y1="-7.62" x2="0" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="0" y1="-7.62" x2="2.54" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="2.54" y1="-7.62" x2="2.54" y2="7.62" width="0.254" layer="94"/>
-<wire x1="2.54" y1="7.62" x2="0" y2="7.62" width="0.254" layer="94"/>
-<wire x1="0" y1="7.62" x2="-2.54" y2="7.62" width="0.254" layer="94"/>
-<wire x1="0" y1="7.62" x2="0" y2="-7.62" width="0.254" layer="94"/>
-<pin name="IN" x="0" y="12.7" length="middle" rot="R270"/>
-<pin name="OUT" x="0" y="-12.7" length="middle" rot="R90"/>
-<text x="-5.08" y="0" size="1.778" layer="95" font="vector" rot="R90" align="center">&gt;NAME</text>
-<text x="5.08" y="0" size="1.778" layer="96" font="vector" rot="R90" align="center">&gt;VALUE</text>
 </symbol>
 <symbol name="DIODE-SCHOTTKY">
 <description>&lt;h3&gt; Schottky Diode&lt;/h3&gt; Diode with low voltage drop</description>
@@ -4492,6 +4465,34 @@ Switches electrical signals</description>
 <text x="0" y="2.54" size="1.778" layer="95" font="vector" align="bottom-center">&gt;NAME</text>
 <text x="0" y="-2.54" size="1.778" layer="96" font="vector" align="top-center">&gt;VALUE</text>
 </symbol>
+<symbol name="VARISTOR">
+<description>&lt;h3&gt;Varistor
+&lt;/h3&gt;</description>
+<wire x1="-7.62" y1="2.54" x2="7.62" y2="2.54" width="0.254" layer="94"/>
+<wire x1="7.62" y1="2.54" x2="7.62" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="7.62" y1="-2.54" x2="-7.62" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="-2.54" x2="-7.62" y2="2.54" width="0.254" layer="94"/>
+<pin name="IN" x="-12.7" y="0" length="middle"/>
+<pin name="OUT" x="12.7" y="0" length="middle" rot="R180"/>
+<text x="0" y="5.08" size="1.778" layer="95" font="vector" rot="MR0" align="center">&gt;NAME</text>
+<text x="0" y="-5.08" size="1.778" layer="96" font="vector" rot="MR0" align="center">&gt;VALUE</text>
+<wire x1="-5.08" y1="5.08" x2="5.08" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="5.08" y1="-5.08" x2="7.62" y2="-5.08" width="0.254" layer="94"/>
+</symbol>
+<symbol name="FUSE">
+<description>&lt;h3&gt;A Fuse&lt;/h3&gt;</description>
+<wire x1="7.62" y1="2.54" x2="-7.62" y2="2.54" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="2.54" x2="-7.62" y2="0" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="0" x2="-7.62" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="-2.54" x2="7.62" y2="-2.54" width="0.254" layer="94"/>
+<wire x1="7.62" y1="-2.54" x2="7.62" y2="0" width="0.254" layer="94"/>
+<wire x1="7.62" y1="0" x2="7.62" y2="2.54" width="0.254" layer="94"/>
+<wire x1="7.62" y1="0" x2="-7.62" y2="0" width="0.254" layer="94"/>
+<pin name="IN" x="12.7" y="0" length="middle" rot="R180"/>
+<pin name="OUT" x="-12.7" y="0" length="middle"/>
+<text x="0" y="5.08" size="1.778" layer="95" font="vector" align="center">&gt;NAME</text>
+<text x="0" y="-5.08" size="1.778" layer="96" font="vector" align="center">&gt;VALUE</text>
+</symbol>
 </symbols>
 <devicesets>
 <deviceset name="100KOHM" prefix="R" uservalue="yes">
@@ -4550,27 +4551,6 @@ Switches electrical signals</description>
 <attribute name="PACKAGE" value="0805" constant="no"/>
 <attribute name="PN" value="08053C473KAT4A" constant="no"/>
 <attribute name="VALUE" value="47nF" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="LITTLEBLOCK_FUSE_15A" prefix="F" uservalue="yes">
-<description>&lt;p&gt;Littlefuse 154 Series Omni-BLOK Fuse&lt;/p&gt;</description>
-<gates>
-<gate name="G$1" symbol="FUSE" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="LITTLEFUSE">
-<connects>
-<connect gate="G$1" pin="IN" pad="OUT"/>
-<connect gate="G$1" pin="OUT" pad="IN"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="MFG" value="LITTLEBLOCK" constant="no"/>
-<attribute name="PN" value="015401.5DRT" constant="no"/>
-<attribute name="VALUE" value="1.5A" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -5229,6 +5209,59 @@ Switches electrical signals</description>
 <technology name="">
 <attribute name="VALUE" value="210" constant="no"/>
 </technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="V18AUMLA1812H" prefix="V">
+<gates>
+<gate name="G$1" symbol="VARISTOR" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="1812">
+<connects>
+<connect gate="G$1" pin="IN" pad="1"/>
+<connect gate="G$1" pin="OUT" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="LITTLEBLOCK_FUSE_.75A" prefix="F" uservalue="yes">
+<description>&lt;p&gt;Littlefuse 154 Series Omni-BLOK Fuse&lt;/p&gt;</description>
+<gates>
+<gate name="G$1" symbol="FUSE" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="LITTLEFUSE">
+<connects>
+<connect gate="G$1" pin="IN" pad="OUT"/>
+<connect gate="G$1" pin="OUT" pad="IN"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="LITTLEBLOCK" constant="no"/>
+<attribute name="PN" value="0154.750DRT" constant="no"/>
+<attribute name="VALUE" value="750mA" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="0468.500NR" prefix="F">
+<gates>
+<gate name="G$1" symbol="FUSE" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="1206">
+<connects>
+<connect gate="G$1" pin="IN" pad="1"/>
+<connect gate="G$1" pin="OUT" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -5918,7 +5951,6 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <part name="R7" library="Passives" deviceset="100KOHM" device="" value="100k"/>
 <part name="L1" library="Passives" deviceset="MPLCG0630L4R7" device="" value="4.7uH"/>
 <part name="C14" library="Passives" deviceset="47NF" device="" value="47nF"/>
-<part name="F1" library="Passives" deviceset="LITTLEBLOCK_FUSE_15A" device="" value="1.5A"/>
 <part name="D1" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/100V"/>
 <part name="C4" library="Passives" deviceset="22UF" device="" value="22uF"/>
 <part name="C5" library="Passives" deviceset="1UF" device="" value="1uF"/>
@@ -5931,7 +5963,6 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <part name="R5" library="Passives" deviceset="9.09KOHM" device="" value="9.09k"/>
 <part name="C6" library="Passives" deviceset="1UF" device="" value="1uF"/>
 <part name="SUPPLY3" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
-<part name="SUPPLY4" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="C11" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C10" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C9" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
@@ -6093,6 +6124,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <part name="H4" library="Connectors" deviceset="2,0-PAD" device=""/>
 <part name="GND28" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="FB3" library="Passives" deviceset="FERRITE_2A/120OHM" device="" value="2A/120OHM"/>
+<part name="V1" library="Passives" deviceset="V18AUMLA1812H" device=""/>
+<part name="SUPPLY12" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
+<part name="F1" library="Passives" deviceset="LITTLEBLOCK_FUSE_.75A" device="" value="750mA"/>
+<part name="F2" library="Passives" deviceset="0468.500NR" device=""/>
+<part name="SUPPLY18" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -6103,7 +6139,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <text x="241.3" y="7.62" size="3.81" layer="94">C</text>
 <text x="101.6" y="170.18" size="2.54" layer="97">3.3v Regulator</text>
 <text x="17.78" y="170.18" size="2.54" layer="97">5v Regulator</text>
-<text x="177.8" y="170.18" size="2.54" layer="97">Circuit Protection</text>
+<text x="205.74" y="172.72" size="2.54" layer="97">Circuit Protection</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0" smashed="yes"/>
@@ -6120,13 +6156,9 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="NAME" x="58.42" y="158.75" size="1.778" layer="95" font="vector" rot="R90"/>
 <attribute name="VALUE" x="63.5" y="158.75" size="1.778" layer="96" font="vector" rot="R90" align="top-left"/>
 </instance>
-<instance part="F1" gate="G$1" x="185.42" y="154.94" smashed="yes" rot="R90">
-<attribute name="NAME" x="185.42" y="149.86" size="1.778" layer="95" font="vector" rot="R180" align="center"/>
-<attribute name="VALUE" x="185.42" y="160.02" size="1.778" layer="96" font="vector" rot="R180" align="center"/>
-</instance>
-<instance part="D1" gate="G$1" x="172.72" y="160.02" smashed="yes" rot="R270">
-<attribute name="NAME" x="174.752" y="162.56" size="1.778" layer="95" font="vector" rot="R270"/>
-<attribute name="VALUE" x="170.688" y="162.56" size="1.778" layer="96" font="vector" rot="R270" align="top-left"/>
+<instance part="D1" gate="G$1" x="187.96" y="165.1" smashed="yes" rot="R270">
+<attribute name="NAME" x="189.992" y="167.64" size="1.778" layer="95" font="vector" rot="R270"/>
+<attribute name="VALUE" x="185.928" y="167.64" size="1.778" layer="96" font="vector" rot="R270" align="top-left"/>
 </instance>
 <instance part="C4" gate="G$1" x="71.12" y="147.32" smashed="yes">
 <attribute name="NAME" x="72.644" y="150.241" size="1.778" layer="95" font="vector"/>
@@ -6147,8 +6179,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="SUPPLY1" gate="G$1" x="43.18" y="167.64" smashed="yes">
 <attribute name="VALUE" x="43.18" y="170.434" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="SUPPLY2" gate="G$1" x="172.72" y="165.1" smashed="yes">
-<attribute name="VALUE" x="172.72" y="167.894" size="1.778" layer="96" align="bottom-center"/>
+<instance part="SUPPLY2" gate="G$1" x="187.96" y="170.18" smashed="yes">
+<attribute name="VALUE" x="187.96" y="172.974" size="1.778" layer="96" align="bottom-center"/>
 </instance>
 <instance part="GND1" gate="1" x="109.22" y="134.62" smashed="yes">
 <attribute name="VALUE" x="109.22" y="134.366" size="1.778" layer="96" align="top-center"/>
@@ -6168,20 +6200,17 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="SUPPLY3" gate="G$1" x="96.52" y="167.64" smashed="yes">
 <attribute name="VALUE" x="96.52" y="170.434" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="SUPPLY4" gate="G$1" x="134.62" y="167.64" smashed="yes">
-<attribute name="VALUE" x="134.62" y="170.434" size="1.778" layer="96" align="bottom-center"/>
-</instance>
 <instance part="DSP_OUT" gate="G$1" x="68.58" y="99.06" smashed="yes" rot="R270">
 <attribute name="VALUE" x="63.754" y="101.6" size="1.778" layer="96" font="vector" rot="R270"/>
 <attribute name="NAME" x="71.628" y="101.6" size="1.778" layer="95" font="vector" rot="R270"/>
 </instance>
-<instance part="D3" gate="G$1" x="177.8" y="142.24" smashed="yes">
-<attribute name="NAME" x="175.26" y="144.272" size="1.778" layer="95" font="vector"/>
-<attribute name="VALUE" x="175.26" y="140.208" size="1.778" layer="96" font="vector" align="top-left"/>
+<instance part="D3" gate="G$1" x="200.66" y="134.62" smashed="yes">
+<attribute name="NAME" x="198.12" y="136.652" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="198.12" y="132.588" size="1.778" layer="96" font="vector" align="top-left"/>
 </instance>
-<instance part="C1" gate="G$1" x="198.12" y="147.32" smashed="yes">
-<attribute name="NAME" x="199.644" y="150.241" size="1.778" layer="95" font="vector"/>
-<attribute name="VALUE" x="199.644" y="145.161" size="1.778" layer="96" font="vector"/>
+<instance part="C1" gate="G$1" x="231.14" y="142.24" smashed="yes">
+<attribute name="NAME" x="232.664" y="145.161" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="232.664" y="140.081" size="1.778" layer="96" font="vector"/>
 </instance>
 <instance part="SPKR_OUT" gate="G$1" x="66.04" y="53.34" smashed="yes">
 <attribute name="NAME" x="62.484" y="58.928" size="1.778" layer="95" font="vector"/>
@@ -6191,8 +6220,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="VALUE" x="33.274" y="101.6" size="1.778" layer="96" font="vector" rot="R270"/>
 <attribute name="NAME" x="46.228" y="101.6" size="1.778" layer="95" font="vector" rot="R270"/>
 </instance>
-<instance part="GND17" gate="1" x="198.12" y="139.7" smashed="yes">
-<attribute name="VALUE" x="198.12" y="139.446" size="1.778" layer="96" align="top-center"/>
+<instance part="GND17" gate="1" x="231.14" y="134.62" smashed="yes">
+<attribute name="VALUE" x="231.14" y="134.366" size="1.778" layer="96" align="top-center"/>
 </instance>
 <instance part="XRP7659" gate="G$1" x="30.48" y="154.94" smashed="yes">
 <attribute name="NAME" x="30.48" y="161.29" size="1.778" layer="95" font="vector" align="bottom-center"/>
@@ -6247,6 +6276,24 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND28" gate="1" x="25.4" y="15.24" smashed="yes">
 <attribute name="VALUE" x="25.4" y="14.986" size="1.778" layer="96" align="top-center"/>
 </instance>
+<instance part="V1" gate="G$1" x="215.9" y="162.56" smashed="yes">
+<attribute name="NAME" x="215.9" y="167.64" size="1.778" layer="95" font="vector" rot="MR0" align="center"/>
+<attribute name="VALUE" x="215.9" y="157.48" size="1.778" layer="96" font="vector" rot="MR0" align="center"/>
+</instance>
+<instance part="SUPPLY12" gate="G$1" x="236.22" y="152.4" smashed="yes">
+<attribute name="VALUE" x="236.22" y="155.194" size="1.778" layer="96" align="bottom-center"/>
+</instance>
+<instance part="F1" gate="G$1" x="215.9" y="147.32" smashed="yes">
+<attribute name="NAME" x="215.9" y="152.4" size="1.778" layer="95" font="vector" align="center"/>
+<attribute name="VALUE" x="215.9" y="142.24" size="1.778" layer="96" font="vector" align="center"/>
+</instance>
+<instance part="F2" gate="G$1" x="149.86" y="162.56" smashed="yes">
+<attribute name="NAME" x="149.86" y="167.64" size="1.778" layer="95" font="vector" align="center"/>
+<attribute name="VALUE" x="149.86" y="157.48" size="1.778" layer="96" font="vector" align="center"/>
+</instance>
+<instance part="SUPPLY18" gate="G$1" x="162.56" y="170.18" smashed="yes">
+<attribute name="VALUE" x="162.56" y="172.974" size="1.778" layer="96" align="bottom-center"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -6272,11 +6319,6 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="PWR_IN" gate="G$1" pin="1"/>
 <wire x1="38.1" y1="91.44" x2="38.1" y2="88.9" width="0.1524" layer="91"/>
 <label x="38.1" y="88.9" size="1.27" layer="95" rot="R270" xref="yes"/>
-</segment>
-<segment>
-<pinref part="C1" gate="G$1" pin="2"/>
-<wire x1="198.12" y1="144.78" x2="198.12" y2="142.24" width="0.1524" layer="91"/>
-<pinref part="GND17" gate="1" pin="GND"/>
 </segment>
 <segment>
 <pinref part="XC6210" gate="G$1" pin="GND"/>
@@ -6350,6 +6392,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <junction x="27.94" y="22.86"/>
 <junction x="25.4" y="17.78"/>
 </segment>
+<segment>
+<pinref part="C1" gate="G$1" pin="2"/>
+<pinref part="GND17" gate="1" pin="GND"/>
+<wire x1="231.14" y1="139.7" x2="231.14" y2="137.16" width="0.1524" layer="91"/>
+</segment>
 </net>
 <net name="VIN" class="3">
 <segment>
@@ -6369,17 +6416,29 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <pinref part="SUPPLY2" gate="G$1" pin="VIN"/>
 <pinref part="D1" gate="G$1" pin="A"/>
-<wire x1="172.72" y1="165.1" x2="172.72" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="187.96" y1="170.18" x2="187.96" y2="167.64" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="F1" gate="G$1" pin="OUT"/>
 <pinref part="C1" gate="G$1" pin="1"/>
-<wire x1="198.12" y1="154.94" x2="198.12" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="231.14" y1="147.32" x2="236.22" y2="147.32" width="0.1524" layer="91"/>
+<wire x1="236.22" y1="147.32" x2="236.22" y2="152.4" width="0.1524" layer="91"/>
+<pinref part="SUPPLY12" gate="G$1" pin="VIN"/>
+<wire x1="228.6" y1="147.32" x2="231.14" y2="147.32" width="0.1524" layer="91"/>
+<junction x="231.14" y="147.32"/>
+<pinref part="F1" gate="G$1" pin="IN"/>
 </segment>
 <segment>
 <pinref part="D1" gate="G$1" pin="C"/>
-<pinref part="F1" gate="G$1" pin="IN"/>
-<wire x1="172.72" y1="157.48" x2="172.72" y2="154.94" width="0.1524" layer="91"/>
+<pinref part="V1" gate="G$1" pin="IN"/>
+<wire x1="187.96" y1="162.56" x2="203.2" y2="162.56" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="V1" gate="G$1" pin="OUT"/>
+<wire x1="228.6" y1="162.56" x2="228.6" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="228.6" y1="154.94" x2="200.66" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="200.66" y1="154.94" x2="200.66" y2="147.32" width="0.1524" layer="91"/>
+<wire x1="200.66" y1="147.32" x2="203.2" y2="147.32" width="0.1524" layer="91"/>
+<pinref part="F1" gate="G$1" pin="OUT"/>
 </segment>
 </net>
 <net name="IBUS" class="4">
@@ -6433,8 +6492,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </segment>
 <segment>
 <pinref part="D3" gate="G$1" pin="C"/>
-<wire x1="180.34" y1="142.24" x2="182.88" y2="142.24" width="0.1524" layer="91"/>
-<label x="182.88" y="142.24" size="1.27" layer="95" xref="yes"/>
+<wire x1="203.2" y1="134.62" x2="205.74" y2="134.62" width="0.1524" layer="91"/>
+<label x="205.74" y="134.62" size="1.27" layer="95" xref="yes"/>
 </segment>
 <segment>
 <wire x1="116.84" y1="96.52" x2="119.38" y2="96.52" width="0.1524" layer="91"/>
@@ -6470,15 +6529,6 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="3.3V" class="2">
 <segment>
-<wire x1="124.46" y1="157.48" x2="124.46" y2="162.56" width="0.1524" layer="91"/>
-<pinref part="C6" gate="G$1" pin="1"/>
-<wire x1="124.46" y1="162.56" x2="134.62" y2="162.56" width="0.1524" layer="91"/>
-<wire x1="134.62" y1="162.56" x2="134.62" y2="167.64" width="0.1524" layer="91"/>
-<junction x="134.62" y="162.56"/>
-<pinref part="SUPPLY4" gate="G$1" pin="3.3V"/>
-<pinref part="XC6210" gate="G$1" pin="VOUT"/>
-</segment>
-<segment>
 <pinref part="SUPPLY25" gate="G$1" pin="3.3V"/>
 <pinref part="R12" gate="G$1" pin="2"/>
 <wire x1="185.42" y1="96.52" x2="185.42" y2="88.9" width="0.1524" layer="91"/>
@@ -6487,6 +6537,20 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="PICKIT" gate="G$1" pin="1"/>
 <wire x1="101.6" y1="96.52" x2="99.06" y2="96.52" width="0.1524" layer="91"/>
 <label x="99.06" y="96.52" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+<segment>
+<pinref part="F2" gate="G$1" pin="IN"/>
+<wire x1="162.56" y1="162.56" x2="162.56" y2="170.18" width="0.1524" layer="91"/>
+<pinref part="SUPPLY18" gate="G$1" pin="3.3V"/>
+</segment>
+<segment>
+<wire x1="124.46" y1="157.48" x2="124.46" y2="162.56" width="0.1524" layer="91"/>
+<pinref part="XC6210" gate="G$1" pin="VOUT"/>
+<pinref part="C6" gate="G$1" pin="1"/>
+<pinref part="F2" gate="G$1" pin="OUT"/>
+<wire x1="137.16" y1="162.56" x2="134.62" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="124.46" y1="162.56" x2="134.62" y2="162.56" width="0.1524" layer="91"/>
+<junction x="134.62" y="162.56"/>
 </segment>
 </net>
 <net name="SYS_USB_DP" class="4">
@@ -6523,8 +6587,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </segment>
 <segment>
 <pinref part="D3" gate="G$1" pin="A"/>
-<wire x1="175.26" y1="142.24" x2="172.72" y2="142.24" width="0.1524" layer="91"/>
-<label x="172.72" y="142.24" size="1.27" layer="95" rot="R180" xref="yes"/>
+<wire x1="198.12" y1="134.62" x2="195.58" y2="134.62" width="0.1524" layer="91"/>
+<label x="195.58" y="134.62" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="BT_MIC_L" class="0">
