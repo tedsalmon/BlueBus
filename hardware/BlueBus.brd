@@ -4189,15 +4189,15 @@ design rules under a new name.</description>
 <attribute name="PN" value="C0805C104J5RACTU" x="141.54" y="68.34" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" x="76.5" y="15" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
-<element name="C38" library="Passives" package="0805" value="9nF" x="29.35" y="46.3" smashed="yes" rot="R270">
+<element name="C37" library="Passives" package="0805" value="9nF" x="29.35" y="46.3" smashed="yes" rot="R270">
 <attribute name="NAME" x="28.35" y="46.3" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" value="9nF" x="28.35" y="46.3" size="0.5" layer="27" font="vector" ratio="15" rot="R270" align="top-center"/>
 </element>
-<element name="C37" library="Passives" package="0805" value="9nF" x="29.35" y="53.5" smashed="yes" rot="R90">
+<element name="C36" library="Passives" package="0805" value="9nF" x="29.35" y="53.5" smashed="yes" rot="R90">
 <attribute name="NAME" x="28.35" y="53.5" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" value="9nF" x="30.35" y="53.5" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
-<element name="C41" library="Passives" package="0805" value="2.2uF" x="34" y="53.5" smashed="yes" rot="R270">
+<element name="C40" library="Passives" package="0805" value="2.2uF" x="34" y="53.5" smashed="yes" rot="R270">
 <attribute name="DEVICE" value="2.2uF-0805-25V-10%" x="-32.04" y="-15.08" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="MFG" value="TDK" x="-32.04" y="-15.08" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="NAME" x="34" y="55.25" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4205,7 +4205,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="CGB4B1JB1E225K055AC" x="-32.04" y="-15.08" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" x="33" y="53.5" size="0.5" layer="27" font="vector" ratio="15" rot="R270" align="top-center"/>
 </element>
-<element name="C42" library="Passives" package="0805" value="2.2uF" x="36" y="53.5" smashed="yes" rot="R270">
+<element name="C41" library="Passives" package="0805" value="2.2uF" x="36" y="53.5" smashed="yes" rot="R270">
 <attribute name="DEVICE" value="2.2uF-0805-25V-10%" x="-30.04" y="-18.89" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="MFG" value="TDK" x="-30.04" y="-18.89" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="NAME" x="36" y="55.25" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4213,7 +4213,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="CGB4B1JB1E225K055AC" x="-30.04" y="-18.89" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" x="35" y="53.5" size="0.5" layer="27" font="vector" ratio="15" rot="R270" align="top-center"/>
 </element>
-<element name="C43" library="Passives" package="0805" value="10uF" x="38" y="57" smashed="yes" rot="R90">
+<element name="C42" library="Passives" package="0805" value="10uF" x="38" y="57" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="10UF-0805-6.3V-10%" x="104.04" y="133.2" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MFG" value="TDK" x="104.04" y="133.2" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="38" y="58.75" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4229,7 +4229,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="CGA4J3X7R1E105K125AB" x="-46.73" y="-12.92" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" x="14.5" y="45.5" size="0.5" layer="27" font="vector" ratio="15" rot="R270" align="top-center"/>
 </element>
-<element name="C44" library="Passives" package="0805" value="0.1uF" x="40" y="57" smashed="yes" rot="R90">
+<element name="C43" library="Passives" package="0805" value="0.1uF" x="40" y="57" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="0.1uF-0805-25V" x="106.04" y="137.01" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MFG" value="KEMET" x="106.04" y="137.01" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="40" y="58.75" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4237,7 +4237,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="C0805C104J5RACTU" x="106.04" y="137.01" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" x="41" y="57" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
-<element name="C45" library="Passives" package="0805" value="0.1uF" x="44" y="57" smashed="yes" rot="R90">
+<element name="C44" library="Passives" package="0805" value="0.1uF" x="44" y="57" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="0.1uF-0805-25V" x="113.85" y="72.24" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MFG" value="KEMET" x="113.85" y="72.24" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="44" y="58.75" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4245,7 +4245,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="C0805C104J5RACTU" x="113.85" y="72.24" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" x="45" y="57" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
-<element name="C46" library="Passives" package="0805" value="10uF" x="46" y="57" smashed="yes" rot="R90">
+<element name="C45" library="Passives" package="0805" value="10uF" x="46" y="57" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="10UF-0805-6.3V-10%" x="115.85" y="76.05" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MFG" value="TDK" x="115.85" y="76.05" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="46" y="58.75" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4253,7 +4253,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="C2012X8L0J106K125AC" x="115.85" y="76.05" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" x="47" y="57" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
-<element name="C40" library="Passives" package="0805" value="0.1uF" x="36" y="47.5" smashed="yes" rot="R270">
+<element name="C39" library="Passives" package="0805" value="0.1uF" x="36" y="47.5" smashed="yes" rot="R270">
 <attribute name="DEVICE" value="0.1uF-0805-25V" x="-33.85" y="24.64" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="MFG" value="KEMET" x="-33.85" y="24.64" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="NAME" x="36" y="49.25" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4261,7 +4261,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="C0805C104J5RACTU" x="-33.85" y="24.64" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" x="35" y="47.5" size="0.5" layer="27" font="vector" ratio="15" rot="R270" align="top-center"/>
 </element>
-<element name="C39" library="Passives" package="0805" value="10uF" x="34" y="47.5" smashed="yes" rot="R270">
+<element name="C38" library="Passives" package="0805" value="10uF" x="34" y="47.5" smashed="yes" rot="R270">
 <attribute name="DEVICE" value="10UF-0805-6.3V-10%" x="-35.85" y="20.83" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="MFG" value="TDK" x="-35.85" y="20.83" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="NAME" x="34" y="49.24" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4269,7 +4269,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="C2012X8L0J106K125AC" x="-35.85" y="20.83" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" x="33" y="47.5" size="0.5" layer="27" font="vector" ratio="15" rot="R270" align="top-center"/>
 </element>
-<element name="C47" library="Passives" package="0805" value="0.1uF" x="47.5" y="53.075" smashed="yes" rot="R90">
+<element name="C46" library="Passives" package="0805" value="0.1uF" x="47.5" y="53.075" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="0.1uF-0805-25V" x="117.35" y="83.555" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MFG" value="KEMET" x="117.35" y="83.555" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="47.5" y="54.825" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4277,7 +4277,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="C0805C104J5RACTU" x="117.35" y="83.555" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" x="48.5" y="53.075" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
-<element name="C48" library="Passives" package="0805" value="10uF" x="49.5" y="53.075" smashed="yes" rot="R90">
+<element name="C47" library="Passives" package="0805" value="10uF" x="49.5" y="53.075" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="10UF-0805-6.3V-10%" x="119.35" y="87.365" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MFG" value="TDK" x="119.35" y="87.365" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="49.5" y="54.835" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
@@ -4355,7 +4355,7 @@ design rules under a new name.</description>
 <attribute name="PN" value="C0805X200J5GAC7800" x="122.55" y="-17.85" size="1.778" layer="27" display="off"/>
 <attribute name="VALUE" x="57.78" y="51" size="0.5" layer="27" font="vector" ratio="15" align="top-center"/>
 </element>
-<element name="C36" library="Passives" package="0805" value="1uF" x="23.5" y="41.5" smashed="yes" rot="R90">
+<element name="C35" library="Passives" package="0805" value="1uF" x="23.5" y="41.5" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="1uF-0805-25v-10%" x="93.35" y="110.08" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MFG" value="TDK" x="93.35" y="110.08" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="24.5" y="41.5" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="top-center"/>
@@ -4529,7 +4529,7 @@ design rules under a new name.</description>
 <attribute name="NAME" x="28.5" y="50.9" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" value="110" x="30.25" y="51.9" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
 </element>
-<element name="R37" library="Passives" package="0805" value="110" x="30.25" y="48.9" smashed="yes" rot="R180">
+<element name="R36" library="Passives" package="0805" value="110" x="30.25" y="48.9" smashed="yes" rot="R180">
 <attribute name="NAME" x="28.5" y="48.9" size="0.75" layer="25" font="vector" ratio="15" rot="R270" align="top-center"/>
 <attribute name="VALUE" value="110" x="30.25" y="49.9" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
 </element>
@@ -4889,10 +4889,10 @@ design rules under a new name.</description>
 <contactref element="Q3" pad="2"/>
 <contactref element="R3" pad="1"/>
 <contactref element="SH1" pad="1"/>
-<contactref element="C47" pad="2"/>
-<contactref element="C48" pad="2"/>
-<contactref element="C45" pad="2"/>
 <contactref element="C46" pad="2"/>
+<contactref element="C47" pad="2"/>
+<contactref element="C44" pad="2"/>
+<contactref element="C45" pad="2"/>
 <contactref element="PAM8406" pad="10"/>
 <contactref element="C29" pad="2"/>
 <contactref element="WM8804" pad="8"/>
@@ -5254,12 +5254,12 @@ design rules under a new name.</description>
 <contactref element="C20" pad="1"/>
 <contactref element="TMUX154E" pad="10"/>
 <contactref element="R13" pad="1"/>
-<contactref element="C40" pad="1"/>
 <contactref element="C39" pad="1"/>
-<contactref element="C44" pad="1"/>
+<contactref element="C38" pad="1"/>
 <contactref element="C43" pad="1"/>
+<contactref element="C42" pad="1"/>
+<contactref element="C44" pad="1"/>
 <contactref element="C45" pad="1"/>
-<contactref element="C46" pad="1"/>
 <contactref element="C23" pad="1"/>
 <contactref element="WM8804" pad="19"/>
 <contactref element="C26" pad="1"/>
@@ -5608,13 +5608,13 @@ design rules under a new name.</description>
 <contactref element="SPKR_OUT" pad="2"/>
 <contactref element="SPKR_OUT" pad="5"/>
 <contactref element="SH1" pad="2"/>
-<contactref element="C41" pad="1"/>
-<contactref element="C44" pad="2"/>
+<contactref element="C40" pad="1"/>
 <contactref element="C43" pad="2"/>
-<contactref element="C40" pad="2"/>
+<contactref element="C42" pad="2"/>
 <contactref element="C39" pad="2"/>
-<contactref element="C37" pad="2"/>
 <contactref element="C38" pad="2"/>
+<contactref element="C36" pad="2"/>
+<contactref element="C37" pad="2"/>
 <contactref element="PCM5122" pad="3"/>
 <contactref element="PCM5122" pad="9"/>
 <wire x1="10.3" y1="28.71" x2="12.84" y2="28.71" width="0.5" layer="16"/>
@@ -6062,28 +6062,28 @@ design rules under a new name.</description>
 <wire x1="55.355" y1="47.945" x2="54.375" y2="48.925" width="0.3" layer="1"/>
 </signal>
 <signal name="DAC_CAPM">
-<contactref element="C42" pad="2"/>
+<contactref element="C41" pad="2"/>
 <contactref element="PCM5122" pad="4"/>
 <wire x1="36" y1="52.6" x2="36" y2="51.9" width="0.3" layer="1"/>
 <wire x1="36" y1="51.9" x2="36.375" y2="51.525" width="0.3" layer="1"/>
 <wire x1="36.375" y1="51.525" x2="38.9" y2="51.525" width="0.3" layer="1"/>
 </signal>
 <signal name="DAC_LDOO">
+<contactref element="C46" pad="1"/>
 <contactref element="C47" pad="1"/>
-<contactref element="C48" pad="1"/>
 <contactref element="PCM5122" pad="26"/>
 <wire x1="49.5" y1="52.175" x2="47.5" y2="52.175" width="0.4" layer="1"/>
 <wire x1="47.5" y1="52.175" x2="45.1" y2="52.175" width="0.4" layer="1"/>
 </signal>
 <signal name="DAC_VNEG">
-<contactref element="C41" pad="2"/>
+<contactref element="C40" pad="2"/>
 <contactref element="PCM5122" pad="5"/>
 <wire x1="38.9" y1="50.875" x2="35.025" y2="50.875" width="0.3" layer="1"/>
 <wire x1="34" y1="51.9" x2="34" y2="52.6" width="0.3" layer="1"/>
 <wire x1="35.025" y1="50.875" x2="34" y2="51.9" width="0.3" layer="1"/>
 </signal>
 <signal name="DAC_CAPP">
-<contactref element="C42" pad="1"/>
+<contactref element="C41" pad="1"/>
 <contactref element="PCM5122" pad="2"/>
 <wire x1="36" y1="54.4" x2="36.8" y2="54.4" width="0.3" layer="1"/>
 <wire x1="36.8" y1="54.4" x2="37.1" y2="54.1" width="0.3" layer="1"/>
@@ -6092,7 +6092,7 @@ design rules under a new name.</description>
 <wire x1="37.575" y1="52.825" x2="38.9" y2="52.825" width="0.3" layer="1"/>
 </signal>
 <signal name="DAC_OUT_R">
-<contactref element="R37" pad="1"/>
+<contactref element="R36" pad="1"/>
 <contactref element="PCM5122" pad="7"/>
 <wire x1="32.3" y1="48.9" x2="31.15" y2="48.9" width="0.3" layer="1"/>
 <wire x1="38.9" y1="49.575" x2="32.875" y2="49.575" width="0.3" layer="1"/>
@@ -6167,7 +6167,7 @@ design rules under a new name.</description>
 <wire x1="20" y1="45.2" x2="19.37" y2="45.83" width="0.3" layer="1"/>
 </signal>
 <signal name="TEL_AMP_INL_CAP_RES">
-<contactref element="C36" pad="2"/>
+<contactref element="C35" pad="2"/>
 <contactref element="R34" pad="1"/>
 <wire x1="23.5" y1="42.4" x2="21.8" y2="42.4" width="0.3" layer="1"/>
 </signal>
@@ -6197,7 +6197,7 @@ design rules under a new name.</description>
 <contactref element="SPKR_OUT" pad="6"/>
 <contactref element="SPKR_OUT" pad="1"/>
 <contactref element="R35" pad="2"/>
-<contactref element="C37" pad="1"/>
+<contactref element="C36" pad="1"/>
 <wire x1="25.3" y1="35.4" x2="26.8" y2="36.9" width="0.3" layer="1"/>
 <wire x1="10.3" y1="31.25" x2="10.3" y2="32.2" width="0.3" layer="1"/>
 <wire x1="10.3" y1="32.2" x2="11.4" y2="33.3" width="0.3" layer="1"/>
@@ -6218,8 +6218,8 @@ design rules under a new name.</description>
 <signal name="SPKR_OUT_R">
 <contactref element="SPKR_OUT" pad="3"/>
 <contactref element="SPKR_OUT" pad="4"/>
-<contactref element="R37" pad="2"/>
-<contactref element="C38" pad="1"/>
+<contactref element="R36" pad="2"/>
+<contactref element="C37" pad="1"/>
 <wire x1="10.3" y1="26.17" x2="11.67" y2="24.8" width="0.3" layer="1"/>
 <wire x1="11.67" y1="24.8" x2="14.2" y2="24.8" width="0.3" layer="1"/>
 <wire x1="14.2" y1="24.8" x2="14.5" y2="25.1" width="0.3" layer="1"/>
@@ -6416,7 +6416,7 @@ design rules under a new name.</description>
 <wire x1="70.1" y1="2.3" x2="70.1" y2="6.5497125" width="0.22" layer="1"/>
 </signal>
 <signal name="TEL_AMP_IN">
-<contactref element="C36" pad="1"/>
+<contactref element="C35" pad="1"/>
 <contactref element="FB3" pad="2"/>
 <wire x1="23.5" y1="40.6" x2="23.5" y2="38.9" width="0.3" layer="1"/>
 </signal>
