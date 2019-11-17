@@ -680,6 +680,19 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             if (currentVolume < 0xCF) {
                 currentVolume += 1;
             }
+            uint8_t majorGain = 0;
+            uint8_t minorGain = 0;
+            if (currentVolume >= 2) {
+                majorGain = currentVolume / 2;
+            }
+            if ((currentVolume % 2) != 0) {
+                minorGain = 5;
+            }
+            char volText[6];
+            snprintf(volText, 6, "-%d.%d", majorGain, minorGain);
+            volText[5] = '\0';
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_GAIN, volText);
+            IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
             ConfigSetSetting(CONFIG_SETTING_DAC_VOL, currentVolume);
             PCM51XXSetVolume(currentVolume);
         }
@@ -688,6 +701,19 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             if (currentVolume > 0x00) {
                 currentVolume -= 1;
             }
+            uint8_t majorGain = 0;
+            uint8_t minorGain = 0;
+            if (currentVolume >= 2) {
+                majorGain = currentVolume / 2;
+            }
+            if ((currentVolume % 2) != 0) {
+                minorGain = 5;
+            }
+            char volText[6];
+            snprintf(volText, 6, "-%d.%d", majorGain, minorGain);
+            volText[5] = '\0';
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_GAIN, volText);
+            IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
             ConfigSetSetting(CONFIG_SETTING_DAC_VOL, currentVolume);
             PCM51XXSetVolume(currentVolume);
         }
@@ -700,6 +726,11 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             if (micGain < 0xC0) {
                 micGain = 0xC0;
             }
+            char volText[6];
+            snprintf(volText, 5, "%02X   ", micGain);
+            volText[5] = '\0';
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_GAIN, volText);
+            IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
             ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
             BC127CommandSetMicGain(context->bt, micGain);
         }
@@ -711,6 +742,11 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             if (micGain > 0xD4) {
                 micGain = 0xD4;
             }
+            char volText[6];
+            snprintf(volText, 5, "%02X   ", micGain);
+            volText[5] = '\0';
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_GAIN, volText);
+            IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
             ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
             BC127CommandSetMicGain(context->bt, micGain);
         }

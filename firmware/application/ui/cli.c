@@ -340,16 +340,17 @@ void CLIProcess()
                 } else if(UtilsStricmp(msgBuf[1], "IGN") == 0) {
                     if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         IBusCommandIgnitionStatus(cli.ibus, 0x00);
-                        //EventTriggerCallback(IBusEvent_IgnitionStatus, 0x00);
-                        //cli.ibus->ignitionStatus = 0;
+                        EventTriggerCallback(IBusEvent_IgnitionStatus, 0x00);
+                        cli.ibus->ignitionStatus = 0;
                     } else if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                         unsigned char ignitionStatus = 0x01;
                         IBusCommandIgnitionStatus(cli.ibus, ignitionStatus);
-                        //EventTriggerCallback(
-                        //    IBusEvent_IgnitionStatus,
-                        //    (unsigned char *)&ignitionStatus
-                        //);
-                        //cli.ibus->ignitionStatus = 1;
+                        EventTriggerCallback(
+                            IBusEvent_IgnitionStatus,
+                            (unsigned char *)&ignitionStatus
+                        );
+                        cli.ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
+                        cli.ibus->ignitionStatus = 1;
                     } else {
                         cmdSuccess = 0;
                     }

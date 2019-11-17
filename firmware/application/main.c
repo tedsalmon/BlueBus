@@ -82,7 +82,8 @@ int main(void)
     EEPROMInit();
     TimerInit();
     I2CInit();
-    // WM8804 must be initialized after I2C Bus
+    // PCM5122 and WM8804 must be initialized after the I2C Bus
+    PCM51XXInit();
     WM88XXInit();
     // Initialize handlers
     HandlerInit(&bt, &ibus);

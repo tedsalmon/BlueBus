@@ -31,10 +31,10 @@ void PCM51XXInit()
          * bit   3 - CLKOUTSRC - CLK1 0 or OSCCLK 1
          * bit 2:0 - always 0
          */
-        status = I2CWrite(PCM51XX_I2C_ADDR, PCM51XX_REGISTER_ERROR_IGNORE, 0b01111100);
-        if (status != 0x00) {
-            LogError("PCM51XX failed to set ERROR_IGNORE [%d]", status);
-        }
+        //status = I2CWrite(PCM51XX_I2C_ADDR, PCM51XX_REGISTER_ERROR_IGNORE, 0b01111100);
+        //if (status != 0x00) {
+        //    LogError("PCM51XX failed to set ERROR_IGNORE [%d]", status);
+        //}
         unsigned char volume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
         PCM51XXSetVolume(volume);
         TimerRegisterScheduledTask(&PCM51XXPollTimer, 0, PCM51XX_POLL_INT);

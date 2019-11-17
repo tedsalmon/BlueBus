@@ -610,7 +610,10 @@ void MIDIIBusRADMIDMenuUpdate(void *ctx, unsigned char *pkt)
     // Ensure that we're only looking at updates sent by the radio
     // which writes the menu using a different command and always has
     // a long length
-    if ((pkt[4] == 0x00 || pkt[4] == 0xC0) && pkt[IBUS_PKT_LEN] > 0x09) {
+    if ((pkt[4] == 0x00 || pkt[4] == 0xC0) &&
+        pkt[IBUS_PKT_LEN] > 0x09 &&
+        context->mode != MID_MODE_OFF
+    ) {
         if (context->displayUpdate == MID_DISPLAY_REWRITE) {
             context->displayUpdate = MID_DISPLAY_REWRITE_NEXT;
         } else if (context->displayUpdate == MID_DISPLAY_REWRITE_NEXT) {
@@ -622,6 +625,8 @@ void MIDIIBusRADMIDMenuUpdate(void *ctx, unsigned char *pkt)
             } else if (context->mode == MID_MODE_DEVICES) {
                 MIDMenuDevices(context);
             }
+        } else {
+            context->displayUpdate = MID_DISPLAY_REWRITE_NEXT;
         }
     }
 }
