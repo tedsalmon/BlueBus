@@ -584,7 +584,9 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
             BC127CommandClose(context->bt, BC127_CLOSE_ALL);
             BC127ClearPairedDevices(context->bt);
             // Unlock the car
-            IBusCommandGMUnlock(context->ibus);
+            if (ConfigGetSetting(CONFIG_SETTING_OT_BLINKERS) == CONFIG_SETTING_ON) {
+                IBusCommandGMUnlock(context->ibus);
+            }
         } else if (ignitionStatus == IBUS_IGNITION_ON) {
             // Play a tone to awaken the WM8804 / PCM5122
             BC127CommandTone(Context.bt, "V 0 N C6 L 4");
