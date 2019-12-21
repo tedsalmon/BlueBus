@@ -499,6 +499,11 @@ static void BMBTMenuSettings(BMBTContext_t *context)
             "OT Blinkers: 1"
         );
     }
+    if (ConfigGetSetting(CONFIG_SETTING_AUTO_UNLOCK) == CONFIG_SETTING_OFF) {
+        BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_AUTO_UNLOCK, "Autounlock: Off");
+    } else {
+        BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_AUTO_UNLOCK, "Autounlock: On");
+    }
     unsigned char tcuMode = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
     if (tcuMode == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
@@ -1000,6 +1005,15 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                 } else {
                     ConfigSetSetting(CONFIG_SETTING_OT_BLINKERS, 0);
                     BMBTGTWriteIndex(context, selectedIdx, "OT Blinkers: 1");
+                }
+            } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUTO_UNLOCK) {
+                unsigned char value = ConfigGetSetting(CONFIG_SETTING_AUTO_UNLOCK);
+                if (value == CONFIG_SETTING_OFF) {
+                    ConfigSetSetting(CONFIG_SETTING_AUTO_UNLOCK, CONFIG_SETTING_ON);
+                    BMBTGTWriteIndex(context, selectedIdx, "Autounlock: On");
+                } else {
+                    ConfigSetSetting(CONFIG_SETTING_AUTO_UNLOCK, CONFIG_SETTING_OFF);
+                    BMBTGTWriteIndex(context, selectedIdx, "Autounlock: Off");
                 }
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_TCU_MODE) {
                 if (ConfigGetSetting(CONFIG_SETTING_TCU_MODE) == CONFIG_SETTING_OFF) {

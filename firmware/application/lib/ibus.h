@@ -296,6 +296,7 @@ void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
+void IBusCommandGMUnlock(IBus_t *ibus);
 /* Temporary */
 void IBusCommandIgnitionStatus(IBus_t *, unsigned char);
 void IBusCommandLCMTurnLeft(IBus_t *);

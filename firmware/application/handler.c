@@ -562,7 +562,8 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
  *     Description:
  *         Track the Ignition state and update the BC127 accordingly. We set
  *         the BT device "off" when the key is set to position 0 and on
- *         as soon as it goes to a position >= 1
+ *         as soon as it goes to a position >= 1. Also, if the user has 
+ *         enabled auto unlock, we unlock the car.
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *tmp - Any event data
@@ -582,6 +583,8 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
             BC127CommandBtState(context->bt, BC127_STATE_OFF, BC127_STATE_OFF);
             BC127CommandClose(context->bt, BC127_CLOSE_ALL);
             BC127ClearPairedDevices(context->bt);
+            // Unlock the car
+            IBusCommandGMUnlock(context->ibus);
         } else if (ignitionStatus == IBUS_IGNITION_ON) {
             // Play a tone to awaken the WM8804 / PCM5122
             BC127CommandTone(Context.bt, "V 0 N C6 L 4");

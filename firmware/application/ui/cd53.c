@@ -13,6 +13,7 @@ uint8_t SETTINGS_MENU[] = {
     CD53_SETTING_IDX_AUTOPLAY,
     CD53_SETTING_IDX_VEH_TYPE,
     CD53_SETTING_IDX_BLINKERS,
+    CD53_SETTING_IDX_AUTO_UNLOCK,
     CD53_SETTING_IDX_TCU_MODE,
     CD53_SETTING_IDX_PAIRINGS,
 };
@@ -23,6 +24,7 @@ uint8_t SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_AUTOPLAY,
     CONFIG_VEHICLE_TYPE_ADDRESS,
     CONFIG_SETTING_OT_BLINKERS,
+    CONFIG_SETTING_AUTO_UNLOCK,
     CONFIG_SETTING_TCU_MODE
 };
 
@@ -241,6 +243,16 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                 }
                 context->settingIdx = CD53_SETTING_IDX_BLINKERS;
             }
+            if (nextMenu == CD53_SETTING_IDX_AUTO_UNLOCK) {
+                if (ConfigGetSetting(CONFIG_SETTING_AUTO_UNLOCK) == CONFIG_SETTING_OFF) {
+                    CD53SetMainDisplayText(context, "Autounlock: 0", 0);
+                    context->settingValue = CONFIG_SETTING_OFF;
+                } else {
+                    CD53SetMainDisplayText(context, "Autounlock: 1", 0);
+                    context->settingValue = CONFIG_SETTING_ON;
+                }
+                context->settingIdx = CD53_SETTING_IDX_AUTO_UNLOCK;
+            }
             if (nextMenu == CD53_SETTING_IDX_TCU_MODE) {
                 unsigned char tcuMode = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
                 if (tcuMode == CONFIG_SETTING_OFF) {
@@ -309,6 +321,15 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                     context->settingValue = 0x05;
                 } else {
                     CD53SetMainDisplayText(context, "OT Blink: 1", 0);
+                    context->settingValue = CONFIG_SETTING_OFF;
+                }
+            }
+            if (context->settingIdx == CD53_SETTING_IDX_AUTO_UNLOCK) {
+                if (context->settingValue == CONFIG_SETTING_OFF) {
+                    CD53SetMainDisplayText(context, "Autounlock: 1", 0);
+                    context->settingValue = CONFIG_SETTING_ON;
+                } else {
+                    CD53SetMainDisplayText(context, "Autounlock: 0", 0);
                     context->settingValue = CONFIG_SETTING_OFF;
                 }
             }
