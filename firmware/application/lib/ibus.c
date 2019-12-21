@@ -1477,6 +1477,20 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
     );
 }
 
+/**
+ * IBusCommandGMUnlock()
+ *     Description:
+ *        Issue a diagnostic message to the GM to unlock the car
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandGMUnlock(IBus_t *ibus) {
+    unsigned char msg[] = {0x0C, 0x97, 0x01};
+    IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
+}
+
 
 /* Temporary Commands for debugging */
 void IBusCommandIgnitionStatus(IBus_t *ibus, unsigned char status)
