@@ -6172,9 +6172,9 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <part name="C13" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
 <part name="R8" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
 <part name="R31" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="R28" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R28" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
 <part name="R27" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="R30" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R30" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
 <part name="GND26" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="R25" library="Passives" deviceset="110OHM" device="" value="110"/>
 <part name="R24" library="Passives" deviceset="210OHM" device="" value="210"/>
@@ -6226,9 +6226,9 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="SHEET" x="233.68" y="1.27" size="2.54" layer="94" font="vector"/>
 <attribute name="DRAWING_NAME" x="152.654" y="17.78" size="2.7432" layer="94" font="vector"/>
 </instance>
-<instance part="R7" gate="G$1" x="43.18" y="147.32" smashed="yes" rot="R90">
-<attribute name="NAME" x="41.656" y="147.32" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
-<attribute name="VALUE" x="44.704" y="147.32" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
+<instance part="R7" gate="G$1" x="43.18" y="144.78" smashed="yes" rot="R90">
+<attribute name="NAME" x="41.656" y="144.78" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
+<attribute name="VALUE" x="44.704" y="144.78" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
 <instance part="L1" gate="G$1" x="60.96" y="157.48" smashed="yes" rot="R90">
 <attribute name="NAME" x="58.42" y="158.75" size="1.778" layer="95" font="vector" rot="R90"/>
@@ -6603,7 +6603,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <pinref part="R7" gate="G$1" pin="2"/>
 <pinref part="XRP7659" gate="G$1" pin="EN"/>
-<wire x1="43.18" y1="152.4" x2="40.64" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="40.64" y1="152.4" x2="43.18" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="43.18" y1="152.4" x2="43.18" y2="149.86" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="5VREG_BS" class="1">
@@ -6790,7 +6791,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <net name="IBUS_5V" class="0">
 <segment>
 <pinref part="R7" gate="G$1" pin="1"/>
-<wire x1="43.18" y1="142.24" x2="43.18" y2="116.84" width="0.1524" layer="91"/>
+<wire x1="43.18" y1="139.7" x2="43.18" y2="116.84" width="0.1524" layer="91"/>
 <label x="43.18" y="116.84" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
@@ -7700,18 +7701,18 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </segment>
 <segment>
 <pinref part="GND18" gate="1" pin="GND"/>
-<wire x1="81.28" y1="20.32" x2="81.28" y2="17.78" width="0.1524" layer="91"/>
 <pinref part="C20" gate="G$1" pin="2"/>
 <wire x1="66.04" y1="40.64" x2="66.04" y2="38.1" width="0.1524" layer="91"/>
 <wire x1="66.04" y1="38.1" x2="81.28" y2="38.1" width="0.1524" layer="91"/>
 <wire x1="81.28" y1="38.1" x2="81.28" y2="35.56" width="0.1524" layer="91"/>
-<wire x1="81.28" y1="35.56" x2="81.28" y2="20.32" width="0.1524" layer="91"/>
+<wire x1="81.28" y1="35.56" x2="81.28" y2="17.78" width="0.1524" layer="91"/>
 <pinref part="TMUX154E" gate="G$1" pin="EN"/>
-<wire x1="50.8" y1="20.32" x2="81.28" y2="20.32" width="0.1524" layer="91"/>
-<junction x="81.28" y="20.32"/>
+<junction x="81.28" y="17.78"/>
 <pinref part="TMUX154E" gate="G$1" pin="GND"/>
 <wire x1="60.96" y1="35.56" x2="81.28" y2="35.56" width="0.1524" layer="91"/>
 <junction x="81.28" y="35.56"/>
+<wire x1="50.8" y1="20.32" x2="50.8" y2="17.78" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="17.78" x2="81.28" y2="17.78" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="VIN" class="3">
