@@ -13,7 +13,7 @@ uint8_t MID_SETTINGS_MENU[] = {
     MID_SETTING_IDX_AUTOPLAY,
     MID_SETTING_IDX_VEH_TYPE,
     MID_SETTING_IDX_BLINKERS,
-    MID_SETTING_IDX_AUTO_UNLOCK,
+    MID_SETTING_IDX_COMFORT_LOCKS,
     MID_SETTING_IDX_TCU_MODE,
     MID_SETTING_IDX_PAIRINGS,
 };
@@ -24,7 +24,7 @@ uint8_t MID_SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_AUTOPLAY,
     CONFIG_VEHICLE_TYPE_ADDRESS,
     CONFIG_SETTING_OT_BLINKERS,
-    CONFIG_SETTING_AUTO_UNLOCK,
+    CONFIG_SETTING_COMFORT_LOCKS,
     CONFIG_SETTING_TCU_MODE
 };
 
@@ -215,15 +215,15 @@ static void MIDShowNextSetting(MIDContext_t *context, uint8_t direction)
         }
         context->settingIdx = MID_SETTING_IDX_BLINKERS;
     }
-    if (nextMenu == MID_SETTING_IDX_AUTO_UNLOCK) {
-        if (ConfigGetSetting(CONFIG_SETTING_AUTO_UNLOCK) == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "Autounlock: Off", 0);
+    if (nextMenu == MID_SETTING_IDX_COMFORT_LOCKS) {
+        if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS) == CONFIG_SETTING_OFF) {
+            MIDSetMainDisplayText(context, "Comfort Locks: Off", 0);
             context->settingValue = CONFIG_SETTING_OFF;
         } else {
-            MIDSetMainDisplayText(context, "Autounlock: On", 0);
+            MIDSetMainDisplayText(context, "Comfort Locks: On", 0);
             context->settingValue = CONFIG_SETTING_ON;
         }
-        context->settingIdx = MID_SETTING_IDX_AUTO_UNLOCK;
+        context->settingIdx = MID_SETTING_IDX_COMFORT_LOCKS;
     }
     if (nextMenu == MID_SETTING_IDX_TCU_MODE) {
         unsigned char tcuMode = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
@@ -297,12 +297,12 @@ static void MIDShowNextSettingValue(MIDContext_t *context, uint8_t direction)
             context->settingValue = CONFIG_SETTING_OFF;
         }
     }
-    if (context->settingIdx == MID_SETTING_IDX_AUTO_UNLOCK) {
+    if (context->settingIdx == MID_SETTING_IDX_COMFORT_LOCKS) {
         if (context->settingValue == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "Autounlock: On", 0);
+            MIDSetMainDisplayText(context, "Comfort Locks: On", 0);
             context->settingValue = CONFIG_SETTING_ON;
         } else {
-            MIDSetMainDisplayText(context, "Autounlock: Off", 0);
+            MIDSetMainDisplayText(context, "Comfort Locks: Off", 0);
             context->settingValue = CONFIG_SETTING_OFF;
         }
     }

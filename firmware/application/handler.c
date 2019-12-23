@@ -562,8 +562,9 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
  *     Description:
  *         Track the Ignition state and update the BC127 accordingly. We set
  *         the BT device "off" when the key is set to position 0 and on
- *         as soon as it goes to a position >= 1. Also, if the user has 
- *         enabled auto unlock, we unlock the car.
+ *         as soon as it goes to a position >= 1.
+ *         Request the LCM status when the car is turned to or past position 1
+ *         Unlock the vehicle once the key is turned to position 1
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *tmp - Any event data
@@ -583,8 +584,8 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
             BC127CommandBtState(context->bt, BC127_STATE_OFF, BC127_STATE_OFF);
             BC127CommandClose(context->bt, BC127_CLOSE_ALL);
             BC127ClearPairedDevices(context->bt);
-            // Unlock the car
-            if (ConfigGetSetting(CONFIG_SETTING_OT_BLINKERS) == CONFIG_SETTING_ON) {
+            // Unlock doors
+            if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS) == CONFIG_SETTING_ON) {
                 IBusCommandGMUnlock(context->ibus);
             }
         } else if (ignitionStatus == IBUS_IGNITION_ON) {
@@ -600,9 +601,7 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
             BC127CommandStatus(context->bt);
             BC127CommandList(context->bt);
             // Ask the LCM for the I/O Status of all lamps
-            if (ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E46_Z4) {
-                IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
-            }
+            IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
         }
     } else {
         if (ignitionStatus == IBUS_IGNITION_ON) {
@@ -683,9 +682,7 @@ void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusLCMDimmerStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E46_Z4) {
-        IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
-    }
+    IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
 }
 
 /**

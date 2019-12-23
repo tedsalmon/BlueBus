@@ -31,6 +31,7 @@ IBus_t IBusInit()
     ibus.ignitionStatus = IBUS_IGNITION_OFF;
     ibus.lcmDimmerStatus1 = 0x80;
     ibus.lcmDimmerStatus2 = 0x80;
+    ibus.oilTemperature = 0x00;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -159,6 +160,21 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
     ) {
         ibus->lcmDimmerStatus1 = pkt[19];
         ibus->lcmDimmerStatus2 = pkt[20];
+        if (ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E38_E39_E53 &&
+            pkt[23] != 0x00
+        ) {
+            // Oil Temp calculation
+            float rawTemperature = (pkt[23] * 0.01275) + (pkt[24] * 0.000050);
+            unsigned char oilTemperature = 1.0 * 67.2529 * log(rawTemperature) + 310.0;
+            if (oilTemperature != ibus->oilTemperature) {
+                ibus->oilTemperature = oilTemperature;
+                unsigned char updateType = 0x01;
+                EventTriggerCallback(
+                    IBusEvent_ValueUpdate,
+                    &updateType
+                );
+            }
+        }
     }
 }
 
@@ -953,7 +969,7 @@ void IBusCommandGTWriteBusinessNavTitle(IBus_t *ibus, char *message) {
     const size_t pktLenght = length + 3;
     unsigned char text[pktLenght];
     text[0] = 0x23;
-    text[1] = 0xC4;
+    text[1] = 0x40;
     text[2] = 0x30;
     uint8_t idx;
     for (idx = 0; idx < length; idx++) {

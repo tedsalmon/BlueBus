@@ -39,7 +39,7 @@
 #define BMBT_MENU_IDX_SETTINGS_DEFAULT_MENU 3
 #define BMBT_MENU_IDX_SETTINGS_VEHICLE_TYPE 4
 #define BMBT_MENU_IDX_SETTINGS_BLINKERS 5
-#define BMBT_MENU_IDX_SETTINGS_AUTO_UNLOCK 6
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS 6
 #define BMBT_MENU_IDX_SETTINGS_TCU_MODE 7
 #define BMBT_MENU_IDX_PAIRING_MODE 0
 #define BMBT_MENU_IDX_CLEAR_PAIRING 1
@@ -91,6 +91,7 @@ void BMBTIBusGTDiagnostics(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);
 void BMBTRADDisplayMenu(void *, unsigned char *);
 void BMBTRADUpdateMainArea(void *, unsigned char *);
+void BMBTIBusValueUpdate(void *, unsigned char *);
 void BMBTScreenModeUpdate(void *, unsigned char *);
 void BMBTScreenModeSet(void *, unsigned char *);
 void BMBTTimerHeaderWrite(void *);

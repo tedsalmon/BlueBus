@@ -78,6 +78,11 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBusEvent_ValueUpdate,
+        &BMBTIBusValueUpdate,
+        &Context
+    );
+    EventRegisterCallback(
         IBusEvent_ScreenModeSet,
         &BMBTScreenModeSet,
         &Context
@@ -103,6 +108,24 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         BMBT_SCROLL_TEXT_TIMER
     );
     IBusCommandDIAGetIdentity(ibus, IBUS_DEVICE_GT);
+}
+
+/**
+ * BMBTMenuRefresh()
+ *     Description:
+ *         Trigger the scheduled task to rewrite the main area. If the text
+ *         fits on the screen, reset the index so it is written again
+ *     Params:
+ *         BMBTContext_t *context - The BMBT context
+ *     Returns:
+ *         void
+ */
+static void BMBTMainAreaRefresh(BMBTContext_t *context)
+{
+    if (context->mainDisplay.length <= 9) {
+        context->mainDisplay.index = 0;
+    }
+    TimerTriggerScheduledTask(context->displayUpdateTaskId);
 }
 
 /**
@@ -262,7 +285,7 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     ) {
         BMBTGTWriteTitle(context, "Bluetooth");
     } else {
-        TimerTriggerScheduledTask(context->displayUpdateTaskId);
+        BMBTMainAreaRefresh(context);
     }
     if (context->bt->activeDevice.deviceId != 0) {
         char name[33];
@@ -275,6 +298,12 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
     } else {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
+    }
+    if (ConfigGetVehicleType() == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+        char oilTemp[4];
+        snprintf(oilTemp, 4, "%d", context->ibus->oilTemperature);
+        oilTemp[3] = '\0';
+        //IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_GAIN, oilTemp);
     }
     IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "BT  ");
     IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
@@ -499,10 +528,10 @@ static void BMBTMenuSettings(BMBTContext_t *context)
             "OT Blinkers: 1"
         );
     }
-    if (ConfigGetSetting(CONFIG_SETTING_AUTO_UNLOCK) == CONFIG_SETTING_OFF) {
-        BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_AUTO_UNLOCK, "Autounlock: Off");
+    if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS) == CONFIG_SETTING_OFF) {
+        BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS, "Comfort Locks: Off");
     } else {
-        BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_AUTO_UNLOCK, "Autounlock: On");
+        BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS, "Comfort Locks: On");
     }
     unsigned char tcuMode = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
     if (tcuMode == CONFIG_SETTING_OFF) {
@@ -630,7 +659,7 @@ void BMBTBC127PlaybackStatus(void *ctx, unsigned char *tmp)
             BMBTSetMainDisplayText(context, "Bluetooth", 0, 1);
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
         } else {
-            TimerTriggerScheduledTask(context->displayUpdateTaskId);
+            BMBTMainAreaRefresh(context);
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
         }
         IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
@@ -728,6 +757,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             if (micGain == 0x00) {
                 micGain = 0xC0;
             }
+            micGain--;
             if (micGain < 0xC0) {
                 micGain = 0xC0;
             }
@@ -744,6 +774,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             if (micGain == 0x00) {
                 micGain = 0xC0;
             }
+            micGain++;
             if (micGain > 0xD4) {
                 micGain = 0xD4;
             }
@@ -1006,14 +1037,14 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                     ConfigSetSetting(CONFIG_SETTING_OT_BLINKERS, 0);
                     BMBTGTWriteIndex(context, selectedIdx, "OT Blinkers: 1");
                 }
-            } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUTO_UNLOCK) {
-                unsigned char value = ConfigGetSetting(CONFIG_SETTING_AUTO_UNLOCK);
+            } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS) {
+                unsigned char value = ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS);
                 if (value == CONFIG_SETTING_OFF) {
-                    ConfigSetSetting(CONFIG_SETTING_AUTO_UNLOCK, CONFIG_SETTING_ON);
-                    BMBTGTWriteIndex(context, selectedIdx, "Autounlock: On");
+                    ConfigSetSetting(CONFIG_SETTING_COMFORT_LOCKS, CONFIG_SETTING_ON);
+                    BMBTGTWriteIndex(context, selectedIdx, "Comfort Locks: On");
                 } else {
-                    ConfigSetSetting(CONFIG_SETTING_AUTO_UNLOCK, CONFIG_SETTING_OFF);
-                    BMBTGTWriteIndex(context, selectedIdx, "Autounlock: Off");
+                    ConfigSetSetting(CONFIG_SETTING_COMFORT_LOCKS, CONFIG_SETTING_OFF);
+                    BMBTGTWriteIndex(context, selectedIdx, "Comfort Locks: Off");
                 }
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_TCU_MODE) {
                 if (ConfigGetSetting(CONFIG_SETTING_TCU_MODE) == CONFIG_SETTING_OFF) {
@@ -1113,12 +1144,22 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
             ) {
                 BMBTGTWriteTitle(context, "Bluetooth");
             } else {
-                TimerTriggerScheduledTask(context->displayUpdateTaskId);
+                BMBTMainAreaRefresh(context);
             }
             BMBTTriggerWriteHeader(context);
             BMBTTriggerWriteMenu(context);
         }
     }
+}
+
+void BMBTIBusValueUpdate(void *ctx, unsigned char *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    char oilTemp[4];
+    snprintf(oilTemp, 4, "%d", context->ibus->oilTemperature);
+    oilTemp[3] = '\0';
+    //IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_GAIN, oilTemp);
+    //IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
 }
 
 /**

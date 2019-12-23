@@ -174,6 +174,7 @@
 #define IBusEvent_GTWriteResponse 50
 #define IBusEvent_MFLVolume 51
 #define IBusEvent_MIDButtonPress 52
+#define IBusEvent_ValueUpdate 53
 
 #define IBus_UI_CD53 1
 #define IBus_UI_BMBT 2
@@ -227,6 +228,7 @@
 #define IBUS_TX_BUFFER_SIZE 16
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 7 // If we transmit faster, other modules may not hear us
+#include <math.h>
 #include <stdint.h>
 #include <string.h>
 #include "../mappings.h"
@@ -258,6 +260,7 @@ typedef struct IBus_t {
     unsigned char ignitionStatus;
     unsigned char lcmDimmerStatus1;
     unsigned char lcmDimmerStatus2;
+    unsigned char oilTemperature;
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);

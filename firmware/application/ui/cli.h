@@ -25,7 +25,7 @@
 #define CLI_MSG_END_CHAR 0x0D
 #define CLI_MSG_DELIMETER 0x20
 #define CLI_MSG_DELETE_CHAR 0x7F
-#define CLI_VERSION_BANNER "BlueBus Firmware: 1.0.9.15\r\n"
+#define CLI_VERSION_BANNER "BlueBus Firmware: 1.0.9.17\r\n"
 /**
  * CLI_t
  *     Description:

@@ -35,7 +35,7 @@
 #define CD53_SETTING_IDX_AUTOPLAY 2
 #define CD53_SETTING_IDX_VEH_TYPE 3
 #define CD53_SETTING_IDX_BLINKERS 4
-#define CD53_SETTING_IDX_AUTO_UNLOCK 5
+#define CD53_SETTING_IDX_COMFORT_LOCKS 5
 #define CD53_SETTING_IDX_TCU_MODE 6
 #define CD53_SETTING_IDX_PAIRINGS 7
 #define CD53_SETTING_MODE_SCROLL_SETTINGS 1
@@ -78,7 +78,9 @@ void CD53BC127DeviceDisconnected(void *, unsigned char *);
 void CD53BC127DeviceReady(void *, unsigned char *);
 void CD53BC127Metadata(CD53Context_t *, unsigned char *);
 void CD53BC127PlaybackStatus(void *, unsigned char *);
+void CD53IBusBMBTButtonPress(void *, unsigned char *);
 void CD53IBusClearScreen(void *, unsigned char *);
 void CD53IBusCDChangerStatus(void *, unsigned char *);
+void CD53IBusRADUpdateMainArea(void *, unsigned char *);
 void CD53TimerDisplay(void *);
 #endif /* CD53_H */

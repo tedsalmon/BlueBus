@@ -13,7 +13,7 @@ uint8_t SETTINGS_MENU[] = {
     CD53_SETTING_IDX_AUTOPLAY,
     CD53_SETTING_IDX_VEH_TYPE,
     CD53_SETTING_IDX_BLINKERS,
-    CD53_SETTING_IDX_AUTO_UNLOCK,
+    CD53_SETTING_IDX_COMFORT_LOCKS,
     CD53_SETTING_IDX_TCU_MODE,
     CD53_SETTING_IDX_PAIRINGS,
 };
@@ -24,7 +24,7 @@ uint8_t SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_AUTOPLAY,
     CONFIG_VEHICLE_TYPE_ADDRESS,
     CONFIG_SETTING_OT_BLINKERS,
-    CONFIG_SETTING_AUTO_UNLOCK,
+    CONFIG_SETTING_COMFORT_LOCKS,
     CONFIG_SETTING_TCU_MODE
 };
 
@@ -62,13 +62,23 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_CDClearDisplay,
-        &CD53IBusClearScreen,
+        BC127Event_PlaybackStatusChange,
+        &CD53BC127PlaybackStatus,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_BMBTButton,
+        &CD53IBusBMBTButtonPress,
         &Context
     );
     EventRegisterCallback(
         IBusEvent_CDStatusRequest,
         &CD53IBusCDChangerStatus,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_RADUpdateMainArea,
+        &CD53IBusRADUpdateMainArea,
         &Context
     );
     Context.displayUpdateTaskId = TimerRegisterScheduledTask(
@@ -243,15 +253,15 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                 }
                 context->settingIdx = CD53_SETTING_IDX_BLINKERS;
             }
-            if (nextMenu == CD53_SETTING_IDX_AUTO_UNLOCK) {
-                if (ConfigGetSetting(CONFIG_SETTING_AUTO_UNLOCK) == CONFIG_SETTING_OFF) {
-                    CD53SetMainDisplayText(context, "Autounlock: 0", 0);
+            if (nextMenu == CD53_SETTING_IDX_COMFORT_LOCKS) {
+                if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS) == CONFIG_SETTING_OFF) {
+                    CD53SetMainDisplayText(context, "Comfort Locks: 0", 0);
                     context->settingValue = CONFIG_SETTING_OFF;
                 } else {
-                    CD53SetMainDisplayText(context, "Autounlock: 1", 0);
+                    CD53SetMainDisplayText(context, "Comfort Locks: 1", 0);
                     context->settingValue = CONFIG_SETTING_ON;
                 }
-                context->settingIdx = CD53_SETTING_IDX_AUTO_UNLOCK;
+                context->settingIdx = CD53_SETTING_IDX_COMFORT_LOCKS;
             }
             if (nextMenu == CD53_SETTING_IDX_TCU_MODE) {
                 unsigned char tcuMode = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
@@ -324,12 +334,12 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                     context->settingValue = CONFIG_SETTING_OFF;
                 }
             }
-            if (context->settingIdx == CD53_SETTING_IDX_AUTO_UNLOCK) {
+            if (context->settingIdx == CD53_SETTING_IDX_COMFORT_LOCKS) {
                 if (context->settingValue == CONFIG_SETTING_OFF) {
-                    CD53SetMainDisplayText(context, "Autounlock: 1", 0);
+                    CD53SetMainDisplayText(context, "Comfort Locks: 1", 0);
                     context->settingValue = CONFIG_SETTING_ON;
                 } else {
-                    CD53SetMainDisplayText(context, "Autounlock: 0", 0);
+                    CD53SetMainDisplayText(context, "Comfort Locks: 0", 0);
                     context->settingValue = CONFIG_SETTING_OFF;
                 }
             }
@@ -342,16 +352,6 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                     context->settingValue = CONFIG_SETTING_OFF;
                 }
             }
-            //if (context->settingIdx == CD53_SETTING_IDX_DAC_GAIN) {
-            //    unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
-            //    if (context->settingValue == CONFIG_SETTING_ON) {
-            //        CD53SetMainDisplayText(context, "TCU Mode: Out of BT", 0);
-            //        context->settingValue = CONFIG_SETTING_ON;
-            //    } else {
-            //        CD53SetMainDisplayText(context, "TCU Mode: Always", 0);
-            //        context->settingValue = CONFIG_SETTING_OFF;
-            //    }
-            //}
             if (context->settingIdx == CD53_SETTING_IDX_PAIRINGS) {
                 if (context->settingValue == CONFIG_SETTING_OFF) {
                     CD53SetMainDisplayText(context, "Press Ok", 0);
@@ -607,6 +607,31 @@ void CD53BC127PlaybackStatus(void *ctx, unsigned char *status)
     }
 }
 
+/**
+ * CD53IBusBMBTButtonPress()
+ *     Description:
+ *         Handle button presses on the BoardMonitor when installed with
+ *         a monochrome navigation unit
+ *     Params:
+ *         void *context - A void pointer to the CD53Context_t struct
+ *         unsigned char *pkt - A pointer to the data packet
+ *     Returns:
+ *         void
+ */
+void CD53IBusBMBTButtonPress(void *ctx, unsigned char *pkt)
+{
+    CD53Context_t *context = (CD53Context_t *) ctx;
+    if (context->mode != CD53_MODE_OFF) {
+        if (pkt[4] == IBUS_DEVICE_BMBT_Button_PlayPause) {
+            if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+                BC127CommandPause(context->bt);
+            } else {
+                BC127CommandPlay(context->bt);
+            }
+        }
+    }
+}
+
 void CD53IBusClearScreen(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
@@ -651,6 +676,15 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
         requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK
     ) {
         CD53HandleUIButtons(context, pkt);
+    }
+}
+
+void CD53IBusRADUpdateMainArea(void *ctx, unsigned char *pkt)
+{
+    CD53Context_t *context = (CD53Context_t *) ctx;
+    if (pkt[4] == 0xC4) {
+        context->radioType = IBus_UI_BUSINESS_NAV;
+        CD53RedisplayText(context);
     }
 }
 
@@ -720,10 +754,11 @@ void CD53TimerDisplay(void *ctx)
                     }
                 } else {
                     if (context->mainDisplay.index == 0) {
-                        IBusCommandIKEText(
-                            context->ibus,
-                            context->mainDisplay.text
-                        );
+                        if (context->radioType == IBus_UI_CD53) {
+                            IBusCommandIKEText(context->ibus, context->mainDisplay.text);
+                        } else if (context->radioType == IBus_UI_BUSINESS_NAV) {
+                            IBusCommandGTWriteBusinessNavTitle(context->ibus, context->mainDisplay.text);
+                        }
                     }
                     context->mainDisplay.index = 1;
                 }
