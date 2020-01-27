@@ -23,7 +23,7 @@ uint8_t MID_SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_METADATA_MODE,
     CONFIG_SETTING_AUTOPLAY,
     CONFIG_VEHICLE_TYPE_ADDRESS,
-    CONFIG_SETTING_OT_BLINKERS,
+    CONFIG_SETTING_COMFORT_BLINKERS,
     CONFIG_SETTING_COMFORT_LOCKS,
     CONFIG_SETTING_TCU_MODE
 };
@@ -65,6 +65,11 @@ void MIDInit(BC127_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBusEvent_RADMIDDisplayMenu,
         &MIDIIBusRADMIDMenuUpdate,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_MIDModeChange,
+        &MIDIBusMIDModeChange,
         &Context
     );
     Context.displayUpdateTaskId = TimerRegisterScheduledTask(
@@ -202,7 +207,7 @@ static void MIDShowNextSetting(MIDContext_t *context, uint8_t direction)
         context->settingIdx = MID_SETTING_IDX_VEH_TYPE;
     }
     if (nextMenu == MID_SETTING_IDX_BLINKERS) {
-        unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_OT_BLINKERS);
+        unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
         if (blinkCount == 0x03) {
             MIDSetMainDisplayText(context, "OT Blink: 3", 0);
             context->settingValue = 0x03;
@@ -652,6 +657,34 @@ void MIDIIBusRADMIDMenuUpdate(void *ctx, unsigned char *pkt)
     }
 }
 
+/**
+ * MIDIBusMIDModeChange()
+ *     Description:
+ *         
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         unsigned char *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
+{
+    MIDContext_t *context = (MIDContext_t *) ctx;
+    if (pkt[4] == 0x08) {
+        if (pkt[5] == 0xB0) {
+            MIDSetMainDisplayText(context, "", 0);
+        } else {
+            context->mode = MID_MODE_OFF;
+        }
+    } else if (pkt[4] == 0x01) {
+        if (context->mode == MID_MODE_OFF) {
+            context->mode = MID_MODE_ACTIVE;
+        } else {
+            context->mode = MID_MODE_DISPLAY_OFF;
+        }
+    }
+}
+
 void MIDTimerDisplay(void *ctx)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
@@ -709,7 +742,9 @@ void MIDTimerDisplay(void *ctx)
                         }
                     }
                 } else {
-                    if (context->mainDisplay.index == 0) {
+                    if (context->mainDisplay.index == 0 &&
+                        strlen(context->mainDisplay.text) > 0
+                    ) {
                         IBusCommandMIDDisplayText(
                             context->ibus,
                             context->mainDisplay.text

@@ -1108,9 +1108,6 @@ void BC127Process(BC127_t *bt)
         } else if(strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             if (bt->activeDevice.deviceId == deviceId) {
-                // Clear the Metadata, since this notification comes prior
-                // to the new metadata
-                BC127ClearMetadata(bt);
                 bt->playbackStatus = BC127_AVRCP_STATUS_PLAYING;
                 LogDebug(LOG_SOURCE_BT, "BT: Playing");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
@@ -1279,6 +1276,8 @@ void BC127Process(BC127_t *bt)
             EventTriggerCallback(BC127Event_DeviceFound, (unsigned char *) msgBuf[1]);
             LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s -> %s", msgBuf[1], deviceName);
         } else if(strcmp(msgBuf[0], "Build:") == 0) {
+            // Clear the Metadata
+            BC127ClearMetadata(bt);
             // The device sometimes resets without sending the "Ready" message
             // so we instead watch for the build string
             memset(&bt->activeDevice, 0, sizeof(BC127Connection_t));

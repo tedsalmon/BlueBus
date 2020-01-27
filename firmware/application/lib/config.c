@@ -39,9 +39,7 @@ unsigned char ConfigGetLog(unsigned char system)
 {
     unsigned char currentSetting = CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS];
     if (currentSetting == 0x00) {
-        unsigned char currentSetting = ConfigGetByte(
-            CONFIG_SETTING_LOG_ADDRESS
-        );
+        currentSetting = ConfigGetByte(CONFIG_SETTING_LOG_ADDRESS);
         if (currentSetting == 0x00) {
             // Prevent from re-reading the byte
             currentSetting = 0x01;
@@ -72,17 +70,24 @@ unsigned char ConfigGetNavType()
 }
 
 /**
- * ConfigGetPoweroffTimeout()
+ * ConfigGetPoweroffTimeoutDisabled()
  *     Description:
- *         Get the time in minutes that we should wait before powering off
+ *         Check if Auto-Power Off is disabled
  *     Params:
  *         void
  *     Returns:
  *         void
  */
-unsigned char ConfigGetPoweroffTimeout()
+unsigned char ConfigGetPoweroffTimeoutDisabled()
 {
-    return ConfigGetByte(CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS);
+    unsigned char poweroffValue = ConfigGetByte(
+        CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS
+    );
+    if (poweroffValue == CONFIG_SETTING_DISABLED) {
+        return CONFIG_SETTING_DISABLED;
+    } else {
+        return CONFIG_SETTING_ENABLED;
+    }
 }
 
 /**
@@ -98,7 +103,9 @@ unsigned char ConfigGetSetting(unsigned char setting)
 {
     unsigned char value = 0x00;
     // Catch invalid setting addresses
-    if (setting >= 0x0F && setting <= 0x19) {
+    if (setting >= CONFIG_SETTING_START_ADDRESS &&
+        setting <= CONFIG_SETTING_END_ADDRESS
+    ) {
         value = CONFIG_CACHE[setting];
         if (value == 0x00) {
             value = ConfigGetByte(setting);
@@ -175,6 +182,24 @@ unsigned char ConfigGetVehicleType()
 }
 
 /**
+ * ConfigGetVehicleIdentity()
+ *     Description:
+ *         Get the vehicle VIN from the EEPROM
+ *     Params:
+ *         unsigned char *
+ *     Returns:
+ *         void
+ */
+void ConfigGetVehicleIdentity(unsigned char *vin)
+{
+    unsigned char vinAddress[] = CONFIG_VEHICLE_VIN_ADDRESS;
+    uint8_t i;
+    for (i = 0; i < 5; i++) {
+        vin[i] = ConfigGetByte(vinAddress[i]);
+    }
+}
+
+/**
  * ConfigSetBootloaderMode()
  *     Description:
  *         Set the bootloader mode
@@ -226,17 +251,20 @@ void ConfigSetNavType(unsigned char type)
 }
 
 /**
- * ConfigSetPoweroffTimeout()
+ * ConfigSetPoweroffTimeoutDisabled()
  *     Description:
- *         Set the time in minutes that we should wait before powering off
+ *         Disable Auto-Power Off
  *     Params:
- *         unsigned char timeout - The timeout
+ *         unsigned char status - Enable / Disable Auto Power off
  *     Returns:
  *         void
  */
-void ConfigSetPoweroffTimeout(unsigned char timeout)
+void ConfigSetPoweroffTimeoutDisabled(unsigned char status)
 {
-    EEPROMWriteByte(CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS, timeout);
+    EEPROMWriteByte(
+        CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS,
+        status
+    );
 }
 
 /**
@@ -252,7 +280,9 @@ void ConfigSetPoweroffTimeout(unsigned char timeout)
 void ConfigSetSetting(unsigned char setting, unsigned char value)
 {
     // Catch invalid setting addresses
-    if (setting >= 0x0F && setting <= 0x19) {
+    if (setting >= CONFIG_SETTING_START_ADDRESS &&
+        setting <= CONFIG_SETTING_END_ADDRESS
+    ) {
         CONFIG_CACHE[setting] = value;
         EEPROMWriteByte(setting, value);
     }
@@ -335,4 +365,22 @@ void ConfigSetVehicleType(unsigned char vehicleType)
 {
     CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = vehicleType;
     EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, vehicleType);
+}
+
+/**
+ * ConfigSetVehicleIdentity()
+ *     Description:
+ *         Set the vehicle VIN
+ *     Params:
+ *         unsigned char *vin - The array to populate
+ *     Returns:
+ *         void
+ */
+void ConfigSetVehicleIdentity(unsigned char *vin)
+{
+    unsigned char vinAddress[] = CONFIG_VEHICLE_VIN_ADDRESS;
+    uint8_t i;
+    for (i = 0; i < 5; i++) {
+        EEPROMWriteByte(vinAddress[i], vin[i]);
+    }
 }

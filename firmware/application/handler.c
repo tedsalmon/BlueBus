@@ -39,6 +39,8 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     Context.blinkerCount = 0;
     Context.blinkerStatus = HANDLER_BLINKER_OFF;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
+    Context.ibusModuleStatus = 0x00;
+    Context.generalModuleStatus = 0x00;
     Context.powerStatus = HANDLER_POWER_ON;
     Context.scanIntervals = 0;
     EventRegisterCallback(
@@ -87,18 +89,33 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_CDPoll,
-        &HandlerIBusCDCPoll,
-        &Context
-    );
-    EventRegisterCallback(
         IBusEvent_CDStatusRequest,
         &HandlerIBusCDCStatus,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_IgnitionStatus,
-        &HandlerIBusIgnitionStatus,
+        IBusEvent_FirstMessageReceived,
+        &HandlerIBusFirstMessageReceived,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_GTDIAOSIdentityResponse,
+        &HandlerIBusGTDIAOSIdentityResponse,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_IKEIgnitionStatus,
+        &HandlerIBusIKEIgnitionStatus,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_IKESpeedRPMUpdate,
+        &HandlerIBusIKESpeedRPMUpdate,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_IKEVehicleType,
+        &HandlerIBusIKEVehicleType,
         &Context
     );
     EventRegisterCallback(
@@ -112,6 +129,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBusEvent_LCMRedundantData,
+        &HandlerIBusLCMRedundantData,
+        &Context
+    );
+    EventRegisterCallback(
         IBusEvent_MFLButton,
         &HandlerIBusMFLButton,
         &Context
@@ -121,15 +143,25 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &HandlerIBusMFLVolume,
         &Context
     );
+    EventRegisterCallback(
+        IBusEvent_ModuleStatusRequest,
+        &HandlerIBusModuleStatusRequest,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_ModuleStatusResponse,
+        &HandlerIBusModuleStatusResponse,
+        &Context
+    );
     TimerRegisterScheduledTask(
         &HandlerTimerCDCAnnounce,
         &Context,
-        HANDLER_CDC_ANOUNCE_INT
+        HANDLER_INT_CDC_ANOUNCE
     );
     TimerRegisterScheduledTask(
         &HandlerTimerCDCSendStatus,
         &Context,
-        HANDLER_CDC_STATUS_INT
+        HANDLER_INT_CDC_STATUS
     );
     TimerRegisterScheduledTask(
         &HandlerTimerDeviceConnection,
@@ -137,22 +169,26 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         HANDLER_INT_DEVICE_CONN
     );
     TimerRegisterScheduledTask(
-        &HandlerTimerPoweroff,
+        &HandlerTimerLCMIOStatus,
         &Context,
-        1000
+        HANDLER_INT_LCM_IO_STATUS
     );
     TimerRegisterScheduledTask(
         &HandlerTimerOpenProfileErrors,
         &Context,
-        HANDLER_PROFILE_ERROR_INT
+        HANDLER_INT_PROFILE_ERROR
+    );
+    TimerRegisterScheduledTask(
+        &HandlerTimerPoweroff,
+        &Context,
+        HANDLER_INT_POWEROFF
     );
     TimerRegisterScheduledTask(
         &HandlerTimerScanDevices,
         &Context,
-        HANDLER_SCAN_INT
+        HANDLER_INT_DEVICE_SCAN
     );
-    // Poll the vehicle for the ignition status so we can configure ourselves
-    IBusCommandIKEGetIgnition(Context.ibus);
+
     BC127CommandStatus(Context.bt);
     if (Context.uiMode == IBus_UI_CD53 ||
         Context.uiMode == IBus_UI_BUSINESS_NAV
@@ -244,6 +280,8 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
             TimerDelayMicroseconds(250);
             TEL_MUTE = 0;
         }
+        // Tell the vehicle what the call status is
+        HandlerIBusBroadcastTELStatus(context);
     }
 }
 
@@ -261,7 +299,7 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
 void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
+    if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF) {
         // Once A2DP and AVRCP are connected, we can disable connectability
         // If HFP is enabled, do not disable connectability until the
         // profile opens
@@ -281,6 +319,9 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
                     context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
                 ) {
                     BC127CommandPlay(context->bt);
+                }
+                if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                    IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
                 }
             } else if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
                        context->bt->activeDevice.hfpLinkId == 0
@@ -311,7 +352,7 @@ void HandlerBC127DeviceDisconnected(void *ctx, unsigned char *data)
     // Reset the metadata so we don't display the wrong data
     BC127ClearMetadata(context->bt);
     BC127ClearPairingErrors(context->bt);
-    if (context->ibus->ignitionStatus == IBUS_IGNITION_ON) {
+    if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF) {
         BC127CommandBtState(
             context->bt,
             BC127_STATE_ON,
@@ -327,6 +368,9 @@ void HandlerBC127DeviceDisconnected(void *ctx, unsigned char *data)
             }
             context->btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
         } else {
+            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
+            }
             BC127CommandList(context->bt);
         }
     }
@@ -348,7 +392,7 @@ void HandlerBC127DeviceFound(void *ctx, unsigned char *data)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->bt->activeDevice.deviceId == 0 &&
         context->btConnectionStatus == HANDLER_BT_CONN_OFF &&
-        context->ibus->ignitionStatus == IBUS_IGNITION_ON
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF
     ) {
         char *macId = (char *) data;
         LogDebug(LOG_SOURCE_SYSTEM, "Handler: No Device -- Attempt connection");
@@ -443,23 +487,6 @@ void HandlerUIInitiateConnection(void *ctx, unsigned char *deviceId)
 }
 
 /**
- * HandlerIBusCDCPoll()
- *     Description:
- *         Respond to the Radio's "ping" with a "pong"
- *     Params:
- *         void *ctx - The context provided at registration
- *         unsigned char *pkt - The IBus packet
- *     Returns:
- *         void
- */
-void HandlerIBusCDCPoll(void *ctx, unsigned char *pkt)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    IBusCommandCDCPollResponse(context->ibus);
-    context->cdChangerLastPoll = TimerGetMillis();
-}
-
-/**
  * HandlerIBusCDCStatus()
  *     Description:
  *         Track the current CD Changer status based on what the radio
@@ -491,6 +518,10 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
         }
         curStatus = IBUS_CDC_STAT_STOP;
         curFunction = IBUS_CDC_FUNC_NOT_PLAYING;
+        // Return to non-S/PDIF input once told to stop playback, if enabled
+        if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_MODE_INPUT_RADIO);
+        }
     } else if (requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK) {
         curFunction = context->ibus->cdChangerFunction;
         curStatus = IBUS_CDC_STAT_PLAYING;
@@ -544,6 +575,10 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
                 BC127CommandBackwardSeekRelease(context->bt);
                 context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
             }
+            // Set the Input to S/PDIF once told to start playback, if enabled
+            if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
+                IBusCommandDSPSetMode(context->ibus, IBUS_DSP_MODE_INPUT_SPDIF);
+            }
         } else {
             curStatus = requestedCommand;
         }
@@ -558,7 +593,86 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
 }
 
 /**
- * HandlerIBusIgnitionStatus()
+ * HandlerIBusFirstMessageReceived()
+ *     Description:
+ *         Request module status after the first IBus message is received.
+ *         DO NOT change the order in which these modules are polled.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusFirstMessageReceived(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    IBusCommandGetModuleStatus(
+        context->ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_IKE
+    );
+    IBusCommandGetModuleStatus(
+        context->ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_GT
+    );
+    IBusCommandGetModuleStatus(
+        context->ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_MID
+    );
+    IBusCommandGetModuleStatus(
+        context->ibus,
+        IBUS_DEVICE_CDC,
+        IBUS_DEVICE_RAD
+    );
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+        IBusCommandSetModuleStatus(
+            context->ibus,
+            IBUS_DEVICE_TEL,
+            IBUS_DEVICE_LOC,
+            0x01
+        );
+    }
+    IBusCommandIKEGetIgnitionStatus(context->ibus);
+}
+
+/**
+ * HandlerIBusGTDIAOSIdentityResponse()
+ *     Description:
+ *         Identify the navigation module type from its OS
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGTDIAOSIdentityResponse(void *ctx, unsigned char *pkt)
+{
+    char navigationOS[8] = {};
+    uint8_t i;
+    for (i = 0; i < 7; i++) {
+        navigationOS[i] = pkt[i + 4];
+    }
+    // The string should come null terminated, but we should not trust that
+    navigationOS[7] = '\0';
+    if (UtilsStricmp(navigationOS, "BMWC01S") == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT UI");
+        ConfigSetUIMode(IBus_UI_BMBT);
+        // Reboot for the new UI to take effect
+        UtilsReset();
+    } else if (UtilsStricmp(navigationOS, "BMWM01S") == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Detected Business Nav UI");
+        ConfigSetUIMode(IBus_UI_BUSINESS_NAV);
+        // Reboot for the new UI to take effect
+        UtilsReset();
+    } else {
+        LogError("Unable to identify GT OS: %s", navigationOS);
+    }
+}
+
+/**
+ * HandlerIBusIKEIgnitionStatus()
  *     Description:
  *         Track the Ignition state and update the BC127 accordingly. We set
  *         the BT device "off" when the key is set to position 0 and on
@@ -571,7 +685,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
  *     Returns:
  *         void
  */
-void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
+void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char ignitionStatus = pkt[0];
@@ -584,15 +698,24 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
             BC127CommandBtState(context->bt, BC127_STATE_OFF, BC127_STATE_OFF);
             BC127CommandClose(context->bt, BC127_CLOSE_ALL);
             BC127ClearPairedDevices(context->bt);
-            // Unlock doors
-            if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS) == CONFIG_SETTING_ON) {
-                IBusCommandGMUnlock(context->ibus);
+            // Unlock the vehicle
+            if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS_ADDRESS) ==
+                CONFIG_SETTING_ON
+            ) {
+                IBusCommandGMDoorUnlock(context->ibus);
             }
-        } else if (ignitionStatus == IBUS_IGNITION_ON) {
-            // Play a tone to awaken the WM8804 / PCM5122
+            context->generalModuleStatus = 0x00;
+        // If the ignition WAS off, but now it's not, then run these actions.
+        // I realize the second condition is frivolous, but it helps with
+        // readability.
+        } else if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF &&
+                   ignitionStatus != IBUS_IGNITION_OFF
+        ) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Handler: Ignition On");
+            // Play a tone to wake up the WM8804 / PCM5122
             BC127CommandTone(Context.bt, "V 0 N C6 L 4");
             // Anounce the CDC to the network
-            HandlerIBusSendCDCStatus(context);
+            HandlerIBusBroadcastCDCStatus(context);
             // Reset the metadata so we don't display the wrong data
             BC127ClearMetadata(context->bt);
             // Set the BT module connectable
@@ -600,13 +723,90 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
             // Request BC127 state
             BC127CommandStatus(context->bt);
             BC127CommandList(context->bt);
-            // Ask the LCM for the I/O Status of all lamps
-            IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+            // Enable the TEL LEDs
+            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                if (context->bt->activeDevice.avrcpLinkId == 0 &&
+                    context->bt->activeDevice.a2dpLinkId == 0
+                ) {
+                    IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
+                } else {
+                    IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
+                }
+            }
+             if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_LCM) != 0) {
+                // Ask the LCM for the redundant data
+                LogInfo(LOG_SOURCE_SYSTEM, "Handler: Request LCM Redundant Data!");
+                IBusCommandLCMGetRedundantData(context->ibus);
+             }
         }
     } else {
-        if (ignitionStatus == IBUS_IGNITION_ON) {
-            HandlerIBusSendCDCStatus(context);
+        if (ignitionStatus > IBUS_IGNITION_OFF) {
+            HandlerIBusBroadcastCDCStatus(context);
+            HandlerIBusBroadcastTELStatus(context);
         }
+    }
+    if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_IKE) == 0) {
+        HandlerIBusBroadcastTELStatus(context);
+        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_IKE;
+    }
+}
+
+/**
+ * HandlerIBusIKESpeedRPMUpdate()
+ *     Description:
+ *         Act upon updates from the IKE about the vehicle speed / RPM
+ *         * Lock the vehicle at 20mph
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS_ADDRESS) ==
+        CONFIG_SETTING_ON &&
+        context->generalModuleStatus == 0x00
+        && pkt[4] >= 0x20
+    ) {
+        IBusCommandGMDoorLock(context->ibus);
+        context->generalModuleStatus = 0x01;
+    }
+}
+
+/**
+ * HandlerIBusIKEVehicleType()
+ *     Description:
+ *         Set the vehicle type
+ *         Raw Sample: 80 07 BF 15 02 FF FA 42 68
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusIKEVehicleType(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    unsigned char vehicleType = (pkt[4] >> 4) & 0xF;
+    unsigned char detectedVehicleType = 0x00;
+    if (vehicleType == 0x0F || vehicleType == 0x0A) {
+        detectedVehicleType = IBUS_VEHICLE_TYPE_E46_Z4;
+    } else {
+        detectedVehicleType = IBUS_VEHICLE_TYPE_E38_E39_E53;
+    }
+    if (detectedVehicleType != ConfigGetVehicleType()) {
+        ConfigSetVehicleType(detectedVehicleType);
+        if (detectedVehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+            LogDebug(LOG_SOURCE_SYSTEM, "Detected New Vehicle Type: E46/Z4");
+        } else {
+            LogDebug(LOG_SOURCE_SYSTEM, "Detected New Vehicle Type: E38/E39/E53");
+        }
+    }
+    // New UI
+    if (context->uiMode == 0xFF) {
+        UtilsReset();
     }
 }
 
@@ -623,7 +823,7 @@ void HandlerIBusIgnitionStatus(void *ctx, unsigned char *pkt)
  */
 void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
 {
-    uint8_t blinkCount = ConfigGetSetting(CONFIG_SETTING_OT_BLINKERS);
+    uint8_t blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
     if (blinkCount != 0x00 && blinkCount != 0xFF) {
         HandlerContext_t *context = (HandlerContext_t *) ctx;
         unsigned char lightStatus = pkt[4];
@@ -644,7 +844,8 @@ void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
             if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) != 0 ||
                 context->blinkerCount == blinkCount
             ) {
-                // Reset ourselves once the signal is off so we do not reactivate
+                // Reset ourselves once the signal is off so we do not
+                // reactivate and signal in increments of `blinkCount`
                 if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) == 0) {
                     context->blinkerStatus = HANDLER_BLINKER_OFF;
                 }
@@ -656,7 +857,8 @@ void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
             if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) != 0 ||
                 context->blinkerCount == blinkCount
             ) {
-                // Reset ourselves once the signal is off so we do not reactivate
+                // Reset ourselves once the signal is off so we do not
+                // reactivate and signal in increments of `blinkCount`
                 if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) == 0) {
                     context->blinkerStatus = HANDLER_BLINKER_OFF;
                 }
@@ -683,6 +885,87 @@ void HandlerIBusLCMDimmerStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+}
+
+/**
+ * HandlerIBusLCMRedundantData()
+ *     Description:
+ *         Check the VIN to see if we're in a new vehicle
+ *         Raw: D0 10 80 54 50 4E 66 05 80 06 10 42 38 07 00 06 05 81
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusLCMRedundantData(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // Check VIN
+    unsigned char vehicleId[] = {
+        pkt[4],
+        pkt[5],
+        pkt[6],
+        pkt[7],
+        (pkt[8] >> 4) & 0xF,
+    };
+    unsigned char currentVehicleId[5] = {};
+    ConfigGetVehicleIdentity(currentVehicleId);
+    char vinTwo[] = {vehicleId[0], vehicleId[1], '\0'};
+    char currentVinTwo[] = {currentVehicleId[0], currentVehicleId[1], '\0'};
+    LogRaw(
+        "Got VIN: %s%d%d%d%d%d\r\nExisting VIN: %s%d%d%d%d%d\r\n",
+        vinTwo,
+        (vehicleId[2] >> 4) & 0xF,
+        vehicleId[2] & 0xF,
+        (vehicleId[3] >> 4) & 0xF,
+        vehicleId[3] & 0xF,
+        vehicleId[4],
+        currentVinTwo,
+        (currentVehicleId[2] >> 4) & 0xF,
+        currentVehicleId[2] & 0xF,
+        (currentVehicleId[3] >> 4) & 0xF,
+        currentVehicleId[3] & 0xF,
+        currentVehicleId[4]
+    );
+    if (memcmp(&vehicleId, &currentVehicleId, 5) != 0) {
+        LogDebug(LOG_SOURCE_SYSTEM, "Detected VIN Change");
+        // Request the vehicle type
+        IBusCommandIKEGetVehicleType(context->ibus);
+        // Identify the user interface
+        unsigned char vehicleInterface = 0x00;
+        if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_GT) != 0) {
+            vehicleInterface = 0xFF;
+        } else if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_MID) != 0) {
+            vehicleInterface = IBus_UI_MID;
+            if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_GT) != 0) {
+                vehicleInterface = IBus_UI_MID_BMBT;
+            }
+        } else if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_RAD) != 0) {
+            if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_MID) == 0 &&
+                CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_GT) == 0
+            ) {
+                vehicleInterface = IBus_UI_CD53;
+            }
+        }
+        if (vehicleInterface != 0x00 && vehicleInterface != ConfigGetUIMode()) {
+            if (vehicleInterface == IBus_UI_MID_BMBT) {
+                LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT / MID UI");
+            } else if (vehicleInterface == IBus_UI_MID) {
+                LogInfo(LOG_SOURCE_SYSTEM, "Detected MID UI");
+            } else if (vehicleInterface == IBus_UI_CD53) {
+                LogInfo(LOG_SOURCE_SYSTEM, "Detected CD53 UI");
+            } else if (vehicleInterface == 0xFF) {
+                // Request the Navigation Identity
+                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+                IBusCommandDIAGetOSIdentity(context->ibus, IBUS_DEVICE_GT);
+            }
+            if (vehicleInterface < 0xFF) {
+                ConfigSetUIMode(vehicleInterface);
+                context->uiMode = 0xFF;
+            }
+        }
+    }
 }
 
 /**
@@ -759,7 +1042,88 @@ void HandlerIBusMFLVolume(void *ctx, unsigned char *pkt)
 }
 
 /**
- * HandlerIBusSendCDCStatus()
+ * HandlerIBusModuleStatusRequest()
+ *     Description:
+ *         Respond to module status requests for those modules which
+ *         we are emulating
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusModuleStatusRequest(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_CDC) {
+        IBusCommandSetModuleStatus(
+            context->ibus,
+            IBUS_DEVICE_CDC,
+            pkt[IBUS_PKT_SRC],
+            0x00
+        );
+        context->cdChangerLastPoll = TimerGetMillis();
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL &&
+               ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON
+    ) {
+        IBusCommandSetModuleStatus(
+            context->ibus,
+            IBUS_DEVICE_TEL,
+            pkt[IBUS_PKT_SRC],
+            0x01
+        );
+    }
+}
+
+/**
+ * HandlerIBusModuleStatusResponse()
+ *     Description:
+ *         Track module status as we get them
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *pkt - The packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusModuleStatusResponse(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    unsigned char module = pkt[IBUS_PKT_SRC];
+    if (module == IBUS_DEVICE_DSP &&
+        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_DSP) == 0
+    ) {
+        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_DSP;
+        LogInfo(LOG_SOURCE_SYSTEM, "DSP Detected");
+    } else if (module == IBUS_DEVICE_GT &&
+        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_GT) == 0
+    ) {
+        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_GT;
+        LogInfo(LOG_SOURCE_SYSTEM, "GT Detected");
+    } else if (module == IBUS_DEVICE_LCM &&
+        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_LCM) == 0
+    ) {
+        LogInfo(LOG_SOURCE_SYSTEM, "LCM Detected");
+        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_LCM;
+    } else if (module == IBUS_DEVICE_MID &&
+        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_MID) == 0
+    ) {
+        LogInfo(LOG_SOURCE_SYSTEM, "MID Detected");
+        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_MID;
+    } else if (module == IBUS_DEVICE_BMBT &&
+        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_BMBT) == 0
+    ) {
+        LogInfo(LOG_SOURCE_SYSTEM, "BMBT Detected");
+        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_BMBT;
+    } else if (module == IBUS_DEVICE_RAD &&
+        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_RAD) == 0
+    ) {
+        LogInfo(LOG_SOURCE_SYSTEM, "RAD Detected");
+        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_RAD;
+    }
+}
+
+/**
+ * HandlerIBusBroadcastCDCStatus()
  *     Description:
  *         Wrapper to send the CDC Status
  *     Params:
@@ -767,7 +1131,7 @@ void HandlerIBusMFLVolume(void *ctx, unsigned char *pkt)
  *     Returns:
  *         void
  */
-void HandlerIBusSendCDCStatus(HandlerContext_t *context)
+void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
 {
     unsigned char curStatus = IBUS_CDC_STAT_STOP;
     if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PAUSE) {
@@ -789,6 +1153,32 @@ void HandlerIBusSendCDCStatus(HandlerContext_t *context)
 }
 
 /**
+ * HandlerIBusBroadcastTELStatus()
+ *     Description:
+ *         Send the TEL status to the vehicle
+ *     Params:
+ *         HandlerContext_t *context - The module context
+ *     Returns:
+ *         void
+ */
+void HandlerIBusBroadcastTELStatus(HandlerContext_t *context)
+{
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+        if (context->bt->callStatus == BC127_CALL_INACTIVE) {
+            IBusCommandTELStatus(
+                context->ibus,
+                IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE
+            );
+        } else {
+            IBusCommandTELStatus(
+                context->ibus,
+                IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE
+            );
+        }
+    }
+}
+
+/**
  * HandlerTimerCDCAnnounce()
  *     Description:
  *         This periodic task tracks how long it has been since the radio
@@ -804,9 +1194,14 @@ void HandlerTimerCDCAnnounce(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint32_t now = TimerGetMillis();
     if ((now - context->cdChangerLastPoll) >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
-        context->ibus->ignitionStatus == IBUS_IGNITION_ON
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF
     ) {
-        IBusCommandCDCAnnounce(context->ibus);
+        IBusCommandSetModuleStatus(
+            context->ibus,
+            IBUS_DEVICE_CDC,
+            IBUS_DEVICE_LOC,
+            0x00
+        );
         context->cdChangerLastPoll = now;
     }
 }
@@ -827,10 +1222,10 @@ void HandlerTimerCDCSendStatus(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint32_t now = TimerGetMillis();
     if ((now - context->cdChangerLastStatus) >= HANDLER_CDC_STATUS_TIMEOUT &&
-        context->ibus->ignitionStatus == IBUS_IGNITION_ON &&
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
         (context->uiMode == IBus_UI_BMBT || context->uiMode == IBus_UI_MID_BMBT)
     ) {
-        HandlerIBusSendCDCStatus(context);
+        HandlerIBusBroadcastCDCStatus(context);
         LogDebug(LOG_SOURCE_SYSTEM, "Handler: Send CDC status preemptively");
     }
 }
@@ -871,6 +1266,26 @@ void HandlerTimerDeviceConnection(void *ctx)
         }
     } else if (context->btDeviceConnRetries > 0) {
         context->btDeviceConnRetries = 0;
+    }
+}
+
+/**
+ * HandlerTimerLCMIOStatus()
+ *     Description:
+ *         Request the LCM I/O Status when the key is in position 2 or above
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerLCMIOStatus(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_LCM) != 0 &&
+        context->ibus->ignitionStatus >= IBUS_IGNITION_KL15
+    ) {
+        // Ask the LCM for the I/O Status of all lamps
+        IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
     }
 }
 
@@ -916,12 +1331,9 @@ void HandlerTimerOpenProfileErrors(void *ctx)
 void HandlerTimerPoweroff(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    unsigned char powerTimeout = ConfigGetPoweroffTimeout();
-    if (powerTimeout != 0) {
-        // Convert the timeout from minutes to seconds and add one second
-        uint16_t timeoutSeconds = (powerTimeout * 60) + 1;
-        uint16_t lastRxSeconds = (TimerGetMillis() - context->ibus->rxLastStamp) / 1000;
-        if (lastRxSeconds >= timeoutSeconds) {
+    if (ConfigGetPoweroffTimeoutDisabled() == CONFIG_SETTING_ENABLED) {
+        uint32_t lastRx = TimerGetMillis() - context->ibus->rxLastStamp;
+        if (lastRx >= HANDLER_POWER_TIMEOUT_MILLIS) {
             if (context->powerStatus == HANDLER_POWER_ON) {
                 // Destroy the UART module for IBus
                 UARTDestroy(IBUS_UART_MODULE);
@@ -956,7 +1368,7 @@ void HandlerTimerScanDevices(void *ctx)
     if (((context->bt->activeDevice.deviceId == 0 &&
         context->btConnectionStatus == HANDLER_BT_CONN_OFF) ||
         context->scanIntervals == 12) &&
-        context->ibus->ignitionStatus == IBUS_IGNITION_ON
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF
     ) {
         context->scanIntervals = 0;
         BC127ClearInactivePairedDevices(context->bt);

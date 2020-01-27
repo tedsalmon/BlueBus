@@ -123,10 +123,10 @@ void CLIProcess()
                     BC127SendCommand(cli.bt, "CONFIG");
                 } else if (UtilsStricmp(msgBuf[1], "CVC") == 0) {
                     if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                        BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON OFF OFF");
+                        BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
                         BC127CommandWrite(cli.bt);
                     } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                        BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF OFF OFF");
+                        BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF ON OFF");
                         BC127CommandWrite(cli.bt);
                     } else if (UtilsStricmp(msgBuf[2], "NB") == 0) {
                         BC127CommandCVC(cli.bt, "NB", 0, 0);
@@ -148,6 +148,7 @@ void CLIProcess()
                     BC127CommandSetMetadata(cli.bt, 1);
                     BC127CommandSetModuleName(cli.bt, "BlueBus");
                     BC127CommandSetUART(cli.bt, 115200, "OFF", 0);
+                    BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
                 } else if (UtilsStricmp(msgBuf[1], "HFP") == 0) {
                     if (delimCount == 2) {
                         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
@@ -267,6 +268,12 @@ void CLIProcess()
                     LogRaw("WM8804: SPDSTAT %02X (0x0C) [%d]\r\n", buffer, status);
                     status = I2CRead(0x3A, 0x0B, &buffer);
                     LogRaw("WM8804: INTSTAT %02X (0x0B) [%d]\r\n", buffer, status);
+                } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
+                    if (ConfigGetPoweroffTimeoutDisabled() == CONFIG_SETTING_ENABLED) {
+                        LogRaw("Auto-Power Off: On\r\n");
+                    } else {
+                        LogRaw("Auto-Power Off: Off\r\n");
+                    }
                 } else {
                     cmdSuccess = 0;
                 }
@@ -318,6 +325,24 @@ void CLIProcess()
                     } else {
                         cmdSuccess = 0;
                     }
+                } else if (UtilsStricmp(msgBuf[1], "DSP") == 0) {
+                    if (UtilsStricmp(msgBuf[2], "INPUT") == 0) {
+                        if (UtilsStricmp(msgBuf[3], "ANALOG") == 0) {
+                            ConfigSetSetting(
+                                CONFIG_SETTING_USE_SPDIF_INPUT,
+                                CONFIG_SETTING_OFF
+                            );
+                        } else if (UtilsStricmp(msgBuf[3], "DIGITAL") == 0) {
+                            ConfigSetSetting(
+                                CONFIG_SETTING_USE_SPDIF_INPUT,
+                                CONFIG_SETTING_ON
+                            );
+                        } else {
+                            cmdSuccess = 0;
+                        }
+                    } else {
+                        cmdSuccess = 0;
+                    }
                 } else if (UtilsStricmp(msgBuf[1], "UI") == 0) {
                     if (UtilsStricmp(msgBuf[2], "1") == 0) {
                         ConfigSetUIMode(IBus_UI_CD53);
@@ -340,13 +365,16 @@ void CLIProcess()
                 } else if(UtilsStricmp(msgBuf[1], "IGN") == 0) {
                     if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         IBusCommandIgnitionStatus(cli.ibus, 0x00);
-                        EventTriggerCallback(IBusEvent_IgnitionStatus, 0x00);
+                        EventTriggerCallback(
+                            IBusEvent_IKEIgnitionStatus,
+                            0x00
+                        );
                         cli.ibus->ignitionStatus = 0;
                     } else if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                         unsigned char ignitionStatus = 0x01;
                         IBusCommandIgnitionStatus(cli.ibus, ignitionStatus);
                         EventTriggerCallback(
-                            IBusEvent_IgnitionStatus,
+                            IBusEvent_IKEIgnitionStatus,
                             (unsigned char *)&ignitionStatus
                         );
                         cli.ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
@@ -390,13 +418,37 @@ void CLIProcess()
                         TEL_MUTE = 0;
                     }
                 } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
-                    unsigned char timeout = (unsigned char) UtilsStrToInt(msgBuf[2]);
-                    ConfigSetPoweroffTimeout(timeout);
+                    if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                        ConfigSetPoweroffTimeoutDisabled(CONFIG_SETTING_ENABLED);
+                    } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                        ConfigSetPoweroffTimeoutDisabled(CONFIG_SETTING_DISABLED);
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "LOCKS") == 0) {
+                    if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                        ConfigSetSetting(
+                            CONFIG_SETTING_COMFORT_LOCKS,
+                            CONFIG_SETTING_ON
+                        );
+                    } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                        ConfigSetSetting(
+                            CONFIG_SETTING_COMFORT_LOCKS,
+                            CONFIG_SETTING_OFF
+                        );
+                    } else {
+                        cmdSuccess = 0;
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "VIN") == 0) {
+                    if (UtilsStricmp(msgBuf[2], "CLEAR") == 0) {
+                        unsigned char vin[] = {0x00, 0x00, 0x00, 0x00, 0x00};
+                        ConfigSetVehicleIdentity(vin);
+                    } else {
+                        cmdSuccess = 0;
+                    }
                 } else {
                     cmdSuccess = 0;
                 }
             } else if (UtilsStricmp(msgBuf[0], "VERSION") == 0) {
-                LogRaw(CLI_VERSION_BANNER);
+                LogRaw(FIRMWARE_VERSION);
             } else if (UtilsStricmp(msgBuf[0], "HELP") == 0 || UtilsStricmp(msgBuf[0], "?") == 0) {
                 LogRaw("Available Commands:\r\n");
                 LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
@@ -420,7 +472,7 @@ void CLIProcess()
                 LogRaw("    SET DAC GAIN xx - Set the PCM5122 gain from 0x00 - 0xCF (higher is lower)\r\n");
                 LogRaw("    SET IGN ON/OFF - Send the ignition status message [DEBUG]\r\n");
                 LogRaw("    SET LOG x ON/OFF - Change logging for x (BT, IBUS, SYS, UI)\r\n");
-                LogRaw("    SET PWROFF x - Set the time in minutes that we should wait before powering off\r\n");
+                LogRaw("    SET PWROFF ON/OFF - Enable or disable auto power off\r\n");
                 LogRaw("    SET TEL ON/OFF - Enable/Disable output as the TCU\r\n");
                 LogRaw("    SET UI x - Set the UI to x, where x:\r\n");
                 LogRaw("        x = 1. CD53 (Business Radio)\r\n");
@@ -442,7 +494,7 @@ void CLIProcess()
                 cli.lastRxTimestamp == 0
             ) {
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
-                LogRaw(CLI_VERSION_BANNER);
+                LogRaw(FIRMWARE_VERSION);
                 LogRaw("Try HELP or ?\r\n");
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
             }
@@ -466,7 +518,7 @@ void CLITimerTerminalReady(void *ctx)
     if (cli.terminalReady == 1) {
         cli.terminalReady = 2;
         LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
-        LogRaw(CLI_VERSION_BANNER);
+        LogRaw(FIRMWARE_VERSION);
         LogRaw("Try HELP or ?\r\n");
         LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
         LogRaw("# ");

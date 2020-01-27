@@ -23,7 +23,7 @@ uint8_t SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_METADATA_MODE,
     CONFIG_SETTING_AUTOPLAY,
     CONFIG_VEHICLE_TYPE_ADDRESS,
-    CONFIG_SETTING_OT_BLINKERS,
+    CONFIG_SETTING_COMFORT_BLINKERS,
     CONFIG_SETTING_COMFORT_LOCKS,
     CONFIG_SETTING_TCU_MODE
 };
@@ -240,7 +240,7 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                 context->settingIdx = CD53_SETTING_IDX_VEH_TYPE;
             }
             if (nextMenu == CD53_SETTING_IDX_BLINKERS) {
-                unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_OT_BLINKERS);
+                unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
                 if (blinkCount == 0x03) {
                     CD53SetMainDisplayText(context, "OT Blink: 3", 0);
                     context->settingValue = 0x03;

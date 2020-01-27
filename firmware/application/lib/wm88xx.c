@@ -22,7 +22,6 @@ void WM88XXInit()
         LogError("WM88XX Responded with %d during initialization", status);
     } else {
         LogDebug(LOG_SOURCE_SYSTEM, "WM88XX Responded to Poll");
-        
         /**
          * Register 8 - PLL_CLK
          * bit   7 - MCLKSRC - CLK2 0 or OSCCLK 1
@@ -43,7 +42,7 @@ void WM88XXInit()
          * bit   0 - SPDIF Input Mode - 0 TTL or 1 Commercial
          */
         // Set the S/PDIF input to CMOS
-        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_SPDMODE, 0b00000000);
+        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_SPDMODE, 0);
         if (status != 0x00) {
             LogError("WM88XX failed to set SPDMODE [%d]", status);
         }
@@ -51,10 +50,11 @@ void WM88XXInit()
         /**
          * Register 21 - TXSRC
          * bit   7 - Transmit Channel Status Source - 0 received or 1 transmit
-         * bit   6 - TXSRC - Transmitter source - 0 is SPDIF 1 is AIF
+         * bit   6 - TXSRC - Transmitter source - 0 is S/PDIF 1 is AIF
          * bit 5:4 - CLKACU - Clock accuracy of transmitted clock
          * bit 3:0 - Freq - Indicated sampling frequency
          */
+        // Set the TXSRC to S/PDIF
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_TXSRC, 0b00110001);
         if (status != 0x00) {
             LogError("WM88XX failed to set TXSRC [%d]", status);

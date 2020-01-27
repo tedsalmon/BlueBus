@@ -55,6 +55,7 @@ UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
     value.index = 0;
     value.timeout = 0;
     value.status = status;
+    value.length = strlen(text);
     return value;
 }
 

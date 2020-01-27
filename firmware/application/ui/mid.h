@@ -87,5 +87,6 @@ void MIDIBusCDChangerStatus(void *, unsigned char *);
 void MIDIBusMIDButtonPress(void *, unsigned char *);
 void MIDIIBusRADMIDDisplayUpdate(void *, unsigned char *);
 void MIDIIBusRADMIDMenuUpdate(void *, unsigned char *);
+void MIDIBusMIDModeChange(void *, unsigned char *);
 void MIDTimerDisplay(void *);
 #endif /* MID_H */

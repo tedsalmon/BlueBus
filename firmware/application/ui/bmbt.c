@@ -15,7 +15,6 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
     Context.mode = BMBT_MODE_INACTIVE;
     Context.displayMode = BMBT_DISPLAY_OFF;
     Context.navState = BMBT_NAV_STATE_ON;
-    Context.navType = (uint8_t) ConfigGetNavType();
     Context.navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
     Context.radType = IBUS_RADIO_TYPE_BM53;
     Context.writtenIndices = 3;
@@ -58,8 +57,8 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_GTDiagResponse,
-        &BMBTIBusGTDiagnostics,
+        IBusEvent_GTChangeUIRequest,
+        &BMBTIBusGTChangeUIRequest,
         &Context
     );
     EventRegisterCallback(
@@ -107,7 +106,6 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &Context,
         BMBT_SCROLL_TEXT_TIMER
     );
-    IBusCommandDIAGetIdentity(ibus, IBUS_DEVICE_GT);
 }
 
 /**
@@ -142,7 +140,7 @@ static void BMBTMenuRefresh(BMBTContext_t *context)
 {
     if ((context->menu != BMBT_MENU_DASHBOARD &&
         context->menu != BMBT_MENU_DASHBOARD_FRESH) ||
-        context->navType != IBUS_GT_MKIV_STATIC
+        context->ibus->gtVersion != IBUS_GT_MKIV_STATIC
     ) {
         IBusCommandGTUpdate(context->ibus, context->navIndexType);
     } else {
@@ -199,7 +197,7 @@ static void BMBTTriggerWriteMenu(BMBTContext_t *context)
     // do so immediately. Otherwise, trigger the menu write timer
     if (context->menu == BMBT_MENU_NONE ||
         context->menu == BMBT_MENU_DASHBOARD_FRESH ||
-        context->navType < IBUS_GT_MKIII_NEW_UI ||
+        context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI ||
         context->radType == IBUS_RADIO_TYPE_C43
     ) {
         if (context->timerMenuIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
@@ -224,7 +222,7 @@ static void BMBTTriggerWriteMenu(BMBTContext_t *context)
  */
 static void BMBTHeaderWriteDeviceName(BMBTContext_t *context, char *text)
 {
-    if (context->navType < IBUS_GT_MKIII_NEW_UI) {
+    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
         char cleanName[21];
         strncpy(cleanName, text, 20);
         uint8_t nameLength = strlen(cleanName);
@@ -254,7 +252,7 @@ static void BMBTHeaderWriteDeviceName(BMBTContext_t *context, char *text)
 static void BMBTGTWriteIndex(BMBTContext_t *context, uint8_t index, char *text)
 {
     context->navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
-    IBusCommandGTWriteIndexTMC(context->ibus, index, text, context->navType);
+    IBusCommandGTWriteIndexTMC(context->ibus, index, text);
 }
 
 /**
@@ -270,7 +268,7 @@ static void BMBTGTWriteIndex(BMBTContext_t *context, uint8_t index, char *text)
  */
 static void BMBTGTWriteTitle(BMBTContext_t *context, char *text)
 {
-    if (context->navType < IBUS_GT_MKIII_NEW_UI) {
+    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
         IBusCommandGTWriteTitleArea(context->ibus, text);
     } else {
         IBusCommandGTWriteTitleIndex(context->ibus, text);
@@ -337,15 +335,15 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
     if (strlen(f3) == 0) {
         strncpy(f3, " ", 1);
     }
-    if (context->navType == IBUS_GT_MKIV_STATIC) {
+    if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
         IBusCommandGTWriteIndexStatic(context->ibus, 1, f1);
         IBusCommandGTWriteIndexStatic(context->ibus, 2, f2);
         IBusCommandGTWriteIndexStatic(context->ibus, 3, f3);
         IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_STATIC);
     } else {
-        IBusCommandGTWriteIndex(context->ibus, 0, f1, context->navType);
-        IBusCommandGTWriteIndex(context->ibus, 1, f2, context->navType);
-        IBusCommandGTWriteIndex(context->ibus, 2, f3, context->navType);
+        IBusCommandGTWriteIndex(context->ibus, 0, f1);
+        IBusCommandGTWriteIndex(context->ibus, 1, f2);
+        IBusCommandGTWriteIndex(context->ibus, 2, f3);
         context->navIndexType = IBUS_CMD_GT_WRITE_INDEX;
         uint8_t index = 3;
         while (index < context->writtenIndices) {
@@ -508,7 +506,7 @@ static void BMBTMenuSettings(BMBTContext_t *context)
             "Car: Unset"
         );
     }
-    unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_OT_BLINKERS);
+    unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
     if (blinkCount == 0x03) {
         BMBTGTWriteIndex(
             context,
@@ -528,11 +526,11 @@ static void BMBTMenuSettings(BMBTContext_t *context)
             "OT Blinkers: 1"
         );
     }
-    if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS) == CONFIG_SETTING_OFF) {
-        BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS, "Comfort Locks: Off");
-    } else {
-        BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS, "Comfort Locks: On");
-    }
+    //if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS) == CONFIG_SETTING_ON) {
+    //    BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS, "Comfort Locks: On");
+    //} else {
+    //    BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS, "Comfort Locks: Off");
+    //}
     unsigned char tcuMode = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
     if (tcuMode == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
@@ -635,7 +633,9 @@ void BMBTBC127Metadata(void *ctx, unsigned char *data)
             UtilsRemoveNonAscii(cleanText, text);
             BMBTSetMainDisplayText(context, cleanText, 0, 1);
         }
-        if (context->menu == BMBT_MENU_DASHBOARD) {
+        if (context->menu == BMBT_MENU_DASHBOARD ||
+            context->menu == BMBT_MENU_DASHBOARD_FRESH
+        ) {
             BMBTMenuDashboard(context);
         }
     }
@@ -707,6 +707,12 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
             } else {
                 BC127CommandPlay(context->bt);
             }
+        }
+        // Enable Mic Bias
+        if (pkt[4] == IBUS_DEVICE_BMBT_Button_Num4) {
+            BC127CommandSetAudioAnalog(context->bt, "11", "15", "1", "OFF");
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_GAIN, "MB1");
+            IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
         }
         // Set the DAC Volume
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_Num3) {
@@ -789,7 +795,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
         if (pkt[4] == IBUS_DEVICE_BMBT_Button_Knob) {
             if (context->displayMode == BMBT_DISPLAY_ON &&
                 context->menu == BMBT_MENU_DASHBOARD &&
-                context->navType == IBUS_GT_MKIV_STATIC
+                context->ibus->gtVersion == IBUS_GT_MKIV_STATIC
             ) {
                 BMBTMenuMain(context);
             }
@@ -878,26 +884,22 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
 }
 
 /**
- * BMBTIBusGTDiagnostics()
+ * BMBTIBusGTChangeUIRequest()
  *     Description:
- *         Track the nav type from the Diagnostic response to the identity
- *         of the nav computer
+ *         Display the Telephone UI when the GT requests it
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
  *         unsigned char *pkt - A pointer to the data packet
  *     Returns:
  *         void
  */
-void BMBTIBusGTDiagnostics(void *ctx, unsigned char *pkt)
+void BMBTIBusGTChangeUIRequest(void *ctx, unsigned char *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    uint8_t navType = IBusGetNavType(pkt);
-    if (navType != context->navType &&
-        navType != IBUS_GT_DETECT_ERROR
-    ) {
-        // Write it to the EEPROM
-        ConfigSetNavType(navType);
-        context->navType = navType;
+    if (pkt[4] == 0x02 && pkt[5] == 0x0C) {
+        if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+            IBusCommandTELSetGTDisplayMenu(context->ibus);
+        }
     }
 }
 
@@ -1026,26 +1028,26 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                     BMBTGTWriteIndex(context, selectedIdx, "Car: E46/Z4");
                 }
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_BLINKERS) {
-                unsigned char value = ConfigGetSetting(CONFIG_SETTING_OT_BLINKERS);
+                unsigned char value = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
                 if (value == 0) {
-                    ConfigSetSetting(CONFIG_SETTING_OT_BLINKERS, 3);
+                    ConfigSetSetting(CONFIG_SETTING_COMFORT_BLINKERS, 3);
                     BMBTGTWriteIndex(context, selectedIdx, "OT Blinkers: 3");
                 } else if (value == 3) {
-                    ConfigSetSetting(CONFIG_SETTING_OT_BLINKERS, 5);
+                    ConfigSetSetting(CONFIG_SETTING_COMFORT_BLINKERS, 5);
                     BMBTGTWriteIndex(context, selectedIdx, "OT Blinkers: 5");
                 } else {
-                    ConfigSetSetting(CONFIG_SETTING_OT_BLINKERS, 0);
+                    ConfigSetSetting(CONFIG_SETTING_COMFORT_BLINKERS, 0);
                     BMBTGTWriteIndex(context, selectedIdx, "OT Blinkers: 1");
                 }
-            } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS) {
-                unsigned char value = ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS);
-                if (value == CONFIG_SETTING_OFF) {
-                    ConfigSetSetting(CONFIG_SETTING_COMFORT_LOCKS, CONFIG_SETTING_ON);
-                    BMBTGTWriteIndex(context, selectedIdx, "Comfort Locks: On");
-                } else {
-                    ConfigSetSetting(CONFIG_SETTING_COMFORT_LOCKS, CONFIG_SETTING_OFF);
-                    BMBTGTWriteIndex(context, selectedIdx, "Comfort Locks: Off");
-                }
+            //} else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS) {
+            //    unsigned char value = ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS);
+            //    if (value == CONFIG_SETTING_OFF) {
+            //        ConfigSetSetting(CONFIG_SETTING_COMFORT_LOCKS, CONFIG_SETTING_ON);
+            //        BMBTGTWriteIndex(context, selectedIdx, "Comfort Locks: On");
+            //    } else {
+            //        ConfigSetSetting(CONFIG_SETTING_COMFORT_LOCKS, CONFIG_SETTING_OFF);
+            //        BMBTGTWriteIndex(context, selectedIdx, "Comfort Locks: Off");
+            //    }
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_TCU_MODE) {
                 if (ConfigGetSetting(CONFIG_SETTING_TCU_MODE) == CONFIG_SETTING_OFF) {
                     ConfigSetSetting(CONFIG_SETTING_TCU_MODE, CONFIG_SETTING_ON);
@@ -1125,16 +1127,15 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
         ) {
             context->displayMode = BMBT_DISPLAY_OFF;
         } else {
+            // Clear the radio display if we have a C43 in a "new UI" nav
+            if (pkt[4] == IBUS_C43_TITLE_MODE &&
+                context->ibus->gtVersion >= IBUS_GT_MKIII_NEW_UI
+            ) {
+                IBusCommandRADClearMenu(context->ibus);
+            }
             if (context->displayMode == BMBT_DISPLAY_OFF) {
                 context->displayMode = BMBT_DISPLAY_ON;
             } else {
-                // Clear the radio display if we have a C43 in a "new UI" nav
-                if (pkt[4] == IBUS_C43_TITLE_MODE &&
-                    context->navType >= IBUS_GT_MKIII_NEW_UI
-                ) {
-                    context->radType = IBUS_RADIO_TYPE_C43;
-                    IBusCommandRADClearMenu(context->ibus);
-                }
                 if (UtilsStricmp("NO DISC", text) == 0) {
                     BMBTTriggerWriteMenu(context);
                 }

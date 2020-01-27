@@ -70,23 +70,28 @@ int main(void)
     UARTAddModuleHandler(&systemUart);
     LogMessage("", "**** BlueBus ****");
 
+    // Initialize low level modules
+    EEPROMInit();
+    TimerInit();
+    I2CInit();
+
     struct BC127_t bt = BC127Init();
     UARTAddModuleHandler(&bt.uart);
 
     struct IBus_t ibus = IBusInit();
     UARTAddModuleHandler(&ibus.uart);
 
-    CLIInit(&systemUart, &bt, &ibus);
+    
+    // WM8804 and PCM5122 must be initialized after the I2C Bus
+    WM88XXInit();
+    PCM51XXInit();
 
     ON_LED = 1;
-    EEPROMInit();
-    TimerInit();
-    I2CInit();
-    // PCM5122 and WM8804 must be initialized after the I2C Bus
-    PCM51XXInit();
-    WM88XXInit();
+
     // Initialize handlers
     HandlerInit(&bt, &ibus);
+    // Initialize the CLI
+    CLIInit(&systemUart, &bt, &ibus);
 
     // Process events
     while (1) {

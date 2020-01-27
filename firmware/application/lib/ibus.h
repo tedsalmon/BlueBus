@@ -6,6 +6,17 @@
  */
 #ifndef IBUS_H
 #define IBUS_H
+#include <math.h>
+#include <stdint.h>
+#include <string.h>
+#include "../mappings.h"
+#include "char_queue.h"
+#include "log.h"
+#include "event.h"
+#include "ibus.h"
+#include "timer.h"
+#include "uart.h"
+#include "utils.h"
 
 // Devices
 #define IBUS_DEVICE_GM 0x00 /* Body module */
@@ -45,7 +56,6 @@
 // IBus Commands
 #define IBUS_COMMAND_CDC_GET_STATUS 0x38
 #define IBUS_COMMAND_CDC_SET_STATUS 0x39
-#define IBUS_COMMAND_CDC_POLL 0x01
 
 // CDC Commands
 #define IBUS_CDC_CMD_GET_STATUS 0x00
@@ -75,6 +85,11 @@
 #define IBUS_CDC_DISC_COUNT_1 0x01
 #define IBUS_CDC_DISC_COUNT_6 0x3F
 
+// DSP
+#define IBUS_DSP_CMD_MODE 0x36
+#define IBUS_DSP_MODE_INPUT_RADIO 0xA1
+#define IBUS_DSP_MODE_INPUT_SPDIF 0xA0
+
 // All buttons presses are triggered on the "Push" message
 #define IBUS_DEVICE_BMBT_Button_Next 0x00
 #define IBUS_DEVICE_BMBT_Button_Prev 0x10
@@ -97,7 +112,9 @@
 #define IBUS_CMD_BMBT_BUTTON0 0x47
 #define IBUS_CMD_BMBT_BUTTON1 0x48
 
-#define IBUS_CMD_DIAG_RESPONSE 0xA0
+#define IBUS_CMD_DIA_DIAG_RESPONSE 0xA0
+
+#define IBUS_CMD_EWS_IMMOBILISER_STATUS 0x74
 
 #define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
 #define IBUS_CMD_GT_MENU_SELECT 0x31
@@ -113,8 +130,18 @@
 
 #define IBUS_CMD_GT_DISPLAY_RADIO_MENU 0x37
 
-#define IBUS_CMD_IGN_STATUS_REQ 0x10
-#define IBUS_CMD_IGN_STATUS_RESP 0x11
+#define IBUS_CMD_IKE_IGN_STATUS_REQ 0x10
+#define IBUS_CMD_IKE_IGN_STATUS_RESP 0x11
+#define IBUS_CMD_IKE_REQ_VEHICLE_TYPE 0x14
+#define IBUS_CMD_IKE_RESP_VEHICLE_TYPE 0x15
+#define IBUS_CMD_IKE_SPEED_RPM_UPDATE 0x18
+#define IBUS_CMD_IKE_COOLANT_TEMP_UPDATE 0x19
+
+#define IBUS_CMD_LCM_REQ_REDUNDANT_DATA 0x53
+#define IBUS_CMD_LCM_RESP_REDUNDANT_DATA 0x54
+
+#define IBUS_CMD_MOD_STATUS_REQ 0x01
+#define IBUS_CMD_MOD_STATUS_RESP 0x02
 
 #define IBUS_CMD_RAD_SCREEN_MODE_UPDATE 0x46
 #define IBUS_CMD_RAD_UPDATE_MAIN_AREA 0x23
@@ -138,57 +165,13 @@
 #define IBUS_GT_SEL_MENU_OFF 0x04
 #define IBUS_GT_MENU_CLEAR 0xC
 #define IBUS_GT_RADIO_SCREEN_OFF 0x02
-#define IBUS_IGNITION_OFF 0
-#define IBUS_IGNITION_ON 1
+#define IBUS_CMD_GT_CHANGE_UI_REQ 0x20
+#define IBUS_CMD_GT_CHANGE_UI_RESP 0x21
 
-#define IBusMIDSymbolNext 0xC9
-#define IBusMIDSymbolBack 0xCA
-
-#define IBus_MID_MAX_CHARS 23
-#define IBus_MID_TITLE_MAX_CHARS 11
-#define IBus_MID_MENU_MAX_CHARS 4
-#define IBis_MID_Button_Press 0x31
-
-#define IBUS_TX_TIMEOUT_OFF 0
-#define IBUS_TX_TIMEOUT_ON 1
-#define IBUS_TX_TIMEOUT_DATA_SENT 2
-#define IBUS_TX_TIMEOUT_WAIT 250
-
-#define IBusEvent_CDPoll 33
-#define IBusEvent_CDStatusRequest 34
-#define IBusEvent_CDClearDisplay 35
-#define IBusEvent_IgnitionStatus 36
-#define IBusEvent_GTDiagResponse 37
-#define IBusEvent_BMBTButton 38
-#define IBusEvent_GTMenuSelect 39
-#define IBusEvent_ScreenModeUpdate 40
-#define IBusEvent_RADUpdateMainArea 41
-#define IBusEvent_ScreenModeSet 42
-#define IBusEvent_RADDiagResponse 43
-#define IBusEvent_MFLButton 44
-#define IBusEvent_RADDisplayMenu 45
-#define IBusEvent_RADMIDDisplayText 46
-#define IBusEvent_RADMIDDisplayMenu 47
-#define IBusEvent_LCMLightStatus 48
-#define IBusEvent_LCMDimmerStatus 49
-#define IBusEvent_GTWriteResponse 50
-#define IBusEvent_MFLVolume 51
-#define IBusEvent_MIDButtonPress 52
-#define IBusEvent_ValueUpdate 53
-
-#define IBus_UI_CD53 1
-#define IBus_UI_BMBT 2
-#define IBus_UI_MID 3
-#define IBus_UI_MID_BMBT 4
-#define IBus_UI_BUSINESS_NAV 5
-
-#define IBUS_C43_TITLE_MODE 0xC4
-
-#define IBUS_RADIO_TYPE_C43 1
-#define IBUS_RADIO_TYPE_BM53 2
-#define IBUS_RADIO_TYPE_BM54 3
-#define IBUS_RADIO_TYPE_BRCD 4
-#define IBUS_RADIO_TYPE_BRTP 5
+#define IBUS_IGNITION_OFF 0x00
+#define IBUS_IGNITION_KLR 0x01
+#define IBUS_IGNITION_KL15 0x02
+#define IBUS_IGNITION_KL50 0x07
 
 #define IBUS_LCM_LIGHT_STATUS 0x5B
 #define IBUS_LCM_DIMMER_STATUS 0x5C
@@ -204,6 +187,38 @@
 #define IBUS_LCM_BLINKER_PSG 0x40
 #define IBUS_LCM_BLINKER_DRV_E46 0x50
 #define IBUS_LCM_BLINKER_PSG_E46 0x80
+
+#define IBusMIDSymbolNext 0xC9
+#define IBusMIDSymbolBack 0xCA
+
+#define IBus_MID_MAX_CHARS 23
+#define IBus_MID_TITLE_MAX_CHARS 11
+#define IBus_MID_MENU_MAX_CHARS 4
+#define IBus_MID_CMD_MODE 0x20
+#define IBus_MID_Button_Press 0x31
+
+#define IBUS_TEL_CMD_LED_STATUS 0x2B
+#define IBUS_TEL_CMD_STATUS 0x2C
+#define IBUS_TEL_CMD_MAIN_MENU 0x21
+#define IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE 0x10
+#define IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE 0x35
+#define IBUS_TEL_LED_STATUS_RED 0x01
+#define IBUS_TEL_LED_STATUS_GREEN 0x10
+
+#define IBus_UI_CD53 1
+#define IBus_UI_BMBT 2
+#define IBus_UI_MID 3
+#define IBus_UI_MID_BMBT 4
+#define IBus_UI_BUSINESS_NAV 5
+
+#define IBUS_C43_TITLE_MODE 0xC4
+
+#define IBUS_RADIO_TYPE_C43 1
+#define IBUS_RADIO_TYPE_BM53 2
+#define IBUS_RADIO_TYPE_BM54 3
+#define IBUS_RADIO_TYPE_BRCD 4
+#define IBUS_RADIO_TYPE_BRTP 5
+
 
 #define IBUS_MFL_BTN_EVENT 0x3B
 #define IBusMFLButtonNextRelease 0x21
@@ -221,6 +236,38 @@
 #define IBUS_VEHICLE_TYPE_E38_E39_E53 0x01
 #define IBUS_VEHICLE_TYPE_E46_Z4 0x02
 
+// Events
+#define IBusEvent_CDPoll 33
+#define IBusEvent_CDStatusRequest 34
+#define IBusEvent_CDClearDisplay 35
+#define IBusEvent_IKEIgnitionStatus 36
+#define IBusEvent_BMBTButton 37
+#define IBusEvent_GTMenuSelect 38
+#define IBusEvent_ScreenModeUpdate 39
+#define IBusEvent_RADUpdateMainArea 40
+#define IBusEvent_ScreenModeSet 41
+#define IBusEvent_RADDiagResponse 42
+#define IBusEvent_MFLButton 43
+#define IBusEvent_RADDisplayMenu 44
+#define IBusEvent_RADMIDDisplayText 45
+#define IBusEvent_RADMIDDisplayMenu 46
+#define IBusEvent_LCMLightStatus 47
+#define IBusEvent_LCMDimmerStatus 48
+#define IBusEvent_GTWriteResponse 49
+#define IBusEvent_MFLVolume 50
+#define IBusEvent_MIDButtonPress 51
+#define IBusEvent_MIDModeChange 52
+#define IBusEvent_ValueUpdate 53
+#define IBusEvent_ModuleStatusResponse 54
+#define IBusEvent_IKEVehicleType 55
+#define IBusEvent_LCMRedundantData 56
+#define IBusEvent_FirstMessageReceived 57
+#define IBusEvent_GTDIAOSIdentityResponse 58
+#define IBusEvent_IKESpeedRPMUpdate 59
+#define IBusEvent_IKECoolantTempUpdate 60
+#define IBusEvent_ModuleStatusRequest 61
+#define IBusEvent_GTChangeUIRequest 62
+
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
@@ -228,17 +275,10 @@
 #define IBUS_TX_BUFFER_SIZE 16
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 7 // If we transmit faster, other modules may not hear us
-#include <math.h>
-#include <stdint.h>
-#include <string.h>
-#include "../mappings.h"
-#include "char_queue.h"
-#include "log.h"
-#include "event.h"
-#include "ibus.h"
-#include "timer.h"
-#include "uart.h"
-#include "utils.h"
+#define IBUS_TX_TIMEOUT_OFF 0
+#define IBUS_TX_TIMEOUT_ON 1
+#define IBUS_TX_TIMEOUT_DATA_SENT 2
+#define IBUS_TX_TIMEOUT_WAIT 250
 
 /**
  * IBus_t
@@ -257,6 +297,7 @@ typedef struct IBus_t {
     uint32_t rxLastStamp;
     uint32_t txLastStamp;
     unsigned char cdChangerFunction;
+    unsigned char gtVersion;
     unsigned char ignitionStatus;
     unsigned char lcmDimmerStatus1;
     unsigned char lcmDimmerStatus2;
@@ -271,26 +312,33 @@ uint8_t IBusGetNavHWVersion(unsigned char *);
 uint8_t IBusGetNavSWVersion(unsigned char *);
 uint8_t IBusGetNavType(unsigned char *);
 void IBusCommandCDCAnnounce(IBus_t *);
-void IBusCommandCDCPollResponse(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
 void IBusCommandDIAGetCodingData(IBus_t *, unsigned char, unsigned char, unsigned char);
 void IBusCommandDIAGetIdentity(IBus_t *, unsigned char);
 void IBusCommandDIAGetIOStatus(IBus_t *, unsigned char);
+void IBusCommandDIAGetOSIdentity(IBus_t *, unsigned char);
 void IBusCommandDIATerminateDiag(IBus_t *, unsigned char);
+void IBusCommandDSPSetMode(IBus_t *, unsigned char);
+void IBusCommandGetModuleStatus(IBus_t *, unsigned char, unsigned char);
+void IBusCommandSetModuleStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
+void IBusCommandGMDoorLock(IBus_t *ibus);
+void IBusCommandGMDoorUnlock(IBus_t *ibus);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
 void IBusCommandGTWriteBusinessNavTitle(IBus_t *, char *);
-void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *, unsigned char);
-void IBusCommandGTWriteIndexTMC(IBus_t *, uint8_t, char *, unsigned char);
+void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *);
+void IBusCommandGTWriteIndexTMC(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteIndexTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndexStatic(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteTitleArea(IBus_t *, char *);
 void IBusCommandGTWriteTitleIndex(IBus_t *, char *);
 void IBusCommandGTWriteTitleC43(IBus_t *, char *);
 void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
-void IBusCommandIKEGetIgnition(IBus_t *);
+void IBusCommandIKEGetIgnitionStatus(IBus_t *);
 void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
+void IBusCommandIKEGetVehicleType(IBus_t *);
 void IBusCommandLCMEnableBlinker(IBus_t *, unsigned char);
+void IBusCommandLCMGetRedundantData(IBus_t *);
 void IBusCommandMIDDisplayTitleText(IBus_t *, char *);
 void IBusCommandMIDDisplayText(IBus_t *, char *);
 void IBusCommandMIDMenuText(IBus_t *, uint8_t, char *);
@@ -299,7 +347,9 @@ void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
-void IBusCommandGMUnlock(IBus_t *ibus);
+void IBusCommandTELSetGTDisplayMenu(IBus_t *);
+void IBusCommandTELSetLED(IBus_t *, unsigned char);
+void IBusCommandTELStatus(IBus_t *, unsigned char);
 /* Temporary */
 void IBusCommandIgnitionStatus(IBus_t *, unsigned char);
 void IBusCommandLCMTurnLeft(IBus_t *);

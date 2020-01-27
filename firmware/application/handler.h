@@ -24,21 +24,31 @@
 #define HANDLER_BT_CONN_ON 1
 #define HANDLER_BT_CONN_CHANGE 2
 #define HANDLER_BT_SELECTED_DEVICE_NONE -1
-#define HANDLER_CDC_ANOUNCE_INT 1000
 #define HANDLER_CDC_ANOUNCE_TIMEOUT 21000
 #define HANDLER_CDC_SEEK_MODE_NONE 0
 #define HANDLER_CDC_SEEK_MODE_FWD 1
 #define HANDLER_CDC_SEEK_MODE_REV 2
-#define HANDLER_CDC_STATUS_INT 500
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
 #define HANDLER_DEVICE_MAX_RECONN 10
+#define HANDLER_IBUS_DEVICE_BIT_IKE 0
+#define HANDLER_IBUS_DEVICE_BIT_LCM 1
+#define HANDLER_IBUS_DEVICE_BIT_GT 2
+#define HANDLER_IBUS_DEVICE_BIT_RAD 3
+#define HANDLER_IBUS_DEVICE_BIT_DSP 4
+#define HANDLER_IBUS_DEVICE_BIT_MID 5
+#define HANDLER_IBUS_DEVICE_BIT_BMBT 6
+#define HANDLER_INT_CDC_ANOUNCE 1000
+#define HANDLER_INT_CDC_STATUS 500
 #define HANDLER_INT_DEVICE_CONN 30000
+#define HANDLER_INT_DEVICE_SCAN 10000
+#define HANDLER_INT_LCM_IO_STATUS 5000
+#define HANDLER_INT_PROFILE_ERROR 2500
+#define HANDLER_INT_POWEROFF 1000
 #define HANDLER_MFL_STATUS_OFF 0
 #define HANDLER_MFL_STATUS_SPEAK_HOLD 1
 #define HANDLER_POWER_OFF 0
 #define HANDLER_POWER_ON 1
-#define HANDLER_PROFILE_ERROR_INT 2500
-#define HANDLER_SCAN_INT 10000
+#define HANDLER_POWER_TIMEOUT_MILLIS 61000
 
 typedef struct HandlerContext_t {
     BC127_t *bt;
@@ -54,6 +64,8 @@ typedef struct HandlerContext_t {
     uint8_t blinkerStatus;
     uint8_t blinkerCount;
     uint8_t mflButtonStatus;
+    uint8_t ibusModuleStatus;
+    uint8_t generalModuleStatus;
     uint8_t powerStatus;
     uint8_t scanIntervals;
     uint32_t cdChangerLastPoll;
@@ -69,19 +81,27 @@ void HandlerBC127DeviceFound(void *, unsigned char *);
 void HandlerBC127PlaybackStatus(void *, unsigned char *);
 void HandlerUICloseConnection(void *, unsigned char *);
 void HandlerUIInitiateConnection(void *, unsigned char *);
-void HandlerIBusCDCPoll(void *, unsigned char *);
 void HandlerIBusCDCStatus(void *, unsigned char *);
-void HandlerIBusIgnitionStatus(void *, unsigned char *);
+void HandlerIBusFirstMessageReceived(void *, unsigned char *);
+void HandlerIBusGTDIAOSIdentityResponse(void *, unsigned char *);
+void HandlerIBusIKEIgnitionStatus(void *, unsigned char *);
+void HandlerIBusIKESpeedRPMUpdate(void *, unsigned char *);
+void HandlerIBusIKEVehicleType(void *, unsigned char *);
 void HandlerIBusLCMLightStatus(void *, unsigned char *);
 void HandlerIBusLCMDimmerStatus(void *, unsigned char *);
+void HandlerIBusLCMRedundantData(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerIBusMFLVolume(void *, unsigned char *);
-void HandlerIBusSendCDCStatus(HandlerContext_t *);
+void HandlerIBusModuleStatusResponse(void *, unsigned char *);
+void HandlerIBusModuleStatusRequest(void *, unsigned char *);
+void HandlerIBusBroadcastCDCStatus(HandlerContext_t *);
+void HandlerIBusBroadcastTELStatus(HandlerContext_t *);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
 void HandlerTimerBTStatus(void *);
 void HandlerTimerDeviceConnection(void *);
-void HandlerTimerPoweroff(void *);
+void HandlerTimerLCMIOStatus(void *);
 void HandlerTimerOpenProfileErrors(void *);
+void HandlerTimerPoweroff(void *);
 void HandlerTimerScanDevices(void *);
 #endif /* HANDLER_H */

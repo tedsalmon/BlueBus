@@ -40,7 +40,7 @@
 #define BMBT_MENU_IDX_SETTINGS_VEHICLE_TYPE 4
 #define BMBT_MENU_IDX_SETTINGS_BLINKERS 5
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS 6
-#define BMBT_MENU_IDX_SETTINGS_TCU_MODE 7
+#define BMBT_MENU_IDX_SETTINGS_TCU_MODE 6
 #define BMBT_MENU_IDX_PAIRING_MODE 0
 #define BMBT_MENU_IDX_CLEAR_PAIRING 1
 #define BMBT_MENU_IDX_FIRST_DEVICE 2
@@ -68,7 +68,6 @@ typedef struct BMBTContext_t {
     uint8_t mode;
     uint8_t displayMode;
     uint8_t navState;
-    uint8_t navType;
     uint8_t navIndexType;
     uint8_t radType;
     uint8_t writtenIndices;
@@ -87,7 +86,7 @@ void BMBTBC127PlaybackStatus(void *, unsigned char *);
 void BMBTBC127Ready(void *, unsigned char *);
 void BMBTIBusBMBTButtonPress(void *, unsigned char *);
 void BMBTIBusCDChangerStatus(void *, unsigned char *);
-void BMBTIBusGTDiagnostics(void *, unsigned char *);
+void BMBTIBusGTChangeUIRequest(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);
 void BMBTRADDisplayMenu(void *, unsigned char *);
 void BMBTRADUpdateMainArea(void *, unsigned char *);
