@@ -32,7 +32,7 @@ void WM88XXInit()
          * bit 2:0 - always 0
          */
         // Fill data to all zeros
-        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLLCLK, 0b00111000);
+        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLLCLK, 0b01111000);
         if (status != 0x00) {
             LogError("WM88XX failed to set PLLCLK [%d]", status);
         }

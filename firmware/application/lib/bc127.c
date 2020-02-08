@@ -6,6 +6,37 @@
  */
 #include "bc127.h"
 
+/** BC127CVCGainTable
+ * C0 - D6 (22 Settings)
+ * 
+ *
+ */
+int8_t BC127CVCGainTable[] = {
+    -27, // C0
+    -23, // Technically 23.5
+    -21,
+    -17, // Technically -17.5
+    -15,
+    -11,
+    -9,
+    -5, // Technically -5.5
+    -3,
+    0,
+    3,
+    6,
+    9,
+    12,
+    15,
+    18,
+    21, // Technically 21.5
+    24,
+    27, // Technically 27.5
+    30,
+    33, // Technically 33.5
+    36,
+    39 // Technically 39.5 - D6
+};
+
 /**
  * BC127Init()
  *     Description:
@@ -770,12 +801,13 @@ void BC127CommandSetMetadata(BC127_t *bt, uint8_t value)
   *         Set the microphone gain
   *     Params:
   *         BC127_t *bt - A pointer to the module object
-  *         unsigned char gain - The gain to set
+  *         unsigned char gain - The gain index to set
   *     Returns:
   *         void
   */
 void BC127CommandSetMicGain(BC127_t *bt, unsigned char gain)
 {
+    gain = gain + 0x0C;
     BC127CommandCVC(bt, "NB", 0, 14);
     char params[70];
     snprintf(params, 70, "2280 0000 1A00 8000 0000 00%02X 0000 0000 0000 0000 0000 0020 0000 00%02X", gain, gain);

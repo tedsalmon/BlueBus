@@ -88,6 +88,53 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
     );
 }
 
+/**
+ * CD53Destroy()
+ *     Description:
+ *         Unregister all event handlers, scheduled tasks and clear the context
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+void CD53Destroy()
+{
+    EventUnregisterCallback(
+        BC127Event_Boot,
+        &CD53BC127DeviceReady
+    );
+    EventUnregisterCallback(
+        BC127Event_DeviceDisconnected,
+        &CD53BC127DeviceDisconnected
+    );
+    EventUnregisterCallback(
+        BC127Event_MetadataChange,
+        &CD53BC127Metadata
+    );
+    EventUnregisterCallback(
+        BC127Event_PlaybackStatusChange,
+        &CD53BC127PlaybackStatus
+    );
+    EventUnregisterCallback(
+        BC127Event_PlaybackStatusChange,
+        &CD53BC127PlaybackStatus
+    );
+    EventUnregisterCallback(
+        IBusEvent_BMBTButton,
+        &CD53IBusBMBTButtonPress
+    );
+    EventUnregisterCallback(
+        IBusEvent_CDStatusRequest,
+        &CD53IBusCDChangerStatus
+    );
+    EventUnregisterCallback(
+        IBusEvent_RADUpdateMainArea,
+        &CD53IBusRADUpdateMainArea
+    );
+    TimerUnregisterScheduledTask(&CD53TimerDisplay);
+    memset(&Context, 0, sizeof(CD53Context_t));
+}
+
 static void CD53SetMainDisplayText(
     CD53Context_t *context,
     const char *str,
@@ -691,6 +738,7 @@ void CD53IBusRADUpdateMainArea(void *ctx, unsigned char *pkt)
 void CD53TimerDisplay(void *ctx)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
+    LogRaw("CD53 Timer Called!\r\n");
     if (context->mode != CD53_MODE_OFF) {
         // Display the temp text, if there is any
         if (context->tempDisplay.status > CD53_DISPLAY_STATUS_OFF) {

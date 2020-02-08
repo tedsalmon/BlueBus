@@ -32,6 +32,31 @@ void EventRegisterCallback(uint8_t eventType, void *callback, void *context)
 }
 
 /**
+ * EventUnregisterCallback()
+ *     Description:
+ *         Unregister a callback
+ *     Params:
+ *         uint8_t eventType
+ *         void *callback - Pointer to the function to call when triggered
+ *     Returns:
+ *         uint8_t - The status code
+ */
+uint8_t EventUnregisterCallback(uint8_t eventType, void *callback)
+{
+    uint8_t idx;
+    for (idx = 0; idx < EVENT_CALLBACKS_COUNT; idx++) {
+        Event_t *cb = &EVENT_CALLBACKS[idx];
+        if (cb->type == eventType &&
+            cb->callback == callback
+        ) {
+            memset(cb, 0, sizeof(Event_t));
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/**
  * EventTriggerCallback()
  *     Description:
  *         Triggers all registered callbacks of eventType

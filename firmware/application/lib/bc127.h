@@ -16,7 +16,6 @@
 #include "event.h"
 #include "uart.h"
 #include "utils.h"
-
 #define BC127_AUDIO_I2S "0"
 #define BC127_AUDIO_SPDIF "2"
 #define BC127_AVRCP_STATUS_PAUSED 0
@@ -64,6 +63,7 @@
 #define BC127Event_DeviceFound 6
 #define BC127Event_CallStatus 7
 #define BC127Event_BootStatus 8
+extern int8_t BC127CVCGainTable[];
 /**
  * BC127PairedDevice_t
  *     Description:

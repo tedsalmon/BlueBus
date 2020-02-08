@@ -125,7 +125,7 @@ void EEPROMIsReady()
  *     Description:
  *         Read a byte from the EEPROM at the given address and return it
  *     Params:
- *         unsigned char address - The memory address of the byte to retrieve
+ *         uint32_t - The memory address of the byte to retrieve
  *     Returns:
  *         unsigned char - The byte at the given address
  */
@@ -151,7 +151,7 @@ unsigned char EEPROMReadByte(uint32_t address)
  *         Check with the EEPROM to see if it's ready to be written to. If it
  *         is not, this function blocks until it is ready (status 0x00).
  *     Params:
- *         unsigned char address - The memory address of the byte to retrieve
+ *         uint32_t address - The memory address of the byte to retrieve
  *         unsigned char data - The 8-bit byte to write
  *     Returns:
  *         void

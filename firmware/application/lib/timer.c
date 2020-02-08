@@ -79,7 +79,7 @@ void TimerProcessScheduledTasks()
     uint8_t idx;
     for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
         volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
-        if (t->ticks >= t->interval) {
+        if (t->ticks >= t->interval && t->task != 0) {
             t->task(t->context);
             t->ticks = 0;
         }
@@ -110,6 +110,28 @@ uint8_t TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
 }
 
 /**
+ * TimerUnregisterScheduledTask()
+ *     Description:
+ *         Unregister a previously scheduled task
+ *     Params:
+ *         void *task - A pointer to the function to call
+ *     Returns:
+ *         uint8_t - The status code
+ */
+uint8_t TimerUnregisterScheduledTask(void *task)
+{
+    uint8_t idx;
+    for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
+        volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
+        if (t->task == task) {
+            memset((void *)t, 0, sizeof(TimerScheduledTask_t));
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/**
  * TimerResetScheduledTask()
  *     Description:
  *         Reset the ticks on a given task
@@ -121,7 +143,7 @@ uint8_t TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
 void TimerResetScheduledTask(uint8_t taskId)
 {
     volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
-    if (t != 0) {
+    if (t->task != 0) {
         t->ticks = 0;
     }
 }
@@ -138,7 +160,7 @@ void TimerResetScheduledTask(uint8_t taskId)
 void TimerTriggerScheduledTask(uint8_t taskId)
 {
     volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
-    if (t != 0) {
+    if (t->task != 0) {
         // Prevent it from executing immediately
         t->ticks = 0;
         t->task(t->context);
@@ -162,7 +184,10 @@ void __attribute__((__interrupt__, auto_psv)) _AltT1Interrupt(void)
     TimerCurrentMillis++;
     uint8_t idx;
     for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
-        TimerRegisteredTasks[idx].ticks++;
+        volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
+        if (t->task != 0) {
+            TimerRegisteredTasks[idx].ticks++;
+        }
     }
     SetTIMERIF(TIMER_INDEX, 0);
 }

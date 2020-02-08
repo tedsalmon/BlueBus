@@ -80,9 +80,10 @@ typedef struct MIDContext_t {
     UtilsAbstractDisplayValue_t tempDisplay;
     uint8_t displayUpdateTaskId;
 } MIDContext_t;
+void MIDInit(BC127_t *, IBus_t *);
+void MIDDestroy();
 void MIDBC127MetadataUpdate(void *, unsigned char *);
 void MIDBC127PlaybackStatus(void *, unsigned char *);
-void MIDInit(BC127_t *, IBus_t *);
 void MIDIBusCDChangerStatus(void *, unsigned char *);
 void MIDIBusMIDButtonPress(void *, unsigned char *);
 void MIDIIBusRADMIDDisplayUpdate(void *, unsigned char *);

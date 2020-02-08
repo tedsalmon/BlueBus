@@ -39,8 +39,8 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     Context.blinkerCount = 0;
     Context.blinkerStatus = HANDLER_BLINKER_OFF;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
-    Context.ibusModuleStatus = 0x00;
-    Context.generalModuleStatus = 0x00;
+    memset(&Context.ibusModuleStatus, 0, sizeof(HandlerModuleStatus_t));
+    memset(&Context.bodyModuleStatus, 0, sizeof(HandlerBodyModuleStatus_t));
     Context.powerStatus = HANDLER_POWER_ON;
     Context.scanIntervals = 0;
     EventRegisterCallback(
@@ -96,6 +96,16 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBusEvent_FirstMessageReceived,
         &HandlerIBusFirstMessageReceived,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_DoorsFlapsStatusResponse,
+        &HandlerIBusGMDoorsFlapsStatusResponse,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_GTDIAIdentityResponse,
+        &HandlerIBusGTDIAIdentityResponse,
         &Context
     );
     EventRegisterCallback(
@@ -202,12 +212,36 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         MIDInit(bt, ibus);
         BMBTInit(bt, ibus);
     }
-    unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-    // Set the CVC Parameters
-    if (micGain == 0x00) {
-        micGain = 0xC0; // Default
+    BC127CommandSetMicGain(Context.bt, ConfigGetSetting(CONFIG_SETTING_MIC_GAIN));
+}
+
+static void HandlerSwitchUI(HandlerContext_t *context, unsigned char newUi)
+{
+    // Unregister the previous UI
+    if (context->uiMode == IBus_UI_CD53 ||
+        context->uiMode == IBus_UI_BUSINESS_NAV
+    ) {
+        CD53Destroy();
+    } else if (context->uiMode == IBus_UI_BMBT) {
+        BMBTDestroy();
+    } else if (context->uiMode == IBus_UI_MID) {
+        MIDDestroy();
+    } else if (context->uiMode == IBus_UI_MID_BMBT) {
+        MIDDestroy();
+        BMBTDestroy();
     }
-    BC127CommandSetMicGain(Context.bt, micGain);
+    if (newUi == IBus_UI_CD53 || newUi == IBus_UI_BUSINESS_NAV) {
+        CD53Init(context->bt, context->ibus);
+    } else if (newUi == IBus_UI_BMBT) {
+        BMBTInit(context->bt, context->ibus);
+    } else if (newUi == IBus_UI_MID) {
+        MIDInit(context->bt, context->ibus);
+    } else if (newUi == IBus_UI_MID_BMBT) {
+        MIDInit(context->bt, context->ibus);
+        BMBTInit(context->bt, context->ibus);
+    }
+    ConfigSetUIMode(newUi);
+    context->uiMode = newUi;
 }
 
 /**
@@ -320,14 +354,14 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
                 ) {
                     BC127CommandPlay(context->bt);
                 }
-                if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-                    IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
-                }
             } else if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
                        context->bt->activeDevice.hfpLinkId == 0
             ) {
                 char *macId = (char *) context->bt->activeDevice.macId;
                 BC127CommandProfileOpen(context->bt, macId, "HFP");
+            }
+            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
             }
         }
     } else {
@@ -626,6 +660,11 @@ void HandlerIBusFirstMessageReceived(void *ctx, unsigned char *pkt)
         IBUS_DEVICE_CDC,
         IBUS_DEVICE_RAD
     );
+    IBusCommandGetModuleStatus(
+        context->ibus,
+        IBUS_DEVICE_IKE,
+        IBUS_DEVICE_LCM
+    );
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         IBusCommandSetModuleStatus(
             context->ibus,
@@ -638,17 +677,65 @@ void HandlerIBusFirstMessageReceived(void *ctx, unsigned char *pkt)
 }
 
 /**
+ * HandlerIBusGMDoorsFlapStatusResponse()
+ *     Description:
+ *         Track which doors have been opened while the ignition was on
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *type - The navigation type
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bodyModuleStatus.lowSideDoors == 0) {
+        unsigned char doorStatus = pkt[4] & 0x0F;
+        if (doorStatus > 0x01) {
+            context->bodyModuleStatus.lowSideDoors = 1;
+        }
+    }
+    unsigned char lockStatus = pkt[4] & 0xF0;
+    if (CHECK_BIT(lockStatus, 4) != 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Centrol Locks unlocked");
+        context->bodyModuleStatus.doorsLocked = 0;
+    } else if (CHECK_BIT(lockStatus, 5) != 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Centrol Locks locked");
+        context->bodyModuleStatus.doorsLocked = 1;
+    }
+}
+
+/**
+ * HandlerIBusGTDIAIdentityResponse()
+ *     Description:
+ *         Identify the navigation module hardware and software versions
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *type - The navigation type
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGTDIAIdentityResponse(void *ctx, unsigned char *type)
+{
+    unsigned char navType = *type;
+    if (ConfigGetNavType() != navType) {
+        ConfigSetNavType(navType);
+    }
+}
+
+/**
  * HandlerIBusGTDIAOSIdentityResponse()
  *     Description:
  *         Identify the navigation module type from its OS
  *     Params:
  *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
+ *         unsigned char *pkt - Data packet
  *     Returns:
  *         void
  */
 void HandlerIBusGTDIAOSIdentityResponse(void *ctx, unsigned char *pkt)
 {
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
     char navigationOS[8] = {};
     uint8_t i;
     for (i = 0; i < 7; i++) {
@@ -657,15 +744,22 @@ void HandlerIBusGTDIAOSIdentityResponse(void *ctx, unsigned char *pkt)
     // The string should come null terminated, but we should not trust that
     navigationOS[7] = '\0';
     if (UtilsStricmp(navigationOS, "BMWC01S") == 0) {
-        LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT UI");
-        ConfigSetUIMode(IBus_UI_BMBT);
-        // Reboot for the new UI to take effect
-        UtilsReset();
+        if (context->ibusModuleStatus.MID == 0) {
+            if (ConfigGetUIMode() != IBus_UI_BMBT) {
+                LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT UI");
+                HandlerSwitchUI(context, IBus_UI_BMBT);
+            }
+        } else {
+            if (ConfigGetUIMode() != IBus_UI_MID_BMBT) {
+                LogInfo(LOG_SOURCE_SYSTEM, "Detected MID / BMBT UI");
+                HandlerSwitchUI(context, IBus_UI_MID_BMBT);
+            }
+        }
     } else if (UtilsStricmp(navigationOS, "BMWM01S") == 0) {
-        LogInfo(LOG_SOURCE_SYSTEM, "Detected Business Nav UI");
-        ConfigSetUIMode(IBus_UI_BUSINESS_NAV);
-        // Reboot for the new UI to take effect
-        UtilsReset();
+        if (ConfigGetUIMode() != IBus_UI_BUSINESS_NAV) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Detected Business Nav UI");
+            HandlerSwitchUI(context, IBus_UI_BUSINESS_NAV);
+        }
     } else {
         LogError("Unable to identify GT OS: %s", navigationOS);
     }
@@ -702,16 +796,24 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
             if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS_ADDRESS) ==
                 CONFIG_SETTING_ON
             ) {
-                IBusCommandGMDoorUnlock(context->ibus);
+                if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+                    IBusCommandGMDoorCenterLockButton(context->ibus);
+                } else {
+                    if (context->bodyModuleStatus.lowSideDoors == 1) {
+                        IBusCommandGMDoorUnlockAll(context->ibus);
+                    } else {
+                        IBusCommandGMDoorUnlockHigh(context->ibus);
+                    }
+                }
             }
-            context->generalModuleStatus = 0x00;
+            context->bodyModuleStatus.lowSideDoors = 0;
         // If the ignition WAS off, but now it's not, then run these actions.
         // I realize the second condition is frivolous, but it helps with
         // readability.
         } else if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF &&
                    ignitionStatus != IBUS_IGNITION_OFF
         ) {
-            LogInfo(LOG_SOURCE_SYSTEM, "Handler: Ignition On");
+            LogDebug(LOG_SOURCE_SYSTEM, "Handler: Ignition On");
             // Play a tone to wake up the WM8804 / PCM5122
             BC127CommandTone(Context.bt, "V 0 N C6 L 4");
             // Anounce the CDC to the network
@@ -733,21 +835,34 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
                     IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
                 }
             }
-             if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_LCM) != 0) {
-                // Ask the LCM for the redundant data
-                LogInfo(LOG_SOURCE_SYSTEM, "Handler: Request LCM Redundant Data!");
-                IBusCommandLCMGetRedundantData(context->ibus);
-             }
+            // Ask the LCM for the redundant data
+            LogDebug(LOG_SOURCE_SYSTEM, "Handler: Request LCM Redundant Data");
+            IBusCommandLCMGetRedundantData(context->ibus);
         }
     } else {
         if (ignitionStatus > IBUS_IGNITION_OFF) {
             HandlerIBusBroadcastCDCStatus(context);
-            HandlerIBusBroadcastTELStatus(context);
+            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                HandlerIBusBroadcastTELStatus(context);
+                if (context->bt->activeDevice.avrcpLinkId != 0 &&
+                    context->bt->activeDevice.a2dpLinkId != 0
+                ) {
+                    IBusCommandTELSetLED(
+                        context->ibus,
+                        IBUS_TEL_LED_STATUS_GREEN
+                    );
+                } else {
+                    IBusCommandTELSetLED(
+                        context->ibus,
+                        IBUS_TEL_LED_STATUS_RED
+                    );
+                }
+            }
         }
     }
-    if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_IKE) == 0) {
+    if (context->ibusModuleStatus.IKE == 0) {
         HandlerIBusBroadcastTELStatus(context);
-        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_IKE;
+        context->ibusModuleStatus.IKE = 1;
     }
 }
 
@@ -767,11 +882,14 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS_ADDRESS) ==
         CONFIG_SETTING_ON &&
-        context->generalModuleStatus == 0x00
+        context->bodyModuleStatus.doorsLocked == 0x00
         && pkt[4] >= 0x20
     ) {
-        IBusCommandGMDoorLock(context->ibus);
-        context->generalModuleStatus = 0x01;
+        if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+            IBusCommandGMDoorCenterLockButton(context->ibus);
+        } else {
+            IBusCommandGMDoorLockHigh(context->ibus);
+        }
     }
 }
 
@@ -779,34 +897,39 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
  * HandlerIBusIKEVehicleType()
  *     Description:
  *         Set the vehicle type
- *         Raw Sample: 80 07 BF 15 02 FF FA 42 68
  *     Params:
  *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
+ *         unsigned char *pkt - The IBus Packet
  *     Returns:
  *         void
  */
 void HandlerIBusIKEVehicleType(void *ctx, unsigned char *pkt)
 {
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    unsigned char vehicleType = (pkt[4] >> 4) & 0xF;
-    unsigned char detectedVehicleType = 0x00;
-    if (vehicleType == 0x0F || vehicleType == 0x0A) {
-        detectedVehicleType = IBUS_VEHICLE_TYPE_E46_Z4;
-    } else {
-        detectedVehicleType = IBUS_VEHICLE_TYPE_E38_E39_E53;
+    unsigned char rawVehicleType = (pkt[4] >> 4) & 0xF;
+    unsigned char detectedVehicleType = IBusGetVehicleType(pkt);
+    if (detectedVehicleType == 0xFF) {
+        LogError("Handler: Unknown Vehicle Detected");
     }
-    if (detectedVehicleType != ConfigGetVehicleType()) {
+    if (detectedVehicleType != ConfigGetVehicleType() &&
+        detectedVehicleType != 0xFF
+    ) {
         ConfigSetVehicleType(detectedVehicleType);
-        if (detectedVehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+        if (rawVehicleType == 0x0A || rawVehicleType == 0x0F) {
+            ConfigSetIKEType(IBUS_IKE_TYPE_LOW);
             LogDebug(LOG_SOURCE_SYSTEM, "Detected New Vehicle Type: E46/Z4");
-        } else {
-            LogDebug(LOG_SOURCE_SYSTEM, "Detected New Vehicle Type: E38/E39/E53");
+        } else if (rawVehicleType == 0x02) {
+            ConfigSetIKEType(IBUS_IKE_TYPE_LOW);
+            LogDebug(
+                LOG_SOURCE_SYSTEM,
+                "Detected New Vehicle Type: E38/E39/E53 - Low OBC"
+            );
+        } else if (rawVehicleType == 0x00) {
+            ConfigSetIKEType(IBUS_IKE_TYPE_HIGH);
+            LogDebug(
+                LOG_SOURCE_SYSTEM,
+                "Detected New Vehicle Type: E38/E39/E53 - High OBC"
+            );
         }
-    }
-    // New UI
-    if (context->uiMode == 0xFF) {
-        UtilsReset();
     }
 }
 
@@ -824,7 +947,7 @@ void HandlerIBusIKEVehicleType(void *ctx, unsigned char *pkt)
 void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
 {
     uint8_t blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
-    if (blinkCount != 0x00 && blinkCount != 0xFF) {
+    if (blinkCount > 0x01 && blinkCount != 0xFF) {
         HandlerContext_t *context = (HandlerContext_t *) ctx;
         unsigned char lightStatus = pkt[4];
         if (context->blinkerStatus == HANDLER_BLINKER_OFF) {
@@ -930,40 +1053,17 @@ void HandlerIBusLCMRedundantData(void *ctx, unsigned char *pkt)
     );
     if (memcmp(&vehicleId, &currentVehicleId, 5) != 0) {
         LogDebug(LOG_SOURCE_SYSTEM, "Detected VIN Change");
+        // Save the new VIN
+        ConfigSetVehicleIdentity(vehicleId);
         // Request the vehicle type
         IBusCommandIKEGetVehicleType(context->ibus);
-        // Identify the user interface
-        unsigned char vehicleInterface = 0x00;
-        if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_GT) != 0) {
-            vehicleInterface = 0xFF;
-        } else if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_MID) != 0) {
-            vehicleInterface = IBus_UI_MID;
-            if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_GT) != 0) {
-                vehicleInterface = IBus_UI_MID_BMBT;
-            }
-        } else if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_RAD) != 0) {
-            if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_MID) == 0 &&
-                CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_GT) == 0
-            ) {
-                vehicleInterface = IBus_UI_CD53;
-            }
-        }
-        if (vehicleInterface != 0x00 && vehicleInterface != ConfigGetUIMode()) {
-            if (vehicleInterface == IBus_UI_MID_BMBT) {
-                LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT / MID UI");
-            } else if (vehicleInterface == IBus_UI_MID) {
-                LogInfo(LOG_SOURCE_SYSTEM, "Detected MID UI");
-            } else if (vehicleInterface == IBus_UI_CD53) {
-                LogInfo(LOG_SOURCE_SYSTEM, "Detected CD53 UI");
-            } else if (vehicleInterface == 0xFF) {
-                // Request the Navigation Identity
-                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
-                IBusCommandDIAGetOSIdentity(context->ibus, IBUS_DEVICE_GT);
-            }
-            if (vehicleInterface < 0xFF) {
-                ConfigSetUIMode(vehicleInterface);
-                context->uiMode = 0xFF;
-            }
+        // Fallback for vehicle UI Identification
+        if (context->ibusModuleStatus.RAD != 0 &&
+            context->ibusModuleStatus.MID == 0 &&
+            context->ibusModuleStatus.GT == 0
+        ) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Detected CD53 UI");
+            HandlerSwitchUI(context, IBus_UI_CD53);
         }
     }
 }
@@ -1078,7 +1178,7 @@ void HandlerIBusModuleStatusRequest(void *ctx, unsigned char *pkt)
 /**
  * HandlerIBusModuleStatusResponse()
  *     Description:
- *         Track module status as we get them
+ *         Track module status as we get them & track UI changes
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *pkt - The packet
@@ -1090,35 +1190,56 @@ void HandlerIBusModuleStatusResponse(void *ctx, unsigned char *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char module = pkt[IBUS_PKT_SRC];
     if (module == IBUS_DEVICE_DSP &&
-        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_DSP) == 0
+        context->ibusModuleStatus.DSP == 0
     ) {
-        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_DSP;
+        context->ibusModuleStatus.DSP = 1;
         LogInfo(LOG_SOURCE_SYSTEM, "DSP Detected");
     } else if (module == IBUS_DEVICE_GT &&
-        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_GT) == 0
+        context->ibusModuleStatus.GT == 0
     ) {
-        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_GT;
+        context->ibusModuleStatus.GT = 1;
         LogInfo(LOG_SOURCE_SYSTEM, "GT Detected");
+        unsigned char uiMode = ConfigGetUIMode();
+        if (uiMode != IBus_UI_BMBT &&
+            uiMode != IBus_UI_MID_BMBT &&
+            uiMode != IBus_UI_BUSINESS_NAV
+        ) {
+            // Request the Navigation Identity
+            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+            IBusCommandDIAGetOSIdentity(context->ibus, IBUS_DEVICE_GT);
+        }
     } else if (module == IBUS_DEVICE_LCM &&
-        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_LCM) == 0
+        context->ibusModuleStatus.LCM == 0
     ) {
         LogInfo(LOG_SOURCE_SYSTEM, "LCM Detected");
-        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_LCM;
+        context->ibusModuleStatus.LCM = 1;
     } else if (module == IBUS_DEVICE_MID &&
-        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_MID) == 0
+        context->ibusModuleStatus.MID == 0
     ) {
+        context->ibusModuleStatus.MID = 1;
         LogInfo(LOG_SOURCE_SYSTEM, "MID Detected");
-        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_MID;
+        unsigned char uiMode = ConfigGetUIMode();
+        if (uiMode != IBus_UI_MID &&
+            uiMode != IBus_UI_MID_BMBT
+        ) {
+            if (context->ibusModuleStatus.GT == 1) {
+                LogInfo(LOG_SOURCE_SYSTEM, "Detected MID / BMBT UI");
+                HandlerSwitchUI(context, IBus_UI_MID_BMBT);
+            } else {
+                LogInfo(LOG_SOURCE_SYSTEM, "Detected MID UI");
+                HandlerSwitchUI(context, IBus_UI_MID);
+            }
+        }
     } else if (module == IBUS_DEVICE_BMBT &&
-        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_BMBT) == 0
+        context->ibusModuleStatus.BMBT == 0
     ) {
+        context->ibusModuleStatus.BMBT = 1;
         LogInfo(LOG_SOURCE_SYSTEM, "BMBT Detected");
-        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_BMBT;
     } else if (module == IBUS_DEVICE_RAD &&
-        CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_RAD) == 0
+        context->ibusModuleStatus.RAD == 0
     ) {
+        context->ibusModuleStatus.RAD = 1;
         LogInfo(LOG_SOURCE_SYSTEM, "RAD Detected");
-        context->ibusModuleStatus ^= 1 << HANDLER_IBUS_DEVICE_BIT_RAD;
     }
 }
 
@@ -1281,8 +1402,8 @@ void HandlerTimerDeviceConnection(void *ctx)
 void HandlerTimerLCMIOStatus(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (CHECK_BIT(context->ibusModuleStatus, HANDLER_IBUS_DEVICE_BIT_LCM) != 0 &&
-        context->ibus->ignitionStatus >= IBUS_IGNITION_KL15
+    if (context->ibusModuleStatus.LCM != 0 &&
+        context->ibus->ignitionStatus != IBUS_IGNITION_OFF
     ) {
         // Ask the LCM for the I/O Status of all lamps
         IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);

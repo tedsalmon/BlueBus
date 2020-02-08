@@ -133,22 +133,6 @@ void CLIProcess()
                     } else if (UtilsStricmp(msgBuf[2], "WB") == 0) {
                         BC127CommandCVC(cli.bt, "WB", 0, 0);
                     }
-                } else if (UtilsStricmp(msgBuf[1], "INIT") == 0) {
-                    BC127CommandSetAudio(cli.bt, 0, 1);
-                    BC127CommandSetAudioAnalog(cli.bt, "11", "15", "0", "OFF");
-                    BC127CommandSetAudioDigital(
-                        cli.bt,
-                        BC127_AUDIO_SPDIF,
-                        "44100",
-                        "0",
-                        "0"
-                    );
-                    BC127CommandSetBtState(cli.bt, 2, 2);
-                    BC127CommandSetCodec(cli.bt, 1, "OFF");
-                    BC127CommandSetMetadata(cli.bt, 1);
-                    BC127CommandSetModuleName(cli.bt, "BlueBus");
-                    BC127CommandSetUART(cli.bt, 115200, "OFF", 0);
-                    BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
                 } else if (UtilsStricmp(msgBuf[1], "HFP") == 0) {
                     if (delimCount == 2) {
                         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
@@ -176,6 +160,8 @@ void CLIProcess()
                         if (micGain < 0xC0 || micGain > 0xD6) {
                             LogRaw("Mic Gain '%02X' out of range: C0 - D6\r\n", micGain);
                         } else {
+                            // Store it as a smaller value
+                            micGain = micGain - 0xC0;
                             ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
                             BC127CommandSetMicGain(cli.bt, micGain);
                         }
@@ -274,6 +260,20 @@ void CLIProcess()
                     } else {
                         LogRaw("Auto-Power Off: Off\r\n");
                     }
+                } else if (UtilsStricmp(msgBuf[1], "VIN") == 0) {
+                    // Get VIN
+                    unsigned char currentVehicleId[5] = {};
+                    ConfigGetVehicleIdentity(currentVehicleId);
+                    char currentVinTwo[] = {currentVehicleId[0], currentVehicleId[1], '\0'};
+                    LogRaw(
+                        "Vehicle VIN: %s%d%d%d%d%d\r\n",
+                        currentVinTwo,
+                        (currentVehicleId[2] >> 4) & 0xF,
+                        currentVehicleId[2] & 0xF,
+                        (currentVehicleId[3] >> 4) & 0xF,
+                        currentVehicleId[3] & 0xF,
+                        currentVehicleId[4]
+                    );
                 } else {
                     cmdSuccess = 0;
                 }
@@ -447,6 +447,39 @@ void CLIProcess()
                 } else {
                     cmdSuccess = 0;
                 }
+            } else if (UtilsStricmp(msgBuf[0], "RESTORE") == 0) {
+                BC127CommandUnpair(cli.bt);
+                BC127CommandSetAudio(cli.bt, 0, 1);
+                BC127CommandSetAudioAnalog(cli.bt, "11", "15", "1", "OFF");
+                BC127CommandSetAudioDigital(
+                    cli.bt,
+                    BC127_AUDIO_SPDIF,
+                    "44100",
+                    "0",
+                    "0"
+                );
+                BC127CommandSetBtState(cli.bt, 2, 2);
+                BC127CommandSetCodec(cli.bt, 1, "OFF");
+                BC127CommandSetMetadata(cli.bt, 1);
+                BC127CommandSetModuleName(cli.bt, "BlueBus");
+                BC127CommandSetUART(cli.bt, 115200, "OFF", 0);
+                BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
+                // Reset the UI
+                ConfigSetUIMode(0x00);
+                ConfigSetNavType(0x00);
+                // Reset the VIN
+                unsigned char vin[] = {0x00, 0x00, 0x00, 0x00, 0x00};
+                ConfigSetVehicleIdentity(vin);
+                // Reset all settings
+                uint8_t idx = CONFIG_SETTING_START_ADDRESS;
+                while (idx <= 0x50) {
+                    ConfigSetSetting(idx, 0x00);
+                    idx++;
+                }
+                // Settings
+                ConfigSetSetting(CONFIG_SETTING_DAC_VOL, 0x46); // -10dB Gain
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
+                ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
             } else if (UtilsStricmp(msgBuf[0], "VERSION") == 0) {
                 LogRaw(FIRMWARE_VERSION);
             } else if (UtilsStricmp(msgBuf[0], "HELP") == 0 || UtilsStricmp(msgBuf[0], "?") == 0) {

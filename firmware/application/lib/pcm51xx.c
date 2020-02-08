@@ -22,7 +22,7 @@ void PCM51XXInit()
         LogError("PCM51XX Responded with %d during initialization", status);
     } else {
         LogDebug(LOG_SOURCE_SYSTEM, "PCM51XX Responded to Poll");
-        unsigned char volume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL) + 0x30;
+        unsigned char volume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
         status = I2CWrite(PCM51XX_I2C_ADDR, PCM51XX_REGISTER_VOLL, volume);
         if (status != 0x00) {
             LogError("PCM51XX failed to set VOLL [%d]", status);
@@ -63,7 +63,6 @@ void PCM51XXPollTimer(void *ctx)
  */
 void PCM51XXSetVolume(unsigned char volume)
 {
-    volume = volume + 0x30;
     int8_t status = I2CPoll(PCM51XX_I2C_ADDR);
     if (status != 0x00) {
         LogError("PCM51XX Responded with %d", status);

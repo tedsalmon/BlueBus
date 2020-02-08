@@ -74,6 +74,7 @@ typedef struct CD53Context_t {
     UtilsAbstractDisplayValue_t tempDisplay;
 } CD53Context_t;
 void CD53Init(BC127_t *, IBus_t *);
+void CD53Destroy();
 void CD53BC127DeviceDisconnected(void *, unsigned char *);
 void CD53BC127DeviceReady(void *, unsigned char *);
 void CD53BC127Metadata(CD53Context_t *, unsigned char *);

@@ -30,13 +30,6 @@
 #define HANDLER_CDC_SEEK_MODE_REV 2
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
 #define HANDLER_DEVICE_MAX_RECONN 10
-#define HANDLER_IBUS_DEVICE_BIT_IKE 0
-#define HANDLER_IBUS_DEVICE_BIT_LCM 1
-#define HANDLER_IBUS_DEVICE_BIT_GT 2
-#define HANDLER_IBUS_DEVICE_BIT_RAD 3
-#define HANDLER_IBUS_DEVICE_BIT_DSP 4
-#define HANDLER_IBUS_DEVICE_BIT_MID 5
-#define HANDLER_IBUS_DEVICE_BIT_BMBT 6
 #define HANDLER_INT_CDC_ANOUNCE 1000
 #define HANDLER_INT_CDC_STATUS 500
 #define HANDLER_INT_DEVICE_CONN 30000
@@ -49,7 +42,19 @@
 #define HANDLER_POWER_OFF 0
 #define HANDLER_POWER_ON 1
 #define HANDLER_POWER_TIMEOUT_MILLIS 61000
-
+typedef struct HandlerModuleStatus_t {
+    uint8_t BMBT: 1;
+    uint8_t DSP: 1;
+    uint8_t GT: 1;
+    uint8_t IKE: 1;
+    uint8_t LCM: 1;
+    uint8_t MID: 1;
+    uint8_t RAD: 1;
+} HandlerModuleStatus_t;
+typedef struct HandlerBodyModuleStatus_t {
+    uint8_t lowSideDoors: 1;
+    uint8_t doorsLocked: 1;
+} HandlerBodyModuleStatus_t;
 typedef struct HandlerContext_t {
     BC127_t *bt;
     IBus_t *ibus;
@@ -64,8 +69,8 @@ typedef struct HandlerContext_t {
     uint8_t blinkerStatus;
     uint8_t blinkerCount;
     uint8_t mflButtonStatus;
-    uint8_t ibusModuleStatus;
-    uint8_t generalModuleStatus;
+    HandlerModuleStatus_t ibusModuleStatus;
+    HandlerBodyModuleStatus_t bodyModuleStatus;
     uint8_t powerStatus;
     uint8_t scanIntervals;
     uint32_t cdChangerLastPoll;
@@ -83,6 +88,8 @@ void HandlerUICloseConnection(void *, unsigned char *);
 void HandlerUIInitiateConnection(void *, unsigned char *);
 void HandlerIBusCDCStatus(void *, unsigned char *);
 void HandlerIBusFirstMessageReceived(void *, unsigned char *);
+void HandlerIBusGMDoorsFlapsStatusResponse(void *, unsigned char *);
+void HandlerIBusGTDIAIdentityResponse(void *, unsigned char *);
 void HandlerIBusGTDIAOSIdentityResponse(void *, unsigned char *);
 void HandlerIBusIKEIgnitionStatus(void *, unsigned char *);
 void HandlerIBusIKESpeedRPMUpdate(void *, unsigned char *);

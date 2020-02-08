@@ -112,9 +112,23 @@
 #define IBUS_CMD_BMBT_BUTTON0 0x47
 #define IBUS_CMD_BMBT_BUTTON1 0x48
 
+#define IBUS_CMD_DIA_JOB_REQUEST 0x0C
 #define IBUS_CMD_DIA_DIAG_RESPONSE 0xA0
 
 #define IBUS_CMD_EWS_IMMOBILISER_STATUS 0x74
+
+#define IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP 0x7A
+#define IBUS_CMD_ZKE3_GM4_JOB_CENTRAL_LOCK 0x0B
+#define IBUS_CMD_ZKE3_GM4_JOB_LOCK_HIGH 0x40
+#define IBUS_CMD_ZKE3_GM4_JOB_LOCK_LOW 0x41
+#define IBUS_CMD_ZKE3_GM4_JOB_UNLOCK_HIGH 0x42
+#define IBUS_CMD_ZKE3_GM4_JOB_UNLOCK_LOW 0x43
+#define IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK 0x03
+#define IBUS_CMD_ZKE5_JOB_LOCK_HIGH 0x34
+#define IBUS_CMD_ZKE5_JOB_LOCK_LOW 0x36
+#define IBUS_CMD_ZKE5_JOB_UNLOCK_HIGH 0x35
+#define IBUS_CMD_ZKE5_JOB_UNLOCK_LOW 0x37
+#define IBUS_CMD_ZKE5_JOB_UNLOCK_ALL 0x96
 
 #define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
 #define IBUS_CMD_GT_MENU_SELECT 0x31
@@ -170,7 +184,7 @@
 
 #define IBUS_IGNITION_OFF 0x00
 #define IBUS_IGNITION_KLR 0x01
-#define IBUS_IGNITION_KL15 0x02
+#define IBUS_IGNITION_KL15 0x03
 #define IBUS_IGNITION_KL50 0x07
 
 #define IBUS_LCM_LIGHT_STATUS 0x5B
@@ -235,8 +249,11 @@
 
 #define IBUS_VEHICLE_TYPE_E38_E39_E53 0x01
 #define IBUS_VEHICLE_TYPE_E46_Z4 0x02
+#define IBUS_IKE_TYPE_LOW 0x00
+#define IBUS_IKE_TYPE_HIGH 0x0F
 
 // Events
+#define IBusEvent_GTDIAIdentityResponse 32
 #define IBusEvent_CDPoll 33
 #define IBusEvent_CDStatusRequest 34
 #define IBusEvent_CDClearDisplay 35
@@ -267,6 +284,7 @@
 #define IBusEvent_IKECoolantTempUpdate 60
 #define IBusEvent_ModuleStatusRequest 61
 #define IBusEvent_GTChangeUIRequest 62
+#define IBusEvent_DoorsFlapsStatusResponse 63
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -298,6 +316,7 @@ typedef struct IBus_t {
     uint32_t txLastStamp;
     unsigned char cdChangerFunction;
     unsigned char gtVersion;
+    unsigned char vehicleType;
     unsigned char ignitionStatus;
     unsigned char lcmDimmerStatus1;
     unsigned char lcmDimmerStatus2;
@@ -311,6 +330,7 @@ uint8_t IBusGetRadioType(uint32_t);
 uint8_t IBusGetNavHWVersion(unsigned char *);
 uint8_t IBusGetNavSWVersion(unsigned char *);
 uint8_t IBusGetNavType(unsigned char *);
+uint8_t IBusGetVehicleType(unsigned char *);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
 void IBusCommandDIAGetCodingData(IBus_t *, unsigned char, unsigned char, unsigned char);
@@ -321,8 +341,12 @@ void IBusCommandDIATerminateDiag(IBus_t *, unsigned char);
 void IBusCommandDSPSetMode(IBus_t *, unsigned char);
 void IBusCommandGetModuleStatus(IBus_t *, unsigned char, unsigned char);
 void IBusCommandSetModuleStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
-void IBusCommandGMDoorLock(IBus_t *ibus);
-void IBusCommandGMDoorUnlock(IBus_t *ibus);
+void IBusCommandGMDoorCenterLockButton(IBus_t *);
+void IBusCommandGMDoorUnlockHigh(IBus_t *);
+void IBusCommandGMDoorUnlockLow(IBus_t *);
+void IBusCommandGMDoorLockHigh(IBus_t *);
+void IBusCommandGMDoorLockLow(IBus_t *);
+void IBusCommandGMDoorUnlockAll(IBus_t *);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
 void IBusCommandGTWriteBusinessNavTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *);

@@ -79,6 +79,49 @@ void MIDInit(BC127_t *bt, IBus_t *ibus)
     );
 }
 
+/**
+ * MIDDestroy()
+ *     Description:
+ *         Unregister all event handlers, scheduled tasks and clear the context
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+void MIDDestroy()
+{
+    EventUnregisterCallback(
+        BC127Event_MetadataChange,
+        &MIDBC127MetadataUpdate
+    );
+    EventUnregisterCallback(
+        BC127Event_PlaybackStatusChange,
+        &MIDBC127PlaybackStatus
+    );
+    EventUnregisterCallback(
+        IBusEvent_CDStatusRequest,
+        &MIDIBusCDChangerStatus
+    );
+    EventUnregisterCallback(
+        IBusEvent_MIDButtonPress,
+        &MIDIBusMIDButtonPress
+    );
+    EventUnregisterCallback(
+        IBusEvent_RADMIDDisplayText,
+        &MIDIIBusRADMIDDisplayUpdate
+    );
+    EventUnregisterCallback(
+        IBusEvent_RADMIDDisplayMenu,
+        &MIDIIBusRADMIDMenuUpdate
+    );
+    EventUnregisterCallback(
+        IBusEvent_MIDModeChange,
+        &MIDIBusMIDModeChange
+    );
+    TimerUnregisterScheduledTask(&MIDTimerDisplay);
+    memset(&Context, 0, sizeof(MIDContext_t));
+}
+
 static void MIDSetMainDisplayText(
     MIDContext_t *context,
     const char *str,

@@ -45,11 +45,12 @@
 /* Config 0x36 - 0x3E: Telephony Settings */
 #define CONFIG_SETTING_HFP_ADDRESS 0x36
 #define CONFIG_SETTING_TCU_MODE_ADDRESS 0x37
+#define CONFIG_SETTING_MIC_GAIN_ADDRESS 0x38
+#define CONFIG_SETTING_MIC_BIAS_ADDRESS 0x39
 /* Config 0x40 - 0x50: Audio Settings */
 #define CONFIG_SETTING_AUTOPLAY_ADDRESS 0x40
-#define CONFIG_SETTING_MIC_GAIN_ADDRESS 0x41
-#define CONFIG_SETTING_DAC_VOL_ADDRESS 0x42
-#define CONFIG_SETTING_USE_SPDIF_INPUT_ADDRESS 0x43
+#define CONFIG_SETTING_DAC_VOL_ADDRESS 0x41
+#define CONFIG_SETTING_USE_SPDIF_INPUT_ADDRESS 0x42
 
 #define CONFIG_DEVICE_LOG_BT 2
 #define CONFIG_DEVICE_LOG_IBUS 3
@@ -79,9 +80,10 @@
 /* Config 0x36 - 0x3E: Telephony Settings */
 #define CONFIG_SETTING_HFP CONFIG_SETTING_HFP_ADDRESS
 #define CONFIG_SETTING_TCU_MODE CONFIG_SETTING_TCU_MODE_ADDRESS
+#define CONFIG_SETTING_MIC_GAIN CONFIG_SETTING_MIC_GAIN_ADDRESS
+#define CONFIG_SETTING_MIC_BIAS CONFIG_SETTING_MIC_BIAS_ADDRESS
 /* Config 0x40 - 0x50: Audio Settings */
 #define CONFIG_SETTING_AUTOPLAY CONFIG_SETTING_AUTOPLAY_ADDRESS
-#define CONFIG_SETTING_MIC_GAIN CONFIG_SETTING_MIC_GAIN_ADDRESS
 #define CONFIG_SETTING_DAC_VOL CONFIG_SETTING_DAC_VOL_ADDRESS
 #define CONFIG_SETTING_USE_SPDIF_INPUT CONFIG_SETTING_USE_SPDIF_INPUT_ADDRESS
 /* Data Boundry Helpers */
@@ -90,6 +92,7 @@
 
 
 unsigned char ConfigGetByte(unsigned char);
+unsigned char ConfigGetIKEType();
 unsigned char ConfigGetLog(unsigned char);
 unsigned char ConfigGetNavType();
 unsigned char ConfigGetPoweroffTimeoutDisabled();
@@ -100,6 +103,7 @@ unsigned char ConfigGetUIMode();
 unsigned char ConfigGetVehicleType();
 void ConfigGetVehicleIdentity(unsigned char *);
 void ConfigSetBootloaderMode(unsigned char);
+void ConfigSetIKEType(unsigned char);
 void ConfigSetLog(unsigned char, unsigned char);
 void ConfigSetSetting(unsigned char, unsigned char);
 void ConfigSetNavType(unsigned char);

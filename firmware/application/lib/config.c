@@ -27,6 +27,25 @@ unsigned char ConfigGetByte(unsigned char address)
 }
 
 /**
+ * ConfigGetIKEType()
+ *     Description:
+ *         Get the IKE type
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetIKEType()
+{
+    unsigned char value = CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
+    if (value == 0x00) {
+        value = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);        
+        CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
+    }
+    return (value & 0xF0) >> 4;
+}
+
+/**
  * ConfigGetLog()
  *     Description:
  *         Get the log level for different systems
@@ -175,10 +194,10 @@ unsigned char ConfigGetVehicleType()
 {
     unsigned char value = CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
     if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);
+        value = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);        
         CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
     }
-    return value;
+    return value & 0x0F;
 }
 
 /**
@@ -211,6 +230,25 @@ void ConfigGetVehicleIdentity(unsigned char *vin)
 void ConfigSetBootloaderMode(unsigned char bootloaderMode)
 {
     EEPROMWriteByte(CONFIG_BOOTLOADER_MODE_ADDRESS, bootloaderMode);
+}
+
+/**
+ * ConfigSetIKEType()
+ *     Description:
+ *         Set the IKE type
+ *     Params:
+ *         unsigned char ikeType - The IKE type
+ *     Returns:
+ *         void
+ */
+void ConfigSetIKEType(unsigned char ikeType)
+{
+    unsigned char currentValue = CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
+    // Store the value in the upper nibble of the vehicle type byte
+    currentValue &= 0x0F;
+    currentValue |= (ikeType << 4) & 0xF0;
+    CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = currentValue;
+    EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, currentValue);
 }
 
 /**
@@ -353,7 +391,7 @@ void ConfigSetUIMode(unsigned char uiMode)
 }
 
 /**
- * ConfigSetUIMode()
+ * ConfigSetVehicleType()
  *     Description:
  *         Set the vehicle type
  *     Params:
@@ -363,8 +401,11 @@ void ConfigSetUIMode(unsigned char uiMode)
  */
 void ConfigSetVehicleType(unsigned char vehicleType)
 {
-    CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = vehicleType;
-    EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, vehicleType);
+    unsigned char currentValue = CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
+    currentValue &= 0xF0;
+    currentValue |= vehicleType & 0x0F;
+    CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = currentValue;
+    EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, currentValue);
 }
 
 /**

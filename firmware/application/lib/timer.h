@@ -21,6 +21,7 @@
 #define TIMER_TASKS_MAX 16
 #define TIMER_INDEX 0
 #include <stdint.h>
+#include <string.h>
 #include <xc.h>
 #include "sfr_setters.h"
 /**
@@ -45,6 +46,7 @@ void TimerDelayMicroseconds(uint16_t);
 uint32_t TimerGetMillis();
 void TimerProcessScheduledTasks();
 uint8_t TimerRegisterScheduledTask(void *, void *, uint16_t);
+uint8_t TimerUnregisterScheduledTask(void *);
 void TimerResetScheduledTask(uint8_t);
 void TimerTriggerScheduledTask(uint8_t);
 #endif /* TIMER_H */

@@ -28,19 +28,37 @@
 #define BMBT_MENU_DASHBOARD 2
 #define BMBT_MENU_DEVICE_SELECTION 3
 #define BMBT_MENU_SETTINGS 4
+#define BMBT_MENU_SETTINGS_AUDIO 5
+#define BMBT_MENU_SETTINGS_COMFORT 6
+#define BMBT_MENU_SETTINGS_CALLING 7
+#define BMBT_MENU_SETTINGS_UI 8
 #define BMBT_MENU_DASHBOARD_FRESH 255
 #define BMBT_MENU_IDX_BACK 7
 #define BMBT_MENU_IDX_DASHBOARD 0
 #define BMBT_MENU_IDX_DEVICE_SELECTION 1
 #define BMBT_MENU_IDX_SETTINGS 2
-#define BMBT_MENU_IDX_SETTINGS_HFP 0
-#define BMBT_MENU_IDX_SETTINGS_METADATA_MODE 1
-#define BMBT_MENU_IDX_SETTINGS_AUTOPLAY 2
-#define BMBT_MENU_IDX_SETTINGS_DEFAULT_MENU 3
-#define BMBT_MENU_IDX_SETTINGS_VEHICLE_TYPE 4
-#define BMBT_MENU_IDX_SETTINGS_BLINKERS 5
-#define BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS 6
-#define BMBT_MENU_IDX_SETTINGS_TCU_MODE 6
+#define BMBT_MENU_IDX_SETTINGS_AUDIO 0
+#define BMBT_MENU_IDX_SETTINGS_CALLING 1
+#define BMBT_MENU_IDX_SETTINGS_COMFORT 2
+#define BMBT_MENU_IDX_SETTINGS_UI 3
+/* Audio Settings */
+#define BMBT_MENU_IDX_SETTINGS_AUDIO_AUTOPLAY 0
+#define BMBT_MENU_IDX_SETTINGS_AUDIO_DAC_GAIN 1
+#define BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT 2
+/* Call Settings */
+#define BMBT_MENU_IDX_SETTINGS_CALLING_HFP 0
+#define BMBT_MENU_IDX_SETTINGS_CALLING_MIC_BIAS 1
+#define BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN 2
+#define BMBT_MENU_IDX_SETTINGS_CALLING_TCU_MODE 3
+/* Comfort Settings */
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS 0
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS 1
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_VEHICLE_TYPE 2
+/* UI Settings */
+#define BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU 0
+#define BMBT_MENU_IDX_SETTINGS_UI_METADATA_MODE 1
+#define BMBT_MENU_IDX_SETTINGS_UI_TEMPS 2
+
 #define BMBT_MENU_IDX_PAIRING_MODE 0
 #define BMBT_MENU_IDX_CLEAR_PAIRING 1
 #define BMBT_MENU_IDX_FIRST_DEVICE 2
@@ -61,15 +79,18 @@
 #define BMBT_SCROLL_TEXT_SIZE 255
 #define BMBT_SCROLL_TEXT_SPEED 750
 #define BMBT_SCROLL_TEXT_TIMER 500
+typedef struct BMBTStatus_t {
+    uint8_t playerMode: 1;
+    uint8_t displayMode: 2;
+    uint8_t navState: 1;
+    uint8_t radType: 4;
+    uint8_t navIndexType;
+} BMBTStatus_t;
 typedef struct BMBTContext_t {
     BC127_t *bt;
     IBus_t *ibus;
     uint8_t menu;
-    uint8_t mode;
-    uint8_t displayMode;
-    uint8_t navState;
-    uint8_t navIndexType;
-    uint8_t radType;
+    BMBTStatus_t status;
     uint8_t writtenIndices;
     uint8_t timerHeaderIntervals;
     uint8_t timerMenuIntervals;
@@ -79,6 +100,7 @@ typedef struct BMBTContext_t {
     UtilsAbstractDisplayValue_t mainDisplay;
 } BMBTContext_t;
 void BMBTInit(BC127_t *, IBus_t *);
+void BMBTDestroy();
 void BMBTBC127DeviceConnected(void *, unsigned char *);
 void BMBTBC127DeviceDisconnected(void *, unsigned char *);
 void BMBTBC127Metadata(void *, unsigned char *);
