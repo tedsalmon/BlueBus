@@ -129,7 +129,7 @@ void EEPROMIsReady()
  *     Description:
  *         Read a byte from the EEPROM at the given address and return it
  *     Params:
- *         uint32_t address - The memory address of the byte to retrieve
+ *         uint32_t - The memory address of the byte to retrieve
  *     Returns:
  *         unsigned char - The byte at the given address
  */
@@ -138,7 +138,8 @@ unsigned char EEPROMReadByte(uint32_t address)
     EEPROMIsReady();
     EEPROM_CS_PIN = 0;
     EEPROMSend(EEPROM_COMMAND_READ);
-    // Address must be 16-bits but we're transferring it in two 8-bit sessions
+    // Address must be 24-bits but we're transferring it in three 8-bit sessions
+    EEPROMSend(address >> 16 && 0xFF);
     EEPROMSend(address >> 8 && 0xFF);
     EEPROMSend(address & 0xFF);
     // Cast return of EEPROM send to an 8-bit byte, since the returned register
@@ -164,7 +165,8 @@ void EEPROMWriteByte(uint32_t address, unsigned char data)
     EEPROMEnableWrite();
     EEPROM_CS_PIN = 0;
     EEPROMSend(EEPROM_COMMAND_WRITE);
-    // Address must be 16-bits but we're transferring it in two 8-bit sessions
+    // Address must be 24-bits but we're transferring it in three 8-bit sessions
+    EEPROMSend(address >> 16 && 0xFF);
     EEPROMSend(address >> 8 && 0xFF);
     EEPROMSend(address & 0xFF);
     EEPROMSend(data);

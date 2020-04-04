@@ -136,7 +136,7 @@ void ProtocolProcessMessage(
             ProtocolFlashErase();
             ProtocolSendPacket(
                 uart,
-                (unsigned char) PROTOCOL_CMD_ERASE_FLASH_RESPONSE,
+                PROTOCOL_CMD_ERASE_FLASH_RESPONSE,
                 0,
                 0
             );
@@ -160,7 +160,7 @@ void ProtocolProcessMessage(
         } else if (packet.command == PROTOCOL_CMD_BC127_MODE_REQUEST) {
             ProtocolSendPacket(
                 uart,
-                (unsigned char) PROTOCOL_CMD_BC127_MODE_RESPONSE,
+                PROTOCOL_CMD_BC127_MODE_RESPONSE,
                 0,
                 0
             );
@@ -174,7 +174,7 @@ void ProtocolProcessMessage(
         } else if (packet.command == PROTOCOL_CMD_START_APP_REQUEST) {
             ProtocolSendPacket(
                 uart,
-                (unsigned char) PROTOCOL_CMD_START_APP_RESPONSE,
+                PROTOCOL_CMD_START_APP_RESPONSE,
                 0,
                 0
             );
@@ -185,8 +185,44 @@ void ProtocolProcessMessage(
                 i++;
             }
             *BOOT_MODE = BOOT_MODE_NOW;
+        } else if (packet.command == PROTOCOL_CMD_FIRMWARE_VERSION_REQUEST) {
+            unsigned char response[] = {
+                EEPROMReadByte(CONFIG_FIRMWARE_VERSION_ADDRESS_MAJOR),
+                EEPROMReadByte(CONFIG_FIRMWARE_VERSION_ADDRESS_MINOR),
+                EEPROMReadByte(CONFIG_FIRMWARE_VERSION_ADDRESS_PATCH)
+            };
+            ProtocolSendPacket(
+                uart,
+                PROTOCOL_CMD_FIRMWARE_VERSION_RESPONSE,
+                response,
+                3
+            );
+        } else if (packet.command == PROTOCOL_CMD_READ_SN_REQUEST) {
+            unsigned char response[] = {
+                EEPROMReadByte(CONFIG_SN_MSB),
+                EEPROMReadByte(CONFIG_SN_LSB)
+            };
+            ProtocolSendPacket(
+                uart,
+                PROTOCOL_CMD_READ_SN_RESPONSE,
+                response,
+                2
+            );
         } else if (packet.command == PROTOCOL_CMD_WRITE_SN_REQUEST) {
             ProtocolWriteSerialNumber(uart, &packet);
+        } else if (packet.command == PROTOCOL_CMD_READ_BUILD_DATE_REQUEST) {
+            unsigned char response[] = {
+                EEPROMReadByte(CONFIG_BUILD_DATE_ADDRESS_WEEK),
+                EEPROMReadByte(CONFIG_BUILD_DATE_ADDRESS_YEAR)
+            };
+            ProtocolSendPacket(
+                uart,
+                PROTOCOL_CMD_READ_BUILD_DATE_RESPONSE,
+                response,
+                2
+            );
+        } else if (packet.command == PROTOCOL_CMD_WRITE_BUILD_DATE_REQUEST) {
+            ProtocolWriteBuildDate(uart, &packet);
         }
     } else if (packet.status == PROTOCOL_PACKET_STATUS_BAD) {
         UARTResetRxQueue(uart);
@@ -252,30 +288,27 @@ void ProtocolSendPacket(
     unsigned char *data,
     uint8_t dataSize
 ) {
-    uint8_t nullData = 0;
     if (dataSize == 0) {
         dataSize = 1;
-        nullData = 1;
     }
-    uint8_t crc = 0;
-    uint8_t length = dataSize + PROTOCOL_DATA_INDEX_BEGIN;
+    uint8_t length = dataSize + PROTOCOL_CONTROL_PACKET_SIZE;
     unsigned char packet[length];
-
-    crc = crc ^ (uint8_t) command;
-    crc = crc ^ (uint8_t) length;
     packet[0] = command;
     packet[1] = length;
-    if (nullData == 1) {
-        // The protocol requires at least one data byte, so throw in a NULL
+    if (data == 0x00) {
         packet[2] = 0x00;
     } else {
         uint8_t i;
         for (i = 2; i < length; i++) {
             packet[i] = data[i - 2];
-            crc = crc ^ (uint8_t) data[i - 2];
         }
     }
-    packet[length - 1] = (unsigned char) crc;
+    uint8_t i;
+    unsigned char crc = 0x00;
+    for (i = 0; i < length; i++) {
+        crc ^= (unsigned char) packet[i];
+    }
+    packet[length - 1] = crc;
     UARTSendData(uart, packet, length);
 }
 
@@ -296,7 +329,6 @@ void ProtocolSendStringPacket(UART_t *uart, unsigned char command, char *string)
     while (string[len] != 0) {
         len++;
     }
-    len++;
     ProtocolSendPacket(uart, command, (unsigned char *) string, len);
 }
 
@@ -343,11 +375,41 @@ void ProtocolWriteSerialNumber(UART_t *uart, ProtocolPacket_t *packet)
             (EEPROMReadByte(CONFIG_SN_MSB) << 8) | 
             (EEPROMReadByte(CONFIG_SN_LSB) & 0xFF)
     );
-    if (serialNumber == 0x0) {
+    if ((serialNumber == 0x0000 || serialNumber == 0xFFFF) &&
+        packet->dataSize == 2
+    ) {
         EEPROMWriteByte(CONFIG_SN_MSB, packet->data[0]);
         EEPROMWriteByte(CONFIG_SN_LSB, packet->data[1]);
         ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_SN_RESPONSE_OK, 0, 0);
     } else {
         ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR, 0, 0);
+    }
+}
+
+/**
+ * ProtocolWriteBuildDate()
+ *     Description:
+ *         Write the build date to EEPROM if it's not already set
+ *     Params:
+ *         UART_t *uart - The UART struct to use for communication
+ *         ProtocolPacket_t *packet - The data packet structure
+ *     Returns:
+ *         void
+ */
+void ProtocolWriteBuildDate(UART_t *uart, ProtocolPacket_t *packet)
+{
+    uint8_t buildWeek = EEPROMReadByte(CONFIG_BUILD_DATE_ADDRESS_WEEK);
+    uint8_t buildYear = EEPROMReadByte(CONFIG_BUILD_DATE_ADDRESS_YEAR);
+    if ((
+            (buildWeek == 0xFF && buildYear == 0xFF) ||
+            (buildWeek == 0x00 && buildYear == 0x00)
+        ) &&
+        packet->dataSize == 2
+    ) {
+        EEPROMWriteByte(CONFIG_BUILD_DATE_ADDRESS_WEEK, packet->data[0]);
+        EEPROMWriteByte(CONFIG_BUILD_DATE_ADDRESS_YEAR, packet->data[1]);
+        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK, 0, 0);
+    } else {
+        ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_ERR, 0, 0);
     }
 }

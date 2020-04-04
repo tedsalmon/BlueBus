@@ -36,9 +36,18 @@
 #define PROTOCOL_CMD_BC127_MODE_RESPONSE 0x08
 #define PROTOCOL_CMD_START_APP_REQUEST 0x09
 #define PROTOCOL_CMD_START_APP_RESPONSE 0x0A
-#define PROTOCOL_CMD_WRITE_SN_REQUEST 0x0B
-#define PROTOCOL_CMD_WRITE_SN_RESPONSE_OK 0x0C
-#define PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR 0x0D
+#define PROTOCOL_CMD_FIRMWARE_VERSION_REQUEST 0x0B
+#define PROTOCOL_CMD_FIRMWARE_VERSION_RESPONSE 0x0C
+#define PROTOCOL_CMD_READ_SN_REQUEST 0x0D
+#define PROTOCOL_CMD_READ_SN_RESPONSE 0x0E
+#define PROTOCOL_CMD_WRITE_SN_REQUEST 0x0F
+#define PROTOCOL_CMD_WRITE_SN_RESPONSE_OK 0x10
+#define PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR 0x11
+#define PROTOCOL_CMD_READ_BUILD_DATE_REQUEST 0x12
+#define PROTOCOL_CMD_READ_BUILD_DATE_RESPONSE 0x13
+#define PROTOCOL_CMD_WRITE_BUILD_DATE_REQUEST 0x14
+#define PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK 0x15
+#define PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_ERR 0x16
 #define PROTOCOL_BAD_PACKET_RESPONSE 0xFF
 
 /**
@@ -69,4 +78,6 @@ void ProtocolSendPacket(UART_t *, unsigned char, unsigned char *, uint8_t);
 void ProtocolSendStringPacket(UART_t *, unsigned char, char *);
 uint8_t ProtocolValidatePacket(ProtocolPacket_t *, unsigned char);
 void ProtocolWriteSerialNumber(UART_t *, ProtocolPacket_t *);
+void ProtocolWriteSerialNumber(UART_t *, ProtocolPacket_t *);
+void ProtocolWriteBuildDate(UART_t *, ProtocolPacket_t *);
 #endif /* PROTOCOL_H */
