@@ -177,7 +177,7 @@ void BC127CommandProfileClose(BC127_t *, uint8_t);
 void BC127CommandProfileOpen(BC127_t *, char *, char *);
 void BC127CommandReset(BC127_t *);
 void BC127CommandSetAudio(BC127_t *, uint8_t, uint8_t);
-void BC127CommandSetAudioAnalog(BC127_t *, char *, char *, char *, char *);
+void BC127CommandSetAudioAnalog(BC127_t *, uint8_t, uint8_t, uint8_t, char *);
 void BC127CommandSetAudioDigital(BC127_t *, char *,char *, char *, char *);
 void BC127CommandSetAutoConnect(BC127_t *, uint8_t);
 void BC127CommandSetBtState(BC127_t *, uint8_t, uint8_t);

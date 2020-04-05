@@ -623,25 +623,25 @@ void BC127CommandSetAudio(BC127_t *bt, uint8_t input, uint8_t output) {
  *         Set the analog audio parameters
  *     Params:
  *         BC127_t *bt - A pointer to the module object
- *         char *inputGain - The microphone/line in gain. Default: 15
- *         char *outputGain - The output gain. Default: 15
- *         char *micBias - The Mic Bias setting. Default On with audio (1)
+ *         uint8_t inputGain - The microphone/line in gain. Default: 15
+ *         uint8_t outputGain - The output gain. Default: 15
+ *         uint8_t micBias - The Mic Bias setting. Default On with audio (1)
  *         char *enablePreamp - Enable a 20dB gain on the input. Default: Off
  *     Returns:
  *         void
  */
 void BC127CommandSetAudioAnalog(
     BC127_t *bt,
-    char *inputGain,
-    char *outputGain,
-    char *micBias,
+    uint8_t inputGain,
+    uint8_t outputGain,
+    uint8_t micBias,
     char *enablePreamp
 ) {
     char command[29];
     snprintf(
         command,
         29,
-        "SET AUDIO_ANALOG=%s %s %s %s",
+        "SET AUDIO_ANALOG=%d %d %d %s",
         inputGain,
         outputGain,
         micBias,

@@ -9,23 +9,28 @@
 #include "eeprom.h"
 
 #define CONFIG_CACHE_VALUES 96
-/* EEPROM 0x00 - 0x04: Reserved for the BlueBus */
-#define CONFIG_SN_ADDRESS {0x00, 0x01}
-#define CONFIG_VERSION_ADDRESS {0x02, 0x03}
-#define CONFIG_BOOTLOADER_MODE_ADDRESS 0x04
-/* EEPROM 0x05 - 0x0B: Reserved for Trap counters */
-#define CONFIG_TRAP_OSC 0x05
-#define CONFIG_TRAP_ADDR 0x06
-#define CONFIG_TRAP_STACK 0x07
-#define CONFIG_TRAP_MATH 0x08
-#define CONFIG_TRAP_NVM 0x09
-#define CONFIG_TRAP_GEN 0x0A
-#define CONFIG_TRAP_LAST_ERR 0x0B
-/* EEPROM 0x0C - 0x19: IBus / Vehicle Data */
-#define CONFIG_UI_MODE_ADDRESS 0x0C
-#define CONFIG_NAV_TYPE_ADDRESS 0x0D
-#define CONFIG_VEHICLE_TYPE_ADDRESS 0x0E
-#define CONFIG_VEHICLE_VIN_ADDRESS {0x0F, 0x10, 0x11, 0x12, 0x13}
+/* EEPROM 0x00 - 0x07: Reserved for the BlueBus */
+#define CONFIG_SN_ADDRESS_MSB 0x00
+#define CONFIG_SN_ADDRESS_LSB 0x01
+#define CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS 0x02
+#define CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS 0x03
+#define CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS 0x04
+#define CONFIG_BUILD_DATE_ADDRESS_WEEK 0x05
+#define CONFIG_BUILD_DATE_ADDRESS_YEAR 0x06
+#define CONFIG_BOOTLOADER_MODE_ADDRESS 0x07
+/* EEPROM 0x08 - 0x0E: Reserved for Trap counters */
+#define CONFIG_TRAP_OSC 0x08
+#define CONFIG_TRAP_ADDR 0x09
+#define CONFIG_TRAP_STACK 0x0A
+#define CONFIG_TRAP_MATH 0x0B
+#define CONFIG_TRAP_NVM 0x0C
+#define CONFIG_TRAP_GEN 0x0D
+#define CONFIG_TRAP_LAST_ERR 0x0E
+/* EEPROM 0x0F - 0x19: IBus / Vehicle Data */
+#define CONFIG_UI_MODE_ADDRESS 0x0F
+#define CONFIG_NAV_TYPE_ADDRESS 0x10
+#define CONFIG_VEHICLE_TYPE_ADDRESS 0x11
+#define CONFIG_VEHICLE_VIN_ADDRESS {0x12, 0x13, 0x14, 0x15, 0x16}
 /* EEPROM 0x1A - 0x50: User Configurable Settings */
 #define CONFIG_SETTING_LOG_ADDRESS 0x1A
 #define CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS 0x1B
@@ -61,6 +66,10 @@
 #define CONFIG_SETTING_ON 0x01
 #define CONFIG_SETTING_ENABLED 0x00
 #define CONFIG_SETTING_DISABLED 0xFF
+#define CONFIG_SETTING_COMFORT_LOCK_10KM 0x01
+#define CONFIG_SETTING_COMFORT_LOCK_20KM 0x02
+#define CONFIG_SETTING_COMFORT_UNLOCK_POS_1 0x01
+#define CONFIG_SETTING_COMFORT_UNLOCK_POS_0 0x02
 /* EEPROM 0x1A - 0x50: User Configurable Settings */
 #define CONFIG_SETTING_LOG CONFIG_SETTING_LOG_ADDRESS
 #define CONFIG_SETTING_POWEROFF_TIMEOUT CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS
@@ -92,10 +101,19 @@
 
 
 unsigned char ConfigGetByte(unsigned char);
+unsigned char ConfigGetBuildWeek();
+unsigned char ConfigGetBuildYear();
+unsigned char ConfigGetComfortLock();
+unsigned char ConfigGetComfortUnlock();
+unsigned char ConfigGetFirmwareVersionMajor();
+unsigned char ConfigGetFirmwareVersionMinor();
+unsigned char ConfigGetFirmwareVersionPatch();
+void ConfigGetFirmwareVersionString(char *);
 unsigned char ConfigGetIKEType();
 unsigned char ConfigGetLog(unsigned char);
 unsigned char ConfigGetNavType();
 unsigned char ConfigGetPoweroffTimeoutDisabled();
+uint16_t ConfigGetSerialNumber();
 unsigned char ConfigGetSetting(unsigned char);
 unsigned char ConfigGetTrapCount(unsigned char);
 unsigned char ConfigGetTrapLast();
@@ -103,6 +121,9 @@ unsigned char ConfigGetUIMode();
 unsigned char ConfigGetVehicleType();
 void ConfigGetVehicleIdentity(unsigned char *);
 void ConfigSetBootloaderMode(unsigned char);
+void ConfigSetComfortLock(unsigned char);
+void ConfigSetComfortUnlock(unsigned char);
+void ConfigSetFirmwareVersion(unsigned char, unsigned char, unsigned char);
 void ConfigSetIKEType(unsigned char);
 void ConfigSetLog(unsigned char, unsigned char);
 void ConfigSetSetting(unsigned char, unsigned char);

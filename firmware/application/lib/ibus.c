@@ -106,6 +106,51 @@ static void IBusHandleGMMessage(unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBusEvent_DoorsFlapsStatusResponse, pkt);
+    //} else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_IDENT_RESP) {
+    //    unsigned char diagnosticIdx = pkt[9];
+    //    unsigned char moduleVariant = 0x00;
+    //
+    //    if (diagnosticIdx < 0x20) {
+    //        moduleVariant = IBUS_GM_ZKE4;
+    //    }
+    //    switch (diagnosticIdx) {
+    //        case 0x20:
+    //        case 0x21:
+    //        case 0x22:
+    //            moduleVariant = IBUS_GM_ZKE3_GM1;
+    //            break;
+    //        case 0x25:
+    //            moduleVariant = IBUS_GM_ZKE3_GM5;
+    //            break;
+    //        case 0x40:
+    //        case 0x50:
+    //        case 0x41:
+    //        case 0x51:
+    //        case 0x42:
+    //        case 0x52:
+    //            moduleVariant = IBUS_GM_ZKE5;
+    //            break;
+    //        case 0x45:
+    //        case 0x55:
+    //        case 0x46:
+    //        case 0x56:
+    //            moduleVariant = IBUS_GM_ZKE5_S12;
+    //            break;
+    //        case 0x80:
+    //        case 0x81:
+    //            moduleVariant = IBUS_GM_ZKE3_GM4;
+    //            break;
+    //        case 0x85:
+    //            moduleVariant = IBUS_GM_ZKE3_GM6;
+    //            break;
+    //        case 0xA0:
+    //            moduleVariant = IBUS_GM_ZKEBC1;
+    //            break;
+    //        case 0xA3:
+    //            moduleVariant = IBUS_GM_ZKEBC1RD;
+    //            break;
+    //    }
+    //    // Emit event
     }
 }
 
@@ -272,7 +317,9 @@ static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
 
 static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD) {
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
+        EventTriggerCallback(IBusEvent_ModuleStatusResponse, pkt);
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD) {
         if (pkt[IBUS_PKT_CMD] == IBus_MID_Button_Press) {
             EventTriggerCallback(IBusEvent_MIDButtonPress, pkt);
         }
@@ -1142,7 +1189,7 @@ void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_UNLOCK_HIGH, // Job
+            IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
@@ -1200,7 +1247,7 @@ void IBusCommandGMDoorLockHigh(IBus_t *ibus)
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_LOCK_HIGH, // Job
+            IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
@@ -1229,7 +1276,7 @@ void IBusCommandGMDoorLockLow(IBus_t *ibus)
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_LOCK_LOW, // Job
+            IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
@@ -1245,7 +1292,7 @@ void IBusCommandGMDoorLockLow(IBus_t *ibus)
 }
 
 /**
- * IBusCommandGMDoorLockLow()
+ * IBusCommandGMDoorUnlockAll()
  *     Description:
  *        Issue a diagnostic message to the GM to unlock all doors
  *     Params:
@@ -1268,6 +1315,35 @@ void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             IBUS_CMD_ZKE3_GM4_JOB_CENTRAL_LOCK, // Job
+            0x01 // On / Off
+        };
+        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
+    }
+}
+
+/**
+ * IBusCommandGMDoorLockAll()
+ *     Description:
+ *        Issue a diagnostic message to the GM to lock all doors
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandGMDoorLockAll(IBus_t *ibus)
+{
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+        unsigned char msg[] = {
+            IBUS_CMD_DIA_JOB_REQUEST,
+            IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
+            0x01 // On / Off
+        };
+        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+        unsigned char msg[] = {
+            IBUS_CMD_DIA_JOB_REQUEST,
+            0x00, // Sub-Module
+            IBUS_CMD_ZKE3_GM4_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
@@ -1299,15 +1375,36 @@ static void IBusInternalCommandGTWriteIndex(
         command = IBUS_CMD_GT_WRITE_MK4;
     }
     uint8_t length = strlen(message);
-    if (length > 20) {
-        length = 20;
+    if (length > 15) {
+        length = 15;
     }
-    const size_t pktLenght = length + 4;
+    const size_t pktLenght = length + 5;
     unsigned char text[pktLenght];
     text[0] = command;
     text[1] = indexMode;
     text[2] = 0x00;
     text[3] = 0x40 + (unsigned char) index;
+    uint8_t idx;
+    for (idx = 0; idx < length; idx++) {
+        text[idx + 4] = message[idx];
+    }
+    text[pktLenght - 1] = 0x06;
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
+}
+
+static void IBusCommandGTWriteIndexStaticInternal(
+    IBus_t *ibus,
+    uint8_t index,
+    char *message,
+    uint8_t padding
+) {
+    uint8_t length = strlen(message);
+    const size_t pktLenght = length + 4;
+    unsigned char text[pktLenght];
+    text[0] = IBUS_CMD_GT_WRITE_MK2;
+    text[1] = IBUS_CMD_GT_WRITE_STATIC;
+    text[2] = padding;
+    text[3] = index;
     uint8_t idx;
     for (idx = 0; idx < length; idx++) {
         text[idx + 4] = message[idx];
@@ -1369,12 +1466,22 @@ void IBusCommandGTWriteIndexTMC(
     );
 }
 
+/**
+ * IBusCommandGTWriteIndexTitle()
+ *     Description:
+ *        Write the TMC title "Strip"
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *message - The text
+ *     Returns:
+ *         void
+ */
 void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     uint8_t length = strlen(message);
     if (length > 20) {
         length = 20;
     }
-    const size_t pktLenght = length + 4;
+    const size_t pktLenght = length + 6;
     unsigned char text[pktLenght];
     text[0] = 0x21;
     text[1] = 0x61;
@@ -1384,6 +1491,8 @@ void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     for (idx = 0; idx < length; idx++) {
         text[idx + 4] = message[idx];
     }
+    text[pktLenght - 2] = 0x06;
+    text[pktLenght - 1] = 0x06;
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
@@ -1393,17 +1502,27 @@ void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
     if (length > 38) {
         length = 38;
     }
-    const size_t pktLenght = length + 4;
-    unsigned char text[pktLenght];
-    text[0] = IBUS_CMD_GT_WRITE_MK4;
-    text[1] = IBUS_CMD_GT_WRITE_STATIC;
-    text[2] = 0x00;
-    text[3] = 0x40 + (unsigned char) index;
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 4] = message[idx];
+    uint8_t padding = 0;
+    uint8_t currentIdx = 0;
+    while (currentIdx < (length - 1) ) {
+        uint8_t textLength = length - currentIdx;
+        if (textLength > 15) {
+            textLength = 15;
+        }
+        char msg[textLength + 1];
+        memset(msg, '\0', sizeof(msg));
+        uint8_t i;
+        for (i = 0; i < textLength; i++) {
+            msg[i] = message[currentIdx];
+            currentIdx++;
+        }
+        if (padding == 0) {
+            IBusCommandGTWriteIndexStaticInternal(ibus, index, msg, 1);
+        } else {
+            IBusCommandGTWriteIndexStaticInternal(ibus, index, msg, padding);
+        }
+        padding = padding + textLength;
     }
-    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
 /**
@@ -1530,6 +1649,55 @@ void IBusCommandIKEGetIgnitionStatus(IBus_t *ibus)
 }
 
 /**
+ * IBusCommandIKEGetVehicleType()
+ *     Description:
+ *        Request the vehicle type from the IKE
+ *        Raw: 68 03 80 14 FF
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKEGetVehicleType(IBus_t *ibus)
+{
+    unsigned char msg[] = {IBUS_CMD_IKE_REQ_VEHICLE_TYPE};
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_IKE,
+        msg,
+        1
+    );
+}
+
+/**
+ * IBusCommandIKESetTime()
+ *     Description:
+ *        Set the current time
+ *        Raw: 3B 06 80 40 01 HH MM CS
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKESetTime(IBus_t *ibus, uint8_t hour, uint8_t minute)
+{
+    unsigned char msg[] = {
+        IBUS_CMD_IKE_SET_REQUEST,
+        IBUS_CMD_IKE_SET_REQUEST_TIME,
+        hour,
+        minute
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_GT,
+        IBUS_DEVICE_IKE,
+        msg,
+        sizeof(msg)
+    );
+}
+
+/**
  * IBusCommandIKEText()
  *     Description:
  *        Send text to the Business Radio
@@ -1570,28 +1738,6 @@ void IBusCommandIKEText(IBus_t *ibus, char *message)
 void IBusCommandIKETextClear(IBus_t *ibus)
 {
     IBusCommandIKEText(ibus, 0);
-}
-
-/**
- * IBusCommandIKEGetVehicleType()
- *     Description:
- *        Request the vehicle type from the IKE
- *        Raw: 68 03 80 14 FF
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandIKEGetVehicleType(IBus_t *ibus)
-{
-    unsigned char msg[] = {IBUS_CMD_IKE_REQ_VEHICLE_TYPE};
-    IBusSendCommand(
-        ibus,
-        IBUS_DEVICE_RAD,
-        IBUS_DEVICE_IKE,
-        msg,
-        1
-    );
 }
 
 /**

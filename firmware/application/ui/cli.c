@@ -121,18 +121,6 @@ void CLIProcess()
             } else if (UtilsStricmp(msgBuf[0], "BT") == 0) {
                 if (UtilsStricmp(msgBuf[1], "CONFIG") == 0) {
                     BC127SendCommand(cli.bt, "CONFIG");
-                } else if (UtilsStricmp(msgBuf[1], "CVC") == 0) {
-                    if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                        BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
-                        BC127CommandWrite(cli.bt);
-                    } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                        BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF ON OFF");
-                        BC127CommandWrite(cli.bt);
-                    } else if (UtilsStricmp(msgBuf[2], "NB") == 0) {
-                        BC127CommandCVC(cli.bt, "NB", 0, 0);
-                    } else if (UtilsStricmp(msgBuf[2], "WB") == 0) {
-                        BC127CommandCVC(cli.bt, "WB", 0, 0);
-                    }
                 } else if (UtilsStricmp(msgBuf[1], "HFP") == 0) {
                     if (delimCount == 2) {
                         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
@@ -163,17 +151,24 @@ void CLIProcess()
                             // Store it as a smaller value
                             micGain = micGain - 0xC0;
                             ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
-                            BC127CommandSetMicGain(cli.bt, micGain);
+                            if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS) == CONFIG_SETTING_ON) {
+                                BC127CommandSetAudioAnalog(cli.bt, micGain, 15, 1, "OFF");
+                            } else {
+                                BC127CommandSetAudioAnalog(cli.bt, micGain, 15, 0, "OFF");
+                            }
                         }
                     }
                 } else if (UtilsStricmp(msgBuf[1], "MBIAS") == 0) {
                     if (delimCount == 2) {
                         LogRaw("Set the Mic Bias Generator");
                     } else {
+                        unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
                         if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                            BC127CommandSetAudioAnalog(cli.bt, "11", "15", "1", "OFF");
+                            BC127CommandSetAudioAnalog(cli.bt, micGain, 15, 1, "OFF");
+                            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
                         } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                            BC127CommandSetAudioAnalog(cli.bt, "11", "15", "0", "OFF");
+                            BC127CommandSetAudioAnalog(cli.bt, micGain, 15, 0, "OFF");
+                            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_OFF);
                         } else {
                             cmdSuccess = 0;
                         }
@@ -277,8 +272,6 @@ void CLIProcess()
                 } else {
                     cmdSuccess = 0;
                 }
-            }  else if(UtilsStricmp(msgBuf[0], "ID") == 0) {
-                    LogRaw("BlueBus\r\n");
             } else if (UtilsStricmp(msgBuf[0], "REBOOT") == 0) {
                 UtilsReset();
             } else if (UtilsStricmp(msgBuf[0], "RESET") == 0) {
@@ -417,6 +410,14 @@ void CLIProcess()
                         TimerDelayMicroseconds(250);
                         TEL_MUTE = 0;
                     }
+                } else if (UtilsStricmp(msgBuf[1], "TIME") == 0) {
+                    if (delimCount == 4) {
+                        uint8_t hour = UtilsStrToInt(msgBuf[2]);
+                        uint8_t minutes = UtilsStrToInt(msgBuf[3]);
+                        IBusCommandIKESetTime(cli.ibus, hour, minutes);
+                    } else {
+                        cmdSuccess = 0;
+                    }
                 } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
                     if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                         ConfigSetPoweroffTimeoutDisabled(CONFIG_SETTING_ENABLED);
@@ -450,7 +451,7 @@ void CLIProcess()
             } else if (UtilsStricmp(msgBuf[0], "RESTORE") == 0) {
                 BC127CommandUnpair(cli.bt);
                 BC127CommandSetAudio(cli.bt, 0, 1);
-                BC127CommandSetAudioAnalog(cli.bt, "11", "15", "1", "OFF");
+                BC127CommandSetAudioAnalog(cli.bt, 3, 15, 1, "OFF");
                 BC127CommandSetAudioDigital(
                     cli.bt,
                     BC127_AUDIO_SPDIF,
@@ -458,12 +459,14 @@ void CLIProcess()
                     "0",
                     "0"
                 );
+                BC127CommandSetProfiles(cli.bt, 1, 1, 1, 1);
                 BC127CommandSetBtState(cli.bt, 2, 2);
                 BC127CommandSetCodec(cli.bt, 1, "OFF");
                 BC127CommandSetMetadata(cli.bt, 1);
                 BC127CommandSetModuleName(cli.bt, "BlueBus");
-                BC127CommandSetUART(cli.bt, 115200, "OFF", 0);
-                BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
+                BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF ON OFF");
+                // Save
+                BC127CommandWrite(cli.bt);
                 // Reset the UI
                 ConfigSetUIMode(0x00);
                 ConfigSetNavType(0x00);
@@ -477,16 +480,23 @@ void CLIProcess()
                     idx++;
                 }
                 // Settings
-                ConfigSetSetting(CONFIG_SETTING_DAC_VOL, 0x46); // -10dB Gain
+                // -10dB Gain for the DAC
+                ConfigSetSetting(CONFIG_SETTING_DAC_VOL, 0x44);
+                PCM51XXSetVolume(0x44);
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
+                // Set the Mic Gain to -17.5dB by default
+                ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x03);
             } else if (UtilsStricmp(msgBuf[0], "VERSION") == 0) {
-                LogRaw(FIRMWARE_VERSION);
+                char version[9];
+                ConfigGetFirmwareVersionString(version);
+                LogRaw("BlueBus Firmware: %s\r\n", version);
+                LogRaw("Serial Number: %u\r\n", ConfigGetSerialNumber());
+                LogRaw("Build Date: %d/%d\r\n", ConfigGetBuildWeek(), ConfigGetBuildYear());
             } else if (UtilsStricmp(msgBuf[0], "HELP") == 0 || UtilsStricmp(msgBuf[0], "?") == 0) {
                 LogRaw("Available Commands:\r\n");
                 LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
                 LogRaw("    BT CONFIG - Get the BC127 Configuration\r\n");
-                LogRaw("    BT CVC ON/OFF - Enable or Disable CVC.\r\n");
                 LogRaw("    BT HFP ON/OFF - Enable or Disable HFP. Get the HFP Status without a param.\r\n");
                 LogRaw("    BT MGAIN x - Set the Mic gain to x where x is octal C0-D6\r\n");
                 LogRaw("    BT PAIR - Enable pairing mode\r\n");
@@ -500,9 +510,9 @@ void CLIProcess()
                 LogRaw("    GET IBUS - Get debug info from the IBus\r\n");
                 LogRaw("    GET UI - Get the current UI Mode\r\n");
                 LogRaw("    GET I2S - Read the WM8804 INT/SPD Status registers\r\n");
-                LogRaw("    ID - Print 'BlueBus' to the terminal\r\n");
                 LogRaw("    REBOOT - Reboot the device\r\n");
                 LogRaw("    SET DAC GAIN xx - Set the PCM5122 gain from 0x00 - 0xCF (higher is lower)\r\n");
+                LogRaw("    SET DSP INPUT ANALOG/DIGITAL - Set the CD Changer DSP input\r\n");
                 LogRaw("    SET IGN ON/OFF - Send the ignition status message [DEBUG]\r\n");
                 LogRaw("    SET LOG x ON/OFF - Change logging for x (BT, IBUS, SYS, UI)\r\n");
                 LogRaw("    SET PWROFF ON/OFF - Enable or disable auto power off\r\n");
@@ -513,6 +523,7 @@ void CLIProcess()
                 LogRaw("        x = 3. MID (Multi-Info Display)\r\n");
                 LogRaw("        x = 4. BMBT / MID\r\n");
                 LogRaw("        x = 5. Business Navigation\r\n");
+                LogRaw("    RESTORE - Fully Reset the BlueBus and BC127 to factory defaults\r\n");
                 LogRaw("    VERSION - Get the BlueBus Hardware/Software Versions\r\n");
             } else {
                 cmdSuccess = 0;
@@ -526,8 +537,10 @@ void CLIProcess()
             if (((TimerGetMillis() - cli.lastRxTimestamp) / 1000) > CLI_BANNER_TIMEOUT ||
                 cli.lastRxTimestamp == 0
             ) {
+                char version[9];
+                ConfigGetFirmwareVersionString(version);
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
-                LogRaw(FIRMWARE_VERSION);
+                LogRaw("BlueBus Firmware: %s\r\n", version);
                 LogRaw("Try HELP or ?\r\n");
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
             }
@@ -550,8 +563,10 @@ void CLITimerTerminalReady(void *ctx)
 {
     if (cli.terminalReady == 1) {
         cli.terminalReady = 2;
+        char version[9];
+        ConfigGetFirmwareVersionString(version);
         LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
-        LogRaw(FIRMWARE_VERSION);
+        LogRaw("BlueBus Firmware: %s\r\n", version);
         LogRaw("Try HELP or ?\r\n");
         LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
         LogRaw("# ");

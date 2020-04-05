@@ -42,6 +42,7 @@
 #define HANDLER_POWER_OFF 0
 #define HANDLER_POWER_ON 1
 #define HANDLER_POWER_TIMEOUT_MILLIS 61000
+#define HANDLER_TEL_DAC_VOL 0x44
 typedef struct HandlerModuleStatus_t {
     uint8_t BMBT: 1;
     uint8_t DSP: 1;

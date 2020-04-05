@@ -96,7 +96,7 @@
 #define IBUS_DEVICE_BMBT_Button_Mode 0x23
 #define IBUS_DEVICE_BMBT_Button_PlayPause 0x14
 #define IBUS_DEVICE_BMBT_Button_Knob 0x05
-#define IBUS_DEVICE_BMBT_Button_Display 0x30
+#define IBUS_DEVICE_BMBT_Button_Display 0xB0
 #define IBUS_DEVICE_BMBT_Button_Info 0x38
 #define IBUS_DEVICE_BMBT_Button_SEL 0x0F
 #define IBUS_DEVICE_BMBT_Button_Num1 0x11
@@ -121,14 +121,15 @@
 #define IBUS_CMD_ZKE3_GM4_JOB_CENTRAL_LOCK 0x0B
 #define IBUS_CMD_ZKE3_GM4_JOB_LOCK_HIGH 0x40
 #define IBUS_CMD_ZKE3_GM4_JOB_LOCK_LOW 0x41
+#define IBUS_CMD_ZKE3_GM4_JOB_LOCK_ALL 0x88
+#define IBUS_CMD_ZKE3_GM6_JOB_LOCK_ALL 0x90
 #define IBUS_CMD_ZKE3_GM4_JOB_UNLOCK_HIGH 0x42
 #define IBUS_CMD_ZKE3_GM4_JOB_UNLOCK_LOW 0x43
 #define IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK 0x03
-#define IBUS_CMD_ZKE5_JOB_LOCK_HIGH 0x34
-#define IBUS_CMD_ZKE5_JOB_LOCK_LOW 0x36
-#define IBUS_CMD_ZKE5_JOB_UNLOCK_HIGH 0x35
+#define IBUS_CMD_ZKE5_JOB_LOCK_ALL 0x34
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_LOW 0x37
-#define IBUS_CMD_ZKE5_JOB_UNLOCK_ALL 0x96
+#define IBUS_CMD_ZKE5_JOB_UNLOCK_ALL 0x45
+
 
 #define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
 #define IBUS_CMD_GT_MENU_SELECT 0x31
@@ -150,6 +151,8 @@
 #define IBUS_CMD_IKE_RESP_VEHICLE_TYPE 0x15
 #define IBUS_CMD_IKE_SPEED_RPM_UPDATE 0x18
 #define IBUS_CMD_IKE_COOLANT_TEMP_UPDATE 0x19
+#define IBUS_CMD_IKE_SET_REQUEST 0x40
+#define IBUS_CMD_IKE_SET_REQUEST_TIME 0x01
 
 #define IBUS_CMD_LCM_REQ_REDUNDANT_DATA 0x53
 #define IBUS_CMD_LCM_RESP_REDUNDANT_DATA 0x54
@@ -177,7 +180,7 @@
 #define IBUS_GT_SW_ID_OFFSET 33
 #define IBUS_GT_TONE_MENU_OFF 0x08
 #define IBUS_GT_SEL_MENU_OFF 0x04
-#define IBUS_GT_MENU_CLEAR 0xC
+#define IBUS_GT_MENU_CLEAR 0x0C
 #define IBUS_GT_RADIO_SCREEN_OFF 0x02
 #define IBUS_CMD_GT_CHANGE_UI_REQ 0x20
 #define IBUS_CMD_GT_CHANGE_UI_RESP 0x21
@@ -251,6 +254,16 @@
 #define IBUS_VEHICLE_TYPE_E46_Z4 0x02
 #define IBUS_IKE_TYPE_LOW 0x00
 #define IBUS_IKE_TYPE_HIGH 0x0F
+
+#define IBUS_GM_ZKE3_GM1 1
+#define IBUS_GM_ZKE3_GM4 2
+#define IBUS_GM_ZKE3_GM5 3
+#define IBUS_GM_ZKE3_GM6 4
+#define IBUS_GM_ZKE4 5
+#define IBUS_GM_ZKE5 6
+#define IBUS_GM_ZKE5_S12 7
+#define IBUS_GM_ZKEBC1 8
+#define IBUS_GM_ZKEBC1RD 9
 
 // Events
 #define IBusEvent_GTDIAIdentityResponse 32
@@ -347,6 +360,7 @@ void IBusCommandGMDoorUnlockLow(IBus_t *);
 void IBusCommandGMDoorLockHigh(IBus_t *);
 void IBusCommandGMDoorLockLow(IBus_t *);
 void IBusCommandGMDoorUnlockAll(IBus_t *);
+void IBusCommandGMDoorLockAll(IBus_t *);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
 void IBusCommandGTWriteBusinessNavTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *);
@@ -358,9 +372,10 @@ void IBusCommandGTWriteTitleIndex(IBus_t *, char *);
 void IBusCommandGTWriteTitleC43(IBus_t *, char *);
 void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnitionStatus(IBus_t *);
+void IBusCommandIKEGetVehicleType(IBus_t *);
+void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
-void IBusCommandIKEGetVehicleType(IBus_t *);
 void IBusCommandLCMEnableBlinker(IBus_t *, unsigned char);
 void IBusCommandLCMGetRedundantData(IBus_t *);
 void IBusCommandMIDDisplayTitleText(IBus_t *, char *);

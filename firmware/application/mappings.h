@@ -69,6 +69,8 @@
 #define UIEvent_InitiateConnection 64
 #define UIEvent_CloseConnection 65
 
-#define FIRMWARE_VERSION "BlueBus Firmware: 1.0.9.40\r\n"
+#define FIRMWARE_VERSION_MAJOR 1
+#define FIRMWARE_VERSION_MINOR 1
+#define FIRMWARE_VERSION_PATCH 5
 
 #endif /* IO_MAPPINGS_H */

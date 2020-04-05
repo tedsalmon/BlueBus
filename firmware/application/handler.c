@@ -212,7 +212,6 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         MIDInit(bt, ibus);
         BMBTInit(bt, ibus);
     }
-    BC127CommandSetMicGain(Context.bt, ConfigGetSetting(CONFIG_SETTING_MIC_GAIN));
 }
 
 static void HandlerSwitchUI(HandlerContext_t *context, unsigned char newUi)
@@ -306,17 +305,19 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
             // Enable the amp and mute the radio
             PAM_SHDN = 1;
             TEL_MUTE = 1;
+            PCM51XXSetVolume(HANDLER_TEL_DAC_VOL);
         }
         // Close the call immediately, without waiting for SCO to close
         if (context->bt->callStatus == BC127_CALL_INACTIVE) {
             // Disable the amp and unmute the radio
             PAM_SHDN = 0;
             TimerDelayMicroseconds(250);
+            PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_VOL));
             TEL_MUTE = 0;
         }
-        // Tell the vehicle what the call status is
-        HandlerIBusBroadcastTELStatus(context);
     }
+    // Tell the vehicle what the call status is
+    HandlerIBusBroadcastTELStatus(context);
 }
 
 /**
@@ -613,6 +614,17 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
                 IBusCommandDSPSetMode(context->ibus, IBUS_DSP_MODE_INPUT_SPDIF);
             }
+            // Fallback for vehicle UI Identification
+            // If no UI has been detected and we have been
+            // running at least a minute, default to CD53 UI
+            if (context->ibusModuleStatus.MID == 0 &&
+                context->ibusModuleStatus.GT == 0 &&
+                ConfigGetUIMode() == 0 &&
+                TimerGetMillis() > 60000
+            ) {
+                LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
+                HandlerSwitchUI(context, IBus_UI_CD53);
+            }
         } else {
             curStatus = requestedCommand;
         }
@@ -793,12 +805,12 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
             BC127CommandClose(context->bt, BC127_CLOSE_ALL);
             BC127ClearPairedDevices(context->bt);
             // Unlock the vehicle
-            if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS_ADDRESS) ==
-                CONFIG_SETTING_ON
+            if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_0 &&
+                context->bodyModuleStatus.doorsLocked == 1
             ) {
                 if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
                     IBusCommandGMDoorCenterLockButton(context->ibus);
-                } else {
+                } else if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
                     if (context->bodyModuleStatus.lowSideDoors == 1) {
                         IBusCommandGMDoorUnlockAll(context->ibus);
                     } else {
@@ -807,6 +819,24 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
                 }
             }
             context->bodyModuleStatus.lowSideDoors = 0;
+        // If the engine was on, but now it's in position 1
+        } else if (context->ibus->ignitionStatus >= IBUS_IGNITION_KL15 &&
+                   ignitionStatus == IBUS_IGNITION_KLR
+        ) {
+            // Unlock the vehicle
+            if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_1 &&
+                context->bodyModuleStatus.doorsLocked == 1
+            ) {
+                if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+                    IBusCommandGMDoorCenterLockButton(context->ibus);
+                } else if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+                    if (context->bodyModuleStatus.lowSideDoors == 1) {
+                        IBusCommandGMDoorUnlockAll(context->ibus);
+                    } else {
+                        IBusCommandGMDoorUnlockHigh(context->ibus);
+                    }
+                }
+            }
         // If the ignition WAS off, but now it's not, then run these actions.
         // I realize the second condition is frivolous, but it helps with
         // readability.
@@ -880,15 +910,19 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS_ADDRESS) ==
-        CONFIG_SETTING_ON &&
+    unsigned char comfortLock = ConfigGetComfortLock();
+    if (comfortLock != CONFIG_SETTING_OFF &&
         context->bodyModuleStatus.doorsLocked == 0x00
-        && pkt[4] >= 0x20
     ) {
-        if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-            IBusCommandGMDoorCenterLockButton(context->ibus);
-        } else {
-            IBusCommandGMDoorLockHigh(context->ibus);
+        
+        if ((comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM && pkt[4] >= 10) ||
+            (comfortLock == CONFIG_SETTING_COMFORT_LOCK_20KM && pkt[4] >= 20)
+        ) {
+            if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+                IBusCommandGMDoorCenterLockButton(context->ibus);
+            } else {
+                IBusCommandGMDoorLockAll(context->ibus);
+            }
         }
     }
 }
@@ -1058,8 +1092,7 @@ void HandlerIBusLCMRedundantData(void *ctx, unsigned char *pkt)
         // Request the vehicle type
         IBusCommandIKEGetVehicleType(context->ibus);
         // Fallback for vehicle UI Identification
-        if (context->ibusModuleStatus.RAD != 0 &&
-            context->ibusModuleStatus.MID == 0 &&
+        if (context->ibusModuleStatus.MID == 0 &&
             context->ibusModuleStatus.GT == 0
         ) {
             LogInfo(LOG_SOURCE_SYSTEM, "Detected CD53 UI");

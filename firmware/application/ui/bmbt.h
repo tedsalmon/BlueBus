@@ -51,9 +51,10 @@
 #define BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN 2
 #define BMBT_MENU_IDX_SETTINGS_CALLING_TCU_MODE 3
 /* Comfort Settings */
-#define BMBT_MENU_IDX_SETTINGS_COMFORT_LOCKS 0
-#define BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS 1
-#define BMBT_MENU_IDX_SETTINGS_COMFORT_VEHICLE_TYPE 2
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_LOCK 0
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_UNLOCK 1
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS 2
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_VEHICLE_TYPE 3
 /* UI Settings */
 #define BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU 0
 #define BMBT_MENU_IDX_SETTINGS_UI_METADATA_MODE 1
@@ -91,7 +92,6 @@ typedef struct BMBTContext_t {
     IBus_t *ibus;
     uint8_t menu;
     BMBTStatus_t status;
-    uint8_t writtenIndices;
     uint8_t timerHeaderIntervals;
     uint8_t timerMenuIntervals;
     uint8_t displayUpdateTaskId;

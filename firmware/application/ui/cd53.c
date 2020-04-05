@@ -241,10 +241,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             }
             if (nextMenu == CD53_SETTING_IDX_HFP) {
                 if (ConfigGetSetting(CONFIG_SETTING_HFP) == 0x00) {
-                    CD53SetMainDisplayText(context, "HFP: 0", 0);
+                    CD53SetMainDisplayText(context, "Handsfree: 0", 0);
                     context->settingValue = CONFIG_SETTING_OFF;
                 } else {
-                    CD53SetMainDisplayText(context, "HFP: 1", 0);
+                    CD53SetMainDisplayText(context, "Handsfree: 1", 0);
                     context->settingValue = CONFIG_SETTING_ON;
                 }
                 context->settingIdx = CD53_SETTING_IDX_HFP;
@@ -311,13 +311,11 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                 context->settingIdx = CD53_SETTING_IDX_COMFORT_LOCKS;
             }
             if (nextMenu == CD53_SETTING_IDX_TCU_MODE) {
-                unsigned char tcuMode = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
-                if (tcuMode == CONFIG_SETTING_OFF) {
+                context->settingValue = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
+                if (context->settingValue == CONFIG_SETTING_OFF) {
                     CD53SetMainDisplayText(context, "TCU Mode: Always", 0);
-                    context->settingValue = CONFIG_SETTING_OFF;
                 } else {
                     CD53SetMainDisplayText(context, "TCU Mode: Out of BT", 0);
-                    context->settingValue = CONFIG_SETTING_ON;
                 }
                 context->settingIdx = CD53_SETTING_IDX_TCU_MODE;
             }
@@ -332,10 +330,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             // Select different configuration options
             if (context->settingIdx == CD53_SETTING_IDX_HFP) {
                 if (context->settingValue == CONFIG_SETTING_OFF) {
-                    CD53SetMainDisplayText(context, "HFP: 1", 0);
+                    CD53SetMainDisplayText(context, "Handsfree: 1", 0);
                     context->settingValue = CONFIG_SETTING_ON;
                 } else {
-                    CD53SetMainDisplayText(context, "HFP: 0", 0);
+                    CD53SetMainDisplayText(context, "Handsfree: 0", 0);
                     context->settingValue = CONFIG_SETTING_OFF;
                 }
             }
@@ -391,7 +389,7 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                 }
             }
             if (context->settingIdx == CD53_SETTING_IDX_TCU_MODE) {
-                if (context->settingValue == CONFIG_SETTING_ON) {
+                if (context->settingValue == CONFIG_SETTING_OFF) {
                     CD53SetMainDisplayText(context, "TCU Mode: Out of BT", 0);
                     context->settingValue = CONFIG_SETTING_ON;
                 } else {
@@ -517,10 +515,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         if (context->mode != CD53_MODE_SETTINGS) {
             CD53SetTempDisplayText(context, "Settings", 2);
             if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
-                CD53SetMainDisplayText(context, "HFP: 0", 0);
+                CD53SetMainDisplayText(context, "Handsfree: 0", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
             } else {
-                CD53SetMainDisplayText(context, "HFP: 1", 0);
+                CD53SetMainDisplayText(context, "Handsfree: 1", 0);
                 context->settingValue = CONFIG_SETTING_ON;
             }
             context->settingIdx = CD53_SETTING_IDX_HFP;
@@ -738,7 +736,6 @@ void CD53IBusRADUpdateMainArea(void *ctx, unsigned char *pkt)
 void CD53TimerDisplay(void *ctx)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
-    LogRaw("CD53 Timer Called!\r\n");
     if (context->mode != CD53_MODE_OFF) {
         // Display the temp text, if there is any
         if (context->tempDisplay.status > CD53_DISPLAY_STATUS_OFF) {

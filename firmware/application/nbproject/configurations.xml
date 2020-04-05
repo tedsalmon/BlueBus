@@ -29,6 +29,7 @@
       <itemPath>handler.h</itemPath>
       <itemPath>mappings.h</itemPath>
       <itemPath>sysconfig.h</itemPath>
+      <itemPath>upgrade.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -64,6 +65,7 @@
       </logicalFolder>
       <itemPath>main.c</itemPath>
       <itemPath>handler.c</itemPath>
+      <itemPath>upgrade.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

@@ -687,12 +687,11 @@ void MIDIIBusRADMIDMenuUpdate(void *ctx, unsigned char *pkt)
             context->displayUpdate = MID_DISPLAY_REWRITE_NEXT;
         } else if (context->displayUpdate == MID_DISPLAY_REWRITE_NEXT) {
             context->displayUpdate = MID_DISPLAY_NONE;
-            if (context->mode == MID_MODE_ACTIVE) {
-                MIDMenuMain(context);
-            } else if (context->mode == MID_MODE_SETTINGS) {
-                MIDMenuSettings(context);
-            } else if (context->mode == MID_MODE_DEVICES) {
-                MIDMenuDevices(context);
+            if (context->mode == MID_MODE_ACTIVE ||
+                context->mode == MID_MODE_SETTINGS ||
+                context->mode == MID_MODE_DEVICES
+            ) {
+                TimerTriggerScheduledTask(context->displayUpdateTaskId);
             }
         } else {
             context->displayUpdate = MID_DISPLAY_REWRITE_NEXT;

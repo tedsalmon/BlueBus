@@ -10,6 +10,7 @@
 #include "sysconfig.h"
 #include "handler.h"
 #include "mappings.h"
+#include "upgrade.h"
 #include "lib/bc127.h"
 #include "lib/config.h"
 #include "lib/eeprom.h"
@@ -92,6 +93,8 @@ int main(void)
     HandlerInit(&bt, &ibus);
     // Initialize the CLI
     CLIInit(&systemUart, &bt, &ibus);
+    // Run any applicable updates
+    UpgradeProcess(&bt, &ibus);
 
     // Process events
     while (1) {
