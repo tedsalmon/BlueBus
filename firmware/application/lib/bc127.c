@@ -801,20 +801,40 @@ void BC127CommandSetMetadata(BC127_t *bt, uint8_t value)
   *         Set the microphone gain
   *     Params:
   *         BC127_t *bt - A pointer to the module object
-  *         unsigned char gain - The gain index to set
+  *         unsigned char micGain - The gain index to set
+  *         unsigned char bias - If the bias generator should be on or off
   *     Returns:
   *         void
   */
-void BC127CommandSetMicGain(BC127_t *bt, unsigned char gain)
-{
-    gain = gain + 0x0C;
+void BC127CommandSetMicGain(
+    BC127_t *bt,
+    unsigned char micGain,
+    unsigned char bias
+) {
+    unsigned char gain = micGain + 0xC0;
     BC127CommandCVC(bt, "NB", 0, 14);
     char params[70];
-    snprintf(params, 70, "2280 0000 1A00 8000 0000 00%02X 0000 0000 0000 0000 0000 0020 0000 00%02X", gain, gain);
+    snprintf(
+        params,
+        70,
+        "2280 0000 1A00 0000 0000 00%02X 0000 0000 0000 0000 0000 0020 0000 00%02X",
+        gain,
+        gain
+    );
     BC127CommandCVCParams(bt, params);
     BC127CommandCVC(bt, "WB", 0, 14);
-    snprintf(params, 70, "2284 0000 1A00 8000 0000 00%02X 0000 0000 0000 0000 0000 0020 0000 00%02X", gain, gain);
+    snprintf(
+        params,
+        70,
+        "2284 0000 1A00 0000 0000 00%02X 0000 0000 0000 0000 0000 0020 0000 00%02X",
+        gain,
+        gain
+    );
     BC127CommandCVCParams(bt, params);
+    // Mic Gain comes in as an array index, so add 1
+    // before configuring the analog microphone gain
+    micGain = micGain + 1;
+    BC127CommandSetAudioAnalog(bt, micGain, 15, bias, "OFF");
 }
 
 /**

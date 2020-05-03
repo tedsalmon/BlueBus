@@ -406,7 +406,7 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
 static void BMBTMenuMain(BMBTContext_t *context)
 {
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_DASHBOARD, "Dashboard", 0);
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_DEVICE_SELECTION, "Select Device", 0);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_DEVICE_SELECTION, "Devices", 0);
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS, "Settings", 6);
     IBusCommandGTWriteIndexTitle(context->ibus, "Main Menu");
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
@@ -524,7 +524,7 @@ static void BMBTMenuDeviceSelection(BMBTContext_t *context)
         }
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, "Back", 1);
-    IBusCommandGTWriteIndexTitle(context->ibus, "Device Selection");
+    IBusCommandGTWriteIndexTitle(context->ibus, "Devices");
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
     context->menu = BMBT_MENU_DEVICE_SELECTION;
 }
@@ -568,7 +568,7 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
             0
         );
     }
-    unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
+    unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
     char volText[15];
     if (currentVolume > 0x30) {
         unsigned char gain = (currentVolume - 0x30) / 2;
@@ -675,7 +675,7 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_COMFORT_VEHICLE_TYPE,
-            "Car: E38/E39/E53",
+            "Car: E3x/E53",
             2
         );
     } else if (vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
@@ -742,23 +742,8 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
         context,
         BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN,
         micGainText,
-        0
+        3
     );
-    if (ConfigGetSetting(CONFIG_SETTING_TCU_MODE) == CONFIG_SETTING_OFF) {
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_CALLING_TCU_MODE,
-            "TCU: Always",
-            2
-        );
-    } else {
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_CALLING_TCU_MODE,
-            "TCU: Radio/AUX",
-            2
-        );
-    }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, "Back", 1);
     IBusCommandGTWriteIndexTitle(context->ibus, "Settings -> Calling");
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
@@ -837,12 +822,12 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
 static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
 {
     if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_DAC_GAIN) {
-        unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_VOL);
+        unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
         currentVolume = currentVolume + 2;
         if (currentVolume > 96) {
             currentVolume = 0;
         }
-        ConfigSetSetting(CONFIG_SETTING_DAC_VOL, currentVolume);
+        ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, currentVolume);
         char volText[15];
         if (currentVolume > 0x30) {
             unsigned char gain = (currentVolume - 0x30) / 2;
@@ -861,11 +846,11 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT) {
         if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
             ConfigSetSetting(CONFIG_SETTING_USE_SPDIF_INPUT, CONFIG_SETTING_OFF);
-            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_MODE_INPUT_RADIO);
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
             BMBTGTWriteIndex(context, selectedIdx, "DSP: Analog", 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_USE_SPDIF_INPUT, CONFIG_SETTING_ON);
-            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_MODE_INPUT_SPDIF);
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
             BMBTGTWriteIndex(context, selectedIdx, "DSP: Digital", 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_AUTOPLAY) {
@@ -890,7 +875,7 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         unsigned char value = ConfigGetVehicleType();
         if (value == 0 || value == 0xFF || value == IBUS_VEHICLE_TYPE_E46_Z4) {
             ConfigSetVehicleType(IBUS_VEHICLE_TYPE_E38_E39_E53);
-            BMBTGTWriteIndex(context, selectedIdx, "Car: E38/E39/E53", 0);
+            BMBTGTWriteIndex(context, selectedIdx, "Car: E3x/E53", 0);
         } else {
             ConfigSetVehicleType(IBUS_VEHICLE_TYPE_E46_Z4);
             BMBTGTWriteIndex(context, selectedIdx, "Car: E46/Z4", 0);
@@ -958,14 +943,6 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
         }
         BC127CommandReset(context->bt);
-    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_TCU_MODE) {
-        if (ConfigGetSetting(CONFIG_SETTING_TCU_MODE) == CONFIG_SETTING_OFF) {
-            ConfigSetSetting(CONFIG_SETTING_TCU_MODE, CONFIG_SETTING_ON);
-            BMBTGTWriteIndex(context, selectedIdx, "TCU: Radio/AUX", 0);
-        } else {
-            ConfigSetSetting(CONFIG_SETTING_TCU_MODE, CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, "TCU: Always", 0);
-        }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN) {
         unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
         micGain = micGain + 1;
@@ -974,11 +951,10 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
         }
         ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
         if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS) == CONFIG_SETTING_OFF) {
-            BC127CommandSetAudioAnalog(context->bt, micGain, 15, 0, "OFF");
+            BC127CommandSetMicGain(context->bt, micGain, 0);
         } else {
-            BC127CommandSetAudioAnalog(context->bt, micGain, 15, 1, "OFF");
+            BC127CommandSetMicGain(context->bt, micGain, 1);
         }
-        BC127CommandSetMicGain(context->bt, micGain);
         char micGainText[16];
         snprintf(micGainText, 15, "Mic Gain: %idB", (int8_t)BC127CVCGainTable[micGain]);
         micGainText[15] = '\0';
@@ -991,11 +967,11 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MIC_BIAS) {
         unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
         if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS) == CONFIG_SETTING_OFF) {
-            BC127CommandSetAudioAnalog(context->bt, micGain, 15, 1, "OFF");
+            BC127CommandSetMicGain(context->bt, micGain, 1);
             ConfigSetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS, CONFIG_SETTING_ON);
             BMBTGTWriteIndex(context, selectedIdx, "Mic Bias: On", 0);
         } else {
-            BC127CommandSetAudioAnalog(context->bt, micGain, 15, 0, "OFF");
+            BC127CommandSetMicGain(context->bt, micGain, 0);
             ConfigSetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS, CONFIG_SETTING_OFF);
             BMBTGTWriteIndex(context, selectedIdx, "Mic Bias: Off", 0);
         }

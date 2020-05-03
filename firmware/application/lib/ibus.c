@@ -297,11 +297,15 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
                 );
             }
         }
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+               pkt[IBUS_PKT_LEN] == 0x03
+    ) {
+        EventTriggerCallback(IBusEvent_LCMDiagnosticsAcknowledge, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_LCM_RESP_REDUNDANT_DATA) {
         EventTriggerCallback(IBusEvent_LCMRedundantData, pkt);
     }
 }
-
 
 static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
 {
@@ -330,7 +334,7 @@ static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         EventTriggerCallback(IBusEvent_ModuleStatusResponse, pkt);
@@ -368,6 +372,12 @@ static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
             (pkt[13] & 0xF0) >> 4,
             pkt[13] & 0x0F
         );
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DSP ||
+               pkt[IBUS_PKT_DST] == IBUS_DEVICE_LOC
+    ) {
+         if (pkt[IBUS_PKT_CMD] == IBUS_DSP_CMD_CONFIG_SET) {
+            EventTriggerCallback(IBusEvent_DSPConfigSet, pkt);
+        }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GT) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_SCREEN_MODE_UPDATE) {
             EventTriggerCallback(IBusEvent_ScreenModeUpdate, pkt);
@@ -396,10 +406,12 @@ static void IBusHandleRadioMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandleMessageForTEL(unsigned char *pkt)
+static void IBusHandleTELMessage(unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
         EventTriggerCallback(IBusEvent_ModuleStatusRequest, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_VOL_CTRL) {
+        EventTriggerCallback(IBusEvent_TELVolumeChange, pkt);
     }
 }
 
@@ -475,7 +487,7 @@ void IBusProcess(IBus_t *ibus)
                 if (IBusValidateChecksum(pkt) == 1) {
                     unsigned char srcSystem = pkt[IBUS_PKT_SRC];
                     if (srcSystem == IBUS_DEVICE_RAD) {
-                        IBusHandleRadioMessage(ibus, pkt);
+                        IBusHandleRADMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_BMBT) {
                         IBusHandleBMBTMessage(pkt);
@@ -505,7 +517,7 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleEWSMessage(pkt);
                     }
                     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
-                        IBusHandleMessageForTEL(pkt);
+                        IBusHandleTELMessage(pkt);
                     }
                 } else {
                     LogError(
@@ -1094,7 +1106,7 @@ void IBusCommandDIATerminateDiag(IBus_t *ibus, unsigned char system)
  */
 void IBusCommandDSPSetMode(IBus_t *ibus, unsigned char mode)
 {
-    unsigned char msg[] = {IBUS_DSP_CMD_MODE, mode};
+    unsigned char msg[] = {IBUS_DSP_CMD_CONFIG_SET, mode};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_RAD,
@@ -1353,7 +1365,7 @@ void IBusCommandGMDoorLockAll(IBus_t *ibus)
 void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
 {
     unsigned char msg[4] = {
-        IBUS_CMD_GT_WRITE_MK2,
+        IBUS_CMD_GT_WRITE_WITH_CURSOR,
         updateType,
         0x01,
         0x00
@@ -1367,20 +1379,14 @@ static void IBusInternalCommandGTWriteIndex(
     char *message,
     unsigned char indexMode
 ) {
-    unsigned char command;
-    if (ibus->gtVersion == IBUS_GT_MKI || ibus->gtVersion == IBUS_GT_MKII) {
-        command = IBUS_CMD_GT_WRITE_MK2;
-        indexMode = IBUS_CMD_GT_WRITE_ZONE;
-    } else {
-        command = IBUS_CMD_GT_WRITE_MK4;
-    }
     uint8_t length = strlen(message);
-    if (length > 15) {
-        length = 15;
+    // @TODO: This is 14 for the older UI. Come up with a better solution
+    if (length > 23) {
+        length = 23;
     }
     const size_t pktLenght = length + 5;
     unsigned char text[pktLenght];
-    text[0] = command;
+    text[0] = IBUS_CMD_GT_WRITE_NO_CURSOR;
     text[1] = indexMode;
     text[2] = 0x00;
     text[3] = 0x40 + (unsigned char) index;
@@ -1396,14 +1402,14 @@ static void IBusCommandGTWriteIndexStaticInternal(
     IBus_t *ibus,
     uint8_t index,
     char *message,
-    uint8_t padding
+    uint8_t cursorPos
 ) {
     uint8_t length = strlen(message);
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
-    text[0] = IBUS_CMD_GT_WRITE_MK2;
+    text[0] = IBUS_CMD_GT_WRITE_WITH_CURSOR;
     text[1] = IBUS_CMD_GT_WRITE_STATIC;
-    text[2] = padding;
+    text[2] = cursorPos;
     text[3] = index;
     uint8_t idx;
     for (idx = 0; idx < length; idx++) {
@@ -1430,7 +1436,7 @@ void IBusCommandGTWriteBusinessNavTitle(IBus_t *ibus, char *message) {
     }
     const size_t pktLenght = length + 3;
     unsigned char text[pktLenght];
-    text[0] = 0x23;
+    text[0] = IBUS_CMD_GT_WRITE_TITLE;
     text[1] = 0x40;
     text[2] = 0x30;
     uint8_t idx;
@@ -1483,10 +1489,10 @@ void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     }
     const size_t pktLenght = length + 6;
     unsigned char text[pktLenght];
-    text[0] = 0x21;
-    text[1] = 0x61;
-    text[2] = 0x00;
-    text[3] = 0x09;
+    text[0] = IBUS_CMD_GT_WRITE_NO_CURSOR;
+    text[1] = IBUS_CMD_GT_WRITE_INDEX_TMC;
+    text[2] = 0x00; // Cursor at 0
+    text[3] = 0x09; // Write menu title index
     uint8_t idx;
     for (idx = 0; idx < length; idx++) {
         text[idx + 4] = message[idx];
@@ -1499,15 +1505,15 @@ void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
 void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
 {
     uint8_t length = strlen(message);
-    if (length > 38) {
-        length = 38;
+    if (length > 40) {
+        length = 40;
     }
-    uint8_t padding = 0;
+    uint8_t cursorPos = 0;
     uint8_t currentIdx = 0;
     while (currentIdx < (length - 1) ) {
         uint8_t textLength = length - currentIdx;
-        if (textLength > 15) {
-            textLength = 15;
+        if (textLength > 0x15) {
+            textLength = 0x15;
         }
         char msg[textLength + 1];
         memset(msg, '\0', sizeof(msg));
@@ -1516,12 +1522,12 @@ void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
             msg[i] = message[currentIdx];
             currentIdx++;
         }
-        if (padding == 0) {
+        if (cursorPos == 0) {
             IBusCommandGTWriteIndexStaticInternal(ibus, index, msg, 1);
         } else {
-            IBusCommandGTWriteIndexStaticInternal(ibus, index, msg, padding);
+            IBusCommandGTWriteIndexStaticInternal(ibus, index, msg, cursorPos);
         }
-        padding = padding + textLength;
+        cursorPos = cursorPos + textLength;
     }
 }
 
@@ -1573,10 +1579,10 @@ void IBusCommandGTWriteTitleIndex(IBus_t *ibus, char *message)
     // Length + Write Type + Write Area + Write Index + Size
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
-    text[0] = IBUS_CMD_GT_WRITE_MK4;
+    text[0] = IBUS_CMD_GT_WRITE_NO_CURSOR;
     text[1] = IBUS_CMD_GT_WRITE_ZONE;
-    text[2] = 0x01;
-    text[3] = 0x40;
+    text[2] = 0x01; // Unused in this layout
+    text[3] = 0x40; // Write Area 0 Index
     uint8_t idx;
     for (idx = 0; idx < length; idx++) {
         text[idx + 4] = message[idx];
@@ -1621,7 +1627,7 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
     }
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
-    text[0] = IBUS_CMD_GT_WRITE_MK2;
+    text[0] = IBUS_CMD_GT_WRITE_WITH_CURSOR;
     text[1] = IBUS_CMD_GT_WRITE_ZONE;
     text[2] = 0x01;
     text[3] = (unsigned char) index;

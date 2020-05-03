@@ -274,8 +274,9 @@ unsigned char ConfigGetPoweroffTimeoutDisabled()
  */
 uint16_t ConfigGetSerialNumber()
 {
-    unsigned char snMSB = ConfigGetByte(CONFIG_SN_ADDRESS_MSB);
-    unsigned char snLSB = ConfigGetByte(CONFIG_SN_ADDRESS_LSB);
+    // Do not use ConfigGetByte() because our LSB could very well be 0xFF
+    unsigned char snMSB = EEPROMReadByte(CONFIG_SN_ADDRESS_MSB);
+    unsigned char snLSB = EEPROMReadByte(CONFIG_SN_ADDRESS_LSB);
     uint16_t serialNumber = (snMSB << 8) + snLSB;
     return serialNumber;
 }

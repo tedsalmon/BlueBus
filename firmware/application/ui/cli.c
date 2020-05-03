@@ -121,6 +121,22 @@ void CLIProcess()
             } else if (UtilsStricmp(msgBuf[0], "BT") == 0) {
                 if (UtilsStricmp(msgBuf[1], "CONFIG") == 0) {
                     BC127SendCommand(cli.bt, "CONFIG");
+                } else if(UtilsStricmp(msgBuf[1], "CVC") == 0) {
+                    if (delimCount == 2) {
+                        cmdSuccess = 0;
+                    } else {
+                        if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                            BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
+                            unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+                            unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS);
+                            BC127CommandSetMicGain(cli.bt, micGain, micBias);
+                        } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                            BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF ON OFF");
+                            BC127CommandWrite(cli.bt);
+                        } else {
+                            cmdSuccess = 0;
+                        }
+                    }
                 } else if (UtilsStricmp(msgBuf[1], "HFP") == 0) {
                     if (delimCount == 2) {
                         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
@@ -152,9 +168,9 @@ void CLIProcess()
                             micGain = micGain - 0xC0;
                             ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
                             if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS) == CONFIG_SETTING_ON) {
-                                BC127CommandSetAudioAnalog(cli.bt, micGain, 15, 1, "OFF");
+                                BC127CommandSetMicGain(cli.bt, micGain, 1);
                             } else {
-                                BC127CommandSetAudioAnalog(cli.bt, micGain, 15, 0, "OFF");
+                                BC127CommandSetMicGain(cli.bt, micGain, 0);
                             }
                         }
                     }
@@ -164,10 +180,10 @@ void CLIProcess()
                     } else {
                         unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
                         if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                            BC127CommandSetAudioAnalog(cli.bt, micGain, 15, 1, "OFF");
+                            BC127CommandSetMicGain(cli.bt, micGain, 1);
                             ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
                         } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                            BC127CommandSetAudioAnalog(cli.bt, micGain, 15, 0, "OFF");
+                            BC127CommandSetMicGain(cli.bt, micGain, 0);
                             ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_OFF);
                         } else {
                             cmdSuccess = 0;
@@ -234,7 +250,7 @@ void CLIProcess()
                     LogRaw("PCM5122: I2SSTAT %02X (0x5E) [%d]\r\n", buffer, status);
                     status = I2CRead(0x4C, 0x76, &buffer);
                     LogRaw("PCM5122: PWRSTAT %02X (0x76) [%d]\r\n", buffer, status);
-                    LogRaw("PCM5122: Volume configured to %02X\r\n", ConfigGetSetting(CONFIG_SETTING_DAC_VOL));
+                    LogRaw("PCM5122: Volume configured to %02X\r\n", ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL));
                 } else if (UtilsStricmp(msgBuf[1], "I2S") == 0) {
                     int8_t status;
                     unsigned char buffer;
@@ -313,7 +329,7 @@ void CLIProcess()
                 if (UtilsStricmp(msgBuf[1], "DAC") == 0) {
                     if (UtilsStricmp(msgBuf[2], "GAIN") == 0) {
                         unsigned char currentVolume = UtilsStrToHex(msgBuf[3]);
-                        ConfigSetSetting(CONFIG_SETTING_DAC_VOL, currentVolume);
+                        ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, currentVolume);
                         PCM51XXSetVolume(currentVolume);
                     } else {
                         cmdSuccess = 0;
@@ -464,7 +480,7 @@ void CLIProcess()
                 BC127CommandSetCodec(cli.bt, 1, "OFF");
                 BC127CommandSetMetadata(cli.bt, 1);
                 BC127CommandSetModuleName(cli.bt, "BlueBus");
-                BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF ON OFF");
+                BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON ON ON OFF");
                 // Save
                 BC127CommandWrite(cli.bt);
                 // Reset the UI
@@ -475,13 +491,13 @@ void CLIProcess()
                 ConfigSetVehicleIdentity(vin);
                 // Reset all settings
                 uint8_t idx = CONFIG_SETTING_START_ADDRESS;
-                while (idx <= 0x50) {
+                while (idx <= CONFIG_SETTING_END_ADDRESS) {
                     ConfigSetSetting(idx, 0x00);
                     idx++;
                 }
                 // Settings
                 // -10dB Gain for the DAC
-                ConfigSetSetting(CONFIG_SETTING_DAC_VOL, 0x44);
+                ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, 0x44);
                 PCM51XXSetVolume(0x44);
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);

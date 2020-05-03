@@ -17,9 +17,10 @@
 #include "ui/bmbt.h"
 #include "ui/cd53.h"
 #include "ui/mid.h"
-#define HANDLER_BLINKER_OFF 0
-#define HANDLER_BLINKER_DRV 1
-#define HANDLER_BLINKER_PSG 2
+#define HANDLER_LCM_STATUS_BLINKER_OFF 0
+#define HANDLER_LCM_STATUS_BLINKER_ON 1
+#define HANDLER_LCM_TRIGGER_OFF 0
+#define HANDLER_LCM_TRIGGER_ON 1
 #define HANDLER_BT_CONN_OFF 0
 #define HANDLER_BT_CONN_ON 1
 #define HANDLER_BT_CONN_CHANGE 2
@@ -43,6 +44,17 @@
 #define HANDLER_POWER_ON 1
 #define HANDLER_POWER_TIMEOUT_MILLIS 61000
 #define HANDLER_TEL_DAC_VOL 0x44
+typedef struct HandlerBodyModuleStatus_t {
+    uint8_t lowSideDoors: 1;
+    uint8_t doorsLocked: 1;
+} HandlerBodyModuleStatus_t;
+typedef struct HandlerLightControlStatus_t {
+    uint8_t lightStatus: 1;
+    uint8_t triggerStatus: 1;
+    uint8_t drvBlinker: 1;
+    uint8_t psgBlinker: 1;
+    uint8_t blinkCount: 4;
+} HandlerLightControlStatus_t;
 typedef struct HandlerModuleStatus_t {
     uint8_t BMBT: 1;
     uint8_t DSP: 1;
@@ -52,10 +64,7 @@ typedef struct HandlerModuleStatus_t {
     uint8_t MID: 1;
     uint8_t RAD: 1;
 } HandlerModuleStatus_t;
-typedef struct HandlerBodyModuleStatus_t {
-    uint8_t lowSideDoors: 1;
-    uint8_t doorsLocked: 1;
-} HandlerBodyModuleStatus_t;
+
 typedef struct HandlerContext_t {
     BC127_t *bt;
     IBus_t *ibus;
@@ -67,11 +76,10 @@ typedef struct HandlerContext_t {
     uint8_t btConnectionStatus;
     uint8_t uiMode;
     uint8_t seekMode;
-    uint8_t blinkerStatus;
-    uint8_t blinkerCount;
     uint8_t mflButtonStatus;
-    HandlerModuleStatus_t ibusModuleStatus;
     HandlerBodyModuleStatus_t bodyModuleStatus;
+    HandlerLightControlStatus_t lightControlStatus;
+    HandlerModuleStatus_t ibusModuleStatus;
     uint8_t powerStatus;
     uint8_t scanIntervals;
     uint32_t cdChangerLastPoll;
@@ -88,6 +96,7 @@ void HandlerBC127PlaybackStatus(void *, unsigned char *);
 void HandlerUICloseConnection(void *, unsigned char *);
 void HandlerUIInitiateConnection(void *, unsigned char *);
 void HandlerIBusCDCStatus(void *, unsigned char *);
+void HandlerIBusDSPConfigSet(void *, unsigned char *);
 void HandlerIBusFirstMessageReceived(void *, unsigned char *);
 void HandlerIBusGMDoorsFlapsStatusResponse(void *, unsigned char *);
 void HandlerIBusGTDIAIdentityResponse(void *, unsigned char *);
@@ -96,12 +105,14 @@ void HandlerIBusIKEIgnitionStatus(void *, unsigned char *);
 void HandlerIBusIKESpeedRPMUpdate(void *, unsigned char *);
 void HandlerIBusIKEVehicleType(void *, unsigned char *);
 void HandlerIBusLCMLightStatus(void *, unsigned char *);
+void HandlerIBusLCMDiagnosticsAcknowledge(void *, unsigned char *);
 void HandlerIBusLCMDimmerStatus(void *, unsigned char *);
 void HandlerIBusLCMRedundantData(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerIBusMFLVolume(void *, unsigned char *);
 void HandlerIBusModuleStatusResponse(void *, unsigned char *);
 void HandlerIBusModuleStatusRequest(void *, unsigned char *);
+void HandlerIBusTELVolumeChange(void *, unsigned char *);
 void HandlerIBusBroadcastCDCStatus(HandlerContext_t *);
 void HandlerIBusBroadcastTELStatus(HandlerContext_t *);
 void HandlerTimerCDCAnnounce(void *);

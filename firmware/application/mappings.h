@@ -66,11 +66,11 @@
 #define TEL_MUTE LATEbits.LATE2
 
 // UI Events
-#define UIEvent_InitiateConnection 64
-#define UIEvent_CloseConnection 65
+#define UIEvent_InitiateConnection 96
+#define UIEvent_CloseConnection 97
 
 #define FIRMWARE_VERSION_MAJOR 1
 #define FIRMWARE_VERSION_MINOR 1
-#define FIRMWARE_VERSION_PATCH 5
+#define FIRMWARE_VERSION_PATCH 8
 
 #endif /* IO_MAPPINGS_H */

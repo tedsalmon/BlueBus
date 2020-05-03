@@ -55,7 +55,7 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         }
         // Settings
         // -10dB Gain for the DAC
-        ConfigSetSetting(CONFIG_SETTING_DAC_VOL, 0x44);
+        ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, 0x44);
         PCM51XXSetVolume(0x44);
         ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
         ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
@@ -67,13 +67,29 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 1) == 1) {
         BC127CommandSetAudioAnalog(bt, 3, 15, 1, "OFF");
         BC127CommandSetProfiles(bt, 1, 1, 1, 1);
-        BC127SendCommand(bt, "SET HFP_CONFIG=OFF ON ON OFF ON OFF");
-        BC127CommandWrite(bt);
         // Set the Mic Gain to -17.5dB by default
         ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x03);
         LogRaw("Ran Upgrade 1.1.1\r\n");
     }
-
+    // Changes in version 1.1.7
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 7) == 1) {
+        // Install the cVc license
+        BC127SendCommand(bt, "LICENSE CVC=3A6B CB90 E2D6 FC81 0000");
+        LogRaw("Ran Upgrade 1.1.7\r\n");
+    }
+    // Changes in version 1.1.8
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 8) == 1) {
+        // Enable cVc by default
+        BC127SendCommand(bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
+        BC127CommandWrite(bt);
+        unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+        unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS);
+        // Set the cVc parameters
+        BC127CommandSetMicGain(bt, micGain, micBias);
+        // -10dB Gain for the DAC in Telephone Mode
+        ConfigSetSetting(CONFIG_SETTING_DAC_TEL_VOL, 0x44);
+        LogRaw("Ran Upgrade 1.1.8\r\n");
+    }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
         FIRMWARE_VERSION_MINOR,

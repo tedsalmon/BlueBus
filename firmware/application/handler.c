@@ -36,11 +36,10 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     Context.btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
     Context.uiMode = ConfigGetUIMode();
     Context.seekMode = HANDLER_CDC_SEEK_MODE_NONE;
-    Context.blinkerCount = 0;
-    Context.blinkerStatus = HANDLER_BLINKER_OFF;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
-    memset(&Context.ibusModuleStatus, 0, sizeof(HandlerModuleStatus_t));
     memset(&Context.bodyModuleStatus, 0, sizeof(HandlerBodyModuleStatus_t));
+    memset(&Context.lightControlStatus, 0, sizeof(HandlerLightControlStatus_t));
+    memset(&Context.ibusModuleStatus, 0, sizeof(HandlerModuleStatus_t));
     Context.powerStatus = HANDLER_POWER_ON;
     Context.scanIntervals = 0;
     EventRegisterCallback(
@@ -94,6 +93,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBusEvent_DSPConfigSet,
+        &HandlerIBusDSPConfigSet,
+        &Context
+    );
+    EventRegisterCallback(
         IBusEvent_FirstMessageReceived,
         &HandlerIBusFirstMessageReceived,
         &Context
@@ -134,6 +138,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBusEvent_LCMDiagnosticsAcknowledge,
+        &HandlerIBusLCMDiagnosticsAcknowledge,
+        &Context
+    );
+    EventRegisterCallback(
         IBusEvent_LCMDimmerStatus,
         &HandlerIBusLCMDimmerStatus,
         &Context
@@ -161,6 +170,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBusEvent_ModuleStatusResponse,
         &HandlerIBusModuleStatusResponse,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_TELVolumeChange,
+        &HandlerIBusTELVolumeChange,
         &Context
     );
     TimerRegisterScheduledTask(
@@ -295,9 +309,18 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
     ) {
         BC127CommandPlay(context->bt);
     }
-    if (ConfigGetSetting(CONFIG_SETTING_TCU_MODE) == CONFIG_SETTING_OFF ||
-        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING
+    // Set the DAC Volume to the "telephone" volume
+    if ((context->bt->callStatus == BC127_CALL_INCOMING ||
+        context->bt->callStatus == BC127_CALL_OUTGOING) &&
+        context->bt->scoStatus == BC127_CALL_SCO_OPEN
     ) {
+        PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_TEL_VOL));
+    }
+    // Reset the DAC volume to the preset "audio" volume once the call is over
+    if (context->bt->callStatus == BC127_CALL_INACTIVE) {
+        PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL));
+    }
+    if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING) {
         if ((context->bt->callStatus == BC127_CALL_INCOMING ||
             context->bt->callStatus == BC127_CALL_OUTGOING) &&
             context->bt->scoStatus == BC127_CALL_SCO_OPEN
@@ -305,14 +328,12 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
             // Enable the amp and mute the radio
             PAM_SHDN = 1;
             TEL_MUTE = 1;
-            PCM51XXSetVolume(HANDLER_TEL_DAC_VOL);
         }
         // Close the call immediately, without waiting for SCO to close
         if (context->bt->callStatus == BC127_CALL_INACTIVE) {
             // Disable the amp and unmute the radio
             PAM_SHDN = 0;
             TimerDelayMicroseconds(250);
-            PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_VOL));
             TEL_MUTE = 0;
         }
     }
@@ -555,7 +576,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
         curFunction = IBUS_CDC_FUNC_NOT_PLAYING;
         // Return to non-S/PDIF input once told to stop playback, if enabled
         if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
-            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_MODE_INPUT_RADIO);
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
         }
     } else if (requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK) {
         curFunction = context->ibus->cdChangerFunction;
@@ -612,7 +633,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             }
             // Set the Input to S/PDIF once told to start playback, if enabled
             if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
-                IBusCommandDSPSetMode(context->ibus, IBUS_DSP_MODE_INPUT_SPDIF);
+                IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
             }
             // Fallback for vehicle UI Identification
             // If no UI has been detected and we have been
@@ -636,6 +657,29 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
     IBusCommandCDCStatus(context->ibus, curStatus, curFunction, discCount);
     context->cdChangerLastPoll = TimerGetMillis();
     context->cdChangerLastStatus = TimerGetMillis();
+}
+
+/**
+ * HandlerIBusDSPConfigSet()
+ *     Description:
+ *         Sort through received DSP configurations to ensure
+ *         the correct input source is selected when appropriate
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusDSPConfigSet(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
+        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
+        ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON
+    ) {
+        // Set the Input to S/PDIF if we are overridden
+        IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+    }
 }
 
 /**
@@ -709,10 +753,10 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, unsigned char *pkt)
     }
     unsigned char lockStatus = pkt[4] & 0xF0;
     if (CHECK_BIT(lockStatus, 4) != 0) {
-        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Centrol Locks unlocked");
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks unlocked");
         context->bodyModuleStatus.doorsLocked = 0;
     } else if (CHECK_BIT(lockStatus, 5) != 0) {
-        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Centrol Locks locked");
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks locked");
         context->bodyModuleStatus.doorsLocked = 1;
     }
 }
@@ -914,9 +958,9 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
     if (comfortLock != CONFIG_SETTING_OFF &&
         context->bodyModuleStatus.doorsLocked == 0x00
     ) {
-        
-        if ((comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM && pkt[4] >= 10) ||
-            (comfortLock == CONFIG_SETTING_COMFORT_LOCK_20KM && pkt[4] >= 20)
+        uint16_t speed = pkt[4] * 2;
+        if ((comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM && speed >= 10) ||
+            (comfortLock == CONFIG_SETTING_COMFORT_LOCK_20KM && speed >= 20)
         ) {
             if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
                 IBusCommandGMDoorCenterLockButton(context->ibus);
@@ -984,45 +1028,75 @@ void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
     if (blinkCount > 0x01 && blinkCount != 0xFF) {
         HandlerContext_t *context = (HandlerContext_t *) ctx;
         unsigned char lightStatus = pkt[4];
-        if (context->blinkerStatus == HANDLER_BLINKER_OFF) {
-            context->blinkerCount = 2;
+        if (context->lightControlStatus.lightStatus == HANDLER_LCM_STATUS_BLINKER_OFF) {
+            context->lightControlStatus.blinkCount = 2;
             if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) != 0 &&
                 CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) == 0
             ) {
-                context->blinkerStatus = HANDLER_BLINKER_DRV;
+                context->lightControlStatus.drvBlinker = 1;
+                context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_ON;
                 IBusCommandLCMEnableBlinker(context->ibus, IBUS_LCM_BLINKER_DRV);
             } else if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) != 0 &&
                 CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) == 0
             ) {
-                context->blinkerStatus = HANDLER_BLINKER_PSG;
+                context->lightControlStatus.psgBlinker = 1;
+                context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_ON;
                 IBusCommandLCMEnableBlinker(context->ibus, IBUS_LCM_BLINKER_PSG);
             }
-        } else if (context->blinkerStatus == HANDLER_BLINKER_DRV) {
+        } else if (context->lightControlStatus.drvBlinker == 1) {
             if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) != 0 ||
-                context->blinkerCount == blinkCount
+                context->lightControlStatus.blinkCount == blinkCount
             ) {
                 // Reset ourselves once the signal is off so we do not
                 // reactivate and signal in increments of `blinkCount`
                 if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) == 0) {
-                    context->blinkerStatus = HANDLER_BLINKER_OFF;
+                    context->lightControlStatus.drvBlinker = 0;
+                    context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
                 }
-                IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
+                if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
+                    IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
+                }
             } else {
-                context->blinkerCount++;
+                context->lightControlStatus.blinkCount++;
             }
-        } else if (context->blinkerStatus == HANDLER_BLINKER_PSG) {
+        } else if (context->lightControlStatus.psgBlinker == 1) {
             if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) != 0 ||
-                context->blinkerCount == blinkCount
+                context->lightControlStatus.blinkCount == blinkCount
             ) {
                 // Reset ourselves once the signal is off so we do not
                 // reactivate and signal in increments of `blinkCount`
                 if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) == 0) {
-                    context->blinkerStatus = HANDLER_BLINKER_OFF;
+                    context->lightControlStatus.psgBlinker = 0;
+                    context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
                 }
-                IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
+                if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
+                    IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
+                }
             } else {
-                context->blinkerCount++;
+                context->lightControlStatus.blinkCount++;
             }
+        }
+    }
+}
+
+/**
+ * HandlerIBusLCMDiagnosticsAcknowledge()
+ *     Description:
+ *         Track when the LCM acknowledges a diagnostic command
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusLCMDiagnosticsAcknowledge(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->lightControlStatus.lightStatus == HANDLER_LCM_STATUS_BLINKER_ON) {
+        if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
+            context->lightControlStatus.triggerStatus = HANDLER_LCM_TRIGGER_OFF;
+        } else {
+            context->lightControlStatus.triggerStatus = HANDLER_LCM_TRIGGER_ON;
         }
     }
 }
@@ -1206,6 +1280,29 @@ void HandlerIBusModuleStatusRequest(void *ctx, unsigned char *pkt)
             0x01
         );
     }
+}
+
+/**
+ * HandlerIBusTELVolumeChange()
+ *     Description:
+ *         Adjust the volume for calls when asked to do so by the BMBT/MID
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusTELVolumeChange(void *ctx, unsigned char *pkt)
+{
+    uint8_t direction = pkt[4] >> 4;
+    unsigned char volume = ConfigGetSetting(CONFIG_SETTING_DAC_TEL_VOL);
+    if (direction == 1) {
+        volume = volume - 0x02;
+    } else {
+        volume = volume + 0x02;
+    }
+    PCM51XXSetVolume(volume);
+    ConfigSetSetting(CONFIG_SETTING_DAC_TEL_VOL, volume);
 }
 
 /**

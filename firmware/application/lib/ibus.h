@@ -86,9 +86,9 @@
 #define IBUS_CDC_DISC_COUNT_6 0x3F
 
 // DSP
-#define IBUS_DSP_CMD_MODE 0x36
-#define IBUS_DSP_MODE_INPUT_RADIO 0xA1
-#define IBUS_DSP_MODE_INPUT_SPDIF 0xA0
+#define IBUS_DSP_CMD_CONFIG_SET 0x36
+#define IBUS_DSP_CONFIG_SET_INPUT_RADIO 0xA1
+#define IBUS_DSP_CONFIG_SET_INPUT_SPDIF 0xA0
 
 // All buttons presses are triggered on the "Push" message
 #define IBUS_DEVICE_BMBT_Button_Next 0x00
@@ -133,11 +133,10 @@
 
 #define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
 #define IBUS_CMD_GT_MENU_SELECT 0x31
-#define IBUS_CMD_GT_WRITE_MK4 0x21
+#define IBUS_CMD_GT_WRITE_NO_CURSOR 0x21
+#define IBUS_CMD_GT_WRITE_WITH_CURSOR 0xA5
 #define IBUS_CMD_GT_WRITE_RESPONSE 0x22
 #define IBUS_CMD_GT_WRITE_TITLE 0x23
-// Newer GTs use a different action to write to fields
-#define IBUS_CMD_GT_WRITE_MK2 0xA5
 #define IBUS_CMD_GT_WRITE_INDEX 0x60
 #define IBUS_CMD_GT_WRITE_INDEX_TMC 0x61
 #define IBUS_CMD_GT_WRITE_ZONE 0x62
@@ -166,6 +165,8 @@
 #define IBUS_CMD_RAD_C43_SET_MENU_MODE 0xC0
 #define IBUS_CMD_RAD_WRITE_MID_DISPLAY 0x23
 #define IBUS_CMD_RAD_WRITE_MID_MENU 0x21
+
+#define IBUS_CMD_VOL_CTRL 0x32
 
 #define IBUS_GT_DETECT_ERROR 0
 #define IBUS_GT_MKI 1
@@ -298,6 +299,9 @@
 #define IBusEvent_ModuleStatusRequest 61
 #define IBusEvent_GTChangeUIRequest 62
 #define IBusEvent_DoorsFlapsStatusResponse 63
+#define IBusEvent_LCMDiagnosticsAcknowledge 64
+#define IBusEvent_DSPConfigSet 65
+#define IBusEvent_TELVolumeChange 66
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR

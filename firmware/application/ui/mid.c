@@ -14,8 +14,7 @@ uint8_t MID_SETTINGS_MENU[] = {
     MID_SETTING_IDX_VEH_TYPE,
     MID_SETTING_IDX_BLINKERS,
     MID_SETTING_IDX_COMFORT_LOCKS,
-    MID_SETTING_IDX_TCU_MODE,
-    MID_SETTING_IDX_PAIRINGS,
+    MID_SETTING_IDX_PAIRINGS
 };
 
 uint8_t MID_SETTINGS_TO_MENU[] = {
@@ -24,8 +23,7 @@ uint8_t MID_SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_AUTOPLAY,
     CONFIG_VEHICLE_TYPE_ADDRESS,
     CONFIG_SETTING_COMFORT_BLINKERS,
-    CONFIG_SETTING_COMFORT_LOCKS,
-    CONFIG_SETTING_TCU_MODE
+    CONFIG_SETTING_COMFORT_LOCKS
 };
 
 void MIDInit(BC127_t *bt, IBus_t *ibus)
@@ -273,17 +271,6 @@ static void MIDShowNextSetting(MIDContext_t *context, uint8_t direction)
         }
         context->settingIdx = MID_SETTING_IDX_COMFORT_LOCKS;
     }
-    if (nextMenu == MID_SETTING_IDX_TCU_MODE) {
-        unsigned char tcuMode = ConfigGetSetting(CONFIG_SETTING_TCU_MODE);
-        if (tcuMode == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "TCU Mode: Always", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        } else {
-            MIDSetMainDisplayText(context, "TCU Mode: Out of BT", 0);
-            context->settingValue = CONFIG_SETTING_ON;
-        }
-        context->settingIdx = MID_SETTING_IDX_TCU_MODE;
-    }
     if (nextMenu== MID_SETTING_IDX_PAIRINGS) {
         MIDSetMainDisplayText(context, "Clear Pairings", 0);
         context->settingIdx = MID_SETTING_IDX_PAIRINGS;
@@ -351,15 +338,6 @@ static void MIDShowNextSettingValue(MIDContext_t *context, uint8_t direction)
             context->settingValue = CONFIG_SETTING_ON;
         } else {
             MIDSetMainDisplayText(context, "Comfort Locks: Off", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        }
-    }
-    if (context->settingIdx == MID_SETTING_IDX_TCU_MODE) {
-        if (context->settingValue == CONFIG_SETTING_ON) {
-            MIDSetMainDisplayText(context, "TCU Mode: Out of BT", 0);
-            context->settingValue = CONFIG_SETTING_ON;
-        } else {
-            MIDSetMainDisplayText(context, "TCU Mode: Always", 0);
             context->settingValue = CONFIG_SETTING_OFF;
         }
     }

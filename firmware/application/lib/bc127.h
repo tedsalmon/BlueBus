@@ -184,7 +184,7 @@ void BC127CommandSetBtState(BC127_t *, uint8_t, uint8_t);
 void BC127CommandSetBtVolConfig(BC127_t *, uint8_t, uint8_t, uint8_t, uint8_t);
 void BC127CommandSetCodec(BC127_t *, uint8_t, char *);
 void BC127CommandSetMetadata(BC127_t *, uint8_t);
-void BC127CommandSetMicGain(BC127_t *, unsigned char);
+void BC127CommandSetMicGain(BC127_t *, unsigned char, unsigned char);
 void BC127CommandSetModuleName(BC127_t *, char *);
 void BC127CommandSetPin(BC127_t *, char *);
 void BC127CommandSetProfiles(BC127_t *, uint8_t, uint8_t, uint8_t, uint8_t);
