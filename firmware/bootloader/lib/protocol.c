@@ -375,9 +375,7 @@ void ProtocolWriteSerialNumber(UART_t *uart, ProtocolPacket_t *packet)
             (EEPROMReadByte(CONFIG_SN_MSB) << 8) | 
             (EEPROMReadByte(CONFIG_SN_LSB) & 0xFF)
     );
-    if ((serialNumber == 0x0000 || serialNumber == 0xFFFF) &&
-        packet->dataSize == 2
-    ) {
+    if (serialNumber == 0xFFFF && packet->dataSize == 2) {
         EEPROMWriteByte(CONFIG_SN_MSB, packet->data[0]);
         EEPROMWriteByte(CONFIG_SN_LSB, packet->data[1]);
         ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_SN_RESPONSE_OK, 0, 0);
@@ -400,12 +398,7 @@ void ProtocolWriteBuildDate(UART_t *uart, ProtocolPacket_t *packet)
 {
     uint8_t buildWeek = EEPROMReadByte(CONFIG_BUILD_DATE_ADDRESS_WEEK);
     uint8_t buildYear = EEPROMReadByte(CONFIG_BUILD_DATE_ADDRESS_YEAR);
-    if ((
-            (buildWeek == 0xFF && buildYear == 0xFF) ||
-            (buildWeek == 0x00 && buildYear == 0x00)
-        ) &&
-        packet->dataSize == 2
-    ) {
+    if (buildWeek == 0xFF && buildYear == 0xFF && packet->dataSize == 2) {
         EEPROMWriteByte(CONFIG_BUILD_DATE_ADDRESS_WEEK, packet->data[0]);
         EEPROMWriteByte(CONFIG_BUILD_DATE_ADDRESS_YEAR, packet->data[1]);
         ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK, 0, 0);
