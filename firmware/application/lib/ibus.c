@@ -1510,10 +1510,10 @@ void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
     }
     uint8_t cursorPos = 0;
     uint8_t currentIdx = 0;
-    while (currentIdx < (length - 1) ) {
+    while (currentIdx < length) {
         uint8_t textLength = length - currentIdx;
-        if (textLength > 0x15) {
-            textLength = 0x15;
+        if (textLength > 0x14) {
+            textLength = 0x14;
         }
         char msg[textLength + 1];
         memset(msg, '\0', sizeof(msg));
@@ -1527,7 +1527,9 @@ void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
         } else {
             IBusCommandGTWriteIndexStaticInternal(ibus, index, msg, cursorPos);
         }
-        cursorPos = cursorPos + textLength;
+        // Make sure we do not write over the
+        // last character of the previous string
+        cursorPos = cursorPos + textLength + 1;
     }
 }
 
@@ -1561,7 +1563,7 @@ void IBusCommandGTWriteTitleArea(IBus_t *ibus, char *message)
 }
 
 /**
- * IBusCommandGTWriteTitleIndex()
+ * IBusCommandGTWriteTitleIndex().l
  *     Description:
  *        Write the title using the "new" UI "Index" update message.
  *     Params:
@@ -2041,6 +2043,34 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
         ibus,
         IBUS_DEVICE_GT,
         IBUS_DEVICE_RAD,
+        msg,
+        sizeof(msg)
+    );
+}
+
+/**
+ * IBusCommandSetVolune()
+ *     Description:
+ *        Exit the radio menu and return to the BMBT home screen
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         unsigned char source - The source system of the command
+ *         unsigned char dest - The destination system of the command
+ *         unsigned char volume - The volume and direction to issue
+ *     Returns:
+ *         void
+ */
+void IBusCommandSetVolune(
+    IBus_t *ibus,
+    unsigned char source,
+    unsigned char dest,
+    unsigned char volume
+) {
+    unsigned char msg[] = {IBUS_CMD_VOLUME_SET, volume};
+    IBusSendCommand(
+        ibus,
+        source,
+        dest,
         msg,
         sizeof(msg)
     );

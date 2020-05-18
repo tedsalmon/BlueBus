@@ -30,7 +30,7 @@
 #define HANDLER_CDC_SEEK_MODE_FWD 1
 #define HANDLER_CDC_SEEK_MODE_REV 2
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
-#define HANDLER_DEVICE_MAX_RECONN 10
+#define HANDLER_DEVICE_MAX_RECONN 15
 #define HANDLER_INT_CDC_ANOUNCE 1000
 #define HANDLER_INT_CDC_STATUS 500
 #define HANDLER_INT_DEVICE_CONN 30000
@@ -44,6 +44,9 @@
 #define HANDLER_POWER_ON 1
 #define HANDLER_POWER_TIMEOUT_MILLIS 61000
 #define HANDLER_TEL_DAC_VOL 0x44
+#define HANDLER_TEL_STATUS_SET 0
+#define HANDLER_TEL_STATUS_FORCE 1
+
 typedef struct HandlerBodyModuleStatus_t {
     uint8_t lowSideDoors: 1;
     uint8_t doorsLocked: 1;
@@ -70,13 +73,12 @@ typedef struct HandlerContext_t {
     IBus_t *ibus;
     uint8_t btDeviceConnRetries;
     int8_t btSelectedDevice;
-    uint8_t btStatus;
-    uint8_t btStatusCount;
     uint8_t btStartupIsRun;
     uint8_t btConnectionStatus;
     uint8_t uiMode;
     uint8_t seekMode;
     uint8_t mflButtonStatus;
+    uint8_t telStatus;
     HandlerBodyModuleStatus_t bodyModuleStatus;
     HandlerLightControlStatus_t lightControlStatus;
     HandlerModuleStatus_t ibusModuleStatus;
@@ -109,12 +111,11 @@ void HandlerIBusLCMDiagnosticsAcknowledge(void *, unsigned char *);
 void HandlerIBusLCMDimmerStatus(void *, unsigned char *);
 void HandlerIBusLCMRedundantData(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
-void HandlerIBusMFLVolume(void *, unsigned char *);
 void HandlerIBusModuleStatusResponse(void *, unsigned char *);
 void HandlerIBusModuleStatusRequest(void *, unsigned char *);
 void HandlerIBusTELVolumeChange(void *, unsigned char *);
 void HandlerIBusBroadcastCDCStatus(HandlerContext_t *);
-void HandlerIBusBroadcastTELStatus(HandlerContext_t *);
+void HandlerIBusBroadcastTELStatus(HandlerContext_t *, unsigned char);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
 void HandlerTimerBTStatus(void *);

@@ -37,6 +37,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     Context.uiMode = ConfigGetUIMode();
     Context.seekMode = HANDLER_CDC_SEEK_MODE_NONE;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
+    Context.telStatus = IBUS_TEL_STATUS_NONE;
     memset(&Context.bodyModuleStatus, 0, sizeof(HandlerBodyModuleStatus_t));
     memset(&Context.lightControlStatus, 0, sizeof(HandlerLightControlStatus_t));
     memset(&Context.ibusModuleStatus, 0, sizeof(HandlerModuleStatus_t));
@@ -155,11 +156,6 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBusEvent_MFLButton,
         &HandlerIBusMFLButton,
-        &Context
-    );
-    EventRegisterCallback(
-        IBusEvent_MFLVolume,
-        &HandlerIBusMFLVolume,
         &Context
     );
     EventRegisterCallback(
@@ -300,6 +296,16 @@ void HandlerBC127BootStatus(void *ctx, unsigned char *tmp)
     }
 }
 
+/**
+ * HandlerBC127CallStatus()
+ *     Description:
+ *         Handle call status updates. When the 
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerBC127CallStatus(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
@@ -309,17 +315,9 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
     ) {
         BC127CommandPlay(context->bt);
     }
-    // Set the DAC Volume to the "telephone" volume
-    if ((context->bt->callStatus == BC127_CALL_INCOMING ||
-        context->bt->callStatus == BC127_CALL_OUTGOING) &&
-        context->bt->scoStatus == BC127_CALL_SCO_OPEN
-    ) {
-        PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_TEL_VOL));
-    }
-    // Reset the DAC volume to the preset "audio" volume once the call is over
-    if (context->bt->callStatus == BC127_CALL_INACTIVE) {
-        PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL));
-    }
+    // Tell the vehicle what the call status is
+    HandlerIBusBroadcastTELStatus(context, HANDLER_TEL_STATUS_SET);
+    // Handle volume control
     if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING) {
         if ((context->bt->callStatus == BC127_CALL_INCOMING ||
             context->bt->callStatus == BC127_CALL_OUTGOING) &&
@@ -328,17 +326,74 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
             // Enable the amp and mute the radio
             PAM_SHDN = 1;
             TEL_MUTE = 1;
+            // Set the DAC Volume to the "telephone" volume
+            PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL));
         }
         // Close the call immediately, without waiting for SCO to close
         if (context->bt->callStatus == BC127_CALL_INACTIVE) {
+            // Reset the DAC volume
+            PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL));
             // Disable the amp and unmute the radio
             PAM_SHDN = 0;
             TimerDelayMicroseconds(250);
             TEL_MUTE = 0;
         }
+    } else {
+        if (context->ibusModuleStatus.DSP == 1 ||
+            context->ibusModuleStatus.MID == 1 ||
+            context->ibusModuleStatus.GT == 1 ||
+            context->ibusModuleStatus.BMBT == 1
+        ) {
+            if ((context->bt->callStatus == BC127_CALL_INCOMING ||
+                context->bt->callStatus == BC127_CALL_OUTGOING) &&
+                context->bt->scoStatus == BC127_CALL_SCO_OPEN
+            ) {
+                unsigned char volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+                LogDebug(LOG_SOURCE_SYSTEM, "Handler: Set Telephone Volume: %d", volume);
+                while (volume > 0) {
+                    unsigned char sourceSystem = IBUS_DEVICE_BMBT;
+                    if (context->ibusModuleStatus.MID == 1) {
+                        sourceSystem = IBUS_DEVICE_MID;
+                    }
+                    unsigned char volStep = volume;
+                    if (volStep > 0x03) {
+                        volStep = 0x03;
+                    }
+                    unsigned char volValue = volStep << 4;
+                    volValue++; // Direction is "Up"
+                    IBusCommandSetVolune(
+                        context->ibus,
+                        sourceSystem,
+                        IBUS_DEVICE_RAD,
+                        volValue
+                    );
+                    volume = volume - volStep;
+                }
+            }
+            if (context->bt->callStatus == BC127_CALL_INACTIVE) {
+                // Reset the NAV / DSP / MID volume
+                unsigned char volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+                LogDebug(LOG_SOURCE_SYSTEM, "Handler: Unset Telephone Volume: %d", volume);
+                while (volume > 0) {
+                    unsigned char sourceSystem = IBUS_DEVICE_BMBT;
+                    if (context->ibusModuleStatus.MID == 1) {
+                        sourceSystem = IBUS_DEVICE_MID;
+                    }
+                    unsigned char volStep = volume;
+                    if (volStep > 0x03) {
+                        volStep = 0x03;
+                    }
+                    IBusCommandSetVolune(
+                        context->ibus,
+                        sourceSystem,
+                        IBUS_DEVICE_RAD,
+                        volStep << 4
+                    );
+                    volume = volume - volStep;
+                }
+            }
+        }
     }
-    // Tell the vehicle what the call status is
-    HandlerIBusBroadcastTELStatus(context);
 }
 
 /**
@@ -365,7 +420,7 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
             if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF ||
                 context->bt->activeDevice.hfpLinkId != 0
             ) {
-                LogDebug(LOG_SOURCE_SYSTEM, "Handler: Disable connectability");
+                LogDebug(LOG_SOURCE_SYSTEM, "Handler: Disable connect-ability");
                 BC127CommandBtState(
                     context->bt,
                     BC127_STATE_OFF,
@@ -917,7 +972,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
         if (ignitionStatus > IBUS_IGNITION_OFF) {
             HandlerIBusBroadcastCDCStatus(context);
             if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-                HandlerIBusBroadcastTELStatus(context);
+                HandlerIBusBroadcastTELStatus(context, HANDLER_TEL_STATUS_FORCE);
                 if (context->bt->activeDevice.avrcpLinkId != 0 &&
                     context->bt->activeDevice.a2dpLinkId != 0
                 ) {
@@ -935,7 +990,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
         }
     }
     if (context->ibusModuleStatus.IKE == 0) {
-        HandlerIBusBroadcastTELStatus(context);
+        HandlerIBusBroadcastTELStatus(context, HANDLER_TEL_STATUS_FORCE);
         context->ibusModuleStatus.IKE = 1;
     }
 }
@@ -1227,28 +1282,6 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
 }
 
 /**
- * HandlerIBusMFLButton()
- *     Description:
- *         Act upon MFL Volume commands to control call volume
- *     Params:
- *         void *ctx - The context provided at registration
- *         unsigned char *pkt - The packet
- *     Returns:
- *         void
- */
-void HandlerIBusMFLVolume(void *ctx, unsigned char *pkt)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->bt->callStatus != BC127_CALL_INACTIVE) {
-        if (pkt[4] == IBusMFLVolUp) {
-            BC127CommandVolume(context->bt, 13, "UP");
-        } else if (pkt[4] == IBusMFLVolDown) {
-            BC127CommandVolume(context->bt, 13, "DOWN");
-        }
-    }
-}
-
-/**
  * HandlerIBusModuleStatusRequest()
  *     Description:
  *         Respond to module status requests for those modules which
@@ -1285,7 +1318,9 @@ void HandlerIBusModuleStatusRequest(void *ctx, unsigned char *pkt)
 /**
  * HandlerIBusTELVolumeChange()
  *     Description:
- *         Adjust the volume for calls when asked to do so by the BMBT/MID
+ *         Adjust the volume for calls when asked to do so by the BMBT / MID.
+ *         If the vehicle has a DSP or MID, then forward those changes to the DSP
+ *         or RAD rather than adjusting the DAC volume.
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *pkt - The IBus packet
@@ -1294,15 +1329,52 @@ void HandlerIBusModuleStatusRequest(void *ctx, unsigned char *pkt)
  */
 void HandlerIBusTELVolumeChange(void *ctx, unsigned char *pkt)
 {
-    uint8_t direction = pkt[4] >> 4;
-    unsigned char volume = ConfigGetSetting(CONFIG_SETTING_DAC_TEL_VOL);
-    if (direction == 1) {
-        volume = volume - 0x02;
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint8_t direction = pkt[4] & 0xF;
+    // Forward volume changes to the RAD / DSP when in Bluetooth mode
+    if ((
+            context->ibusModuleStatus.DSP == 1 ||
+            context->ibusModuleStatus.MID == 1 ||
+            context->ibusModuleStatus.GT == 1 ||
+            context->ibusModuleStatus.BMBT == 1
+        ) && (
+            context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING ||
+            context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PAUSE
+        )
+    ) {
+        unsigned char sourceSystem = IBUS_DEVICE_BMBT;
+        if (context->ibusModuleStatus.MID == 1) {
+            sourceSystem = IBUS_DEVICE_MID;
+        }
+        IBusCommandSetVolune(
+            context->ibus,
+            sourceSystem,
+            IBUS_DEVICE_RAD,
+            pkt[4]
+        );
+        uint8_t steps = pkt[4] >> 4;
+        unsigned char volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        if (volume < 0xFF && direction == 1) {
+            volume = volume + steps;
+        } else if (volume > 0 && direction == 0) {
+            volume = volume - steps;
+        }
+        LogDebug(LOG_SOURCE_SYSTEM, "Handler: Config Telephone Volume: %d", volume);
+        ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
     } else {
-        volume = volume + 0x02;
+        unsigned char volumeConfig = 0x00;
+        if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING) {
+            volumeConfig = CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL;
+            unsigned char volume = ConfigGetSetting(volumeConfig);
+            if (direction == 1 && volume != 0x00) {
+                volume = volume - 0x01;
+            } else if (direction == 0 && volume != 0x00) {
+                volume = volume + 0x01;
+            }
+            PCM51XXSetVolume(volume);
+            ConfigSetSetting(volumeConfig, volume);
+        }
     }
-    PCM51XXSetVolume(volume);
-    ConfigSetSetting(CONFIG_SETTING_DAC_TEL_VOL, volume);
 }
 
 /**
@@ -1409,22 +1481,32 @@ void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
  *         Send the TEL status to the vehicle
  *     Params:
  *         HandlerContext_t *context - The module context
+ *         unsigned char sendFlag - Weather to update the status only if it is
+ *             different, or force broadcasting it.
  *     Returns:
  *         void
  */
-void HandlerIBusBroadcastTELStatus(HandlerContext_t *context)
-{
+void HandlerIBusBroadcastTELStatus(
+    HandlerContext_t *context,
+    unsigned char sendFlag
+) {
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+        unsigned char currentTelStatus = 0x00;
+        if ((context->bt->callStatus == BC127_CALL_INCOMING ||
+            context->bt->callStatus == BC127_CALL_OUTGOING) &&
+            context->bt->scoStatus == BC127_CALL_SCO_OPEN
+        ) {
+            currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE;
+        }
         if (context->bt->callStatus == BC127_CALL_INACTIVE) {
-            IBusCommandTELStatus(
-                context->ibus,
-                IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE
-            );
-        } else {
-            IBusCommandTELStatus(
-                context->ibus,
-                IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE
-            );
+            currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
+        }
+        if (currentTelStatus != 0x00 && 
+            (context->telStatus != currentTelStatus ||
+            sendFlag == HANDLER_TEL_STATUS_FORCE)
+        ) {
+            IBusCommandTELStatus(context->ibus, currentTelStatus);
+            context->telStatus = currentTelStatus;
         }
     }
 }

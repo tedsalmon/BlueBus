@@ -128,8 +128,9 @@ void CLIProcess()
                         if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                             BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
                             unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-                            unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS);
-                            BC127CommandSetMicGain(cli.bt, micGain, micBias);
+                            unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+                            unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+                            BC127CommandSetMicGain(cli.bt, micGain, micBias, micPreamp);
                         } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                             BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF ON OFF");
                             BC127CommandWrite(cli.bt);
@@ -167,11 +168,14 @@ void CLIProcess()
                             // Store it as a smaller value
                             micGain = micGain - 0xC0;
                             ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
-                            if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS) == CONFIG_SETTING_ON) {
-                                BC127CommandSetMicGain(cli.bt, micGain, 1);
-                            } else {
-                                BC127CommandSetMicGain(cli.bt, micGain, 0);
-                            }
+                            unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+                            unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+                            BC127CommandSetMicGain(
+                                cli.bt,
+                                micGain,
+                                micBias,
+                                micPreamp
+                            );
                         }
                     }
                 } else if (UtilsStricmp(msgBuf[1], "MBIAS") == 0) {
@@ -179,12 +183,29 @@ void CLIProcess()
                         LogRaw("Set the Mic Bias Generator");
                     } else {
                         unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+                        unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
                         if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                            BC127CommandSetMicGain(cli.bt, micGain, 1);
+                            BC127CommandSetMicGain(cli.bt, micGain, 1, micPreamp);
                             ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
                         } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                            BC127CommandSetMicGain(cli.bt, micGain, 0);
+                            BC127CommandSetMicGain(cli.bt, micGain, 0, micPreamp);
                             ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_OFF);
+                        } else {
+                            cmdSuccess = 0;
+                        }
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "MPREAMP") == 0) {
+                    if (delimCount == 2) {
+                        LogRaw("Set the Mic Pre-Amp");
+                    } else {
+                        unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+                        unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+                        if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                            BC127CommandSetMicGain(cli.bt, micGain, micBias, 1);
+                            ConfigSetSetting(CONFIG_SETTING_MIC_PREAMP, CONFIG_SETTING_ON);
+                        } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                            BC127CommandSetMicGain(cli.bt, micGain, micBias, 0);
+                            ConfigSetSetting(CONFIG_SETTING_MIC_PREAMP, CONFIG_SETTING_OFF);
                         } else {
                             cmdSuccess = 0;
                         }
@@ -326,7 +347,40 @@ void CLIProcess()
                     }
                 }
             } else if (UtilsStricmp(msgBuf[0], "SET") == 0) {
-                if (UtilsStricmp(msgBuf[1], "DAC") == 0) {
+                if (UtilsStricmp(msgBuf[1], "COMFORT") == 0) {
+                    if (UtilsStricmp(msgBuf[2], "BLINKERS") == 0) {
+                        uint8_t blinks = UtilsStrToInt(msgBuf[3]);
+                        if (blinks > 1 && blinks <= 8) {
+                            ConfigSetSetting(CONFIG_SETTING_COMFORT_BLINKERS, blinks);
+                        } else {
+                            cmdSuccess = 0;
+                        }
+                    } else if (UtilsStricmp(msgBuf[2], "LOCK") == 0) {
+                        if (UtilsStricmp(msgBuf[3], "10") == 0) {
+                            ConfigSetComfortLock(CONFIG_SETTING_COMFORT_LOCK_10KM);
+                        } else if (UtilsStricmp(msgBuf[3], "20") == 0) {
+                            ConfigSetComfortLock(CONFIG_SETTING_COMFORT_LOCK_20KM);
+                        } else if (UtilsStricmp(msgBuf[3], "OFF") == 0) {
+                            ConfigSetComfortLock(CONFIG_SETTING_OFF);
+                        } else {
+                            cmdSuccess = 0;
+                        }
+                    } else if (UtilsStricmp(msgBuf[2], "UNLOCK") == 0) {
+                        if (UtilsStricmp(msgBuf[3], "POS1") == 0) {
+                            ConfigSetComfortUnlock(
+                                CONFIG_SETTING_COMFORT_UNLOCK_POS_1
+                            );
+                        } else if (UtilsStricmp(msgBuf[3], "POS0") == 0) {
+                            ConfigSetComfortUnlock(
+                                CONFIG_SETTING_COMFORT_UNLOCK_POS_0
+                            );
+                        } else if (UtilsStricmp(msgBuf[3], "OFF") == 0) {
+                            ConfigSetComfortUnlock(CONFIG_SETTING_OFF);
+                        } else {
+                            cmdSuccess = 0;
+                        }
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "DAC") == 0) {
                     if (UtilsStricmp(msgBuf[2], "GAIN") == 0) {
                         unsigned char currentVolume = UtilsStrToHex(msgBuf[3]);
                         ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, currentVolume);
@@ -475,6 +529,7 @@ void CLIProcess()
                     "0",
                     "0"
                 );
+                BC127CommandSetBtVolConfig(cli.bt, 15, 100, 10, 1);
                 BC127CommandSetProfiles(cli.bt, 1, 1, 1, 1);
                 BC127CommandSetBtState(cli.bt, 2, 2);
                 BC127CommandSetCodec(cli.bt, 1, "OFF");
@@ -499,6 +554,8 @@ void CLIProcess()
                 // -10dB Gain for the DAC
                 ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, 0x44);
                 PCM51XXSetVolume(0x44);
+                // -10dB Gain for the DAC in Telephone Mode
+                ConfigSetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL, 0x44);
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
                 // Set the Mic Gain to -17.5dB by default

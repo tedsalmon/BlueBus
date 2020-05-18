@@ -716,7 +716,7 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
             0
         );
     }
-    if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS) == CONFIG_SETTING_OFF) {
+    if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS) == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_CALLING_MIC_BIAS,
@@ -950,11 +950,14 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             micGain = 0;
         }
         ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
-        if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS) == CONFIG_SETTING_OFF) {
-            BC127CommandSetMicGain(context->bt, micGain, 0);
-        } else {
-            BC127CommandSetMicGain(context->bt, micGain, 1);
-        }
+        unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+        unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+        BC127CommandSetMicGain(
+            context->bt,
+            micGain,
+            micBias,
+            micPreamp
+        );
         char micGainText[16];
         snprintf(micGainText, 15, "Mic Gain: %idB", (int8_t)BC127CVCGainTable[micGain]);
         micGainText[15] = '\0';
@@ -966,13 +969,24 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
         );
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MIC_BIAS) {
         unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-        if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS) == CONFIG_SETTING_OFF) {
-            BC127CommandSetMicGain(context->bt, micGain, 1);
-            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS, CONFIG_SETTING_ON);
+        unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+        if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS) == CONFIG_SETTING_OFF) {
+            BC127CommandSetMicGain(
+                context->bt,
+                micGain,
+                1,
+                micPreamp
+            );
+            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
             BMBTGTWriteIndex(context, selectedIdx, "Mic Bias: On", 0);
         } else {
-            BC127CommandSetMicGain(context->bt, micGain, 0);
-            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS, CONFIG_SETTING_OFF);
+            BC127CommandSetMicGain(
+                context->bt,
+                micGain,
+                0,
+                micPreamp
+            );
+            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_OFF);
             BMBTGTWriteIndex(context, selectedIdx, "Mic Bias: Off", 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {

@@ -803,22 +803,31 @@ void BC127CommandSetMetadata(BC127_t *bt, uint8_t value)
   *         BC127_t *bt - A pointer to the module object
   *         unsigned char micGain - The gain index to set
   *         unsigned char bias - If the bias generator should be on or off
+  *         unsigned char micPreamp - Weather or not to enable the preamp
   *     Returns:
   *         void
   */
 void BC127CommandSetMicGain(
     BC127_t *bt,
     unsigned char micGain,
-    unsigned char bias
+    unsigned char bias,
+    unsigned char micPreamp
 ) {
     unsigned char gain = micGain + 0xC0;
+    unsigned char cvcPreamp = 0x00;
+    if (micPreamp == 0x01) {
+        cvcPreamp = 0x80;
+    }
     BC127CommandCVC(bt, "NB", 0, 14);
     char params[70];
     snprintf(
         params,
         70,
-        "2280 0000 1A00 0000 0000 00%02X 0000 0000 0000 0000 0000 0020 0000 00%02X",
+        "2280 0000 1A00 %02X00 0000 %02X%02X 0000 0000 0000 0000 0000 0020 0000 %02X%02X",
+        cvcPreamp,
+        cvcPreamp,
         gain,
+        cvcPreamp,
         gain
     );
     BC127CommandCVCParams(bt, params);
@@ -826,15 +835,22 @@ void BC127CommandSetMicGain(
     snprintf(
         params,
         70,
-        "2284 0000 1A00 0000 0000 00%02X 0000 0000 0000 0000 0000 0020 0000 00%02X",
+        "2284 0000 1A00 %02X00 0000 %02X%02X 0000 0000 0000 0000 0000 0020 0000 %02X%02X",
+        cvcPreamp,
+        cvcPreamp,
         gain,
+        cvcPreamp,
         gain
     );
     BC127CommandCVCParams(bt, params);
     // Mic Gain comes in as an array index, so add 1
     // before configuring the analog microphone gain
     micGain = micGain + 1;
-    BC127CommandSetAudioAnalog(bt, micGain, 15, bias, "OFF");
+    if (micPreamp == 0x01) {
+        BC127CommandSetAudioAnalog(bt, micGain, 15, bias, "ON");
+    } else {
+        BC127CommandSetAudioAnalog(bt, micGain, 15, bias, "OFF");
+    }
 }
 
 /**
@@ -1163,6 +1179,15 @@ void BC127Process(BC127_t *bt)
                 bt->playbackStatus = BC127_AVRCP_STATUS_PLAYING;
                 LogDebug(LOG_SOURCE_BT, "BT: Playing");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
+                // If we are beginning playback, then we cannot possibly be
+                // on a call. Sanity check.
+                if (bt->callStatus != BC127_CALL_INACTIVE) {
+                    bt->callStatus = BC127_CALL_INACTIVE;
+                    EventTriggerCallback(
+                        BC127Event_CallStatus,
+                        (unsigned char *) BC127_CALL_INACTIVE
+                    );
+                }
             }
         } else if(strcmp(msgBuf[0], "AVRCP_PAUSE") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
@@ -1176,6 +1201,15 @@ void BC127Process(BC127_t *bt)
                 bt->playbackStatus = BC127_AVRCP_STATUS_PLAYING;
                 LogDebug(LOG_SOURCE_BT, "BT: Playing [A2DP Stream Start]");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
+                // If we are beginning playback, then we cannot possibly be
+                // on a call. Sanity check.
+                if (bt->callStatus != BC127_CALL_INACTIVE) {
+                    bt->callStatus = BC127_CALL_INACTIVE;
+                    EventTriggerCallback(
+                        BC127Event_CallStatus,
+                        (unsigned char *) BC127_CALL_INACTIVE
+                    );
+                }
             }
         } else if(strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
             if (bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
@@ -1184,29 +1218,37 @@ void BC127Process(BC127_t *bt)
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
         } else if(strcmp(msgBuf[0], "CALL_ACTIVE") == 0) {
-            bt->callStatus = BC127_CALL_ACTIVE;
-            EventTriggerCallback(
-                BC127Event_CallStatus,
-                (unsigned char *) BC127_CALL_ACTIVE
-            );
+            if (bt->callStatus != BC127_CALL_ACTIVE) {
+                bt->callStatus = BC127_CALL_ACTIVE;
+                EventTriggerCallback(
+                    BC127Event_CallStatus,
+                    (unsigned char *) BC127_CALL_ACTIVE
+                );
+            }
         } else if(strcmp(msgBuf[0], "CALL_END") == 0) {
-            bt->callStatus = BC127_CALL_INACTIVE;
-            EventTriggerCallback(
-                BC127Event_CallStatus,
-                (unsigned char *) BC127_CALL_INACTIVE
-            );
+            if (bt->callStatus != BC127_CALL_INACTIVE) {
+                bt->callStatus = BC127_CALL_INACTIVE;
+                EventTriggerCallback(
+                    BC127Event_CallStatus,
+                    (unsigned char *) BC127_CALL_INACTIVE
+                );
+            }
         } else if(strcmp(msgBuf[0], "CALL_INCOMING") == 0) {
-            bt->callStatus = BC127_CALL_INCOMING;
-            EventTriggerCallback(
-                BC127Event_CallStatus,
-                (unsigned char *) BC127_CALL_INCOMING
-            );
+            if (bt->callStatus != BC127_CALL_INCOMING) {
+                bt->callStatus = BC127_CALL_INCOMING;
+                EventTriggerCallback(
+                    BC127Event_CallStatus,
+                    (unsigned char *) BC127_CALL_INCOMING
+                );
+            }
         } else if (strcmp(msgBuf[0], "CALL_OUTGOING") == 0) {
-            bt->callStatus = BC127_CALL_OUTGOING;
-            EventTriggerCallback(
-                BC127Event_CallStatus,
-                (unsigned char *) BC127_CALL_OUTGOING
-            );
+            if (bt->callStatus != BC127_CALL_OUTGOING) {
+                bt->callStatus = BC127_CALL_OUTGOING;
+                EventTriggerCallback(
+                    BC127Event_CallStatus,
+                    (unsigned char *) BC127_CALL_OUTGOING
+                );
+            }
         } else if(strcmp(msgBuf[0], "LINK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             uint8_t isNew = 0;
@@ -1393,7 +1435,8 @@ void BC127Process(BC127_t *bt)
     uint32_t now = TimerGetMillis();
     if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT &&
         bt->metadataStatus == BC127_METADATA_STATUS_NEW &&
-        bt->activeDevice.avrcpLinkId != 0
+        bt->activeDevice.avrcpLinkId != 0 &&
+        bt->callStatus == BC127_CALL_INACTIVE
     ) {
         BC127CommandGetMetadata(bt);
         bt->metadataTimestamp = now;

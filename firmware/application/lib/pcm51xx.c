@@ -70,10 +70,14 @@ void PCM51XXSetVolume(unsigned char volume)
         status = I2CWrite(PCM51XX_I2C_ADDR, PCM51XX_REGISTER_VOLL, volume);
         if (status != 0x00) {
             LogError("PCM51XX failed to set VOLL [%d]", status);
+        } else {
+            LogDebug(LOG_SOURCE_SYSTEM, "PCM51XX VOLL Set to 0x%02X", volume);
         }
         status = I2CWrite(PCM51XX_I2C_ADDR, PCM51XX_REGISTER_VOLR, volume);
         if (status != 0x00) {
             LogError("PCM51XX failed to set VOLR [%d]", status);
+        } else {
+            LogDebug(LOG_SOURCE_SYSTEM, "PCM51XX VOLR Set to 0x%02X", volume);
         }
     }
 }

@@ -130,6 +130,7 @@
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_LOW 0x37
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_ALL 0x45
 
+#define IBUS_CMD_VOLUME_SET 0x32
 
 #define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
 #define IBUS_CMD_GT_MENU_SELECT 0x31
@@ -218,6 +219,7 @@
 #define IBUS_TEL_CMD_LED_STATUS 0x2B
 #define IBUS_TEL_CMD_STATUS 0x2C
 #define IBUS_TEL_CMD_MAIN_MENU 0x21
+#define IBUS_TEL_STATUS_NONE 0x00
 #define IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE 0x10
 #define IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE 0x35
 #define IBUS_TEL_LED_STATUS_RED 0x01
@@ -390,6 +392,7 @@ void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
+void IBusCommandSetVolune(IBus_t *, unsigned char, unsigned char, unsigned char);
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetLED(IBus_t *, unsigned char);
 void IBusCommandTELStatus(IBus_t *, unsigned char);

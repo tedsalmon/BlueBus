@@ -83,12 +83,21 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         BC127SendCommand(bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
         BC127CommandWrite(bt);
         unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-        unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS_ADDRESS);
+        unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+        unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
         // Set the cVc parameters
-        BC127CommandSetMicGain(bt, micGain, micBias);
+        BC127CommandSetMicGain(bt, micGain, micBias, micPreamp);
         // -10dB Gain for the DAC in Telephone Mode
-        ConfigSetSetting(CONFIG_SETTING_DAC_TEL_VOL, 0x44);
+        ConfigSetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL, 0x44);
         LogRaw("Ran Upgrade 1.1.8\r\n");
+    }
+    // Changes in version 1.1.9
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 9) == 1) {
+        // Max out the A2DP and HFP volumes by default
+        BC127CommandSetBtVolConfig(bt, 15, 100, 10, 1);
+        // Set a starting value for the telephony volume value
+        ConfigSetSetting(CONFIG_SETTING_TEL_VOL, 0x00);
+        LogRaw("Ran Upgrade 1.1.9\r\n");
     }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,

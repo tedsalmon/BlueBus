@@ -49,7 +49,7 @@
 #define BC127_STATE_OFF 0
 #define BC127_STATE_ON 1
 #define BC127_PROFILE_COUNT 4
-#define BC127_RX_QUEUE_TIMEOUT 375
+#define BC127_RX_QUEUE_TIMEOUT 500
 #define BC127_LINK_A2DP 0
 #define BC127_LINK_AVRCP 1
 #define BC127_LINK_HFP 3
@@ -184,7 +184,7 @@ void BC127CommandSetBtState(BC127_t *, uint8_t, uint8_t);
 void BC127CommandSetBtVolConfig(BC127_t *, uint8_t, uint8_t, uint8_t, uint8_t);
 void BC127CommandSetCodec(BC127_t *, uint8_t, char *);
 void BC127CommandSetMetadata(BC127_t *, uint8_t);
-void BC127CommandSetMicGain(BC127_t *, unsigned char, unsigned char);
+void BC127CommandSetMicGain(BC127_t *, unsigned char, unsigned char, unsigned char);
 void BC127CommandSetModuleName(BC127_t *, char *);
 void BC127CommandSetPin(BC127_t *, char *);
 void BC127CommandSetProfiles(BC127_t *, uint8_t, uint8_t, uint8_t, uint8_t);
