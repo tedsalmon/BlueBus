@@ -99,6 +99,18 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, 0x00);
         LogRaw("Ran Upgrade 1.1.9\r\n");
     }
+    // Changes in version 1.1.10
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 10) == 1) {
+        // Migrate settings to new addresses by shifting every value up by one
+        unsigned char startAddress = 0x20;
+        while (startAddress > 0x1C) {
+            ConfigSetSetting(startAddress, ConfigGetSetting(startAddress - 1));
+            startAddress--;
+        }
+        // Set new `0x1C` to OFF
+        ConfigSetSetting(CONFIG_SETTING_IGN_ALWAYS_ON, CONFIG_SETTING_OFF);
+        LogRaw("Ran Upgrade 1.1.10\r\n");
+    }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
         FIRMWARE_VERSION_MINOR,

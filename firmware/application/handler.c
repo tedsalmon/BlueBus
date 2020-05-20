@@ -222,6 +222,14 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         MIDInit(bt, ibus);
         BMBTInit(bt, ibus);
     }
+    if (ConfigGetSetting(CONFIG_SETTING_IGN_ALWAYS_ON) == CONFIG_SETTING_ON) {
+        unsigned char ignitionStatus = 0x01;
+        EventTriggerCallback(
+            IBusEvent_IKEIgnitionStatus,
+            (unsigned char *)&ignitionStatus
+        );
+        ibus->ignitionStatus = ignitionStatus;
+    }
 }
 
 static void HandlerSwitchUI(HandlerContext_t *context, unsigned char newUi)

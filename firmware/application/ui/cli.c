@@ -409,19 +409,14 @@ void CLIProcess()
                 } else if (UtilsStricmp(msgBuf[1], "UI") == 0) {
                     if (UtilsStricmp(msgBuf[2], "1") == 0) {
                         ConfigSetUIMode(IBus_UI_CD53);
-                        LogRaw("UI Mode: CD53\r\n");
                     } else if (UtilsStricmp(msgBuf[2], "2") == 0) {
                         ConfigSetUIMode(IBus_UI_BMBT);
-                        LogRaw("UI Mode: Navigation\r\n");
                     } else if (UtilsStricmp(msgBuf[2], "3") == 0) {
                         ConfigSetUIMode(IBus_UI_MID);
-                        LogRaw("UI Mode: MID\r\n");
                     } else if (UtilsStricmp(msgBuf[2], "4") == 0) {
                         ConfigSetUIMode(IBus_UI_MID_BMBT);
-                        LogRaw("UI Mode: MID / Navigation\r\n");
                     } else if (UtilsStricmp(msgBuf[2], "5") == 0) {
                         ConfigSetUIMode(IBus_UI_BUSINESS_NAV);
-                        LogRaw("UI Mode: Business Navigation\r\n");
                     } else {
                         LogRaw("Invalid UI Mode specified\r\n");
                     }
@@ -442,6 +437,14 @@ void CLIProcess()
                         );
                         cli.ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
                         cli.ibus->ignitionStatus = 1;
+                    } else if (UtilsStricmp(msgBuf[2], "ALWAYSON") == 0) {
+                        if (UtilsStricmp(msgBuf[3], "ON") == 0) {
+                            ConfigSetSetting(CONFIG_SETTING_IGN_ALWAYS_ON, CONFIG_SETTING_ON);
+                        } else if (UtilsStricmp(msgBuf[3], "OFF") == 0) {
+                            ConfigSetSetting(CONFIG_SETTING_IGN_ALWAYS_ON, CONFIG_SETTING_OFF);
+                        } else {
+                            cmdSuccess = 0;
+                        }
                     } else {
                         cmdSuccess = 0;
                     }
