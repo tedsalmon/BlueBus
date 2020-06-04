@@ -46,6 +46,7 @@
 #define HANDLER_TEL_DAC_VOL 0x44
 #define HANDLER_TEL_STATUS_SET 0
 #define HANDLER_TEL_STATUS_FORCE 1
+#define HANDLER_TEL_STATUS_VOL_CHANGE 0xFF
 
 typedef struct HandlerBodyModuleStatus_t {
     uint8_t lowSideDoors: 1;
@@ -113,9 +114,10 @@ void HandlerIBusLCMRedundantData(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerIBusModuleStatusResponse(void *, unsigned char *);
 void HandlerIBusModuleStatusRequest(void *, unsigned char *);
+void HandlerIBusRADVolumeChange(void *, unsigned char *);
 void HandlerIBusTELVolumeChange(void *, unsigned char *);
 void HandlerIBusBroadcastCDCStatus(HandlerContext_t *);
-void HandlerIBusBroadcastTELStatus(HandlerContext_t *, unsigned char);
+uint8_t HandlerIBusBroadcastTELStatus(HandlerContext_t *, unsigned char);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
 void HandlerTimerBTStatus(void *);

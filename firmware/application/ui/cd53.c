@@ -195,7 +195,9 @@ static void CD53ShowNextAvailableDevice(CD53Context_t *context, uint8_t directio
 static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
 {
     unsigned char requestedCommand = pkt[4];
-    if (requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK) {
+    if (requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
+        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
+    ) {
         unsigned char direction = pkt[5];
         if (context->mode == CD53_MODE_ACTIVE) {
             if (pkt[5] == 0x00) {
@@ -692,7 +694,8 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
         }
     }
     if (requestedCommand == IBUS_CDC_CMD_CD_CHANGE ||
-        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK
+        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
+        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
     ) {
         CD53HandleUIButtons(context, pkt);
     }

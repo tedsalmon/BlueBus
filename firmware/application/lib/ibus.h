@@ -64,6 +64,7 @@
 #define IBUS_CDC_CMD_START_PLAYING 0x03
 #define IBUS_CDC_CMD_CHANGE_TRACK 0x0A
 #define IBUS_CDC_CMD_SEEK 0x04
+#define IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT 0x05
 #define IBUS_CDC_CMD_CD_CHANGE 0x06
 #define IBUS_CDC_CMD_SCAN 0x07
 #define IBUS_CDC_CMD_RANDOM_MODE 0x08
@@ -180,6 +181,7 @@
 #define IBUS_GT_MKIV_STATIC 6
 #define IBUS_GT_HW_ID_OFFSET 11
 #define IBUS_GT_SW_ID_OFFSET 33
+#define IBUS_GT_DI_ID_OFFSET 15
 #define IBUS_GT_TONE_MENU_OFF 0x08
 #define IBUS_GT_SEL_MENU_OFF 0x04
 #define IBUS_GT_MENU_CLEAR 0x0C
@@ -238,6 +240,7 @@
 #define IBUS_RADIO_TYPE_BM54 3
 #define IBUS_RADIO_TYPE_BRCD 4
 #define IBUS_RADIO_TYPE_BRTP 5
+#define IBUS_RADIO_TYPE_BM24 6
 
 
 #define IBUS_MFL_BTN_EVENT 0x3B
@@ -304,6 +307,7 @@
 #define IBusEvent_LCMDiagnosticsAcknowledge 64
 #define IBusEvent_DSPConfigSet 65
 #define IBusEvent_TELVolumeChange 66
+#define IBusEvent_RADVolumeChange 67
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -340,12 +344,14 @@ typedef struct IBus_t {
     unsigned char lcmDimmerStatus1;
     unsigned char lcmDimmerStatus2;
     unsigned char oilTemperature;
+    unsigned char coolantTemperature;
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
 void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, const size_t);
 uint8_t IBusGetDeviceManufacturer(const unsigned char);
 uint8_t IBusGetRadioType(uint32_t);
+uint8_t IBusGetNavDiagnosticIndex(unsigned char *);
 uint8_t IBusGetNavHWVersion(unsigned char *);
 uint8_t IBusGetNavSWVersion(unsigned char *);
 uint8_t IBusGetNavType(unsigned char *);

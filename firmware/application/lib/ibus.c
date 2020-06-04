@@ -34,6 +34,7 @@ IBus_t IBusInit()
     ibus.lcmDimmerStatus1 = 0xFF;
     ibus.lcmDimmerStatus2 = 0xFF;
     ibus.oilTemperature = 0x00;
+    ibus.coolantTemperature = 0x00;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -60,6 +61,8 @@ static void IBusHandleBMBTMessage(unsigned char *pkt)
         pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON1
     ) {
         EventTriggerCallback(IBusEvent_BMBTButton, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_VOL_CTRL) {
+        EventTriggerCallback(IBusEvent_RADVolumeChange, pkt);
     }
 }
 
@@ -174,10 +177,11 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
         // Decode the software and hardware versions
         uint8_t hardwareVersion = IBusGetNavHWVersion(pkt);
         uint8_t softwareVersion = IBusGetNavSWVersion(pkt);
+        uint8_t diagnosticIndex = IBusGetNavDiagnosticIndex(pkt);
         uint8_t gtVersion = IBusGetNavType(pkt);
         if (gtVersion != IBUS_GT_DETECT_ERROR) {
             LogRaw(
-                "\r\nIBus: GT P/N: %c%c%c%c%c%c%c HW: %d SW: %d Build: %c%c/%c%c\r\n",
+                "\r\nIBus: GT P/N: %c%c%c%c%c%c%c DI: %d HW: %d SW: %d Build: %c%c/%c%c\r\n",
                 pkt[4],
                 pkt[5],
                 pkt[6],
@@ -185,6 +189,7 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
                 pkt[8],
                 pkt[9],
                 pkt[10],
+                diagnosticIndex,
                 hardwareVersion,
                 softwareVersion,
                 pkt[19],
@@ -251,6 +256,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SPEED_RPM_UPDATE) {
         EventTriggerCallback(IBusEvent_IKESpeedRPMUpdate, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_COOLANT_TEMP_UPDATE) {
+        ibus->coolantTemperature = pkt[5];
         EventTriggerCallback(IBusEvent_IKECoolantTempUpdate, pkt);
     }
 }
@@ -331,6 +337,8 @@ static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
         if (pkt[IBUS_PKT_CMD] == IBus_MID_CMD_MODE) {
             EventTriggerCallback(IBusEvent_MIDModeChange, pkt);
         }
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_VOL_CTRL) {
+        EventTriggerCallback(IBusEvent_RADVolumeChange, pkt);
     }
 }
 
@@ -820,6 +828,25 @@ uint8_t IBusGetRadioType(uint32_t partNumber)
 }
 
 /**
+ * IBusGetNavDiagnosticIndex()
+ *     Description:
+ *        Get the nav diagnostic index
+ *     Params:
+ *         unsigned char *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - The nav hardware version
+ */
+uint8_t IBusGetNavDiagnosticIndex(unsigned char *packet)
+{
+    char diVersion[3] = {
+        packet[IBUS_GT_DI_ID_OFFSET],
+        packet[IBUS_GT_DI_ID_OFFSET + 1],
+        '\0'
+    };
+    return UtilsStrToInt(diVersion);
+}
+
+/**
  * IBusGetNavHWVersion()
  *     Description:
  *        Get the nav type hardware version
@@ -868,28 +895,29 @@ uint8_t IBusGetNavSWVersion(unsigned char *packet)
  */
 uint8_t IBusGetNavType(unsigned char *packet)
 {
-    uint8_t hardwareVersion = IBusGetNavHWVersion(packet);
+    uint8_t diagnosticIndex = IBusGetNavDiagnosticIndex(packet);
     uint8_t navType = 0;
-    switch (hardwareVersion) {
-        case 10:
-            navType = IBUS_GT_MKIV;
+    switch (diagnosticIndex) {
+        case 1:
+            navType = IBUS_GT_MKI;
             break;
-        case 11:
-            navType = IBUS_GT_MKIII;
-            break;
-        case 21:
+        case 2:
+        case 3:
             navType = IBUS_GT_MKII;
             break;
-        case 50:
-        case 53:
-            navType = IBUS_GT_MKI;
+        case 4:
+            navType = IBUS_GT_MKIII;
+            break;
+        case 5:
+        case 6:
+            navType = IBUS_GT_MKIV;
             break;
         default:
             navType = IBUS_GT_DETECT_ERROR;
             break;
     }
     uint8_t softwareVersion = IBusGetNavSWVersion(packet);
-    if (navType == IBUS_GT_MKIII && softwareVersion > 40) {
+    if (navType == IBUS_GT_MKIII && softwareVersion >= 40) {
         navType = IBUS_GT_MKIII_NEW_UI;
     }
     if (navType == IBUS_GT_MKIV &&
