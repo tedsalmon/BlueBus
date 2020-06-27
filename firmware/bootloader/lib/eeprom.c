@@ -24,11 +24,11 @@ void EEPROMInit()
     // Unlock the programmable pin register
     __builtin_write_OSCCONL(OSCCON & 0xBF);
     // Data Input
-    _SDI1R = EEPROM_SDI_PIN;
+    _SDI1R = EEPROM_SDI_RPIN;
     // Set the SCK Output
-    EEPROM_SCK_PIN = EEPROM_SPI_SCK_MODE;
+    EEPROM_SCK_RPIN = EEPROM_SPI_SCK_MODE;
     // Set the SDO Output
-    EEPROM_SDO_PIN = EEPROM_SPI_SDO_MODE;
+    EEPROM_SDO_RPIN = EEPROM_SPI_SDO_MODE;
     // Lock the programmable pin register
     __builtin_write_OSCCONL(OSCCON & 0x40);
     SPI1BRGL = EEPROM_BRG;
@@ -92,9 +92,9 @@ void EEPROMDestroy()
     // Data Input
     _SDI1R = 0;
     // Reset the SCK Output
-    EEPROM_SCK_PIN = 0;
+    EEPROM_SCK_RPIN = 0;
     // Reset the SDO Output
-    EEPROM_SDO_PIN = 0;
+    EEPROM_SDO_RPIN = 0;
     // Lock the programmable pin register
     __builtin_write_OSCCONL(OSCCON & 0x40);
     SPI1BRGL = 0;

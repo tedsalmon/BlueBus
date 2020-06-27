@@ -21,6 +21,9 @@
  */
 void ProtocolBC127Mode()
 {
+    // Stop driving the TX and RX pins of the BC127
+    BC127_UART_RX_PIN_MODE = 1;
+    BC127_UART_TX_PIN_MODE = 1;
     // Set the UART mode to BC127 after disabling the MCU UART
     UART_SEL = UART_SEL_BT;
 }

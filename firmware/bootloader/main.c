@@ -17,34 +17,61 @@ int main(void)
     // Set the IVT mode to regular
     IVT_MODE = IVT_MODE_BOOT;
 
-    // Set all used ports to digital mode
+    // Set all ports to digital mode
     ANSB = 0;
+    ANSC = 0;
     ANSD = 0;
     ANSE = 0;
     ANSF = 0;
     ANSG = 0;
 
-    // Set the I/O port directions
+    // Set all ports as outputs
+    TRISB = 0;
+    TRISC = 0;
+    TRISD = 0;
+    TRISE = 0;
+    TRISF = 0;
+    TRISG = 0;
+
+    // Drive all ports to logic low
+    LATB = 0;
+    LATC = 0;
+    LATD = 0;
+    LATE = 0;
+    LATF = 0;
+    LATG = 0;
+
+    // Set the I/O ports to outputs
     ON_LED_MODE = 0;
     BT_DATA_SEL_MODE = 0;
     UART_SEL_MODE = 0;
-    RECOVERY_MODE = 1;
     IBUS_EN_MODE = 0;
     PAM_SHDN_MODE = 0;
     TEL_ON_MODE = 0;
     TEL_MUTE_MODE = 0;
+
+    // Set the RX / input pins to inputs
+    IBUS_UART_RX_PIN_MODE = 1;
+    IBUS_UART_STATUS_MODE = 1;
+    BC127_UART_RX_PIN_MODE = 1;
+    SYSTEM_UART_RX_PIN_MODE = 1;
+    EEPROM_SDI_PIN_MODE = 1;
+    RECOVERY_MODE = 1;
+    SYS_DTR_MODE = 1;
     
-    // Set the UART mode to MCU by default
+    // Set the UART mode to MCU for the remainder of this application code
     UART_SEL = UART_SEL_MCU;
     // Enable the IBus Regulator
     IBUS_EN = 1;
     // Turn the PAM8406 off until it's required
     PAM_SHDN = 0;
-    // Keep the system unmuted but enable the TEL_ON signal
-    TEL_ON = 1;
+    // Keep the vehicle unmuted and telephone on disengaged
     TEL_MUTE = 0;
+    TEL_ON = 0;
+    // Keep the BC127 out of data mode
+    BT_DATA_SEL = 0;
 
-    // Ensure the Pwr LED is off
+    // Ensure the Power LED is off
     ON_LED = 0;
 
     // Init the timer interrupt and the SPI module for the EEPROM
@@ -67,16 +94,16 @@ int main(void)
             BT_DATA_SEL = 1;
             systemUart = UARTInit(
                 SYSTEM_UART_MODULE,
-                BC127_UART_RX_PIN,
-                BC127_UART_TX_PIN,
+                BC127_UART_RX_RPIN,
+                BC127_UART_TX_RPIN,
                 UART_BAUD_115200,
                 UART_PARITY_NONE
             );
         } else {
             systemUart = UARTInit(
                 SYSTEM_UART_MODULE,
-                SYSTEM_UART_RX_PIN,
-                SYSTEM_UART_TX_PIN,
+                SYSTEM_UART_RX_RPIN,
+                SYSTEM_UART_TX_RPIN,
                 UART_BAUD_115200,
                 UART_PARITY_ODD
             );
