@@ -97,12 +97,12 @@ void UARTDestroy(uint8_t uartModule) {
     // Pull down the RX and TX pins for the module
     switch (uartModule) {
         case BC127_UART_MODULE:
-            BC127_UART_RX_PIN = 0;
-            BC127_UART_TX_PIN = 0;
+            BC127_UART_RX_PIN_MODE = 1;
+            BC127_UART_TX_PIN_MODE = 1;
             break;
         case SYSTEM_UART_MODULE:
-            SYSTEM_UART_RX_PIN = 0;
-            SYSTEM_UART_TX_PIN = 0;
+            SYSTEM_UART_RX_PIN_MODE = 1;
+            SYSTEM_UART_TX_PIN_MODE = 1;
             break;
     }
 }

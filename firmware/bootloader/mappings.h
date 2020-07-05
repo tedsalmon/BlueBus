@@ -90,5 +90,5 @@
 #define TEL_MUTE_MODE TRISEbits.TRISE2
 #define TEL_MUTE LATEbits.LATE2
 
-#define NOP_COUNT 2048
+#define NOP_COUNT 3072
 #endif /* MAPPINGS_H */
