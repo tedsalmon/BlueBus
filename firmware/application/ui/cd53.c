@@ -175,21 +175,19 @@ static void CD53ShowNextAvailableDevice(CD53Context_t *context, uint8_t directio
     }
     BC127PairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
     char text[12];
-    UtilsRemoveNonAscii(text, dev->deviceName);
-    char cleanText[12];
-    strncpy(cleanText, text, 11);
+    strncpy(text, dev->deviceName, 11);
     text[11] = '\0';
     // Add a space and asterisks to the end of the device name
     // if it's the currently selected device
     if (strcmp(dev->macId, context->bt->activeDevice.macId) == 0) {
-        uint8_t startIdx = strlen(cleanText);
+        uint8_t startIdx = strlen(text);
         if (startIdx > 9) {
             startIdx = 9;
         }
-        cleanText[startIdx++] = 0x20;
-        cleanText[startIdx++] = 0x2A;
+        text[startIdx++] = 0x20;
+        text[startIdx++] = 0x2A;
     }
-    CD53SetMainDisplayText(context, cleanText, 0);
+    CD53SetMainDisplayText(context, text, 0);
 }
 
 static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
@@ -596,10 +594,8 @@ void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
         } else {
             snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
         }
-        char cleanText[UTILS_DISPLAY_TEXT_SIZE];
-        UtilsRemoveNonAscii(cleanText, text);
         context->mainDisplay.timeout = 0;
-        CD53SetMainDisplayText(context, cleanText, 3000 / CD53_DISPLAY_SCROLL_SPEED);
+        CD53SetMainDisplayText(context, text, 3000 / CD53_DISPLAY_SCROLL_SPEED);
         if (context->mediaChangeState == CD53_MEDIA_STATE_CHANGE) {
             context->mediaChangeState = CD53_MEDIA_STATE_METADATA_OK;
         }

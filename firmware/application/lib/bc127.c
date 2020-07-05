@@ -63,8 +63,8 @@ BC127_t BC127Init()
     BC127ClearMetadata(&bt);
     bt.uart = UARTInit(
         BC127_UART_MODULE,
-        BC127_UART_RX_PIN,
-        BC127_UART_TX_PIN,
+        BC127_UART_RX_RPIN,
+        BC127_UART_TX_RPIN,
         BC127_UART_RX_PRIORITY,
         BC127_UART_TX_PRIORITY,
         UART_BAUD_115200,
@@ -488,6 +488,42 @@ void BC127CommandGetMetadata(BC127_t *bt)
         BC127SendCommand(bt, command);
     } else {
         LogWarning("BT: Unable to get Metadata - AVRCP link unopened");
+    }
+}
+
+/**
+ * BC127CommandLicense()
+ *     Description:
+ *         Read or write aptx and cVc license keys
+ *     Params:
+ *         BC127_t *bt - A pointer to the module object
+ *         char *licenseType - Type
+ *         char *licensekey - The key
+ *     Returns:
+ *         void
+ */
+void BC127CommandLicense(
+    BC127_t *bt,
+    char *licenseType,
+    char *licenseKey
+) {
+    // Get both license keys
+    if (licenseType == 0 && licenseKey == 0) {
+        char command[9];
+        snprintf(command, 8, "LICENSE");
+        BC127SendCommand(bt, command);
+    }
+    // Get a single license key
+    if (licenseType != 0 && licenseKey == 0) {
+        char command[14];
+        snprintf(command, 13, "LICENSE %s", licenseType);
+        BC127SendCommand(bt, command);
+    }
+    // Set a single license key
+    if (licenseType != 0 && licenseKey != 0) {
+        char command[40];
+        snprintf(command, 39, "LICENSE %s=%s", licenseType, licenseKey);
+        BC127SendCommand(bt, command);
     }
 }
 
@@ -1139,24 +1175,21 @@ void BC127Process(BC127_t *bt)
                 // Clear Metadata since we're receiving new data
                 BC127ClearMetadata(bt);
                 bt->metadataStatus = BC127_METADATA_STATUS_NEW;
-                strncpy(
-                    bt->title,
-                    &msg[BC127_METADATA_TITLE_OFFSET],
-                    BC127_METADATA_FIELD_SIZE - 1
-                );
+                char title[BC127_METADATA_MAX_SIZE];
+                memset(title, 0, BC127_METADATA_MAX_SIZE);
+                UtilsNormalizeText(title, &msg[BC127_METADATA_TITLE_OFFSET]);
+                strncpy(bt->title, title, BC127_METADATA_FIELD_SIZE - 1);
             } else if (strcmp(msgBuf[2], "ARTIST:") == 0) {
-                strncpy(
-                    bt->artist,
-                    &msg[BC127_METADATA_ARTIST_OFFSET],
-                    BC127_METADATA_FIELD_SIZE - 1
-                );
+                char artist[BC127_METADATA_MAX_SIZE];
+                memset(artist, 0, BC127_METADATA_MAX_SIZE);
+                UtilsNormalizeText(artist, &msg[BC127_METADATA_ARTIST_OFFSET]);
+                strncpy(bt->artist, artist, BC127_METADATA_FIELD_SIZE - 1);
             } else {
                 if (strcmp(msgBuf[2], "ALBUM:") == 0) {
-                    strncpy(
-                        bt->album,
-                        &msg[BC127_METADATA_ALBUM_OFFSET],
-                        BC127_METADATA_FIELD_SIZE - 1
-                    );
+                    char album[BC127_METADATA_MAX_SIZE];
+                    memset(album, 0, BC127_METADATA_MAX_SIZE);
+                    UtilsNormalizeText(album, &msg[BC127_METADATA_ALBUM_OFFSET]);
+                    strncpy(bt->album, album, BC127_METADATA_FIELD_SIZE - 1);
                 }
                 if (bt->metadataStatus == BC127_METADATA_STATUS_NEW) {
                     LogDebug(
@@ -1362,8 +1395,12 @@ void BC127Process(BC127_t *bt)
             }
             deviceName[strIdx] = '\0';
             if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
+                // Clean the device name up
+                char name[33];
+                memset(name, 0, 3);
+                UtilsNormalizeText(name, deviceName);
                 memset(bt->activeDevice.deviceName, 0, 33);
-                strncpy(bt->activeDevice.deviceName, deviceName, 32);
+                strncpy(bt->activeDevice.deviceName, name, 32);
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
             BC127PairedDeviceInit(bt, msgBuf[1], deviceName);

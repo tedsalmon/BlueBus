@@ -60,32 +60,69 @@ UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
 }
 
 /**
- * UtilsRemoveNonAscii()
+ * UtilsNormalizeText()
  *     Description:
- *         Ignore non-ASCII characters from input and put the rest into string.
- *         Additionally, unescape characters in the string before conversion
+ *         Unescape characters and convert them from UTF-8 to their Unicode
+ *         bytes. This is to support extended ASCII.
  *     Params:
  *         char *string - The subject
  *         const char *input - The string to copy from
  *     Returns:
  *         void
  */
-void UtilsRemoveNonAscii(char *string, const char *input)
+void UtilsNormalizeText(char *string, const char *input)
 {
     uint16_t idx;
     uint16_t strIdx = 0;
     uint16_t strLength = strlen(input);
     for (idx = 0; idx < strLength; idx++) {
-        char c = input[idx];
+        uint32_t c = input[idx];
         if (c == 0x5C) {
-            // Create an array containing <Bytes>\0
-            char buf[] = {input[idx + 1], input[idx + 2], '\0'};
-            c = (char) UtilsStrToHex(buf);
-            idx = idx + 2;
+            uint16_t byteIdx = idx;
+            uint8_t byteSize = 0;
+            uint8_t curByte = input[byteIdx];
+            while (curByte == 0x5C && byteSize <= 3) {
+                if (idx + 3 <= strLength) {
+                    byteSize = byteSize + 1;
+                    byteIdx = byteIdx + 3;
+                    idx = idx + 3;
+                    curByte = input[byteIdx];
+                } else {
+                    curByte = 0x00;
+                }
+            }
+            if (curByte != 0x00) {
+                // Bring the index back one so we're on the "current" index still
+                idx--;
+            }
+            uint8_t byteOffset = 0;
+            unsigned char rawUtf[] = {0x00, 0x00, 0x00};
+            while (byteSize > 0) {
+                char buf[] = {input[byteIdx - 2], input[byteIdx - 1], '\0'};
+                unsigned char byte = UtilsStrToHex(buf);
+                rawUtf[2 - byteOffset] = byte;
+                byteOffset++;
+                byteIdx = byteIdx - 3;
+                byteSize--;
+            }
+            c = (
+                ((uint32_t)0 << 24) + // "Phantom" Byte
+                ((uint32_t)rawUtf[0] << 16) +
+                ((uint32_t)rawUtf[1] << 8) +
+                ((uint32_t)rawUtf[2])
+            );
         }
         if (c >= 0x20 && c <= 0x7E) {
-            string[strIdx] = c;
+            string[strIdx] = (uint8_t) c;
             strIdx++;
+        } else if (c > 0x7E) {
+            // Convert UTF-8 byte to Unicode then check if it falls within
+            // the range of extended ASCII
+            c = c - 0xC2C0;
+            if (c < 0xFF) {
+                string[strIdx] = (uint8_t) c & 0xFF;
+                strIdx++;
+            }
         }
     }
     string[strIdx] = '\0';

@@ -31,8 +31,8 @@ void WM88XXInit()
          * bit   3 - CLKOUTSRC - CLK1 0 or OSCCLK 1
          * bit 2:0 - always 0
          */
-        // Ignore invalid flag
-        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLLCLK, 0b01011000);
+        // Ignore invalid flag & Zero Fill
+        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLLCLK, 0b01111000);
         if (status != 0x00) {
             LogError("WM88XX failed to set PLLCLK [%d]", status);
         }

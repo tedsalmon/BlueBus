@@ -97,7 +97,7 @@
 #define IBUS_DEVICE_BMBT_Button_Mode 0x23
 #define IBUS_DEVICE_BMBT_Button_PlayPause 0x14
 #define IBUS_DEVICE_BMBT_Button_Knob 0x05
-#define IBUS_DEVICE_BMBT_Button_Display 0xB0
+#define IBUS_DEVICE_BMBT_Button_Display 0x30
 #define IBUS_DEVICE_BMBT_Button_Info 0x38
 #define IBUS_DEVICE_BMBT_Button_SEL 0x0F
 #define IBUS_DEVICE_BMBT_Button_Num1 0x11

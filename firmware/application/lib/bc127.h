@@ -35,6 +35,7 @@
 #define BC127_CONN_STATE_DISCONNECTED 2
 #define BC127_MAX_DEVICE_PAIRED 8
 #define BC127_MAX_DEVICE_PROFILES 5
+#define BC127_METADATA_MAX_SIZE 384
 #define BC127_METADATA_FIELD_SIZE 128
 #define BC127_METADATA_TITLE_OFFSET 22
 #define BC127_METADATA_ARTIST_OFFSET 23
@@ -49,7 +50,7 @@
 #define BC127_STATE_OFF 0
 #define BC127_STATE_ON 1
 #define BC127_PROFILE_COUNT 4
-#define BC127_RX_QUEUE_TIMEOUT 500
+#define BC127_RX_QUEUE_TIMEOUT 750
 #define BC127_LINK_A2DP 0
 #define BC127_LINK_AVRCP 1
 #define BC127_LINK_HFP 3
@@ -170,6 +171,7 @@ void BC127CommandForwardSeekPress(BC127_t *);
 void BC127CommandForwardSeekRelease(BC127_t *);
 void BC127CommandGetDeviceName(BC127_t *, char *);
 void BC127CommandGetMetadata(BC127_t *);
+void BC127CommandLicense(BC127_t *, char *, char *);
 void BC127CommandList(BC127_t *);
 void BC127CommandPause(BC127_t *);
 void BC127CommandPlay(BC127_t *);

@@ -20,8 +20,8 @@ IBus_t IBusInit()
     IBus_t ibus;
     ibus.uart = UARTInit(
         IBUS_UART_MODULE,
-        IBUS_UART_RX_PIN,
-        IBUS_UART_TX_PIN,
+        IBUS_UART_RX_RPIN,
+        IBUS_UART_TX_RPIN,
         IBUS_UART_RX_PRIORITY,
         IBUS_UART_TX_PRIORITY,
         UART_BAUD_9600,
@@ -256,8 +256,11 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SPEED_RPM_UPDATE) {
         EventTriggerCallback(IBusEvent_IKESpeedRPMUpdate, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_COOLANT_TEMP_UPDATE) {
-        ibus->coolantTemperature = pkt[5];
-        EventTriggerCallback(IBusEvent_IKECoolantTempUpdate, pkt);
+        // Do not update the system if the value is the same
+        if (ibus->coolantTemperature != pkt[5] && pkt[5] < 0x80) {
+            ibus->coolantTemperature = pkt[5];
+            EventTriggerCallback(IBusEvent_IKECoolantTempUpdate, pkt);
+        }
     }
 }
 
@@ -380,10 +383,8 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
             (pkt[13] & 0xF0) >> 4,
             pkt[13] & 0x0F
         );
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DSP ||
-               pkt[IBUS_PKT_DST] == IBUS_DEVICE_LOC
-    ) {
-         if (pkt[IBUS_PKT_CMD] == IBUS_DSP_CMD_CONFIG_SET) {
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DSP) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_DSP_CMD_CONFIG_SET) {
             EventTriggerCallback(IBusEvent_DSPConfigSet, pkt);
         }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GT) {
@@ -402,6 +403,9 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
         }
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_UPDATE_MAIN_AREA) {
             EventTriggerCallback(IBusEvent_RADUpdateMainArea, pkt);
+        }
+        if (pkt[IBUS_PKT_CMD] == IBUS_DSP_CMD_CONFIG_SET) {
+            EventTriggerCallback(IBusEvent_DSPConfigSet, pkt);
         }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_MID) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_WRITE_MID_DISPLAY) {

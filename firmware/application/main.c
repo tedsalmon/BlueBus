@@ -29,21 +29,46 @@ int main(void)
     // Set the IVT mode
     IVT_MODE = IVT_MODE_APP;
 
-    // Set all used ports to digital mode
+    // Set all ports to digital mode
     ANSB = 0;
+    ANSC = 0;
     ANSD = 0;
     ANSE = 0;
     ANSF = 0;
     ANSG = 0;
 
+    // Set all ports as outputs
+    TRISB = 0;
+    TRISC = 0;
+    TRISD = 0;
+    TRISE = 0;
+    TRISF = 0;
+    TRISG = 0;
+
+    // Drive all ports to logic low
+    LATB = 0;
+    LATC = 0;
+    LATD = 0;
+    LATE = 0;
+    LATF = 0;
+    LATG = 0;
+
     // Set the I/O ports to outputs
+    BT_DATA_SEL_MODE = 0;
     ON_LED_MODE = 0;
     UART_SEL_MODE = 0;
     IBUS_EN_MODE = 0;
     PAM_SHDN_MODE = 0;
-    SYS_DTR_MODE = 1;
     TEL_ON_MODE = 0;
     TEL_MUTE_MODE = 0;
+
+    // Set the RX / input pins to inputs
+    IBUS_UART_RX_PIN_MODE = 1;
+    IBUS_UART_STATUS_MODE = 1;
+    BC127_UART_RX_PIN_MODE = 1;
+    SYSTEM_UART_RX_PIN_MODE = 1;
+    EEPROM_SDI_PIN_MODE = 1;
+    SYS_DTR_MODE = 1;
     
     // Set the UART mode to MCU for the remainder of this application code
     UART_SEL = UART_SEL_MCU;
@@ -51,15 +76,17 @@ int main(void)
     IBUS_EN = 1;
     // Turn the PAM8406 off until it's required
     PAM_SHDN = 0;
-    // Keep the system unmuted but enable the TEL_ON signal
-    TEL_ON = 1;
+    // Keep the vehicle unmuted and telephone on disengaged
     TEL_MUTE = 0;
+    TEL_ON = 0;
+    // Keep the BC127 out of data mode
+    BT_DATA_SEL = 0;
 
     // Initialize the system UART first, since we needed it for debug
     struct UART_t systemUart = UARTInit(
         SYSTEM_UART_MODULE,
-        SYSTEM_UART_RX_PIN,
-        SYSTEM_UART_TX_PIN,
+        SYSTEM_UART_RX_RPIN,
+        SYSTEM_UART_TX_RPIN,
         SYSTEM_UART_RX_PRIORITY,
         SYSTEM_UART_TX_PRIORITY,
         UART_BAUD_115200,

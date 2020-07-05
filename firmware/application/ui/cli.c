@@ -156,6 +156,38 @@ void CLIProcess()
                             cmdSuccess = 0;
                         }
                     }
+                } else if (UtilsStricmp(msgBuf[1], "LICENSE") == 0) {
+                    cmdSuccess = 0;
+                    if (delimCount == 2) {
+                        BC127CommandLicense(cli.bt, 0, 0);
+                        cmdSuccess = 1;
+                    }
+                    if (delimCount == 3 && (
+                        UtilsStricmp(msgBuf[2], "CVC") == 0 ||
+                        UtilsStricmp(msgBuf[2], "APTX") == 0)
+                    ) {
+                        BC127CommandLicense(cli.bt, msgBuf[2], 0);
+                        cmdSuccess = 1;
+                    }
+                    if (delimCount == 8 && (
+                        UtilsStricmp(msgBuf[2], "CVC") == 0 ||
+                        UtilsStricmp(msgBuf[2], "APTX") == 0)
+                    ) {
+                        char license[25];
+                        memset(license, 0, 25);
+                        snprintf(
+                            license,
+                            24,
+                            "%s %s %s %s %s",
+                            msgBuf[3],
+                            msgBuf[4],
+                            msgBuf[5],
+                            msgBuf[6],
+                            msgBuf[7]
+                        );
+                        BC127CommandLicense(cli.bt, msgBuf[2], license);
+                        cmdSuccess = 1;
+                    }
                 } else if (UtilsStricmp(msgBuf[1], "MGAIN") == 0) {
                     if (delimCount == 2) {
                         unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);

@@ -168,21 +168,19 @@ static void MIDShowNextDevice(MIDContext_t *context, uint8_t direction)
         }
         BC127PairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
         char text[16];
-        UtilsRemoveNonAscii(text, dev->deviceName);
-        char cleanText[16];
-        strncpy(cleanText, text, 15);
+        strncpy(text, dev->deviceName, 15);
         text[15] = '\0';
         // Add a space and asterisks to the end of the device name
         // if it's the currently selected device
         if (strcmp(dev->macId, context->bt->activeDevice.macId) == 0) {
-            uint8_t startIdx = strlen(cleanText);
+            uint8_t startIdx = strlen(text);
             if (startIdx > 15) {
                 startIdx = 16;
             }
-            cleanText[startIdx++] = 0x20;
-            cleanText[startIdx++] = 0x2A;
+            text[startIdx++] = 0x20;
+            text[startIdx++] = 0x2A;
         }
-        MIDSetMainDisplayText(context, cleanText, 0);
+        MIDSetMainDisplayText(context, text, 0);
     }
 }
 
@@ -449,9 +447,7 @@ void MIDBC127MetadataUpdate(void *ctx, unsigned char *tmp)
         } else {
             snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
         }
-        char cleanText[UTILS_DISPLAY_TEXT_SIZE];
-        UtilsRemoveNonAscii(cleanText, text);
-        MIDSetMainDisplayText(context, cleanText, 3000 / MID_DISPLAY_SCROLL_SPEED);
+        MIDSetMainDisplayText(context, text, 3000 / MID_DISPLAY_SCROLL_SPEED);
         TimerTriggerScheduledTask(context->displayUpdateTaskId);
     }
 }

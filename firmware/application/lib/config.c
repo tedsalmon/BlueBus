@@ -346,7 +346,7 @@ unsigned char ConfigGetTrapLast()
 unsigned char ConfigGetUIMode()
 {
     unsigned char value = CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS];
-    if (value == 0x00 || 1) {
+    if (value == 0x00) {
         value = ConfigGetByte(CONFIG_UI_MODE_ADDRESS);
         CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS] = value;
     }

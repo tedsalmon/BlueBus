@@ -668,6 +668,9 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             BC127CommandForwardSeekPress(context->bt);
         }
         curStatus = IBUS_CDC_STAT_FAST_REV;
+    } else if (requestedCommand == IBUS_CDC_CMD_CD_CHANGE) {
+        curStatus = IBUS_CDC_STAT_PLAYING;
+        curFunction = IBUS_CDC_FUNC_PLAYING;
     } else if (requestedCommand == IBUS_CDC_CMD_SCAN) {
         curStatus = 0x00;
         // The 5th octet in the packet tells the CDC if we should
@@ -923,6 +926,8 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
         // If the first bit is set, the key is in position 1 at least, otherwise
         // the ignition is off
         if (ignitionStatus == IBUS_IGNITION_OFF) {
+            // Disable Telephone On
+            TEL_ON = 0;
             // Set the BT module not connectable/discoverable. Disconnect all devices
             BC127CommandBtState(context->bt, BC127_STATE_OFF, BC127_STATE_OFF);
             BC127CommandClose(context->bt, BC127_CLOSE_ALL);
@@ -969,6 +974,8 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
             LogDebug(LOG_SOURCE_SYSTEM, "Handler: Ignition On");
             // Play a tone to wake up the WM8804 / PCM5122
             BC127CommandTone(Context.bt, "V 0 N C6 L 4");
+            // Enable Telephone On
+            TEL_ON = 1;
             // Anounce the CDC to the network
             HandlerIBusBroadcastCDCStatus(context);
             // Reset the metadata so we don't display the wrong data
@@ -1275,11 +1282,13 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
     unsigned char mflButton = pkt[4];
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         if (mflButton == IBusMFLButtonVoicePress) {
+            LogDebug(LOG_SOURCE_SYSTEM, "MFL OFF");
             context->mflButtonStatus = HANDLER_MFL_STATUS_OFF;
         }
         if (mflButton == IBusMFLButtonVoiceRelease &&
             context->mflButtonStatus == HANDLER_MFL_STATUS_OFF
         ) {
+            LogDebug(LOG_SOURCE_SYSTEM, "MFL PRESS");
             if (context->bt->callStatus == BC127_CALL_ACTIVE) {
                 BC127CommandCallEnd(context->bt);
             } else if (context->bt->callStatus == BC127_CALL_INCOMING) {
@@ -1294,7 +1303,9 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
                 }
             }
         } else if (mflButton == IBusMFLButtonVoiceHold) {
+            LogDebug(LOG_SOURCE_SYSTEM, "MFL HOLD");
             context->mflButtonStatus = HANDLER_MFL_STATUS_SPEAK_HOLD;
+            LogDebug(LOG_SOURCE_SYSTEM, "Toggle VR");
             BC127CommandToggleVR(context->bt);
         }
     } else {
@@ -1720,7 +1731,7 @@ void HandlerTimerOpenProfileErrors(void *ctx)
 /**
  * HandlerTimerPoweroff()
  *     Description:
- *         Track the time since the last IBus message and see if we need to
+ *         Track the time since the last I-Bus message and see if we need to
  *         power off.
  *     Params:
  *         void *ctx - The context provided at registration

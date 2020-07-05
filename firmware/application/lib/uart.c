@@ -125,6 +125,21 @@ void UARTDestroy(uint8_t uartModule) {
     uart->registers->uxmode = 0;
     // Disable transmit and receive on the module
     uart->registers->uxsta = 0;
+    // Pull down the RX and TX pins for the module
+    switch (uartModule) {
+        case IBUS_UART_MODULE:
+            IBUS_UART_RX_PIN_MODE = 1;
+            IBUS_UART_TX_PIN_MODE = 1;
+            break;
+        case BC127_UART_MODULE:
+            BC127_UART_RX_PIN_MODE = 1;
+            BC127_UART_TX_PIN_MODE = 1;
+            break;
+        case SYSTEM_UART_MODULE:
+            SYSTEM_UART_RX_PIN_MODE = 1;
+            SYSTEM_UART_TX_PIN_MODE = 1;
+            break;
+    }
 }
 
 UART_t * UARTGetModuleHandler(uint8_t moduleIndex)
