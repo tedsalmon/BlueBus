@@ -200,6 +200,25 @@ unsigned char ConfigGetIKEType()
 }
 
 /**
+ * ConfigGetLMVariant()
+ *     Description:
+ *         Get the Light Module variant
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetLMVariant()
+{
+    unsigned char value = CONFIG_CACHE[CONFIG_LM_VARIANT_ADDRESS];
+    if (value == 0x00) {
+        value = ConfigGetByte(CONFIG_LM_VARIANT_ADDRESS);
+        CONFIG_CACHE[CONFIG_LM_VARIANT_ADDRESS] = value;
+    }
+    return value;
+}
+
+/**
  * ConfigGetLog()
  *     Description:
  *         Get the log level for different systems
@@ -483,6 +502,21 @@ void ConfigSetIKEType(unsigned char ikeType)
     currentValue |= (ikeType << 4) & 0xF0;
     CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = currentValue;
     EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, currentValue);
+}
+
+/***
+ * ConfigSetLMVariant()
+ *     Description:
+ *         Set the Light Module variant
+ *     Params:
+ *         unsigned char version
+ *     Returns:
+ *         void
+ */
+void ConfigSetLMVariant(unsigned char variant)
+{
+    CONFIG_CACHE[CONFIG_LM_VARIANT_ADDRESS] = variant;
+    EEPROMWriteByte(CONFIG_LM_VARIANT_ADDRESS, variant);
 }
 
 /**
