@@ -35,7 +35,7 @@
 #define HANDLER_INT_CDC_STATUS 500
 #define HANDLER_INT_DEVICE_CONN 30000
 #define HANDLER_INT_DEVICE_SCAN 10000
-#define HANDLER_INT_LCM_IO_STATUS 5000
+#define HANDLER_INT_LCM_IO_STATUS 20000
 #define HANDLER_INT_PROFILE_ERROR 2500
 #define HANDLER_INT_POWEROFF 1000
 #define HANDLER_MFL_STATUS_OFF 0
@@ -52,13 +52,15 @@ typedef struct HandlerBodyModuleStatus_t {
     uint8_t lowSideDoors: 1;
     uint8_t doorsLocked: 1;
 } HandlerBodyModuleStatus_t;
+
 typedef struct HandlerLightControlStatus_t {
     uint8_t lightStatus: 1;
     uint8_t triggerStatus: 1;
-    uint8_t drvBlinker: 1;
-    uint8_t psgBlinker: 1;
+    uint8_t leftBlinker: 1;
+    uint8_t rightBlinker: 1;
     uint8_t blinkCount: 4;
 } HandlerLightControlStatus_t;
+
 typedef struct HandlerModuleStatus_t {
     uint8_t BMBT: 1;
     uint8_t DSP: 1;
@@ -78,6 +80,7 @@ typedef struct HandlerContext_t {
     uint8_t btConnectionStatus;
     uint8_t uiMode;
     uint8_t seekMode;
+    uint8_t lmDimmerChecksum;
     uint8_t mflButtonStatus;
     uint8_t telStatus;
     HandlerBodyModuleStatus_t bodyModuleStatus;
@@ -87,7 +90,9 @@ typedef struct HandlerContext_t {
     uint8_t scanIntervals;
     uint32_t cdChangerLastPoll;
     uint32_t cdChangerLastStatus;
+    uint32_t lmLastIOStatus;
 } HandlerContext_t;
+
 void HandlerInit(BC127_t *, IBus_t *);
 void HandlerBC127Boot(void *, unsigned char *);
 void HandlerBC127BootStatus(void *, unsigned char *);
@@ -107,10 +112,11 @@ void HandlerIBusGTDIAOSIdentityResponse(void *, unsigned char *);
 void HandlerIBusIKEIgnitionStatus(void *, unsigned char *);
 void HandlerIBusIKESpeedRPMUpdate(void *, unsigned char *);
 void HandlerIBusIKEVehicleType(void *, unsigned char *);
-void HandlerIBusLCMLightStatus(void *, unsigned char *);
-void HandlerIBusLCMDiagnosticsAcknowledge(void *, unsigned char *);
-void HandlerIBusLCMDimmerStatus(void *, unsigned char *);
-void HandlerIBusLCMRedundantData(void *, unsigned char *);
+void HandlerIBusLMLightStatus(void *, unsigned char *);
+void HandlerIBusLMDiagnosticsAcknowledge(void *, unsigned char *);
+void HandlerIBusLMDimmerStatus(void *, unsigned char *);
+void HandlerIBusLMIdentResponse(void *, unsigned char *);
+void HandlerIBusLMRedundantData(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerIBusModuleStatusResponse(void *, unsigned char *);
 void HandlerIBusModuleStatusRequest(void *, unsigned char *);

@@ -31,8 +31,11 @@ IBus_t IBusInit()
     ibus.ignitionStatus = IBUS_IGNITION_OFF;
     ibus.gtVersion = ConfigGetNavType();
     ibus.vehicleType = ConfigGetVehicleType();
-    ibus.lcmDimmerStatus1 = 0xFF;
-    ibus.lcmDimmerStatus2 = 0xFF;
+    ibus.lmVariant = ConfigGetLMVariant();
+    ibus.lmLoadFrontVoltage = 0x00; // Front load sensor voltage (LWR)
+    ibus.lmDimmerVoltage = 0xFF;
+    ibus.lmLoadRearVoltage = 0x00; // Rear load sensor voltage (LWR)
+    ibus.lmPhotoVoltage = 0xFF; // Photosensor voltage (LSZ)
     ibus.oilTemperature = 0x00;
     ibus.coolantTemperature = 0x00;
     ibus.rxBufferIdx = 0;
@@ -287,10 +290,28 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
         EventTriggerCallback(IBusEvent_LCMDimmerStatus, pkt);
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
                pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+               pkt[IBUS_PKT_LEN] == 0x19
+    ) {
+        // LME38 has unique status. It's shorter, and different mapping.
+        // Length is an (educated) guess based on number of bytes required to
+        // populate the job results.
+        ibus->lmDimmerVoltage = pkt[IBUS_LME38_IO_DIMMER_OFFSET];
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
                pkt[IBUS_PKT_LEN] == 0x23
     ) {
-        ibus->lcmDimmerStatus1 = pkt[19];
-        ibus->lcmDimmerStatus2 = pkt[20];
+        // Status reply length and mapping is the same for LCM and LSZ variants.
+        // The non-applicable parameters default to 0x00, i.e. LCM does not
+        // have a photosensor, so value will be 0x00.
+
+        // Front load sensor voltage (Xenon)
+        ibus->lmLoadFrontVoltage = pkt[IBUS_LM_IO_LOAD_FRONT_OFFSET];
+        // Dimmer (58G) voltage
+        ibus->lmDimmerVoltage = pkt[IBUS_LM_IO_DIMMER_OFFSET];
+        // Rear load sensor voltage (Xenon) / manual vertical aim control (non-Xenon)
+        ibus->lmLoadRearVoltage = pkt[IBUS_LM_IO_LOAD_REAR_OFFSET];
+        // Photosensor voltage (LSZ)
+        ibus->lmPhotoVoltage = pkt[IBUS_LM_IO_PHOTO_OFFSET];
         if (ibus->vehicleType != IBUS_VEHICLE_TYPE_E46_Z4 &&
             pkt[23] != 0x00
         ) {
@@ -313,6 +334,19 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
         EventTriggerCallback(IBusEvent_LCMDiagnosticsAcknowledge, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_LCM_RESP_REDUNDANT_DATA) {
         EventTriggerCallback(IBusEvent_LCMRedundantData, pkt);
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE && // 0xa0
+               pkt[IBUS_PKT_LEN] == 0x0F
+    ) {
+      // I was a bit nervous about relying upon message length, but only an
+      // ident request (0x00) results in a reply of this length. Winning.
+      // I would have done the same GT and had the ident logic in the handler,
+      // but it's a bit unwieldy so I split it out.
+      uint8_t lmVariant = IBusGetLMVariant(pkt);
+      // I did not modify struct in above method as it was not very _SOLID_.
+      // Yes, that's right, SOLID. Don't you roll your eyes at me!
+      ibus->lmVariant = lmVariant;
+      EventTriggerCallback(IBusEvent_LMIdentResponse, &lmVariant);
     }
 }
 
@@ -660,175 +694,113 @@ void IBusSendCommand(
     }
 }
 
-uint8_t IBusGetDeviceManufacturer(const unsigned char mfgByte) {
-    uint8_t deviceManufacturer = 0;
-    switch (mfgByte) {
-        case 0x00:
-            //"Siemens"
-            break;
-        case 0x01:
-            //"Reinshagen (Delphi)"
-            break;
-        case 0x02:
-            //"Kostal"
-            break;
-        case 0x03:
-            //"Hella"
-            break;
-        case 0x04:
-            //"Siemens"
-            break;
-        case 0x07:
-            //"Helbako"
-            break;
-        case 0x09:
-            //"Loewe -> Lear"
-            break;
-        case 0x10:
-            //"VDO"
-            break;
-        case 0x14:
-            //"SWF"
-            break;
-        case 0x16:
-            // MK3 "Philips / Siemens VDO" "0103708.21"
-            break;
-        case 0x17:
-            //"Alpine"
-            break;
-        case 0x19:
-            //"Kammerer"
-            break;
-        case 0x20:
-            //"Becker"
-            break;
-        case 0x22:
-            //"Alps"
-            break;
-        case 0x23:
-            //"Continental"
-            break;
-        case 0x24:
-            //"Temic"
-            break;
-        case 0x26:
-            //"MotoMeter"
-            break;
-        case 0x34:
-            //"VDO" 0108788.10" "0145067.10 For Mk4
-            break;
-        case 0x41:
-            //"Megamos"
-            break;
-        case 0x46:
-            //"Gemel"
-            break;
-        case 0x56:
-            //"Siemens VDO Automotive"
-            break;
-        case 0x57:
-            //"Visteon"
-            break;
-        case 0xD9:
-            //"Webasto"
-            break;
-    }
-    return deviceManufacturer;
+/***
+ * IBusGetLMCodingIndex()
+ *     Description:
+ *        Get the light module coding index
+ *     Params:
+ *         unsigned char *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - the light module coding index
+ */
+uint8_t IBusGetLMCodingIndex(unsigned char *packet)
+{
+    uint8_t codingIndex = {
+        packet[IBUS_LM_CI_ID_OFFSET]
+    };
+    return codingIndex;
 }
 
-/**
- * IBusGetRadioType()
+/***
+ * IBusGetLMDiagnosticIndex()
  *     Description:
- *        Get the radio type based on the part number
+ *        Get the light module diagnostic index
  *     Params:
- *         uint32_t partNumber - The device part number
+ *         unsigned char *packet - The diagnostics packet
  *     Returns:
- *         void
+ *         uint8_t - the light module diagnostic index
  */
-uint8_t IBusGetRadioType(uint32_t partNumber)
+uint8_t IBusGetLMDiagnosticIndex(unsigned char *packet)
 {
-    uint8_t radioType = 0;
-    switch (partNumber) {
-        case 4160119:
-        case 6915711:
-        case 6924733:
-        case 6924906:
-        case 6927902:
-        case 6961215:
-        case 6961217:
-        case 6932564:
-        case 6933701:
-        case 6921825:
-        case 6935628:
-        case 6932431:
-        case 6939661:
-        case 6943436:
-        case 6976887:
-        case 6921964:
-        case 6927903:
-        case 6941506:
-        case 6915712:
-        case 6919073:
-        case 9124631:
-            // Business Radio CD
-            radioType = IBUS_RADIO_TYPE_BRCD;
-            break;
-        case 6900403:
-        case 6915710:
-        case 6928763:
-        case 6935630:
-        case 6943428:
-        case 6923842:
-        case 6943426:
-            // Business Radio Tape Player
-            radioType = IBUS_RADIO_TYPE_BRTP;
-            break;
-        case 6902718:
-        case 6902719:
-            // Navigation C43
-            radioType = IBUS_RADIO_TYPE_C43;
-            break;
-        case 6904213:
-        case 6904214:
-        case 6919080:
-        case 6919081:
-        case 6922512:
-        case 6922513:
-        case 6933089:
-        case 6933090:
-        case 6927910:
-        case 6927911:
-        case 6943449:
-        case 6943450:
-        case 6964398:
-        case 6964399:
-        case 6972662:
-        case 6972665:
-        case 6976961:
-        case 6976962:
-        case 6988275:
-        case 6988276:
-            // Navigation BM53 (USDM)
-            radioType = IBUS_RADIO_TYPE_BM53;
-            break;
-        case 6919079:
-        case 6922511:
-        case 6932812:
-        case 6933092:
-        case 6934650:
-        case 6941691:
-        case 6943452:
-        case 6964401:
-        case 6972667:
-        case 6976963:
-        case 6976964:
-        case 8385457:
-        case 9185185:
-            // Navigation BM54 (EUDM)
-            radioType = IBUS_RADIO_TYPE_BM54;
-            break;
+    uint8_t diagnosticIndex = {
+        packet[IBUS_LM_DI_ID_OFFSET]
+    };
+    return diagnosticIndex;
+}
+
+/***
+ * IBusGetLMDimmerChecksum()
+ *     Description:
+ *        Get the dimmer checksum
+ *     Params:
+ *         unsigned char *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - the light module coding index
+ */
+uint8_t IBusGetLMDimmerChecksum(unsigned char *packet)
+{
+    uint8_t frameLength = packet[1] - 1;
+    uint8_t index = 4;
+    uint8_t checksum = 0x00;
+    while (frameLength > 0) {
+        checksum ^= packet[index];
+        index++;
+        frameLength--;
     }
-    return radioType;
+    return checksum;
+}
+
+
+uint8_t IBusGetLMDimmerChecksum(unsigned char *);
+
+/**
+ * IBusGetLMVariant()
+ *     Description:
+ *        Get the light module variant, as per EDIABAS:
+ *        Group file: D_00D0.GRP
+*         Version:    1.5.1
+ *     Params:
+ *         unsigned char *packet - Diagnostics ident packet
+ *     Returns:
+ *         uint8_t - The light module variant
+ */
+uint8_t IBusGetLMVariant(unsigned char *packet)
+{
+    uint8_t diagnosticIndex = IBusGetLMDiagnosticIndex(packet);
+    uint8_t codingIndex = IBusGetLMCodingIndex(packet);
+    uint8_t lmVariant = 0;
+
+    LogRaw("\r\nIBus: LM DI: %d CI: %d\r\n", diagnosticIndex, codingIndex);
+
+    if (diagnosticIndex < 0x10) {
+        lmVariant = IBUS_LM_LME38;
+        LogInfo(LOG_SOURCE_IBUS, "Light Module: LME38");
+    } else if (diagnosticIndex == 0x10) {
+        lmVariant = IBUS_LM_LCM;
+        LogInfo(LOG_SOURCE_IBUS, "Light Module: LCM");
+    } else if (diagnosticIndex == 0x11) {
+        lmVariant = IBUS_LM_LCM_A;
+        LogInfo(LOG_SOURCE_IBUS, "Light Module: LCM_A");
+    } else if (diagnosticIndex == 0x12 && codingIndex == 0x16) {
+        lmVariant = IBUS_LM_LCM_II;
+        LogInfo(LOG_SOURCE_IBUS, "Light Module: LCM_II");
+    } else if ((diagnosticIndex == 0x12 || diagnosticIndex == 0x13) &&
+              codingIndex == 0x17
+    ) {
+        lmVariant = IBUS_LM_LCM_III;
+        LogInfo(LOG_SOURCE_IBUS, "Light Module: LCM_III");
+    } else if (diagnosticIndex == 0x14) {
+        lmVariant = IBUS_LM_LCM_IV;
+        LogInfo(LOG_SOURCE_IBUS, "Light Module: LCM_IV");
+    } else if (diagnosticIndex >= 0x20 && diagnosticIndex <= 0x2f) {
+        lmVariant = IBUS_LM_LSZ;
+        LogInfo(LOG_SOURCE_IBUS, "Light Module: LSZ");
+    } else if (diagnosticIndex == 0x30) {
+        lmVariant = IBUS_LM_LSZ_2;
+        LogInfo(LOG_SOURCE_IBUS, "Light Module: LSZ_2");
+    }
+
+    return lmVariant;
 }
 
 /**
@@ -1781,54 +1753,147 @@ void IBusCommandIKETextClear(IBus_t *ibus)
 }
 
 /**
- * IBusCommandLCMEnableBlinker()
+ * IBusCommandLMActivateBulbs()
  *     Description:
- *        Issue a diagnostic message to the LCM to enable the turn signals
- *            // E38/E39/E53/Range Rover Left / Right
- *            3F 0F D0 0C 00 00 40 00 00 00 00 00 00 FF FF 00 AC
- *            3F 0F D0 0C 00 00 80 00 00 00 00 00 00 FF FF 00 6C
- *            // E46/Z4 Left / Right
- *            3F 0F D0 0C 00 00 FF 50 00 00 00 80 00 80 80 00 C3
- *            3F 0F D0 0C 00 00 FF 80 00 00 00 80 00 80 80 00 13
+ *        Light module diagnostics: Activate bulbs
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char blinker - The byte containing the bits of which bulb
- *             to illuminate
+ *         unsigned char blinkerSide - left or right blinker
  *     Returns:
  *         void
  */
-void IBusCommandLCMEnableBlinker(IBus_t *ibus, unsigned char blinker) {
-    unsigned char lightStatus = 0x00;
-    unsigned char lightStatus2 = 0x00;
-    unsigned char ioStatus = 0x00;
+void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
+    unsigned char blinker = IBUS_LSZ_BLINKER_OFF;
 
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        lightStatus = blinker;
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        lightStatus = 0xFF;
-        if (blinker == IBUS_LCM_BLINKER_DRV) {
-            blinker = IBUS_LCM_BLINKER_DRV_E46;
-        } else if (blinker == IBUS_LCM_BLINKER_PSG) {
-            blinker = IBUS_LCM_BLINKER_PSG_E46;
+    if (ibus->lmVariant == IBUS_LM_LME38) {
+        switch (blinkerSide) {
+            case IBUS_LM_BLINKER_LEFT:
+                blinker = IBUS_LME38_BLINKER_LEFT;
+                break;
+            case IBUS_LM_BLINKER_RIGHT:
+                blinker = IBUS_LME38_BLINKER_RIGHT;
+                break;
         }
-        lightStatus2 = blinker;
-        ioStatus = 0x80;
-    }
-    // Only fire the command if the light status byte is set
-    if (lightStatus != 0x00) {
+        // No LWR load sensor/HVAC pot voltage for LME38
         unsigned char msg[] = {
-            0x0C,
-            0x00,
-            0x00,
-            lightStatus,
-            lightStatus2,
+            IBUS_CMD_DIA_JOB_REQUEST,
+            blinker,
             0x00,
             0x00,
             0x00,
-            ioStatus,
             0x00,
-            ibus->lcmDimmerStatus1,
-            ibus->lcmDimmerStatus2,
+            0x00,
+            0x00,
+            ibus->lmDimmerVoltage,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+        };
+        IBusSendCommand(
+            ibus,
+            IBUS_DEVICE_DIA,
+            IBUS_DEVICE_LCM,
+            msg,
+            sizeof(msg)
+        );
+    } else if (ibus->lmVariant == IBUS_LM_LCM ||
+               ibus->lmVariant == IBUS_LM_LCM_A
+    ) {
+        switch (blinkerSide) {
+            case IBUS_LM_BLINKER_LEFT:
+                blinker = IBUS_LCM_BLINKER_LEFT;
+                break;
+            case IBUS_LM_BLINKER_RIGHT:
+                blinker = IBUS_LCM_BLINKER_RIGHT;
+                break;
+        }
+        // This is an issue! I'm not sure what differentiates S1 and S2.
+        // It's meaningful enough a distinction that it is displayed in INPA.
+        unsigned char msg[] = {
+            IBUS_CMD_DIA_JOB_REQUEST,
+            0x00, // S2_BLK_L, S2_BLK_R
+            blinker, // S1_BLK_L, S1_BLK_R
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            ibus->lmDimmerVoltage,
+            ibus->lmLoadRearVoltage,
+            0x00
+        };
+        IBusSendCommand(
+            ibus,
+            IBUS_DEVICE_DIA,
+            IBUS_DEVICE_LCM,
+            msg,
+            sizeof(msg)
+        );
+    } else if (ibus->lmVariant == IBUS_LM_LCM_II ||
+               ibus->lmVariant == IBUS_LM_LCM_III ||
+               ibus->lmVariant == IBUS_LM_LCM_IV
+    ) {
+        switch (blinkerSide) {
+            case IBUS_LM_BLINKER_LEFT:
+                blinker = IBUS_LCM_II_BLINKER_LEFT;
+                break;
+            case IBUS_LM_BLINKER_RIGHT:
+                blinker = IBUS_LCM_II_BLINKER_RIGHT;
+                break;
+        }
+        unsigned char msg[] = {
+            IBUS_CMD_DIA_JOB_REQUEST,
+            0x00,
+            0x00,
+            blinker,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            0x00,
+            ibus->lmDimmerVoltage,
+            ibus->lmLoadRearVoltage,
+            0x00
+        };
+        IBusSendCommand(
+            ibus,
+            IBUS_DEVICE_DIA,
+            IBUS_DEVICE_LCM,
+            msg,
+            sizeof(msg)
+        );
+    }
+    else if (ibus->lmVariant == IBUS_LM_LSZ ||
+             ibus->lmVariant == IBUS_LM_LSZ_2
+    ) {
+        switch (blinkerSide) {
+          case IBUS_LM_BLINKER_LEFT:
+                blinker = IBUS_LSZ_BLINKER_LEFT;
+                break;
+          case IBUS_LM_BLINKER_RIGHT:
+                blinker = IBUS_LSZ_BLINKER_RIGHT;
+                break;
+        }
+        unsigned char msg[] = {
+            IBUS_CMD_DIA_JOB_REQUEST,
+            0x00,
+            0x00,
+            IBUS_LSZ_HEADLIGHT_OFF,
+            blinker,
+            0x00,
+            0x00,
+            0x00,
+            ibus->lmLoadFrontVoltage,
+            0x00,
+            ibus->lmDimmerVoltage,
+            ibus->lmLoadRearVoltage,
+            ibus->lmPhotoVoltage,
+            0x00,
+            0x00,
             0x00
         };
         IBusSendCommand(
@@ -1841,17 +1906,18 @@ void IBusCommandLCMEnableBlinker(IBus_t *ibus, unsigned char blinker) {
     }
 }
 
+
 /**
- * IBusCommandLCMGetRedundantData()
+ * IBusCommandLMGetRedundantData()
  *     Description:
- *        Query the LCM for the vehicle vehicle
+ *        Query the Light Module for the vehicle vehicle
  *        Raw: 80 03 D0 53 00
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *     Returns:
  *         void
  */
-void IBusCommandLCMGetRedundantData(IBus_t *ibus)
+void IBusCommandLMGetRedundantData(IBus_t *ibus)
 {
     unsigned char msg[] = {IBUS_CMD_LCM_REQ_REDUNDANT_DATA};
     IBusSendCommand(

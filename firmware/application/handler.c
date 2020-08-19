@@ -28,14 +28,14 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
 {
     Context.bt = bt;
     Context.ibus = ibus;
-    Context.cdChangerLastPoll = TimerGetMillis();
-    Context.cdChangerLastStatus = TimerGetMillis();
+    uint32_t now = TimerGetMillis();
     Context.btDeviceConnRetries = 0;
     Context.btStartupIsRun = 0;
     Context.btConnectionStatus = HANDLER_BT_CONN_OFF;
     Context.btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
     Context.uiMode = ConfigGetUIMode();
     Context.seekMode = HANDLER_CDC_SEEK_MODE_NONE;
+    Context.lmDimmerChecksum = 0x00;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
     Context.telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
     memset(&Context.bodyModuleStatus, 0, sizeof(HandlerBodyModuleStatus_t));
@@ -43,6 +43,9 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     memset(&Context.ibusModuleStatus, 0, sizeof(HandlerModuleStatus_t));
     Context.powerStatus = HANDLER_POWER_ON;
     Context.scanIntervals = 0;
+    Context.lmLastIOStatus = now;
+    Context.cdChangerLastPoll = now;
+    Context.cdChangerLastStatus = now;
     EventRegisterCallback(
         BC127Event_Boot,
         &HandlerBC127Boot,
@@ -135,22 +138,27 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     );
     EventRegisterCallback(
         IBusEvent_LCMLightStatus,
-        &HandlerIBusLCMLightStatus,
+        &HandlerIBusLMLightStatus,
         &Context
     );
     EventRegisterCallback(
         IBusEvent_LCMDiagnosticsAcknowledge,
-        &HandlerIBusLCMDiagnosticsAcknowledge,
+        &HandlerIBusLMDiagnosticsAcknowledge,
         &Context
     );
     EventRegisterCallback(
         IBusEvent_LCMDimmerStatus,
-        &HandlerIBusLCMDimmerStatus,
+        &HandlerIBusLMDimmerStatus,
         &Context
     );
     EventRegisterCallback(
         IBusEvent_LCMRedundantData,
-        &HandlerIBusLCMRedundantData,
+        &HandlerIBusLMRedundantData,
+        &Context
+    );
+    EventRegisterCallback(
+        IBusEvent_LMIdentResponse,
+        &HandlerIBusLMIdentResponse,
         &Context
     );
     EventRegisterCallback(
@@ -995,9 +1003,13 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
                     IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
                 }
             }
+            // Identify the LM if we do not have an ID for it
+            if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
+                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+            }
             // Ask the LCM for the redundant data
             LogDebug(LOG_SOURCE_SYSTEM, "Handler: Request LCM Redundant Data");
-            IBusCommandLCMGetRedundantData(context->ibus);
+            IBusCommandLMGetRedundantData(context->ibus);
         }
     } else {
         if (ignitionStatus > IBUS_IGNITION_OFF) {
@@ -1098,7 +1110,25 @@ void HandlerIBusIKEVehicleType(void *ctx, unsigned char *pkt)
 }
 
 /**
- * HandlerIBusLightStatus()
+ * HandlerIBusLMIdentResponse()
+ *     Description:
+ *         Identify the light module variant
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *type - The light module variant
+ *     Returns:
+ *         void
+ */
+void HandlerIBusLMIdentResponse(void *ctx, unsigned char *variant)
+{
+    unsigned char lmVariant = *variant;
+    if (ConfigGetLMVariant() != lmVariant) {
+        ConfigSetLMVariant(lmVariant);
+    }
+}
+
+/**
+ * HandlerIBusLMLightStatus()
  *     Description:
  *         Track the Light Status messages in case the user has configured
  *         Three/Five One-Touch Blinkers.
@@ -1108,7 +1138,7 @@ void HandlerIBusIKEVehicleType(void *ctx, unsigned char *pkt)
  *     Returns:
  *         void
  */
-void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
+void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
 {
     uint8_t blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
     if (blinkCount > 0x01 && blinkCount != 0xFF) {
@@ -1116,27 +1146,27 @@ void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
         unsigned char lightStatus = pkt[4];
         if (context->lightControlStatus.lightStatus == HANDLER_LCM_STATUS_BLINKER_OFF) {
             context->lightControlStatus.blinkCount = 2;
-            if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) != 0 &&
-                CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) == 0
+            if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+                CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
             ) {
-                context->lightControlStatus.drvBlinker = 1;
+                context->lightControlStatus.leftBlinker = 1;
                 context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_ON;
-                IBusCommandLCMEnableBlinker(context->ibus, IBUS_LCM_BLINKER_DRV);
-            } else if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) != 0 &&
-                CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) == 0
+                IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_LEFT);
+            } else if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
+                CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0
             ) {
-                context->lightControlStatus.psgBlinker = 1;
+                context->lightControlStatus.rightBlinker = 1;
                 context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_ON;
-                IBusCommandLCMEnableBlinker(context->ibus, IBUS_LCM_BLINKER_PSG);
+                IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_RIGHT);
             }
-        } else if (context->lightControlStatus.drvBlinker == 1) {
-            if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) != 0 ||
+        } else if (context->lightControlStatus.leftBlinker == 1) {
+            if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 ||
                 context->lightControlStatus.blinkCount == blinkCount
             ) {
                 // Reset ourselves once the signal is off so we do not
                 // reactivate and signal in increments of `blinkCount`
-                if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) == 0) {
-                    context->lightControlStatus.drvBlinker = 0;
+                if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0) {
+                    context->lightControlStatus.leftBlinker = 0;
                     context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
                 }
                 if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
@@ -1145,14 +1175,14 @@ void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
             } else {
                 context->lightControlStatus.blinkCount++;
             }
-        } else if (context->lightControlStatus.psgBlinker == 1) {
-            if (CHECK_BIT(lightStatus, IBUS_LCM_DRV_SIG_BIT) != 0 ||
+        } else if (context->lightControlStatus.rightBlinker == 1) {
+            if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 ||
                 context->lightControlStatus.blinkCount == blinkCount
             ) {
                 // Reset ourselves once the signal is off so we do not
                 // reactivate and signal in increments of `blinkCount`
-                if (CHECK_BIT(lightStatus, IBUS_LCM_PSG_SIG_BIT) == 0) {
-                    context->lightControlStatus.psgBlinker = 0;
+                if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0) {
+                    context->lightControlStatus.rightBlinker = 0;
                     context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
                 }
                 if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
@@ -1175,7 +1205,7 @@ void HandlerIBusLCMLightStatus(void *ctx, unsigned char *pkt)
  *     Returns:
  *         void
  */
-void HandlerIBusLCMDiagnosticsAcknowledge(void *ctx, unsigned char *pkt)
+void HandlerIBusLMDiagnosticsAcknowledge(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->lightControlStatus.lightStatus == HANDLER_LCM_STATUS_BLINKER_ON) {
@@ -1198,14 +1228,19 @@ void HandlerIBusLCMDiagnosticsAcknowledge(void *ctx, unsigned char *pkt)
  *     Returns:
  *         void
  */
-void HandlerIBusLCMDimmerStatus(void *ctx, unsigned char *pkt)
+void HandlerIBusLMDimmerStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+    uint8_t checksum = IBusGetLMDimmerChecksum(pkt);
+    if (checksum != context->lmDimmerChecksum) {
+        IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+        context->lmLastIOStatus = TimerGetMillis();
+        context->lmDimmerChecksum = checksum;
+    }
 }
 
 /**
- * HandlerIBusLCMRedundantData()
+ * HandlerIBusLMRedundantData()
  *     Description:
  *         Check the VIN to see if we're in a new vehicle
  *         Raw: D0 10 80 54 50 4E 66 05 80 06 10 42 38 07 00 06 05 81
@@ -1215,7 +1250,7 @@ void HandlerIBusLCMDimmerStatus(void *ctx, unsigned char *pkt)
  *     Returns:
  *         void
  */
-void HandlerIBusLCMRedundantData(void *ctx, unsigned char *pkt)
+void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // Check VIN
@@ -1249,6 +1284,8 @@ void HandlerIBusLCMRedundantData(void *ctx, unsigned char *pkt)
             vehicleId[3] & 0xF,
             vehicleId[4]
         );
+        // Request light module ident
+        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
         // Save the new VIN
         ConfigSetVehicleIdentity(vehicleId);
         // Request the vehicle type
@@ -1699,11 +1736,14 @@ void HandlerTimerDeviceConnection(void *ctx)
 void HandlerTimerLCMIOStatus(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint32_t now = TimerGetMillis();
     if (context->ibusModuleStatus.LCM != 0 &&
-        context->ibus->ignitionStatus != IBUS_IGNITION_OFF
+        context->ibus->ignitionStatus != IBUS_IGNITION_OFF &&
+        (now - context->lmLastIOStatus) >= 20000
     ) {
         // Ask the LCM for the I/O Status of all lamps
         IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+        context->lmLastIOStatus = now;
     }
 }
 
