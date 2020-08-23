@@ -1580,6 +1580,14 @@ uint8_t HandlerIBusBroadcastTELStatus(
         if (context->telStatus != currentTelStatus ||
             sendFlag == HANDLER_TEL_STATUS_FORCE
         ) {
+            // Do not set the active call flag for these UIs to allow
+            // the radio volume controls to remain active
+            if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE &&
+                (context->uiMode == IBus_UI_CD53 ||
+                 context->uiMode == IBus_UI_BUSINESS_NAV)
+            ) {
+                return 1;
+            }
             IBusCommandTELStatus(context->ibus, currentTelStatus);
             context->telStatus = currentTelStatus;
             return 1;
@@ -1741,7 +1749,7 @@ void HandlerTimerOpenProfileErrors(void *ctx)
 void HandlerTimerPoweroff(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetPoweroffTimeoutDisabled() == CONFIG_SETTING_ENABLED) {
+    if (ConfigGetPoweroffTimeout() == CONFIG_SETTING_ENABLED) {
         uint32_t lastRx = TimerGetMillis() - context->ibus->rxLastStamp;
         if (lastRx >= HANDLER_POWER_TIMEOUT_MILLIS) {
             if (context->powerStatus == HANDLER_POWER_ON) {

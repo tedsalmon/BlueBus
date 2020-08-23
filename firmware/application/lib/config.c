@@ -243,7 +243,7 @@ unsigned char ConfigGetNavType()
 }
 
 /**
- * ConfigGetPoweroffTimeoutDisabled()
+ * ConfigGetPoweroffTimeout()
  *     Description:
  *         Check if Auto-Power Off is disabled
  *     Params:
@@ -251,9 +251,9 @@ unsigned char ConfigGetNavType()
  *     Returns:
  *         void
  */
-unsigned char ConfigGetPoweroffTimeoutDisabled()
+unsigned char ConfigGetPoweroffTimeout()
 {
-    unsigned char poweroffValue = ConfigGetByte(
+    unsigned char poweroffValue = EEPROMReadByte(
         CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS
     );
     if (poweroffValue == CONFIG_SETTING_DISABLED) {
@@ -523,7 +523,7 @@ void ConfigSetNavType(unsigned char type)
 }
 
 /**
- * ConfigSetPoweroffTimeoutDisabled()
+ * ConfigSetPoweroffTimeout()
  *     Description:
  *         Disable Auto-Power Off
  *     Params:
@@ -531,7 +531,7 @@ void ConfigSetNavType(unsigned char type)
  *     Returns:
  *         void
  */
-void ConfigSetPoweroffTimeoutDisabled(unsigned char status)
+void ConfigSetPoweroffTimeout(unsigned char status)
 {
     EEPROMWriteByte(
         CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS,

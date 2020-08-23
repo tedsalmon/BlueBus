@@ -319,7 +319,7 @@ void CLIProcess()
                     status = I2CRead(0x3A, 0x0B, &buffer);
                     LogRaw("WM8804: INTSTAT %02X (0x0B) [%d]\r\n", buffer, status);
                 } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
-                    if (ConfigGetPoweroffTimeoutDisabled() == CONFIG_SETTING_ENABLED) {
+                    if (ConfigGetPoweroffTimeout() == CONFIG_SETTING_ENABLED) {
                         LogRaw("Auto-Power Off: On\r\n");
                     } else {
                         LogRaw("Auto-Power Off: Off\r\n");
@@ -525,9 +525,9 @@ void CLIProcess()
                     }
                 } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
                     if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                        ConfigSetPoweroffTimeoutDisabled(CONFIG_SETTING_ENABLED);
+                        ConfigSetPoweroffTimeout(CONFIG_SETTING_ENABLED);
                     } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                        ConfigSetPoweroffTimeoutDisabled(CONFIG_SETTING_DISABLED);
+                        ConfigSetPoweroffTimeout(CONFIG_SETTING_DISABLED);
                     }
                 } else if (UtilsStricmp(msgBuf[1], "LOCKS") == 0) {
                     if (UtilsStricmp(msgBuf[2], "ON") == 0) {
@@ -570,7 +570,7 @@ void CLIProcess()
                 BC127CommandSetCodec(cli.bt, 1, "OFF");
                 BC127CommandSetMetadata(cli.bt, 1);
                 BC127CommandSetModuleName(cli.bt, "BlueBus");
-                BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON ON ON OFF");
+                BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
                 // Save
                 BC127CommandWrite(cli.bt);
                 // Reset the UI
@@ -605,8 +605,10 @@ void CLIProcess()
                 LogRaw("Available Commands:\r\n");
                 LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
                 LogRaw("    BT CONFIG - Get the BC127 Configuration\r\n");
+                LogRaw("    BT CVC ON/OFF - Enable or Disable Clear Voice Capture\r\n");
                 LogRaw("    BT HFP ON/OFF - Enable or Disable HFP. Get the HFP Status without a param.\r\n");
                 LogRaw("    BT MGAIN x - Set the Mic gain to x where x is octal C0-D6\r\n");
+                LogRaw("    BT MPREAMP ON/OFF - Enable the microphone pre-amp so non-OE microphones work well\r\n");
                 LogRaw("    BT PAIR - Enable pairing mode\r\n");
                 LogRaw("    BT NAME <name> - Set the module name, up to 32 chars\r\n");
                 LogRaw("    BT PIN <pin> - Set the module pin, up to 4 digits\r\n");
@@ -618,13 +620,18 @@ void CLIProcess()
                 LogRaw("    GET IBUS - Get debug info from the IBus\r\n");
                 LogRaw("    GET UI - Get the current UI Mode\r\n");
                 LogRaw("    GET I2S - Read the WM8804 INT/SPD Status registers\r\n");
+                LogRaw("    GET VIN - Read the stored vehicle VIN\r\n");
                 LogRaw("    REBOOT - Reboot the device\r\n");
+                LogRaw("    SET COMFORT BLINKERS x - Set the comfort blinkers between 1 and 8\r\n");
+                LogRaw("    SET COMFORT LOCK x - Lock the car at the given KM/h. 10, 20 or OFF\r\n");
+                LogRaw("    SET COMFORT UNLOCK x - Unock the car at the given ignition position. POS0, POS1 or OFF\r\n");
                 LogRaw("    SET DAC GAIN xx - Set the PCM5122 gain from 0x00 - 0xCF (higher is lower)\r\n");
                 LogRaw("    SET DSP INPUT ANALOG/DIGITAL - Set the CD Changer DSP input\r\n");
-                LogRaw("    SET IGN ON/OFF - Send the ignition status message [DEBUG]\r\n");
+                LogRaw("    SET IGN ON/OFF/ALWAYSON - Send the ignition status message or configure the BlueBus to assume the ignition is always on\r\n");
                 LogRaw("    SET LOG x ON/OFF - Change logging for x (BT, IBUS, SYS, UI)\r\n");
                 LogRaw("    SET PWROFF ON/OFF - Enable or disable auto power off\r\n");
                 LogRaw("    SET TEL ON/OFF - Enable/Disable output as the TCU\r\n");
+                LogRaw("    SET TIME HH MM - Set the IKE Time\r\n");
                 LogRaw("    SET UI x - Set the UI to x, where x:\r\n");
                 LogRaw("        x = 1. CD53 (Business Radio)\r\n");
                 LogRaw("        x = 2. BMBT (Navigation)\r\n");

@@ -548,38 +548,38 @@ void IBusProcess(IBus_t *ibus)
             EventTriggerCallback(IBusEvent_FirstMessageReceived, 0);
         }
         ibus->rxLastStamp = TimerGetMillis();
-    }
-
-    // Flush the transmit buffer out to the bus
-    uint8_t txTimeout = 0;
-    uint8_t beginTxTimestamp = TimerGetMillis();
-    while (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
-           txTimeout == IBUS_TX_TIMEOUT_OFF
-    ) {
-        uint32_t now = TimerGetMillis();
-        if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
-            uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
-            uint8_t idx;
-            /*
-             * Make sure that the STATUS pin on the TH3122 is low, indicating no
-             * bus activity before transmitting
-             */
-            if (IBUS_UART_STATUS == 0) {
-                for (idx = 0; idx < msgLen; idx++) {
-                    ibus->uart.registers->uxtxreg = ibus->txBuffer[ibus->txBufferReadIdx][idx];
-                    // Wait for the data to leave the TX buffer
-                    while ((ibus->uart.registers->uxsta & (1 << 9)) != 0);
-                }
-                txTimeout = IBUS_TX_TIMEOUT_DATA_SENT;
-                if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
-                    ibus->txBufferReadIdx = 0;
-                } else {
-                    ibus->txBufferReadIdx++;
-                }
-                ibus->txLastStamp = TimerGetMillis();
-            } else if (txTimeout != IBUS_TX_TIMEOUT_DATA_SENT) {
-                if ((now - beginTxTimestamp) > IBUS_TX_TIMEOUT_WAIT) {
-                    txTimeout = IBUS_TX_TIMEOUT_ON;
+    } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx) {
+        // Flush the transmit buffer out to the bus
+        uint8_t txTimeout = IBUS_TX_TIMEOUT_OFF;
+        uint8_t beginTxTimestamp = TimerGetMillis();
+        while (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
+               txTimeout != IBUS_TX_TIMEOUT_ON
+        ) {
+            uint32_t now = TimerGetMillis();
+            if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
+                uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
+                uint8_t idx;
+                /*
+                 * Make sure that the STATUS pin on the TH3122 is low, indicating no
+                 * bus activity before transmitting
+                 */
+                if (IBUS_UART_STATUS == 0) {
+                    for (idx = 0; idx < msgLen; idx++) {
+                        ibus->uart.registers->uxtxreg = ibus->txBuffer[ibus->txBufferReadIdx][idx];
+                        // Wait for the data to leave the TX buffer
+                        while ((ibus->uart.registers->uxsta & (1 << 9)) != 0);
+                    }
+                    txTimeout = IBUS_TX_TIMEOUT_DATA_SENT;
+                    if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
+                        ibus->txBufferReadIdx = 0;
+                    } else {
+                        ibus->txBufferReadIdx++;
+                    }
+                    ibus->txLastStamp = TimerGetMillis();
+                } else if (txTimeout != IBUS_TX_TIMEOUT_DATA_SENT) {
+                    if ((now - beginTxTimestamp) > IBUS_TX_TIMEOUT_WAIT) {
+                        txTimeout = IBUS_TX_TIMEOUT_ON;
+                    }
                 }
             }
         }
