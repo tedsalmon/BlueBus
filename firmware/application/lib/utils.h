@@ -40,4 +40,5 @@ void UtilsSetRPORMode(uint8_t, uint16_t);
 unsigned char UtilsStrToHex(char *);
 uint8_t UtilsStrToInt(char *);
 int8_t UtilsStricmp(const char *, const char *);
+const char* TransliterateUnicodeToExtendedASCII(uint32_t);
 #endif /* UTILS_H */

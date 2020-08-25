@@ -72,60 +72,66 @@ UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
  */
 void UtilsNormalizeText(char *string, const char *input)
 {
-    uint16_t idx;
-    uint16_t strIdx = 0;
-    uint16_t strLength = strlen(input);
-    for (idx = 0; idx < strLength; idx++) {
-        uint32_t c = input[idx];
-        if (c == 0x5C) {
-            uint16_t byteIdx = idx;
-            uint8_t byteSize = 0;
-            uint8_t curByte = input[byteIdx];
-            while (curByte == 0x5C && byteSize <= 3) {
-                if (idx + 3 <= strLength) {
-                    byteSize = byteSize + 1;
-                    byteIdx = byteIdx + 3;
-                    idx = idx + 3;
-                    curByte = input[byteIdx];
-                } else {
-                    curByte = 0x00;
-                }
-            }
-            if (curByte != 0x00) {
-                // Bring the index back one so we're on the "current" index still
-                idx--;
-            }
-            uint8_t byteOffset = 0;
-            unsigned char rawUtf[] = {0x00, 0x00, 0x00};
-            while (byteSize > 0) {
-                char buf[] = {input[byteIdx - 2], input[byteIdx - 1], '\0'};
-                unsigned char byte = UtilsStrToHex(buf);
-                rawUtf[2 - byteOffset] = byte;
-                byteOffset++;
-                byteIdx = byteIdx - 3;
-                byteSize--;
-            }
-            c = (
-                ((uint32_t)0 << 24) + // "Phantom" Byte
-                ((uint32_t)rawUtf[0] << 16) +
-                ((uint32_t)rawUtf[1] << 8) +
-                ((uint32_t)rawUtf[2])
-            );
-        }
-        if (c >= 0x20 && c <= 0x7E) {
-            string[strIdx] = (uint8_t) c;
-            strIdx++;
-        } else if (c > 0x7E) {
-            // Convert UTF-8 byte to Unicode then check if it falls within
-            // the range of extended ASCII
-            c = c - 0xC2C0;
-            if (c < 0xFF) {
-                string[strIdx] = (uint8_t) c & 0xFF;
-                strIdx++;
-            }
-        }
-    }
-    string[strIdx] = '\0';
+	uint16_t idx;
+	uint16_t strIdx = 0;
+	uint32_t unicodeChar;
+
+	uint8_t transIdx;
+	uint8_t transStrLength;
+
+	uint16_t strLength = strlen(input);
+
+	for (idx = 0; idx < strLength; idx++) {
+		uint8_t c = (uint8_t)input[idx];
+		unicodeChar = 0 | c;
+
+		// Identify number of bytes to read from the first negative byte
+		uint8_t bytesInChar = 0;
+		// 11110xxx
+		if (c >> 3 == 30) {
+			bytesInChar = 3;
+		}
+		// 1110xxxx
+		else if (c >> 4 == 14) {
+			bytesInChar = 2;
+		}
+		// 110xxxx
+		else if (c >> 5 == 6) {
+			bytesInChar = 1;
+		}
+
+		// Identify if we can read more byte
+		if (idx + bytesInChar <= strLength) {
+			while (bytesInChar != 0) {
+				unicodeChar = unicodeChar << 8 | (uint8_t)input[++idx];
+				bytesInChar--;
+			}
+		}
+		else {
+			idx = strLength;
+		}
+
+		if (unicodeChar <= 0x7F) {
+			string[strIdx++] = (char)unicodeChar;
+		}
+		else if (unicodeChar > 0x7F && unicodeChar <= 0xFF) {
+			// Convert UTF-8 byte to Unicode then check if it falls within
+			// the range of extended ASCII
+			uint32_t extendedChar = unicodeChar - 0xC2C0;
+			if (extendedChar < 0xFF) {
+				string[strIdx++] = (char)extendedChar;
+			}
+		}
+		else if (unicodeChar > 0xFF) {
+			const char* transStr = TransliterateUnicodeToExtendedASCII(unicodeChar);
+			transStrLength = strlen(transStr);
+			for (transIdx = 0; transIdx < transStrLength; transIdx++) {
+				string[strIdx++] = (char)transStr[transIdx];
+			}
+		}
+	}
+
+	string[strIdx] = '\0';
 }
 
 /**
@@ -235,4 +241,92 @@ int8_t UtilsStricmp(const char *string, const char *compare)
         compare++;
     }
     return result;
+}
+
+/**
+ * TransliterateUnicodeToExtendedASCII()
+ *     Description:
+ *         Transliterates Unicode character to the corresponding ASCII string.
+ *     Params:
+ *         uint32_t - Representation of the Unicode character
+ *     Returns:
+ *         const char* - Corresponding Extended ASCII characters
+ */
+const char* TransliterateUnicodeToExtendedASCII(uint32_t input) {
+	switch (input) {
+	case 0xCA80: return "R"; break; // LATIN LETTER SMALL CAPITAL R
+	case 0xD081: return "Yo"; break; // CYRILLIC CAPITAL LETTER IO
+	case 0xD084: return "E"; break; // CYRILLIC CAPITAL LETTER UKRAINIAN IE
+	case 0xD086: return "I"; break; // CYRILLIC CAPITAL LETTER BYELORUSSIAN-UKRAINIAN I
+	case 0xD090: return "A"; break; // CYRILLIC CAPITAL LETTER A
+	case 0xD091: return "B"; break; // CYRILLIC CAPITAL LETTER BE
+	case 0xD092: return "V"; break; // CYRILLIC CAPITAL LETTER VE
+	case 0xD093: return "G"; break; // CYRILLIC CAPITAL LETTER GHE
+	case 0xD094: return "D"; break; // CYRILLIC CAPITAL LETTER DE
+	case 0xD095: return "Ye"; break; // CYRILLIC CAPITAL LETTER IE
+	case 0xD096: return "Zh"; break; // CYRILLIC CAPITAL LETTER ZHE
+	case 0xD097: return "Z"; break; // CYRILLIC CAPITAL LETTER ZE
+	case 0xD098: return "I"; break; // CYRILLIC CAPITAL LETTER I
+	case 0xD099: return "Y"; break; // CYRILLIC CAPITAL LETTER SHORT I
+	case 0xD09A: return "K"; break; // CYRILLIC CAPITAL LETTER KA
+	case 0xD09B: return "L"; break; // CYRILLIC CAPITAL LETTER EL
+	case 0xD09C: return "M"; break; // CYRILLIC CAPITAL LETTER EM
+	case 0xD09D: return "N"; break; // CYRILLIC CAPITAL LETTER EN
+	case 0xD09E: return "O"; break; // CYRILLIC CAPITAL LETTER O
+	case 0xD09F: return "P"; break; // CYRILLIC CAPITAL LETTER PE
+	case 0xD0A0: return "R"; break; // CYRILLIC CAPITAL LETTER ER
+	case 0xD0A1: return "S"; break; // CYRILLIC CAPITAL LETTER ES
+	case 0xD0A2: return "T"; break; // CYRILLIC CAPITAL LETTER TE
+	case 0xD0A3: return "U"; break; // CYRILLIC CAPITAL LETTER U
+	case 0xD0A4: return "F"; break; // CYRILLIC CAPITAL LETTER EF
+	case 0xD0A5: return "Kh"; break; // CYRILLIC CAPITAL LETTER HA
+	case 0xD0A6: return "Ts"; break; // CYRILLIC CAPITAL LETTER TSE
+	case 0xD0A7: return "Ch"; break; // CYRILLIC CAPITAL LETTER CHE
+	case 0xD0A8: return "Sh"; break; // CYRILLIC CAPITAL LETTER SHA
+	case 0xD0A9: return "Shch"; break; // CYRILLIC CAPITAL LETTER SHCHA
+	case 0xD0AA: return "\""; break; // CYRILLIC CAPITAL LETTER HARD SIGN
+	case 0xD0AB: return "Y"; break; // CYRILLIC CAPITAL LETTER YERU
+	case 0xD0AC: return "'"; break; // CYRILLIC CAPITAL LETTER SOFT SIGN
+	case 0xD0AD: return "E"; break; // CYRILLIC CAPITAL LETTER E
+	case 0xD0AE: return "Yu"; break; // CYRILLIC CAPITAL LETTER YU
+	case 0xD0AF: return "Ya"; break; // CYRILLIC CAPITAL LETTER YA
+	case 0xD0B0: return "a"; break; // CYRILLIC SMALL LETTER A
+	case 0xD0B1: return "b"; break; // CYRILLIC SMALL LETTER BE
+	case 0xD0B2: return "v"; break; // CYRILLIC SMALL LETTER VE
+	case 0xD0B3: return "g"; break; // CYRILLIC SMALL LETTER GHE
+	case 0xD0B4: return "d"; break; // CYRILLIC SMALL LETTER DE
+	case 0xD0B5: return "ye"; break; // CYRILLIC SMALL LETTER IE
+	case 0xD0B6: return "zh"; break; // CYRILLIC SMALL LETTER ZHE
+	case 0xD0B7: return "z"; break; // CYRILLIC SMALL LETTER ZE
+	case 0xD0B8: return "i"; break; // CYRILLIC SMALL LETTER I
+	case 0xD0B9: return "y"; break; // CYRILLIC SMALL LETTER SHORT I
+	case 0xD0BA: return "k"; break; // CYRILLIC SMALL LETTER KA
+	case 0xD0BB: return "l"; break; // CYRILLIC SMALL LETTER EL
+	case 0xD0BC: return "m"; break; // CYRILLIC SMALL LETTER EM
+	case 0xD0BD: return "n"; break; // CYRILLIC SMALL LETTER EN
+	case 0xD0BE: return "o"; break; // CYRILLIC SMALL LETTER O
+	case 0xD0BF: return "p"; break; // CYRILLIC SMALL LETTER PE
+	case 0xD180: return "r"; break; // CYRILLIC SMALL LETTER ER
+	case 0xD181: return "s"; break; // CYRILLIC SMALL LETTER ES
+	case 0xD182: return "t"; break; // CYRILLIC SMALL LETTER TE
+	case 0xD183: return "u"; break; // CYRILLIC SMALL LETTER U
+	case 0xD184: return "f"; break; // CYRILLIC SMALL LETTER EF
+	case 0xD185: return "kh"; break; // CYRILLIC SMALL LETTER HA
+	case 0xD186: return "ts"; break; // CYRILLIC SMALL LETTER TSE
+	case 0xD187: return "ch"; break; // CYRILLIC SMALL LETTER CHE
+	case 0xD188: return "sh"; break; // CYRILLIC SMALL LETTER SHA
+	case 0xD189: return "shch"; break; // CYRILLIC SMALL LETTER SHCHA
+	case 0xD18A: return "\""; break; // CYRILLIC SMALL LETTER HARD SIGN
+	case 0xD18B: return "y"; break; // CYRILLIC SMALL LETTER YERU
+	case 0xD18C: return "'"; break; // CYRILLIC SMALL LETTER SOFT SIGN
+	case 0xD18D: return "e"; break; // CYRILLIC SMALL LETTER E
+	case 0xD18E: return "yu"; break; // CYRILLIC SMALL LETTER YU
+	case 0xD18F: return "ya"; break; // CYRILLIC SMALL LETTER YA
+	case 0xD191: return "yo"; break; // CYRILLIC SMALL LETTER IO
+	case 0xD194: return "e"; break; // CYRILLIC SMALL LETTER UKRAINIAN IE
+	case 0xD196: return "i"; break; // CYRILLIC SMALL LETTER BYELORUSSIAN-UKRAINIAN I
+	case 0xE28098: return "'"; break; // LEFT SINGLE QUOTATION MARK
+	case 0xE28099: return "'"; break; // RIGHT SINGLE QUOTATION MARK
+	default: return ""; break;
+	}
 }
