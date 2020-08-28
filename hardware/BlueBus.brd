@@ -3044,15 +3044,11 @@ design rules under a new name.</description>
 <wire x1="8.4" y1="41.4" x2="8.4" y2="42.3" width="0.4" layer="1"/>
 <wire x1="9.6" y1="43.5" x2="9.6" y2="44.6" width="0.4" layer="1"/>
 <via x="9.6" y="44.6" extent="1-16" drill="0.51"/>
-<wire x1="9.6" y1="44.6" x2="9.6" y2="45.6" width="0.4" layer="16"/>
-<wire x1="9.6" y1="45.6" x2="10.5" y2="46.5" width="0.4" layer="16"/>
-<wire x1="10.5" y1="46.5" x2="10.5" y2="47.7" width="0.4" layer="16"/>
-<wire x1="10.5" y1="47.7" x2="11.3" y2="48.5" width="0.4" layer="16"/>
+<wire x1="9.6" y1="44.6" x2="9.6" y2="46.9" width="0.4" layer="16"/>
+<wire x1="9.6" y1="46.9" x2="11.2" y2="48.5" width="0.4" layer="16"/>
 <wire x1="8.4" y1="42.3" x2="9.6" y2="43.5" width="0.4" layer="1"/>
-<wire x1="17.2" y1="48.9" x2="17.2" y2="49.6" width="0.4" layer="16"/>
-<wire x1="11.3" y1="48.5" x2="16.8" y2="48.5" width="0.4" layer="16"/>
-<wire x1="16.8" y1="48.5" x2="17.2" y2="48.9" width="0.4" layer="16"/>
-<wire x1="17.2" y1="49.6" x2="17.8" y2="50.2" width="0.4" layer="16"/>
+<wire x1="11.2" y1="48.5" x2="16.1" y2="48.5" width="0.4" layer="16"/>
+<wire x1="16.1" y1="48.5" x2="17.8" y2="50.2" width="0.4" layer="16"/>
 <wire x1="21.9" y1="50.2" x2="27.6" y2="55.9" width="0.4" layer="16"/>
 <wire x1="17.8" y1="50.2" x2="21.9" y2="50.2" width="0.4" layer="16"/>
 </signal>
