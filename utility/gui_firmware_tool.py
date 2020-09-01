@@ -3,7 +3,7 @@ import platform
 import serial.tools.list_ports as list_ports
 
 from glob import glob
-from intelhex import IntelHex
+from intelhex import IntelHex, HexRecordError
 from serial import Serial, PARITY_ODD, serialutil
 from struct import pack
 from time import time, sleep
@@ -11,6 +11,11 @@ from tkinter import Button, Tk, Label, Text, StringVar, HORIZONTAL, BOTTOM, SUNK
 from tkinter.ttk import Progressbar
 from tkinter.filedialog import askopenfilename
 from tk_tools import SmartOptionMenu
+
+BLUEBUS_PLATFORMS = [
+    'BLUEBUS_BOOTLOADER_1_3',
+    'BLUEBUS_BOOTLOADER_1_4'
+]
 
 # Protocol definition
 PROTOCOL_CMD_PLATFORM_REQUEST = 0x00
@@ -24,9 +29,18 @@ PROTOCOL_CMD_BC127_MODE_REQUEST = 0x07
 PROTOCOL_CMD_BC127_MODE_RESPONSE = 0x08
 PROTOCOL_CMD_START_APP_REQUEST = 0x09
 PROTOCOL_CMD_START_APP_RESPONSE = 0x0A
-PROTOCOL_CMD_WRITE_SN_REQUEST = 0x0B
-PROTOCOL_CMD_WRITE_SN_RESPONSE_OK = 0x0C
-PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR = 0x0D
+PROTOCOL_CMD_FIRMWARE_VERSION_REQUEST = 0x0B
+PROTOCOL_CMD_FIRMWARE_VERSION_RESPONSE = 0x0C
+PROTOCOL_CMD_READ_SN_REQUEST = 0x0D
+PROTOCOL_CMD_READ_SN_RESPONSE = 0x0E
+PROTOCOL_CMD_WRITE_SN_REQUEST = 0x0F
+PROTOCOL_CMD_WRITE_SN_RESPONSE_OK = 0x10
+PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR = 0x11
+PROTOCOL_CMD_READ_BUILD_DATE_REQUEST = 0x12
+PROTOCOL_CMD_READ_BUILD_DATE_RESPONSE = 0x13
+PROTOCOL_CMD_WRITE_BUILD_DATE_REQUEST = 0x14
+PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK = 0x15
+PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_ERR = 0x16
 PROTOCOL_BAD_PACKET_RESPONSE = 0xFF
 
 def bitwise_not(n, width=32):
@@ -85,6 +99,9 @@ class Application(Tk):
     BAUDRATE = '115200'
     TIMEOUT = 10
     tx_buffer = []
+    firmware_version = ''
+    serial_num = ''
+    build = ''
 
     def __init__(self):
         super().__init__()
@@ -184,6 +201,18 @@ class Application(Tk):
     def request_platform(self):
         for i in generate_packet(PROTOCOL_CMD_PLATFORM_REQUEST, [0x00]):
             self.tx_buffer.append(i)
+
+    def request_firmware_version(self):
+        for i in generate_packet(PROTOCOL_CMD_FIRMWARE_VERSION_REQUEST, [0x00]):
+            self.tx_buffer.append(i)
+
+    def request_serial_number(self):
+        for i in generate_packet(PROTOCOL_CMD_READ_SN_REQUEST, [0x00]):
+            self.tx_buffer.append(i)
+
+    def request_build_date(self):
+        for i in generate_packet(PROTOCOL_CMD_READ_BUILD_DATE_REQUEST, [0x00]):
+            self.tx_buffer.append(i)
     
     def request_start_app(self):
         for i in generate_packet(PROTOCOL_CMD_START_APP_REQUEST, [0x00]):
@@ -198,9 +227,13 @@ class Application(Tk):
         if not self.hex_file_path:
             self.set_status('ERROR: Could not find firmware file')
             return
-        self.hex_data = read_hexfile(self.hex_file_path)
+        try:
+            self.hex_data = read_hexfile(self.hex_file_path)
+        except HexRecordError:
+            self.set_status('ERROR: Invalid / Corrupt Firmware File')
+            return
         if not self.hex_data:
-            self.set_status('ERROR: Could not read firmware file')
+            self.set_status('ERROR: Could Not Read Firmware File')
             return
         self.flash_button['state'] = 'normal'
         self.set_status('Ready to Flash')
@@ -210,6 +243,10 @@ class Application(Tk):
         self.port_name = port_name.split('-')[0].strip()
         if self.port_name == 'Select Device...':
             return
+        # Reset Info
+        self.firmware_version = ''
+        self.serial_num = ''
+        self.build = ''
         # Reload the device and verify
         self.serial_port = Serial(port_name, self.BAUDRATE)
         self.serial_port.write(b'bootloader\r\n')
@@ -239,6 +276,7 @@ class Application(Tk):
         start = int(time())
         has_response = False
         rx_buffer = []
+
         while not has_response:
             while self.serial_port.in_waiting:
                 rx_buffer.append(self.serial_port.read())
@@ -248,9 +286,32 @@ class Application(Tk):
                         _ = rx_buffer.pop(0) # Remove the length
                         xor = rx_buffer.pop() # Remove the XOR
                         if command == PROTOCOL_CMD_PLATFORM_RESPONSE:
+                            has_response = True
                             string = [b.decode('ascii') for b in rx_buffer]
-                            self.set_status('Connected: %s' % ''.join(string))
-                            self.select_hex_button['state'] = 'normal'
+                            if ''.join(string) in BLUEBUS_PLATFORMS:
+                                self.select_hex_button['state'] = 'normal'
+                                # Request FW Version
+                                self.request_firmware_version()
+                                self.handle_serial()
+                            else:
+                                self.set_status('ERROR: Unsupported device')
+                        if command == PROTOCOL_CMD_FIRMWARE_VERSION_RESPONSE:
+                            self.firmware_version = '%d.%d.%d' % (
+                                ord(rx_buffer[0]),
+                                ord(rx_buffer[1]),
+                                ord(rx_buffer[2])
+                            )
+                            self.request_serial_number()
+                            has_response = True
+                            self.handle_serial()
+                        if command == PROTOCOL_CMD_READ_SN_RESPONSE:
+                            self.serial = (ord(rx_buffer[0]) << 8) | ord(rx_buffer[1])
+                            self.set_status(
+                                'Current Firmware: %s / Unit Serial Number: %d' % (
+                                    self.firmware_version,
+                                    self.serial
+                                )
+                            )
                             has_response = True
                         if command == PROTOCOL_CMD_ERASE_FLASH_RESPONSE:
                             self.set_status('Writing Flash: 0%')
