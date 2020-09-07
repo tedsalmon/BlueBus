@@ -308,7 +308,7 @@ void ProtocolSendPacket(
     }
     uint8_t i;
     unsigned char crc = 0x00;
-    for (i = 0; i < length; i++) {
+    for (i = 0; i < length - 1; i++) {
         crc ^= (unsigned char) packet[i];
     }
     packet[length - 1] = crc;
