@@ -1,7 +1,7 @@
 /*
  * Linker script for PIC24FJ1024GA606
  * (c) Copyright 2013 Microchip Technology, Inc
- * Part support version 1.35.A(30-May-2018)
+ * Part support version 1.60.A(03-Aug-2020)
  *
  * This software is developed by Microchip Technology Inc. and its
  * subsidiaries ("Microchip").
@@ -15,7 +15,8 @@
  * 2.      Redistributions in binary form must reproduce the above 
  *         copyright notice, this list of conditions and the following 
  *         disclaimer in the documentation and/or other materials provided 
- *         with the distribution.
+ *         with the distribution. Publication is not required when
+ *         this file is used in an embedded application.
  * 3.      Microchip's name may not be used to endorse or promote products
  *         derived from this software without specific prior written 
  *         permission.
@@ -32,14 +33,13 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  */
- 
- /*
-  * Customizations:
-  *     1. program (xr) moved to 0x1800 from 0x100
-  *     2. Length set to original length - 0xD00
-  *     3. Updated __CODE_BASE and __CODE_LENGTH
-  */
 
+/*
+ * Customizations:
+ *     1. program (xr) moved to 0x2000 from 0x100
+ *     2. Length set to original length - 0x1900
+ *     3. Updated __CODE_BASE and __CODE_LENGTH
+*/
 
 OUTPUT_ARCH("24FJ1024GA606")
 #if __XC16_VERSION__ > 1027
@@ -83,7 +83,7 @@ MEMORY
 #ifndef __DUAL_PARTITION
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
   ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
-  program (xr)   : ORIGIN = 0x1800,        LENGTH = 0xAA700
+  program (xr)   : ORIGIN = 0x2000,        LENGTH = 0xAA500
   FSEC           : ORIGIN = 0xABF00,       LENGTH = 0x2
   FBSLIM         : ORIGIN = 0xABF10,       LENGTH = 0x2
   FSIGN          : ORIGIN = 0xABF14,       LENGTH = 0x2
@@ -103,7 +103,7 @@ MEMORY
 #ifdef __DUAL_PARTITION
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
   ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
-  program (xr)   : ORIGIN = 0x1800         LENGTH = 0x54700
+  program (xr)   : ORIGIN = 0x2000,        LENGTH = 0x54500
   FSEC           : ORIGIN = 0x55F00,       LENGTH = 0x2
   FBSLIM         : ORIGIN = 0x55F10,       LENGTH = 0x2
   FSIGN          : ORIGIN = 0x55F14,       LENGTH = 0x2
@@ -139,8 +139,8 @@ __FWDT = 0xABF20;
 __FPOR = 0xABF24;
 __FICD = 0xABF28;
 __FDEVOPT1 = 0xABF2C;
-__CODE_BASE = 0x1800;
-__CODE_LENGTH = 0xAA700;
+__CODE_BASE = 0x2000;
+__CODE_LENGTH = 0xAA500;
 __IVT_BASE  = 0x4;
 #endif
 
@@ -161,8 +161,8 @@ __FPOR = 0x55F24;
 __FICD = 0x55F28;
 __FDEVOPT1 = 0x55F2C;
 __FBTSEQ = 0x55FFC;
-__CODE_BASE = 0x1800;
-__CODE_LENGTH = 0x54700;
+__CODE_BASE = 0x2000;
+__CODE_LENGTH = 0x54500;
 __IVT_BASE  = 0x4;
 #endif
 
@@ -213,7 +213,11 @@ SECTIONS
   ** Note that input sections *(.text) are not mapped here.
   ** The best-fit allocator locates them, so that .text
   ** may flow around PSV sections as needed.
+  **
+  ** Define __USE_BFA to force the following sections to
+  ** to also be linked by the best-fit allocator.
   */
+#if !defined(__USE_BFA)
   .text :
   {
         *(.init);
@@ -223,6 +227,7 @@ SECTIONS
         *(.libc) *(.libm) *(.libdsp);  /* keep together in this order */
         *(.lib*);
   } >program
+#endif
 
 
   /*
@@ -1378,9 +1383,6 @@ _REFOCON2bits = 0x16A;
  REFOCONH     = 0x16A;
 _REFOCONH     = 0x16A;
 _REFOCONHbits = 0x16A;
- REFOTRIML    = 0x16C;
-_REFOTRIML    = 0x16C;
-_REFOTRIMLbits = 0x16C;
  PMD1         = 0x178;
 _PMD1         = 0x178;
 _PMD1bits     = 0x178;
@@ -2543,6 +2545,9 @@ _ODCBbits     = 0x67C;
  ANSB         = 0x67E;
 _ANSB         = 0x67E;
 _ANSBbits     = 0x67E;
+ ANSELB       = 0x67E;
+_ANSELB       = 0x67E;
+_ANSELBbits   = 0x67E;
  IOCPB        = 0x680;
 _IOCPB        = 0x680;
 _IOCPBbits    = 0x680;
@@ -2579,6 +2584,9 @@ _ODCCbits     = 0x690;
  ANSC         = 0x692;
 _ANSC         = 0x692;
 _ANSCbits     = 0x692;
+ ANSELC       = 0x692;
+_ANSELC       = 0x692;
+_ANSELCbits   = 0x692;
  IOCPC        = 0x694;
 _IOCPC        = 0x694;
 _IOCPCbits    = 0x694;
@@ -2615,6 +2623,9 @@ _ODCDbits     = 0x6A4;
  ANSD         = 0x6A6;
 _ANSD         = 0x6A6;
 _ANSDbits     = 0x6A6;
+ ANSELD       = 0x6A6;
+_ANSELD       = 0x6A6;
+_ANSELDbits   = 0x6A6;
  IOCPD        = 0x6A8;
 _IOCPD        = 0x6A8;
 _IOCPDbits    = 0x6A8;
@@ -2651,6 +2662,9 @@ _ODCEbits     = 0x6B8;
  ANSE         = 0x6BA;
 _ANSE         = 0x6BA;
 _ANSEbits     = 0x6BA;
+ ANSELE       = 0x6BA;
+_ANSELE       = 0x6BA;
+_ANSELEbits   = 0x6BA;
  IOCPE        = 0x6BC;
 _IOCPE        = 0x6BC;
 _IOCPEbits    = 0x6BC;
@@ -2684,6 +2698,8 @@ _LATFbits     = 0x6CA;
  ODCF         = 0x6CC;
 _ODCF         = 0x6CC;
 _ODCFbits     = 0x6CC;
+ ANSELF       = 0x6CE;
+_ANSELF       = 0x6CE;
  ANSF         = 0x6CE;
 _ANSF         = 0x6CE;
  IOCPF        = 0x6D0;
@@ -2719,6 +2735,9 @@ _LATGbits     = 0x6DE;
  ODCG         = 0x6E0;
 _ODCG         = 0x6E0;
 _ODCGbits     = 0x6E0;
+ ANSELG       = 0x6E2;
+_ANSELG       = 0x6E2;
+_ANSELGbits   = 0x6E2;
  ANSG         = 0x6E2;
 _ANSG         = 0x6E2;
 _ANSGbits     = 0x6E2;
@@ -2834,6 +2853,9 @@ _AD1CTMENHbits = 0x75A;
  AD1CTMENL    = 0x75C;
 _AD1CTMENL    = 0x75C;
 _AD1CTMENLbits = 0x75C;
+ AD1DMBUF     = 0x75E;
+_AD1DMBUF     = 0x75E;
+_AD1DMBUFbits = 0x75E;
  AD1RESDMA    = 0x75E;
 _AD1RESDMA    = 0x75E;
 _AD1RESDMAbits = 0x75E;
@@ -2994,3 +3016,4 @@ _OC6          = 0x266;
 _UART1        = 0x398;
  UART2        = 0x3AE;
 _UART2        = 0x3AE;
+
