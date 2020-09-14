@@ -142,7 +142,7 @@ static void CD53SetTempDisplayText(
     char *str,
     int8_t timeout
 ) {
-    strncpy(context->tempDisplay.text, str, CD53_DISPLAY_TEMP_TEXT_SIZE - 1);
+    strncpy(context->tempDisplay.text, str, CD53_DISPLAY_TEXT_LEN - 1);
     context->tempDisplay.length = strlen(context->tempDisplay.text);
     context->tempDisplay.index = 0;
     context->tempDisplay.status = CD53_DISPLAY_STATUS_NEW;
@@ -174,9 +174,9 @@ static void CD53ShowNextAvailableDevice(CD53Context_t *context, uint8_t directio
         }
     }
     BC127PairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
-    char text[12];
-    strncpy(text, dev->deviceName, 11);
-    text[11] = '\0';
+    char text[CD53_DISPLAY_TEXT_LEN + 1];
+    strncpy(text, dev->deviceName, CD53_DISPLAY_TEXT_LEN);
+    text[CD53_DISPLAY_TEXT_LEN] = '\0';
     // Add a space and asterisks to the end of the device name
     // if it's the currently selected device
     if (strcmp(dev->macId, context->bt->activeDevice.macId) == 0) {
@@ -730,7 +730,7 @@ void CD53TimerDisplay(void *ctx)
                 }
                 context->tempDisplay.status = CD53_DISPLAY_STATUS_ON;
             }
-            if (context->mainDisplay.length <= 11) {
+            if (context->mainDisplay.length <= CD53_DISPLAY_TEXT_LEN) {
                 context->mainDisplay.index = 0;
             }
         } else {
@@ -738,14 +738,14 @@ void CD53TimerDisplay(void *ctx)
             if (context->mainDisplay.timeout > 0) {
                 context->mainDisplay.timeout--;
             } else {
-                if (context->mainDisplay.length > 11) {
-                    char text[12];
+                if (context->mainDisplay.length > CD53_DISPLAY_TEXT_LEN) {
+                    char text[CD53_DISPLAY_TEXT_LEN + 1];
                     strncpy(
                         text,
                         &context->mainDisplay.text[context->mainDisplay.index],
-                        11
+                        CD53_DISPLAY_TEXT_LEN
                     );
-                    text[11] = '\0';
+                    text[CD53_DISPLAY_TEXT_LEN] = '\0';
                     if (context->radioType == IBus_UI_CD53) {
                         IBusCommandIKEText(context->ibus, text);
                     } else if (context->radioType == IBus_UI_BUSINESS_NAV) {
@@ -755,7 +755,7 @@ void CD53TimerDisplay(void *ctx)
                     if (context->mainDisplay.index == 0) {
                         context->mainDisplay.timeout = 5;
                     }
-                    uint8_t idxEnd = context->mainDisplay.index + 11;
+                    uint8_t idxEnd = context->mainDisplay.index + CD53_DISPLAY_TEXT_LEN;
                     if (idxEnd >= context->mainDisplay.length) {
                         // Pause at the end of the text
                         context->mainDisplay.timeout = 2;
@@ -765,7 +765,7 @@ void CD53TimerDisplay(void *ctx)
                             CD53_METADATA_MODE_CHUNK
                         ) {
                             context->mainDisplay.timeout = 2;
-                            context->mainDisplay.index += 11;
+                            context->mainDisplay.index += CD53_DISPLAY_TEXT_LEN;
                         } else {
                             context->mainDisplay.index++;
                         }

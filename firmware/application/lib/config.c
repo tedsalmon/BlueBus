@@ -200,6 +200,25 @@ unsigned char ConfigGetIKEType()
 }
 
 /**
+ * ConfigGetLMVariant()
+ *     Description:
+ *         Get the Light Module variant
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetLMVariant()
+{
+    unsigned char value = CONFIG_CACHE[CONFIG_LM_VARIANT_ADDRESS];
+    if (value == 0x00) {
+        value = ConfigGetByte(CONFIG_LM_VARIANT_ADDRESS);
+        CONFIG_CACHE[CONFIG_LM_VARIANT_ADDRESS] = value;
+    }
+    return value;
+}
+
+/**
  * ConfigGetLog()
  *     Description:
  *         Get the log level for different systems
@@ -243,7 +262,7 @@ unsigned char ConfigGetNavType()
 }
 
 /**
- * ConfigGetPoweroffTimeoutDisabled()
+ * ConfigGetPoweroffTimeout()
  *     Description:
  *         Check if Auto-Power Off is disabled
  *     Params:
@@ -251,9 +270,9 @@ unsigned char ConfigGetNavType()
  *     Returns:
  *         void
  */
-unsigned char ConfigGetPoweroffTimeoutDisabled()
+unsigned char ConfigGetPoweroffTimeout()
 {
-    unsigned char poweroffValue = ConfigGetByte(
+    unsigned char poweroffValue = EEPROMReadByte(
         CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS
     );
     if (poweroffValue == CONFIG_SETTING_DISABLED) {
@@ -485,6 +504,21 @@ void ConfigSetIKEType(unsigned char ikeType)
     EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, currentValue);
 }
 
+/***
+ * ConfigSetLMVariant()
+ *     Description:
+ *         Set the Light Module variant
+ *     Params:
+ *         unsigned char version
+ *     Returns:
+ *         void
+ */
+void ConfigSetLMVariant(unsigned char variant)
+{
+    CONFIG_CACHE[CONFIG_LM_VARIANT_ADDRESS] = variant;
+    EEPROMWriteByte(CONFIG_LM_VARIANT_ADDRESS, variant);
+}
+
 /**
  * ConfigSetLog()
  *     Description:
@@ -523,7 +557,7 @@ void ConfigSetNavType(unsigned char type)
 }
 
 /**
- * ConfigSetPoweroffTimeoutDisabled()
+ * ConfigSetPoweroffTimeout()
  *     Description:
  *         Disable Auto-Power Off
  *     Params:
@@ -531,7 +565,7 @@ void ConfigSetNavType(unsigned char type)
  *     Returns:
  *         void
  */
-void ConfigSetPoweroffTimeoutDisabled(unsigned char status)
+void ConfigSetPoweroffTimeout(unsigned char status)
 {
     EEPROMWriteByte(
         CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS,

@@ -202,8 +202,8 @@ void ProtocolProcessMessage(
             );
         } else if (packet.command == PROTOCOL_CMD_READ_SN_REQUEST) {
             unsigned char response[] = {
-                EEPROMReadByte(CONFIG_SN_MSB),
-                EEPROMReadByte(CONFIG_SN_LSB)
+                EEPROMReadByte(CONFIG_SN_ADDRESS_MSB),
+                EEPROMReadByte(CONFIG_SN_ADDRESS_LSB)
             };
             ProtocolSendPacket(
                 uart,
@@ -308,7 +308,7 @@ void ProtocolSendPacket(
     }
     uint8_t i;
     unsigned char crc = 0x00;
-    for (i = 0; i < length; i++) {
+    for (i = 0; i < length - 1; i++) {
         crc ^= (unsigned char) packet[i];
     }
     packet[length - 1] = crc;
@@ -375,12 +375,12 @@ uint8_t ProtocolValidatePacket(ProtocolPacket_t *packet, unsigned char validatio
 void ProtocolWriteSerialNumber(UART_t *uart, ProtocolPacket_t *packet)
 {
     uint16_t serialNumber = (
-            (EEPROMReadByte(CONFIG_SN_MSB) << 8) | 
-            (EEPROMReadByte(CONFIG_SN_LSB) & 0xFF)
+            (EEPROMReadByte(CONFIG_SN_ADDRESS_MSB) << 8) |
+            (EEPROMReadByte(CONFIG_SN_ADDRESS_LSB) & 0xFF)
     );
     if (serialNumber == 0xFFFF && packet->dataSize == 2) {
-        EEPROMWriteByte(CONFIG_SN_MSB, packet->data[0]);
-        EEPROMWriteByte(CONFIG_SN_LSB, packet->data[1]);
+        EEPROMWriteByte(CONFIG_SN_ADDRESS_MSB, packet->data[0]);
+        EEPROMWriteByte(CONFIG_SN_ADDRESS_LSB, packet->data[1]);
         ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_SN_RESPONSE_OK, 0, 0);
     } else {
         ProtocolSendPacket(uart, PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR, 0, 0);

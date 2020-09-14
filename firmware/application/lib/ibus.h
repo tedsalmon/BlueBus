@@ -197,17 +197,56 @@
 #define IBUS_LCM_LIGHT_STATUS 0x5B
 #define IBUS_LCM_DIMMER_STATUS 0x5C
 #define IBUS_LCM_IO_STATUS 0x90
-#define IBUS_LCM_E46_DRV_SIG_BIT 5
-#define IBUS_LCM_E46_PSG_SIG_BIT 6
-#define IBUS_LCM_E46_BLINKER_DRV 0x50
-#define IBUS_LCM_E46_BLINKER_PSG 0x80
 
-#define IBUS_LCM_DRV_SIG_BIT 5
-#define IBUS_LCM_PSG_SIG_BIT 6
-#define IBUS_LCM_BLINKER_DRV 0x80
-#define IBUS_LCM_BLINKER_PSG 0x40
-#define IBUS_LCM_BLINKER_DRV_E46 0x50
-#define IBUS_LCM_BLINKER_PSG_E46 0x80
+// Lamp Status (0x5B)
+#define IBUS_LM_LEFT_SIG_BIT 5
+#define IBUS_LM_RIGHT_SIG_BIT 6
+
+// LM diagnostics activate (0x0C)
+#define IBUS_LM_BLINKER_LEFT 1 // PN convention, odd = left
+#define IBUS_LM_BLINKER_RIGHT 2 // PN convention, even = right
+
+// LME38
+#define IBUS_LME38_BLINKER_LEFT 0x01 // byte 0
+#define IBUS_LME38_BLINKER_RIGHT 0x02 // byte 0
+
+// LCM, LCM_A
+// Different bytes! Update the blinker msg if alternating.
+// #define IBUS_LCM_BLINKER_LEFT 0x80 // byte 0 (S2_BLK_L	switch No.2 left turn)
+// #define IBUS_LCM_BLINKER_RIGHT 0x40 // byte 0 (S2_BLK_R	switch No.2 right turn)
+#define IBUS_LCM_BLINKER_LEFT 0x01 // byte 1 (S1_BLK_L	switch No.1 left turn)
+#define IBUS_LCM_BLINKER_RIGHT 0x02 // byte 1 (S1_BLK_R	switch No.1 right turn)
+
+// LCM_II, LCM_III, LCM_IV
+#define IBUS_LCM_II_BLINKER_LEFT 0x80 // byte 2
+#define IBUS_LCM_II_BLINKER_RIGHT 0x40 // byte 2
+
+// LSZ, LSZ_2
+#define IBUS_LSZ_HEADLIGHT_OFF 0xFF // byte 2
+#define IBUS_LSZ_BLINKER_LEFT 0x50 // byte 3
+#define IBUS_LSZ_BLINKER_RIGHT 0x80 // byte 3
+#define IBUS_LSZ_BLINKER_OFF 0xFF // byte 3
+
+// Ident (0x00) parameter offsets
+#define IBUS_LM_CI_ID_OFFSET 9
+#define IBUS_LM_DI_ID_OFFSET 10
+// Status (0x0b) parameter offsets
+#define IBUS_LM_IO_LOAD_FRONT_OFFSET 11
+#define IBUS_LM_IO_DIMMER_OFFSET 19
+#define IBUS_LM_IO_LOAD_REAR_OFFSET 20
+#define IBUS_LM_IO_PHOTO_OFFSET 22
+// LME38 has unique mapping. Spoilt first child.
+#define IBUS_LME38_IO_DIMMER_OFFSET 22
+
+// Light Module variants
+#define IBUS_LM_LME38 1
+#define IBUS_LM_LCM 2
+#define IBUS_LM_LCM_A 3
+#define IBUS_LM_LCM_II 4
+#define IBUS_LM_LCM_III 5
+#define IBUS_LM_LCM_IV 6
+#define IBUS_LM_LSZ 7
+#define IBUS_LM_LSZ_2 8
 
 #define IBusMIDSymbolNext 0xC9
 #define IBusMIDSymbolBack 0xCA
@@ -308,6 +347,7 @@
 #define IBusEvent_DSPConfigSet 65
 #define IBusEvent_TELVolumeChange 66
 #define IBusEvent_RADVolumeChange 67
+#define IBusEvent_LMIdentResponse 68
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -340,17 +380,22 @@ typedef struct IBus_t {
     unsigned char cdChangerFunction;
     unsigned char gtVersion;
     unsigned char vehicleType;
+    unsigned char lmVariant;
     unsigned char ignitionStatus;
-    unsigned char lcmDimmerStatus1;
-    unsigned char lcmDimmerStatus2;
+    unsigned char lmLoadFrontVoltage;
+    unsigned char lmDimmerVoltage;
+    unsigned char lmLoadRearVoltage;
+    unsigned char lmPhotoVoltage;
     unsigned char oilTemperature;
     unsigned char coolantTemperature;
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
 void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, const size_t);
-uint8_t IBusGetDeviceManufacturer(const unsigned char);
-uint8_t IBusGetRadioType(uint32_t);
+uint8_t IBusGetLMCodingIndex(unsigned char *);
+uint8_t IBusGetLMDiagnosticIndex(unsigned char *);
+uint8_t IBusGetLMDimmerChecksum(unsigned char *);
+uint8_t IBusGetLMVariant(unsigned char *);
 uint8_t IBusGetNavDiagnosticIndex(unsigned char *);
 uint8_t IBusGetNavHWVersion(unsigned char *);
 uint8_t IBusGetNavSWVersion(unsigned char *);
@@ -388,8 +433,8 @@ void IBusCommandIKEGetVehicleType(IBus_t *);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
-void IBusCommandLCMEnableBlinker(IBus_t *, unsigned char);
-void IBusCommandLCMGetRedundantData(IBus_t *);
+void IBusCommandLMActivateBulbs(IBus_t *, unsigned char);
+void IBusCommandLMGetRedundantData(IBus_t *);
 void IBusCommandMIDDisplayTitleText(IBus_t *, char *);
 void IBusCommandMIDDisplayText(IBus_t *, char *);
 void IBusCommandMIDMenuText(IBus_t *, uint8_t, char *);

@@ -54,7 +54,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>pk4hybrid</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.35</languageToolchainVersion>
+        <languageToolchainVersion>1.60</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <packs>

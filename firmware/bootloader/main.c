@@ -52,6 +52,9 @@ int main(void)
 
     // Set the RX / input pins to inputs
     IBUS_UART_RX_PIN_MODE = 1;
+    // The I-Bus UART TX pin should be an input so we don't accidentally
+    // keep the bus low and block frames from transmitting
+    IBUS_UART_TX_PIN_MODE = 1;
     IBUS_UART_STATUS_MODE = 1;
     BC127_UART_RX_PIN_MODE = 1;
     SYSTEM_UART_RX_PIN_MODE = 1;

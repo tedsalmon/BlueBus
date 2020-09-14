@@ -636,7 +636,7 @@ void MIDIIBusRADMIDDisplayUpdate(void *ctx, unsigned char *pkt)
 }
 
 /**
- * MIDIIBusRADMIDDisplayUpdate()
+ * MIDIIBusRADMIDMenuUpdate()
  *     Description:
  *         Handle the RAD writing to the MID menu. Refresh on the second
  *         message, if the menu update correlates to the SCAN/RANDOM buttons

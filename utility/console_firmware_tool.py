@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
+import platform
+import serial.tools.list_ports as list_ports
 import sys
+
 from argparse import ArgumentParser
+from datetime import date
+from glob import glob
 from intelhex import IntelHex
 from serial import Serial, PARITY_ODD, serialutil
 from struct import pack
@@ -17,10 +22,20 @@ PROTOCOL_CMD_BC127_MODE_REQUEST = 0x07
 PROTOCOL_CMD_BC127_MODE_RESPONSE = 0x08
 PROTOCOL_CMD_START_APP_REQUEST = 0x09
 PROTOCOL_CMD_START_APP_RESPONSE = 0x0A
-PROTOCOL_CMD_WRITE_SN_REQUEST = 0x0B
-PROTOCOL_CMD_WRITE_SN_RESPONSE_OK = 0x0C
-PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR = 0x0D
+PROTOCOL_CMD_FIRMWARE_VERSION_REQUEST = 0x0B
+PROTOCOL_CMD_FIRMWARE_VERSION_RESPONSE = 0x0C
+PROTOCOL_CMD_READ_SN_REQUEST = 0x0D
+PROTOCOL_CMD_READ_SN_RESPONSE = 0x0E
+PROTOCOL_CMD_WRITE_SN_REQUEST = 0x0F
+PROTOCOL_CMD_WRITE_SN_RESPONSE_OK = 0x10
+PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR = 0x11
+PROTOCOL_CMD_READ_BUILD_DATE_REQUEST = 0x12
+PROTOCOL_CMD_READ_BUILD_DATE_RESPONSE = 0x13
+PROTOCOL_CMD_WRITE_BUILD_DATE_REQUEST = 0x14
+PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK = 0x15
+PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_ERR = 0x16
 PROTOCOL_BAD_PACKET_RESPONSE = 0xFF
+
 rx_buffer = []
 tx_buffer = []
 last_tx = []
@@ -71,6 +86,26 @@ def start_app():
     for i in generate_packet(PROTOCOL_CMD_START_APP_REQUEST, [0x00]):
         tx_buffer.append(i)
 
+def read_build():
+    for i in generate_packet(PROTOCOL_CMD_READ_BUILD_DATE_REQUEST, [0x00]):
+        tx_buffer.append(i)
+
+def read_sn():
+    for i in generate_packet(PROTOCOL_CMD_READ_SN_REQUEST, [0x00]):
+        tx_buffer.append(i)
+
+def read_firmware():
+    for i in generate_packet(PROTOCOL_CMD_FIRMWARE_VERSION_REQUEST, [0x00]):
+        tx_buffer.append(i)
+
+def write_build(week, year):
+    for i in generate_packet(PROTOCOL_CMD_WRITE_BUILD_DATE_REQUEST, [week, year]):
+        tx_buffer.append(i)
+
+def write_sn(sn_msb, sn_lsb):
+    for i in generate_packet(PROTOCOL_CMD_WRITE_SN_REQUEST, [sn_msb, sn_lsb]):
+        tx_buffer.append(i)
+
 def read_hexfile(filename):
     hp = HexParser(filename)
     address = 0x1800
@@ -105,7 +140,6 @@ if __name__ == '__main__':
             metavar='port',
             type=str,
             help='The port (COMx) or tty (/dev/ttyACMx or /dev/ttyUSBx) to use',
-            required=True,
         )
         parser.add_argument(
             '--firmware',
@@ -117,7 +151,59 @@ if __name__ == '__main__':
             help='Switch UART to the BC127',
             action='store_true',
         )
+        parser.add_argument(
+            '--sn',
+            help='Serial Number',
+        )
+        parser.add_argument(
+            '--getsn',
+            help='Get Serial Number',
+            action='store_true',
+        )
+        parser.add_argument(
+            '--getfw',
+            help='Get Firmware Version',
+            action='store_true',
+        )
+        parser.add_argument(
+            '--getbuild',
+            help='Get Build Date',
+            action='store_true',
+        )
+        parser.add_argument(
+            '--writebuild',
+            help='Get Build Date',
+            action='store_true',
+        )
+        parser.add_argument(
+            '--start',
+            help='Start Application',
+            action='store_true',
+        )
         args = parser.parse_args()
+        # Automatic port selection
+        ports = []
+        if platform.system() == 'Linux':
+            for f in glob('/dev/ttyUSB*'):
+                ports.append(f)
+        elif platform.system() == 'Darwin':
+            for f in glob('/dev/tty.usbserial*'):
+                ports.append(f)
+        else:
+            for port in list_ports.comports():
+                try:
+                    Serial(port.device)
+                    ports.append(port.device)
+                except serialutil.SerialException:
+                    pass
+        if not args.port and len(ports) == 1:
+            args.port = ports.pop()
+        if not args.port:
+            if len(ports) == 0:
+                print('Error: BlueBus Not detected')
+            else:
+                print('Error: Too many devices available')
+            exit(0)
         serial = Serial(args.port, 115200, parity=PARITY_ODD)
         should_continue = True
         data = None
@@ -150,6 +236,21 @@ if __name__ == '__main__':
                             elif args.btmode:
                                 print('==== Requesting BC127 Mode ====')
                                 request_bc127_mode()
+                            elif args.getsn:
+                                read_sn()
+                            elif args.getbuild:
+                                read_build()
+                            elif args.getfw:
+                                read_firmware()
+                            elif args.writebuild:
+                                write_build(today[1], today[0] - 2000)
+                            elif args.start:
+                                start_app()
+                            elif args.sn:
+                                serial_number = int(args.sn)
+                                msb = (serial_number >> 8) & 0xFF
+                                lsb = serial_number & 0xFF
+                                write_sn(msb, lsb)
                             else:
                                 sys.exit(0)
                         if command == PROTOCOL_CMD_BC127_MODE_RESPONSE:
@@ -167,6 +268,41 @@ if __name__ == '__main__':
                                 send_file(data[data_idx])
                             else:
                                 print ('\nDone')
+                                today = date.today().isocalendar()
+                                write_build(today[1], today[0] - 2000)
+                        if command == PROTOCOL_CMD_READ_SN_RESPONSE:
+                            serial_number = ord(rx_buffer[0]) << 8 | ord(rx_buffer[1])
+                            print('SN: %d' % serial_number)
+                            sys.exit(0)
+                        if command == PROTOCOL_CMD_WRITE_SN_RESPONSE_OK:
+                            print('Wrote SN')
+                            start_app()
+                        if command == PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR:
+                            print('Could not write SN')
+                            start_app()
+                        if command == PROTOCOL_CMD_READ_BUILD_DATE_RESPONSE:
+                            print('Build: %d/%d' % (ord(rx_buffer[0]), ord(rx_buffer[1])))
+                            sys.exit(0)
+                        if command == PROTOCOL_CMD_FIRMWARE_VERSION_RESPONSE:
+                            print('Firmware: %d.%d.%d' % (ord(rx_buffer[0]), ord(rx_buffer[1]), ord(rx_buffer[2])))
+                            sys.exit(0)
+                        if command == PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK:
+                            print('Wrote Build Date')
+                            if args.sn:
+                                serial_number = int(args.sn)
+                                msb = (serial_number >> 8) & 0xFF
+                                lsb = serial_number & 0xFF
+                                write_sn(msb, lsb)
+                            else:
+                                start_app()
+                        if command == PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_ERR:
+                            print('Could not write build date')
+                            if args.sn:
+                                serial_number = int(args.sn)
+                                msb = (serial_number >> 8) & 0xFF
+                                lsb = serial_number & 0xFF
+                                write_sn(msb, lsb)
+                            else:
                                 start_app()
                         if command == PROTOCOL_CMD_START_APP_RESPONSE:
                             print('App Started')

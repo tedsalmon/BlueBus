@@ -73,8 +73,13 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
     }
     // Changes in version 1.1.7
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 7) == 1) {
+        uint16_t serialNumber = ConfigGetSerialNumber();
         // Install the cVc license
-        BC127SendCommand(bt, "LICENSE CVC=3A6B CB90 E2D6 FC81 0000");
+        if (serialNumber < 500) {
+            BC127SendCommand(bt, "LICENSE CVC=3A6B CB90 E2D6 FC81 0000");
+        } else if (serialNumber < 880) {
+            BC127SendCommand(bt, "LICENSE CVC=3A6B D812 D144 FC81 0000");
+        }
         LogRaw("Ran Upgrade 1.1.7\r\n");
     }
     // Changes in version 1.1.8
@@ -110,6 +115,12 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         // Set new `0x1C` to OFF
         ConfigSetSetting(CONFIG_SETTING_IGN_ALWAYS_ON, CONFIG_SETTING_OFF);
         LogRaw("Ran Upgrade 1.1.10\r\n");
+    }
+    // Changes in version 1.1.15
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 15) == 1) {
+        // Enable cVc by default AGAIN to fix the units where
+        // "restore" wiped out cVc
+        BC127SendCommand(bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
     }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
