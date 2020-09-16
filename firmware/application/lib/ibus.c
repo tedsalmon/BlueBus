@@ -770,7 +770,7 @@ uint8_t IBusGetLMVariant(unsigned char *packet)
     uint8_t codingIndex = IBusGetLMCodingIndex(packet);
     uint8_t lmVariant = 0;
 
-    LogRaw("\r\nIBus: LM DI: %d CI: %d\r\n", diagnosticIndex, codingIndex);
+    LogRaw("\r\nIBus: LM DI: %02X CI: %02X\r\n", diagnosticIndex, codingIndex);
 
     if (diagnosticIndex < 0x10) {
         lmVariant = IBUS_LM_LME38;
@@ -784,8 +784,8 @@ uint8_t IBusGetLMVariant(unsigned char *packet)
     } else if (diagnosticIndex == 0x12 && codingIndex == 0x16) {
         lmVariant = IBUS_LM_LCM_II;
         LogInfo(LOG_SOURCE_IBUS, "Light Module: LCM_II");
-    } else if ((diagnosticIndex == 0x12 || diagnosticIndex == 0x13) &&
-              codingIndex == 0x17
+    } else if ((diagnosticIndex == 0x12 && codingIndex == 0x17) ||
+               diagnosticIndex == 0x13
     ) {
         lmVariant = IBUS_LM_LCM_III;
         LogInfo(LOG_SOURCE_IBUS, "Light Module: LCM_III");

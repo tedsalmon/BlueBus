@@ -1003,10 +1003,6 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
                     IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
                 }
             }
-            // Identify the LM if we do not have an ID for it
-            if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
-                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
-            }
             // Ask the LCM for the redundant data
             LogDebug(LOG_SOURCE_SYSTEM, "Handler: Request LCM Redundant Data");
             IBusCommandLMGetRedundantData(context->ibus);
@@ -1159,37 +1155,40 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
                 context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_ON;
                 IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_RIGHT);
             }
-        } else if (context->lightControlStatus.leftBlinker == 1) {
-            if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 ||
-                context->lightControlStatus.blinkCount == blinkCount
-            ) {
-                // Reset ourselves once the signal is off so we do not
-                // reactivate and signal in increments of `blinkCount`
-                if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0) {
-                    context->lightControlStatus.leftBlinker = 0;
-                    context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
+        } else {
+            if (context->lightControlStatus.leftBlinker == 1) {
+                if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 ||
+                    context->lightControlStatus.blinkCount == blinkCount
+                ) {
+                    // Reset ourselves once the signal is off so we do not
+                    // reactivate and signal in increments of `blinkCount`
+                    if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0) {
+                        context->lightControlStatus.leftBlinker = 0;
+                        context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
+                    }
+                    if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
+                        IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
+                    }
+                } else {
+                    context->lightControlStatus.blinkCount++;
                 }
-                if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
-                    IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
-                }
-            } else {
-                context->lightControlStatus.blinkCount++;
             }
-        } else if (context->lightControlStatus.rightBlinker == 1) {
-            if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 ||
-                context->lightControlStatus.blinkCount == blinkCount
-            ) {
-                // Reset ourselves once the signal is off so we do not
-                // reactivate and signal in increments of `blinkCount`
-                if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0) {
-                    context->lightControlStatus.rightBlinker = 0;
-                    context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
+            if (context->lightControlStatus.rightBlinker == 1) {
+                if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 ||
+                    context->lightControlStatus.blinkCount == blinkCount
+                ) {
+                    // Reset ourselves once the signal is off so we do not
+                    // reactivate and signal in increments of `blinkCount`
+                    if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0) {
+                        context->lightControlStatus.rightBlinker = 0;
+                        context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
+                    }
+                    if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
+                        IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
+                    }
+                } else {
+                    context->lightControlStatus.blinkCount++;
                 }
-                if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
-                    IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
-                }
-            } else {
-                context->lightControlStatus.blinkCount++;
             }
         }
     }
