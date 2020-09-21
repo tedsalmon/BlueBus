@@ -108,10 +108,10 @@ void UtilsNormalizeText(char *string, const char *input)
 
         if (unicodeChar <= 0x7F) {
             string[strIdx++] = (char) unicodeChar;
-        } else if (unicodeChar > 0x7F && unicodeChar <= 0xFF) {
+        } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC3BF) {
             // Convert UTF-8 byte to Unicode then check if it falls within
             // the range of extended ASCII
-            uint32_t extendedChar = unicodeChar - 0xC2C0;
+            uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
             if (extendedChar < 0xFF) {
                 string[strIdx++] = (char) extendedChar;
             }
