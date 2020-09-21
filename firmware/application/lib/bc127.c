@@ -1394,18 +1394,18 @@ void BC127Process(BC127_t *bt)
                 }
             }
             deviceName[strIdx] = '\0';
+            char name[33];
+            memset(name, 0, 33);
+            UtilsNormalizeText(name, deviceName);
             if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
                 // Clean the device name up
-                char name[33];
-                memset(name, 0, 3);
-                UtilsNormalizeText(name, deviceName);
                 memset(bt->activeDevice.deviceName, 0, 33);
                 strncpy(bt->activeDevice.deviceName, name, 32);
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
-            BC127PairedDeviceInit(bt, msgBuf[1], deviceName);
+            BC127PairedDeviceInit(bt, msgBuf[1], name);
             EventTriggerCallback(BC127Event_DeviceFound, (unsigned char *) msgBuf[1]);
-            LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s -> %s", msgBuf[1], deviceName);
+            LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s -> %s (%s)", msgBuf[1], deviceName, name);
         } else if(strcmp(msgBuf[0], "Build:") == 0) {
             // Clear the Metadata
             BC127ClearMetadata(bt);
