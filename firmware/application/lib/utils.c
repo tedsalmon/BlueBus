@@ -266,13 +266,13 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
         case UTILS_CHAR_LATIN_SMALL_CAPITAL_R:
             return "R";
             break;
-        case UTILS_CHAR_CYRILLIC_CAPITAL_CAPITAL_IO:
+        case UTILS_CHAR_CYRILLIC_CAPITAL_IO:
             return "Yo";
             break;
         case UTILS_CHAR_CYRILLIC_UA_CAPITAL_IE:
             return "E";
             break;
-        case UTILS_CHAR_CYRILLIC_BYELORUSSIAN_UA_CAPITAL_I:
+        case UTILS_CHAR_CYRILLIC_BY_UA_CAPITAL_I:
             return "I";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_A:
@@ -473,7 +473,7 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
         case UTILS_CHAR_CYRILLIC_UA_SMALL_IE:
             return "e";
             break;
-        case UTILS_CHAR_CYRILLIC_BYELORUSSIAN_UA_SMALL_I:
+        case UTILS_CHAR_CYRILLIC_BY_UA_SMALL_I:
             return "i";
             break;
         case UTILS_CHAR_LEFT_SINGLE_QUOTATION_MARK:
