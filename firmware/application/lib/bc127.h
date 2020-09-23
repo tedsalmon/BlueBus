@@ -35,6 +35,8 @@
 #define BC127_CONN_STATE_DISCONNECTED 2
 #define BC127_MAX_DEVICE_PAIRED 8
 #define BC127_MAX_DEVICE_PROFILES 5
+#define BC127_MAX_DEVICE_NAME 128
+#define BC127_MAX_DEVICE_NAME_OFFSET 19
 #define BC127_METADATA_MAX_SIZE 384
 #define BC127_METADATA_FIELD_SIZE 128
 #define BC127_METADATA_TITLE_OFFSET 22
@@ -71,11 +73,11 @@ extern int8_t BC127CVCGainTable[];
  *         This object defines a previously paired device
  *     Fields:
  *         macId - The MAC ID of the device (12 hexadecimal characters)
- *         deviceName - The friendly name of the device (32 ASCII characters)
+ *         deviceName - The friendly name of the device
  */
 typedef struct BC127PairedDevice_t {
     char macId[13];
-    char deviceName[33];
+    char deviceName[BC127_MAX_DEVICE_NAME];
 } BC127PairedDevice_t;
 
 /**
@@ -84,7 +86,7 @@ typedef struct BC127PairedDevice_t {
  *         This object defines the actively connected device
  *     Fields:
  *         macId - The MAC ID of the device (12 hexadecimal characters)
- *         deviceName - The friendly name of the device (32 ASCII characters)
+ *         deviceName - The friendly name of the device
  *         playbackStatus - Current Playback status - BC127_AVRCP_STATUS_PAUSED
  *                          or BC127_AVRCP_STATUS_PLAYING
  *         title - The title of the currently playing media
@@ -97,7 +99,7 @@ typedef struct BC127PairedDevice_t {
  */
 typedef struct BC127Connection_t {
     char macId[13];
-    char deviceName[33];
+    char deviceName[BC127_MAX_DEVICE_NAME];
     uint8_t deviceId;
     uint8_t avrcpLinkId;
     uint8_t a2dpLinkId;
