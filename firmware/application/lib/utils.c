@@ -124,14 +124,14 @@ void UtilsNormalizeText(char *string, const char *input)
 
         if (unicodeChar <= 0x7F) {
             string[strIdx++] = (char) unicodeChar;
-        } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC3BF) {
+        } else if (unicodeChar >= 0xC2A1 && unicodeChar <= 0xC2BF) {
             // Convert UTF-8 byte to Unicode then check if it falls within
             // the range of extended ASCII
             uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
             if (extendedChar < 0xFF) {
                 string[strIdx++] = (char) extendedChar;
             }
-        } else if (unicodeChar > 0xC3BF) {
+        } else if (unicodeChar > 0xC2BF) {
             char * transStr = UtilsTransliterateUnicodeToASCII(unicodeChar);
             transStrLength = strlen(transStr);
             for (transIdx = 0; transIdx < transStrLength; transIdx++) {
@@ -263,215 +263,329 @@ int8_t UtilsStricmp(const char *string, const char *compare)
 char * UtilsTransliterateUnicodeToASCII(uint32_t input)
 {
     switch (input) {
+        case UTILS_CHAR_LATIN_CAPITAL_A_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_CAPITAL_A_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_CAPITAL_A_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_CAPITAL_A_WITH_TILDE:
+        case UTILS_CHAR_LATIN_CAPITAL_A_WITH_DIAERESIS:
+        case UTILS_CHAR_LATIN_CAPITAL_A_WITH_RING_ABOVE:
+            return "A";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_AE:
+            return "Ae";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_C_WITH_CEDILLA:
+            return "C";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_E_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_CAPITAL_E_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_CAPITAL_E_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_CAPITAL_E_WITH_DIAERESIS:
+            return "E";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_I_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_CAPITAL_I_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_CAPITAL_I_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_CAPITAL_I_WITH_DIAERESIS:
+            return "I";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_ETH:
+            return "Eth";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_N_WITH_TILDE:
+            return "N";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_O_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_CAPITAL_O_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_CAPITAL_O_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_CAPITAL_O_WITH_TILDE:
+        case UTILS_CHAR_LATIN_CAPITAL_O_WITH_DIAERESIS:
+        case UTILS_CHAR_LATIN_CAPITAL_O_WITH_STROKE:
+            return "O";
+            break;
+        case UTILS_CHAR_MULTIPLICATION_SIGN:
+            return "x";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_U_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_CAPITAL_U_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_CAPITAL_U_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_CAPITAL_U_WITH_DIAERESIS:
+            return "U";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_Y_WITH_ACUTE:
+            return "Y";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_THORN:
+            return "Th";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_SHARP_S:
+            return "ss";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_A_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_SMALL_A_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_SMALL_A_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_SMALL_A_WITH_TILDE:
+        case UTILS_CHAR_LATIN_SMALL_A_WITH_DIAERESIS:
+        case UTILS_CHAR_LATIN_SMALL_A_WITH_RING_ABOVE:
+            return "a";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_AE:
+            return "ae";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_C_WITH_CEDILLA:
+            return "c";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_E_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_SMALL_E_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_SMALL_E_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_SMALL_E_WITH_DIAERESIS:
+            return "e";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_I_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_SMALL_I_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_SMALL_I_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_SMALL_I_WITH_DIAERESIS:
+            return "i";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_ETH:
+            return "eth";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_N_WITH_TILDE:
+            return "n";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_O_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_SMALL_O_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_SMALL_O_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_SMALL_O_WITH_TILDE:
+        case UTILS_CHAR_LATIN_SMALL_O_WITH_DIAERESIS:
+        case UTILS_CHAR_LATIN_SMALL_O_WITH_STROKE:
+            return "o";
+            break;
+        case UTILS_CHAR_DIVISION_SIGN:
+            return "%";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_U_WITH_GRAVE:
+        case UTILS_CHAR_LATIN_SMALL_U_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_SMALL_U_WITH_CIRCUMFLEX:
+        case UTILS_CHAR_LATIN_SMALL_U_WITH_DIAERESIS:
+            return "u";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_Y_WITH_ACUTE:
+        case UTILS_CHAR_LATIN_SMALL_Y_WITH_DIAERESIS:
+            return "y";
+            break;
+        case UTILS_CHAR_LATIN_SMALL_THORN:
+            return "th";
+            break;
         case UTILS_CHAR_LATIN_SMALL_CAPITAL_R:
             return "R";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_IO:
-            return "Yo";
+            return "Å";
             break;
         case UTILS_CHAR_CYRILLIC_UA_CAPITAL_IE:
-            return "E";
+            return "Å";
             break;
         case UTILS_CHAR_CYRILLIC_BY_UA_CAPITAL_I:
             return "I";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_A:
-            return "A";
+            return "À";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_BE:
-            return "B";
+            return "Á";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_VE:
-            return "V";
+            return "Â";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_GHE:
-            return "G";
+            return "Ã";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_DE:
-            return "D";
+            return "Ä";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_YE:
-            return "Ye";
+            return "Å";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_ZHE:
-            return "Zh";
+            return "Æ";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_ZE:
-            return "Z";
+            return "Ç";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_I:
-            return "I";
+            return "È";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_SHORT_I:
-            return "Y";
+            return "É";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_KA:
-            return "K";
+            return "Ê";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_EL:
-            return "L";
+            return "Ë";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_EM:
-            return "M";
+            return "Ì";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_EN:
-            return "N";
+            return "Í";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_O:
-            return "O";
+            return "Î";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_PE:
-            return "P";
+            return "Ï";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_ER:
-            return "R";
+            return "Ð";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_ES:
-            return "S";
+            return "Ñ";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_TE:
-            return "T";
+            return "Ò";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_U:
-            return "U";
+            return "Ó";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_EF:
-            return "F";
+            return "Ô";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_HA:
-            return "Kh";
+            return "Õ";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_TSE:
-            return "Ts";
+            return "Ö";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_CHE:
-            return "Ch";
+            return "×";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_SHA:
-            return "Sh";
+            return "Ø";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_SCHA:
-            return "Shch";
+            return "Ù";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_HARD_SIGN:
-            return "\"";
+            return "Ú";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_YERU:
-            return "Y";
+            return "Û";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_SOFT_SIGN:
-            return "'";
+            return "Ü";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_E:
-            return "E";
+            return "Ý";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_YU:
-            return "Yu";
+            return "Þ";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_YA:
-            return "Ya";
+            return "ß";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_A:
-            return "a";
+            return "à";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_BE:
-            return "b";
+            return "á";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_VE:
-            return "v";
+            return "â";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_GHE:
-            return "g";
+            return "ã";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_DE:
-            return "d";
+            return "ä";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_IE:
-            return "ye";
+            return "å";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_ZHE:
-            return "zh";
+            return "æ";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_ZE:
-            return "z";
+            return "ç";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_I:
-            return "i";
+            return "è";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_SHORT_I:
-            return "y";
+            return "é";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_KA:
-            return "k";
+            return "ê";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_EL:
-            return "l";
+            return "ë";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_EM:
-            return "m";
+            return "ì";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_EN:
-            return "n";
+            return "í";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_O:
-            return "o";
+            return "î";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_PE:
-            return "p";
+            return "ï";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_ER:
-            return "r";
+            return "ð";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_ES:
-            return "s";
+            return "ñ";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_TE:
-            return "t";
+            return "ò";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_U:
-            return "u";
+            return "ó";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_EF:
-            return "f";
+            return "ô";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_HA:
-            return "kh";
+            return "õ";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_TSE:
-            return "ts";
+            return "ö";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_CHE:
-            return "ch";
+            return "÷";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_SHA:
-            return "sh";
+            return "ø";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_SHCHA:
-            return "shch";
+            return "ù";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_LEFT_HARD_SIGN:
-            return "\"";
+            return "ú";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_YERU:
-            return "y";
+            return "û";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_SOFT_SIGN:
-            return "'";
+            return "ü";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_E:
-            return "e";
+            return "ý";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_YU:
-            return "yu";
+            return "þ";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_YA:
-            return "ya";
+            return "ÿ";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_IO:
-            return "yo";
+            return "å";
             break;
         case UTILS_CHAR_CYRILLIC_UA_SMALL_IE:
-            return "e";
+            return "å";
             break;
         case UTILS_CHAR_CYRILLIC_BY_UA_SMALL_I:
             return "i";
