@@ -182,5 +182,5 @@ unsigned char UtilsStrToHex(char *);
 uint8_t UtilsStrToInt(char *);
 int8_t UtilsStricmp(const char *, const char *);
 char * UtilsTransliterateUnicodeToASCII(uint32_t);
-char UtilsTranslateCyrillicUnicodeToASCII(uint32_t);
+unsigned char UtilsTranslateCyrillicUnicodeToASCII(uint32_t);
 #endif /* UTILS_H */

@@ -75,7 +75,7 @@ void UtilsNormalizeText(char *string, const char *input)
     uint16_t idx;
     uint16_t strIdx = 0;
     uint8_t bytesInChar = 0;
-    uint32_t unicodeChar;
+    uint32_t unicodeChar = 0;
 
     uint8_t transIdx;
     uint8_t transStrLength;
@@ -139,7 +139,7 @@ void UtilsNormalizeText(char *string, const char *input)
                     string[strIdx++] = (char)transStr[transIdx];
                 }
             } else {
-                char transChar = UtilsTranslateCyrillicUnicodeToASCII(unicodeChar);
+                unsigned char transChar = UtilsTranslateCyrillicUnicodeToASCII(unicodeChar);
                 if (transChar != 0) {
                     string[strIdx++] = transChar;
                 }
@@ -406,9 +406,9 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
  *     Params:
  *         uint32_t - Representation of the Cyrillic Unicode character
  *     Returns:
- *         char - Corresponding Extended ASCII characters
+ *         unsigned char - Corresponding Extended ASCII characters
  */
-char UtilsTranslateCyrillicUnicodeToASCII(uint32_t input) 
+unsigned char UtilsTranslateCyrillicUnicodeToASCII(uint32_t input) 
 {
     switch (input) {
         case UTILS_CHAR_CYRILLIC_BY_UA_CAPITAL_I:
