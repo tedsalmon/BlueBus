@@ -124,7 +124,7 @@ void UtilsNormalizeText(char *string, const char *input)
 
         if (unicodeChar <= 0x7F) {
             string[strIdx++] = (char) unicodeChar;
-        } else if (unicodeChar >= 0xC2A1 && unicodeChar <= 0xC3BF) {
+        } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC3BF) {
             // Convert UTF-8 byte to Unicode then check if it falls within
             // the range of extended ASCII
             uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
@@ -300,6 +300,7 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
             return "Z";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_I:
+        case UTILS_CHAR_CYRILLIC_CAPITAL_YI:
             return "I";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_SHORT_I:
@@ -333,6 +334,7 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
             return "T";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_U:
+        case UTILS_CHAR_CYRILLIC_CAPITAL_SHORT_U:
             return "U";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_EF:
@@ -387,6 +389,7 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
             return "d";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_IE:
+        case UTILS_CHAR_CYRILLIC_UA_SMALL_IE:
             return "ye";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_ZHE:
@@ -396,6 +399,8 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
             return "z";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_I:
+        case UTILS_CHAR_CYRILLIC_BY_UA_SMALL_I:
+        case UTILS_CHAR_CYRILLIC_SMALL_YI:
             return "i";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_SHORT_I:
@@ -429,6 +434,7 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
             return "t";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_U:
+        case UTILS_CHAR_CYRILLIC_SMALL_SHORT_U:
             return "u";
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_EF:
@@ -458,9 +464,6 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
         case UTILS_CHAR_CYRILLIC_SMALL_SOFT_SIGN:
             return "'";
             break;
-        case UTILS_CHAR_CYRILLIC_SMALL_E:
-            return "e";
-            break;
         case UTILS_CHAR_CYRILLIC_SMALL_YU:
             return "yu";
             break;
@@ -470,15 +473,10 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
         case UTILS_CHAR_CYRILLIC_SMALL_IO:
             return "yo";
             break;
-        case UTILS_CHAR_CYRILLIC_UA_SMALL_IE:
+        case UTILS_CHAR_CYRILLIC_SMALL_E:
             return "e";
             break;
-        case UTILS_CHAR_CYRILLIC_BY_UA_SMALL_I:
-            return "i";
-            break;
         case UTILS_CHAR_LEFT_SINGLE_QUOTATION_MARK:
-            return "'";
-            break;
         case UTILS_CHAR_RIGHT_SINGLE_QUOTATION_MARK:
             return "'";
             break;
