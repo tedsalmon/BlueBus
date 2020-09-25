@@ -1590,7 +1590,7 @@ BC127Connection_t BC127ConnectionInit()
 {
     BC127Connection_t conn;
     memset(conn.macId, 0, 13);
-    memset(conn.deviceName, 0, 33);
+    memset(conn.deviceName, 0, BC127_MAX_DEVICE_NAME);
     conn.deviceId = 0;
     conn.a2dpLinkId = 0;
     conn.avrcpLinkId = 0;
