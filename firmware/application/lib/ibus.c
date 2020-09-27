@@ -366,7 +366,9 @@ static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         EventTriggerCallback(IBusEvent_ModuleStatusResponse, pkt);
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD) {
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD ||
+               pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL
+    ) {
         if (pkt[IBUS_PKT_CMD] == IBus_MID_Button_Press) {
             EventTriggerCallback(IBusEvent_MIDButtonPress, pkt);
         }
@@ -1927,17 +1929,17 @@ void IBusCommandLMGetRedundantData(IBus_t *ibus)
 }
 
 /**
- * IBusCommandMIDDisplayText()
+ * IBusCommandMIDDisplayRADTitleText()
  *     Description:
- *        Send text to the MID screen. Add a watermark so we do not fight
- *        ourselves writing to the screen
+ *        Send the main RAD area text to the MID screen.
+ *        Add a watermark so we do not fight ourselves writing to the screen
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         char *message - The to display on the MID
  *     Returns:
  *         void
  */
-void IBusCommandMIDDisplayTitleText(IBus_t *ibus, char *message)
+void IBusCommandMIDDisplayRADTitleText(IBus_t *ibus, char *message)
 {
     unsigned char displayText[strlen(message) + 4];
     displayText[0] = IBUS_CMD_RAD_WRITE_MID_DISPLAY;
@@ -1964,8 +1966,7 @@ void IBusCommandMIDDisplayTitleText(IBus_t *ibus, char *message)
 /**
  * IBusCommandMIDDisplayText()
  *     Description:
- *        Send text to the MID screen. Add a watermark so we do not fight
- *        ourselves writing to the screen
+ *        Send text to the MID screen
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         char *message - The to display on the MID
@@ -1978,7 +1979,7 @@ void IBusCommandMIDDisplayText(IBus_t *ibus, char *message)
     if (textLength > IBus_MID_MAX_CHARS) {
         textLength = IBus_MID_MAX_CHARS;
     }
-    unsigned char displayText[textLength + 4];
+    unsigned char displayText[textLength + 3];
     displayText[0] = IBUS_CMD_RAD_WRITE_MID_DISPLAY;
     displayText[1] = 0x40;
     displayText[2] = 0x20;
@@ -1986,13 +1987,47 @@ void IBusCommandMIDDisplayText(IBus_t *ibus, char *message)
     for (idx = 0; idx < textLength; idx++) {
         displayText[idx + 3] = message[idx];
     }
-    displayText[idx + 3] = IBUS_RAD_MAIN_AREA_WATERMARK;
     IBusSendCommand(
         ibus,
-        IBUS_DEVICE_IKE,
+        IBUS_DEVICE_TEL,
         IBUS_DEVICE_MID,
         displayText,
         sizeof(displayText)
+    );
+}
+
+/**
+ * IBusCommandMIDMenuWriteMany()
+ *     Description:
+ *        Send text to the MID menu
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t startIdx - The index to use
+ *         char *menu - The menu to write to the MID
+ *     Returns:
+ *         void
+ */
+void IBusCommandMIDMenuWriteMany(
+    IBus_t *ibus,
+    uint8_t startIdx,
+    unsigned char *menu,
+    uint8_t menuLength
+) {
+    unsigned char menuText[menuLength + 4];
+    menuText[0] = IBUS_CMD_RAD_WRITE_MID_MENU;
+    menuText[1] = 0x40;
+    menuText[2] = 0x00;
+    menuText[3] = startIdx;
+    uint8_t textIdx;
+    for (textIdx = 0; textIdx < menuLength; textIdx++) {
+        menuText[textIdx + 4] = menu[textIdx];
+    }
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_TEL,
+        IBUS_DEVICE_MID,
+        menuText,
+        sizeof(menuText)
     );
 }
 
@@ -2002,12 +2037,15 @@ void IBusCommandMIDDisplayText(IBus_t *ibus, char *message)
  *        Send text to the MID menu
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         char *message - The to display on the MID
+ *         char *text - The to display on the MID
  *     Returns:
  *         void
  */
-void IBusCommandMIDMenuText(IBus_t *ibus, uint8_t idx, char *text)
-{
+void IBusCommandMIDMenuWriteSingle(
+    IBus_t *ibus,
+    uint8_t idx,
+    char *text
+) {
     uint8_t textLength = strlen(text);
     if (textLength > IBus_MID_MENU_MAX_CHARS) {
         textLength = IBus_MID_MENU_MAX_CHARS;
@@ -2023,10 +2061,42 @@ void IBusCommandMIDMenuText(IBus_t *ibus, uint8_t idx, char *text)
     }
     IBusSendCommand(
         ibus,
-        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_TEL,
         IBUS_DEVICE_MID,
         menuText,
         sizeof(menuText)
+    );
+}
+
+/**
+ * IBusCommandMIDSetMode()
+ *     Description:
+ *        Tell the MID that the IKE wants to write to the screen
+ *        Parameters Known:
+ *            0x00 - Enable the main display and menus buttons
+ *            0x02 - Disable the main display and menus buttons
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         unsigned char system - The system to send the mode request from
+ *         unsigned char param - The parameter to set
+ *     Returns:
+ *         void
+ */
+void IBusCommandMIDSetMode(
+    IBus_t *ibus,
+    unsigned char system,
+    unsigned char param
+) {
+    unsigned char msg[] = {
+        IBus_MID_CMD_SET_MODE,
+        param
+    };
+    IBusSendCommand(
+        ibus,
+        system,
+        IBUS_DEVICE_MID,
+        msg,
+        sizeof(msg)
     );
 }
 
@@ -2218,6 +2288,30 @@ void IBusCommandTELStatus(IBus_t *ibus, unsigned char status)
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, msg, sizeof(msg));
 }
 
+/**
+ * IBusCommandTELStatusText()
+ *     Description:
+ *        Send telephone status text
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *text - The text to send to the front display
+ *         unsigned char index - The index to write to
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
+{
+    uint8_t textLength = strlen(text);
+    unsigned char statusText[textLength + 3];
+    statusText[0] = IBUS_CMD_GT_WRITE_TITLE;
+    statusText[1] = 0x80 + index;
+    statusText[2] = 0x20;
+    uint8_t textIdx;
+    for (textIdx = 0; textIdx < textLength; textIdx++) {
+        statusText[textIdx + 3] = text[textIdx];
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
+}
 
 /* Temporary Commands for debugging */
 void IBusCommandIgnitionStatus(IBus_t *ibus, unsigned char status)

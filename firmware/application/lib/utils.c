@@ -82,44 +82,54 @@ void UtilsNormalizeText(char *string, const char *input)
     uint16_t strLength = strlen(input);
 
     for (idx = 0; idx < strLength; idx++) {
-        uint8_t c = (uint8_t) input[idx];
-        unicodeChar = 0 | c;
+        uint8_t currentChar = (uint8_t) input[idx];
+        unicodeChar = 0 | currentChar;
 
-        // Identify number of bytes to read from the first negative byte
-        uint8_t bytesInChar = 0;
-
-        if (c >> 3 == 30) { // 11110xxx
-            bytesInChar = 3;
-        } else if (c >> 4 == 14) { // 1110xxxx
-            bytesInChar = 2;
-        } else if (c >> 5 == 6) { // 110xxxx
-            bytesInChar = 1;
-        }
-
-        // Identify if we can read more byte
-        if (idx + bytesInChar <= strLength) {
-            while (bytesInChar != 0) {
-                unicodeChar = unicodeChar << 8 | (uint8_t) input[++idx];
-                bytesInChar--;
+        if (currentChar == '\\') {
+            unicodeChar = 0;
+            char currentByteBuf[] = {input[idx + 1], input[idx + 2], '\0'};
+            unsigned char currentByte = UtilsStrToHex(currentByteBuf);
+            // Identify number of bytes to read from the first byte
+            uint8_t bytesInChar = 1;
+            if (currentByte >> 3 == 30) { // 0xF0 - 0xF4
+                bytesInChar = 4;
+            } else if (currentByte >> 4 == 14) { // 0xE0 - 0xEF
+                bytesInChar = 3;
+            } else if (currentByte >> 5 == 6) { // 0xC2 - 0xDF
+                bytesInChar = 2;
             }
-        } else {
-            idx = strLength;
+            uint8_t charsToRead = bytesInChar * 3;
+            // Identify if we can read all the bytes
+            if ((idx + charsToRead) <= strLength) {
+                uint8_t byteIdx = idx;
+                while (bytesInChar != 0) {
+                    char buf[] = {input[byteIdx + 1], input[byteIdx + 2], '\0'};
+                    unsigned char byte = UtilsStrToHex(buf);
+                    unicodeChar = unicodeChar << 8 | byte;
+                    bytesInChar--;
+                    byteIdx = byteIdx + 3;
+                }
+                idx = idx + (charsToRead - 1);
+            } else {
+                idx = strLength;
+            }
         }
 
-        if (unicodeChar <= 0x7F) {
+        if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
             string[strIdx++] = (char) unicodeChar;
-        } else if (unicodeChar > 0x7F && unicodeChar <= 0xFF) {
-            // Convert UTF-8 byte to Unicode then check if it falls within
-            // the range of extended ASCII
-            uint32_t extendedChar = unicodeChar - 0xC2C0;
-            if (extendedChar < 0xFF) {
-                string[strIdx++] = (char) extendedChar;
-            }
-        } else if (unicodeChar > 0xFF) {
-            char * transStr = UtilsTransliterateUnicodeToASCII(unicodeChar);
+        } else {
+            char *transStr = UtilsTransliterateUnicodeToASCII(unicodeChar);
             transStrLength = strlen(transStr);
             for (transIdx = 0; transIdx < transStrLength; transIdx++) {
                 string[strIdx++] = (char) transStr[transIdx];
+            }
+            if (transStrLength == 0) {
+                // Convert UTF-8 byte to Unicode then check if it falls within
+                // the range of extended ASCII
+                uint32_t extendedChar = unicodeChar - UTILS_UNICODE_EXTENDED_ASCII_OFFSET;
+                if (extendedChar >= 0x20 && extendedChar < 0xFF) {
+                    string[strIdx++] = (char) extendedChar;
+                }
             }
         }
     }

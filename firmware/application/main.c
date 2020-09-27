@@ -122,6 +122,8 @@ int main(void)
     CLIInit(&systemUart, &bt, &ibus);
     // Run any applicable updates
     UpgradeProcess(&bt, &ibus);
+    // Run the PCM51XX Start-up process
+    PCM51XXStartup();
 
     // Process events
     while (1) {

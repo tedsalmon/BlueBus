@@ -97,6 +97,7 @@ void HandlerInit(BC127_t *, IBus_t *);
 void HandlerBC127Boot(void *, unsigned char *);
 void HandlerBC127BootStatus(void *, unsigned char *);
 void HandlerBC127CallStatus(void *, unsigned char *);
+void HandlerBC127CallerID(void *, unsigned char *);
 void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
 void HandlerBC127DeviceDisconnected(void *, unsigned char *);
 void HandlerBC127DeviceFound(void *, unsigned char *);

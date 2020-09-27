@@ -62,6 +62,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        BC127Event_CallerID,
+        &HandlerBC127CallerID,
+        &Context
+    );
+    EventRegisterCallback(
         BC127Event_DeviceLinkConnected,
         &HandlerBC127DeviceLinkConnected,
         &Context
@@ -320,7 +325,7 @@ void HandlerBC127BootStatus(void *ctx, unsigned char *tmp)
 /**
  * HandlerBC127CallStatus()
  *     Description:
- *         Handle call status updates. When the 
+ *         Handle call status updates
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *tmp - Any event data
@@ -365,6 +370,9 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
                 context->ibusModuleStatus.BMBT == 1
             ) {
                 if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+                    if (strlen(context->bt->callerId) > 0) {
+                        IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
+                    }
                     unsigned char volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
                     LogDebug(LOG_SOURCE_SYSTEM, "Handler: Set Telephone Volume: %d", volume);
                     while (volume > 0) {
@@ -413,6 +421,25 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
                 }
             }
         }
+    }
+}
+
+/**
+ * HandlerBC127CallStatus()
+ *     Description:
+ *         Handle caller ID updates
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBC127CallerID(void *ctx, unsigned char *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+        LogDebug(LOG_SOURCE_SYSTEM, "Set Caller ID To: %s", context->bt->callerId);
+        IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
     }
 }
 
@@ -1252,7 +1279,8 @@ void HandlerIBusLMDimmerStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    // Check VIN
+    unsigned char currentVehicleId[5] = {};
+    ConfigGetVehicleIdentity(currentVehicleId);
     unsigned char vehicleId[] = {
         pkt[4],
         pkt[5],
@@ -1260,27 +1288,14 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
         pkt[7],
         (pkt[8] >> 4) & 0xF,
     };
-    unsigned char currentVehicleId[5] = {};
-    ConfigGetVehicleIdentity(currentVehicleId);
-    char vinTwo[] = {vehicleId[0], vehicleId[1], '\0'};
-    LogDebug(
-        LOG_SOURCE_SYSTEM,
-        "Got VIN: %s%d%d%d%d%d",
-        vinTwo,
-        (vehicleId[2] >> 4) & 0xF,
-        vehicleId[2] & 0xF,
-        (vehicleId[3] >> 4) & 0xF,
-        vehicleId[3] & 0xF,
-        vehicleId[4]
-    );
+    // Check VIN
     if (memcmp(&vehicleId, &currentVehicleId, 5) != 0) {
+        char vinTwo[] = {vehicleId[0], vehicleId[1], '\0'};
         LogWarning(
-            "Detected VIN Change: %s%d%d%d%d%d",
+            "Detected VIN Change: %s%02x%02x%x",
             vinTwo,
-            (vehicleId[2] >> 4) & 0xF,
-            vehicleId[2] & 0xF,
-            (vehicleId[3] >> 4) & 0xF,
-            vehicleId[3] & 0xF,
+            vehicleId[2],
+            vehicleId[3],
             vehicleId[4]
         );
         // Request light module ident
@@ -1299,6 +1314,9 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
             HandlerSwitchUI(context, IBus_UI_CD53);
         }
+    } else if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
+        // Identify the LM if we do not have an ID for it
+        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
     }
 }
 
@@ -1606,9 +1624,7 @@ uint8_t HandlerIBusBroadcastTELStatus(
 ) {
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         unsigned char currentTelStatus = 0x00;
-        if (context->bt->callStatus != BC127_CALL_INACTIVE ||
-            context->bt->scoStatus == BC127_CALL_SCO_OPEN
-        ) {
+        if (context->bt->scoStatus == BC127_CALL_SCO_OPEN) {
             currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE;
         } else {
             currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;

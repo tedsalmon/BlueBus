@@ -255,7 +255,10 @@
 #define IBus_MID_TITLE_MAX_CHARS 11
 #define IBus_MID_MENU_MAX_CHARS 4
 #define IBus_MID_CMD_MODE 0x20
+#define IBus_MID_CMD_SET_MODE 0x27
 #define IBus_MID_Button_Press 0x31
+#define IBus_MID_BTN_TEL_RIGHT_RELEASE 0x4D
+#define IBus_MID_BTN_TEL_LEFT_RELEASE 0x4C
 
 #define IBUS_TEL_CMD_LED_STATUS 0x2B
 #define IBUS_TEL_CMD_STATUS 0x2C
@@ -435,9 +438,11 @@ void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
 void IBusCommandLMActivateBulbs(IBus_t *, unsigned char);
 void IBusCommandLMGetRedundantData(IBus_t *);
-void IBusCommandMIDDisplayTitleText(IBus_t *, char *);
+void IBusCommandMIDDisplayRADTitleText(IBus_t *, char *);
 void IBusCommandMIDDisplayText(IBus_t *, char *);
-void IBusCommandMIDMenuText(IBus_t *, uint8_t, char *);
+void IBusCommandMIDMenuWriteMany(IBus_t *, uint8_t, unsigned char *, uint8_t);
+void IBusCommandMIDMenuWriteSingle(IBus_t *, uint8_t, char *);
+void IBusCommandMIDSetMode(IBus_t *, unsigned char, unsigned char);
 void IBusCommandRADC43ScreenModeSet(IBus_t *, unsigned char);
 void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
@@ -447,6 +452,7 @@ void IBusCommandSetVolune(IBus_t *, unsigned char, unsigned char, unsigned char)
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetLED(IBus_t *, unsigned char);
 void IBusCommandTELStatus(IBus_t *, unsigned char);
+void IBusCommandTELStatusText(IBus_t *, char *, unsigned char);
 /* Temporary */
 void IBusCommandIgnitionStatus(IBus_t *, unsigned char);
 void IBusCommandLCMTurnLeft(IBus_t *);

@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <xc.h>
-#define UTILS_DISPLAY_TEXT_SIZE 255
 #define UTILS_CHAR_LATIN_SMALL_CAPITAL_R 0xCA80
 #define UTILS_CHAR_CYRILLIC_CAPITAL_CAPITAL_IO 0xD081
 #define UTILS_CHAR_CYRILLIC_UA_CAPITAL_IE 0xD084
@@ -85,6 +84,8 @@
 #define UTILS_CHAR_CYRILLIC_BYELORUSSIAN_UA_SMALL_I 0xD196
 #define UTILS_CHAR_LEFT_SINGLE_QUOTATION_MARK 0xE28098
 #define UTILS_CHAR_RIGHT_SINGLE_QUOTATION_MARK 0xE28099
+#define UTILS_DISPLAY_TEXT_SIZE 255
+#define UTILS_UNICODE_EXTENDED_ASCII_OFFSET 0xC2C0
 /* Check if a bit is set in a byte */
 #define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
 /* Return a programmable output port register */
