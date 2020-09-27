@@ -324,7 +324,7 @@ static void BMBTHeaderWriteDeviceName(BMBTContext_t *context, char *text)
     if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
         cleanName[20] = '\0';
     } else {
-        cleanName[16] = '\0';
+        cleanName[15] = '\0';
     }
     IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, cleanName);
 }
