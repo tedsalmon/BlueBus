@@ -1628,9 +1628,6 @@ void IBusCommandGTWriteTitleC43(IBus_t *ibus, char *message)
 void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
 {
     uint8_t length = strlen(message);
-    if (length > 11) {
-        length = 11;
-    }
     const size_t pktLenght = length + 4;
     unsigned char text[pktLenght];
     text[0] = IBUS_CMD_GT_WRITE_WITH_CURSOR;

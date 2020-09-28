@@ -317,19 +317,16 @@ static void BMBTTriggerWriteMenu(BMBTContext_t *context)
  */
 static void BMBTHeaderWriteDeviceName(BMBTContext_t *context, char *text)
 {
+    char cleanName[21];
+    memset(cleanName, 0x20, 21);
+    uint8_t textLength = strlen(text);
+    memcpy(cleanName, text, textLength);
     if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
-        char cleanName[21];
-        strncpy(cleanName, text, 20);
-        uint8_t nameLength = strlen(cleanName);
-        while (nameLength < 20) {
-            cleanName[nameLength++] = 0x20;
-        }
-        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, cleanName);
+        cleanName[20] = '\0';
     } else {
-        char cleanName[12];
-        strncpy(cleanName, text, 11);
-        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, cleanName);
+        cleanName[15] = '\0';
     }
+    IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, cleanName);
 }
 
 /**
@@ -411,8 +408,8 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_ON &&
         context->ibus->coolantTemperature > 0
     ) {
-        char temperature[6];
-        snprintf(temperature, 5, "%dc", context->ibus->coolantTemperature);
+        char temperature[7];
+        snprintf(temperature, 6, "%d%cC", context->ibus->coolantTemperature, 176);
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
     }
     IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "BT  ");
@@ -1089,14 +1086,14 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_TEMPS) {
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_OFF) {
             ConfigSetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS, CONFIG_SETTING_ON);
-            char temperature[6];
-            snprintf(temperature, 5, "%dc", context->ibus->coolantTemperature);
+            char temperature[7];
+            snprintf(temperature, 6, "%d%cC", context->ibus->coolantTemperature, 176);
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
             BMBTGTWriteIndex(context, selectedIdx, "Temps: Coolant", 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS, CONFIG_SETTING_OFF);
-            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, "    ");
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, "      ");
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
             BMBTGTWriteIndex(context, selectedIdx, "Temps: Off", 0);
         }
@@ -1395,8 +1392,8 @@ void BMBTIBusIKECoolantTempUpdate(void *ctx, unsigned char *pkt)
     if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_ON &&
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
-        char temperature[6];
-        snprintf(temperature, 5, "%dc", context->ibus->coolantTemperature);
+        char temperature[7];
+        snprintf(temperature, 6, "%d%cC", context->ibus->coolantTemperature, 176);
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
         IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
     }
