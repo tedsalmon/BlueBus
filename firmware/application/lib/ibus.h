@@ -198,44 +198,51 @@
 #define IBUS_LCM_DIMMER_STATUS 0x5C
 #define IBUS_LCM_IO_STATUS 0x90
 
-// Lamp Status (0x5B)
+// Lamp Status (0x5B) L / R Lamp Byte = 0, Blink Byte = 2
 #define IBUS_LM_LEFT_SIG_BIT 5
 #define IBUS_LM_RIGHT_SIG_BIT 6
+#define IBUS_LM_BLINK_SIG_BIT 2
 
 // LM diagnostics activate (0x0C)
-#define IBUS_LM_BLINKER_LEFT 1 // PN convention, odd = left
-#define IBUS_LM_BLINKER_RIGHT 2 // PN convention, even = right
+#define IBUS_LM_BLINKER_OFF 0
+#define IBUS_LM_BLINKER_LEFT 1
+#define IBUS_LM_BLINKER_RIGHT 2
 
-// LME38
-#define IBUS_LME38_BLINKER_LEFT 0x01 // byte 0
-#define IBUS_LME38_BLINKER_RIGHT 0x02 // byte 0
+// LME38 (Byte 0)
+#define IBUS_LME38_BLINKER_OFF 0x00
+#define IBUS_LME38_BLINKER_LEFT 0x01
+#define IBUS_LME38_BLINKER_RIGHT 0x02
 
 // LCM, LCM_A
 // Different bytes! Update the blinker msg if alternating.
-// #define IBUS_LCM_BLINKER_LEFT 0x80 // byte 0 (S2_BLK_L	switch No.2 left turn)
-// #define IBUS_LCM_BLINKER_RIGHT 0x40 // byte 0 (S2_BLK_R	switch No.2 right turn)
-#define IBUS_LCM_BLINKER_LEFT 0x01 // byte 1 (S1_BLK_L	switch No.1 left turn)
-#define IBUS_LCM_BLINKER_RIGHT 0x02 // byte 1 (S1_BLK_R	switch No.1 right turn)
+// Byte 0 (S2_BLK_L switch No.2 left turn / S2_BLK_R switch No.2 right turn)
+// #define IBUS_LCM_BLINKER_LEFT 0x80 
+// #define IBUS_LCM_BLINKER_RIGHT 0x40
+// Byte 1 (S2_BLK_L switch No.1 left turn / S2_BLK_R switch No.1 right turn)
+#define IBUS_LCM_BLINKER_OFF 0x00
+#define IBUS_LCM_BLINKER_LEFT 0x01
+#define IBUS_LCM_BLINKER_RIGHT 0x02
 
-// LCM_II, LCM_III, LCM_IV
-#define IBUS_LCM_II_BLINKER_LEFT 0x80 // byte 2
-#define IBUS_LCM_II_BLINKER_RIGHT 0x40 // byte 2
+// LCM_II, LCM_III, LCM_IV (Byte 2)
+#define IBUS_LCM_II_BLINKER_OFF 0x00
+#define IBUS_LCM_II_BLINKER_LEFT 0x80
+#define IBUS_LCM_II_BLINKER_RIGHT 0x40
 
-// LSZ, LSZ_2
-#define IBUS_LSZ_HEADLIGHT_OFF 0xFF // byte 2
-#define IBUS_LSZ_BLINKER_LEFT 0x50 // byte 3
-#define IBUS_LSZ_BLINKER_RIGHT 0x80 // byte 3
-#define IBUS_LSZ_BLINKER_OFF 0xFF // byte 3
+// LSZ, LSZ_2 (Headlight Status = Byte 2, Blinker Status = Byte 3)
+#define IBUS_LSZ_HEADLIGHT_OFF 0xFF
+#define IBUS_LSZ_BLINKER_LEFT 0x50
+#define IBUS_LSZ_BLINKER_RIGHT 0x80
+#define IBUS_LSZ_BLINKER_OFF 0xFF
 
 // Ident (0x00) parameter offsets
 #define IBUS_LM_CI_ID_OFFSET 9
 #define IBUS_LM_DI_ID_OFFSET 10
-// Status (0x0b) parameter offsets
+// Status (0x0B) parameter offsets
 #define IBUS_LM_IO_LOAD_FRONT_OFFSET 11
 #define IBUS_LM_IO_DIMMER_OFFSET 19
 #define IBUS_LM_IO_LOAD_REAR_OFFSET 20
 #define IBUS_LM_IO_PHOTO_OFFSET 22
-// LME38 has unique mapping. Spoilt first child.
+// LME38 has unique mapping
 #define IBUS_LME38_IO_DIMMER_OFFSET 22
 
 // Light Module variants
