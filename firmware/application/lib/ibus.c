@@ -1764,7 +1764,6 @@ void IBusCommandIKETextClear(IBus_t *ibus)
  */
 void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
     unsigned char blinker = IBUS_LSZ_BLINKER_OFF;
-
     if (ibus->lmVariant == IBUS_LM_LME38) {
         switch (blinkerSide) {
             case IBUS_LM_BLINKER_LEFT:
@@ -1772,6 +1771,9 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
                 break;
             case IBUS_LM_BLINKER_RIGHT:
                 blinker = IBUS_LME38_BLINKER_RIGHT;
+                break;
+            case IBUS_LM_BLINKER_OFF:
+                blinker = IBUS_LME38_BLINKER_OFF;
                 break;
         }
         // No LWR load sensor/HVAC pot voltage for LME38
@@ -1806,6 +1808,9 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
                 break;
             case IBUS_LM_BLINKER_RIGHT:
                 blinker = IBUS_LCM_BLINKER_RIGHT;
+                break;
+            case IBUS_LM_BLINKER_OFF:
+                blinker = IBUS_LCM_BLINKER_OFF;
                 break;
         }
         // This is an issue! I'm not sure what differentiates S1 and S2.
@@ -1843,6 +1848,9 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
             case IBUS_LM_BLINKER_RIGHT:
                 blinker = IBUS_LCM_II_BLINKER_RIGHT;
                 break;
+            case IBUS_LM_BLINKER_OFF:
+                blinker = IBUS_LCM_II_BLINKER_OFF;
+                break;
         }
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
@@ -1876,6 +1884,9 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
                 break;
           case IBUS_LM_BLINKER_RIGHT:
                 blinker = IBUS_LSZ_BLINKER_RIGHT;
+                break;
+          case IBUS_LM_BLINKER_OFF:
+                blinker = IBUS_LSZ_BLINKER_OFF;
                 break;
         }
         unsigned char msg[] = {
