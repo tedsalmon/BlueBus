@@ -36,8 +36,8 @@
 #define BC127_CONN_STATE_DISCONNECTED 2
 #define BC127_MAX_DEVICE_PAIRED 8
 #define BC127_MAX_DEVICE_PROFILES 5
-#define BC127_MAX_DEVICE_NAME 128
-#define BC127_MAX_DEVICE_NAME_OFFSET 19
+#define BC127_DEVICE_NAME_LEN 128
+#define BC127_DEVICE_NAME_OFFSET 19
 #define BC127_METADATA_MAX_SIZE 384
 #define BC127_METADATA_FIELD_SIZE 128
 #define BC127_METADATA_TITLE_OFFSET 22
@@ -79,7 +79,7 @@ extern int8_t BC127CVCGainTable[];
  */
 typedef struct BC127PairedDevice_t {
     char macId[13];
-    char deviceName[BC127_MAX_DEVICE_NAME];
+    char deviceName[BC127_DEVICE_NAME_LEN];
 } BC127PairedDevice_t;
 
 /**
@@ -101,7 +101,7 @@ typedef struct BC127PairedDevice_t {
  */
 typedef struct BC127Connection_t {
     char macId[13];
-    char deviceName[BC127_MAX_DEVICE_NAME];
+    char deviceName[BC127_DEVICE_NAME_LEN];
     uint8_t deviceId;
     uint8_t avrcpLinkId;
     uint8_t a2dpLinkId;

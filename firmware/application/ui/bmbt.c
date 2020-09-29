@@ -319,8 +319,7 @@ static void BMBTHeaderWriteDeviceName(BMBTContext_t *context, char *text)
 {
     char cleanName[21];
     memset(cleanName, 0x20, 21);
-    uint8_t textLength = strlen(text);
-    memcpy(cleanName, text, textLength);
+    memcpy(cleanName, text, 21);
     if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
         cleanName[20] = '\0';
     } else {

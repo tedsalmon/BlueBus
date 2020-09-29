@@ -1331,7 +1331,7 @@ void BC127Process(BC127_t *bt)
                 strncpy(bt->activeDevice.macId, msgBuf[4], 12);
                 char *deviceName = BC127PairedDeviceGetName(bt, msgBuf[4]);
                 if (deviceName != 0) {
-                    strncpy(bt->activeDevice.deviceName, deviceName, BC127_MAX_DEVICE_NAME - 1);
+                    strncpy(bt->activeDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN - 1);
                 } else {
                     BC127CommandGetDeviceName(bt, msgBuf[4]);
                 }
@@ -1388,7 +1388,7 @@ void BC127Process(BC127_t *bt)
                 strncpy(bt->activeDevice.macId, msgBuf[3], 12);
                 char *deviceName = BC127PairedDeviceGetName(bt, msgBuf[3]);
                 if (deviceName != 0) {
-                    strncpy(bt->activeDevice.deviceName, deviceName, BC127_MAX_DEVICE_NAME - 1);
+                    strncpy(bt->activeDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN - 1);
                 } else {
                     BC127CommandGetDeviceName(bt, msgBuf[3]);
                 }
@@ -1421,11 +1421,11 @@ void BC127Process(BC127_t *bt)
                 bt->pairingErrors[BC127_LINK_HFP] = 1;
             }
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
-            char deviceName[BC127_MAX_DEVICE_NAME];
+            char deviceName[BC127_DEVICE_NAME_LEN];
             uint8_t idx;
             uint8_t strIdx = 0;
-            for (idx = 0; idx < strlen(msg) - BC127_MAX_DEVICE_NAME_OFFSET; idx++) {
-                char c = msg[idx + BC127_MAX_DEVICE_NAME_OFFSET];
+            for (idx = 0; idx < strlen(msg) - BC127_DEVICE_NAME_OFFSET; idx++) {
+                char c = msg[idx + BC127_DEVICE_NAME_OFFSET];
                 // 0x22 (") is the character that wraps the device name
                 if (c != 0x22) {
                     deviceName[strIdx] = c;
@@ -1433,13 +1433,13 @@ void BC127Process(BC127_t *bt)
                 }
             }
             deviceName[strIdx] = '\0';
-            char name[BC127_MAX_DEVICE_NAME];
-            memset(name, 0, BC127_MAX_DEVICE_NAME);
+            char name[BC127_DEVICE_NAME_LEN];
+            memset(name, 0, BC127_DEVICE_NAME_LEN);
             UtilsNormalizeText(name, deviceName);
             if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
                 // Clean the device name up
-                memset(bt->activeDevice.deviceName, 0, BC127_MAX_DEVICE_NAME);
-                strncpy(bt->activeDevice.deviceName, name, BC127_MAX_DEVICE_NAME - 1);
+                memset(bt->activeDevice.deviceName, 0, BC127_DEVICE_NAME_LEN);
+                strncpy(bt->activeDevice.deviceName, name, BC127_DEVICE_NAME_LEN - 1);
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
             BC127PairedDeviceInit(bt, msgBuf[1], name);
@@ -1586,8 +1586,8 @@ void BC127PairedDeviceInit(BC127_t *bt, char *macId, char *deviceName)
     if (deviceExists == 0) {
         BC127PairedDevice_t pairedDevice;
         strncpy(pairedDevice.macId, macId, 13);
-        memset(pairedDevice.deviceName, 0, BC127_MAX_DEVICE_NAME);
-        strncpy(pairedDevice.deviceName, deviceName, BC127_MAX_DEVICE_NAME - 1);
+        memset(pairedDevice.deviceName, 0, BC127_DEVICE_NAME_LEN);
+        strncpy(pairedDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN - 1);
         bt->pairedDevices[bt->pairedDevicesCount++] = pairedDevice;
     }
 }
@@ -1630,7 +1630,7 @@ BC127Connection_t BC127ConnectionInit()
 {
     BC127Connection_t conn;
     memset(conn.macId, 0, 13);
-    memset(conn.deviceName, 0, BC127_MAX_DEVICE_NAME);
+    memset(conn.deviceName, 0, BC127_DEVICE_NAME_LEN);
     conn.deviceId = 0;
     conn.a2dpLinkId = 0;
     conn.avrcpLinkId = 0;
