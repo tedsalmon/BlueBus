@@ -863,13 +863,13 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, unsigned char *pkt)
             context->bodyModuleStatus.lowSideDoors = 1;
         }
     }
-    unsigned char lockStatus = pkt[4] & 0xF0;
-    if (CHECK_BIT(lockStatus, 4) != 0) {
-        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks unlocked");
-        context->bodyModuleStatus.doorsLocked = 0;
-    } else if (CHECK_BIT(lockStatus, 5) != 0) {
+    // The 5th bit in the first data byte contains the lock status
+    if (CHECK_BIT(pkt[4], 5) != 0) {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks locked");
         context->bodyModuleStatus.doorsLocked = 1;
+    } else {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks unlocked");
+        context->bodyModuleStatus.doorsLocked = 0;
     }
 }
 
