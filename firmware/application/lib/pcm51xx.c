@@ -9,7 +9,7 @@
 /**
  * PCM51XXInit()
  *     Description:
- *         Initialize our PCM51XX module by writing the requisite registers
+ *         Poll the PCM51XX module and issue a power-down request
  *     Params:
  *         void
  *     Returns:
@@ -17,21 +17,15 @@
  */
 void PCM51XXInit()
 {
-     int8_t status = I2CPoll(PCM51XX_I2C_ADDR);
+    int8_t status = I2CPoll(PCM51XX_I2C_ADDR);
     if (status != 0x00) {
         LogError("PCM51XX Responded with %d during initialization", status);
     } else {
         LogDebug(LOG_SOURCE_SYSTEM, "PCM51XX Responded to Poll");
-        unsigned char volume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
-        status = I2CWrite(PCM51XX_I2C_ADDR, PCM51XX_REGISTER_VOLL, volume);
+        status = I2CWrite(PCM51XX_I2C_ADDR, PCM51XX_REGISTER_REQUEST_STBY_PWRDN, 0x01);
         if (status != 0x00) {
-            LogError("PCM51XX failed to set VOLL [%d]", status);
+            LogError("PCM51XX failed to power down [%d]", status);
         }
-        status = I2CWrite(PCM51XX_I2C_ADDR, PCM51XX_REGISTER_VOLR, volume);
-        if (status != 0x00) {
-            LogError("PCM51XX failed to set VOLR [%d]", status);
-        }
-        TimerRegisterScheduledTask(&PCM51XXPollTimer, 0, PCM51XX_POLL_INT);
     }
 }
 
@@ -82,3 +76,23 @@ void PCM51XXSetVolume(unsigned char volume)
     }
 }
 
+/**
+ * PCM51XXStartup()
+ *     Description:
+ *         Initialize our PCM51XX by powering it up and setting the volume
+ *         registers. Additionally, begin the poll timer
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+void PCM51XXStartup()
+{
+    int8_t status = I2CWrite(PCM51XX_I2C_ADDR, PCM51XX_REGISTER_REQUEST_STBY_PWRDN, 0x00);
+    if (status != 0x00) {
+        LogError("PCM51XX failed to power up [%d]", status);
+    }
+    unsigned char volume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
+    PCM51XXSetVolume(volume);
+    TimerRegisterScheduledTask(&PCM51XXPollTimer, 0, PCM51XX_POLL_INT);
+}

@@ -19,6 +19,12 @@
 #include "ui/mid.h"
 #define HANDLER_LCM_STATUS_BLINKER_OFF 0
 #define HANDLER_LCM_STATUS_BLINKER_ON 1
+#define HANDLER_LM_BLINK_OFF 0x00
+#define HANDLER_LM_BLINK_LEFT 0x01
+#define HANDLER_LM_BLINK_RIGHT 0x02
+#define HANDLER_LM_COMF_BLINK_INACTIVE 0x00
+#define HANDLER_LM_COMF_BLINK_LEFT 0x01
+#define HANDLER_LM_COMF_BLINK_RIGHT 0x02
 #define HANDLER_LCM_TRIGGER_OFF 0
 #define HANDLER_LCM_TRIGGER_ON 1
 #define HANDLER_BT_CONN_OFF 0
@@ -54,11 +60,9 @@ typedef struct HandlerBodyModuleStatus_t {
 } HandlerBodyModuleStatus_t;
 
 typedef struct HandlerLightControlStatus_t {
-    uint8_t lightStatus: 1;
-    uint8_t triggerStatus: 1;
-    uint8_t leftBlinker: 1;
-    uint8_t rightBlinker: 1;
-    uint8_t blinkCount: 4;
+    uint8_t blinkStatus: 2;
+    uint8_t blinkCount: 8;
+    uint8_t comfortStatus: 2;
 } HandlerLightControlStatus_t;
 
 typedef struct HandlerModuleStatus_t {
@@ -97,6 +101,7 @@ void HandlerInit(BC127_t *, IBus_t *);
 void HandlerBC127Boot(void *, unsigned char *);
 void HandlerBC127BootStatus(void *, unsigned char *);
 void HandlerBC127CallStatus(void *, unsigned char *);
+void HandlerBC127CallerID(void *, unsigned char *);
 void HandlerBC127DeviceLinkConnected(void *, unsigned char *);
 void HandlerBC127DeviceDisconnected(void *, unsigned char *);
 void HandlerBC127DeviceFound(void *, unsigned char *);
@@ -113,7 +118,6 @@ void HandlerIBusIKEIgnitionStatus(void *, unsigned char *);
 void HandlerIBusIKESpeedRPMUpdate(void *, unsigned char *);
 void HandlerIBusIKEVehicleType(void *, unsigned char *);
 void HandlerIBusLMLightStatus(void *, unsigned char *);
-void HandlerIBusLMDiagnosticsAcknowledge(void *, unsigned char *);
 void HandlerIBusLMDimmerStatus(void *, unsigned char *);
 void HandlerIBusLMIdentResponse(void *, unsigned char *);
 void HandlerIBusLMRedundantData(void *, unsigned char *);

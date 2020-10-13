@@ -154,8 +154,6 @@ int8_t I2CPoll(unsigned char deviceAddress)
                 return I2C_STATUS_OK;
             } else if (retval == I2C_ERR_NAK) {
                 return I2C_ERR_BadAddr;
-            } else {
-                return I2C_ERR_CommFail;
             }
         }
     }

@@ -58,6 +58,7 @@ BC127_t BC127Init()
     bt.playbackStatus = BC127_AVRCP_STATUS_PAUSED;
     bt.scoStatus = BC127_CALL_SCO_CLOSE;
     bt.rxQueueAge = 0;
+    memset(bt.callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
     memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
     // Make sure that we initialize the char arrays to all zeros
     BC127ClearMetadata(&bt);
@@ -1160,15 +1161,52 @@ void BC127Process(BC127_t *bt)
         char tmpMsg[messageLength];
         strcpy(tmpMsg, msg);
         char *msgBuf[delimCount];
-        char *p = strtok(tmpMsg, " ");
+        char delimeter[] = " ";
+        char *p = strtok(tmpMsg, delimeter);
         i = 0;
         while (p != NULL) {
             msgBuf[i++] = p;
-            p = strtok(NULL, " ");
+            p = strtok(NULL, delimeter);
         }
         LogDebug(LOG_SOURCE_BT, "BT: %s", msg);
 
-        if (strcmp(msgBuf[0], "AVRCP_MEDIA") == 0) {
+        if (strcmp(msgBuf[0], "AT") == 0) {
+            if (strcmp(msgBuf[3], "+CLIP:") == 0) {
+                uint8_t delimeterCount = 0;
+                char cidData[strlen(&msg[4])];
+                strcpy(cidData, &msg[4]);
+                char *cidDataBuf[6];
+                memset(cidDataBuf, 0, sizeof(cidDataBuf));
+                char delimeter[] = ",";
+                char *p = strtok(cidData, delimeter);
+                while (p != NULL) {
+                    cidDataBuf[delimeterCount++] = p;
+                    p = strtok(NULL, delimeter);
+                }
+                // Set and clean up the variables to hold the new caller ID text
+                char callerId[BC127_CALLER_ID_FIELD_SIZE];
+                memset(callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
+                memset(bt->callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
+                if (delimeterCount == 2) {
+                    // Remove the escaped quotes that come through
+                    UtilsRemoveSubstring(cidDataBuf[0], "\\22");
+                    // Clean the text up
+                    UtilsNormalizeText(callerId, cidDataBuf[0]);
+                } else {
+                    if (cidDataBuf[delimeterCount - 1] != 0x00) {
+                        // Remove the escaped quotes that come through
+                        UtilsRemoveSubstring(cidDataBuf[delimeterCount - 1], "\\22");
+                        // Clean the text up
+                        UtilsNormalizeText(callerId, cidDataBuf[delimeterCount - 1]);
+                    }
+                }
+                if (strlen(callerId) > 0) {
+                    strncpy(bt->callerId, callerId, BC127_CALLER_ID_FIELD_SIZE - 1);
+                    EventTriggerCallback(BC127Event_CallerID, 0);
+                }
+
+            }
+        } else if (strcmp(msgBuf[0], "AVRCP_MEDIA") == 0) {
             // Always copy size of buffer minus one to make sure we're always
             // null terminated
             if (strcmp(msgBuf[2], "TITLE:") == 0) {
@@ -1261,6 +1299,7 @@ void BC127Process(BC127_t *bt)
         } else if(strcmp(msgBuf[0], "CALL_END") == 0) {
             if (bt->callStatus != BC127_CALL_INACTIVE) {
                 bt->callStatus = BC127_CALL_INACTIVE;
+                memset(bt->callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
                 EventTriggerCallback(
                     BC127Event_CallStatus,
                     (unsigned char *) BC127_CALL_INACTIVE
@@ -1292,7 +1331,7 @@ void BC127Process(BC127_t *bt)
                 strncpy(bt->activeDevice.macId, msgBuf[4], 12);
                 char *deviceName = BC127PairedDeviceGetName(bt, msgBuf[4]);
                 if (deviceName != 0) {
-                    strncpy(bt->activeDevice.deviceName, deviceName, BC127_MAX_DEVICE_NAME - 1);
+                    strncpy(bt->activeDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN - 1);
                 } else {
                     BC127CommandGetDeviceName(bt, msgBuf[4]);
                 }
@@ -1349,7 +1388,7 @@ void BC127Process(BC127_t *bt)
                 strncpy(bt->activeDevice.macId, msgBuf[3], 12);
                 char *deviceName = BC127PairedDeviceGetName(bt, msgBuf[3]);
                 if (deviceName != 0) {
-                    strncpy(bt->activeDevice.deviceName, deviceName, BC127_MAX_DEVICE_NAME - 1);
+                    strncpy(bt->activeDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN - 1);
                 } else {
                     BC127CommandGetDeviceName(bt, msgBuf[3]);
                 }
@@ -1382,11 +1421,11 @@ void BC127Process(BC127_t *bt)
                 bt->pairingErrors[BC127_LINK_HFP] = 1;
             }
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
-            char deviceName[BC127_MAX_DEVICE_NAME];
+            char deviceName[BC127_DEVICE_NAME_LEN];
             uint8_t idx;
             uint8_t strIdx = 0;
-            for (idx = 0; idx < strlen(msg) - BC127_MAX_DEVICE_NAME_OFFSET; idx++) {
-                char c = msg[idx + BC127_MAX_DEVICE_NAME_OFFSET];
+            for (idx = 0; idx < strlen(msg) - BC127_DEVICE_NAME_OFFSET; idx++) {
+                char c = msg[idx + BC127_DEVICE_NAME_OFFSET];
                 // 0x22 (") is the character that wraps the device name
                 if (c != 0x22) {
                     deviceName[strIdx] = c;
@@ -1394,13 +1433,13 @@ void BC127Process(BC127_t *bt)
                 }
             }
             deviceName[strIdx] = '\0';
-            char name[BC127_MAX_DEVICE_NAME];
-            memset(name, 0, BC127_MAX_DEVICE_NAME);
+            char name[BC127_DEVICE_NAME_LEN];
+            memset(name, 0, BC127_DEVICE_NAME_LEN);
             UtilsNormalizeText(name, deviceName);
             if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
                 // Clean the device name up
-                memset(bt->activeDevice.deviceName, 0, BC127_MAX_DEVICE_NAME);
-                strncpy(bt->activeDevice.deviceName, name, BC127_MAX_DEVICE_NAME - 1);
+                memset(bt->activeDevice.deviceName, 0, BC127_DEVICE_NAME_LEN);
+                strncpy(bt->activeDevice.deviceName, name, BC127_DEVICE_NAME_LEN - 1);
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
             BC127PairedDeviceInit(bt, msgBuf[1], name);
@@ -1426,6 +1465,7 @@ void BC127Process(BC127_t *bt)
             );
         } else if (strcmp(msgBuf[0], "SCO_CLOSE") == 0) {
             bt->scoStatus = BC127_CALL_SCO_CLOSE;
+            memset(bt->callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
             EventTriggerCallback(
                 BC127Event_CallStatus,
                 (unsigned char *) BC127_CALL_SCO_CLOSE
@@ -1546,8 +1586,8 @@ void BC127PairedDeviceInit(BC127_t *bt, char *macId, char *deviceName)
     if (deviceExists == 0) {
         BC127PairedDevice_t pairedDevice;
         strncpy(pairedDevice.macId, macId, 13);
-        memset(pairedDevice.deviceName, 0, BC127_MAX_DEVICE_NAME);
-        strncpy(pairedDevice.deviceName, deviceName, BC127_MAX_DEVICE_NAME - 1);
+        memset(pairedDevice.deviceName, 0, BC127_DEVICE_NAME_LEN);
+        strncpy(pairedDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN - 1);
         bt->pairedDevices[bt->pairedDevicesCount++] = pairedDevice;
     }
 }
@@ -1590,7 +1630,7 @@ BC127Connection_t BC127ConnectionInit()
 {
     BC127Connection_t conn;
     memset(conn.macId, 0, 13);
-    memset(conn.deviceName, 0, 33);
+    memset(conn.deviceName, 0, BC127_DEVICE_NAME_LEN);
     conn.deviceId = 0;
     conn.a2dpLinkId = 0;
     conn.avrcpLinkId = 0;

@@ -62,6 +62,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        BC127Event_CallerID,
+        &HandlerBC127CallerID,
+        &Context
+    );
+    EventRegisterCallback(
         BC127Event_DeviceLinkConnected,
         &HandlerBC127DeviceLinkConnected,
         &Context
@@ -139,11 +144,6 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBusEvent_LCMLightStatus,
         &HandlerIBusLMLightStatus,
-        &Context
-    );
-    EventRegisterCallback(
-        IBusEvent_LCMDiagnosticsAcknowledge,
-        &HandlerIBusLMDiagnosticsAcknowledge,
         &Context
     );
     EventRegisterCallback(
@@ -320,7 +320,7 @@ void HandlerBC127BootStatus(void *ctx, unsigned char *tmp)
 /**
  * HandlerBC127CallStatus()
  *     Description:
- *         Handle call status updates. When the 
+ *         Handle call status updates
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *tmp - Any event data
@@ -365,6 +365,9 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
                 context->ibusModuleStatus.BMBT == 1
             ) {
                 if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+                    if (strlen(context->bt->callerId) > 0) {
+                        IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
+                    }
                     unsigned char volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
                     LogDebug(LOG_SOURCE_SYSTEM, "Handler: Set Telephone Volume: %d", volume);
                     while (volume > 0) {
@@ -413,6 +416,25 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
                 }
             }
         }
+    }
+}
+
+/**
+ * HandlerBC127CallStatus()
+ *     Description:
+ *         Handle caller ID updates
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBC127CallerID(void *ctx, unsigned char *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+        LogDebug(LOG_SOURCE_SYSTEM, "Set Caller ID To: %s", context->bt->callerId);
+        IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
     }
 }
 
@@ -841,13 +863,13 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, unsigned char *pkt)
             context->bodyModuleStatus.lowSideDoors = 1;
         }
     }
-    unsigned char lockStatus = pkt[4] & 0xF0;
-    if (CHECK_BIT(lockStatus, 4) != 0) {
-        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks unlocked");
-        context->bodyModuleStatus.doorsLocked = 0;
-    } else if (CHECK_BIT(lockStatus, 5) != 0) {
+    // The 5th bit in the first data byte contains the lock status
+    if (CHECK_BIT(pkt[4], 5) != 0) {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks locked");
         context->bodyModuleStatus.doorsLocked = 1;
+    } else {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks unlocked");
+        context->bodyModuleStatus.doorsLocked = 0;
     }
 }
 
@@ -1136,82 +1158,191 @@ void HandlerIBusLMIdentResponse(void *ctx, unsigned char *variant)
  */
 void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
 {
-    uint8_t blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
-    if (blinkCount > 0x01 && blinkCount != 0xFF) {
+    // Changed identifier as to not confuse it with the blink counter.
+    uint8_t configBlinkLimit = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
+
+    if (configBlinkLimit > 1) {
         HandlerContext_t *context = (HandlerContext_t *) ctx;
         unsigned char lightStatus = pkt[4];
-        if (context->lightControlStatus.lightStatus == HANDLER_LCM_STATUS_BLINKER_OFF) {
-            context->lightControlStatus.blinkCount = 2;
-            if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
-                CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
-            ) {
-                context->lightControlStatus.leftBlinker = 1;
-                context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_ON;
-                IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_LEFT);
-            } else if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
-                CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0
-            ) {
-                context->lightControlStatus.rightBlinker = 1;
-                context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_ON;
-                IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_RIGHT);
-            }
-        } else {
-            if (context->lightControlStatus.leftBlinker == 1) {
-                if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 ||
-                    context->lightControlStatus.blinkCount == blinkCount
-                ) {
-                    // Reset ourselves once the signal is off so we do not
-                    // reactivate and signal in increments of `blinkCount`
-                    if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0) {
-                        context->lightControlStatus.leftBlinker = 0;
-                        context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
-                    }
-                    if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
-                        IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
-                    }
-                } else {
-                    context->lightControlStatus.blinkCount++;
-                }
-            }
-            if (context->lightControlStatus.rightBlinker == 1) {
-                if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 ||
-                    context->lightControlStatus.blinkCount == blinkCount
-                ) {
-                    // Reset ourselves once the signal is off so we do not
-                    // reactivate and signal in increments of `blinkCount`
-                    if (CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0) {
-                        context->lightControlStatus.rightBlinker = 0;
-                        context->lightControlStatus.lightStatus = HANDLER_LCM_STATUS_BLINKER_OFF;
-                    }
-                    if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
-                        IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
-                    }
-                } else {
-                    context->lightControlStatus.blinkCount++;
-                }
-            }
-        }
-    }
-}
+        unsigned char lightStatus2 = pkt[6];
 
-/**
- * HandlerIBusLCMDiagnosticsAcknowledge()
- *     Description:
- *         Track when the LCM acknowledges a diagnostic command
- *     Params:
- *         void *ctx - The context provided at registration
- *         unsigned char *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerIBusLMDiagnosticsAcknowledge(void *ctx, unsigned char *pkt)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->lightControlStatus.lightStatus == HANDLER_LCM_STATUS_BLINKER_ON) {
-        if (context->lightControlStatus.triggerStatus == HANDLER_LCM_TRIGGER_ON) {
-            context->lightControlStatus.triggerStatus = HANDLER_LCM_TRIGGER_OFF;
-        } else {
-            context->lightControlStatus.triggerStatus = HANDLER_LCM_TRIGGER_ON;
+        // Left blinker
+        if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+            CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
+            CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
+        ) {
+            // If quickly switching blinker direction the LM will activate the
+            // opposing blinker immediately, bypassing the "off" message.
+            if (context->lightControlStatus.blinkStatus == HANDLER_LM_BLINK_RIGHT) {
+                LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Quick Switch > Reset");
+                context->lightControlStatus.blinkCount = 0;
+            }
+            context->lightControlStatus.blinkCount++;
+            context->lightControlStatus.blinkStatus = HANDLER_LM_BLINK_LEFT;
+
+            switch (context->lightControlStatus.comfortStatus) {
+                case HANDLER_LM_COMF_BLINK_INACTIVE:
+                    LogDebug(
+                        CONFIG_DEVICE_LOG_SYSTEM,
+                        "LEFT > COMFORT_INACTIVE > %hhu/%hhu",
+                        context->lightControlStatus.blinkCount,
+                        configBlinkLimit
+                    );
+                    break;
+                case HANDLER_LM_COMF_BLINK_LEFT:
+                    LogDebug(
+                        CONFIG_DEVICE_LOG_SYSTEM,
+                        "LEFT > COMFORT_LEFT > %hhu/%hhu",
+                        context->lightControlStatus.blinkCount,
+                        configBlinkLimit
+                    );
+                    if (context->lightControlStatus.blinkCount >= configBlinkLimit) {
+                        LogDebug(
+                            CONFIG_DEVICE_LOG_SYSTEM,
+                            "LEFT > COMFORT_LEFT > Blink limit"
+                        );
+                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
+                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                    }
+                    break;
+                case HANDLER_LM_COMF_BLINK_RIGHT:
+                    LogDebug(
+                        CONFIG_DEVICE_LOG_SYSTEM,
+                        "LEFT > COMFORT_RIGHT > Cancel"
+                    );
+                    // If comfort blinkers are active, the first opposing blink
+                    // will cancel comfort blinkers, and not count towards the blink count.
+                    context->lightControlStatus.blinkCount = 0;
+                    context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
+                    IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                    break;
+                default:
+                    LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Unknown State");
+                    break;
+            }
+        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
+                   CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
+        ) {
+            LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Unrelated activity");
+        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                  CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
+                  CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
+        ) {
+            if (context->lightControlStatus.blinkStatus == HANDLER_LM_BLINK_LEFT) {
+                LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Quick Switch > Reset");
+                context->lightControlStatus.blinkCount = 0;
+            }
+            context->lightControlStatus.blinkCount++;
+            context->lightControlStatus.blinkStatus = HANDLER_LM_BLINK_RIGHT;
+            switch (context->lightControlStatus.comfortStatus) {
+                case HANDLER_LM_COMF_BLINK_INACTIVE:
+                    LogDebug(
+                        CONFIG_DEVICE_LOG_SYSTEM,
+                        "RIGHT > COMFORT_INACTIVE > %hhu/%hhu",
+                        context->lightControlStatus.blinkCount,
+                        configBlinkLimit
+                    );
+                    break;
+                case HANDLER_LM_COMF_BLINK_RIGHT:
+                    LogDebug(
+                        CONFIG_DEVICE_LOG_SYSTEM,
+                        "RIGHT > COMFORT_RIGHT > %hhu/%hhu",
+                        context->lightControlStatus.blinkCount,
+                        configBlinkLimit
+                    );
+                    if(context->lightControlStatus.blinkCount >= configBlinkLimit) {
+                        LogDebug(
+                            CONFIG_DEVICE_LOG_SYSTEM,
+                            "RIGHT > COMFORT_RIGHT > Blink limit"
+                        );
+                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
+                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                    }
+                    break;
+                case HANDLER_LM_COMF_BLINK_LEFT:
+                    LogDebug(
+                        CONFIG_DEVICE_LOG_SYSTEM,
+                        "RIGHT > COMFORT_LEFT > Cancel"
+                    );
+                    context->lightControlStatus.blinkCount = 0;
+                    context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
+                    IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                    break;
+                default:
+                    LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unknown State");
+                    break;
+            }
+        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
+                   CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
+        ) {
+            LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unrelated activity");
+        } else if(CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                  CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
+        ) {
+            // OFF blinker (or anything non-blinker)
+            // Only activate comfort blinkers after a single blink.
+            if (context->lightControlStatus.blinkCount == 1) {
+                LogDebug(
+                    CONFIG_DEVICE_LOG_SYSTEM,
+                    "OFF > Blinks: %hhu => Activate",
+                    context->lightControlStatus.blinkCount
+                );
+                // I believe this is redundant, but better safe than sorry.
+                switch (context->lightControlStatus.comfortStatus) {
+                    case HANDLER_LM_COMF_BLINK_RIGHT:
+                        LogDebug(
+                            CONFIG_DEVICE_LOG_SYSTEM,
+                            "OFF > Blinks: %hhu > COMFORT_RIGHT > Cancel",
+                            context->lightControlStatus.blinkCount
+                        );
+                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
+                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                        break;
+                    case HANDLER_LM_COMF_BLINK_LEFT:
+                        LogDebug(
+                            CONFIG_DEVICE_LOG_SYSTEM,
+                            "OFF > Blinks: %hhu > COMFORT_LEFT > Cancel",
+                            context->lightControlStatus.blinkCount
+                        );
+                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
+                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                        break;
+                }
+                // Activate comfort
+                switch (context->lightControlStatus.blinkStatus) {
+                    case HANDLER_LM_BLINK_LEFT:
+                        LogDebug(
+                            CONFIG_DEVICE_LOG_SYSTEM,
+                            "OFF > Blinks: %hhu > BLINK_LEFT => Activate",
+                            context->lightControlStatus.blinkCount
+                        );
+                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_LEFT;
+                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_LEFT);
+                        break;
+                    case HANDLER_LM_BLINK_RIGHT:
+                        LogDebug(
+                            CONFIG_DEVICE_LOG_SYSTEM,
+                            "OFF > Blinks: %hhu > BLINK_RIGHT => Activate",
+                            context->lightControlStatus.blinkCount
+                        );
+                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_RIGHT;
+                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_RIGHT);
+                        break;
+                }
+            } else if (context->lightControlStatus.blinkCount > 1) {
+                LogDebug(
+                    CONFIG_DEVICE_LOG_SYSTEM,
+                    "OFF > Blinks: %hhu => Do not activate comfort",
+                    context->lightControlStatus.blinkCount
+                );
+                context->lightControlStatus.blinkCount = 0;
+            } else {
+                // Sequential non-blinker lamp activity
+                LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "OFF > Unrelated activity!");
+            }
+            context->lightControlStatus.blinkStatus = HANDLER_LM_BLINK_OFF;
         }
     }
 }
@@ -1252,7 +1383,8 @@ void HandlerIBusLMDimmerStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    // Check VIN
+    unsigned char currentVehicleId[5] = {};
+    ConfigGetVehicleIdentity(currentVehicleId);
     unsigned char vehicleId[] = {
         pkt[4],
         pkt[5],
@@ -1260,27 +1392,14 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
         pkt[7],
         (pkt[8] >> 4) & 0xF,
     };
-    unsigned char currentVehicleId[5] = {};
-    ConfigGetVehicleIdentity(currentVehicleId);
-    char vinTwo[] = {vehicleId[0], vehicleId[1], '\0'};
-    LogDebug(
-        LOG_SOURCE_SYSTEM,
-        "Got VIN: %s%d%d%d%d%d",
-        vinTwo,
-        (vehicleId[2] >> 4) & 0xF,
-        vehicleId[2] & 0xF,
-        (vehicleId[3] >> 4) & 0xF,
-        vehicleId[3] & 0xF,
-        vehicleId[4]
-    );
+    // Check VIN
     if (memcmp(&vehicleId, &currentVehicleId, 5) != 0) {
+        char vinTwo[] = {vehicleId[0], vehicleId[1], '\0'};
         LogWarning(
-            "Detected VIN Change: %s%d%d%d%d%d",
+            "Detected VIN Change: %s%02x%02x%x",
             vinTwo,
-            (vehicleId[2] >> 4) & 0xF,
-            vehicleId[2] & 0xF,
-            (vehicleId[3] >> 4) & 0xF,
-            vehicleId[3] & 0xF,
+            vehicleId[2],
+            vehicleId[3],
             vehicleId[4]
         );
         // Request light module ident
@@ -1299,6 +1418,9 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
             HandlerSwitchUI(context, IBus_UI_CD53);
         }
+    } else if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
+        // Identify the LM if we do not have an ID for it
+        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
     }
 }
 
@@ -1606,9 +1728,7 @@ uint8_t HandlerIBusBroadcastTELStatus(
 ) {
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         unsigned char currentTelStatus = 0x00;
-        if (context->bt->callStatus != BC127_CALL_INACTIVE ||
-            context->bt->scoStatus == BC127_CALL_SCO_OPEN
-        ) {
+        if (context->bt->scoStatus == BC127_CALL_SCO_OPEN) {
             currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE;
         } else {
             currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;

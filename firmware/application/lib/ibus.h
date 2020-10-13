@@ -198,44 +198,51 @@
 #define IBUS_LCM_DIMMER_STATUS 0x5C
 #define IBUS_LCM_IO_STATUS 0x90
 
-// Lamp Status (0x5B)
+// Lamp Status (0x5B) L / R Lamp Byte = 0, Blink Byte = 2
 #define IBUS_LM_LEFT_SIG_BIT 5
 #define IBUS_LM_RIGHT_SIG_BIT 6
+#define IBUS_LM_BLINK_SIG_BIT 2
 
 // LM diagnostics activate (0x0C)
-#define IBUS_LM_BLINKER_LEFT 1 // PN convention, odd = left
-#define IBUS_LM_BLINKER_RIGHT 2 // PN convention, even = right
+#define IBUS_LM_BLINKER_OFF 0
+#define IBUS_LM_BLINKER_LEFT 1
+#define IBUS_LM_BLINKER_RIGHT 2
 
-// LME38
-#define IBUS_LME38_BLINKER_LEFT 0x01 // byte 0
-#define IBUS_LME38_BLINKER_RIGHT 0x02 // byte 0
+// LME38 (Byte 0)
+#define IBUS_LME38_BLINKER_OFF 0x00
+#define IBUS_LME38_BLINKER_LEFT 0x01
+#define IBUS_LME38_BLINKER_RIGHT 0x02
 
 // LCM, LCM_A
 // Different bytes! Update the blinker msg if alternating.
-// #define IBUS_LCM_BLINKER_LEFT 0x80 // byte 0 (S2_BLK_L	switch No.2 left turn)
-// #define IBUS_LCM_BLINKER_RIGHT 0x40 // byte 0 (S2_BLK_R	switch No.2 right turn)
-#define IBUS_LCM_BLINKER_LEFT 0x01 // byte 1 (S1_BLK_L	switch No.1 left turn)
-#define IBUS_LCM_BLINKER_RIGHT 0x02 // byte 1 (S1_BLK_R	switch No.1 right turn)
+// Byte 0 (S2_BLK_L switch No.2 left turn / S2_BLK_R switch No.2 right turn)
+// #define IBUS_LCM_BLINKER_LEFT 0x80 
+// #define IBUS_LCM_BLINKER_RIGHT 0x40
+// Byte 1 (S2_BLK_L switch No.1 left turn / S2_BLK_R switch No.1 right turn)
+#define IBUS_LCM_BLINKER_OFF 0x00
+#define IBUS_LCM_BLINKER_LEFT 0x01
+#define IBUS_LCM_BLINKER_RIGHT 0x02
 
-// LCM_II, LCM_III, LCM_IV
-#define IBUS_LCM_II_BLINKER_LEFT 0x80 // byte 2
-#define IBUS_LCM_II_BLINKER_RIGHT 0x40 // byte 2
+// LCM_II, LCM_III, LCM_IV (Byte 2)
+#define IBUS_LCM_II_BLINKER_OFF 0x00
+#define IBUS_LCM_II_BLINKER_LEFT 0x80
+#define IBUS_LCM_II_BLINKER_RIGHT 0x40
 
-// LSZ, LSZ_2
-#define IBUS_LSZ_HEADLIGHT_OFF 0xFF // byte 2
-#define IBUS_LSZ_BLINKER_LEFT 0x50 // byte 3
-#define IBUS_LSZ_BLINKER_RIGHT 0x80 // byte 3
-#define IBUS_LSZ_BLINKER_OFF 0xFF // byte 3
+// LSZ, LSZ_2 (Headlight Status = Byte 2, Blinker Status = Byte 3)
+#define IBUS_LSZ_HEADLIGHT_OFF 0xFF
+#define IBUS_LSZ_BLINKER_LEFT 0x50
+#define IBUS_LSZ_BLINKER_RIGHT 0x80
+#define IBUS_LSZ_BLINKER_OFF 0xFF
 
 // Ident (0x00) parameter offsets
 #define IBUS_LM_CI_ID_OFFSET 9
 #define IBUS_LM_DI_ID_OFFSET 10
-// Status (0x0b) parameter offsets
+// Status (0x0B) parameter offsets
 #define IBUS_LM_IO_LOAD_FRONT_OFFSET 11
 #define IBUS_LM_IO_DIMMER_OFFSET 19
 #define IBUS_LM_IO_LOAD_REAR_OFFSET 20
 #define IBUS_LM_IO_PHOTO_OFFSET 22
-// LME38 has unique mapping. Spoilt first child.
+// LME38 has unique mapping
 #define IBUS_LME38_IO_DIMMER_OFFSET 22
 
 // Light Module variants
@@ -255,7 +262,10 @@
 #define IBus_MID_TITLE_MAX_CHARS 11
 #define IBus_MID_MENU_MAX_CHARS 4
 #define IBus_MID_CMD_MODE 0x20
+#define IBus_MID_CMD_SET_MODE 0x27
 #define IBus_MID_Button_Press 0x31
+#define IBus_MID_BTN_TEL_RIGHT_RELEASE 0x4D
+#define IBus_MID_BTN_TEL_LEFT_RELEASE 0x4C
 
 #define IBUS_TEL_CMD_LED_STATUS 0x2B
 #define IBUS_TEL_CMD_STATUS 0x2C
@@ -435,9 +445,11 @@ void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
 void IBusCommandLMActivateBulbs(IBus_t *, unsigned char);
 void IBusCommandLMGetRedundantData(IBus_t *);
-void IBusCommandMIDDisplayTitleText(IBus_t *, char *);
+void IBusCommandMIDDisplayRADTitleText(IBus_t *, char *);
 void IBusCommandMIDDisplayText(IBus_t *, char *);
-void IBusCommandMIDMenuText(IBus_t *, uint8_t, char *);
+void IBusCommandMIDMenuWriteMany(IBus_t *, uint8_t, unsigned char *, uint8_t);
+void IBusCommandMIDMenuWriteSingle(IBus_t *, uint8_t, char *);
+void IBusCommandMIDSetMode(IBus_t *, unsigned char, unsigned char);
 void IBusCommandRADC43ScreenModeSet(IBus_t *, unsigned char);
 void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
@@ -447,6 +459,7 @@ void IBusCommandSetVolune(IBus_t *, unsigned char, unsigned char, unsigned char)
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetLED(IBus_t *, unsigned char);
 void IBusCommandTELStatus(IBus_t *, unsigned char);
+void IBusCommandTELStatusText(IBus_t *, char *, unsigned char);
 /* Temporary */
 void IBusCommandIgnitionStatus(IBus_t *, unsigned char);
 void IBusCommandLCMTurnLeft(IBus_t *);

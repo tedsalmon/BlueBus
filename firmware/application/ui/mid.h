@@ -34,14 +34,18 @@
 #define MID_DISPLAY_STATUS_OFF 0
 #define MID_DISPLAY_STATUS_ON 1
 #define MID_DISPLAY_STATUS_NEW 2
-#define MID_DISPLAY_TEXT_SIZE 20
-#define MID_DISPLAY_TIMER_INT 500
+#define MID_DISPLAY_TEXT_SIZE 25
+#define MID_TIMER_DISPLAY_INT 500
+#define MID_TIMER_MENU_WRITE_INT 250
 
 #define MID_MODE_OFF 0
 #define MID_MODE_DISPLAY_OFF 1
 #define MID_MODE_ACTIVE 2
 #define MID_MODE_SETTINGS 3
 #define MID_MODE_DEVICES 4
+#define MID_MODE_ACTIVE_NEW 5
+#define MID_MODE_SETTINGS_NEW 6
+#define MID_MODE_DEVICES_NEW 7
 
 #define MID_PAIRING_DEVICE_NONE -1
 
@@ -77,6 +81,7 @@ typedef struct MIDContext_t {
     uint8_t settingMode;
     UtilsAbstractDisplayValue_t mainDisplay;
     UtilsAbstractDisplayValue_t tempDisplay;
+    char mainText[16];
     uint8_t displayUpdateTaskId;
 } MIDContext_t;
 void MIDInit(BC127_t *, IBus_t *);
@@ -88,5 +93,6 @@ void MIDIBusMIDButtonPress(void *, unsigned char *);
 void MIDIIBusRADMIDDisplayUpdate(void *, unsigned char *);
 void MIDIIBusRADMIDMenuUpdate(void *, unsigned char *);
 void MIDIBusMIDModeChange(void *, unsigned char *);
+void MIDTimerMenuWrite(void *);
 void MIDTimerDisplay(void *);
 #endif /* MID_H */

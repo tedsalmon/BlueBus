@@ -387,11 +387,15 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
         case UTILS_CHAR_LATIN_SMALL_CAPITAL_R:
             return "R";
             break;
-        case UTILS_CHAR_LEFT_SINGLE_QUOTATION_MARK:
-            return "'";
+        case UTILS_CHAR_HYPHEN:
+            return "-";
             break;
+        case UTILS_CHAR_LEFT_SINGLE_QUOTATION_MARK:
         case UTILS_CHAR_RIGHT_SINGLE_QUOTATION_MARK:
             return "'";
+            break;
+        case UTILS_CHAR_HORIZONTAL_ELLIPSIS:
+            return "...";
             break;
         default:
             return "";

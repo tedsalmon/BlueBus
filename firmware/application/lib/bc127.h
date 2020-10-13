@@ -26,6 +26,7 @@
 #define BC127_CALL_OUTGOING 3
 #define BC127_CALL_SCO_CLOSE 4
 #define BC127_CALL_SCO_OPEN 5
+#define BC127_CALLER_ID_FIELD_SIZE 32
 #define BC127_CLOSE_ALL 255
 #define BC127_CONFIG_STATE_NEVER "0"
 #define BC127_CONFIG_STATE_ALWAYS "1"
@@ -35,8 +36,8 @@
 #define BC127_CONN_STATE_DISCONNECTED 2
 #define BC127_MAX_DEVICE_PAIRED 8
 #define BC127_MAX_DEVICE_PROFILES 5
-#define BC127_MAX_DEVICE_NAME 128
-#define BC127_MAX_DEVICE_NAME_OFFSET 19
+#define BC127_DEVICE_NAME_LEN 128
+#define BC127_DEVICE_NAME_OFFSET 19
 #define BC127_METADATA_MAX_SIZE 384
 #define BC127_METADATA_FIELD_SIZE 128
 #define BC127_METADATA_TITLE_OFFSET 22
@@ -66,6 +67,7 @@
 #define BC127Event_DeviceFound 6
 #define BC127Event_CallStatus 7
 #define BC127Event_BootStatus 8
+#define BC127Event_CallerID 9
 extern int8_t BC127CVCGainTable[];
 /**
  * BC127PairedDevice_t
@@ -77,7 +79,7 @@ extern int8_t BC127CVCGainTable[];
  */
 typedef struct BC127PairedDevice_t {
     char macId[13];
-    char deviceName[BC127_MAX_DEVICE_NAME];
+    char deviceName[BC127_DEVICE_NAME_LEN];
 } BC127PairedDevice_t;
 
 /**
@@ -99,7 +101,7 @@ typedef struct BC127PairedDevice_t {
  */
 typedef struct BC127Connection_t {
     char macId[13];
-    char deviceName[BC127_MAX_DEVICE_NAME];
+    char deviceName[BC127_DEVICE_NAME_LEN];
     uint8_t deviceId;
     uint8_t avrcpLinkId;
     uint8_t a2dpLinkId;
@@ -147,6 +149,7 @@ typedef struct BC127_t {
     char title[BC127_METADATA_FIELD_SIZE];
     char artist[BC127_METADATA_FIELD_SIZE];
     char album[BC127_METADATA_FIELD_SIZE];
+    char callerId[BC127_CALLER_ID_FIELD_SIZE];
     uint32_t metadataTimestamp;
     UART_t uart;
 } BC127_t;

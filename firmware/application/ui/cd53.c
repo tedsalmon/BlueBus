@@ -443,15 +443,12 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             ];
             // Do nothing if the user selected the active device
             if (strcmp(dev->macId, context->bt->activeDevice.macId) != 0) {
-                // Immediately connect if there isn't an active device
-                if (context->bt->activeDevice.deviceId == 0) {
-                    // Trigger device selection event
-                    EventTriggerCallback(
-                        UIEvent_InitiateConnection,
-                        (unsigned char *)&context->btDeviceIndex
-                    );
-                    CD53SetTempDisplayText(context, "Connecting", 2);
-                }
+                // Trigger device selection event
+                EventTriggerCallback(
+                    UIEvent_InitiateConnection,
+                    (unsigned char *)&context->btDeviceIndex
+                );
+                CD53SetTempDisplayText(context, "Connecting", 2);
             } else {
                 CD53SetTempDisplayText(context, "Connected", 2);
             }
