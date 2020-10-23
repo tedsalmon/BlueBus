@@ -39,7 +39,7 @@ PROTOCOL_BAD_PACKET_RESPONSE = 0xFF
 rx_buffer = []
 tx_buffer = []
 last_tx = []
-TIMEOUT = 5
+TIMEOUT = 1
 
 def bitwise_not(n, width=32):
     return (1 << width) - 1 - n
@@ -215,6 +215,7 @@ if __name__ == '__main__':
                 print('ERR: Could not read firmware file')
                 exit(0)
             data_len = len(data)
+        retries = 0
         start = int(time())
         has_response = False
         request_platform()
@@ -318,10 +319,15 @@ if __name__ == '__main__':
                 last_tx = list(tx_buffer)
                 tx_buffer = []
             if not has_response and int(time()) - start > TIMEOUT:
-                print(
-                    'ERR: Failed to get a response from the device within 5 '
-                    'seconds. Is the device in bootloader mode?'
-                )
-                should_continue = False
+                if retries <= 5:
+                    start = int(time())
+                    request_platform()
+                    retries += 1
+                else:
+                    print(
+                        'ERR: Failed to get a response from the device within 5 '
+                        'seconds. Is the device in bootloader mode?'
+                    )
+                    should_continue = False
     except KeyboardInterrupt:
         sys.exit(0)
