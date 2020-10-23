@@ -83,8 +83,8 @@ void CD53BC127DeviceReady(void *, unsigned char *);
 void CD53BC127Metadata(CD53Context_t *, unsigned char *);
 void CD53BC127PlaybackStatus(void *, unsigned char *);
 void CD53IBusBMBTButtonPress(void *, unsigned char *);
-void CD53IBusClearScreen(void *, unsigned char *);
 void CD53IBusCDChangerStatus(void *, unsigned char *);
+void CD53IBusMFLButton(void *, unsigned char *);
 void CD53IBusRADUpdateMainArea(void *, unsigned char *);
 void CD53TimerDisplay(void *);
 #endif /* CD53_H */

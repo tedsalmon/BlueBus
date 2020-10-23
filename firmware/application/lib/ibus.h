@@ -52,6 +52,8 @@
 #define IBUS_PKT_LEN 1
 #define IBUS_PKT_DST 2
 #define IBUS_PKT_CMD 3
+#define IBUS_PKT_DB1 4
+#define IBUS_PKT_DB2 5
 
 // IBus Commands
 #define IBUS_COMMAND_CDC_GET_STATUS 0x38
@@ -275,6 +277,7 @@
 #define IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE 0x35
 #define IBUS_TEL_LED_STATUS_RED 0x01
 #define IBUS_TEL_LED_STATUS_GREEN 0x10
+#define IBUS_TEL_SIG_EVEREST 0x38
 
 #define IBus_UI_CD53 1
 #define IBus_UI_BMBT 2
@@ -292,16 +295,16 @@
 #define IBUS_RADIO_TYPE_BM24 6
 
 
-#define IBUS_MFL_BTN_EVENT 0x3B
-#define IBusMFLButtonNextRelease 0x21
-#define IBusMFLButtonPrevRelease 0x28
-#define IBusMFLButtonRTPress 0x40
-#define IBusMFLButtonRTRelease 0x00
-#define IBusMFLButtonVoicePress 0x80
-#define IBusMFLButtonVoiceHold 0x90
-#define IBusMFLButtonVoiceRelease 0xA0
+#define IBUS_MFL_CMD_BTN_PRESS 0x3B
+#define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
+#define IBUS_MFL_BTN_EVENT_PREV_REL 0x28
+#define IBUS_MFL_BTN_EVENT_RT_PRESS 0x40
+#define IBUS_MFL_BTN_EVENT_RT_REL 0x00
+#define IBUS_MFL_BTN_EVENT_VOICE_PRESS 0x80
+#define IBUS_MFL_BTN_EVENT_VOICE_HOLD 0x90
+#define IBUS_MFL_BTN_EVENT_VOICE_REL 0xA0
 
-#define IBUS_MFL_BTN_VOL 0x32
+#define IBUS_MFL_CMD_VOL_PRESS 0x32
 #define IBusMFLVolUp 0x11
 #define IBusMFLVolDown 0x10
 
@@ -321,43 +324,43 @@
 #define IBUS_GM_ZKEBC1RD 9
 
 // Events
-#define IBusEvent_GTDIAIdentityResponse 32
-#define IBusEvent_CDPoll 33
-#define IBusEvent_CDStatusRequest 34
-#define IBusEvent_CDClearDisplay 35
-#define IBusEvent_IKEIgnitionStatus 36
-#define IBusEvent_BMBTButton 37
-#define IBusEvent_GTMenuSelect 38
-#define IBusEvent_ScreenModeUpdate 39
-#define IBusEvent_RADUpdateMainArea 40
-#define IBusEvent_ScreenModeSet 41
-#define IBusEvent_RADDiagResponse 42
-#define IBusEvent_MFLButton 43
-#define IBusEvent_RADDisplayMenu 44
-#define IBusEvent_RADMIDDisplayText 45
-#define IBusEvent_RADMIDDisplayMenu 46
-#define IBusEvent_LCMLightStatus 47
-#define IBusEvent_LCMDimmerStatus 48
-#define IBusEvent_GTWriteResponse 49
-#define IBusEvent_MFLVolume 50
-#define IBusEvent_MIDButtonPress 51
-#define IBusEvent_MIDModeChange 52
-#define IBusEvent_ValueUpdate 53
-#define IBusEvent_ModuleStatusResponse 54
-#define IBusEvent_IKEVehicleType 55
-#define IBusEvent_LCMRedundantData 56
-#define IBusEvent_FirstMessageReceived 57
-#define IBusEvent_GTDIAOSIdentityResponse 58
-#define IBusEvent_IKESpeedRPMUpdate 59
-#define IBusEvent_IKECoolantTempUpdate 60
-#define IBusEvent_ModuleStatusRequest 61
-#define IBusEvent_GTChangeUIRequest 62
-#define IBusEvent_DoorsFlapsStatusResponse 63
-#define IBusEvent_LCMDiagnosticsAcknowledge 64
-#define IBusEvent_DSPConfigSet 65
-#define IBusEvent_TELVolumeChange 66
-#define IBusEvent_RADVolumeChange 67
-#define IBusEvent_LMIdentResponse 68
+#define IBUS_EVENT_GTDIAIdentityResponse 32
+#define IBUS_EVENT_CDPoll 33
+#define IBUS_EVENT_CDStatusRequest 34
+#define IBUS_EVENT_CDClearDisplay 35
+#define IBUS_EVENT_IKEIgnitionStatus 36
+#define IBUS_EVENT_BMBTButton 37
+#define IBUS_EVENT_GTMenuSelect 38
+#define IBUS_EVENT_ScreenModeUpdate 39
+#define IBUS_EVENT_RADUpdateMainArea 40
+#define IBUS_EVENT_ScreenModeSet 41
+#define IBUS_EVENT_RADDiagResponse 42
+#define IBUS_EVENT_MFLButton 43
+#define IBUS_EVENT_RADDisplayMenu 44
+#define IBUS_EVENT_RADMIDDisplayText 45
+#define IBUS_EVENT_RADMIDDisplayMenu 46
+#define IBUS_EVENT_LCMLightStatus 47
+#define IBUS_EVENT_LCMDimmerStatus 48
+#define IBUS_EVENT_GTWriteResponse 49
+#define IBUS_EVENT_MFLVolume 50
+#define IBUS_EVENT_MIDButtonPress 51
+#define IBUS_EVENT_MIDModeChange 52
+#define IBUS_EVENT_ValueUpdate 53
+#define IBUS_EVENT_ModuleStatusResponse 54
+#define IBUS_EVENT_IKEVehicleType 55
+#define IBUS_EVENT_LCMRedundantData 56
+#define IBUS_EVENT_FirstMessageReceived 57
+#define IBUS_EVENT_GTDIAOSIdentityResponse 58
+#define IBUS_EVENT_IKESpeedRPMUpdate 59
+#define IBUS_EVENT_IKECoolantTempUpdate 60
+#define IBUS_EVENT_ModuleStatusRequest 61
+#define IBUS_EVENT_GTChangeUIRequest 62
+#define IBUS_EVENT_DoorsFlapsStatusResponse 63
+#define IBUS_EVENT_LCMDiagnosticsAcknowledge 64
+#define IBUS_EVENT_DSPConfigSet 65
+#define IBUS_EVENT_TELVolumeChange 66
+#define IBUS_EVENT_RADVolumeChange 67
+#define IBUS_EVENT_LMIdentResponse 68
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -412,7 +415,7 @@ uint8_t IBusGetNavSWVersion(unsigned char *);
 uint8_t IBusGetNavType(unsigned char *);
 uint8_t IBusGetVehicleType(unsigned char *);
 void IBusCommandCDCAnnounce(IBus_t *);
-void IBusCommandCDCStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
+void IBusCommandCDCStatus(IBus_t *, unsigned char, unsigned char, unsigned char, unsigned char);
 void IBusCommandDIAGetCodingData(IBus_t *, unsigned char, unsigned char, unsigned char);
 void IBusCommandDIAGetIdentity(IBus_t *, unsigned char);
 void IBusCommandDIAGetIOStatus(IBus_t *, unsigned char);
@@ -445,6 +448,7 @@ void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
 void IBusCommandLMActivateBulbs(IBus_t *, unsigned char);
 void IBusCommandLMGetRedundantData(IBus_t *);
+void IBusCommandMIDButtonPress(IBus_t *, unsigned char, unsigned char);
 void IBusCommandMIDDisplayRADTitleText(IBus_t *, char *);
 void IBusCommandMIDDisplayText(IBus_t *, char *);
 void IBusCommandMIDMenuWriteMany(IBus_t *, uint8_t, unsigned char *, uint8_t);

@@ -22,20 +22,20 @@ void WM88XXInit()
         LogError("WM88XX Responded with %d during initialization", status);
     } else {
         LogDebug(LOG_SOURCE_SYSTEM, "WM88XX Responded to Poll");
-        /**
-         * Register 8 - PLL_CLK
-         * bit   7 - MCLKSRC - CLK2 0 or OSCCLK 1
-         * bit   6 - ALWAYSVALID - Use INVALID Flag 0 or ignore INVALID Flag 1
-         * bit   5 - FILLMODE - Data remains static 0 or data is zero filled 1
-         * bit   4 - CLKOUTDIS - Disabled 0 or Enabled 1
-         * bit   3 - CLKOUTSRC - CLK1 0 or OSCCLK 1
-         * bit 2:0 - always 0
-         */
-        // Ignore invalid flag & Zero Fill
-        status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLLCLK, 0b01111000);
-        if (status != 0x00) {
-            LogError("WM88XX failed to set PLLCLK [%d]", status);
-        }
+        ///**
+        // * Register 8 - PLL_CLK
+        // * bit   7 - MCLKSRC - CLK2 0 or OSCCLK 1
+        // * bit   6 - ALWAYSVALID - Use INVALID Flag 0 or ignore INVALID Flag 1
+        // * bit   5 - FILLMODE - Data remains static 0 or data is zero filled 1
+        // * bit   4 - CLKOUTDIS - Disabled 0 or Enabled 1
+        // * bit   3 - CLKOUTSRC - CLK1 0 or OSCCLK 1
+        // * bit 2:0 - always 0
+        // */
+        //// Ignore invalid flag & Zero Fill
+        //status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLLCLK, 0b01111000);
+        //if (status != 0x00) {
+        //    LogError("WM88XX failed to set PLLCLK [%d]", status);
+        //}
 
         /**
          * Register 8 - SPDMODE

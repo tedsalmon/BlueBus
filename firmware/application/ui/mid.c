@@ -35,6 +35,7 @@ void MIDInit(BC127_t *bt, IBus_t *ibus)
     Context.displayUpdate = MID_DISPLAY_NONE;
     Context.mainDisplay = UtilsDisplayValueInit("", MID_DISPLAY_STATUS_OFF);
     Context.tempDisplay = UtilsDisplayValueInit("", MID_DISPLAY_STATUS_OFF);
+    Context.modeChangeStatus = MID_MODE_CHANGE_OFF;
     strncpy(Context.mainText, "Bluetooth", 10);
     EventRegisterCallback(
         BC127Event_MetadataChange,
@@ -47,22 +48,22 @@ void MIDInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_CDStatusRequest,
+        IBUS_EVENT_CDStatusRequest,
         &MIDIBusCDChangerStatus,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_MIDButtonPress,
+        IBUS_EVENT_MIDButtonPress,
         &MIDIBusMIDButtonPress,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_RADMIDDisplayText,
+        IBUS_EVENT_RADMIDDisplayText,
         &MIDIIBusRADMIDDisplayUpdate,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_MIDModeChange,
+        IBUS_EVENT_MIDModeChange,
         &MIDIBusMIDModeChange,
         &Context
     );
@@ -98,19 +99,19 @@ void MIDDestroy()
         &MIDBC127PlaybackStatus
     );
     EventUnregisterCallback(
-        IBusEvent_CDStatusRequest,
+        IBUS_EVENT_CDStatusRequest,
         &MIDIBusCDChangerStatus
     );
     EventUnregisterCallback(
-        IBusEvent_MIDButtonPress,
+        IBUS_EVENT_MIDButtonPress,
         &MIDIBusMIDButtonPress
     );
     EventUnregisterCallback(
-        IBusEvent_RADMIDDisplayText,
+        IBUS_EVENT_RADMIDDisplayText,
         &MIDIIBusRADMIDDisplayUpdate
     );
     EventUnregisterCallback(
-        IBusEvent_MIDModeChange,
+        IBUS_EVENT_MIDModeChange,
         &MIDIBusMIDModeChange
     );
     TimerUnregisterScheduledTask(&MIDTimerMenuWrite);
@@ -228,13 +229,12 @@ static void MIDShowNextSetting(MIDContext_t *context, uint8_t direction)
         unsigned char value = ConfigGetSetting(
             CONFIG_SETTING_METADATA_MODE
         );
-        if (value == MID_SETTING_METADATA_MODE_PARTY) {
+        if (value == MID_SETTING_METADATA_MODE_OFF) {
+            MIDSetMainDisplayText(context, "Meta: Off", 0);
+        } else if (value == MID_SETTING_METADATA_MODE_PARTY) {
             MIDSetMainDisplayText(context, "Meta: Party", 0);
         } else if (value == MID_SETTING_METADATA_MODE_CHUNK) {
             MIDSetMainDisplayText(context, "Meta: Chunk", 0);
-        } else {
-            MIDSetMainDisplayText(context, "Meta: Party", 0);
-            value = MID_SETTING_METADATA_MODE_PARTY;
         }
         context->settingIdx = MID_SETTING_IDX_METADATA_MODE;
         context->settingValue = value;
@@ -305,12 +305,15 @@ static void MIDShowNextSettingValue(MIDContext_t *context, uint8_t direction)
         }
     }
     if (context->settingIdx == MID_SETTING_IDX_METADATA_MODE) {
-        if (context->settingValue == MID_SETTING_METADATA_MODE_CHUNK) {
+        if (context->settingValue == MID_SETTING_METADATA_MODE_OFF) {
             MIDSetMainDisplayText(context, "Meta: Party", 0);
             context->settingValue = MID_SETTING_METADATA_MODE_PARTY;
         } else if (context->settingValue == MID_SETTING_METADATA_MODE_PARTY) {
             MIDSetMainDisplayText(context, "Meta: Chunk", 0);
             context->settingValue = MID_SETTING_METADATA_MODE_CHUNK;
+        } else if (context->settingValue == MID_SETTING_METADATA_MODE_CHUNK) {
+            MIDSetMainDisplayText(context, "Meta: Off", 0);
+            context->settingValue = MID_SETTING_METADATA_MODE_OFF;
         }
     }
     if (context->settingIdx == MID_SETTING_IDX_AUTOPLAY) {
@@ -415,6 +418,7 @@ static void MIDMenuMain(MIDContext_t *context)
         IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PLAYBACK, "|| ");
     }
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PAIR, "Pair");
+    IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_MODE, "MODE");
 }
 
 static void MIDMenuSettings(MIDContext_t *context)
@@ -441,7 +445,10 @@ static void MIDMenuSettings(MIDContext_t *context)
 void MIDBC127MetadataUpdate(void *ctx, unsigned char *tmp)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
-    if (context->mode == MID_MODE_ACTIVE && strlen(context->bt->title) > 0) {
+    if (context->mode == MID_MODE_ACTIVE &&
+        strlen(context->bt->title) > 0 &&
+        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MID_SETTING_METADATA_MODE_OFF
+    ) {
         char text[UTILS_DISPLAY_TEXT_SIZE];
         if (strlen(context->bt->artist) > 0 && strlen(context->bt->album) > 0) {
             snprintf(
@@ -484,7 +491,9 @@ void MIDBC127PlaybackStatus(void *ctx, unsigned char *tmp)
             IBusCommandMIDMenuWriteSingle(context->ibus, 0, " >");
             BC127CommandGetMetadata(context->bt);
         } else {
-            MIDSetMainDisplayText(context, "Paused", 0);
+            if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MID_SETTING_METADATA_MODE_OFF) {
+                MIDSetMainDisplayText(context, "Paused", 0);
+            }
             IBusCommandMIDMenuWriteSingle(context->ibus, 0, "|| ");
         }
     }
@@ -495,10 +504,16 @@ void MIDIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     MIDContext_t *context = (MIDContext_t *) ctx;
     unsigned char requestedCommand = pkt[4];
     if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
-        IBusCommandMIDDisplayText(context->ibus, "                    ");
+        if (context->mode != MID_MODE_DISPLAY_OFF &&
+            context->mode != MID_MODE_OFF
+        ) {
+            IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x00);
+        }
         // Stop Playing
         context->mode = MID_MODE_OFF;
+        context->modeChangeStatus = MID_MODE_CHANGE_OFF;
     } else if (requestedCommand == IBUS_CDC_CMD_START_PLAYING) {
+        context->modeChangeStatus = MID_MODE_CHANGE_OFF;
         // Start Playing
         if (context->mode == MID_MODE_OFF) {
             IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x02);
@@ -507,6 +522,15 @@ void MIDIBusCDChangerStatus(void *ctx, unsigned char *pkt)
                context->mode == MID_MODE_DISPLAY_OFF
     ) {
         IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x02);
+    } else if (requestedCommand == IBUS_CDC_CMD_GET_STATUS) {
+        // Reset the UI if the user has chosen not to
+        // continue with the mode change
+        if (context->mode == MID_MODE_DISPLAY_OFF &&
+            context->modeChangeStatus == MID_MODE_CHANGE_RELEASE
+        ) {
+            context->modeChangeStatus = MID_MODE_CHANGE_OFF;
+            IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x02);
+        }
     }
 }
 
@@ -619,6 +643,17 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
             MIDShowNextDevice(context, btnPressed);
         }
     }
+    if (btnPressed == MID_BUTTON_MODE && pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
+        // Close TEL UI
+        IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x00);
+        context->modeChangeStatus = MID_MODE_CHANGE_PRESS;
+    }
+    if (btnPressed == MID_BUTTON_MODE &&
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD &&
+        context->modeChangeStatus == MID_MODE_CHANGE_RELEASE
+    ) {
+        IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE | 0x40);
+    }
     // Handle Next and Previous
     if (context->ibus->cdChangerFunction != IBUS_CDC_FUNC_NOT_PLAYING) {
         if (btnPressed == IBus_MID_BTN_TEL_RIGHT_RELEASE) {
@@ -644,12 +679,11 @@ void MIDIIBusRADMIDDisplayUpdate(void *ctx, unsigned char *pkt)
     MIDContext_t *context = (MIDContext_t *) ctx;
     unsigned char watermark = pkt[pkt[IBUS_PKT_LEN]];
     if (watermark != IBUS_RAD_MAIN_AREA_WATERMARK) {
-        if (context->mode == MID_MODE_ACTIVE || context->mode == MID_MODE_DISPLAY_OFF) {
+        if ((context->mode == MID_MODE_ACTIVE ||
+             context->mode == MID_MODE_DISPLAY_OFF) &&
+            context->modeChangeStatus == MID_MODE_CHANGE_OFF
+        ) {
             IBusCommandMIDDisplayRADTitleText(context->ibus, "Bluetooth");
-        } else if (context->mode == MID_MODE_SETTINGS) {
-            IBusCommandMIDDisplayRADTitleText(context->ibus, "Settings");
-        } else if (context->mode == MID_MODE_DEVICES) {
-            IBusCommandMIDDisplayRADTitleText(context->ibus, "Devices");
         }
     }
 }
@@ -667,11 +701,23 @@ void MIDIIBusRADMIDDisplayUpdate(void *ctx, unsigned char *pkt)
 void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
-    if (pkt[5] == 0x8E) {
+    if (pkt[IBUS_PKT_DB2] == 0x8E) {
         context->mode = MID_MODE_ACTIVE_NEW;
-    } else if (pkt[5] != 0x8F) {
-        if (context->mode != MID_MODE_OFF) {
+    } else if (pkt[IBUS_PKT_DB2] != 0x8F) {
+        if (pkt[IBUS_PKT_DB2] == 0x00) {
+            if (context->mode != MID_MODE_DISPLAY_OFF &&
+                context->mode != MID_MODE_OFF
+            ) {
+                IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x02);
+            }
+        } else if (context->mode != MID_MODE_OFF) {
             context->mode = MID_MODE_DISPLAY_OFF;
+        }
+        if (pkt[IBUS_PKT_DB2] == 0xB0 &&
+               context->modeChangeStatus == MID_MODE_CHANGE_PRESS
+        ) {
+            IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE);
+            context->modeChangeStatus = MID_MODE_CHANGE_RELEASE;
         }
     }
 }
