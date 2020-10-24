@@ -1173,8 +1173,10 @@ void BC127Process(BC127_t *bt)
         if (strcmp(msgBuf[0], "AT") == 0) {
             if (strcmp(msgBuf[3], "+CLIP:") == 0) {
                 uint8_t delimeterCount = 0;
-                char cidData[strlen(&msg[4])];
-                strcpy(cidData, &msg[4]);
+                uint8_t cidDataLength = strlen(msgBuf[4]);
+                char cidData[cidDataLength];
+                memset(cidData, 0, sizeof(cidData));
+                strncpy(cidData, msgBuf[4], cidDataLength);
                 char *cidDataBuf[6];
                 memset(cidDataBuf, 0, sizeof(cidDataBuf));
                 char delimeter[] = ",";

@@ -75,10 +75,12 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 7) == 1) {
         uint16_t serialNumber = ConfigGetSerialNumber();
         // Install the cVc license
-        if (serialNumber < 500) {
+        if (serialNumber <= 500) {
             BC127SendCommand(bt, "LICENSE CVC=3A6B CB90 E2D6 FC81 0000");
-        } else if (serialNumber < 880) {
+        } else if (serialNumber <= 880) {
             BC127SendCommand(bt, "LICENSE CVC=3A6B D812 D144 FC81 0000");
+        } else if (serialNumber <= 1180) {
+            BC127SendCommand(bt, "LICENSE CVC=3A6B B2F8 AB8F FC81 0000");
         }
         LogRaw("Ran Upgrade 1.1.7\r\n");
     }

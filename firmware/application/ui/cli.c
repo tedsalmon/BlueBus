@@ -456,7 +456,7 @@ void CLIProcess()
                     if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         IBusCommandIgnitionStatus(cli.ibus, 0x00);
                         EventTriggerCallback(
-                            IBusEvent_IKEIgnitionStatus,
+                            IBUS_EVENT_IKEIgnitionStatus,
                             0x00
                         );
                         cli.ibus->ignitionStatus = 0;
@@ -464,7 +464,7 @@ void CLIProcess()
                         unsigned char ignitionStatus = 0x01;
                         IBusCommandIgnitionStatus(cli.ibus, ignitionStatus);
                         EventTriggerCallback(
-                            IBusEvent_IKEIgnitionStatus,
+                            IBUS_EVENT_IKEIgnitionStatus,
                             (unsigned char *)&ignitionStatus
                         );
                         cli.ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;

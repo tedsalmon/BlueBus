@@ -423,24 +423,6 @@ FRAME-LETTER</description>
 <wire x1="5.2" y1="4.5" x2="5" y2="4.5" width="0.2" layer="21"/>
 <wire x1="5.2" y1="-4.5" x2="5" y2="-4.5" width="0.2" layer="21"/>
 </package>
-<package name="SOT23-6">
-<wire x1="1.4224" y1="0.4294" x2="1.4224" y2="-0.4294" width="0.2" layer="21"/>
-<wire x1="-1.4224" y1="-0.4294" x2="-1.4224" y2="0.4294" width="0.2" layer="21"/>
-<smd name="1" x="-0.95" y="-1.45" dx="0.55" dy="1.5" layer="1"/>
-<smd name="2" x="0" y="-1.45" dx="0.55" dy="1.5" layer="1"/>
-<smd name="3" x="0.95" y="-1.45" dx="0.55" dy="1.5" layer="1"/>
-<smd name="4" x="0.95" y="1.45" dx="0.55" dy="1.5" layer="1"/>
-<smd name="5" x="0" y="1.45" dx="0.55" dy="1.5" layer="1"/>
-<text x="-2.159" y="-0.29" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center">&gt;NAME</text>
-<rectangle x1="-1.2" y1="-1.5" x2="-0.7" y2="-0.85" layer="51"/>
-<rectangle x1="-0.25" y1="-1.5" x2="0.25" y2="-0.85" layer="51"/>
-<rectangle x1="0.7" y1="-1.5" x2="1.2" y2="-0.85" layer="51"/>
-<rectangle x1="0.7" y1="0.85" x2="1.2" y2="1.5" layer="51"/>
-<rectangle x1="-1.2" y1="0.85" x2="-0.7" y2="1.5" layer="51"/>
-<smd name="6" x="-0.95" y="1.45" dx="0.55" dy="1.5" layer="1"/>
-<rectangle x1="-0.25" y1="0.85" x2="0.25" y2="1.5" layer="51"/>
-<circle x="-0.95" y="-0.25" radius="0.2" width="0.1" layer="21"/>
-</package>
 <package name="SOT23-5">
 <description>&lt;b&gt;Small Outline Transistor&lt;/b&gt;</description>
 <wire x1="1.4224" y1="0.4294" x2="1.4224" y2="-0.4294" width="0.1" layer="21"/>
@@ -640,6 +622,51 @@ FRAME-LETTER</description>
 <smd name="27" x="3.1" y="3.575" dx="1.6" dy="0.4" layer="1"/>
 <smd name="28" x="3.1" y="4.225" dx="1.6" dy="0.4" layer="1"/>
 </package>
+<package name="TSOT23-8">
+<wire x1="1.4224" y1="0.4294" x2="1.4224" y2="-0.4294" width="0.2" layer="21"/>
+<wire x1="-1.4224" y1="-0.4294" x2="-1.4224" y2="0.4294" width="0.2" layer="21"/>
+<smd name="1" x="-0.975" y="-1.45" dx="0.4" dy="1.5" layer="1"/>
+<smd name="2" x="-0.325" y="-1.45" dx="0.4" dy="1.5" layer="1"/>
+<smd name="3" x="0.325" y="-1.45" dx="0.4" dy="1.5" layer="1"/>
+<smd name="4" x="0.975" y="-1.45" dx="0.4" dy="1.5" layer="1"/>
+<smd name="5" x="0.975" y="1.45" dx="0.4" dy="1.5" layer="1"/>
+<text x="-2.159" y="-0.29" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center">&gt;NAME</text>
+<smd name="6" x="0.325" y="1.45" dx="0.4" dy="1.5" layer="1"/>
+<circle x="-0.95" y="-0.25" radius="0.2" width="0.1" layer="21"/>
+<smd name="7" x="-0.325" y="1.45" dx="1.5" dy="0.4" layer="1" rot="R90"/>
+<smd name="8" x="-0.975" y="1.45" dx="1.5" dy="0.4" layer="1" rot="R90"/>
+</package>
+<package name="SOT-89-5">
+<description>SOT-89-5</description>
+<smd name="1" x="-1.4986" y="-1.781" dx="0.6" dy="1.4" layer="1"/>
+<smd name="3" x="1.4986" y="-1.781" dx="0.6" dy="1.4" layer="1"/>
+<smd name="2" x="0" y="-1.781" dx="0.65" dy="1.4" layer="1"/>
+<text x="-2.6" y="0" size="1" layer="25" ratio="18" rot="R90" align="bottom-center">&gt;NAME</text>
+<polygon width="0.2032" layer="1">
+<vertex x="-0.7" y="2.5"/>
+<vertex x="-0.7" y="-0.7"/>
+<vertex x="-0.2" y="-1.2"/>
+<vertex x="-0.2" y="-2.2"/>
+<vertex x="0.2" y="-2.2"/>
+<vertex x="0.2" y="-1.2"/>
+<vertex x="0.7" y="-0.7"/>
+<vertex x="0.7" y="2.5"/>
+</polygon>
+<polygon width="0.254" layer="29">
+<vertex x="-0.8" y="2.6"/>
+<vertex x="0.8" y="2.6"/>
+<vertex x="0.8" y="-0.75"/>
+<vertex x="0.4" y="-1.15"/>
+<vertex x="-0.4" y="-1.15"/>
+<vertex x="-0.8" y="-0.75"/>
+</polygon>
+<rectangle x1="-0.8" y1="-0.8" x2="0.8" y2="2.5" layer="31"/>
+<wire x1="-2.3" y1="1.3" x2="-2.3" y2="-1.2" width="0.1" layer="21"/>
+<wire x1="2.3" y1="1.3" x2="2.3" y2="-1.2" width="0.1" layer="21"/>
+<smd name="4" x="1.4986" y="1.894" dx="0.6" dy="1.4" layer="1"/>
+<smd name="5" x="-1.4986" y="1.894" dx="0.6" dy="1.4" layer="1"/>
+<circle x="-1.5" y="-0.5" radius="0.3" width="0.1" layer="21"/>
+</package>
 </packages>
 <symbols>
 <symbol name="FT232R">
@@ -782,19 +809,6 @@ FRAME-LETTER</description>
 <pin name="VCC" x="12.7" y="7.62" length="short" direction="pas" rot="R180"/>
 <wire x1="-10.16" y1="-12.7" x2="10.16" y2="-12.7" width="0.254" layer="94"/>
 <text x="0" y="11" size="1.778" layer="95" font="vector" align="bottom-center">&gt;NAME</text>
-</symbol>
-<symbol name="XRP7659">
-<wire x1="7.62" y1="5.08" x2="7.62" y2="-5.08" width="0.254" layer="94"/>
-<wire x1="7.62" y1="-5.08" x2="-7.62" y2="-5.08" width="0.254" layer="94"/>
-<wire x1="-7.62" y1="-5.08" x2="-7.62" y2="5.08" width="0.254" layer="94"/>
-<wire x1="-7.62" y1="5.08" x2="7.62" y2="5.08" width="0.254" layer="94"/>
-<pin name="BS" x="-10.16" y="2.54" length="short" direction="in"/>
-<pin name="GND" x="-10.16" y="0" length="short" direction="pwr"/>
-<pin name="FB" x="-10.16" y="-2.54" length="short" direction="in"/>
-<pin name="SW" x="10.16" y="2.54" length="short" direction="pwr" rot="R180"/>
-<pin name="VIN" x="10.16" y="0" length="short" direction="pwr" rot="R180"/>
-<pin name="EN" x="10.16" y="-2.54" length="short" direction="in" rot="R180"/>
-<text x="0" y="6.35" size="1.778" layer="95" font="vector" align="bottom-center">&gt;NAME</text>
 </symbol>
 <symbol name="XC6210">
 <wire x1="7.62" y1="5.08" x2="-7.62" y2="5.08" width="0.254" layer="94"/>
@@ -975,6 +989,33 @@ FRAME-LETTER</description>
 <pin name="ADR2/GPIO2/DOUT" x="-22.86" y="15.24" length="short"/>
 <pin name="MODE1" x="-22.86" y="12.7" length="short"/>
 <pin name="MODE2/MS" x="-22.86" y="10.16" length="short"/>
+</symbol>
+<symbol name="MPQ4420">
+<wire x1="-10.16" y1="12.7" x2="-10.16" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="-10.16" y1="-12.7" x2="10.16" y2="-12.7" width="0.254" layer="94"/>
+<wire x1="10.16" y1="-12.7" x2="10.16" y2="12.7" width="0.254" layer="94"/>
+<wire x1="10.16" y1="12.7" x2="-10.16" y2="12.7" width="0.254" layer="94"/>
+<pin name="IN" x="-15.24" y="10.16" length="middle"/>
+<pin name="EN" x="-15.24" y="5.08" length="middle"/>
+<pin name="PG" x="-15.24" y="-5.08" length="middle"/>
+<pin name="VCC" x="-15.24" y="-10.16" length="middle"/>
+<pin name="GND" x="0" y="-17.78" length="middle" rot="R90"/>
+<pin name="FB" x="15.24" y="-10.16" length="middle" rot="R180"/>
+<pin name="SW" x="15.24" y="0" length="middle" rot="R180"/>
+<pin name="BS" x="15.24" y="10.16" length="middle" rot="R180"/>
+<text x="-5.08" y="2.54" size="1.778" layer="95">&gt;NAME</text>
+</symbol>
+<symbol name="XC6702">
+<wire x1="7.62" y1="5.08" x2="-7.62" y2="5.08" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="5.08" x2="-7.62" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="-7.62" y1="-7.62" x2="7.62" y2="-7.62" width="0.254" layer="94"/>
+<wire x1="7.62" y1="-7.62" x2="7.62" y2="5.08" width="0.254" layer="94"/>
+<pin name="VIN" x="-10.16" y="2.54" length="short" direction="pwr"/>
+<pin name="GND" x="0" y="-10.16" length="short" direction="sup" rot="R90"/>
+<pin name="CE" x="-10.16" y="-2.54" length="short" direction="pwr"/>
+<pin name="VOUT" x="10.16" y="2.54" length="short" direction="pwr" rot="R180"/>
+<pin name="NC" x="10.16" y="-2.54" length="short" direction="nc" rot="R180"/>
+<text x="0" y="6.35" size="1.778" layer="95" font="vector" align="bottom-center">&gt;NAME</text>
 </symbol>
 </symbols>
 <devicesets>
@@ -1158,27 +1199,6 @@ FRAME-LETTER</description>
 <connect gate="G$1" pin="VCC" pad="16"/>
 <connect gate="G$1" pin="VS" pad="1"/>
 <connect gate="G$1" pin="VTR" pad="3"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="XRP7659">
-<description>The XRP7659 is a current-mode PWM setup-down (buck) voltage regulator capable of delivering an output current up to 1.5A. &lt;br&gt; A wide 4.5V to 18V input voltage range allows for single supply operation from industry standard 5V, 9.6V and 12V power rails.</description>
-<gates>
-<gate name="G$1" symbol="XRP7659" x="0" y="0"/>
-</gates>
-<devices>
-<device name="SOT23-6" package="SOT23-6">
-<connects>
-<connect gate="G$1" pin="BS" pad="1"/>
-<connect gate="G$1" pin="EN" pad="4"/>
-<connect gate="G$1" pin="FB" pad="3"/>
-<connect gate="G$1" pin="GND" pad="2"/>
-<connect gate="G$1" pin="SW" pad="6"/>
-<connect gate="G$1" pin="VIN" pad="5"/>
 </connects>
 <technologies>
 <technology name=""/>
@@ -1393,6 +1413,47 @@ FRAME-LETTER</description>
 </device>
 </devices>
 </deviceset>
+<deviceset name="MPQ4420" prefix="U">
+<gates>
+<gate name="G$1" symbol="MPQ4420" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="TSOT23-8">
+<connects>
+<connect gate="G$1" pin="BS" pad="5"/>
+<connect gate="G$1" pin="EN" pad="6"/>
+<connect gate="G$1" pin="FB" pad="8"/>
+<connect gate="G$1" pin="GND" pad="4"/>
+<connect gate="G$1" pin="IN" pad="2"/>
+<connect gate="G$1" pin="PG" pad="1"/>
+<connect gate="G$1" pin="SW" pad="3"/>
+<connect gate="G$1" pin="VCC" pad="7"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="XC6702DC018PR-G" prefix="I">
+<gates>
+<gate name="G$1" symbol="XC6702" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="SOT-89-5">
+<connects>
+<connect gate="G$1" pin="CE" pad="3"/>
+<connect gate="G$1" pin="GND" pad="2"/>
+<connect gate="G$1" pin="NC" pad="4"/>
+<connect gate="G$1" pin="VIN" pad="5"/>
+<connect gate="G$1" pin="VOUT" pad="1"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
 </devicesets>
 </library>
 <library name="Passives">
@@ -1407,20 +1468,6 @@ FRAME-LETTER</description>
 <wire x1="1.5" y1="0.8" x2="1.5" y2="-0.8" width="0.0508" layer="39"/>
 <wire x1="1.5" y1="-0.8" x2="-1.5" y2="-0.8" width="0.0508" layer="39"/>
 <wire x1="-1.5" y1="-0.8" x2="-1.5" y2="0.8" width="0.0508" layer="39"/>
-</package>
-<package name="MPLCG0630">
-<smd name="1" x="-2.975" y="0" dx="3.5" dy="2.25" layer="1" rot="R90"/>
-<smd name="2" x="2.975" y="0" dx="3.5" dy="2.25" layer="1" rot="R90"/>
-<wire x1="-3.25" y1="-1.35" x2="-3.25" y2="2.35" width="0.1" layer="21"/>
-<wire x1="-3.25" y1="2.35" x2="-2.25" y2="3.35" width="0.1" layer="21" curve="-90"/>
-<wire x1="-2.25" y1="3.35" x2="2.25" y2="3.35" width="0.1" layer="21"/>
-<wire x1="2.25" y1="3.35" x2="3.25" y2="2.35" width="0.1" layer="21" curve="-90"/>
-<wire x1="3.25" y1="2.35" x2="3.25" y2="-1.35" width="0.1" layer="21"/>
-<wire x1="3.25" y1="-1.35" x2="1.25" y2="-3.35" width="0.1" layer="21" curve="-90"/>
-<wire x1="1.25" y1="-3.35" x2="-1.25" y2="-3.35" width="0.1" layer="21"/>
-<wire x1="-1.25" y1="-3.35" x2="-3.25" y2="-1.35" width="0.1" layer="21" curve="-90"/>
-<text x="0" y="3.746" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
-<text x="0" y="-3.746" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
 </package>
 <package name="SOD123">
 <description>&lt;b&gt;Diode&lt;/b&gt;</description>
@@ -1454,21 +1501,6 @@ FRAME-LETTER</description>
 <text x="0" y="-1" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
 <rectangle x1="-1.5875" y1="-0.889" x2="1.5875" y2="0.889" layer="39"/>
 </package>
-<package name="EIA7343">
-<description>EIA7343 tantalum capacitor</description>
-<wire x1="-5" y1="2.5" x2="-2" y2="2.5" width="0.2032" layer="21"/>
-<wire x1="-5" y1="2.5" x2="-5" y2="-2.5" width="0.2032" layer="21"/>
-<wire x1="-5" y1="-2.5" x2="-2" y2="-2.5" width="0.2032" layer="21"/>
-<wire x1="2" y1="2.5" x2="4" y2="2.5" width="0.2032" layer="21"/>
-<wire x1="4" y1="2.5" x2="5" y2="1.5" width="0.2032" layer="21"/>
-<wire x1="5" y1="1.5" x2="5" y2="-1.5" width="0.2032" layer="21"/>
-<wire x1="5" y1="-1.5" x2="4" y2="-2.5" width="0.2032" layer="21"/>
-<wire x1="4" y1="-2.5" x2="2" y2="-2.5" width="0.2032" layer="21"/>
-<smd name="C" x="-3.17" y="0" dx="2.55" dy="2.7" layer="1" rot="R180"/>
-<smd name="A" x="3.17" y="0" dx="2.55" dy="2.7" layer="1" rot="R180"/>
-<text x="0" y="2.75" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
-<text x="0" y="-2.75" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
-</package>
 <package name="SOT-23">
 <description>&lt;b&gt;SOT23&lt;/b&gt;</description>
 <wire x1="-0.2" y1="-0.65" x2="0.2" y2="-0.65" width="0.1" layer="21"/>
@@ -1488,11 +1520,6 @@ FRAME-LETTER</description>
 <wire x1="5.7" y1="2.45" x2="5.7" y2="-2.45" width="0.1" layer="21"/>
 <wire x1="5.7" y1="-2.45" x2="-5.7" y2="-2.45" width="0.1" layer="21"/>
 <wire x1="-5.7" y1="-2.45" x2="-5.7" y2="2.45" width="0.1" layer="21"/>
-</package>
-<package name="1812">
-<smd name="1" x="-2.35" y="0" dx="3.5" dy="1.8" layer="1" rot="R90"/>
-<smd name="2" x="2.35" y="0" dx="3.5" dy="1.8" layer="1" rot="R90"/>
-<text x="0" y="2" size="0.75" layer="25" ratio="18" align="bottom-center">&gt;NAME</text>
 </package>
 <package name="LITTLEFUSE">
 <wire x1="-2.515" y1="4.865" x2="-2.515" y2="-4.865" width="0.1" layer="21"/>
@@ -1517,6 +1544,47 @@ FRAME-LETTER</description>
 <text x="0" y="-1.25" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
 <rectangle x1="-0.1999" y1="-0.4001" x2="0.1999" y2="0.4001" layer="35"/>
 </package>
+<package name="ACM70V-701-2PL-TL00">
+<smd name="1" x="-2.8575" y="1.5" dx="1.905" dy="1.651" layer="1"/>
+<smd name="2" x="-2.8575" y="-1.5" dx="1.905" dy="1.651" layer="1"/>
+<smd name="3" x="2.8575" y="-1.5" dx="1.905" dy="1.651" layer="1"/>
+<smd name="4" x="2.8575" y="1.5" dx="1.905" dy="1.651" layer="1"/>
+<wire x1="-3.7338" y1="-3.2258" x2="3.7338" y2="-3.2258" width="0.1524" layer="21"/>
+<wire x1="3.7338" y1="-3.2258" x2="3.7338" y2="-2.667" width="0.1524" layer="21"/>
+<wire x1="3.7338" y1="3.2258" x2="-3.7338" y2="3.2258" width="0.1524" layer="21"/>
+<wire x1="-3.7338" y1="3.2258" x2="-3.7338" y2="2.667" width="0.1524" layer="21"/>
+<wire x1="-3.7338" y1="0.3302" x2="-3.7338" y2="-0.3302" width="0.1524" layer="21"/>
+<wire x1="-3.7338" y1="-2.667" x2="-3.7338" y2="-3.2258" width="0.1524" layer="21"/>
+<wire x1="3.7338" y1="-0.3302" x2="3.7338" y2="0.3302" width="0.1524" layer="21"/>
+<wire x1="3.7338" y1="2.667" x2="3.7338" y2="3.2258" width="0.1524" layer="21"/>
+<wire x1="-4.234" y1="1.4986" x2="-4.3864" y2="1.4986" width="0.1524" layer="21" curve="-180"/>
+<wire x1="-4.3864" y1="1.4986" x2="-4.234" y2="1.4986" width="0.1524" layer="21" curve="-180"/>
+<text x="0" y="3.5" size="0.75" layer="25" ratio="6" rot="SR0" align="bottom-center">&gt;Name</text>
+</package>
+<package name="PCC-M0648M-LE">
+<smd name="1" x="-2.35" y="0" dx="2.7" dy="2.3" layer="1"/>
+<smd name="2" x="2.35" y="0" dx="2.7" dy="2.3" layer="1"/>
+<wire x1="-3.3" y1="3.05" x2="-3.3" y2="-3.05" width="0.1" layer="21"/>
+<wire x1="-3.3" y1="-3.05" x2="3.3" y2="-3.05" width="0.1" layer="21"/>
+<wire x1="3.3" y1="-3.05" x2="3.3" y2="3.05" width="0.1" layer="21"/>
+<wire x1="3.3" y1="3.05" x2="-3.3" y2="3.05" width="0.1" layer="21"/>
+<text x="0" y="3.3" size="1" layer="25" align="bottom-center">&gt;NAME</text>
+<circle x="-4.25" y="0" radius="0.2" width="0.127" layer="21"/>
+</package>
+<package name="RHS1V101MCN1GS">
+<smd name="1" x="-3.25" y="0" dx="3.3" dy="1.5" layer="1"/>
+<smd name="2" x="3.25" y="0" dx="3.3" dy="1.5" layer="1"/>
+<wire x1="-3" y1="-4.25" x2="4.25" y2="-4.25" width="0.1" layer="21"/>
+<wire x1="4.25" y1="-4.25" x2="4.25" y2="-1" width="0.1" layer="21"/>
+<wire x1="4.25" y1="4.25" x2="-3" y2="4.25" width="0.1" layer="21"/>
+<wire x1="4.25" y1="1" x2="4.25" y2="4.25" width="0.1" layer="21"/>
+<wire x1="-5.2" y1="0" x2="-5.3" y2="0" width="0.15" layer="21" curve="-180"/>
+<wire x1="-5.3" y1="0" x2="-5.2" y2="0" width="0.15" layer="21" curve="-180"/>
+<text x="0" y="-5" size="0.75" layer="25" ratio="6" rot="SR0" align="center">&gt;Name</text>
+<wire x1="-4.25" y1="2.25" x2="-4.25" y2="-2.25" width="0.1" layer="21"/>
+<wire x1="-3" y1="-4.25" x2="-4.25" y2="-2.25" width="0.1" layer="21"/>
+<wire x1="-4.25" y1="2.25" x2="-3" y2="4.25" width="0.1" layer="21"/>
+</package>
 </packages>
 <symbols>
 <symbol name="RESISTOR">
@@ -1533,17 +1601,6 @@ FRAME-LETTER</description>
 <text x="0" y="-1.524" size="1.778" layer="96" font="vector" align="top-center">&gt;VALUE</text>
 <pin name="2" x="5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1" rot="R180"/>
 <pin name="1" x="-5.08" y="0" visible="off" length="short" direction="pas" swaplevel="1"/>
-</symbol>
-<symbol name="INDUCTOR">
-<description>&lt;h3&gt;Inductors&lt;/h3&gt; &lt;p&gt;Resist changes in electrical current. Basically a coil of wire.&lt;/p&gt;</description>
-<text x="1.27" y="2.54" size="1.778" layer="95" font="vector">&gt;NAME</text>
-<text x="1.27" y="-2.54" size="1.778" layer="96" font="vector" align="top-left">&gt;VALUE</text>
-<pin name="1" x="0" y="5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R270"/>
-<pin name="2" x="0" y="-5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R90"/>
-<wire x1="0" y1="2.54" x2="0" y2="1.27" width="0.1524" layer="94" curve="-180"/>
-<wire x1="0" y1="1.27" x2="0" y2="0" width="0.1524" layer="94" curve="-180"/>
-<wire x1="0" y1="0" x2="0" y2="-1.27" width="0.1524" layer="94" curve="-180"/>
-<wire x1="0" y1="-1.27" x2="0" y2="-2.54" width="0.1524" layer="94" curve="-180"/>
 </symbol>
 <symbol name="CAP">
 <wire x1="0" y1="2.54" x2="0" y2="2.032" width="0.1524" layer="94"/>
@@ -1702,20 +1759,6 @@ Switches electrical signals</description>
 <text x="0" y="2.54" size="1.778" layer="95" font="vector" align="bottom-center">&gt;NAME</text>
 <text x="0" y="-2.54" size="1.778" layer="96" font="vector" align="top-center">&gt;VALUE</text>
 </symbol>
-<symbol name="VARISTOR">
-<description>&lt;h3&gt;Varistor
-&lt;/h3&gt;</description>
-<wire x1="-7.62" y1="2.54" x2="7.62" y2="2.54" width="0.254" layer="94"/>
-<wire x1="7.62" y1="2.54" x2="7.62" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="7.62" y1="-2.54" x2="-7.62" y2="-2.54" width="0.254" layer="94"/>
-<wire x1="-7.62" y1="-2.54" x2="-7.62" y2="2.54" width="0.254" layer="94"/>
-<pin name="IN" x="-12.7" y="0" visible="off" length="middle"/>
-<pin name="OUT" x="12.7" y="0" visible="off" length="middle" rot="R180"/>
-<text x="0" y="5.08" size="1.778" layer="95" font="vector" rot="MR0" align="center">&gt;NAME</text>
-<text x="0" y="-5.08" size="1.778" layer="96" font="vector" rot="MR0" align="center">&gt;VALUE</text>
-<wire x1="-5.08" y1="5.08" x2="5.08" y2="-5.08" width="0.254" layer="94"/>
-<wire x1="5.08" y1="-5.08" x2="7.62" y2="-5.08" width="0.254" layer="94"/>
-</symbol>
 <symbol name="FUSE">
 <description>&lt;h3&gt;A Fuse&lt;/h3&gt;</description>
 <wire x1="7.62" y1="2.54" x2="-7.62" y2="2.54" width="0.254" layer="94"/>
@@ -1729,6 +1772,47 @@ Switches electrical signals</description>
 <pin name="OUT" x="-12.7" y="0" visible="off" length="middle"/>
 <text x="0" y="5.08" size="1.778" layer="95" font="vector" align="center">&gt;NAME</text>
 <text x="0" y="-5.08" size="1.778" layer="96" font="vector" align="center">&gt;VALUE</text>
+</symbol>
+<symbol name="CHOKE4">
+<pin name="1" x="-10.16" y="0" visible="pad" length="middle" direction="pas"/>
+<pin name="2" x="-10.16" y="-2.54" visible="pad" length="middle" direction="pas"/>
+<pin name="3" x="10.16" y="-2.54" visible="pad" length="middle" direction="pas" rot="R180"/>
+<pin name="4" x="10.16" y="0" visible="pad" length="middle" direction="pas" rot="R180"/>
+<wire x1="-5.08" y1="2.54" x2="-5.08" y2="0" width="0.1524" layer="94"/>
+<wire x1="-5.08" y1="0" x2="-5.08" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="-5.08" y1="-2.54" x2="-5.08" y2="-5.08" width="0.1524" layer="94"/>
+<wire x1="-5.08" y1="-5.08" x2="5.08" y2="-5.08" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="-5.08" x2="5.08" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="-2.54" x2="5.08" y2="0" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="0" x2="5.08" y2="2.54" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="2.54" x2="-5.08" y2="2.54" width="0.1524" layer="94"/>
+<wire x1="-5.08" y1="0" x2="-2.54" y2="0" width="0.1524" layer="94"/>
+<wire x1="2.54" y1="0" x2="5.08" y2="0" width="0.1524" layer="94"/>
+<wire x1="5.08" y1="-2.54" x2="2.54" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="-2.54" y1="-2.54" x2="-5.08" y2="-2.54" width="0.1524" layer="94"/>
+<wire x1="-2.54" y1="-1.016" x2="2.54" y2="-1.016" width="0.1524" layer="94"/>
+<wire x1="2.54" y1="-1.524" x2="-2.54" y2="-1.524" width="0.1524" layer="94"/>
+<wire x1="-2.54" y1="-2.54" x2="-1.27" y2="-2.54" width="0.1524" layer="94" curve="-180"/>
+<wire x1="-1.27" y1="-2.54" x2="0" y2="-2.54" width="0.1524" layer="94" curve="-180"/>
+<wire x1="0" y1="-2.54" x2="1.27" y2="-2.54" width="0.1524" layer="94" curve="-180"/>
+<wire x1="1.27" y1="-2.54" x2="2.54" y2="-2.54" width="0.1524" layer="94" curve="-180"/>
+<wire x1="-1.27" y1="0" x2="-2.54" y2="0" width="0.1524" layer="94" curve="-180"/>
+<wire x1="0" y1="0" x2="-1.27" y2="0" width="0.1524" layer="94" curve="-180"/>
+<wire x1="1.27" y1="0" x2="0" y2="0" width="0.1524" layer="94" curve="-180"/>
+<wire x1="2.54" y1="0" x2="1.27" y2="0" width="0.1524" layer="94" curve="-180"/>
+<text x="0" y="3.175" size="2.0828" layer="95" ratio="6" rot="SR0" align="bottom-center">&gt;Name</text>
+<text x="0" y="-5.715" size="2.0828" layer="96" ratio="6" rot="SR0" align="top-center">&gt;Value</text>
+</symbol>
+<symbol name="INDUCTOR">
+<description>&lt;h3&gt;Inductors&lt;/h3&gt; &lt;p&gt;Resist changes in electrical current. Basically a coil of wire.&lt;/p&gt;</description>
+<text x="1.27" y="2.54" size="1.778" layer="95" font="vector">&gt;NAME</text>
+<text x="1.27" y="-2.54" size="1.778" layer="96" font="vector" align="top-left">&gt;VALUE</text>
+<pin name="1" x="0" y="5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R270"/>
+<pin name="2" x="0" y="-5.08" visible="off" length="short" direction="pas" swaplevel="1" rot="R90"/>
+<wire x1="0" y1="2.54" x2="0" y2="1.27" width="0.1524" layer="94" curve="-180"/>
+<wire x1="0" y1="1.27" x2="0" y2="0" width="0.1524" layer="94" curve="-180"/>
+<wire x1="0" y1="0" x2="0" y2="-1.27" width="0.1524" layer="94" curve="-180"/>
+<wire x1="0" y1="-1.27" x2="0" y2="-2.54" width="0.1524" layer="94" curve="-180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -1748,24 +1832,6 @@ Switches electrical signals</description>
 <attribute name="DEVICE" value="100KOHM-0805-1/8-1%" constant="no"/>
 <attribute name="PN" value="ERJ-6ENF1003V" constant="no"/>
 <attribute name="VALUE" value="100k" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="MPLCG0630L4R7" prefix="L">
-<gates>
-<gate name="G$1" symbol="INDUCTOR" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="MPLCG0630">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="VALUE" value="4.7uH" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -1793,7 +1859,7 @@ Switches electrical signals</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="SCHOTTKYDIODE2A30V" prefix="D" uservalue="yes">
+<deviceset name="SCHOTTKYDIODE2A100V" prefix="D" uservalue="yes">
 <description>&lt;p&gt;2A / 100v Schottky Diode in SOD123 packaging&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="DIODE-SCHOTTKY" x="0" y="0"/>
@@ -1827,10 +1893,10 @@ Switches electrical signals</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="10UF-1206-25V-10%" constant="no"/>
+<attribute name="DEVICE" value="10UF-1206-50V-10%" constant="no"/>
 <attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="1206" constant="no"/>
-<attribute name="PN" value="C2012X5R1E106K085AC"/>
+<attribute name="PN" value="CGA5L3X5R1H106K160AB"/>
 <attribute name="VALUE" value="10uF" constant="no"/>
 </technology>
 </technologies>
@@ -1842,10 +1908,10 @@ Switches electrical signals</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="10UF-0805-6.3V-10%" constant="no"/>
+<attribute name="DEVICE" value="10UF-0805-35V-10%" constant="no"/>
 <attribute name="MFG" value="TDK" constant="no"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="C2012X8L0J106K125AC" constant="no"/>
+<attribute name="PN" value="C2012X5R1V106K125AC" constant="no"/>
 <attribute name="VALUE" value="10uF" constant="no"/>
 </technology>
 </technologies>
@@ -1886,78 +1952,11 @@ Switches electrical signals</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="1uF-0805-25v-10%"/>
+<attribute name="DEVICE" value="1uF-0805-50v-10%"/>
 <attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="0805"/>
-<attribute name="PN" value="CGA4J3X7R1E105K125AB" constant="no"/>
+<attribute name="PN" value="CGA4J3X7R1H105K125AB" constant="no"/>
 <attribute name="VALUE" value="1uF" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="0.01UF" prefix="C">
-<description>&lt;p&gt;0.01uF Capacitor&lt;/p&gt;</description>
-<gates>
-<gate name="G$1" symbol="CAP" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="0805">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="0.01uF-0805-16v-10%" constant="no"/>
-<attribute name="MFG" value="KEMET"/>
-<attribute name="PACKAGE" value="0805"/>
-<attribute name="PN" value="C0805Y103K4RACTU"/>
-<attribute name="VALUE" value="0.01uF" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="47KOHM" prefix="R" uservalue="yes">
-<description>&lt;p&gt;47k Ohm Resistor&lt;/p&gt;</description>
-<gates>
-<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="0805">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="47KOHM-0805-1/6-1%" constant="no"/>
-<attribute name="MFG" value="Vishay"/>
-<attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="RCS080547K0FKEA"/>
-<attribute name="VALUE" value="47k" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="9.09KOHM" prefix="R" uservalue="yes">
-<gates>
-<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="0805">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="9.09KOHM-0805-1/4-.1%" constant="no"/>
-<attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="ERJ-PB6B9091V" constant="no"/>
-<attribute name="VALUE" value="9.09k"/>
 </technology>
 </technologies>
 </device>
@@ -1976,10 +1975,10 @@ Switches electrical signals</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="0.1uF-0805-25V" constant="no"/>
+<attribute name="DEVICE" value="0.1uF-0805-50V" constant="no"/>
 <attribute name="MFG" value="KEMET" constant="no"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="C0805C104J5RACTU"/>
+<attribute name="PN" value="C0805C104J5RACAUTO"/>
 <attribute name="VALUE" value="0.1uF" constant="no"/>
 </technology>
 </technologies>
@@ -2002,7 +2001,7 @@ Switches electrical signals</description>
 <attribute name="DEVICE" value="2.2uF-0805-25V-10%" constant="no"/>
 <attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="0805" constant="no"/>
-<attribute name="PN" value="CGB4B1JB1E225K055AC"/>
+<attribute name="PN" value="CGB4B1X5R1E225K055AC"/>
 <attribute name="VALUE" value="2.2uF" constant="no"/>
 </technology>
 </technologies>
@@ -2072,29 +2071,7 @@ Switches electrical signals</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="100UF" prefix="C" uservalue="yes">
-<gates>
-<gate name="G$1" symbol="CAP" x="0" y="0"/>
-</gates>
-<devices>
-<device name="2917" package="EIA7343">
-<connects>
-<connect gate="G$1" pin="1" pad="A"/>
-<connect gate="G$1" pin="2" pad="C"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="DEVICE" value="100UF-2917-25V-10%" constant="no"/>
-<attribute name="MFG" value="Kemet"/>
-<attribute name="PACKAGE" value="2917" constant="no"/>
-<attribute name="PN" value="T495X107K025ATE150"/>
-<attribute name="VALUE" value="100uF" constant="no"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="9NF" prefix="C">
+<deviceset name="10NF" prefix="C" uservalue="yes">
 <gates>
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
 </gates>
@@ -2106,7 +2083,11 @@ Switches electrical signals</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="VALUE" value="9nF" constant="no"/>
+<attribute name="DEVICE" value="10NF-0805-50V" constant="no"/>
+<attribute name="MFG" value="KEMET" constant="no"/>
+<attribute name="PACKAGE" value="0805" constant="no"/>
+<attribute name="PN" value="C0805C103J5GEC7210" constant="no"/>
+<attribute name="VALUE" value="10nF" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -2198,23 +2179,6 @@ Switches electrical signals</description>
 </deviceset>
 <deviceset name="0.0001UF" prefix="C">
 <description>&lt;p&gt;100pF Capacitor&lt;/p&gt;</description>
-<gates>
-<gate name="G$1" symbol="CAP" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="0805">
-<connects>
-<connect gate="G$1" pin="1" pad="1"/>
-<connect gate="G$1" pin="2" pad="2"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
-<deviceset name="47UF" prefix="C">
-<description>&lt;p&gt;47uF Capacitor&lt;/p&gt;</description>
 <gates>
 <gate name="G$1" symbol="CAP" x="0" y="0"/>
 </gates>
@@ -2413,6 +2377,26 @@ Switches electrical signals</description>
 </device>
 </devices>
 </deviceset>
+<deviceset name="100OHM" prefix="R">
+<gates>
+<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="0805">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="PANASONIC" constant="no"/>
+<attribute name="PN" value="ERA-6AED101V" constant="no"/>
+<attribute name="VALUE" value="100" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
 <deviceset name="110OHM" prefix="R">
 <gates>
 <gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
@@ -2449,22 +2433,6 @@ Switches electrical signals</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="V18AUMLA1812H" prefix="V">
-<gates>
-<gate name="G$1" symbol="VARISTOR" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="1812">
-<connects>
-<connect gate="G$1" pin="IN" pad="1"/>
-<connect gate="G$1" pin="OUT" pad="2"/>
-</connects>
-<technologies>
-<technology name=""/>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="LITTLEBLOCK_FUSE_.75A" prefix="F" uservalue="yes">
 <description>&lt;p&gt;Littlefuse 154 Series Omni-BLOK Fuse&lt;/p&gt;</description>
 <gates>
@@ -2486,18 +2454,154 @@ Switches electrical signals</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="0468.500NR" prefix="F">
+<deviceset name="ACM70V-701-2PL-TL00" prefix="T">
 <gates>
-<gate name="G$1" symbol="FUSE" x="0" y="0"/>
+<gate name="A" symbol="CHOKE4" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="1206">
+<device name="" package="ACM70V-701-2PL-TL00">
 <connects>
-<connect gate="G$1" pin="IN" pad="1"/>
-<connect gate="G$1" pin="OUT" pad="2"/>
+<connect gate="A" pin="1" pad="1"/>
+<connect gate="A" pin="2" pad="2"/>
+<connect gate="A" pin="3" pad="3"/>
+<connect gate="A" pin="4" pad="4"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="TDK" constant="no"/>
+<attribute name="PN" value="ACM70V-701-2PL-TL00" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="7.68KOHM" prefix="R">
+<gates>
+<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="0805">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
 </connects>
 <technologies>
 <technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="20OHM" prefix="R">
+<gates>
+<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="0805">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="51KOHM" prefix="R">
+<gates>
+<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="0805">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="41.2KOHM" prefix="R">
+<gates>
+<gate name="G$1" symbol="RESISTOR" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="0805">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="ETQ-P4M100KFN" prefix="L">
+<gates>
+<gate name="A" symbol="INDUCTOR" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="PCC-M0648M-LE">
+<connects>
+<connect gate="A" pin="1" pad="1"/>
+<connect gate="A" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="PANASONIC" constant="no"/>
+<attribute name="PN" value="ETQ-P4M100KFN" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="RHS1V101MCN1GS" prefix="C">
+<gates>
+<gate name="A" symbol="CAP" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="RHS1V101MCN1GS">
+<connects>
+<connect gate="A" pin="1" pad="1"/>
+<connect gate="A" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="Nichicon" constant="no"/>
+<attribute name="PN" value="RHS1V101MCN1GS" constant="no"/>
+</technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="47UF" prefix="C">
+<description>&lt;p&gt;47uF Capacitor&lt;/p&gt;</description>
+<gates>
+<gate name="G$1" symbol="CAP" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="0805">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="1206" package="1206">
+<connects>
+<connect gate="G$1" pin="1" pad="1"/>
+<connect gate="G$1" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name="">
+<attribute name="MFG" value="MURATA" constant="no"/>
+<attribute name="PN" value="GRM31CR61E476ME44K" constant="no"/>
+</technology>
 </technologies>
 </device>
 </devices>
@@ -3184,107 +3288,99 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <parts>
 <part name="FRAME1" library="Frame" deviceset="FRAME-LETTER" device="" package3d_urn="urn:adsk.eagle:package:37104/1"/>
 <part name="FRAME2" library="Frame" deviceset="FRAME-LETTER" device="" package3d_urn="urn:adsk.eagle:package:37104/1"/>
-<part name="R7" library="Passives" deviceset="100KOHM" device="" value="100k"/>
-<part name="L1" library="Passives" deviceset="MPLCG0630L4R7" device="" value="4.7uH"/>
-<part name="C14" library="Passives" deviceset="47NF" device="" value="47nF"/>
-<part name="D1" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/100V"/>
-<part name="C4" library="Passives" deviceset="22UF" device="" value="22uF"/>
-<part name="C5" library="Passives" deviceset="1UF" device="" value="1uF"/>
-<part name="C2" library="Passives" deviceset="0.01UF" device="" value="0.01uF"/>
-<part name="D2" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/100V"/>
+<part name="R6" library="Passives" deviceset="100KOHM" device="" value="100k"/>
+<part name="C23" library="Passives" deviceset="47NF" device="" value="47nF"/>
+<part name="D1" library="Passives" deviceset="SCHOTTKYDIODE2A100V" device="" value="2A/100V"/>
+<part name="C3" library="Passives" deviceset="22UF" device="" value="22uF"/>
+<part name="C12" library="Passives" deviceset="1UF" device="" value="1uF"/>
 <part name="SUPPLY1" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
 <part name="GND1" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="R6" library="Passives" deviceset="47KOHM" device="" value="47k"/>
-<part name="R5" library="Passives" deviceset="9.09KOHM" device="" value="9.09k"/>
-<part name="C6" library="Passives" deviceset="1UF" device="" value="1uF"/>
+<part name="C13" library="Passives" deviceset="1UF" device="" value="1uF"/>
 <part name="SUPPLY3" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
-<part name="C11" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="C10" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="C9" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="C8" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C17" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C16" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C15" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C20" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="SUPPLY5" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="GND3" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="GND4" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="SUPPLY6" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
-<part name="C15" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
+<part name="C21" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
 <part name="GND5" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="SUPPLY7" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="GND6" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="C7" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="R10" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="R9" library="Passives" deviceset="210OHM" device="" value="210"/>
-<part name="C12" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C14" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="R13" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R12" library="Passives" deviceset="210OHM" device="" value="210"/>
+<part name="C18" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="SUPPLY8" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="GND7" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="DSP_OUT" library="Connectors" deviceset="SMB_CONN" device=""/>
-<part name="R16" library="Passives" deviceset="2KOHM" device="" value="2k"/>
+<part name="R19" library="Passives" deviceset="2KOHM" device="" value="2k"/>
 <part name="GND8" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="PWR" library="Passives" deviceset="LED_GREEN" device=""/>
-<part name="D3" library="Passives" deviceset="SCHOTTKYDIODE2A30V" device="" value="2A/100V"/>
+<part name="D2" library="Passives" deviceset="SCHOTTKYDIODE2A100V" device="" value="2A/100V"/>
 <part name="GND10" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="R21" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="R20" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R25" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R26" library="Passives" deviceset="10KOHM" device="" value="10k"/>
 <part name="R23" library="Passives" deviceset="2KOHM" device="" value="2k"/>
 <part name="SUPPLY10" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
-<part name="R22" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="C1" library="Passives" deviceset="100UF" device="2917" value="100uF"/>
+<part name="R24" library="Passives" deviceset="10KOHM" device="" value="10k"/>
 <part name="GND11" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="C45" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="C46" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="C41" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C52" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C53" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="C48" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="C44" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
+<part name="C55" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C51" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
+<part name="C54" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
 <part name="C47" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
-<part name="C40" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
-<part name="C49" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
-<part name="C43" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
-<part name="C42" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
+<part name="C56" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
+<part name="C50" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
+<part name="C49" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
 <part name="GND12" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="R35" library="Passives" deviceset="110OHM" device="" value="110"/>
-<part name="R34" library="Passives" deviceset="110OHM" device="" value="110"/>
-<part name="C39" library="Passives" deviceset="9NF" device="" value="9nF"/>
-<part name="C38" library="Passives" deviceset="9NF" device="" value="9nF"/>
+<part name="R37" library="Passives" deviceset="100OHM" device="" value="100"/>
+<part name="R38" library="Passives" deviceset="100OHM" device="" value="100"/>
+<part name="C45" library="Passives" deviceset="10NF" device="" value="10nF"/>
+<part name="C46" library="Passives" deviceset="10NF" device="" value="10nF"/>
 <part name="SH1" library="shorts" deviceset="SHORT" device="T5"/>
-<part name="R19" library="Passives" deviceset="2OHM" device="" value="2"/>
-<part name="C21" library="Passives" deviceset="4.7UF" device="" value="4.7uF"/>
+<part name="R22" library="Passives" deviceset="2OHM" device="" value="2"/>
+<part name="C28" library="Passives" deviceset="4.7UF" device="" value="4.7uF"/>
 <part name="GND15" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="SPKR_OUT" library="Connectors" deviceset="6PIN_953442_1" device=""/>
 <part name="PWR_IN" library="Connectors" deviceset="3PIN_953442_1" device=""/>
 <part name="FT232RL" library="ICs" deviceset="FT232RL" device=""/>
 <part name="TMUX154E" library="ICs" deviceset="TMUX154E" device=""/>
 <part name="GND9" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="C20" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C24" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="SUPPLY9" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
-<part name="C17" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="C18" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
+<part name="C25" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C26" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
 <part name="SUPPLY13" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
 <part name="RX" library="Passives" deviceset="LED_GREEN" device=""/>
 <part name="TX" library="Passives" deviceset="LED_RED" device=""/>
-<part name="R17" library="Passives" deviceset="2KOHM" device="" value="2k"/>
-<part name="R18" library="Passives" deviceset="2KOHM" device="" value="2k"/>
+<part name="R20" library="Passives" deviceset="2KOHM" device="" value="2k"/>
+<part name="R21" library="Passives" deviceset="2KOHM" device="" value="2k"/>
 <part name="SUPPLY14" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
-<part name="R11" library="Passives" deviceset="10OHM" device="" value="10"/>
-<part name="C16" library="Passives" deviceset="0.0001UF" device=""/>
-<part name="R14" library="Passives" deviceset="100KOHM" device="" value="100k"/>
+<part name="R14" library="Passives" deviceset="10OHM" device="" value="10"/>
+<part name="C22" library="Passives" deviceset="0.0001UF" device=""/>
+<part name="R16" library="Passives" deviceset="100KOHM" device="" value="100k"/>
 <part name="SUPPLY19" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
-<part name="R13" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R17" library="Passives" deviceset="10KOHM" device="" value="10k"/>
 <part name="SUPPLY20" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
-<part name="C19" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C27" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="AGND3" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="AGND" device=""/>
-<part name="C28" library="Passives" deviceset="47UF" device=""/>
-<part name="R32" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
+<part name="R35" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
 <part name="Q1" library="Passives" deviceset="NMOSFET-BSS138K" device=""/>
 <part name="Q3" library="Passives" deviceset="NMOSFET-BSS138K" device=""/>
 <part name="Q2" library="Passives" deviceset="PMOSFET-DMP32D4S" device=""/>
 <part name="GND2" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="SUPPLY16" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
 <part name="GND16" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="R4" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="R2" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
+<part name="R2" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R1" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
 <part name="R3" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="R1" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R4" library="Passives" deviceset="10KOHM" device="" value="10k"/>
 <part name="FRAME3" library="Frame" deviceset="FRAME-LETTER" device="" package3d_urn="urn:adsk.eagle:package:37104/1"/>
-<part name="GND17" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="GND18" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="WM8804" library="ICs" deviceset="WM8804" device=""/>
 <part name="25LC1024" library="ICs" deviceset="25LC1024" device=""/>
@@ -3296,61 +3392,60 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <part name="GND13" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="SUPPLY11" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
 <part name="GND20" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="C31" library="Passives" deviceset="1UF" device="" value="1uF"/>
-<part name="C30" library="Passives" deviceset="1UF" device="" value="1uF"/>
+<part name="C36" library="Passives" deviceset="1UF" device="" value="1uF"/>
+<part name="C38" library="Passives" deviceset="1UF" device="" value="1uF"/>
 <part name="GND21" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="GND22" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="SUPPLY22" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
-<part name="C32" library="Passives" deviceset="1UF" device="" value="1uF"/>
+<part name="C44" library="Passives" deviceset="1UF" device="" value="1uF"/>
 <part name="GND24" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="C23" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="C26" library="Passives" deviceset="1UF" device="" value="1uF"/>
+<part name="C30" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C33" library="Passives" deviceset="1UF" device="" value="1uF"/>
 <part name="SUPPLY23" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="GND25" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="X1" library="Passives" deviceset="CRYSTAL-12MHZ" device=""/>
-<part name="C25" library="Passives" deviceset="20PF" device="" value="20pF"/>
-<part name="C24" library="Passives" deviceset="20PF" device="" value="20pF"/>
+<part name="C32" library="Passives" deviceset="20PF" device="" value="20pF"/>
+<part name="C31" library="Passives" deviceset="20PF" device="" value="20pF"/>
 <part name="GND27" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="C33" library="Passives" deviceset="1UF" device="" value="1uF"/>
+<part name="C43" library="Passives" deviceset="1UF" device="" value="1uF"/>
 <part name="PAM8406" library="ICs" deviceset="PAM8406" device=""/>
-<part name="C29" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
-<part name="C37" library="Passives" deviceset="220PF" device="" value="220pF"/>
-<part name="C36" library="Passives" deviceset="220PF" device="" value="220pF"/>
+<part name="C37" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
+<part name="C39" library="Passives" deviceset="220PF" device="" value="220pF"/>
+<part name="C40" library="Passives" deviceset="220PF" device="" value="220pF"/>
 <part name="TH3122" library="ICs" deviceset="TH3122.4" device=""/>
-<part name="XRP7659" library="ICs" deviceset="XRP7659" device="SOT23-6"/>
 <part name="XC6210" library="ICs" deviceset="XC6210" device="SOT25"/>
 <part name="PIC24FJ1024GA606" library="ICs" deviceset="PIC24FJ1024GA606" device=""/>
 <part name="BC127" library="ICs" deviceset="BC127" device=""/>
 <part name="FB1" library="Passives" deviceset="FERRITE_2A/120OHM" device="" value="2A/120OHM"/>
 <part name="FB2" library="Passives" deviceset="FERRITE_2A/120OHM" device="" value="2A/120OHM"/>
-<part name="C27" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
-<part name="R26" library="Passives" deviceset="75OHM" device="" value="75"/>
-<part name="R29" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="C34" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="R34" library="Passives" deviceset="75OHM" device="" value="75"/>
+<part name="R31" library="Passives" deviceset="10KOHM" device="" value="10k"/>
 <part name="SUPPLY24" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
-<part name="R33" library="Passives" deviceset="18KOHM" device="" value="18k"/>
+<part name="R36" library="Passives" deviceset="18KOHM" device="" value="18k"/>
 <part name="RECOVERY" library="Connectors" deviceset="2PIN_JUMPER" device=""/>
-<part name="R12" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R15" library="Passives" deviceset="10KOHM" device="" value="10k"/>
 <part name="SUPPLY25" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="PICKIT" library="Connectors" deviceset="6PIN_JUMPER" device=""/>
 <part name="GND14" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="MIC_IN" library="Connectors" deviceset="AUDIO-CUI-SJ-3523-SMT" device=""/>
-<part name="C3" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
-<part name="C13" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
-<part name="R8" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
-<part name="R31" library="Passives" deviceset="10KOHM" device="" value="10k"/>
-<part name="R28" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
-<part name="R27" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="C10" library="Passives" deviceset="10UF" device="" value="10uF"/>
+<part name="C19" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
+<part name="R11" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
+<part name="R29" library="Passives" deviceset="10KOHM" device="" value="10k"/>
+<part name="R32" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
+<part name="R33" library="Passives" deviceset="10KOHM" device="" value="10k"/>
 <part name="R30" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
 <part name="GND26" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="R25" library="Passives" deviceset="110OHM" device="" value="110"/>
-<part name="R24" library="Passives" deviceset="210OHM" device="" value="210"/>
-<part name="C22" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="R27" library="Passives" deviceset="110OHM" device="" value="110"/>
+<part name="R28" library="Passives" deviceset="210OHM" device="" value="210"/>
+<part name="C29" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
 <part name="USB" library="Connectors" deviceset="USB_WURTH_629105150521" device=""/>
 <part name="TCU_IO" library="Connectors" deviceset="6PIN_5_103166_1" device=""/>
 <part name="GND30" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="FRAME5" library="Frame" deviceset="FRAME-LETTER" device="" package3d_urn="urn:adsk.eagle:package:37104/1"/>
 <part name="FRAME4" library="Frame" deviceset="FRAME-LETTER" device="" package3d_urn="urn:adsk.eagle:package:37104/1"/>
-<part name="R15" library="Passives" deviceset="100KOHM" device="" value="100k"/>
+<part name="R18" library="Passives" deviceset="100KOHM" device="" value="100k"/>
 <part name="PCM5122" library="ICs" deviceset="PCM5122" device=""/>
 <part name="H1" library="Connectors" deviceset="2,0-PAD" device=""/>
 <part name="H2" library="Connectors" deviceset="2,0-PAD" device=""/>
@@ -3358,19 +3453,40 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <part name="H4" library="Connectors" deviceset="2,0-PAD" device=""/>
 <part name="GND28" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="FB3" library="Passives" deviceset="FERRITE_2A/120OHM" device="" value="2A/120OHM"/>
-<part name="V1" library="Passives" deviceset="V18AUMLA1812H" device=""/>
-<part name="SUPPLY12" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
 <part name="F1" library="Passives" deviceset="LITTLEBLOCK_FUSE_.75A" device="" value="750mA"/>
-<part name="F2" library="Passives" deviceset="0468.500NR" device=""/>
 <part name="SUPPLY18" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
 <part name="GND23" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="GND29" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="SUPPLY4" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
 <part name="GND31" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="SUPPLY2" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
-<part name="C34" library="Passives" deviceset="1UF" device="" value="1uF"/>
-<part name="C35" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
-<part name="SUPPLY15" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
+<part name="C42" library="Passives" deviceset="1UF" device="" value="1uF"/>
+<part name="C41" library="Passives" deviceset="10UF" device="2012" value="10uF"/>
+<part name="L1" library="Passives" deviceset="ACM70V-701-2PL-TL00" device=""/>
+<part name="GND32" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
+<part name="GND33" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
+<part name="SUPPLY12" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
+<part name="MPQ4420" library="ICs" deviceset="MPQ4420" device=""/>
+<part name="C8" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="R9" library="Passives" deviceset="7.68KOHM" device=""/>
+<part name="R7" library="Passives" deviceset="20OHM" device=""/>
+<part name="R8" library="Passives" deviceset="51KOHM" device=""/>
+<part name="C11" library="Passives" deviceset="10UF" device="" value="10uF"/>
+<part name="C9" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="R5" library="Passives" deviceset="100KOHM" device="" value="100k"/>
+<part name="C7" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="GND34" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
+<part name="GND35" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
+<part name="R10" library="Passives" deviceset="41.2KOHM" device=""/>
+<part name="C2" library="Passives" deviceset="22UF" device="" value="22uF"/>
+<part name="L2" library="Passives" deviceset="ETQ-P4M100KFN" device=""/>
+<part name="C4" library="Passives" deviceset="0.1UF" device="" value="0.1uF"/>
+<part name="C1" library="Passives" deviceset="RHS1V101MCN1GS" device=""/>
+<part name="C35" library="Passives" deviceset="47UF" device="" value="47UF"/>
+<part name="XC6702" library="ICs" deviceset="XC6702DC018PR-G" device=""/>
+<part name="C6" library="Passives" deviceset="1UF" device="" value="1uF"/>
+<part name="C5" library="Passives" deviceset="2.2UF" device="" value="2.2uF"/>
+<part name="GND36" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -3379,9 +3495,9 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <text x="7.62" y="177.8" size="3.81" layer="97">Power</text>
 <text x="7.62" y="111.76" size="3.81" layer="97">I/O</text>
 <text x="241.3" y="7.62" size="3.81" layer="94">C</text>
-<text x="101.6" y="170.18" size="2.54" layer="97">3.3v Regulator</text>
-<text x="17.78" y="170.18" size="2.54" layer="97">5v Regulator</text>
-<text x="205.74" y="172.72" size="2.54" layer="97">Circuit Protection</text>
+<text x="116.84" y="170.18" size="2.54" layer="97">3.3v Regulator</text>
+<text x="25.4" y="170.18" size="2.54" layer="97">5v Regulator</text>
+<text x="175.26" y="172.72" size="2.54" layer="97">Circuit Protection</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0" smashed="yes"/>
@@ -3390,66 +3506,42 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="SHEET" x="233.68" y="1.27" size="2.54" layer="94" font="vector"/>
 <attribute name="DRAWING_NAME" x="152.654" y="17.78" size="2.7432" layer="94" font="vector"/>
 </instance>
-<instance part="R7" gate="G$1" x="43.18" y="144.78" smashed="yes" rot="R90">
-<attribute name="NAME" x="41.656" y="144.78" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
-<attribute name="VALUE" x="44.704" y="144.78" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
+<instance part="R6" gate="G$1" x="7.62" y="147.32" smashed="yes" rot="R270">
+<attribute name="NAME" x="9.144" y="147.32" size="1.778" layer="95" font="vector" rot="R270" align="bottom-center"/>
+<attribute name="VALUE" x="6.096" y="147.32" size="1.778" layer="96" font="vector" rot="R270" align="top-center"/>
 </instance>
-<instance part="L1" gate="G$1" x="60.96" y="157.48" smashed="yes" rot="R90">
-<attribute name="NAME" x="58.42" y="158.75" size="1.778" layer="95" font="vector" rot="R90"/>
-<attribute name="VALUE" x="63.5" y="158.75" size="1.778" layer="96" font="vector" rot="R90" align="top-left"/>
+<instance part="D1" gate="G$1" x="165.1" y="165.1" smashed="yes" rot="R270">
+<attribute name="NAME" x="167.132" y="167.64" size="1.778" layer="95" font="vector" rot="R270"/>
+<attribute name="VALUE" x="163.068" y="167.64" size="1.778" layer="96" font="vector" rot="R270" align="top-left"/>
 </instance>
-<instance part="D1" gate="G$1" x="187.96" y="165.1" smashed="yes" rot="R270">
-<attribute name="NAME" x="189.992" y="167.64" size="1.778" layer="95" font="vector" rot="R270"/>
-<attribute name="VALUE" x="185.928" y="167.64" size="1.778" layer="96" font="vector" rot="R270" align="top-left"/>
+<instance part="C3" gate="G$1" x="88.9" y="147.32" smashed="yes">
+<attribute name="NAME" x="90.424" y="150.241" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="90.424" y="145.161" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C4" gate="G$1" x="71.12" y="147.32" smashed="yes">
-<attribute name="NAME" x="72.644" y="150.241" size="1.778" layer="95" font="vector"/>
-<attribute name="VALUE" x="72.644" y="145.161" size="1.778" layer="96" font="vector"/>
+<instance part="C12" gate="G$1" x="114.3" y="147.32" smashed="yes">
+<attribute name="NAME" x="115.824" y="150.241" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="115.824" y="145.161" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C5" gate="G$1" x="99.06" y="147.32" smashed="yes">
-<attribute name="NAME" x="100.584" y="150.241" size="1.778" layer="95" font="vector"/>
-<attribute name="VALUE" x="100.584" y="145.161" size="1.778" layer="96" font="vector"/>
+<instance part="SUPPLY1" gate="G$1" x="5.08" y="165.1" smashed="yes">
+<attribute name="VALUE" x="5.08" y="167.894" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="C2" gate="G$1" x="30.48" y="121.92" smashed="yes" rot="R90">
-<attribute name="NAME" x="27.559" y="123.444" size="1.778" layer="95" font="vector" rot="R90"/>
-<attribute name="VALUE" x="32.639" y="123.444" size="1.778" layer="96" font="vector" rot="R90"/>
+<instance part="GND1" gate="1" x="124.46" y="139.7" smashed="yes">
+<attribute name="VALUE" x="124.46" y="139.446" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="D2" gate="G$1" x="55.88" y="147.32" smashed="yes" rot="R90">
-<attribute name="NAME" x="53.848" y="144.78" size="1.778" layer="95" font="vector" rot="R90"/>
-<attribute name="VALUE" x="57.912" y="144.78" size="1.778" layer="96" font="vector" rot="R90" align="top-left"/>
+<instance part="C13" gate="G$1" x="144.78" y="152.4" smashed="yes">
+<attribute name="NAME" x="146.304" y="155.321" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="146.304" y="150.241" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="SUPPLY1" gate="G$1" x="43.18" y="167.64" smashed="yes">
-<attribute name="VALUE" x="43.18" y="170.434" size="1.778" layer="96" align="bottom-center"/>
-</instance>
-<instance part="GND1" gate="1" x="109.22" y="134.62" smashed="yes">
-<attribute name="VALUE" x="109.22" y="134.366" size="1.778" layer="96" align="top-center"/>
-</instance>
-<instance part="R6" gate="G$1" x="25.4" y="132.08" smashed="yes">
-<attribute name="NAME" x="25.4" y="133.604" size="1.778" layer="95" font="vector" align="bottom-center"/>
-<attribute name="VALUE" x="25.4" y="130.556" size="1.778" layer="96" font="vector" align="top-center"/>
-</instance>
-<instance part="R5" gate="G$1" x="22.86" y="144.78" smashed="yes">
-<attribute name="NAME" x="22.86" y="146.304" size="1.778" layer="95" font="vector" align="bottom-center"/>
-<attribute name="VALUE" x="22.86" y="143.256" size="1.778" layer="96" font="vector" align="top-center"/>
-</instance>
-<instance part="C6" gate="G$1" x="134.62" y="157.48" smashed="yes">
-<attribute name="NAME" x="136.144" y="160.401" size="1.778" layer="95" font="vector"/>
-<attribute name="VALUE" x="136.144" y="155.321" size="1.778" layer="96" font="vector"/>
-</instance>
-<instance part="SUPPLY3" gate="G$1" x="96.52" y="167.64" smashed="yes">
-<attribute name="VALUE" x="96.52" y="170.434" size="1.778" layer="96" align="bottom-center"/>
+<instance part="SUPPLY3" gate="G$1" x="111.76" y="167.64" smashed="yes">
+<attribute name="VALUE" x="111.76" y="170.434" size="1.778" layer="96" align="bottom-center"/>
 </instance>
 <instance part="DSP_OUT" gate="G$1" x="68.58" y="99.06" smashed="yes" rot="R270">
 <attribute name="VALUE" x="63.754" y="101.6" size="1.778" layer="96" font="vector" rot="R270"/>
 <attribute name="NAME" x="71.628" y="101.6" size="1.778" layer="95" font="vector" rot="R270"/>
 </instance>
-<instance part="D3" gate="G$1" x="177.8" y="167.64" smashed="yes" rot="R270">
-<attribute name="NAME" x="179.832" y="170.18" size="1.778" layer="95" font="vector" rot="R270"/>
-<attribute name="VALUE" x="175.768" y="170.18" size="1.778" layer="96" font="vector" rot="R270" align="top-left"/>
-</instance>
-<instance part="C1" gate="G$1" x="231.14" y="154.94" smashed="yes">
-<attribute name="NAME" x="232.664" y="157.861" size="1.778" layer="95" font="vector"/>
-<attribute name="VALUE" x="232.664" y="152.781" size="1.778" layer="96" font="vector"/>
+<instance part="D2" gate="G$1" x="154.94" y="157.48" smashed="yes" rot="R270">
+<attribute name="NAME" x="156.972" y="160.02" size="1.778" layer="95" font="vector" rot="R270"/>
+<attribute name="VALUE" x="152.908" y="160.02" size="1.778" layer="96" font="vector" rot="R270" align="top-left"/>
 </instance>
 <instance part="SPKR_OUT" gate="G$1" x="66.04" y="53.34" smashed="yes">
 <attribute name="NAME" x="62.484" y="58.928" size="1.778" layer="95" font="vector"/>
@@ -3459,19 +3551,13 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="VALUE" x="33.274" y="101.6" size="1.778" layer="96" font="vector" rot="R270"/>
 <attribute name="NAME" x="46.228" y="101.6" size="1.778" layer="95" font="vector" rot="R270"/>
 </instance>
-<instance part="GND17" gate="1" x="231.14" y="127" smashed="yes">
-<attribute name="VALUE" x="231.14" y="126.746" size="1.778" layer="96" align="top-center"/>
-</instance>
-<instance part="XRP7659" gate="G$1" x="30.48" y="154.94" smashed="yes">
-<attribute name="NAME" x="30.48" y="161.29" size="1.778" layer="95" font="vector" align="bottom-center"/>
-</instance>
-<instance part="XC6210" gate="G$1" x="114.3" y="154.94" smashed="yes">
-<attribute name="NAME" x="114.3" y="161.29" size="1.778" layer="95" font="vector" align="bottom-center"/>
+<instance part="XC6210" gate="G$1" x="129.54" y="154.94" smashed="yes">
+<attribute name="NAME" x="129.54" y="161.29" size="1.778" layer="95" font="vector" align="bottom-center"/>
 </instance>
 <instance part="RECOVERY" gate="G$1" x="198.12" y="73.66" smashed="yes" rot="R90">
 <attribute name="NAME" x="192.532" y="71.12" size="1.778" layer="95" font="vector" rot="R90"/>
 </instance>
-<instance part="R12" gate="G$1" x="190.5" y="88.9" smashed="yes" rot="R180">
+<instance part="R15" gate="G$1" x="190.5" y="88.9" smashed="yes" rot="R180">
 <attribute name="NAME" x="190.5" y="87.376" size="1.778" layer="95" font="vector" rot="R180" align="bottom-center"/>
 <attribute name="VALUE" x="190.5" y="90.424" size="1.778" layer="96" font="vector" rot="R180" align="top-center"/>
 </instance>
@@ -3487,9 +3573,9 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="MIC_IN" gate="G$1" x="149.86" y="91.44" smashed="yes">
 <attribute name="NAME" x="144.78" y="94.488" size="1.778" layer="95" font="vector"/>
 </instance>
-<instance part="C3" gate="G$1" x="48.26" y="162.56" smashed="yes" rot="R90">
-<attribute name="NAME" x="45.339" y="164.084" size="1.778" layer="95" font="vector" rot="R90"/>
-<attribute name="VALUE" x="50.419" y="164.084" size="1.778" layer="96" font="vector" rot="R90"/>
+<instance part="C10" gate="G$1" x="5.08" y="157.48" smashed="yes">
+<attribute name="NAME" x="6.604" y="160.401" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="6.604" y="155.321" size="1.778" layer="96" font="vector"/>
 </instance>
 <instance part="USB" gate="G$1" x="190.5" y="53.34" smashed="yes" rot="R90">
 <attribute name="NAME" x="182.88" y="50.8" size="1.778" layer="95" font="vector" rot="R90"/>
@@ -3515,35 +3601,98 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND28" gate="1" x="25.4" y="15.24" smashed="yes">
 <attribute name="VALUE" x="25.4" y="14.986" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="V1" gate="G$1" x="218.44" y="147.32" smashed="yes" rot="R90">
-<attribute name="NAME" x="213.36" y="147.32" size="1.778" layer="95" font="vector" rot="MR270" align="center"/>
-<attribute name="VALUE" x="223.52" y="147.32" size="1.778" layer="96" font="vector" rot="MR270" align="center"/>
+<instance part="F1" gate="G$1" x="180.34" y="160.02" smashed="yes">
+<attribute name="NAME" x="180.34" y="165.1" size="1.778" layer="95" font="vector" align="center"/>
+<attribute name="VALUE" x="180.34" y="154.94" size="1.778" layer="96" font="vector" align="center"/>
 </instance>
-<instance part="SUPPLY12" gate="G$1" x="231.14" y="165.1" smashed="yes">
-<attribute name="VALUE" x="231.14" y="167.894" size="1.778" layer="96" align="bottom-center"/>
+<instance part="SUPPLY18" gate="G$1" x="144.78" y="167.64" smashed="yes">
+<attribute name="VALUE" x="144.78" y="170.434" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="F1" gate="G$1" x="203.2" y="160.02" smashed="yes">
-<attribute name="NAME" x="203.2" y="165.1" size="1.778" layer="95" font="vector" align="center"/>
-<attribute name="VALUE" x="203.2" y="154.94" size="1.778" layer="96" font="vector" align="center"/>
+<instance part="GND23" gate="1" x="93.98" y="137.16" smashed="yes">
+<attribute name="VALUE" x="93.98" y="136.906" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="F2" gate="G$1" x="149.86" y="162.56" smashed="yes" rot="R180">
-<attribute name="NAME" x="149.86" y="157.48" size="1.778" layer="95" font="vector" rot="R180" align="center"/>
-<attribute name="VALUE" x="149.86" y="167.64" size="1.778" layer="96" font="vector" rot="R180" align="center"/>
+<instance part="GND29" gate="1" x="73.66" y="124.46" smashed="yes">
+<attribute name="VALUE" x="73.66" y="124.206" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="SUPPLY18" gate="G$1" x="165.1" y="170.18" smashed="yes">
-<attribute name="VALUE" x="165.1" y="172.974" size="1.778" layer="96" align="bottom-center"/>
+<instance part="SUPPLY4" gate="G$1" x="106.68" y="162.56" smashed="yes">
+<attribute name="VALUE" x="106.68" y="165.354" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="GND23" gate="1" x="55.88" y="170.18" smashed="yes" rot="R180">
-<attribute name="VALUE" x="55.88" y="170.434" size="1.778" layer="96" rot="R180" align="top-center"/>
+<instance part="GND31" gate="1" x="12.7" y="127" smashed="yes">
+<attribute name="VALUE" x="12.7" y="126.746" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="GND29" gate="1" x="55.88" y="137.16" smashed="yes">
-<attribute name="VALUE" x="55.88" y="136.906" size="1.778" layer="96" align="top-center"/>
+<instance part="L1" gate="A" x="215.9" y="160.02" smashed="yes">
+<attribute name="NAME" x="215.9" y="163.83" size="2.0828" layer="95" ratio="6" rot="SR0" align="bottom-center"/>
+<attribute name="VALUE" x="215.9" y="152.4" size="2.0828" layer="96" ratio="6" rot="SR0" align="bottom-center"/>
 </instance>
-<instance part="SUPPLY4" gate="G$1" x="73.66" y="167.64" smashed="yes">
-<attribute name="VALUE" x="73.66" y="170.434" size="1.778" layer="96" align="bottom-center"/>
+<instance part="GND32" gate="1" x="198.12" y="149.86" smashed="yes">
+<attribute name="VALUE" x="198.12" y="149.606" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="GND31" gate="1" x="33.02" y="137.16" smashed="yes" rot="R90">
-<attribute name="VALUE" x="33.274" y="137.16" size="1.778" layer="96" rot="R90" align="top-center"/>
+<instance part="GND33" gate="1" x="241.3" y="147.32" smashed="yes">
+<attribute name="VALUE" x="241.3" y="147.066" size="1.778" layer="96" align="top-center"/>
+</instance>
+<instance part="SUPPLY12" gate="G$1" x="241.3" y="162.56" smashed="yes">
+<attribute name="VALUE" x="241.3" y="165.354" size="1.778" layer="96" align="bottom-center"/>
+</instance>
+<instance part="MPQ4420" gate="G$1" x="43.18" y="152.4" smashed="yes">
+<attribute name="NAME" x="38.1" y="154.94" size="1.778" layer="95"/>
+</instance>
+<instance part="C8" gate="G$1" x="71.12" y="157.48" smashed="yes">
+<attribute name="NAME" x="72.644" y="160.401" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="72.644" y="155.321" size="1.778" layer="96" font="vector"/>
+</instance>
+<instance part="R9" gate="G$1" x="73.66" y="134.62" smashed="yes" rot="R90">
+<attribute name="NAME" x="72.136" y="134.62" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
+<attribute name="VALUE" x="75.184" y="134.62" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
+</instance>
+<instance part="R7" gate="G$1" x="63.5" y="162.56" smashed="yes">
+<attribute name="NAME" x="63.5" y="164.084" size="1.778" layer="95" font="vector" align="bottom-center"/>
+<attribute name="VALUE" x="63.5" y="161.036" size="1.778" layer="96" font="vector" align="top-center"/>
+</instance>
+<instance part="R8" gate="G$1" x="66.04" y="142.24" smashed="yes" rot="R180">
+<attribute name="NAME" x="66.04" y="140.716" size="1.778" layer="95" font="vector" rot="R180" align="bottom-center"/>
+<attribute name="VALUE" x="66.04" y="143.764" size="1.778" layer="96" font="vector" rot="R180" align="top-center"/>
+</instance>
+<instance part="C11" gate="G$1" x="12.7" y="157.48" smashed="yes">
+<attribute name="NAME" x="14.224" y="160.401" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="14.224" y="155.321" size="1.778" layer="96" font="vector"/>
+</instance>
+<instance part="C9" gate="G$1" x="20.32" y="157.48" smashed="yes">
+<attribute name="NAME" x="21.844" y="160.401" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="21.844" y="155.321" size="1.778" layer="96" font="vector"/>
+</instance>
+<instance part="R5" gate="G$1" x="20.32" y="147.32" smashed="yes" rot="R180">
+<attribute name="NAME" x="20.32" y="145.796" size="1.778" layer="95" font="vector" rot="R180" align="bottom-center"/>
+<attribute name="VALUE" x="20.32" y="148.844" size="1.778" layer="96" font="vector" rot="R180" align="top-center"/>
+</instance>
+<instance part="C7" gate="G$1" x="12.7" y="134.62" smashed="yes">
+<attribute name="NAME" x="14.224" y="137.541" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="14.224" y="132.461" size="1.778" layer="96" font="vector"/>
+</instance>
+<instance part="GND34" gate="1" x="5.08" y="152.4" smashed="yes">
+<attribute name="VALUE" x="5.08" y="152.146" size="1.778" layer="96" align="top-center"/>
+</instance>
+<instance part="GND35" gate="1" x="43.18" y="129.54" smashed="yes">
+<attribute name="VALUE" x="43.18" y="129.286" size="1.778" layer="96" align="top-center"/>
+</instance>
+<instance part="R10" gate="G$1" x="83.82" y="142.24" smashed="yes">
+<attribute name="NAME" x="83.82" y="143.764" size="1.778" layer="95" font="vector" align="bottom-center"/>
+<attribute name="VALUE" x="83.82" y="140.716" size="1.778" layer="96" font="vector" align="top-center"/>
+</instance>
+<instance part="C2" gate="G$1" x="96.52" y="147.32" smashed="yes">
+<attribute name="NAME" x="98.044" y="150.241" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="98.044" y="145.161" size="1.778" layer="96" font="vector"/>
+</instance>
+<instance part="L2" gate="A" x="83.82" y="152.4" smashed="yes" rot="R90">
+<attribute name="NAME" x="81.28" y="153.67" size="1.778" layer="95" font="vector" rot="R90"/>
+<attribute name="VALUE" x="86.36" y="153.67" size="1.778" layer="96" font="vector" rot="R90" align="top-left"/>
+</instance>
+<instance part="C4" gate="G$1" x="104.14" y="147.32" smashed="yes">
+<attribute name="NAME" x="105.664" y="150.241" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="105.664" y="145.161" size="1.778" layer="96" font="vector"/>
+</instance>
+<instance part="C1" gate="A" x="241.3" y="154.94" smashed="yes">
+<attribute name="NAME" x="242.824" y="157.861" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="242.824" y="152.781" size="1.778" layer="96" font="vector"/>
 </instance>
 </instances>
 <busses>
@@ -3573,18 +3722,18 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </segment>
 <segment>
 <pinref part="XC6210" gate="G$1" pin="GND"/>
-<wire x1="104.14" y1="154.94" x2="96.52" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="96.52" y1="154.94" x2="96.52" y2="137.16" width="0.1524" layer="91"/>
-<pinref part="C6" gate="G$1" pin="2"/>
-<wire x1="134.62" y1="154.94" x2="134.62" y2="137.16" width="0.1524" layer="91"/>
+<wire x1="119.38" y1="154.94" x2="111.76" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="111.76" y1="154.94" x2="111.76" y2="142.24" width="0.1524" layer="91"/>
+<pinref part="C13" gate="G$1" pin="2"/>
+<wire x1="144.78" y1="149.86" x2="144.78" y2="142.24" width="0.1524" layer="91"/>
 <pinref part="GND1" gate="1" pin="GND"/>
-<wire x1="134.62" y1="137.16" x2="109.22" y2="137.16" width="0.1524" layer="91"/>
-<pinref part="C5" gate="G$1" pin="2"/>
-<wire x1="99.06" y1="144.78" x2="99.06" y2="137.16" width="0.1524" layer="91"/>
-<wire x1="99.06" y1="137.16" x2="109.22" y2="137.16" width="0.1524" layer="91"/>
-<junction x="109.22" y="137.16"/>
-<wire x1="99.06" y1="137.16" x2="96.52" y2="137.16" width="0.1524" layer="91"/>
-<junction x="99.06" y="137.16"/>
+<wire x1="144.78" y1="142.24" x2="124.46" y2="142.24" width="0.1524" layer="91"/>
+<pinref part="C12" gate="G$1" pin="2"/>
+<wire x1="114.3" y1="144.78" x2="114.3" y2="142.24" width="0.1524" layer="91"/>
+<wire x1="114.3" y1="142.24" x2="124.46" y2="142.24" width="0.1524" layer="91"/>
+<junction x="124.46" y="142.24"/>
+<wire x1="114.3" y1="142.24" x2="111.76" y2="142.24" width="0.1524" layer="91"/>
+<junction x="114.3" y="142.24"/>
 </segment>
 <segment>
 <pinref part="RECOVERY" gate="G$1" pin="1"/>
@@ -3623,61 +3772,81 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <junction x="25.4" y="17.78"/>
 </segment>
 <segment>
-<pinref part="C1" gate="G$1" pin="2"/>
-<pinref part="GND17" gate="1" pin="GND"/>
-<wire x1="231.14" y1="152.4" x2="231.14" y2="134.62" width="0.1524" layer="91"/>
-<pinref part="V1" gate="G$1" pin="IN"/>
-<wire x1="231.14" y1="134.62" x2="231.14" y2="129.54" width="0.1524" layer="91"/>
-<wire x1="218.44" y1="134.62" x2="231.14" y2="134.62" width="0.1524" layer="91"/>
-<junction x="231.14" y="134.62"/>
+<pinref part="C7" gate="G$1" pin="2"/>
+<pinref part="GND31" gate="1" pin="GND"/>
+<wire x1="12.7" y1="129.54" x2="12.7" y2="132.08" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="C10" gate="G$1" pin="2"/>
+<pinref part="C11" gate="G$1" pin="2"/>
+<wire x1="5.08" y1="154.94" x2="12.7" y2="154.94" width="0.1524" layer="91"/>
+<pinref part="C9" gate="G$1" pin="2"/>
+<wire x1="12.7" y1="154.94" x2="20.32" y2="154.94" width="0.1524" layer="91"/>
+<junction x="12.7" y="154.94"/>
+<pinref part="GND34" gate="1" pin="GND"/>
+<junction x="5.08" y="154.94"/>
+</segment>
+<segment>
+<pinref part="R9" gate="G$1" pin="1"/>
+<pinref part="GND29" gate="1" pin="GND"/>
+<wire x1="73.66" y1="127" x2="73.66" y2="129.54" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="MPQ4420" gate="G$1" pin="GND"/>
+<pinref part="GND35" gate="1" pin="GND"/>
+<wire x1="43.18" y1="134.62" x2="43.18" y2="132.08" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="C3" gate="G$1" pin="2"/>
-<wire x1="50.8" y1="162.56" x2="55.88" y2="162.56" width="0.1524" layer="91"/>
-<wire x1="55.88" y1="162.56" x2="55.88" y2="167.64" width="0.1524" layer="91"/>
+<pinref part="C2" gate="G$1" pin="2"/>
+<wire x1="88.9" y1="144.78" x2="93.98" y2="144.78" width="0.1524" layer="91"/>
 <pinref part="GND23" gate="1" pin="GND"/>
-</segment>
-<segment>
-<pinref part="D2" gate="G$1" pin="A"/>
-<wire x1="55.88" y1="144.78" x2="55.88" y2="139.7" width="0.1524" layer="91"/>
-<pinref part="GND29" gate="1" pin="GND"/>
+<wire x1="93.98" y1="144.78" x2="96.52" y2="144.78" width="0.1524" layer="91"/>
+<wire x1="93.98" y1="144.78" x2="93.98" y2="139.7" width="0.1524" layer="91"/>
+<junction x="93.98" y="144.78"/>
 <pinref part="C4" gate="G$1" pin="2"/>
-<wire x1="55.88" y1="139.7" x2="71.12" y2="139.7" width="0.1524" layer="91"/>
-<wire x1="71.12" y1="139.7" x2="71.12" y2="144.78" width="0.1524" layer="91"/>
-<junction x="55.88" y="139.7"/>
+<wire x1="96.52" y1="144.78" x2="104.14" y2="144.78" width="0.1524" layer="91"/>
+<junction x="96.52" y="144.78"/>
 </segment>
 <segment>
-<pinref part="R5" gate="G$1" pin="2"/>
-<pinref part="XRP7659" gate="G$1" pin="GND"/>
-<wire x1="20.32" y1="154.94" x2="15.24" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="15.24" y1="154.94" x2="15.24" y2="137.16" width="0.1524" layer="91"/>
-<wire x1="15.24" y1="137.16" x2="30.48" y2="137.16" width="0.1524" layer="91"/>
-<pinref part="GND31" gate="1" pin="GND"/>
-<junction x="30.48" y="137.16"/>
-<wire x1="27.94" y1="144.78" x2="30.48" y2="144.78" width="0.1524" layer="91"/>
-<wire x1="30.48" y1="144.78" x2="30.48" y2="137.16" width="0.1524" layer="91"/>
+<pinref part="L1" gate="A" pin="2"/>
+<wire x1="205.74" y1="157.48" x2="198.12" y2="157.48" width="0.1524" layer="91"/>
+<pinref part="GND32" gate="1" pin="GND"/>
+<wire x1="198.12" y1="157.48" x2="198.12" y2="152.4" width="0.1524" layer="91"/>
+</segment>
+<segment>
+<pinref part="L1" gate="A" pin="3"/>
+<wire x1="226.06" y1="157.48" x2="236.22" y2="157.48" width="0.1524" layer="91"/>
+<wire x1="236.22" y1="157.48" x2="236.22" y2="149.86" width="0.1524" layer="91"/>
+<pinref part="GND33" gate="1" pin="GND"/>
+<wire x1="236.22" y1="149.86" x2="241.3" y2="149.86" width="0.1524" layer="91"/>
+<wire x1="241.3" y1="152.4" x2="241.3" y2="149.86" width="0.1524" layer="91"/>
+<junction x="241.3" y="149.86"/>
+<pinref part="C1" gate="A" pin="2"/>
 </segment>
 </net>
 <net name="VIN" class="3">
 <segment>
 <pinref part="SUPPLY1" gate="G$1" pin="VIN"/>
-<wire x1="43.18" y1="167.64" x2="43.18" y2="162.56" width="0.1524" layer="91"/>
-<wire x1="43.18" y1="162.56" x2="43.18" y2="154.94" width="0.1524" layer="91"/>
-<wire x1="43.18" y1="154.94" x2="40.64" y2="154.94" width="0.1524" layer="91"/>
-<pinref part="XRP7659" gate="G$1" pin="VIN"/>
-<pinref part="C3" gate="G$1" pin="1"/>
-<junction x="43.18" y="162.56"/>
+<pinref part="C10" gate="G$1" pin="1"/>
+<wire x1="5.08" y1="165.1" x2="5.08" y2="162.56" width="0.1524" layer="91"/>
+<pinref part="C11" gate="G$1" pin="1"/>
+<wire x1="5.08" y1="162.56" x2="12.7" y2="162.56" width="0.1524" layer="91"/>
+<junction x="5.08" y="162.56"/>
+<pinref part="C9" gate="G$1" pin="1"/>
+<wire x1="12.7" y1="162.56" x2="20.32" y2="162.56" width="0.1524" layer="91"/>
+<junction x="12.7" y="162.56"/>
+<pinref part="MPQ4420" gate="G$1" pin="IN"/>
+<wire x1="20.32" y1="162.56" x2="27.94" y2="162.56" width="0.1524" layer="91"/>
+<junction x="20.32" y="162.56"/>
 </segment>
 <segment>
-<pinref part="C1" gate="G$1" pin="1"/>
-<wire x1="231.14" y1="160.02" x2="231.14" y2="165.1" width="0.1524" layer="91"/>
+<pinref part="L1" gate="A" pin="4"/>
+<wire x1="226.06" y1="160.02" x2="241.3" y2="160.02" width="0.1524" layer="91"/>
 <pinref part="SUPPLY12" gate="G$1" pin="VIN"/>
-<pinref part="F1" gate="G$1" pin="IN"/>
-<pinref part="V1" gate="G$1" pin="OUT"/>
-<wire x1="215.9" y1="160.02" x2="218.44" y2="160.02" width="0.1524" layer="91"/>
-<wire x1="218.44" y1="160.02" x2="231.14" y2="160.02" width="0.1524" layer="91"/>
-<junction x="218.44" y="160.02"/>
-<junction x="231.14" y="160.02"/>
+<wire x1="241.3" y1="162.56" x2="241.3" y2="160.02" width="0.1524" layer="91"/>
+<pinref part="C1" gate="A" pin="1"/>
+<junction x="241.3" y="160.02"/>
 </segment>
 </net>
 <net name="IBUS" class="4">
@@ -3687,41 +3856,26 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="PWR_IN" gate="G$1" pin="3"/>
 </segment>
 </net>
-<net name="5VREG_SW" class="1">
-<segment>
-<wire x1="40.64" y1="157.48" x2="50.8" y2="157.48" width="0.1524" layer="91"/>
-<pinref part="C2" gate="G$1" pin="2"/>
-<wire x1="33.02" y1="121.92" x2="50.8" y2="121.92" width="0.1524" layer="91"/>
-<wire x1="50.8" y1="121.92" x2="50.8" y2="157.48" width="0.1524" layer="91"/>
-<pinref part="XRP7659" gate="G$1" pin="SW"/>
-<pinref part="L1" gate="G$1" pin="1"/>
-<wire x1="50.8" y1="157.48" x2="55.88" y2="157.48" width="0.1524" layer="91"/>
-<junction x="50.8" y="157.48"/>
-<pinref part="D2" gate="G$1" pin="C"/>
-<wire x1="55.88" y1="149.86" x2="55.88" y2="157.48" width="0.1524" layer="91"/>
-<junction x="55.88" y="157.48"/>
-</segment>
-</net>
 <net name="5V" class="6">
 <segment>
-<pinref part="C5" gate="G$1" pin="1"/>
+<pinref part="C12" gate="G$1" pin="1"/>
 <pinref part="XC6210" gate="G$1" pin="CE"/>
-<wire x1="101.6" y1="152.4" x2="104.14" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="116.84" y1="152.4" x2="119.38" y2="152.4" width="0.1524" layer="91"/>
 <pinref part="XC6210" gate="G$1" pin="VIN"/>
-<wire x1="101.6" y1="157.48" x2="104.14" y2="157.48" width="0.1524" layer="91"/>
-<wire x1="101.6" y1="157.48" x2="101.6" y2="152.4" width="0.1524" layer="91"/>
-<junction x="101.6" y="157.48"/>
-<wire x1="99.06" y1="157.48" x2="101.6" y2="157.48" width="0.1524" layer="91"/>
-<wire x1="99.06" y1="157.48" x2="99.06" y2="152.4" width="0.1524" layer="91"/>
-<junction x="99.06" y="157.48"/>
-<wire x1="96.52" y1="157.48" x2="99.06" y2="157.48" width="0.1524" layer="91"/>
+<wire x1="116.84" y1="157.48" x2="119.38" y2="157.48" width="0.1524" layer="91"/>
+<wire x1="116.84" y1="157.48" x2="116.84" y2="152.4" width="0.1524" layer="91"/>
+<junction x="116.84" y="157.48"/>
+<wire x1="114.3" y1="157.48" x2="116.84" y2="157.48" width="0.1524" layer="91"/>
+<wire x1="114.3" y1="157.48" x2="114.3" y2="152.4" width="0.1524" layer="91"/>
+<junction x="114.3" y="157.48"/>
+<wire x1="111.76" y1="157.48" x2="114.3" y2="157.48" width="0.1524" layer="91"/>
 <pinref part="SUPPLY3" gate="G$1" pin="5V"/>
-<wire x1="96.52" y1="167.64" x2="96.52" y2="157.48" width="0.1524" layer="91"/>
+<wire x1="111.76" y1="167.64" x2="111.76" y2="157.48" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="D3" gate="G$1" pin="C"/>
-<wire x1="177.8" y1="165.1" x2="177.8" y2="162.56" width="0.1524" layer="91"/>
-<label x="177.8" y="162.56" size="1.27" layer="95" rot="R270" xref="yes"/>
+<pinref part="D2" gate="G$1" pin="C"/>
+<wire x1="154.94" y1="154.94" x2="154.94" y2="152.4" width="0.1524" layer="91"/>
+<label x="154.94" y="152.4" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 <segment>
 <wire x1="116.84" y1="96.52" x2="119.38" y2="96.52" width="0.1524" layer="91"/>
@@ -3729,53 +3883,28 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="PICKIT" gate="G$1" pin="2"/>
 </segment>
 <segment>
-<pinref part="C4" gate="G$1" pin="1"/>
-<wire x1="71.12" y1="152.4" x2="71.12" y2="157.48" width="0.1524" layer="91"/>
-<pinref part="L1" gate="G$1" pin="2"/>
-<wire x1="66.04" y1="157.48" x2="71.12" y2="157.48" width="0.1524" layer="91"/>
-<pinref part="R6" gate="G$1" pin="2"/>
-<wire x1="66.04" y1="132.08" x2="30.48" y2="132.08" width="0.1524" layer="91"/>
-<wire x1="66.04" y1="157.48" x2="66.04" y2="132.08" width="0.1524" layer="91"/>
-<junction x="66.04" y="157.48"/>
-<wire x1="71.12" y1="157.48" x2="73.66" y2="157.48" width="0.1524" layer="91"/>
-<junction x="71.12" y="157.48"/>
-<wire x1="73.66" y1="157.48" x2="73.66" y2="167.64" width="0.1524" layer="91"/>
-<pinref part="SUPPLY4" gate="G$1" pin="5V"/>
-</segment>
-</net>
-<net name="5VREG_EN" class="0">
-<segment>
-<pinref part="R7" gate="G$1" pin="2"/>
-<pinref part="XRP7659" gate="G$1" pin="EN"/>
-<wire x1="40.64" y1="152.4" x2="43.18" y2="152.4" width="0.1524" layer="91"/>
-<wire x1="43.18" y1="152.4" x2="43.18" y2="149.86" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="5VREG_BS" class="1">
-<segment>
-<wire x1="20.32" y1="157.48" x2="12.7" y2="157.48" width="0.1524" layer="91"/>
-<wire x1="12.7" y1="157.48" x2="12.7" y2="121.92" width="0.1524" layer="91"/>
+<pinref part="C3" gate="G$1" pin="1"/>
 <pinref part="C2" gate="G$1" pin="1"/>
-<wire x1="12.7" y1="121.92" x2="25.4" y2="121.92" width="0.1524" layer="91"/>
-<pinref part="XRP7659" gate="G$1" pin="BS"/>
-</segment>
-</net>
-<net name="5VREG_FB" class="1">
-<segment>
-<pinref part="R6" gate="G$1" pin="1"/>
-<wire x1="17.78" y1="132.08" x2="20.32" y2="132.08" width="0.1524" layer="91"/>
-<pinref part="XRP7659" gate="G$1" pin="FB"/>
-<wire x1="20.32" y1="152.4" x2="17.78" y2="152.4" width="0.1524" layer="91"/>
-<wire x1="17.78" y1="152.4" x2="17.78" y2="144.78" width="0.1524" layer="91"/>
-<pinref part="R5" gate="G$1" pin="1"/>
-<wire x1="17.78" y1="144.78" x2="17.78" y2="132.08" width="0.1524" layer="91"/>
-<junction x="17.78" y="144.78"/>
+<wire x1="88.9" y1="152.4" x2="96.52" y2="152.4" width="0.1524" layer="91"/>
+<pinref part="R10" gate="G$1" pin="2"/>
+<wire x1="88.9" y1="142.24" x2="106.68" y2="142.24" width="0.1524" layer="91"/>
+<wire x1="106.68" y1="142.24" x2="106.68" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="106.68" y1="152.4" x2="104.14" y2="152.4" width="0.1524" layer="91"/>
+<junction x="96.52" y="152.4"/>
+<pinref part="SUPPLY4" gate="G$1" pin="5V"/>
+<wire x1="104.14" y1="152.4" x2="96.52" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="106.68" y1="162.56" x2="106.68" y2="152.4" width="0.1524" layer="91"/>
+<junction x="106.68" y="152.4"/>
+<pinref part="L2" gate="A" pin="2"/>
+<junction x="88.9" y="152.4"/>
+<pinref part="C4" gate="G$1" pin="1"/>
+<junction x="104.14" y="152.4"/>
 </segment>
 </net>
 <net name="3.3V" class="2">
 <segment>
 <pinref part="SUPPLY25" gate="G$1" pin="3.3V"/>
-<pinref part="R12" gate="G$1" pin="2"/>
+<pinref part="R15" gate="G$1" pin="2"/>
 <wire x1="185.42" y1="96.52" x2="185.42" y2="88.9" width="0.1524" layer="91"/>
 </segment>
 <segment>
@@ -3784,10 +3913,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <label x="99.06" y="96.52" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
+<pinref part="C13" gate="G$1" pin="1"/>
+<pinref part="XC6210" gate="G$1" pin="VOUT"/>
+<wire x1="139.7" y1="157.48" x2="144.78" y2="157.48" width="0.1524" layer="91"/>
 <pinref part="SUPPLY18" gate="G$1" pin="3.3V"/>
-<wire x1="165.1" y1="170.18" x2="165.1" y2="162.56" width="0.1524" layer="91"/>
-<pinref part="F2" gate="G$1" pin="OUT"/>
-<wire x1="165.1" y1="162.56" x2="162.56" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="167.64" x2="144.78" y2="157.48" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="SYS_USB_DP" class="4">
@@ -3823,9 +3953,9 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="USB" gate="G$1" pin="VBUS"/>
 </segment>
 <segment>
-<pinref part="D3" gate="G$1" pin="A"/>
-<wire x1="177.8" y1="170.18" x2="177.8" y2="172.72" width="0.1524" layer="91"/>
-<label x="177.8" y="172.72" size="1.27" layer="95" rot="R90" xref="yes"/>
+<pinref part="D2" gate="G$1" pin="A"/>
+<wire x1="154.94" y1="160.02" x2="154.94" y2="162.56" width="0.1524" layer="91"/>
+<label x="154.94" y="162.56" size="1.27" layer="95" rot="R90" xref="yes"/>
 </segment>
 </net>
 <net name="BT_MIC_L" class="0">
@@ -3846,7 +3976,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <pinref part="RECOVERY" gate="G$1" pin="2"/>
 <wire x1="195.58" y1="81.28" x2="195.58" y2="88.9" width="0.1524" layer="91"/>
-<pinref part="R12" gate="G$1" pin="1"/>
+<pinref part="R15" gate="G$1" pin="1"/>
 <wire x1="195.58" y1="88.9" x2="195.58" y2="91.44" width="0.1524" layer="91"/>
 <junction x="195.58" y="88.9"/>
 <label x="195.58" y="91.44" size="1.27" layer="95" rot="R90" xref="yes"/>
@@ -3922,43 +4052,108 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <label x="68.58" y="86.36" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
-<net name="IBUS_5V" class="0">
+<net name="VBAT_FUSE" class="0">
 <segment>
-<pinref part="R7" gate="G$1" pin="1"/>
-<wire x1="43.18" y1="139.7" x2="43.18" y2="116.84" width="0.1524" layer="91"/>
-<label x="43.18" y="116.84" size="1.27" layer="95" xref="yes"/>
+<pinref part="F1" gate="G$1" pin="IN"/>
+<pinref part="L1" gate="A" pin="1"/>
+<wire x1="193.04" y1="160.02" x2="205.74" y2="160.02" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="VIN_DIODE" class="3">
+<net name="VBAT_DIODE" class="0">
 <segment>
-<pinref part="D1" gate="G$1" pin="C"/>
-<wire x1="187.96" y1="162.56" x2="187.96" y2="160.02" width="0.1524" layer="91"/>
 <pinref part="F1" gate="G$1" pin="OUT"/>
-<wire x1="187.96" y1="160.02" x2="190.5" y2="160.02" width="0.1524" layer="91"/>
+<pinref part="D1" gate="G$1" pin="C"/>
+<wire x1="165.1" y1="162.56" x2="165.1" y2="160.02" width="0.1524" layer="91"/>
+<wire x1="165.1" y1="160.02" x2="167.64" y2="160.02" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="RAW_3.3V" class="2">
-<segment>
-<pinref part="C6" gate="G$1" pin="1"/>
-<pinref part="XC6210" gate="G$1" pin="VOUT"/>
-<wire x1="124.46" y1="157.48" x2="127" y2="157.48" width="0.1524" layer="91"/>
-<wire x1="127" y1="157.48" x2="127" y2="162.56" width="0.1524" layer="91"/>
-<wire x1="127" y1="162.56" x2="137.16" y2="162.56" width="0.1524" layer="91"/>
-<pinref part="F2" gate="G$1" pin="IN"/>
-<junction x="137.16" y="162.56"/>
-<wire x1="137.16" y1="162.56" x2="134.62" y2="162.56" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="12V_VIN" class="3">
+<net name="VBAT" class="0">
 <segment>
 <pinref part="D1" gate="G$1" pin="A"/>
-<wire x1="187.96" y1="170.18" x2="187.96" y2="167.64" width="0.1524" layer="91"/>
-<label x="187.96" y="170.18" size="1.27" layer="95" rot="R90" xref="yes"/>
+<wire x1="165.1" y1="167.64" x2="165.1" y2="170.18" width="0.1524" layer="91"/>
+<label x="165.1" y="170.18" size="1.27" layer="95" rot="R90" xref="yes"/>
 </segment>
 <segment>
 <pinref part="PWR_IN" gate="G$1" pin="2"/>
 <wire x1="40.64" y1="91.44" x2="40.64" y2="88.9" width="0.1524" layer="91"/>
 <label x="40.64" y="88.9" size="1.27" layer="95" rot="R270" xref="yes"/>
+</segment>
+</net>
+<net name="IBUS_5V" class="0">
+<segment>
+<pinref part="R6" gate="G$1" pin="2"/>
+<wire x1="7.62" y1="142.24" x2="7.62" y2="139.7" width="0.1524" layer="91"/>
+<label x="7.62" y="139.7" size="1.27" layer="95" rot="R270" xref="yes"/>
+</segment>
+</net>
+<net name="5VREG_BS" class="0">
+<segment>
+<pinref part="MPQ4420" gate="G$1" pin="BS"/>
+<pinref part="R7" gate="G$1" pin="1"/>
+</segment>
+</net>
+<net name="5VREG_BS_CAP" class="0">
+<segment>
+<pinref part="R7" gate="G$1" pin="2"/>
+<pinref part="C8" gate="G$1" pin="1"/>
+<wire x1="68.58" y1="162.56" x2="71.12" y2="162.56" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="5VREG_EN" class="0">
+<segment>
+<pinref part="MPQ4420" gate="G$1" pin="EN"/>
+<wire x1="27.94" y1="157.48" x2="27.94" y2="152.4" width="0.1524" layer="91"/>
+<pinref part="R6" gate="G$1" pin="1"/>
+<wire x1="27.94" y1="152.4" x2="7.62" y2="152.4" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="5VREG_PG" class="0">
+<segment>
+<pinref part="R5" gate="G$1" pin="1"/>
+<pinref part="MPQ4420" gate="G$1" pin="PG"/>
+<wire x1="25.4" y1="147.32" x2="27.94" y2="147.32" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="5VREG_VCC" class="0">
+<segment>
+<pinref part="R5" gate="G$1" pin="2"/>
+<wire x1="15.24" y1="147.32" x2="12.7" y2="147.32" width="0.1524" layer="91"/>
+<pinref part="C7" gate="G$1" pin="1"/>
+<wire x1="12.7" y1="147.32" x2="12.7" y2="139.7" width="0.1524" layer="91"/>
+<pinref part="MPQ4420" gate="G$1" pin="VCC"/>
+<wire x1="27.94" y1="142.24" x2="15.24" y2="142.24" width="0.1524" layer="91"/>
+<wire x1="15.24" y1="142.24" x2="15.24" y2="139.7" width="0.1524" layer="91"/>
+<wire x1="15.24" y1="139.7" x2="12.7" y2="139.7" width="0.1524" layer="91"/>
+<junction x="12.7" y="139.7"/>
+</segment>
+</net>
+<net name="5VREG_FB" class="0">
+<segment>
+<pinref part="MPQ4420" gate="G$1" pin="FB"/>
+<pinref part="R8" gate="G$1" pin="2"/>
+<wire x1="58.42" y1="142.24" x2="60.96" y2="142.24" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="5VREG_FB_T" class="0">
+<segment>
+<pinref part="R8" gate="G$1" pin="1"/>
+<wire x1="71.12" y1="142.24" x2="73.66" y2="142.24" width="0.1524" layer="91"/>
+<pinref part="R9" gate="G$1" pin="2"/>
+<wire x1="73.66" y1="142.24" x2="73.66" y2="139.7" width="0.1524" layer="91"/>
+<pinref part="R10" gate="G$1" pin="1"/>
+<wire x1="73.66" y1="142.24" x2="78.74" y2="142.24" width="0.1524" layer="91"/>
+<junction x="73.66" y="142.24"/>
+</segment>
+</net>
+<net name="5VREG_SW" class="0">
+<segment>
+<pinref part="MPQ4420" gate="G$1" pin="SW"/>
+<pinref part="C8" gate="G$1" pin="2"/>
+<wire x1="71.12" y1="154.94" x2="71.12" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="71.12" y1="152.4" x2="58.42" y2="152.4" width="0.1524" layer="91"/>
+<wire x1="71.12" y1="152.4" x2="78.74" y2="152.4" width="0.1524" layer="91"/>
+<junction x="71.12" y="152.4"/>
+<pinref part="L2" gate="A" pin="1"/>
 </segment>
 </net>
 </nets>
@@ -3976,19 +4171,19 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="SHEET" x="233.68" y="1.27" size="2.54" layer="94" font="vector"/>
 <attribute name="DRAWING_NAME" x="162.814" y="17.78" size="2.7432" layer="94" font="vector"/>
 </instance>
-<instance part="C11" gate="G$1" x="139.7" y="43.18" smashed="yes" rot="R180">
+<instance part="C17" gate="G$1" x="139.7" y="43.18" smashed="yes" rot="R180">
 <attribute name="NAME" x="138.176" y="40.259" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="138.176" y="45.339" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
-<instance part="C10" gate="G$1" x="129.54" y="43.18" smashed="yes" rot="R180">
+<instance part="C16" gate="G$1" x="129.54" y="43.18" smashed="yes" rot="R180">
 <attribute name="NAME" x="128.016" y="40.259" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="128.016" y="45.339" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
-<instance part="C9" gate="G$1" x="149.86" y="43.18" smashed="yes" rot="R180">
+<instance part="C15" gate="G$1" x="149.86" y="43.18" smashed="yes" rot="R180">
 <attribute name="NAME" x="148.336" y="40.259" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="148.336" y="45.339" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
-<instance part="C8" gate="G$1" x="160.02" y="43.18" smashed="yes" rot="R180">
+<instance part="C20" gate="G$1" x="160.02" y="43.18" smashed="yes" rot="R180">
 <attribute name="NAME" x="158.496" y="40.259" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="158.496" y="45.339" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
@@ -3998,15 +4193,15 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND3" gate="1" x="167.64" y="35.56" smashed="yes">
 <attribute name="VALUE" x="167.64" y="35.306" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="R10" gate="G$1" x="101.6" y="149.86" smashed="yes">
+<instance part="R13" gate="G$1" x="101.6" y="149.86" smashed="yes">
 <attribute name="NAME" x="101.6" y="151.384" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="101.6" y="148.336" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="R9" gate="G$1" x="119.38" y="149.86" smashed="yes">
+<instance part="R12" gate="G$1" x="119.38" y="149.86" smashed="yes">
 <attribute name="NAME" x="119.38" y="151.384" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="119.38" y="148.336" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="C12" gate="G$1" x="109.22" y="144.78" smashed="yes">
+<instance part="C18" gate="G$1" x="109.22" y="144.78" smashed="yes">
 <attribute name="NAME" x="110.744" y="147.701" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="110.744" y="142.621" size="1.778" layer="96" font="vector"/>
 </instance>
@@ -4016,7 +4211,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND7" gate="1" x="104.14" y="142.24" smashed="yes" rot="R270">
 <attribute name="VALUE" x="103.886" y="142.24" size="1.778" layer="96" rot="R270" align="top-center"/>
 </instance>
-<instance part="R16" gate="G$1" x="180.34" y="142.24" smashed="yes" rot="R270">
+<instance part="R19" gate="G$1" x="180.34" y="142.24" smashed="yes" rot="R270">
 <attribute name="NAME" x="181.864" y="142.24" size="1.778" layer="95" font="vector" rot="R270" align="bottom-center"/>
 <attribute name="VALUE" x="178.816" y="142.24" size="1.778" layer="96" font="vector" rot="R270" align="top-center"/>
 </instance>
@@ -4027,7 +4222,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="NAME" x="183.769" y="156.972" size="1.778" layer="95" font="vector" rot="R270"/>
 <attribute name="VALUE" x="178.435" y="156.972" size="1.778" layer="96" font="vector" rot="R270" align="top-left"/>
 </instance>
-<instance part="R14" gate="G$1" x="35.56" y="83.82" smashed="yes" rot="R180">
+<instance part="R16" gate="G$1" x="35.56" y="83.82" smashed="yes" rot="R180">
 <attribute name="NAME" x="35.56" y="82.296" size="1.778" layer="95" font="vector" rot="R180" align="bottom-center"/>
 <attribute name="VALUE" x="35.56" y="85.344" size="1.778" layer="96" font="vector" rot="R180" align="top-center"/>
 </instance>
@@ -4037,11 +4232,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="PIC24FJ1024GA606" gate="G$1" x="124.46" y="93.98" smashed="yes">
 <attribute name="NAME" x="124.46" y="93.98" size="1.778" layer="95" font="vector" align="bottom-center"/>
 </instance>
-<instance part="C13" gate="G$1" x="132.08" y="160.02" smashed="yes" rot="R270">
+<instance part="C19" gate="G$1" x="132.08" y="160.02" smashed="yes" rot="R270">
 <attribute name="NAME" x="135.001" y="158.496" size="1.778" layer="95" font="vector" rot="R270"/>
 <attribute name="VALUE" x="129.921" y="158.496" size="1.778" layer="96" font="vector" rot="R270"/>
 </instance>
-<instance part="R15" gate="G$1" x="35.56" y="91.44" smashed="yes" rot="R180">
+<instance part="R18" gate="G$1" x="35.56" y="91.44" smashed="yes" rot="R180">
 <attribute name="NAME" x="35.56" y="89.916" size="1.778" layer="95" font="vector" rot="R180" align="bottom-center"/>
 <attribute name="VALUE" x="35.56" y="92.964" size="1.778" layer="96" font="vector" rot="R180" align="top-center"/>
 </instance>
@@ -4051,17 +4246,17 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <nets>
 <net name="GND" class="0">
 <segment>
-<pinref part="C10" gate="G$1" pin="1"/>
+<pinref part="C16" gate="G$1" pin="1"/>
 <wire x1="127" y1="53.34" x2="127" y2="38.1" width="0.1524" layer="91"/>
 <wire x1="127" y1="38.1" x2="129.54" y2="38.1" width="0.1524" layer="91"/>
-<pinref part="C11" gate="G$1" pin="1"/>
+<pinref part="C17" gate="G$1" pin="1"/>
 <wire x1="129.54" y1="38.1" x2="137.16" y2="38.1" width="0.1524" layer="91"/>
 <junction x="129.54" y="38.1"/>
-<pinref part="C9" gate="G$1" pin="1"/>
+<pinref part="C15" gate="G$1" pin="1"/>
 <wire x1="137.16" y1="38.1" x2="139.7" y2="38.1" width="0.1524" layer="91"/>
 <wire x1="139.7" y1="38.1" x2="147.32" y2="38.1" width="0.1524" layer="91"/>
 <junction x="139.7" y="38.1"/>
-<pinref part="C8" gate="G$1" pin="1"/>
+<pinref part="C20" gate="G$1" pin="1"/>
 <wire x1="147.32" y1="38.1" x2="149.86" y2="38.1" width="0.1524" layer="91"/>
 <wire x1="149.86" y1="38.1" x2="157.48" y2="38.1" width="0.1524" layer="91"/>
 <junction x="149.86" y="38.1"/>
@@ -4082,12 +4277,12 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </segment>
 <segment>
 <wire x1="129.54" y1="160.02" x2="129.54" y2="142.24" width="0.1524" layer="91"/>
-<pinref part="C12" gate="G$1" pin="2"/>
+<pinref part="C18" gate="G$1" pin="2"/>
 <wire x1="129.54" y1="142.24" x2="109.22" y2="142.24" width="0.1524" layer="91"/>
 <pinref part="GND7" gate="1" pin="GND"/>
 <wire x1="106.68" y1="142.24" x2="109.22" y2="142.24" width="0.1524" layer="91"/>
 <junction x="109.22" y="142.24"/>
-<pinref part="C13" gate="G$1" pin="2"/>
+<pinref part="C19" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <pinref part="GND8" gate="1" pin="GND"/>
@@ -4116,21 +4311,21 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <pinref part="SUPPLY5" gate="G$1" pin="3.3V"/>
 <wire x1="172.72" y1="48.26" x2="172.72" y2="66.04" width="0.1524" layer="91"/>
-<pinref part="C10" gate="G$1" pin="2"/>
+<pinref part="C16" gate="G$1" pin="2"/>
 <wire x1="129.54" y1="45.72" x2="129.54" y2="48.26" width="0.1524" layer="91"/>
-<pinref part="C11" gate="G$1" pin="2"/>
+<pinref part="C17" gate="G$1" pin="2"/>
 <wire x1="129.54" y1="48.26" x2="129.54" y2="53.34" width="0.1524" layer="91"/>
 <wire x1="139.7" y1="53.34" x2="139.7" y2="48.26" width="0.1524" layer="91"/>
 <wire x1="139.7" y1="48.26" x2="139.7" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="129.54" y1="48.26" x2="139.7" y2="48.26" width="0.1524" layer="91"/>
 <junction x="129.54" y="48.26"/>
 <junction x="139.7" y="48.26"/>
-<pinref part="C9" gate="G$1" pin="2"/>
+<pinref part="C15" gate="G$1" pin="2"/>
 <wire x1="149.86" y1="53.34" x2="149.86" y2="48.26" width="0.1524" layer="91"/>
 <wire x1="149.86" y1="48.26" x2="149.86" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="139.7" y1="48.26" x2="149.86" y2="48.26" width="0.1524" layer="91"/>
 <junction x="149.86" y="48.26"/>
-<pinref part="C8" gate="G$1" pin="2"/>
+<pinref part="C20" gate="G$1" pin="2"/>
 <wire x1="160.02" y1="53.34" x2="160.02" y2="48.26" width="0.1524" layer="91"/>
 <wire x1="160.02" y1="48.26" x2="160.02" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="149.86" y1="48.26" x2="160.02" y2="48.26" width="0.1524" layer="91"/>
@@ -4143,14 +4338,14 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </segment>
 <segment>
 <pinref part="SUPPLY8" gate="G$1" pin="3.3V"/>
-<pinref part="R10" gate="G$1" pin="1"/>
+<pinref part="R13" gate="G$1" pin="1"/>
 <wire x1="96.52" y1="154.94" x2="96.52" y2="149.86" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="R14" gate="G$1" pin="2"/>
+<pinref part="R16" gate="G$1" pin="2"/>
 <pinref part="SUPPLY19" gate="G$1" pin="3.3V"/>
 <wire x1="30.48" y1="116.84" x2="30.48" y2="91.44" width="0.1524" layer="91"/>
-<pinref part="R15" gate="G$1" pin="2"/>
+<pinref part="R18" gate="G$1" pin="2"/>
 <wire x1="30.48" y1="91.44" x2="30.48" y2="83.82" width="0.1524" layer="91"/>
 <junction x="30.48" y="91.44"/>
 </segment>
@@ -4158,7 +4353,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <net name="MCU_URX" class="5">
 <segment>
 <wire x1="73.66" y1="83.82" x2="40.64" y2="83.82" width="0.1524" layer="91"/>
-<pinref part="R14" gate="G$1" pin="1"/>
+<pinref part="R16" gate="G$1" pin="1"/>
 <label x="40.64" y="78.74" size="1.27" layer="95" rot="R270" xref="yes"/>
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="RP23/PMACK1/RD2"/>
 <wire x1="40.64" y1="83.82" x2="40.64" y2="78.74" width="0.1524" layer="91"/>
@@ -4178,7 +4373,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <label x="40.64" y="96.52" size="1.27" layer="95" rot="R90" xref="yes"/>
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="RP24/U5TX/ICM4/RD1"/>
 <wire x1="40.64" y1="86.36" x2="40.64" y2="91.44" width="0.1524" layer="91"/>
-<pinref part="R15" gate="G$1" pin="1"/>
+<pinref part="R18" gate="G$1" pin="1"/>
 <wire x1="40.64" y1="91.44" x2="40.64" y2="96.52" width="0.1524" layer="91"/>
 <junction x="40.64" y="91.44"/>
 </segment>
@@ -4220,17 +4415,17 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="MCU_MCLR_RES" class="5">
 <segment>
-<pinref part="R10" gate="G$1" pin="2"/>
-<pinref part="R9" gate="G$1" pin="1"/>
+<pinref part="R13" gate="G$1" pin="2"/>
+<pinref part="R12" gate="G$1" pin="1"/>
 <wire x1="106.68" y1="149.86" x2="109.22" y2="149.86" width="0.1524" layer="91"/>
-<pinref part="C12" gate="G$1" pin="1"/>
+<pinref part="C18" gate="G$1" pin="1"/>
 <wire x1="109.22" y1="149.86" x2="114.3" y2="149.86" width="0.1524" layer="91"/>
 <junction x="109.22" y="149.86"/>
 </segment>
 </net>
 <net name="MCU_MCLR" class="5">
 <segment>
-<pinref part="R9" gate="G$1" pin="2"/>
+<pinref part="R12" gate="G$1" pin="2"/>
 <label x="124.46" y="149.86" size="1.27" layer="95" rot="R90" xref="yes"/>
 <wire x1="124.46" y1="149.86" x2="137.16" y2="149.86" width="0.1524" layer="91"/>
 <wire x1="137.16" y1="149.86" x2="137.16" y2="142.24" width="0.1524" layer="91"/>
@@ -4242,7 +4437,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="137.16" y1="160.02" x2="139.7" y2="160.02" width="0.1524" layer="91"/>
 <wire x1="139.7" y1="160.02" x2="139.7" y2="142.24" width="0.1524" layer="91"/>
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="VCAP"/>
-<pinref part="C13" gate="G$1" pin="1"/>
+<pinref part="C19" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="MCU_PGD" class="5">
@@ -4264,7 +4459,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <net name="MCU_ON_LED" class="5">
 <segment>
 <wire x1="170.18" y1="134.62" x2="180.34" y2="134.62" width="0.1524" layer="91"/>
-<pinref part="R16" gate="G$1" pin="2"/>
+<pinref part="R19" gate="G$1" pin="2"/>
 <wire x1="180.34" y1="137.16" x2="180.34" y2="134.62" width="0.1524" layer="91"/>
 <pinref part="PIC24FJ1024GA606" gate="G$1" pin="PMD0/RE0"/>
 </segment>
@@ -4279,7 +4474,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <net name="MCU_ON_LED_RES" class="0">
 <segment>
 <pinref part="PWR" gate="G$1" pin="A"/>
-<pinref part="R16" gate="G$1" pin="1"/>
+<pinref part="R19" gate="G$1" pin="1"/>
 <wire x1="180.34" y1="149.86" x2="180.34" y2="147.32" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -4366,11 +4561,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND10" gate="1" x="88.9" y="68.58" smashed="yes">
 <attribute name="VALUE" x="88.9" y="68.326" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="R21" gate="G$1" x="157.48" y="116.84" smashed="yes" rot="R180">
+<instance part="R25" gate="G$1" x="157.48" y="116.84" smashed="yes" rot="R180">
 <attribute name="NAME" x="157.48" y="115.316" size="1.778" layer="95" font="vector" rot="R180" align="bottom-center"/>
 <attribute name="VALUE" x="157.48" y="118.364" size="1.778" layer="96" font="vector" rot="R180" align="top-center"/>
 </instance>
-<instance part="R20" gate="G$1" x="160.02" y="127" smashed="yes" rot="R90">
+<instance part="R26" gate="G$1" x="160.02" y="127" smashed="yes" rot="R90">
 <attribute name="NAME" x="158.496" y="127" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="161.544" y="127" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
@@ -4381,18 +4576,18 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="SUPPLY10" gate="G$1" x="149.86" y="152.4" smashed="yes">
 <attribute name="VALUE" x="149.86" y="155.194" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="R22" gate="G$1" x="154.94" y="134.62" smashed="yes">
+<instance part="R24" gate="G$1" x="154.94" y="134.62" smashed="yes">
 <attribute name="NAME" x="154.94" y="136.144" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="154.94" y="133.096" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
 <instance part="GND11" gate="1" x="167.64" y="109.22" smashed="yes">
 <attribute name="VALUE" x="167.64" y="108.966" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="R19" gate="G$1" x="99.06" y="152.4" smashed="yes">
+<instance part="R22" gate="G$1" x="99.06" y="152.4" smashed="yes">
 <attribute name="NAME" x="99.06" y="153.924" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="99.06" y="150.876" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="C21" gate="G$1" x="71.12" y="147.32" smashed="yes">
+<instance part="C28" gate="G$1" x="71.12" y="147.32" smashed="yes">
 <attribute name="NAME" x="72.644" y="150.241" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="72.644" y="145.161" size="1.778" layer="96" font="vector"/>
 </instance>
@@ -4441,7 +4636,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="BC127" gate="G$1" pin="SPI_PCM#"/>
 </segment>
 <segment>
-<pinref part="C21" gate="G$1" pin="2"/>
+<pinref part="C28" gate="G$1" pin="2"/>
 <wire x1="71.12" y1="144.78" x2="71.12" y2="142.24" width="0.1524" layer="91"/>
 <pinref part="GND15" gate="1" pin="GND"/>
 </segment>
@@ -4449,7 +4644,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <net name="BT_UTX" class="5">
 <segment>
 <wire x1="147.32" y1="121.92" x2="160.02" y2="121.92" width="0.1524" layer="91"/>
-<pinref part="R20" gate="G$1" pin="1"/>
+<pinref part="R26" gate="G$1" pin="1"/>
 <wire x1="160.02" y1="121.92" x2="167.64" y2="121.92" width="0.1524" layer="91"/>
 <junction x="160.02" y="121.92"/>
 <label x="167.64" y="121.92" size="1.27" layer="95" xref="yes"/>
@@ -4458,7 +4653,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="BT_URX" class="5">
 <segment>
-<pinref part="R21" gate="G$1" pin="1"/>
+<pinref part="R25" gate="G$1" pin="1"/>
 <wire x1="162.56" y1="116.84" x2="165.1" y2="116.84" width="0.1524" layer="91"/>
 <label x="165.1" y="116.84" size="1.27" layer="95" xref="yes"/>
 </segment>
@@ -4467,7 +4662,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <pinref part="SUPPLY10" gate="G$1" pin="3.3V"/>
 <wire x1="149.86" y1="152.4" x2="160.02" y2="152.4" width="0.1524" layer="91"/>
-<pinref part="R19" gate="G$1" pin="2"/>
+<pinref part="R22" gate="G$1" pin="2"/>
 <wire x1="104.14" y1="152.4" x2="109.22" y2="152.4" width="0.1524" layer="91"/>
 <junction x="149.86" y="152.4"/>
 <wire x1="109.22" y1="152.4" x2="116.84" y2="152.4" width="0.1524" layer="91"/>
@@ -4482,9 +4677,9 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="BC127" gate="G$1" pin="VBAT_SENSE"/>
 <pinref part="BC127" gate="G$1" pin="VBAT"/>
 <pinref part="BC127" gate="G$1" pin="VDD_PADS"/>
-<pinref part="R22" gate="G$1" pin="2"/>
+<pinref part="R24" gate="G$1" pin="2"/>
 <wire x1="160.02" y1="152.4" x2="160.02" y2="134.62" width="0.1524" layer="91"/>
-<pinref part="R20" gate="G$1" pin="2"/>
+<pinref part="R26" gate="G$1" pin="2"/>
 <wire x1="160.02" y1="134.62" x2="160.02" y2="132.08" width="0.1524" layer="91"/>
 <junction x="160.02" y="134.62"/>
 </segment>
@@ -4498,8 +4693,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="BT_3V3_FILTER" class="0">
 <segment>
-<pinref part="C21" gate="G$1" pin="1"/>
-<pinref part="R19" gate="G$1" pin="1"/>
+<pinref part="C28" gate="G$1" pin="1"/>
+<pinref part="R22" gate="G$1" pin="1"/>
 <wire x1="71.12" y1="152.4" x2="83.82" y2="152.4" width="0.1524" layer="91"/>
 <wire x1="83.82" y1="152.4" x2="93.98" y2="152.4" width="0.1524" layer="91"/>
 <wire x1="83.82" y1="144.78" x2="83.82" y2="152.4" width="0.1524" layer="91"/>
@@ -4509,7 +4704,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="BT_RST" class="0">
 <segment>
-<pinref part="R22" gate="G$1" pin="1"/>
+<pinref part="R24" gate="G$1" pin="1"/>
 <wire x1="147.32" y1="134.62" x2="149.86" y2="134.62" width="0.1524" layer="91"/>
 <pinref part="BC127" gate="G$1" pin="RST#"/>
 </segment>
@@ -4550,7 +4745,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="147.32" y1="119.38" x2="152.4" y2="119.38" width="0.1524" layer="91"/>
 <wire x1="152.4" y1="119.38" x2="152.4" y2="116.84" width="0.1524" layer="91"/>
 <pinref part="BC127" gate="G$1" pin="UART_RX"/>
-<pinref part="R21" gate="G$1" pin="2"/>
+<pinref part="R25" gate="G$1" pin="2"/>
 </segment>
 </net>
 </nets>
@@ -4573,7 +4768,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="SHEET" x="233.68" y="1.27" size="2.54" layer="94" font="vector"/>
 <attribute name="DRAWING_NAME" x="162.814" y="17.78" size="2.7432" layer="94" font="vector"/>
 </instance>
-<instance part="C14" gate="G$1" x="193.04" y="55.88" smashed="yes" rot="R270">
+<instance part="C23" gate="G$1" x="193.04" y="55.88" smashed="yes" rot="R270">
 <attribute name="NAME" x="195.961" y="54.356" size="1.778" layer="95" font="vector" rot="R270"/>
 <attribute name="VALUE" x="190.881" y="54.356" size="1.778" layer="96" font="vector" rot="R270"/>
 </instance>
@@ -4583,7 +4778,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="SUPPLY6" gate="G$1" x="198.12" y="66.04" smashed="yes">
 <attribute name="VALUE" x="198.12" y="68.834" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="C15" gate="G$1" x="236.22" y="48.26" smashed="yes" rot="R180">
+<instance part="C21" gate="G$1" x="236.22" y="48.26" smashed="yes" rot="R180">
 <attribute name="NAME" x="234.696" y="45.339" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="234.696" y="50.419" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
@@ -4596,15 +4791,15 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND6" gate="1" x="200.66" y="81.28" smashed="yes">
 <attribute name="VALUE" x="200.66" y="81.026" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="C7" gate="G$1" x="223.52" y="101.6" smashed="yes">
+<instance part="C14" gate="G$1" x="223.52" y="101.6" smashed="yes">
 <attribute name="NAME" x="225.044" y="104.521" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="225.044" y="99.441" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="R11" gate="G$1" x="172.72" y="38.1" smashed="yes">
+<instance part="R14" gate="G$1" x="172.72" y="38.1" smashed="yes">
 <attribute name="NAME" x="172.72" y="39.624" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="172.72" y="36.576" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="C16" gate="G$1" x="177.8" y="33.02" smashed="yes">
+<instance part="C22" gate="G$1" x="177.8" y="33.02" smashed="yes">
 <attribute name="NAME" x="179.324" y="35.941" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="179.324" y="30.861" size="1.778" layer="96" font="vector"/>
 </instance>
@@ -4614,7 +4809,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="TH3122" gate="G$1" x="213.36" y="43.18" smashed="yes">
 <attribute name="NAME" x="213.36" y="54.18" size="1.778" layer="95" font="vector" align="bottom-center"/>
 </instance>
-<instance part="R8" gate="G$1" x="182.88" y="104.14" smashed="yes" rot="R90">
+<instance part="R11" gate="G$1" x="182.88" y="104.14" smashed="yes" rot="R90">
 <attribute name="NAME" x="181.356" y="104.14" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="184.404" y="104.14" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
@@ -4639,11 +4834,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND16" gate="1" x="109.22" y="127" smashed="yes">
 <attribute name="VALUE" x="109.22" y="126.746" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="R4" gate="G$1" x="116.84" y="147.32" smashed="yes">
+<instance part="R2" gate="G$1" x="116.84" y="147.32" smashed="yes">
 <attribute name="NAME" x="116.84" y="148.844" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="116.84" y="145.796" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="R2" gate="G$1" x="124.46" y="167.64" smashed="yes" rot="R90">
+<instance part="R1" gate="G$1" x="124.46" y="167.64" smashed="yes" rot="R90">
 <attribute name="NAME" x="122.936" y="167.64" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="125.984" y="167.64" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
@@ -4651,15 +4846,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="NAME" x="97.536" y="134.62" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="100.584" y="134.62" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
-<instance part="R1" gate="G$1" x="35.56" y="137.16" smashed="yes" rot="R180">
+<instance part="R4" gate="G$1" x="35.56" y="137.16" smashed="yes" rot="R180">
 <attribute name="NAME" x="35.56" y="135.636" size="1.778" layer="95" font="vector" rot="R180" align="bottom-center"/>
 <attribute name="VALUE" x="35.56" y="138.684" size="1.778" layer="96" font="vector" rot="R180" align="top-center"/>
 </instance>
-<instance part="C28" gate="G$1" x="210.82" y="152.4" smashed="yes">
-<attribute name="NAME" x="212.344" y="155.321" size="1.778" layer="95" font="vector"/>
-<attribute name="VALUE" x="212.344" y="150.241" size="1.778" layer="96" font="vector"/>
-</instance>
-<instance part="R32" gate="G$1" x="203.2" y="154.94" smashed="yes" rot="R270">
+<instance part="R35" gate="G$1" x="203.2" y="154.94" smashed="yes" rot="R270">
 <attribute name="NAME" x="204.724" y="154.94" size="1.778" layer="95" font="vector" rot="R270" align="bottom-center"/>
 <attribute name="VALUE" x="201.676" y="154.94" size="1.778" layer="96" font="vector" rot="R270" align="top-center"/>
 </instance>
@@ -4669,11 +4860,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND9" gate="1" x="33.02" y="63.5" smashed="yes">
 <attribute name="VALUE" x="33.02" y="63.246" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="C17" gate="G$1" x="20.32" y="91.44" smashed="yes">
+<instance part="C25" gate="G$1" x="20.32" y="91.44" smashed="yes">
 <attribute name="NAME" x="21.844" y="94.361" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="21.844" y="89.281" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C18" gate="G$1" x="30.48" y="91.44" smashed="yes">
+<instance part="C26" gate="G$1" x="30.48" y="91.44" smashed="yes">
 <attribute name="NAME" x="32.004" y="94.361" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="32.004" y="89.281" size="1.778" layer="96" font="vector"/>
 </instance>
@@ -4688,32 +4879,32 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="NAME" x="85.471" y="94.488" size="1.778" layer="95" font="vector" rot="R90"/>
 <attribute name="VALUE" x="90.805" y="94.488" size="1.778" layer="96" font="vector" rot="R90" align="top-left"/>
 </instance>
-<instance part="R17" gate="G$1" x="78.74" y="109.22" smashed="yes" rot="R90">
+<instance part="R20" gate="G$1" x="78.74" y="109.22" smashed="yes" rot="R90">
 <attribute name="NAME" x="77.216" y="109.22" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="80.264" y="109.22" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
-<instance part="R18" gate="G$1" x="88.9" y="109.22" smashed="yes" rot="R90">
+<instance part="R21" gate="G$1" x="88.9" y="109.22" smashed="yes" rot="R90">
 <attribute name="NAME" x="87.376" y="109.22" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="90.424" y="109.22" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
 <instance part="SUPPLY14" gate="G$1" x="83.82" y="116.84" smashed="yes">
 <attribute name="VALUE" x="83.82" y="119.634" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="C19" gate="G$1" x="10.16" y="88.9" smashed="yes">
+<instance part="C27" gate="G$1" x="10.16" y="88.9" smashed="yes">
 <attribute name="NAME" x="11.684" y="91.821" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="11.684" y="86.741" size="1.778" layer="96" font="vector"/>
 </instance>
 <instance part="TMUX154E" gate="G$1" x="48.26" y="33.02" smashed="yes">
 <attribute name="NAME" x="48.26" y="41.91" size="1.778" layer="95" font="vector" align="bottom-center"/>
 </instance>
-<instance part="C20" gate="G$1" x="66.04" y="43.18" smashed="yes">
+<instance part="C24" gate="G$1" x="66.04" y="43.18" smashed="yes">
 <attribute name="NAME" x="67.564" y="46.101" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="67.564" y="41.021" size="1.778" layer="96" font="vector"/>
 </instance>
 <instance part="SUPPLY9" gate="G$1" x="66.04" y="50.8" smashed="yes">
 <attribute name="VALUE" x="66.04" y="53.594" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="R13" gate="G$1" x="38.1" y="10.16" smashed="yes">
+<instance part="R17" gate="G$1" x="38.1" y="10.16" smashed="yes">
 <attribute name="NAME" x="38.1" y="11.684" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="38.1" y="8.636" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
@@ -4723,8 +4914,23 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND18" gate="1" x="81.28" y="15.24" smashed="yes">
 <attribute name="VALUE" x="81.28" y="14.986" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="SUPPLY15" gate="G$1" x="203.2" y="165.1" smashed="yes">
-<attribute name="VALUE" x="203.2" y="167.894" size="1.778" layer="96" align="bottom-center"/>
+<instance part="C35" gate="G$1" x="210.82" y="152.4" smashed="yes">
+<attribute name="NAME" x="212.344" y="155.321" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="212.344" y="150.241" size="1.778" layer="96" font="vector"/>
+</instance>
+<instance part="XC6702" gate="G$1" x="167.64" y="152.4" smashed="yes">
+<attribute name="NAME" x="167.64" y="158.75" size="1.778" layer="95" font="vector" align="bottom-center"/>
+</instance>
+<instance part="C6" gate="G$1" x="152.4" y="149.86" smashed="yes">
+<attribute name="NAME" x="153.924" y="152.781" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="153.924" y="147.701" size="1.778" layer="96" font="vector"/>
+</instance>
+<instance part="C5" gate="G$1" x="182.88" y="149.86" smashed="yes">
+<attribute name="NAME" x="184.404" y="152.781" size="1.778" layer="95" font="vector"/>
+<attribute name="VALUE" x="184.404" y="147.701" size="1.778" layer="96" font="vector"/>
+</instance>
+<instance part="GND36" gate="1" x="167.64" y="139.7" smashed="yes">
+<attribute name="VALUE" x="167.64" y="139.446" size="1.778" layer="96" align="top-center"/>
 </instance>
 </instances>
 <busses>
@@ -4742,10 +4948,10 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="200.66" y1="43.18" x2="198.12" y2="43.18" width="0.1524" layer="91"/>
 <wire x1="198.12" y1="43.18" x2="198.12" y2="40.64" width="0.1524" layer="91"/>
 <junction x="198.12" y="40.64"/>
-<pinref part="C14" gate="G$1" pin="2"/>
+<pinref part="C23" gate="G$1" pin="2"/>
 <wire x1="190.5" y1="55.88" x2="190.5" y2="40.64" width="0.1524" layer="91"/>
 <junction x="190.5" y="40.64"/>
-<pinref part="C16" gate="G$1" pin="2"/>
+<pinref part="C22" gate="G$1" pin="2"/>
 <wire x1="177.8" y1="30.48" x2="190.5" y2="30.48" width="0.1524" layer="91"/>
 <pinref part="TH3122" gate="G$1" pin="GND1"/>
 <pinref part="TH3122" gate="G$1" pin="GND2"/>
@@ -4762,7 +4968,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="185.42" y1="91.44" x2="185.42" y2="83.82" width="0.1524" layer="91"/>
 <pinref part="GND6" gate="1" pin="GND"/>
 <wire x1="185.42" y1="83.82" x2="200.66" y2="83.82" width="0.1524" layer="91"/>
-<pinref part="C7" gate="G$1" pin="2"/>
+<pinref part="C14" gate="G$1" pin="2"/>
 <wire x1="223.52" y1="99.06" x2="223.52" y2="96.52" width="0.1524" layer="91"/>
 <wire x1="223.52" y1="96.52" x2="233.68" y2="96.52" width="0.1524" layer="91"/>
 <wire x1="233.68" y1="96.52" x2="233.68" y2="83.82" width="0.1524" layer="91"/>
@@ -4771,7 +4977,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="25LC1024" gate="G$1" pin="VSS"/>
 </segment>
 <segment>
-<pinref part="C15" gate="G$1" pin="1"/>
+<pinref part="C21" gate="G$1" pin="1"/>
 <pinref part="GND5" gate="1" pin="GND"/>
 <wire x1="238.76" y1="43.18" x2="236.22" y2="43.18" width="0.1524" layer="91"/>
 <pinref part="TH3122" gate="G$1" pin="GND3"/>
@@ -4789,7 +4995,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="43.18" y1="137.16" x2="43.18" y2="147.32" width="0.1524" layer="91"/>
 <pinref part="Q1" gate="G$1" pin="S"/>
 <wire x1="43.18" y1="147.32" x2="30.48" y2="147.32" width="0.1524" layer="91"/>
-<pinref part="R1" gate="G$1" pin="1"/>
+<pinref part="R4" gate="G$1" pin="1"/>
 <wire x1="40.64" y1="137.16" x2="43.18" y2="137.16" width="0.1524" layer="91"/>
 <junction x="43.18" y="137.16"/>
 </segment>
@@ -4822,20 +5028,20 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="FT232RL" gate="G$1" pin="GND21"/>
 <wire x1="38.1" y1="68.58" x2="33.02" y2="68.58" width="0.1524" layer="91"/>
 <junction x="33.02" y="68.58"/>
-<pinref part="C17" gate="G$1" pin="2"/>
+<pinref part="C25" gate="G$1" pin="2"/>
 <wire x1="20.32" y1="88.9" x2="20.32" y2="76.2" width="0.1524" layer="91"/>
 <wire x1="20.32" y1="76.2" x2="33.02" y2="76.2" width="0.1524" layer="91"/>
-<pinref part="C18" gate="G$1" pin="2"/>
+<pinref part="C26" gate="G$1" pin="2"/>
 <wire x1="30.48" y1="88.9" x2="30.48" y2="78.74" width="0.1524" layer="91"/>
 <wire x1="30.48" y1="78.74" x2="33.02" y2="78.74" width="0.1524" layer="91"/>
 <junction x="33.02" y="78.74"/>
-<pinref part="C19" gate="G$1" pin="2"/>
+<pinref part="C27" gate="G$1" pin="2"/>
 <wire x1="10.16" y1="86.36" x2="10.16" y2="73.66" width="0.1524" layer="91"/>
 <wire x1="10.16" y1="73.66" x2="33.02" y2="73.66" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="GND18" gate="1" pin="GND"/>
-<pinref part="C20" gate="G$1" pin="2"/>
+<pinref part="C24" gate="G$1" pin="2"/>
 <wire x1="66.04" y1="40.64" x2="66.04" y2="38.1" width="0.1524" layer="91"/>
 <wire x1="66.04" y1="38.1" x2="81.28" y2="38.1" width="0.1524" layer="91"/>
 <wire x1="81.28" y1="38.1" x2="81.28" y2="35.56" width="0.1524" layer="91"/>
@@ -4848,11 +5054,22 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="50.8" y1="20.32" x2="50.8" y2="17.78" width="0.1524" layer="91"/>
 <wire x1="50.8" y1="17.78" x2="81.28" y2="17.78" width="0.1524" layer="91"/>
 </segment>
+<segment>
+<pinref part="C6" gate="G$1" pin="2"/>
+<wire x1="152.4" y1="147.32" x2="152.4" y2="142.24" width="0.1524" layer="91"/>
+<pinref part="XC6702" gate="G$1" pin="GND"/>
+<wire x1="152.4" y1="142.24" x2="167.64" y2="142.24" width="0.1524" layer="91"/>
+<pinref part="C5" gate="G$1" pin="2"/>
+<wire x1="167.64" y1="142.24" x2="182.88" y2="142.24" width="0.1524" layer="91"/>
+<wire x1="182.88" y1="142.24" x2="182.88" y2="147.32" width="0.1524" layer="91"/>
+<junction x="167.64" y="142.24"/>
+<pinref part="GND36" gate="1" pin="GND"/>
+</segment>
 </net>
 <net name="VIN" class="3">
 <segment>
 <wire x1="200.66" y1="50.8" x2="198.12" y2="50.8" width="0.1524" layer="91"/>
-<pinref part="C14" gate="G$1" pin="1"/>
+<pinref part="C23" gate="G$1" pin="1"/>
 <wire x1="198.12" y1="50.8" x2="198.12" y2="55.88" width="0.1524" layer="91"/>
 <pinref part="SUPPLY6" gate="G$1" pin="VIN"/>
 <wire x1="198.12" y1="66.04" x2="198.12" y2="55.88" width="0.1524" layer="91"/>
@@ -4860,19 +5077,24 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="TH3122" gate="G$1" pin="VS"/>
 </segment>
 <segment>
-<pinref part="Q2" gate="G$1" pin="S"/>
-<wire x1="124.46" y1="147.32" x2="124.46" y2="149.86" width="0.1524" layer="91"/>
-<pinref part="R4" gate="G$1" pin="2"/>
-<wire x1="124.46" y1="147.32" x2="121.92" y2="147.32" width="0.1524" layer="91"/>
+<pinref part="XC6702" gate="G$1" pin="VIN"/>
+<wire x1="154.94" y1="154.94" x2="157.48" y2="154.94" width="0.1524" layer="91"/>
+<pinref part="XC6702" gate="G$1" pin="CE"/>
+<wire x1="154.94" y1="154.94" x2="154.94" y2="149.86" width="0.1524" layer="91"/>
+<wire x1="154.94" y1="149.86" x2="157.48" y2="149.86" width="0.1524" layer="91"/>
+<pinref part="C6" gate="G$1" pin="1"/>
+<wire x1="154.94" y1="154.94" x2="152.4" y2="154.94" width="0.1524" layer="91"/>
+<junction x="154.94" y="154.94"/>
+<wire x1="152.4" y1="154.94" x2="149.86" y2="154.94" width="0.1524" layer="91"/>
+<junction x="152.4" y="154.94"/>
 <pinref part="SUPPLY16" gate="G$1" pin="VIN"/>
-<wire x1="154.94" y1="177.8" x2="154.94" y2="147.32" width="0.1524" layer="91"/>
-<wire x1="154.94" y1="147.32" x2="124.46" y2="147.32" width="0.1524" layer="91"/>
-<junction x="124.46" y="147.32"/>
+<wire x1="149.86" y1="154.94" x2="149.86" y2="177.8" width="0.1524" layer="91"/>
+<wire x1="149.86" y1="177.8" x2="154.94" y2="177.8" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="IBUS" class="4">
 <segment>
-<pinref part="R11" gate="G$1" pin="1"/>
+<pinref part="R14" gate="G$1" pin="1"/>
 <wire x1="167.64" y1="38.1" x2="165.1" y2="38.1" width="0.1524" layer="91"/>
 <label x="165.1" y="38.1" size="1.27" layer="95" rot="R90" xref="yes"/>
 </segment>
@@ -4890,7 +5112,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="213.36" y1="96.52" x2="218.44" y2="96.52" width="0.1524" layer="91"/>
 <wire x1="218.44" y1="96.52" x2="218.44" y2="109.22" width="0.1524" layer="91"/>
 <junction x="218.44" y="109.22"/>
-<pinref part="C7" gate="G$1" pin="1"/>
+<pinref part="C14" gate="G$1" pin="1"/>
 <wire x1="223.52" y1="109.22" x2="223.52" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="223.52" y1="106.68" x2="213.36" y2="106.68" width="0.1524" layer="91"/>
 <junction x="223.52" y="106.68"/>
@@ -4898,20 +5120,20 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="25LC1024" gate="G$1" pin="WP"/>
 <pinref part="25LC1024" gate="G$1" pin="VDD"/>
 <pinref part="25LC1024" gate="G$1" pin="HOLD"/>
-<pinref part="R8" gate="G$1" pin="2"/>
+<pinref part="R11" gate="G$1" pin="2"/>
 </segment>
 <segment>
 <pinref part="SUPPLY14" gate="G$1" pin="3.3V"/>
 <wire x1="83.82" y1="116.84" x2="83.82" y2="114.3" width="0.1524" layer="91"/>
-<pinref part="R17" gate="G$1" pin="2"/>
+<pinref part="R20" gate="G$1" pin="2"/>
 <wire x1="78.74" y1="114.3" x2="83.82" y2="114.3" width="0.1524" layer="91"/>
-<pinref part="R18" gate="G$1" pin="2"/>
+<pinref part="R21" gate="G$1" pin="2"/>
 <wire x1="83.82" y1="114.3" x2="88.9" y2="114.3" width="0.1524" layer="91"/>
 <junction x="83.82" y="114.3"/>
 </segment>
 <segment>
 <pinref part="SUPPLY9" gate="G$1" pin="3.3V"/>
-<pinref part="C20" gate="G$1" pin="1"/>
+<pinref part="C24" gate="G$1" pin="1"/>
 <wire x1="66.04" y1="50.8" x2="66.04" y2="48.26" width="0.1524" layer="91"/>
 <pinref part="TMUX154E" gate="G$1" pin="VCC"/>
 <wire x1="60.96" y1="48.26" x2="60.96" y2="38.1" width="0.1524" layer="91"/>
@@ -4920,7 +5142,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </segment>
 <segment>
 <pinref part="SUPPLY20" gate="G$1" pin="3.3V"/>
-<pinref part="R13" gate="G$1" pin="1"/>
+<pinref part="R17" gate="G$1" pin="1"/>
 <wire x1="33.02" y1="20.32" x2="33.02" y2="10.16" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -4950,7 +5172,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="187.96" y1="99.06" x2="182.88" y2="99.06" width="0.1524" layer="91"/>
 <label x="182.88" y="99.06" size="1.27" layer="95" rot="R180" xref="yes"/>
 <pinref part="25LC1024" gate="G$1" pin="CE"/>
-<pinref part="R8" gate="G$1" pin="1"/>
+<pinref part="R11" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="EE_SO" class="5">
@@ -4976,8 +5198,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="IBUS_FILT" class="0">
 <segment>
-<pinref part="R11" gate="G$1" pin="2"/>
-<pinref part="C16" gate="G$1" pin="1"/>
+<pinref part="R14" gate="G$1" pin="2"/>
+<pinref part="C22" gate="G$1" pin="1"/>
 <wire x1="177.8" y1="38.1" x2="200.66" y2="38.1" width="0.1524" layer="91"/>
 <junction x="177.8" y="38.1"/>
 <pinref part="TH3122" gate="G$1" pin="IBUS"/>
@@ -4992,7 +5214,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="IBUS_5V" class="0">
 <segment>
-<pinref part="C15" gate="G$1" pin="2"/>
+<pinref part="C21" gate="G$1" pin="2"/>
 <pinref part="TH3122" gate="G$1" pin="VCC"/>
 <wire x1="226.06" y1="50.8" x2="236.22" y2="50.8" width="0.1524" layer="91"/>
 <label x="236.22" y="50.8" size="1.27" layer="95" rot="R90" xref="yes"/>
@@ -5000,7 +5222,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="TEL_ON_IO" class="0">
 <segment>
-<pinref part="R2" gate="G$1" pin="2"/>
+<pinref part="R1" gate="G$1" pin="2"/>
 <wire x1="124.46" y1="172.72" x2="124.46" y2="175.26" width="0.1524" layer="91"/>
 <label x="124.46" y="175.26" size="1.27" layer="95" xref="yes"/>
 </segment>
@@ -5028,7 +5250,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="109.22" y1="152.4" x2="109.22" y2="147.32" width="0.1524" layer="91"/>
 <pinref part="Q2" gate="G$1" pin="G"/>
 <wire x1="116.84" y1="152.4" x2="111.76" y2="152.4" width="0.1524" layer="91"/>
-<pinref part="R4" gate="G$1" pin="1"/>
+<pinref part="R2" gate="G$1" pin="1"/>
 <wire x1="111.76" y1="147.32" x2="111.76" y2="152.4" width="0.1524" layer="91"/>
 <wire x1="111.76" y1="152.4" x2="109.22" y2="152.4" width="0.1524" layer="91"/>
 <junction x="111.76" y="152.4"/>
@@ -5036,7 +5258,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="TEL_ON" class="0">
 <segment>
-<pinref part="R2" gate="G$1" pin="1"/>
+<pinref part="R1" gate="G$1" pin="1"/>
 <pinref part="Q2" gate="G$1" pin="D"/>
 <wire x1="124.46" y1="162.56" x2="124.46" y2="160.02" width="0.1524" layer="91"/>
 </segment>
@@ -5045,7 +5267,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <wire x1="10.16" y1="137.16" x2="10.16" y2="147.32" width="0.1524" layer="91"/>
 <label x="10.16" y="147.32" size="1.27" layer="95" rot="R90" xref="yes"/>
-<pinref part="R1" gate="G$1" pin="2"/>
+<pinref part="R4" gate="G$1" pin="2"/>
 <pinref part="Q1" gate="G$1" pin="G"/>
 <wire x1="30.48" y1="137.16" x2="27.94" y2="137.16" width="0.1524" layer="91"/>
 <wire x1="27.94" y1="137.16" x2="27.94" y2="139.7" width="0.1524" layer="91"/>
@@ -5055,10 +5277,10 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="5V" class="6">
 <segment>
-<pinref part="C18" gate="G$1" pin="1"/>
+<pinref part="C26" gate="G$1" pin="1"/>
 <pinref part="FT232RL" gate="G$1" pin="VCC"/>
 <wire x1="30.48" y1="96.52" x2="38.1" y2="96.52" width="0.1524" layer="91"/>
-<pinref part="C17" gate="G$1" pin="1"/>
+<pinref part="C25" gate="G$1" pin="1"/>
 <wire x1="30.48" y1="96.52" x2="20.32" y2="96.52" width="0.1524" layer="91"/>
 <junction x="30.48" y="96.52"/>
 <wire x1="20.32" y1="96.52" x2="10.16" y2="96.52" width="0.1524" layer="91"/>
@@ -5066,27 +5288,22 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <junction x="20.32" y="96.52"/>
 <pinref part="SUPPLY13" gate="G$1" pin="5V"/>
 </segment>
-<segment>
-<pinref part="R32" gate="G$1" pin="1"/>
-<wire x1="203.2" y1="160.02" x2="203.2" y2="165.1" width="0.1524" layer="91"/>
-<pinref part="SUPPLY15" gate="G$1" pin="5V"/>
-</segment>
 </net>
 <net name="BT_MIC_L" class="0">
 <segment>
-<pinref part="C28" gate="G$1" pin="1"/>
 <wire x1="210.82" y1="157.48" x2="210.82" y2="160.02" width="0.1524" layer="91"/>
 <label x="210.82" y="160.02" size="1.27" layer="95" xref="yes"/>
+<pinref part="C35" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="TEL_MIC_L_OUT" class="0">
 <segment>
-<pinref part="C28" gate="G$1" pin="2"/>
 <wire x1="203.2" y1="149.86" x2="210.82" y2="149.86" width="0.1524" layer="91"/>
-<pinref part="R32" gate="G$1" pin="2"/>
+<pinref part="R35" gate="G$1" pin="2"/>
 <wire x1="210.82" y1="149.86" x2="210.82" y2="147.32" width="0.1524" layer="91"/>
-<junction x="210.82" y="149.86"/>
 <label x="210.82" y="147.32" size="1.27" layer="95" xref="yes"/>
+<pinref part="C35" gate="G$1" pin="2"/>
+<junction x="210.82" y="149.86"/>
 </segment>
 </net>
 <net name="SYS_USB_DN" class="4">
@@ -5149,7 +5366,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="SYS_3V3" class="0">
 <segment>
-<pinref part="C19" gate="G$1" pin="1"/>
+<pinref part="C27" gate="G$1" pin="1"/>
 <pinref part="FT232RL" gate="G$1" pin="3V3OUT"/>
 <wire x1="10.16" y1="93.98" x2="17.78" y2="93.98" width="0.1524" layer="91"/>
 <pinref part="FT232RL" gate="G$1" pin="VCCIO"/>
@@ -5162,14 +5379,14 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="TX_LED_RES" class="0">
 <segment>
-<pinref part="R18" gate="G$1" pin="1"/>
+<pinref part="R21" gate="G$1" pin="1"/>
 <pinref part="TX" gate="G$1" pin="A"/>
 <wire x1="88.9" y1="104.14" x2="88.9" y2="101.6" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="RX_LED_RES" class="0">
 <segment>
-<pinref part="R17" gate="G$1" pin="1"/>
+<pinref part="R20" gate="G$1" pin="1"/>
 <pinref part="RX" gate="G$1" pin="A"/>
 <wire x1="78.74" y1="104.14" x2="78.74" y2="101.6" width="0.1524" layer="91"/>
 </segment>
@@ -5199,7 +5416,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <pinref part="TMUX154E" gate="G$1" pin="SEL"/>
 <wire x1="48.26" y1="20.32" x2="48.26" y2="10.16" width="0.1524" layer="91"/>
-<pinref part="R13" gate="G$1" pin="2"/>
+<pinref part="R17" gate="G$1" pin="2"/>
 <wire x1="48.26" y1="10.16" x2="43.18" y2="10.16" width="0.1524" layer="91"/>
 <label x="48.26" y="10.16" size="1.27" layer="95" xref="yes"/>
 </segment>
@@ -5220,6 +5437,29 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <label x="86.36" y="86.36" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
+<net name="12V" class="3">
+<segment>
+<pinref part="Q2" gate="G$1" pin="S"/>
+<wire x1="124.46" y1="147.32" x2="124.46" y2="149.86" width="0.1524" layer="91"/>
+<pinref part="R2" gate="G$1" pin="2"/>
+<wire x1="124.46" y1="147.32" x2="121.92" y2="147.32" width="0.1524" layer="91"/>
+<junction x="124.46" y="147.32"/>
+<pinref part="XC6702" gate="G$1" pin="VOUT"/>
+<wire x1="144.78" y1="147.32" x2="124.46" y2="147.32" width="0.1524" layer="91"/>
+<wire x1="177.8" y1="154.94" x2="182.88" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="182.88" y1="154.94" x2="193.04" y2="154.94" width="0.1524" layer="91"/>
+<wire x1="193.04" y1="154.94" x2="193.04" y2="137.16" width="0.1524" layer="91"/>
+<wire x1="193.04" y1="137.16" x2="144.78" y2="137.16" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="137.16" x2="144.78" y2="147.32" width="0.1524" layer="91"/>
+<pinref part="C5" gate="G$1" pin="1"/>
+<junction x="182.88" y="154.94"/>
+</segment>
+<segment>
+<pinref part="R35" gate="G$1" pin="1"/>
+<wire x1="203.2" y1="160.02" x2="203.2" y2="165.1" width="0.1524" layer="91"/>
+<label x="203.2" y="165.1" size="1.778" layer="95"/>
+</segment>
+</net>
 </nets>
 </sheet>
 <sheet>
@@ -5237,62 +5477,62 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="SHEET" x="233.68" y="1.27" size="2.54" layer="94" font="vector"/>
 <attribute name="DRAWING_NAME" x="162.814" y="17.78" size="2.7432" layer="94" font="vector"/>
 </instance>
-<instance part="C45" gate="G$1" x="81.28" y="109.22" smashed="yes">
+<instance part="C52" gate="G$1" x="81.28" y="109.22" smashed="yes">
 <attribute name="NAME" x="82.804" y="112.141" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="82.804" y="107.061" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C46" gate="G$1" x="22.86" y="111.76" smashed="yes">
+<instance part="C53" gate="G$1" x="22.86" y="111.76" smashed="yes">
 <attribute name="NAME" x="24.384" y="114.681" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="24.384" y="109.601" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C41" gate="G$1" x="58.42" y="109.22" smashed="yes">
+<instance part="C48" gate="G$1" x="58.42" y="109.22" smashed="yes">
 <attribute name="NAME" x="59.944" y="112.141" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="59.944" y="107.061" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C48" gate="G$1" x="15.24" y="124.46" smashed="yes">
+<instance part="C55" gate="G$1" x="15.24" y="124.46" smashed="yes">
 <attribute name="NAME" x="16.764" y="127.381" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="16.764" y="122.301" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C44" gate="G$1" x="91.44" y="109.22" smashed="yes">
+<instance part="C51" gate="G$1" x="91.44" y="109.22" smashed="yes">
 <attribute name="NAME" x="92.964" y="112.141" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="92.964" y="107.061" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C47" gate="G$1" x="12.7" y="111.76" smashed="yes">
+<instance part="C54" gate="G$1" x="12.7" y="111.76" smashed="yes">
 <attribute name="NAME" x="14.224" y="114.681" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="14.224" y="109.601" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C40" gate="G$1" x="68.58" y="109.22" smashed="yes">
+<instance part="C47" gate="G$1" x="68.58" y="109.22" smashed="yes">
 <attribute name="NAME" x="70.104" y="112.141" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="70.104" y="107.061" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C49" gate="G$1" x="5.08" y="124.46" smashed="yes">
+<instance part="C56" gate="G$1" x="5.08" y="124.46" smashed="yes">
 <attribute name="NAME" x="6.604" y="127.381" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="6.604" y="122.301" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C43" gate="G$1" x="93.98" y="129.54" smashed="yes" rot="R180">
+<instance part="C50" gate="G$1" x="93.98" y="129.54" smashed="yes" rot="R180">
 <attribute name="NAME" x="92.456" y="126.619" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="92.456" y="131.699" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
-<instance part="C42" gate="G$1" x="91.44" y="139.7" smashed="yes">
+<instance part="C49" gate="G$1" x="91.44" y="139.7" smashed="yes">
 <attribute name="NAME" x="92.964" y="142.621" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="92.964" y="137.541" size="1.778" layer="96" font="vector"/>
 </instance>
 <instance part="GND12" gate="1" x="45.72" y="170.18" smashed="yes">
 <attribute name="VALUE" x="45.72" y="169.926" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="R35" gate="G$1" x="88.9" y="160.02" smashed="yes">
+<instance part="R37" gate="G$1" x="88.9" y="160.02" smashed="yes">
 <attribute name="NAME" x="88.9" y="161.544" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="88.9" y="158.496" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="R34" gate="G$1" x="88.9" y="149.86" smashed="yes">
+<instance part="R38" gate="G$1" x="88.9" y="149.86" smashed="yes">
 <attribute name="NAME" x="88.9" y="151.384" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="88.9" y="148.336" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="C39" gate="G$1" x="106.68" y="165.1" smashed="yes" rot="R180">
+<instance part="C45" gate="G$1" x="106.68" y="165.1" smashed="yes" rot="R180">
 <attribute name="NAME" x="105.156" y="162.179" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="105.156" y="167.259" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
-<instance part="C38" gate="G$1" x="106.68" y="144.78" smashed="yes">
+<instance part="C46" gate="G$1" x="106.68" y="144.78" smashed="yes">
 <attribute name="NAME" x="108.204" y="147.701" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="108.204" y="142.621" size="1.778" layer="96" font="vector"/>
 </instance>
@@ -5329,11 +5569,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND20" gate="1" x="7.62" y="45.72" smashed="yes" rot="R270">
 <attribute name="VALUE" x="7.366" y="45.72" size="1.778" layer="96" rot="R270" align="top-center"/>
 </instance>
-<instance part="C31" gate="G$1" x="40.64" y="73.66" smashed="yes" rot="R180">
+<instance part="C36" gate="G$1" x="40.64" y="73.66" smashed="yes" rot="R180">
 <attribute name="NAME" x="39.116" y="70.739" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="39.116" y="75.819" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
-<instance part="C30" gate="G$1" x="60.96" y="73.66" smashed="yes" rot="R180">
+<instance part="C38" gate="G$1" x="60.96" y="73.66" smashed="yes" rot="R180">
 <attribute name="NAME" x="59.436" y="70.739" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="59.436" y="75.819" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
@@ -5346,18 +5586,18 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="SUPPLY22" gate="G$1" x="53.34" y="22.86" smashed="yes">
 <attribute name="VALUE" x="53.34" y="25.654" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="C32" gate="G$1" x="73.66" y="17.78" smashed="yes">
+<instance part="C44" gate="G$1" x="73.66" y="17.78" smashed="yes">
 <attribute name="NAME" x="75.184" y="20.701" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="75.184" y="15.621" size="1.778" layer="96" font="vector"/>
 </instance>
 <instance part="GND24" gate="1" x="81.28" y="10.16" smashed="yes">
 <attribute name="VALUE" x="81.28" y="9.906" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="C23" gate="G$1" x="134.62" y="160.02" smashed="yes">
+<instance part="C30" gate="G$1" x="134.62" y="160.02" smashed="yes">
 <attribute name="NAME" x="136.144" y="162.941" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="136.144" y="157.861" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C26" gate="G$1" x="144.78" y="157.48" smashed="yes">
+<instance part="C33" gate="G$1" x="144.78" y="157.48" smashed="yes">
 <attribute name="NAME" x="146.304" y="160.401" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="146.304" y="155.321" size="1.778" layer="96" font="vector"/>
 </instance>
@@ -5371,33 +5611,33 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="NAME" x="226.06" y="134.112" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="226.06" y="130.048" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="C25" gate="G$1" x="208.28" y="129.54" smashed="yes">
+<instance part="C32" gate="G$1" x="208.28" y="129.54" smashed="yes">
 <attribute name="NAME" x="209.804" y="132.461" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="209.804" y="127.381" size="1.778" layer="96" font="vector"/>
 </instance>
-<instance part="C24" gate="G$1" x="241.3" y="129.54" smashed="yes">
+<instance part="C31" gate="G$1" x="241.3" y="129.54" smashed="yes">
 <attribute name="NAME" x="242.824" y="132.461" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="242.824" y="127.381" size="1.778" layer="96" font="vector"/>
 </instance>
 <instance part="GND27" gate="1" x="226.06" y="119.38" smashed="yes">
 <attribute name="VALUE" x="226.06" y="119.126" size="1.778" layer="96" align="top-center"/>
 </instance>
-<instance part="C33" gate="G$1" x="27.94" y="55.88" smashed="yes" rot="R90">
+<instance part="C43" gate="G$1" x="27.94" y="55.88" smashed="yes" rot="R90">
 <attribute name="NAME" x="25.019" y="57.404" size="1.778" layer="95" font="vector" rot="R90"/>
 <attribute name="VALUE" x="30.099" y="57.404" size="1.778" layer="96" font="vector" rot="R90"/>
 </instance>
 <instance part="PAM8406" gate="G$1" x="66.04" y="45.72" smashed="yes">
 <attribute name="NAME" x="66.04" y="27.94" size="1.778" layer="95" align="center"/>
 </instance>
-<instance part="C29" gate="G$1" x="53.34" y="73.66" smashed="yes" rot="R180">
+<instance part="C37" gate="G$1" x="53.34" y="73.66" smashed="yes" rot="R180">
 <attribute name="NAME" x="51.816" y="70.739" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="51.816" y="75.819" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
-<instance part="C37" gate="G$1" x="109.22" y="63.5" smashed="yes" rot="R180">
+<instance part="C39" gate="G$1" x="109.22" y="63.5" smashed="yes" rot="R180">
 <attribute name="NAME" x="107.696" y="60.579" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="107.696" y="65.659" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
-<instance part="C36" gate="G$1" x="109.22" y="43.18" smashed="yes">
+<instance part="C40" gate="G$1" x="109.22" y="43.18" smashed="yes">
 <attribute name="NAME" x="110.744" y="46.101" size="1.778" layer="95" font="vector"/>
 <attribute name="VALUE" x="110.744" y="41.021" size="1.778" layer="96" font="vector"/>
 </instance>
@@ -5409,34 +5649,34 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <attribute name="NAME" x="99.06" y="50.8" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="99.06" y="45.72" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="C27" gate="G$1" x="152.4" y="129.54" smashed="yes" rot="R270">
+<instance part="C34" gate="G$1" x="152.4" y="129.54" smashed="yes" rot="R270">
 <attribute name="NAME" x="155.321" y="128.016" size="1.778" layer="95" font="vector" rot="R270"/>
 <attribute name="VALUE" x="150.241" y="128.016" size="1.778" layer="96" font="vector" rot="R270"/>
 </instance>
-<instance part="R26" gate="G$1" x="144.78" y="124.46" smashed="yes" rot="R90">
+<instance part="R34" gate="G$1" x="144.78" y="124.46" smashed="yes" rot="R90">
 <attribute name="NAME" x="143.256" y="124.46" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="146.304" y="124.46" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
-<instance part="R29" gate="G$1" x="236.22" y="162.56" smashed="yes" rot="R270">
+<instance part="R31" gate="G$1" x="236.22" y="162.56" smashed="yes" rot="R270">
 <attribute name="NAME" x="237.744" y="162.56" size="1.778" layer="95" font="vector" rot="R270" align="bottom-center"/>
 <attribute name="VALUE" x="234.696" y="162.56" size="1.778" layer="96" font="vector" rot="R270" align="top-center"/>
 </instance>
 <instance part="SUPPLY24" gate="G$1" x="223.52" y="170.18" smashed="yes">
 <attribute name="VALUE" x="223.52" y="172.974" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="R33" gate="G$1" x="38.1" y="55.88" smashed="yes">
+<instance part="R36" gate="G$1" x="38.1" y="55.88" smashed="yes">
 <attribute name="NAME" x="38.1" y="57.404" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="38.1" y="54.356" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="R31" gate="G$1" x="223.52" y="162.56" smashed="yes" rot="R270">
+<instance part="R29" gate="G$1" x="223.52" y="162.56" smashed="yes" rot="R270">
 <attribute name="NAME" x="225.044" y="162.56" size="1.778" layer="95" font="vector" rot="R270" align="bottom-center"/>
 <attribute name="VALUE" x="221.996" y="162.56" size="1.778" layer="96" font="vector" rot="R270" align="top-center"/>
 </instance>
-<instance part="R28" gate="G$1" x="213.36" y="167.64" smashed="yes" rot="R270">
+<instance part="R32" gate="G$1" x="213.36" y="167.64" smashed="yes" rot="R270">
 <attribute name="NAME" x="214.884" y="167.64" size="1.778" layer="95" font="vector" rot="R270" align="bottom-center"/>
 <attribute name="VALUE" x="211.836" y="167.64" size="1.778" layer="96" font="vector" rot="R270" align="top-center"/>
 </instance>
-<instance part="R27" gate="G$1" x="243.84" y="162.56" smashed="yes" rot="R270">
+<instance part="R33" gate="G$1" x="243.84" y="162.56" smashed="yes" rot="R270">
 <attribute name="NAME" x="245.364" y="162.56" size="1.778" layer="95" font="vector" rot="R270" align="bottom-center"/>
 <attribute name="VALUE" x="242.316" y="162.56" size="1.778" layer="96" font="vector" rot="R270" align="top-center"/>
 </instance>
@@ -5447,15 +5687,15 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="GND26" gate="1" x="238.76" y="172.72" smashed="yes" rot="R180">
 <attribute name="VALUE" x="238.76" y="172.974" size="1.778" layer="96" rot="R180" align="top-center"/>
 </instance>
-<instance part="R25" gate="G$1" x="187.96" y="111.76" smashed="yes" rot="R90">
+<instance part="R27" gate="G$1" x="187.96" y="111.76" smashed="yes" rot="R90">
 <attribute name="NAME" x="186.436" y="111.76" size="1.778" layer="95" font="vector" rot="R90" align="bottom-center"/>
 <attribute name="VALUE" x="189.484" y="111.76" size="1.778" layer="96" font="vector" rot="R90" align="top-center"/>
 </instance>
-<instance part="R24" gate="G$1" x="195.58" y="116.84" smashed="yes">
+<instance part="R28" gate="G$1" x="195.58" y="116.84" smashed="yes">
 <attribute name="NAME" x="195.58" y="118.364" size="1.778" layer="95" font="vector" align="bottom-center"/>
 <attribute name="VALUE" x="195.58" y="115.316" size="1.778" layer="96" font="vector" align="top-center"/>
 </instance>
-<instance part="C22" gate="G$1" x="180.34" y="116.84" smashed="yes" rot="R90">
+<instance part="C29" gate="G$1" x="180.34" y="116.84" smashed="yes" rot="R90">
 <attribute name="NAME" x="177.419" y="118.364" size="1.778" layer="95" font="vector" rot="R90"/>
 <attribute name="VALUE" x="182.499" y="118.364" size="1.778" layer="96" font="vector" rot="R90"/>
 </instance>
@@ -5469,11 +5709,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <instance part="SUPPLY2" gate="G$1" x="106.68" y="116.84" smashed="yes">
 <attribute name="VALUE" x="106.68" y="119.634" size="1.778" layer="96" align="bottom-center"/>
 </instance>
-<instance part="C34" gate="G$1" x="68.58" y="73.66" smashed="yes" rot="R180">
+<instance part="C42" gate="G$1" x="68.58" y="73.66" smashed="yes" rot="R180">
 <attribute name="NAME" x="67.056" y="70.739" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="67.056" y="75.819" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
-<instance part="C35" gate="G$1" x="76.2" y="73.66" smashed="yes" rot="R180">
+<instance part="C41" gate="G$1" x="76.2" y="73.66" smashed="yes" rot="R180">
 <attribute name="NAME" x="74.676" y="70.739" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="74.676" y="75.819" size="1.778" layer="96" font="vector" rot="R180"/>
 </instance>
@@ -5502,12 +5742,12 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </segment>
 <segment>
 <pinref part="GND13" gate="1" pin="GND"/>
-<pinref part="C49" gate="G$1" pin="2"/>
+<pinref part="C56" gate="G$1" pin="2"/>
 <wire x1="5.08" y1="121.92" x2="5.08" y2="119.38" width="0.1524" layer="91"/>
 <pinref part="PCM5122" gate="G$1" pin="DGND"/>
 <wire x1="22.86" y1="129.54" x2="27.94" y2="129.54" width="0.1524" layer="91"/>
 <wire x1="22.86" y1="119.38" x2="22.86" y2="129.54" width="0.1524" layer="91"/>
-<pinref part="C48" gate="G$1" pin="2"/>
+<pinref part="C55" gate="G$1" pin="2"/>
 <wire x1="15.24" y1="121.92" x2="15.24" y2="119.38" width="0.1524" layer="91"/>
 <wire x1="15.24" y1="119.38" x2="22.86" y2="119.38" width="0.1524" layer="91"/>
 <junction x="15.24" y="119.38"/>
@@ -5516,32 +5756,32 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <junction x="5.08" y="119.38"/>
 <wire x1="5.08" y1="106.68" x2="12.7" y2="106.68" width="0.1524" layer="91"/>
 <junction x="5.08" y="106.68"/>
-<pinref part="C47" gate="G$1" pin="2"/>
+<pinref part="C54" gate="G$1" pin="2"/>
 <wire x1="12.7" y1="106.68" x2="12.7" y2="109.22" width="0.1524" layer="91"/>
 <wire x1="12.7" y1="106.68" x2="22.86" y2="106.68" width="0.1524" layer="91"/>
 <junction x="12.7" y="106.68"/>
-<pinref part="C46" gate="G$1" pin="2"/>
+<pinref part="C53" gate="G$1" pin="2"/>
 <wire x1="22.86" y1="106.68" x2="22.86" y2="109.22" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="GND21" gate="1" pin="GND"/>
-<pinref part="C37" gate="G$1" pin="2"/>
+<pinref part="C39" gate="G$1" pin="2"/>
 <wire x1="109.22" y1="66.04" x2="109.22" y2="76.2" width="0.1524" layer="91"/>
 <wire x1="109.22" y1="76.2" x2="83.82" y2="76.2" width="0.1524" layer="91"/>
-<pinref part="C29" gate="G$1" pin="2"/>
-<pinref part="C30" gate="G$1" pin="2"/>
+<pinref part="C37" gate="G$1" pin="2"/>
+<pinref part="C38" gate="G$1" pin="2"/>
 <wire x1="53.34" y1="76.2" x2="60.96" y2="76.2" width="0.1524" layer="91"/>
 <junction x="60.96" y="76.2"/>
 <wire x1="83.82" y1="76.2" x2="76.2" y2="76.2" width="0.1524" layer="91"/>
-<pinref part="C31" gate="G$1" pin="2"/>
+<pinref part="C36" gate="G$1" pin="2"/>
 <wire x1="76.2" y1="76.2" x2="68.58" y2="76.2" width="0.1524" layer="91"/>
 <wire x1="68.58" y1="76.2" x2="60.96" y2="76.2" width="0.1524" layer="91"/>
 <wire x1="40.64" y1="76.2" x2="53.34" y2="76.2" width="0.1524" layer="91"/>
 <junction x="53.34" y="76.2"/>
 <junction x="83.82" y="76.2"/>
-<pinref part="C34" gate="G$1" pin="2"/>
+<pinref part="C42" gate="G$1" pin="2"/>
 <junction x="68.58" y="76.2"/>
-<pinref part="C35" gate="G$1" pin="2"/>
+<pinref part="C41" gate="G$1" pin="2"/>
 <junction x="76.2" y="76.2"/>
 </segment>
 <segment>
@@ -5554,28 +5794,28 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="160.02" y1="157.48" x2="157.48" y2="157.48" width="0.1524" layer="91"/>
 <wire x1="157.48" y1="157.48" x2="157.48" y2="154.94" width="0.1524" layer="91"/>
 <junction x="157.48" y="154.94"/>
-<pinref part="C26" gate="G$1" pin="2"/>
+<pinref part="C33" gate="G$1" pin="2"/>
 <junction x="144.78" y="154.94"/>
-<pinref part="C23" gate="G$1" pin="2"/>
+<pinref part="C30" gate="G$1" pin="2"/>
 <wire x1="134.62" y1="157.48" x2="134.62" y2="154.94" width="0.1524" layer="91"/>
 <junction x="134.62" y="154.94"/>
 </segment>
 <segment>
-<pinref part="C24" gate="G$1" pin="2"/>
+<pinref part="C31" gate="G$1" pin="2"/>
 <wire x1="241.3" y1="127" x2="241.3" y2="121.92" width="0.1524" layer="91"/>
 <wire x1="241.3" y1="121.92" x2="226.06" y2="121.92" width="0.1524" layer="91"/>
 <pinref part="GND27" gate="1" pin="GND"/>
-<pinref part="C25" gate="G$1" pin="2"/>
+<pinref part="C32" gate="G$1" pin="2"/>
 <wire x1="208.28" y1="127" x2="208.28" y2="121.92" width="0.1524" layer="91"/>
 <junction x="226.06" y="121.92"/>
 <wire x1="208.28" y1="121.92" x2="226.06" y2="121.92" width="0.1524" layer="91"/>
 <wire x1="208.28" y1="121.92" x2="208.28" y2="106.68" width="0.1524" layer="91"/>
 <junction x="208.28" y="121.92"/>
-<pinref part="R26" gate="G$1" pin="1"/>
+<pinref part="R34" gate="G$1" pin="1"/>
 <wire x1="208.28" y1="106.68" x2="187.96" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="187.96" y1="106.68" x2="144.78" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="144.78" y1="106.68" x2="144.78" y2="119.38" width="0.1524" layer="91"/>
-<pinref part="R25" gate="G$1" pin="1"/>
+<pinref part="R27" gate="G$1" pin="1"/>
 <junction x="187.96" y="106.68"/>
 </segment>
 <segment>
@@ -5588,13 +5828,13 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="86.36" y1="50.8" x2="91.44" y2="50.8" width="0.1524" layer="91"/>
 <wire x1="91.44" y1="50.8" x2="91.44" y2="45.72" width="0.1524" layer="91"/>
 <junction x="91.44" y="45.72"/>
-<pinref part="C36" gate="G$1" pin="2"/>
+<pinref part="C40" gate="G$1" pin="2"/>
 <wire x1="109.22" y1="40.64" x2="96.52" y2="40.64" width="0.1524" layer="91"/>
 <wire x1="96.52" y1="40.64" x2="96.52" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="96.52" y1="45.72" x2="91.44" y2="45.72" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="C32" gate="G$1" pin="2"/>
+<pinref part="C44" gate="G$1" pin="2"/>
 <wire x1="73.66" y1="15.24" x2="73.66" y2="12.7" width="0.1524" layer="91"/>
 <wire x1="73.66" y1="12.7" x2="81.28" y2="12.7" width="0.1524" layer="91"/>
 <pinref part="GND24" gate="1" pin="GND"/>
@@ -5604,8 +5844,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <junction x="81.28" y="12.7"/>
 </segment>
 <segment>
-<pinref part="R27" gate="G$1" pin="1"/>
-<pinref part="R29" gate="G$1" pin="1"/>
+<pinref part="R33" gate="G$1" pin="1"/>
+<pinref part="R31" gate="G$1" pin="1"/>
 <wire x1="236.22" y1="167.64" x2="238.76" y2="167.64" width="0.1524" layer="91"/>
 <pinref part="GND26" gate="1" pin="GND"/>
 <wire x1="238.76" y1="167.64" x2="243.84" y2="167.64" width="0.1524" layer="91"/>
@@ -5622,15 +5862,15 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <pinref part="SUPPLY11" gate="G$1" pin="5V"/>
 <wire x1="33.02" y1="68.58" x2="33.02" y2="71.12" width="0.1524" layer="91"/>
-<pinref part="C31" gate="G$1" pin="1"/>
+<pinref part="C36" gate="G$1" pin="1"/>
 <wire x1="40.64" y1="68.58" x2="33.02" y2="68.58" width="0.1524" layer="91"/>
 <wire x1="40.64" y1="68.58" x2="45.72" y2="68.58" width="0.1524" layer="91"/>
 <junction x="40.64" y="68.58"/>
 <wire x1="45.72" y1="68.58" x2="45.72" y2="66.04" width="0.1524" layer="91"/>
 <pinref part="PAM8406" gate="G$1" pin="VDD"/>
 <wire x1="45.72" y1="66.04" x2="55.88" y2="66.04" width="0.1524" layer="91"/>
-<pinref part="C29" gate="G$1" pin="1"/>
-<pinref part="C30" gate="G$1" pin="1"/>
+<pinref part="C37" gate="G$1" pin="1"/>
+<pinref part="C38" gate="G$1" pin="1"/>
 <wire x1="53.34" y1="68.58" x2="60.96" y2="68.58" width="0.1524" layer="91"/>
 <pinref part="PAM8406" gate="G$1" pin="PVDDL"/>
 <wire x1="60.96" y1="68.58" x2="60.96" y2="66.04" width="0.1524" layer="91"/>
@@ -5640,9 +5880,9 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <junction x="45.72" y="68.58"/>
 <pinref part="PAM8406" gate="G$1" pin="PVDDR"/>
 <wire x1="66.04" y1="66.04" x2="66.04" y2="68.58" width="0.1524" layer="91"/>
-<pinref part="C34" gate="G$1" pin="1"/>
+<pinref part="C42" gate="G$1" pin="1"/>
 <wire x1="66.04" y1="68.58" x2="68.58" y2="68.58" width="0.1524" layer="91"/>
-<pinref part="C35" gate="G$1" pin="1"/>
+<pinref part="C41" gate="G$1" pin="1"/>
 <wire x1="68.58" y1="68.58" x2="76.2" y2="68.58" width="0.1524" layer="91"/>
 <junction x="68.58" y="68.58"/>
 <wire x1="60.96" y1="68.58" x2="66.04" y2="68.58" width="0.1524" layer="91"/>
@@ -5659,10 +5899,10 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="3.3V" class="2">
 <segment>
-<pinref part="C41" gate="G$1" pin="1"/>
+<pinref part="C48" gate="G$1" pin="1"/>
 <pinref part="SUPPLY17" gate="G$1" pin="3.3V"/>
 <wire x1="76.2" y1="116.84" x2="76.2" y2="114.3" width="0.1524" layer="91"/>
-<pinref part="C40" gate="G$1" pin="1"/>
+<pinref part="C47" gate="G$1" pin="1"/>
 <wire x1="68.58" y1="114.3" x2="76.2" y2="114.3" width="0.1524" layer="91"/>
 <junction x="68.58" y="114.3"/>
 <wire x1="68.58" y1="114.3" x2="58.42" y2="114.3" width="0.1524" layer="91"/>
@@ -5672,8 +5912,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="55.88" y1="114.3" x2="58.42" y2="114.3" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="C45" gate="G$1" pin="1"/>
-<pinref part="C44" gate="G$1" pin="1"/>
+<pinref part="C52" gate="G$1" pin="1"/>
+<pinref part="C51" gate="G$1" pin="1"/>
 <wire x1="91.44" y1="114.3" x2="81.28" y2="114.3" width="0.1524" layer="91"/>
 <junction x="81.28" y="114.3"/>
 <wire x1="81.28" y1="114.3" x2="81.28" y2="124.46" width="0.1524" layer="91"/>
@@ -5689,8 +5929,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="10.16" y1="160.02" x2="10.16" y2="154.94" width="0.1524" layer="91"/>
 <wire x1="10.16" y1="154.94" x2="10.16" y2="149.86" width="0.1524" layer="91"/>
 <wire x1="10.16" y1="149.86" x2="2.54" y2="149.86" width="0.1524" layer="91"/>
-<pinref part="C46" gate="G$1" pin="1"/>
-<pinref part="C47" gate="G$1" pin="1"/>
+<pinref part="C53" gate="G$1" pin="1"/>
+<pinref part="C54" gate="G$1" pin="1"/>
 <wire x1="22.86" y1="116.84" x2="12.7" y2="116.84" width="0.1524" layer="91"/>
 <wire x1="2.54" y1="149.86" x2="2.54" y2="116.84" width="0.1524" layer="91"/>
 <wire x1="2.54" y1="116.84" x2="12.7" y2="116.84" width="0.1524" layer="91"/>
@@ -5710,13 +5950,13 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <pinref part="SUPPLY23" gate="G$1" pin="3.3V"/>
 <wire x1="129.54" y1="172.72" x2="129.54" y2="167.64" width="0.1524" layer="91"/>
-<pinref part="C23" gate="G$1" pin="1"/>
+<pinref part="C30" gate="G$1" pin="1"/>
 <wire x1="129.54" y1="167.64" x2="134.62" y2="167.64" width="0.1524" layer="91"/>
 <wire x1="134.62" y1="167.64" x2="134.62" y2="165.1" width="0.1524" layer="91"/>
 <pinref part="WM8804" gate="G$1" pin="DVDD"/>
 <wire x1="134.62" y1="165.1" x2="160.02" y2="165.1" width="0.1524" layer="91"/>
 <junction x="134.62" y="165.1"/>
-<pinref part="C26" gate="G$1" pin="1"/>
+<pinref part="C33" gate="G$1" pin="1"/>
 <wire x1="134.62" y1="167.64" x2="144.78" y2="167.64" width="0.1524" layer="91"/>
 <wire x1="144.78" y1="167.64" x2="144.78" y2="162.56" width="0.1524" layer="91"/>
 <junction x="134.62" y="167.64"/>
@@ -5725,11 +5965,11 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <junction x="144.78" y="162.56"/>
 </segment>
 <segment>
-<pinref part="R31" gate="G$1" pin="1"/>
+<pinref part="R29" gate="G$1" pin="1"/>
 <pinref part="SUPPLY24" gate="G$1" pin="3.3V"/>
 <wire x1="223.52" y1="167.64" x2="223.52" y2="170.18" width="0.1524" layer="91"/>
 <pinref part="R30" gate="G$1" pin="1"/>
-<pinref part="R28" gate="G$1" pin="1"/>
+<pinref part="R32" gate="G$1" pin="1"/>
 <wire x1="205.74" y1="172.72" x2="213.36" y2="172.72" width="0.1524" layer="91"/>
 <wire x1="213.36" y1="172.72" x2="218.44" y2="172.72" width="0.1524" layer="91"/>
 <junction x="213.36" y="172.72"/>
@@ -5766,7 +6006,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <wire x1="93.98" y1="134.62" x2="73.66" y2="134.62" width="0.1524" layer="91"/>
 <pinref part="PCM5122" gate="G$1" pin="CAPM"/>
-<pinref part="C43" gate="G$1" pin="2"/>
+<pinref part="C50" gate="G$1" pin="2"/>
 <wire x1="93.98" y1="134.62" x2="93.98" y2="132.08" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -5781,8 +6021,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="101.6" y1="147.32" x2="101.6" y2="134.62" width="0.1524" layer="91"/>
 <wire x1="101.6" y1="134.62" x2="101.6" y2="127" width="0.1524" layer="91"/>
 <junction x="101.6" y="127"/>
-<pinref part="C45" gate="G$1" pin="2"/>
-<pinref part="C44" gate="G$1" pin="2"/>
+<pinref part="C52" gate="G$1" pin="2"/>
+<pinref part="C51" gate="G$1" pin="2"/>
 <wire x1="81.28" y1="106.68" x2="91.44" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="101.6" y1="127" x2="101.6" y2="116.84" width="0.1524" layer="91"/>
 <wire x1="101.6" y1="116.84" x2="101.6" y2="106.68" width="0.1524" layer="91"/>
@@ -5790,16 +6030,16 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <junction x="101.6" y="127"/>
 <junction x="91.44" y="106.68"/>
 <wire x1="53.34" y1="119.38" x2="53.34" y2="106.68" width="0.1524" layer="91"/>
-<pinref part="C41" gate="G$1" pin="2"/>
+<pinref part="C48" gate="G$1" pin="2"/>
 <wire x1="53.34" y1="106.68" x2="58.42" y2="106.68" width="0.1524" layer="91"/>
-<pinref part="C40" gate="G$1" pin="2"/>
+<pinref part="C47" gate="G$1" pin="2"/>
 <wire x1="58.42" y1="106.68" x2="68.58" y2="106.68" width="0.1524" layer="91"/>
 <junction x="58.42" y="106.68"/>
 <wire x1="68.58" y1="106.68" x2="81.28" y2="106.68" width="0.1524" layer="91"/>
 <junction x="68.58" y="106.68"/>
 <junction x="81.28" y="106.68"/>
 <pinref part="PCM5122" gate="G$1" pin="AGND"/>
-<pinref part="C38" gate="G$1" pin="2"/>
+<pinref part="C46" gate="G$1" pin="2"/>
 <wire x1="106.68" y1="142.24" x2="106.68" y2="134.62" width="0.1524" layer="91"/>
 <wire x1="106.68" y1="134.62" x2="101.6" y2="134.62" width="0.1524" layer="91"/>
 <junction x="101.6" y="134.62"/>
@@ -5808,7 +6048,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="83.82" y1="127" x2="83.82" y2="116.84" width="0.1524" layer="91"/>
 <wire x1="83.82" y1="116.84" x2="101.6" y2="116.84" width="0.1524" layer="91"/>
 <junction x="101.6" y="116.84"/>
-<pinref part="C42" gate="G$1" pin="1"/>
+<pinref part="C49" gate="G$1" pin="1"/>
 <wire x1="91.44" y1="144.78" x2="91.44" y2="147.32" width="0.1524" layer="91"/>
 <wire x1="91.44" y1="147.32" x2="101.6" y2="147.32" width="0.1524" layer="91"/>
 <pinref part="PCM5122" gate="G$1" pin="VCOM/DEMP"/>
@@ -5819,13 +6059,13 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </segment>
 <segment>
 <pinref part="AGND2" gate="G$1" pin="AGND"/>
-<pinref part="C39" gate="G$1" pin="2"/>
+<pinref part="C45" gate="G$1" pin="2"/>
 <wire x1="106.68" y1="170.18" x2="106.68" y2="167.64" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="DAC_VNEG" class="0">
 <segment>
-<pinref part="C42" gate="G$1" pin="2"/>
+<pinref part="C49" gate="G$1" pin="2"/>
 <wire x1="73.66" y1="137.16" x2="91.44" y2="137.16" width="0.1524" layer="91"/>
 <pinref part="PCM5122" gate="G$1" pin="VNEG"/>
 </segment>
@@ -5836,7 +6076,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="PCM5122" gate="G$1" pin="CAPP"/>
 <wire x1="86.36" y1="132.08" x2="86.36" y2="121.92" width="0.1524" layer="91"/>
 <wire x1="86.36" y1="121.92" x2="93.98" y2="121.92" width="0.1524" layer="91"/>
-<pinref part="C43" gate="G$1" pin="1"/>
+<pinref part="C50" gate="G$1" pin="1"/>
 <wire x1="93.98" y1="121.92" x2="93.98" y2="124.46" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -5844,15 +6084,15 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <wire x1="73.66" y1="152.4" x2="76.2" y2="152.4" width="0.1524" layer="91"/>
 <wire x1="76.2" y1="152.4" x2="76.2" y2="160.02" width="0.1524" layer="91"/>
-<pinref part="R35" gate="G$1" pin="1"/>
+<pinref part="R37" gate="G$1" pin="1"/>
 <wire x1="76.2" y1="160.02" x2="83.82" y2="160.02" width="0.1524" layer="91"/>
 <pinref part="PCM5122" gate="G$1" pin="OUTR"/>
 </segment>
 </net>
 <net name="SPKR_OUT_R" class="0">
 <segment>
-<pinref part="R35" gate="G$1" pin="2"/>
-<pinref part="C39" gate="G$1" pin="1"/>
+<pinref part="R37" gate="G$1" pin="2"/>
+<pinref part="C45" gate="G$1" pin="1"/>
 <wire x1="93.98" y1="160.02" x2="106.68" y2="160.02" width="0.1524" layer="91"/>
 <wire x1="106.68" y1="160.02" x2="114.3" y2="160.02" width="0.1524" layer="91"/>
 <junction x="106.68" y="160.02"/>
@@ -5868,7 +6108,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="DAC_OUT_L" class="0">
 <segment>
-<pinref part="R34" gate="G$1" pin="1"/>
+<pinref part="R38" gate="G$1" pin="1"/>
 <wire x1="83.82" y1="149.86" x2="73.66" y2="149.86" width="0.1524" layer="91"/>
 <pinref part="PCM5122" gate="G$1" pin="OUTL"/>
 </segment>
@@ -5881,7 +6121,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="TEL_AMP_VREF" class="0">
 <segment>
-<pinref part="C32" gate="G$1" pin="1"/>
+<pinref part="C44" gate="G$1" pin="1"/>
 <wire x1="73.66" y1="25.4" x2="73.66" y2="22.86" width="0.1524" layer="91"/>
 <pinref part="PAM8406" gate="G$1" pin="VREF"/>
 </segment>
@@ -5900,7 +6140,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="WM_XOP" class="0">
 <segment>
-<pinref part="C25" gate="G$1" pin="1"/>
+<pinref part="C32" gate="G$1" pin="1"/>
 <wire x1="208.28" y1="134.62" x2="215.9" y2="134.62" width="0.1524" layer="91"/>
 <wire x1="215.9" y1="134.62" x2="215.9" y2="132.08" width="0.1524" layer="91"/>
 <pinref part="X1" gate="G$1" pin="1"/>
@@ -5918,14 +6158,14 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <wire x1="45.72" y1="48.26" x2="45.72" y2="55.88" width="0.1524" layer="91"/>
 <wire x1="43.18" y1="55.88" x2="45.72" y2="55.88" width="0.1524" layer="91"/>
 <pinref part="PAM8406" gate="G$1" pin="INL"/>
-<pinref part="R33" gate="G$1" pin="2"/>
+<pinref part="R36" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="TEL_AMP_INL_CAP_RES" class="0">
 <segment>
-<pinref part="C33" gate="G$1" pin="2"/>
+<pinref part="C43" gate="G$1" pin="2"/>
 <wire x1="30.48" y1="55.88" x2="33.02" y2="55.88" width="0.1524" layer="91"/>
-<pinref part="R33" gate="G$1" pin="1"/>
+<pinref part="R36" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="TEL_AMP_OUT_L-" class="0">
@@ -5945,7 +6185,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="TEL_OUT_L+" class="0">
 <segment>
-<pinref part="C37" gate="G$1" pin="1"/>
+<pinref part="C39" gate="G$1" pin="1"/>
 <wire x1="104.14" y1="58.42" x2="109.22" y2="58.42" width="0.1524" layer="91"/>
 <junction x="109.22" y="58.42"/>
 <label x="114.3" y="58.42" size="1.27" layer="95" rot="R90" xref="yes"/>
@@ -5955,7 +6195,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="TEL_OUT_L-" class="0">
 <segment>
-<pinref part="C36" gate="G$1" pin="1"/>
+<pinref part="C40" gate="G$1" pin="1"/>
 <wire x1="104.14" y1="48.26" x2="109.22" y2="48.26" width="0.1524" layer="91"/>
 <junction x="109.22" y="48.26"/>
 <label x="119.38" y="48.26" size="1.27" layer="95" rot="R90" xref="yes"/>
@@ -5967,15 +6207,15 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <segment>
 <pinref part="WM8804" gate="G$1" pin="RXO"/>
 <wire x1="160.02" y1="129.54" x2="157.48" y2="129.54" width="0.1524" layer="91"/>
-<pinref part="C27" gate="G$1" pin="1"/>
+<pinref part="C34" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="BT_DOUT" class="0">
 <segment>
-<pinref part="C27" gate="G$1" pin="2"/>
+<pinref part="C34" gate="G$1" pin="2"/>
 <wire x1="149.86" y1="129.54" x2="144.78" y2="129.54" width="0.1524" layer="91"/>
 <label x="142.24" y="129.54" size="1.27" layer="95" rot="R180" xref="yes"/>
-<pinref part="R26" gate="G$1" pin="2"/>
+<pinref part="R34" gate="G$1" pin="2"/>
 <wire x1="144.78" y1="129.54" x2="142.24" y2="129.54" width="0.1524" layer="91"/>
 <junction x="144.78" y="129.54"/>
 </segment>
@@ -5996,7 +6236,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <net name="WM_RESETB" class="0">
 <segment>
 <pinref part="WM8804" gate="G$1" pin="RESETB"/>
-<pinref part="R31" gate="G$1" pin="2"/>
+<pinref part="R29" gate="G$1" pin="2"/>
 <wire x1="195.58" y1="149.86" x2="223.52" y2="149.86" width="0.1524" layer="91"/>
 <wire x1="223.52" y1="149.86" x2="223.52" y2="157.48" width="0.1524" layer="91"/>
 </segment>
@@ -6004,7 +6244,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <net name="WM_XIN" class="0">
 <segment>
 <pinref part="X1" gate="G$1" pin="2"/>
-<pinref part="C24" gate="G$1" pin="1"/>
+<pinref part="C31" gate="G$1" pin="1"/>
 <wire x1="241.3" y1="134.62" x2="233.68" y2="134.62" width="0.1524" layer="91"/>
 <wire x1="233.68" y1="134.62" x2="233.68" y2="132.08" width="0.1524" layer="91"/>
 <wire x1="233.68" y1="132.08" x2="228.6" y2="132.08" width="0.1524" layer="91"/>
@@ -6018,7 +6258,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="WM_GPO0" class="0">
 <segment>
-<pinref part="R29" gate="G$1" pin="2"/>
+<pinref part="R31" gate="G$1" pin="2"/>
 <wire x1="236.22" y1="157.48" x2="236.22" y2="152.4" width="0.1524" layer="91"/>
 <pinref part="WM8804" gate="G$1" pin="GPO0/SWIFMODE"/>
 <wire x1="236.22" y1="152.4" x2="195.58" y2="152.4" width="0.1524" layer="91"/>
@@ -6029,24 +6269,24 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="WM8804" gate="G$1" pin="CSB/GPO1"/>
 <wire x1="195.58" y1="157.48" x2="198.12" y2="157.48" width="0.1524" layer="91"/>
 <wire x1="198.12" y1="157.48" x2="198.12" y2="147.32" width="0.1524" layer="91"/>
-<pinref part="R27" gate="G$1" pin="2"/>
+<pinref part="R33" gate="G$1" pin="2"/>
 <wire x1="198.12" y1="147.32" x2="243.84" y2="147.32" width="0.1524" layer="91"/>
 <wire x1="243.84" y1="147.32" x2="243.84" y2="157.48" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="WM_SPDIF_TX_RES2" class="0">
 <segment>
-<pinref part="R24" gate="G$1" pin="1"/>
-<pinref part="R25" gate="G$1" pin="2"/>
+<pinref part="R28" gate="G$1" pin="1"/>
+<pinref part="R27" gate="G$1" pin="2"/>
 <wire x1="190.5" y1="116.84" x2="187.96" y2="116.84" width="0.1524" layer="91"/>
-<pinref part="C22" gate="G$1" pin="2"/>
+<pinref part="C29" gate="G$1" pin="2"/>
 <wire x1="187.96" y1="116.84" x2="182.88" y2="116.84" width="0.1524" layer="91"/>
 <junction x="187.96" y="116.84"/>
 </segment>
 </net>
 <net name="SPDIF_OUT" class="0">
 <segment>
-<pinref part="C22" gate="G$1" pin="1"/>
+<pinref part="C29" gate="G$1" pin="1"/>
 <wire x1="175.26" y1="116.84" x2="172.72" y2="116.84" width="0.1524" layer="91"/>
 <label x="172.72" y="116.84" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
@@ -6056,7 +6296,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="WM8804" gate="G$1" pin="SCLK"/>
 <wire x1="195.58" y1="160.02" x2="200.66" y2="160.02" width="0.1524" layer="91"/>
 <wire x1="200.66" y1="160.02" x2="200.66" y2="157.48" width="0.1524" layer="91"/>
-<pinref part="R28" gate="G$1" pin="2"/>
+<pinref part="R32" gate="G$1" pin="2"/>
 <wire x1="200.66" y1="157.48" x2="213.36" y2="157.48" width="0.1524" layer="91"/>
 <wire x1="213.36" y1="157.48" x2="213.36" y2="162.56" width="0.1524" layer="91"/>
 <label x="213.36" y="157.48" size="1.27" layer="95" rot="R270" xref="yes"/>
@@ -6082,8 +6322,8 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="SPKR_OUT_L" class="0">
 <segment>
-<pinref part="R34" gate="G$1" pin="2"/>
-<pinref part="C38" gate="G$1" pin="1"/>
+<pinref part="R38" gate="G$1" pin="2"/>
+<pinref part="C46" gate="G$1" pin="1"/>
 <wire x1="93.98" y1="149.86" x2="106.68" y2="149.86" width="0.1524" layer="91"/>
 <wire x1="106.68" y1="149.86" x2="114.3" y2="149.86" width="0.1524" layer="91"/>
 <junction x="106.68" y="149.86"/>
@@ -6092,18 +6332,18 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 </net>
 <net name="TEL_AMP_IN" class="0">
 <segment>
-<pinref part="C33" gate="G$1" pin="1"/>
+<pinref part="C43" gate="G$1" pin="1"/>
 <pinref part="FB3" gate="G$1" pin="2"/>
 <wire x1="20.32" y1="55.88" x2="22.86" y2="55.88" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="DAC_LDOO" class="0">
 <segment>
-<pinref part="C49" gate="G$1" pin="1"/>
+<pinref part="C56" gate="G$1" pin="1"/>
 <wire x1="5.08" y1="129.54" x2="5.08" y2="132.08" width="0.1524" layer="91"/>
 <pinref part="PCM5122" gate="G$1" pin="LDOO"/>
 <wire x1="5.08" y1="132.08" x2="15.24" y2="132.08" width="0.1524" layer="91"/>
-<pinref part="C48" gate="G$1" pin="1"/>
+<pinref part="C55" gate="G$1" pin="1"/>
 <wire x1="15.24" y1="132.08" x2="27.94" y2="132.08" width="0.1524" layer="91"/>
 <wire x1="15.24" y1="129.54" x2="15.24" y2="132.08" width="0.1524" layer="91"/>
 <junction x="15.24" y="132.08"/>
@@ -6114,7 +6354,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <pinref part="WM8804" gate="G$1" pin="TXO"/>
 <wire x1="195.58" y1="129.54" x2="203.2" y2="129.54" width="0.1524" layer="91"/>
 <wire x1="203.2" y1="129.54" x2="203.2" y2="116.84" width="0.1524" layer="91"/>
-<pinref part="R24" gate="G$1" pin="2"/>
+<pinref part="R28" gate="G$1" pin="2"/>
 <wire x1="203.2" y1="116.84" x2="200.66" y2="116.84" width="0.1524" layer="91"/>
 </segment>
 </net>

@@ -60,52 +60,52 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_BMBTButton,
+        IBUS_EVENT_BMBTButton,
         &BMBTIBusBMBTButtonPress,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_CDStatusRequest,
+        IBUS_EVENT_CDStatusRequest,
         &BMBTIBusCDChangerStatus,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_GTChangeUIRequest,
+        IBUS_EVENT_GTChangeUIRequest,
         &BMBTIBusGTChangeUIRequest,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_IKECoolantTempUpdate,
+        IBUS_EVENT_IKECoolantTempUpdate,
         &BMBTIBusIKECoolantTempUpdate,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_GTMenuSelect,
+        IBUS_EVENT_GTMenuSelect,
         &BMBTIBusMenuSelect,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_RADDisplayMenu,
+        IBUS_EVENT_RADDisplayMenu,
         &BMBTRADDisplayMenu,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_RADUpdateMainArea,
+        IBUS_EVENT_RADUpdateMainArea,
         &BMBTRADUpdateMainArea,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_ValueUpdate,
+        IBUS_EVENT_ValueUpdate,
         &BMBTIBusValueUpdate,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_ScreenModeSet,
+        IBUS_EVENT_ScreenModeSet,
         &BMBTScreenModeSet,
         &Context
     );
     EventRegisterCallback(
-        IBusEvent_ScreenModeUpdate,
+        IBUS_EVENT_ScreenModeUpdate,
         &BMBTScreenModeUpdate,
         &Context
     );
@@ -158,43 +158,43 @@ void BMBTDestroy()
         &BMBTBC127PlaybackStatus
     );
     EventUnregisterCallback(
-        IBusEvent_BMBTButton,
+        IBUS_EVENT_BMBTButton,
         &BMBTIBusBMBTButtonPress
     );
     EventUnregisterCallback(
-        IBusEvent_CDStatusRequest,
+        IBUS_EVENT_CDStatusRequest,
         &BMBTIBusCDChangerStatus
     );
     EventUnregisterCallback(
-        IBusEvent_IKECoolantTempUpdate,
+        IBUS_EVENT_IKECoolantTempUpdate,
         &BMBTIBusIKECoolantTempUpdate
     );
     EventUnregisterCallback(
-        IBusEvent_GTChangeUIRequest,
+        IBUS_EVENT_GTChangeUIRequest,
         &BMBTIBusGTChangeUIRequest
     );
     EventUnregisterCallback(
-        IBusEvent_GTMenuSelect,
+        IBUS_EVENT_GTMenuSelect,
         &BMBTIBusMenuSelect
     );
     EventUnregisterCallback(
-        IBusEvent_RADDisplayMenu,
+        IBUS_EVENT_RADDisplayMenu,
         &BMBTRADDisplayMenu
     );
     EventUnregisterCallback(
-        IBusEvent_RADUpdateMainArea,
+        IBUS_EVENT_RADUpdateMainArea,
         &BMBTRADUpdateMainArea
     );
     EventUnregisterCallback(
-        IBusEvent_ValueUpdate,
+        IBUS_EVENT_ValueUpdate,
         &BMBTIBusValueUpdate
     );
     EventUnregisterCallback(
-        IBusEvent_ScreenModeSet,
+        IBUS_EVENT_ScreenModeSet,
         &BMBTScreenModeSet
     );
     EventUnregisterCallback(
-        IBusEvent_ScreenModeUpdate,
+        IBUS_EVENT_ScreenModeUpdate,
         &BMBTScreenModeUpdate
     );
     TimerUnregisterScheduledTask(&BMBTTimerHeaderWrite);

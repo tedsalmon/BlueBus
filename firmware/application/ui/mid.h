@@ -47,6 +47,10 @@
 #define MID_MODE_SETTINGS_NEW 6
 #define MID_MODE_DEVICES_NEW 7
 
+#define MID_MODE_CHANGE_OFF 0
+#define MID_MODE_CHANGE_PRESS 1
+#define MID_MODE_CHANGE_RELEASE 2
+
 #define MID_PAIRING_DEVICE_NONE -1
 
 #define MID_SETTING_IDX_HFP 0
@@ -58,6 +62,7 @@
 #define MID_SETTING_IDX_PAIRINGS 6
 #define MID_SETTING_MODE_SCROLL_SETTINGS 1
 #define MID_SETTING_MODE_SCROLL_VALUES 2
+#define MID_SETTING_METADATA_MODE_OFF 0x00
 #define MID_SETTING_METADATA_MODE_PARTY 0x01
 #define MID_SETTING_METADATA_MODE_CHUNK 0x02
 
@@ -79,6 +84,7 @@ typedef struct MIDContext_t {
     uint8_t settingIdx;
     uint8_t settingValue;
     uint8_t settingMode;
+    uint8_t modeChangeStatus;
     UtilsAbstractDisplayValue_t mainDisplay;
     UtilsAbstractDisplayValue_t tempDisplay;
     char mainText[16];
