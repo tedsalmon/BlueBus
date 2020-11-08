@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <xc.h>
+#include "config.h"
+
 #define UTILS_CHAR_LATIN_CAPITAL_A_WITH_GRAVE 0xC380
 #define UTILS_CHAR_LATIN_CAPITAL_A_WITH_ACUTE 0xC381
 #define UTILS_CHAR_LATIN_CAPITAL_A_WITH_CIRCUMFLEX 0xC382
@@ -75,6 +77,10 @@
 #define UTILS_CHAR_LATIN_SMALL_Y_WITH_ACUTE 0xC3BD
 #define UTILS_CHAR_LATIN_SMALL_THORN 0xC3BE
 #define UTILS_CHAR_LATIN_SMALL_Y_WITH_DIAERESIS 0xC3BF
+#define UTILS_CHAR_LATIN_CAPITAL_C_WITH_CARON 0xC48C
+#define UTILS_CHAR_LATIN_SMALL_C_WITH_CARON 0xC48D
+#define UTILS_CHAR_LATIN_CAPITAL_S_WITH_CARON 0xC5A0
+#define UTILS_CHAR_LATIN_SMALL_S_WITH_CARON 0xC5A1
 #define UTILS_CHAR_LATIN_SMALL_CAPITAL_R 0xCA80
 #define UTILS_CHAR_CYRILLIC_CAPITAL_IO 0xD081
 #define UTILS_CHAR_CYRILLIC_UA_CAPITAL_IE 0xD084
@@ -184,5 +190,6 @@ unsigned char UtilsStrToHex(char *);
 uint8_t UtilsStrToInt(char *);
 int8_t UtilsStricmp(const char *, const char *);
 char * UtilsTransliterateUnicodeToASCII(uint32_t);
-unsigned char UtilsTranslateCyrillicUnicodeToASCII(uint32_t);
+char * UtilsTransliterateExtendedASCIIToASCII(uint32_t);
+unsigned char UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t);
 #endif /* UTILS_H */

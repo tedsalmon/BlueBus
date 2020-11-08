@@ -41,6 +41,7 @@
 #define CONFIG_SETTING_BMBT_DEFAULT_MENU_ADDRESS 0x1E
 #define CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS 0x1F
 #define CONFIG_SETTING_BMBT_TEMP_HEADERS_ADDRESS 0x20
+#define CONFIG_SETTING_BMBT_LANGUAGE_ADDRESS 0x21
 /* Config 0x25 - 0x35: Comfort Settings */
 #define CONFIG_SETTING_COMFORT_BLINKERS_ADDRESS 0x25
 #define CONFIG_SETTING_COMFORT_LOCKS_ADDRESS 0x26
@@ -74,6 +75,10 @@
 #define CONFIG_SETTING_COMFORT_LOCK_20KM 0x02
 #define CONFIG_SETTING_COMFORT_UNLOCK_POS_1 0x01
 #define CONFIG_SETTING_COMFORT_UNLOCK_POS_0 0x02
+/* English language should be the first one and
+   Russian language should be the last one */
+#define CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH 0x01
+#define CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN 0x02
 /* EEPROM 0x1A - 0x50: User Configurable Settings */
 #define CONFIG_SETTING_LOG CONFIG_SETTING_LOG_ADDRESS
 #define CONFIG_SETTING_POWEROFF_TIMEOUT CONFIG_SETTING_POWEROFF_TIMEOUT_ADDRESS
@@ -83,6 +88,7 @@
 #define CONFIG_SETTING_BMBT_DEFAULT_MENU CONFIG_SETTING_BMBT_DEFAULT_MENU_ADDRESS
 #define CONFIG_SETTING_BMBT_DASHBOARD_OBC CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS
 #define CONFIG_SETTING_BMBT_TEMP_HEADERS CONFIG_SETTING_BMBT_TEMP_HEADERS_ADDRESS
+#define CONFIG_SETTING_BMBT_LANGUAGE CONFIG_SETTING_BMBT_LANGUAGE_ADDRESS
 /* Config 0x25 - 0x35: Comfort Settings */
 #define CONFIG_SETTING_COMFORT_BLINKERS CONFIG_SETTING_COMFORT_BLINKERS_ADDRESS
 #define CONFIG_SETTING_COMFORT_LOCKS CONFIG_SETTING_COMFORT_LOCKS_ADDRESS
@@ -128,6 +134,7 @@ unsigned char ConfigGetTrapCount(unsigned char);
 unsigned char ConfigGetTrapLast();
 unsigned char ConfigGetUIMode();
 unsigned char ConfigGetVehicleType();
+unsigned char ConfigGetLanguage();
 void ConfigGetVehicleIdentity(unsigned char *);
 void ConfigSetBootloaderMode(unsigned char);
 void ConfigSetComfortLock(unsigned char);
@@ -145,4 +152,5 @@ void ConfigSetTrapLast(unsigned char);
 void ConfigSetUIMode(unsigned char);
 void ConfigSetVehicleType(unsigned char);
 void ConfigSetVehicleIdentity(unsigned char *);
+void ConfigSetLanguage(unsigned char);
 #endif /* CONFIG_H */

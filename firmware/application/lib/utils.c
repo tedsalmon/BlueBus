@@ -77,10 +77,12 @@ void UtilsNormalizeText(char *string, const char *input)
     uint8_t bytesInChar = 0;
     uint32_t unicodeChar = 0;
 
+    char * transStr;
     uint8_t transIdx;
     uint8_t transStrLength;
 
     uint16_t strLength = strlen(input);
+    unsigned char language = ConfigGetLanguage();
 
     for (idx = 0; idx < strLength; idx++) {
         uint8_t c = (uint8_t) input[idx];
@@ -124,24 +126,38 @@ void UtilsNormalizeText(char *string, const char *input)
 
         if (unicodeChar <= 0x7F) {
             string[strIdx++] = (char) unicodeChar;
-        } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC2BF) {
-            // Convert UTF-8 byte to Unicode then check if it falls within
-            // the range of extended ASCII
-            uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
-            if (extendedChar < 0xFF) {
-                string[strIdx++] = (char) extendedChar;
-            }
-        } else if (unicodeChar > 0xC2BF) {
-            char * transStr = UtilsTransliterateUnicodeToASCII(unicodeChar);
-            transStrLength = strlen(transStr);
-            if (transStrLength != 0) {
-                for (transIdx = 0; transIdx < transStrLength; transIdx++) {
-                    string[strIdx++] = (char)transStr[transIdx];
-                }
+        } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC3BF) {
+            if (language == CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN &&
+                unicodeChar >= 0xC380) {
+                    transStr = UtilsTransliterateExtendedASCIIToASCII(unicodeChar);
+                    transStrLength = strlen(transStr);
+                    if (transStrLength != 0) {
+                        for (transIdx = 0; transIdx < transStrLength; transIdx++) {
+                            string[strIdx++] = (char)transStr[transIdx];
+                        }
+                    }
             } else {
-                unsigned char transChar = UtilsTranslateCyrillicUnicodeToASCII(unicodeChar);
-                if (transChar != 0) {
-                    string[strIdx++] = transChar;
+                // Convert UTF-8 byte to Unicode then check if it falls within
+                // the range of extended ASCII
+                uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
+                if (extendedChar < 0xFF) {
+                    string[strIdx++] = (char) extendedChar;
+                }
+            }
+        } else if (unicodeChar > 0xC3BF) {
+            unsigned char transChar = 0;
+            if (language == CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN) {
+                transChar = UtilsConvertCyrillicUnicodeToExtendedASCII(unicodeChar);
+            }
+            if (transChar != 0) {
+                string[strIdx++] = transChar;
+            } else {
+                transStr = UtilsTransliterateUnicodeToASCII(unicodeChar);
+                transStrLength = strlen(transStr);
+                if (transStrLength != 0) {
+                    for (transIdx = 0; transIdx < transStrLength; transIdx++) {
+                        string[strIdx++] = (char)transStr[transIdx];
+                    }
                 }
             }
         }
@@ -259,15 +275,260 @@ int8_t UtilsStricmp(const char *string, const char *compare)
 }
 
 /**
- * UtilsTransliterateUnicodeToExtendedASCII()
+ * UtilsTransliterateUnicodeToASCII()
  *     Description:
- *         Transliterates Unicode character to the corresponding ASCII string
+ *         Transliterates Unicode character to the corresponding ASCII string.
+ *         Extend this mapping to add new characters support.
  *     Params:
  *         uint32_t input - Representation of the Unicode character
  *     Returns:
  *         char * - Corresponding Extended ASCII characters
  */
 char * UtilsTransliterateUnicodeToASCII(uint32_t input)
+{
+    switch (input) {
+		case UTILS_CHAR_LATIN_SMALL_CAPITAL_R:
+            return "R";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_IO:
+            return "Yo";
+            break;
+        case UTILS_CHAR_CYRILLIC_UA_CAPITAL_IE:
+            return "E";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_I:
+        case UTILS_CHAR_CYRILLIC_BY_UA_CAPITAL_I:
+        case UTILS_CHAR_CYRILLIC_CAPITAL_YI:
+            return "I";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_A:
+            return "A";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_BE:
+            return "B";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_VE:
+            return "V";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_GHE:
+            return "G";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_DE:
+            return "D";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_YE:
+            return "Ye";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_ZHE:
+            return "Zh";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_ZE:
+            return "Z";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_SHORT_I:
+            return "Y";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_KA:
+            return "K";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_EL:
+            return "L";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_EM:
+            return "M";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_EN:
+            return "N";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_O:
+            return "O";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_PE:
+            return "P";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_ER:
+            return "R";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_ES:
+            return "S";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_TE:
+            return "T";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_U:
+        case UTILS_CHAR_CYRILLIC_CAPITAL_SHORT_U:
+            return "U";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_EF:
+            return "F";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_HA:
+            return "Kh";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_TSE:
+            return "Ts";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_C_WITH_CARON:
+        case UTILS_CHAR_CYRILLIC_CAPITAL_CHE:
+            return "Ch";
+            break;
+        case UTILS_CHAR_LATIN_CAPITAL_S_WITH_CARON:
+        case UTILS_CHAR_CYRILLIC_CAPITAL_SHA:
+            return "Sh";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_SCHA:
+            return "Shch";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_HARD_SIGN:
+            return "\"";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_YERU:
+            return "Y";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_SOFT_SIGN:
+            return "'";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_E:
+            return "E";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_YU:
+            return "Yu";
+            break;
+        case UTILS_CHAR_CYRILLIC_CAPITAL_YA:
+            return "Ya";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_A:
+            return "a";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_BE:
+            return "b";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_VE:
+            return "v";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_GHE:
+            return "g";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_DE:
+            return "d";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_IE:
+        case UTILS_CHAR_CYRILLIC_UA_SMALL_IE:
+            return "ye";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_ZHE:
+            return "zh";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_ZE:
+            return "z";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_I:
+        case UTILS_CHAR_CYRILLIC_BY_UA_SMALL_I:
+        case UTILS_CHAR_CYRILLIC_SMALL_YI:
+            return "i";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_SHORT_I:
+            return "y";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_KA:
+            return "k";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_EL:
+            return "l";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_EM:
+            return "m";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_EN:
+            return "n";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_O:
+            return "o";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_PE:
+            return "p";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_ER:
+            return "r";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_ES:
+            return "s";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_TE:
+            return "t";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_U:
+        case UTILS_CHAR_CYRILLIC_SMALL_SHORT_U:
+            return "u";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_EF:
+            return "f";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_HA:
+            return "kh";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_TSE:
+            return "ts";
+            break;
+		case UTILS_CHAR_LATIN_SMALL_C_WITH_CARON:
+        case UTILS_CHAR_CYRILLIC_SMALL_CHE:
+            return "ch";
+            break;
+		case UTILS_CHAR_LATIN_SMALL_S_WITH_CARON:
+        case UTILS_CHAR_CYRILLIC_SMALL_SHA:
+            return "sh";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_SHCHA:
+            return "shch";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_LEFT_HARD_SIGN:
+            return "\"";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_YERU:
+            return "y";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_SOFT_SIGN:
+            return "'";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_YU:
+            return "yu";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_YA:
+            return "ya";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_IO:
+            return "yo";
+            break;
+        case UTILS_CHAR_CYRILLIC_SMALL_E:
+            return "e";
+            break;
+        case UTILS_CHAR_HYPHEN:
+            return "-";
+            break;
+        case UTILS_CHAR_LEFT_SINGLE_QUOTATION_MARK:
+        case UTILS_CHAR_RIGHT_SINGLE_QUOTATION_MARK:
+            return "'";
+            break;
+        case UTILS_CHAR_HORIZONTAL_ELLIPSIS:
+            return "...";
+            break;
+        default:
+            return "";
+            break;
+    }
+}
+
+/**
+ * UtilsTransliterateExtendedASCIIToASCII()
+ *     Description:
+ *         Converts 192-255 range of extended ASCII symbols to common ASCII symbols
+ *         Only for modified nav software.
+ *     Params:
+ *         uint32_t input - Representation of the Unicode character
+ *     Returns:
+ *         char * - Corresponding Extended ASCII characters
+ */
+char * UtilsTransliterateExtendedASCIIToASCII(uint32_t input)
 {
     switch (input) {
         case UTILS_CHAR_LATIN_CAPITAL_A_WITH_GRAVE:
@@ -384,19 +645,6 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
         case UTILS_CHAR_LATIN_SMALL_THORN:
             return "th";
             break;
-        case UTILS_CHAR_LATIN_SMALL_CAPITAL_R:
-            return "R";
-            break;
-        case UTILS_CHAR_HYPHEN:
-            return "-";
-            break;
-        case UTILS_CHAR_LEFT_SINGLE_QUOTATION_MARK:
-        case UTILS_CHAR_RIGHT_SINGLE_QUOTATION_MARK:
-            return "'";
-            break;
-        case UTILS_CHAR_HORIZONTAL_ELLIPSIS:
-            return "...";
-            break;
         default:
             return "";
             break;
@@ -404,21 +652,18 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
 }
 
 /**
- * TransliterateUnicodeToExtendedASCII()
+ * UtilsConvertCyrillicUnicodeToExtendedASCII()
  *     Description:
- *         Translate Cyrillic Unicode character to the corresponding Extended ASCII char.
+ *         Translates Cyrillic Unicode symbols to the corresponding Extended ASCII symbols (192-255).
+ *         Only for modified nav software.
  *     Params:
  *         uint32_t - Representation of the Cyrillic Unicode character
  *     Returns:
  *         unsigned char - Corresponding Extended ASCII characters
  */
-unsigned char UtilsTranslateCyrillicUnicodeToASCII(uint32_t input) 
+unsigned char UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t input)
 {
     switch (input) {
-        case UTILS_CHAR_CYRILLIC_BY_UA_CAPITAL_I:
-        case UTILS_CHAR_CYRILLIC_CAPITAL_YI:
-            return 'I';
-            break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_A:
             return 192;
             break;
@@ -616,10 +861,6 @@ unsigned char UtilsTranslateCyrillicUnicodeToASCII(uint32_t input)
             break;
         case UTILS_CHAR_CYRILLIC_SMALL_YA:
             return 255;
-            break;
-        case UTILS_CHAR_CYRILLIC_BY_UA_SMALL_I:
-        case UTILS_CHAR_CYRILLIC_SMALL_YI:
-            return 'i';
             break;
         default:
             return 0;
