@@ -389,7 +389,7 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
                         }
                         unsigned char volValue = volStep << 4;
                         volValue++; // Direction is "Up"
-                        IBusCommandSetVolune(
+                        IBusCommandSetVolume(
                             context->ibus,
                             sourceSystem,
                             IBUS_DEVICE_RAD,
@@ -413,7 +413,7 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
                         if (volStep > 0x03) {
                             volStep = 0x03;
                         }
-                        IBusCommandSetVolune(
+                        IBusCommandSetVolume(
                             context->ibus,
                             sourceSystem,
                             IBUS_DEVICE_RAD,
@@ -1598,7 +1598,7 @@ void HandlerIBusTELVolumeChange(void *ctx, unsigned char *pkt)
         if (context->ibusModuleStatus.MID == 1) {
             sourceSystem = IBUS_DEVICE_MID;
         }
-        IBusCommandSetVolune(
+        IBusCommandSetVolume(
             context->ibus,
             sourceSystem,
             IBUS_DEVICE_RAD,

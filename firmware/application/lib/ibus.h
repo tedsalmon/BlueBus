@@ -459,7 +459,7 @@ void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
-void IBusCommandSetVolune(IBus_t *, unsigned char, unsigned char, unsigned char);
+void IBusCommandSetVolume(IBus_t *, unsigned char, unsigned char, unsigned char);
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetLED(IBus_t *, unsigned char);
 void IBusCommandTELStatus(IBus_t *, unsigned char);

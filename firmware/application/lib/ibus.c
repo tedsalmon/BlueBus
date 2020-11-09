@@ -2256,7 +2256,7 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
 }
 
 /**
- * IBusCommandSetVolune()
+ * IBusCommandSetVolume()
  *     Description:
  *        Exit the radio menu and return to the BMBT home screen
  *     Params:
@@ -2267,7 +2267,7 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
  *     Returns:
  *         void
  */
-void IBusCommandSetVolune(
+void IBusCommandSetVolume(
     IBus_t *ibus,
     unsigned char source,
     unsigned char dest,

@@ -1122,6 +1122,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             ConfigSetLanguage(CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH);
             BMBTGTWriteIndex(context, selectedIdx, GetText(LOCAL_STRING_LANGUAGE_ENGLISH), 0);
         }
+        BMBTMenuSettingsUI(context);
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
