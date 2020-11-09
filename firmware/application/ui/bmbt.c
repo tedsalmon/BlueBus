@@ -616,7 +616,7 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
     }
     unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
     char volText[BMBT_MENU_STRING_HALF_SIZE];
-	memset(volText, 0, BMBT_MENU_STRING_HALF_SIZE);
+    memset(volText, 0, BMBT_MENU_STRING_HALF_SIZE);
     if (currentVolume > 0x30) {
         unsigned char gain = (currentVolume - 0x30) / 2;
         snprintf(volText, BMBT_MENU_STRING_HALF_SIZE - 1, GetText(LOCAL_STRING_VOLUME_NEG_DB), gain);
@@ -708,7 +708,7 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         blinkCount = 1;
     }
     char blinkerText[BMBT_MENU_STRING_HALF_SIZE];
-	memset(blinkerText, 0, BMBT_MENU_STRING_HALF_SIZE);
+    memset(blinkerText, 0, BMBT_MENU_STRING_HALF_SIZE);
     snprintf(blinkerText, BMBT_MENU_STRING_HALF_SIZE - 1, GetText(LOCAL_STRING_BLINKERS), blinkCount);
     BMBTGTWriteIndex(
         context,
@@ -782,7 +782,7 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
         micGain = 0;
     }
     char micGainText[BMBT_MENU_STRING_HALF_SIZE];
-	memset(micGainText, 0, BMBT_MENU_STRING_HALF_SIZE);
+    memset(micGainText, 0, BMBT_MENU_STRING_HALF_SIZE);
     snprintf(micGainText, BMBT_MENU_STRING_HALF_SIZE - 1, GetText(LOCAL_STRING_MIC_GAIN), (int8_t)BC127CVCGainTable[micGain]);
     BMBTGTWriteIndex(
         context,
@@ -841,30 +841,30 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             context,
             BMBT_MENU_IDX_SETTINGS_UI_TEMPS,
             GetText(LOCAL_STRING_TEMPS_OFF),
-            3
+            0
         );
     } else {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_UI_TEMPS,
             GetText(LOCAL_STRING_TEMPS_COOLANT),
-            3
+            0
         );
     }
-	unsigned char language = ConfigGetLanguage();
+    unsigned char language = ConfigGetLanguage();
     if (language == CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
             GetText(LOCAL_STRING_LANGUAGE_ENGLISH),
-            0
+            2
         );
     } else if (language == CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
             GetText(LOCAL_STRING_LANGUAGE_RUSSIAN),
-            0
+            2
         );
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, GetText(LOCAL_STRING_BACK), 1);
@@ -890,7 +890,7 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
         }
         ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, currentVolume);
         char volText[BMBT_MENU_STRING_HALF_SIZE];
-		memset(volText, 0, BMBT_MENU_STRING_HALF_SIZE);
+        memset(volText, 0, BMBT_MENU_STRING_HALF_SIZE);
         if (currentVolume > 0x30) {
             unsigned char gain = (currentVolume - 0x30) / 2;
             snprintf(volText, BMBT_MENU_STRING_HALF_SIZE - 1, GetText(LOCAL_STRING_VOLUME_NEG_DB), gain);
@@ -951,7 +951,7 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         value = value + 1;
         ConfigSetSetting(CONFIG_SETTING_COMFORT_BLINKERS, value);
         char blinkerText[BMBT_MENU_STRING_HALF_SIZE];
-		memset(blinkerText, 0, BMBT_MENU_STRING_HALF_SIZE);
+        memset(blinkerText, 0, BMBT_MENU_STRING_HALF_SIZE);
         snprintf(blinkerText, BMBT_MENU_STRING_HALF_SIZE - 1, GetText(LOCAL_STRING_BLINKERS), value);
         BMBTGTWriteIndex(context, selectedIdx, blinkerText, 0);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_LOCK) {
@@ -1020,7 +1020,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             micPreamp
         );
         char micGainText[BMBT_MENU_STRING_HALF_SIZE];
-		memset(micGainText, 0, BMBT_MENU_STRING_HALF_SIZE);
+        memset(micGainText, 0, BMBT_MENU_STRING_HALF_SIZE);
         snprintf(micGainText, BMBT_MENU_STRING_HALF_SIZE - 1, GetText(LOCAL_STRING_MIC_GAIN), (int8_t)BC127CVCGainTable[micGain]);
         BMBTGTWriteIndex(
             context,
@@ -1114,16 +1114,14 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             BMBTGTWriteIndex(context, selectedIdx, GetText(LOCAL_STRING_TEMPS_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE) {
-		unsigned char language = ConfigGetLanguage();
-		if (language == CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH) {
-            language = CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN;
+        unsigned char language = ConfigGetLanguage();
+        if (language == CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH) {
+            ConfigSetLanguage(CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN);
             BMBTGTWriteIndex(context, selectedIdx, GetText(LOCAL_STRING_LANGUAGE_RUSSIAN), 0);
         } else if (language == CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN) {
-            language = CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH;
+            ConfigSetLanguage(CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH);
             BMBTGTWriteIndex(context, selectedIdx, GetText(LOCAL_STRING_LANGUAGE_ENGLISH), 0);
         }
-        ConfigSetLanguage(language);
-		IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }

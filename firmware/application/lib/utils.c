@@ -124,7 +124,7 @@ void UtilsNormalizeText(char *string, const char *input)
             continue;
         }
 
-        if (unicodeChar <= 0x7F) {
+        if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
             string[strIdx++] = (char) unicodeChar;
         } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC3BF) {
             if (language == CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN &&
@@ -287,7 +287,7 @@ int8_t UtilsStricmp(const char *string, const char *compare)
 char * UtilsTransliterateUnicodeToASCII(uint32_t input)
 {
     switch (input) {
-		case UTILS_CHAR_LATIN_SMALL_CAPITAL_R:
+        case UTILS_CHAR_LATIN_SMALL_CAPITAL_R:
             return "R";
             break;
         case UTILS_CHAR_CYRILLIC_CAPITAL_IO:
@@ -470,11 +470,11 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
         case UTILS_CHAR_CYRILLIC_SMALL_TSE:
             return "ts";
             break;
-		case UTILS_CHAR_LATIN_SMALL_C_WITH_CARON:
+        case UTILS_CHAR_LATIN_SMALL_C_WITH_CARON:
         case UTILS_CHAR_CYRILLIC_SMALL_CHE:
             return "ch";
             break;
-		case UTILS_CHAR_LATIN_SMALL_S_WITH_CARON:
+        case UTILS_CHAR_LATIN_SMALL_S_WITH_CARON:
         case UTILS_CHAR_CYRILLIC_SMALL_SHA:
             return "sh";
             break;
