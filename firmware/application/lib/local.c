@@ -153,5 +153,5 @@ char * GetText(uint16_t stringIndex)
 		return RUSSIAN[stringIndex];
 	}
 
-	return LOCALIZATION_TABLE[stringIndex][language - 0x01];
+	return LOCALIZATION_TABLE[language - 0x01][stringIndex];
 }
