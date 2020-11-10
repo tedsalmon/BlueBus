@@ -1385,13 +1385,15 @@ static void IBusInternalCommandGTWriteIndex(
     char *message,
     unsigned char indexMode
 ) {
-    uint8_t length = strlen(message);
     // @TODO: This is 14 for the older UI. Come up with a better solution
-    if (length > 23) {
-        length = 23;
+    uint8_t maxLength = 23;
+    uint8_t length = strlen(message);
+    if (length > maxLength) {
+        length = maxLength;
     }
-    const size_t pktLenght = length + 5;
+    const size_t pktLenght = maxLength + 5;
     unsigned char text[pktLenght];
+    memset(text, 0x20, pktLenght);
     text[0] = IBUS_CMD_GT_WRITE_NO_CURSOR;
     text[1] = indexMode;
     text[2] = 0x00;
