@@ -19,6 +19,7 @@
         <itemPath>lib/uart.h</itemPath>
         <itemPath>lib/utils.h</itemPath>
         <itemPath>lib/wm88xx.h</itemPath>
+        <itemPath>lib/local.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
         <itemPath>ui/bmbt.h</itemPath>
@@ -56,6 +57,7 @@
         <itemPath>lib/uart.c</itemPath>
         <itemPath>lib/utils.c</itemPath>
         <itemPath>lib/wm88xx.c</itemPath>
+        <itemPath>lib/local.c</itemPath>
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
         <itemPath>ui/bmbt.c</itemPath>

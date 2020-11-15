@@ -12,6 +12,7 @@
 #include "../lib/config.h"
 #include "../lib/event.h"
 #include "../lib/ibus.h"
+#include "../lib/local.h"
 #include "../lib/pcm51xx.h"
 #include "../lib/timer.h"
 #include "../lib/utils.h"
@@ -64,6 +65,7 @@
 #define BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU 0
 #define BMBT_MENU_IDX_SETTINGS_UI_METADATA_MODE 1
 #define BMBT_MENU_IDX_SETTINGS_UI_TEMPS 2
+#define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 3
 
 #define BMBT_MENU_IDX_PAIRING_MODE 0
 #define BMBT_MENU_IDX_CLEAR_PAIRING 1
@@ -74,6 +76,7 @@
 #define BMBT_HEADER_TIMER_WRITE_INT 50
 #define BMBT_HEADER_TIMER_WRITE_TIMEOUT 100
 #define BMBT_MENU_HEADER_TIMER_OFF 255
+#define BMBT_MENU_STRING_MAX_SIZE 23
 #define BMBT_METADATA_MODE_OFF 0x00
 #define BMBT_METADATA_MODE_PARTY 0x01
 #define BMBT_METADATA_MODE_CHUNK 0x02

@@ -669,7 +669,7 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
  *     Description:
  *         Handle the RAD writing to the MID.
  *     Params:
- *         void *context - A void pointer to the BMBTContext_t struct
+ *         void *context - A void pointer to the MIDContext_t struct
  *         unsigned char *pkt - The IBus packet
  *     Returns:
  *         void
@@ -693,7 +693,7 @@ void MIDIIBusRADMIDDisplayUpdate(void *ctx, unsigned char *pkt)
  *     Description:
  *         
  *     Params:
- *         void *context - A void pointer to the BMBTContext_t struct
+ *         void *context - A void pointer to the MIDContext_t struct
  *         unsigned char *pkt - The IBus packet
  *     Returns:
  *         void

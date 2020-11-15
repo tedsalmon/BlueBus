@@ -124,6 +124,12 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         // "restore" wiped out cVc
         BC127SendCommand(bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
     }
+    // Changes in version 1.1.17
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 17) == 1) {
+        // Set new `0x21` to `0x01` (English language by default)
+        ConfigSetSetting(CONFIG_SETTING_BMBT_LANGUAGE, CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH);
+        LogRaw("Ran Upgrade 1.1.17\r\n");
+    }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
         FIRMWARE_VERSION_MINOR,
