@@ -1373,7 +1373,7 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
         context->menu = BMBT_MENU_NONE;
         context->status.playerMode = BMBT_MODE_INACTIVE;
         context->status.displayMode = BMBT_DISPLAY_OFF;
-        BMBTSetMainDisplayText(context, GetText(LOCAL_STRING_BLUETOOTH), 0, 0);
+        BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 0);
     } else if (requestedCommand == IBUS_CDC_CMD_START_PLAYING ||
         (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
          context->status.playerMode == BMBT_MODE_INACTIVE)
