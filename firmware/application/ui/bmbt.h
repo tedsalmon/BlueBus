@@ -85,11 +85,14 @@
 #define BMBT_SCROLL_TEXT_SIZE 255
 #define BMBT_SCROLL_TEXT_SPEED 750
 #define BMBT_SCROLL_TEXT_TIMER 500
+#define BMBT_TV_STATUS_OFF 0
+#define BMBT_TV_STATUS_ON 1
 typedef struct BMBTStatus_t {
     uint8_t playerMode: 1;
     uint8_t displayMode: 2;
     uint8_t navState: 1;
     uint8_t radType: 4;
+    uint8_t tvStatus: 1;
     uint8_t navIndexType;
 } BMBTStatus_t;
 typedef struct BMBTContext_t {
@@ -121,6 +124,7 @@ void BMBTRADUpdateMainArea(void *, unsigned char *);
 void BMBTIBusValueUpdate(void *, unsigned char *);
 void BMBTScreenModeUpdate(void *, unsigned char *);
 void BMBTScreenModeSet(void *, unsigned char *);
+void BMBTTVStatusUpdate(void *, unsigned char *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);
 void BMBTTimerScrollDisplay(void *);

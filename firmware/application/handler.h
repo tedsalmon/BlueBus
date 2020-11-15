@@ -53,7 +53,7 @@
 #define HANDLER_TEL_STATUS_SET 0
 #define HANDLER_TEL_STATUS_FORCE 1
 #define HANDLER_TEL_STATUS_VOL_CHANGE 0xFF
-#define HANDLER_TEL_VOL_OFFSET_MAX 0x1E
+#define HANDLER_TEL_VOL_OFFSET_MAX 0x0F
 
 typedef struct HandlerBodyModuleStatus_t {
     uint8_t lowSideDoors: 1;

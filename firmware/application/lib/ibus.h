@@ -44,6 +44,7 @@
 #define IBUS_DEVICE_LCM 0xD0 /* Light control module */
 #define IBUS_DEVICE_IRIS 0xE0 /* Integrated radio information system */
 #define IBUS_DEVICE_ANZV 0xE7 /* Front display */
+#define IBUS_DEVICE_VM 0xED /* Video Module */
 #define IBUS_DEVICE_BMBT 0xF0 /* On-board monitor */
 #define IBUS_DEVICE_LOC 0xFF /* Local */
 
@@ -111,7 +112,6 @@
 #define IBUS_DEVICE_BMBT_Button_TEL_Press
 #define IBUS_DEVICE_BMBT_Button_TEL_Hold 0x48
 #define IBUS_DEVICE_BMBT_Button_TEL_Release 0x88
-
 #define IBUS_CMD_BMBT_BUTTON0 0x47
 #define IBUS_CMD_BMBT_BUTTON1 0x48
 
@@ -135,6 +135,7 @@
 
 #define IBUS_CMD_VOLUME_SET 0x32
 
+#define IBUS_CMD_GT_RAD_TV_STATUS 0x4E
 #define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
 #define IBUS_CMD_GT_MENU_SELECT 0x31
 #define IBUS_CMD_GT_WRITE_NO_CURSOR 0x21
@@ -294,6 +295,9 @@
 #define IBUS_RADIO_TYPE_BRTP 5
 #define IBUS_RADIO_TYPE_BM24 6
 
+#define IBUS_RAD_VOLUME_DOWN 0x00
+#define IBUS_RAD_VOLUME_UP 0x01
+
 
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
 #define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
@@ -361,6 +365,7 @@
 #define IBUS_EVENT_TELVolumeChange 66
 #define IBUS_EVENT_RADVolumeChange 67
 #define IBUS_EVENT_LMIdentResponse 68
+#define IBUS_EVENT_TV_STATUS 69
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR

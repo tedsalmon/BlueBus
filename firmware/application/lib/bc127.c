@@ -1206,7 +1206,6 @@ void BC127Process(BC127_t *bt)
                     strncpy(bt->callerId, callerId, BC127_CALLER_ID_FIELD_SIZE - 1);
                     EventTriggerCallback(BC127Event_CallerID, 0);
                 }
-
             }
         } else if (strcmp(msgBuf[0], "AVRCP_MEDIA") == 0) {
             // Always copy size of buffer minus one to make sure we're always
@@ -1385,7 +1384,9 @@ void BC127Process(BC127_t *bt)
         } else if (strcmp(msgBuf[0], "OPEN_OK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             uint8_t linkId = UtilsStrToInt(msgBuf[1]);
-            if (bt->activeDevice.deviceId != deviceId) {
+            if (bt->activeDevice.deviceId != deviceId &&
+                linkId != BC127_LINK_ID_BLE
+            ) {
                 bt->activeDevice.deviceId = deviceId;
                 strncpy(bt->activeDevice.macId, msgBuf[3], 12);
                 char *deviceName = BC127PairedDeviceGetName(bt, msgBuf[3]);
@@ -1406,6 +1407,12 @@ void BC127Process(BC127_t *bt)
             if (strcmp(msgBuf[2], "HFP") == 0) {
                 bt->pairingErrors[BC127_LINK_HFP] = 0;
             }
+            if (strcmp(msgBuf[2], "BLE") == 0) {
+                bt->pairingErrors[BC127_LINK_BLE] = 0;
+            }
+            if (strcmp(msgBuf[2], "MAP") == 0) {
+                bt->pairingErrors[BC127_LINK_BLE] = 0;
+            }
             BC127ConnectionOpenProfile(&bt->activeDevice, msgBuf[2], linkId);
             LogDebug(LOG_SOURCE_BT, "BT: Open %s for ID %s", msgBuf[2], msgBuf[1]);
             EventTriggerCallback(
@@ -1421,6 +1428,12 @@ void BC127Process(BC127_t *bt)
             }
             if (strcmp(msgBuf[1], "HFP") == 0) {
                 bt->pairingErrors[BC127_LINK_HFP] = 1;
+            }
+            if (strcmp(msgBuf[2], "BLE") == 0) {
+                bt->pairingErrors[BC127_LINK_BLE] = 1;
+            }
+            if (strcmp(msgBuf[2], "MAP") == 0) {
+                bt->pairingErrors[BC127_LINK_MAP] = 1;
             }
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
             char deviceName[BC127_DEVICE_NAME_LEN];
@@ -1631,12 +1644,7 @@ char *BC127PairedDeviceGetName(BC127_t *bt, char *macId)
 BC127Connection_t BC127ConnectionInit()
 {
     BC127Connection_t conn;
-    memset(conn.macId, 0, 13);
-    memset(conn.deviceName, 0, BC127_DEVICE_NAME_LEN);
-    conn.deviceId = 0;
-    conn.a2dpLinkId = 0;
-    conn.avrcpLinkId = 0;
-    conn.hfpLinkId = 0;
+    memset(&conn, 0, sizeof(BC127Connection_t));
     return conn;
 }
 
@@ -1659,9 +1667,18 @@ uint8_t BC127ConnectionCloseProfile(BC127Connection_t *conn, char *profile)
         conn->avrcpLinkId = 0;
     } else if (strcmp(profile, "HFP") == 0) {
         conn->hfpLinkId = 0;
+    } else if (strcmp(profile, "BLE") == 0) {
+        conn->bleLinkId = 0;
+    } else if (strcmp(profile, "MAP") == 0) {
+        conn->mapLinkId = 0;
     }
     // Clear the connection once all the links are closed
-    if (conn->a2dpLinkId == 0 && conn->avrcpLinkId == 0 && conn->hfpLinkId == 0) {
+    if (conn->a2dpLinkId == 0 &&
+        conn->avrcpLinkId == 0 &&
+        conn->hfpLinkId == 0 &&
+        conn->bleLinkId == 0 &&
+        conn->mapLinkId == 0
+    ) {
         conn->deviceId = 0;
         return BC127_CONN_STATE_DISCONNECTED;
     }
@@ -1686,5 +1703,9 @@ void BC127ConnectionOpenProfile(BC127Connection_t *conn, char *profile, uint8_t 
         conn->avrcpLinkId = linkId;
     } else if (strcmp(profile, "HFP") == 0) {
         conn->hfpLinkId = linkId;
+    } else if (strcmp(profile, "BLE") == 0) {
+        conn->bleLinkId = linkId;
+    } else if (strcmp(profile, "MAP") == 0) {
+        conn->mapLinkId = linkId;
     }
 }

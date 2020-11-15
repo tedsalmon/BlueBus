@@ -223,6 +223,8 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
         // The GT broadcasts an emulated version of the BMBT button press
         // command 0x48 that matches the "Phone" button on the BMBT
         EventTriggerCallback(IBUS_EVENT_BMBTButton, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
+        EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
     }
 }
 
@@ -461,6 +463,13 @@ static void IBusHandleTELMessage(unsigned char *pkt)
     }
 }
 
+static void IBusHandleVMMessage(unsigned char *pkt)
+{
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
+        EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
+    }
+}
+
 static uint8_t IBusValidateChecksum(unsigned char *msg)
 {
     uint8_t chk = 0;
@@ -561,6 +570,9 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_EWS) {
                         IBusHandleEWSMessage(pkt);
+                    }
+                    if (srcSystem == IBUS_DEVICE_VM) {
+                        IBusHandleVMMessage(pkt);
                     }
                     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
                         IBusHandleTELMessage(pkt);
@@ -960,6 +972,8 @@ void IBusCommandCDCPollResponse(IBus_t *ibus)
  * IBusCommandCDCStatus()
  *     Description:
  *        Respond to the Radio's status request
+ *        Sample Packet from a factory iPod module:
+ *          18 0E 68 39 00 82 00 60 00 07 11 00 01 00 0B CK
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         unsigned char status - The current CDC status
@@ -985,11 +999,11 @@ void IBusCommandCDCStatus(
         discCount,
         0x00,
         discNumber,
-        0x01, // Track Number
+        0x01, // Song Number
         0x00,
         0x01,
-        discNumber,
-        0x01 // Track Number
+        0x01, // Track Number
+        0x01  // Song Number
     };
     IBusSendCommand(
         ibus,
