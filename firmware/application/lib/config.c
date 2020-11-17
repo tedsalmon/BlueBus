@@ -410,25 +410,6 @@ void ConfigGetVehicleIdentity(unsigned char *vin)
 }
 
 /**
- * ConfigGetLanguage()
- *     Description:
- *         Get the language
- *     Params:
- *         None
- *     Returns:
- *         unsigned char
- */
-unsigned char ConfigGetLanguage()
-{
-    unsigned char value = CONFIG_CACHE[CONFIG_SETTING_BMBT_LANGUAGE_ADDRESS];
-    if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_SETTING_BMBT_LANGUAGE_ADDRESS);
-        CONFIG_CACHE[CONFIG_SETTING_BMBT_LANGUAGE_ADDRESS] = value;
-    }
-    return value;
-}
-
-/**
  * ConfigSetBootloaderMode()
  *     Description:
  *         Set the bootloader mode
@@ -711,19 +692,4 @@ void ConfigSetVehicleIdentity(unsigned char *vin)
     for (i = 0; i < 5; i++) {
         EEPROMWriteByte(vinAddress[i], vin[i]);
     }
-}
-
-/**
- * ConfigSetLanguage()
- *     Description:
- *         Set the language for BMBT interface
- *     Params:
- *         unsigned char language - The selected language
- *     Returns:
- *         void
- */
-void ConfigSetLanguage(unsigned char language)
-{
-    CONFIG_CACHE[CONFIG_SETTING_BMBT_LANGUAGE_ADDRESS] = language;
-    EEPROMWriteByte(CONFIG_SETTING_BMBT_LANGUAGE_ADDRESS, language);
 }

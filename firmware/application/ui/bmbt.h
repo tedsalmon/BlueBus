@@ -12,7 +12,7 @@
 #include "../lib/config.h"
 #include "../lib/event.h"
 #include "../lib/ibus.h"
-#include "../lib/local.h"
+#include "../lib/locale.h"
 #include "../lib/pcm51xx.h"
 #include "../lib/timer.h"
 #include "../lib/utils.h"

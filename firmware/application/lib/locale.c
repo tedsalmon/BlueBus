@@ -1,12 +1,12 @@
 /*
- * File:   local.c
+ * File:   locale.c
  * Author: Aliaksei Prybytkin <alexeypribytkin@gmail.com>
  * Description:
  *     Contains functionality for string localization
  */
-#include "local.h"
+#include "locale.h"
  
-char* ENGLISH[] = {
+char *LOCALE_LANG_ENGLISH[] = {
     "- Not Playing -",
     "About",
     "Audio",
@@ -66,10 +66,12 @@ char* ENGLISH[] = {
     "Volume: 0dB",
     "Apply",
     "Lang: English",
-    "Lang: Russian"
+    "Lang: German",
+    "Lang: Russian",
+    "Lang: Spanish"
 };
 
-char RUSSIAN[][24] = {
+char LOCALE_LANG_RUSSIAN[][24] = {
     {205,229,' ',226,238,241,239,240,238,232,231,226,238,228,232,242,241,255,0},
     {206,' ',239,240,238,227,240,224,236,236,229,0},
     {192,243,228,232,238,0},
@@ -127,33 +129,151 @@ char RUSSIAN[][24] = {
     {195,240,238,236,234,':',' ','+','%','d','d','B',0},
     {195,240,238,236,234,':',' ','+','2','4','d','B',0},
     {195,240,238,236,234,':',' ','0','d','B',0},
-    {207,240,232,236,229,237,232,242,252,0},
-    {223,231,251,234,':',' ','E','n','g','l','i','s','h',0},
-    {223,231,251,234,':',' ',208,243,241,241,234,232,233,0}
+    {207,240,232,236,229,237,232,242,252,0}
 };
 
-char** LOCALIZATION_TABLE[] = {ENGLISH};
+char *LOCALE_LANG_GERMAN[] = {
+    "- Not Playing -",
+    "About",
+    "Audio",
+    "Autoplay: Off",
+    "Autoplay: On",
+    "Back",
+    "Blinkers: %d",
+    "Bluetooth",
+    "Built: %d/%d",
+    "Calling",
+    "Car: E3x/E53",
+    "Car: E46/Z4",
+    "Car: Unset",
+    "Clear Pairings",
+    "Comfort",
+    "Dashboard",
+    "Devices",
+    "DSP: Analog",
+    "DSP: Digital",
+    "FW: %s",
+    "Handsfree: Off",
+    "Handsfree: On",
+    "Lock: 10km/h",
+    "Lock: 20km/h",
+    "Lock: Off",
+    "Main Menu",
+    "Menu: Dashboard",
+    "Menu: Main",
+    "Metadata: Chunk",
+    "Metadata: Off",
+    "Metadata: Party",
+    "Mic Bias: Off",
+    "Mic Bias: On",
+    "Mic Gain: %idB",
+    "No Device",
+    "Pairing: Off",
+    "Pairing: On",
+    "S/N: %u",
+    "Settings",
+    "Settings > About",
+    "Settings > Audio",
+    "Settings > Calling",
+    "Settings > Comfort",
+    "Settings > UI",
+    "Temps: Coolant",
+    "Temps: Off",
+    "UI",
+    "Unknown Album",
+    "Unknown Artist",
+    "Unknown Title",
+    "Unlock: Off",
+    "Unlock: Pos 0",
+    "Unlock: Pos 1",
+    "Volume: -%ddB",
+    "Volume: +%ddB",
+    "Volume: +24dB",
+    "Volume: 0dB"
+};
+
+char *LOCALE_LANG_SPANISH[] = {
+    "- Not Playing -",
+    "About",
+    "Audio",
+    "Autoplay: Off",
+    "Autoplay: On",
+    "Back",
+    "Blinkers: %d",
+    "Bluetooth",
+    "Built: %d/%d",
+    "Calling",
+    "Car: E3x/E53",
+    "Car: E46/Z4",
+    "Car: Unset",
+    "Clear Pairings",
+    "Comfort",
+    "Dashboard",
+    "Devices",
+    "DSP: Analog",
+    "DSP: Digital",
+    "FW: %s",
+    "Handsfree: Off",
+    "Handsfree: On",
+    "Lock: 10km/h",
+    "Lock: 20km/h",
+    "Lock: Off",
+    "Main Menu",
+    "Menu: Dashboard",
+    "Menu: Main",
+    "Metadata: Chunk",
+    "Metadata: Off",
+    "Metadata: Party",
+    "Mic Bias: Off",
+    "Mic Bias: On",
+    "Mic Gain: %idB",
+    "No Device",
+    "Pairing: Off",
+    "Pairing: On",
+    "S/N: %u",
+    "Settings",
+    "Settings > About",
+    "Settings > Audio",
+    "Settings > Calling",
+    "Settings > Comfort",
+    "Settings > UI",
+    "Temps: Coolant",
+    "Temps: Off",
+    "UI",
+    "Unknown Album",
+    "Unknown Artist",
+    "Unknown Title",
+    "Unlock: Off",
+    "Unlock: Pos 0",
+    "Unlock: Pos 1",
+    "Volume: -%ddB",
+    "Volume: +%ddB",
+    "Volume: +24dB",
+    "Volume: 0dB",
+};
+
+char **LOCALE_LOCALIZATION_TABLE[] = {LOCALE_LANG_ENGLISH};
 
 /**
- * GetText()
+ * LocaleGetText()
  *     Description:
- *         Gets localized string
+ *         Returns localized string
  *     Params:
  *         uint16_t stringIndex - string identifier
  *     Returns:
  *         char *
  */
-char * GetText(uint16_t stringIndex)
+char *LocaleGetText(uint16_t stringIndex)
 {
-    unsigned char language = ConfigGetLanguage();
-    if (language < CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH ||
-        language > CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN) {
-        language = CONFIG_SETTING_BMBT_LANGUAGE_ENGLISH;
+    unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    if (language < CONFIG_SETTING_LANGUAGE_ENGLISH ||
+        language > CONFIG_SETTING_LANGUAGE_RUSSIAN) {
+        language = CONFIG_SETTING_LANGUAGE_ENGLISH;
+    }
+    // Catch Russian as its data structure is different to other languages
+    if (language == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
+        return LOCALE_LANG_RUSSIAN[stringIndex];
     }
 
-    if (language == CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN) {
-        return RUSSIAN[stringIndex];
-    }
-
-    return LOCALIZATION_TABLE[language - 0x01][stringIndex];
+    return LOCALE_LOCALIZATION_TABLE[language - 0x01][stringIndex];
 }

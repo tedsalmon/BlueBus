@@ -74,68 +74,63 @@ void UtilsNormalizeText(char *string, const char *input)
 {
     uint16_t idx;
     uint16_t strIdx = 0;
-    uint8_t bytesInChar = 0;
-    uint32_t unicodeChar = 0;
+    uint32_t unicodeChar;
 
-    char * transStr;
+    char *transStr;
     uint8_t transIdx;
     uint8_t transStrLength;
 
     uint16_t strLength = strlen(input);
-    unsigned char language = ConfigGetLanguage();
+    uint8_t bytesInChar = 0;
+    unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
 
     for (idx = 0; idx < strLength; idx++) {
-        uint8_t c = (uint8_t) input[idx];
+        uint8_t currentChar = (uint8_t) input[idx];
+        unicodeChar = 0 | currentChar;
 
-        if (c == 0x5C) {
-            if (idx + 2 <= strLength) {
-                char buf[] = { (uint8_t) input[idx + 1], (uint8_t) input[idx + 2], '\0' };
-                c = UtilsStrToHex(buf);
-
-                idx += 2;
+        if (currentChar == '\\') {
+            unicodeChar = 0;
+            char currentByteBuf[] = {input[idx + 1], input[idx + 2], '\0'};
+            unsigned char currentByte = UtilsStrToHex(currentByteBuf);
+            // Identify number of bytes to read from the first byte
+            bytesInChar = 1;
+            if (currentByte >> 3 == 30) { // 0xF0 - 0xF4
+                bytesInChar = 4;
+            } else if (currentByte >> 4 == 14) { // 0xE0 - 0xEF
+                bytesInChar = 3;
+            } else if (currentByte >> 5 == 6) { // 0xC2 - 0xDF
+                bytesInChar = 2;
+            }
+            uint8_t charsToRead = bytesInChar * 3;
+            // Identify if we can read all the bytes
+            if ((idx + charsToRead) <= strLength) {
+                uint8_t byteIdx = idx;
+                while (bytesInChar != 0) {
+                    char buf[] = {input[byteIdx + 1], input[byteIdx + 2], '\0'};
+                    unsigned char byte = UtilsStrToHex(buf);
+                    unicodeChar = unicodeChar << 8 | byte;
+                    bytesInChar--;
+                    byteIdx = byteIdx + 3;
+                }
+                idx = idx + (charsToRead - 1);
             } else {
                 idx = strLength;
-                continue;
             }
-        }
-
-        if (bytesInChar == 0) {
-            unicodeChar = 0 | c;
-
-            // Identify number of bytes to read from the first negative byte
-            if (c >> 3 == 30) { // 11110xxx
-                bytesInChar = 3;
-                continue;
-            } else if (c >> 4 == 14) { // 1110xxxx
-                bytesInChar = 2;
-                continue;
-            } else if (c >> 5 == 6) { // 110xxxx
-                bytesInChar = 1;
-                continue;
-            }
-        }
-
-        if (bytesInChar > 0) {
-            unicodeChar = unicodeChar << 8 | c;
-            bytesInChar--;
-        }
-
-        if (bytesInChar != 0) {
-            continue;
         }
 
         if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
             string[strIdx++] = (char) unicodeChar;
         } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC3BF) {
-            if (language == CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN &&
-                unicodeChar >= 0xC380) {
-                    transStr = UtilsTransliterateExtendedASCIIToASCII(unicodeChar);
-                    transStrLength = strlen(transStr);
-                    if (transStrLength != 0) {
-                        for (transIdx = 0; transIdx < transStrLength; transIdx++) {
-                            string[strIdx++] = (char)transStr[transIdx];
-                        }
+            if (language == CONFIG_SETTING_LANGUAGE_RUSSIAN &&
+                unicodeChar >= 0xC380
+            ) {
+                transStr = UtilsTransliterateExtendedASCIIToASCII(unicodeChar);
+                transStrLength = strlen(transStr);
+                if (transStrLength != 0) {
+                    for (transIdx = 0; transIdx < transStrLength; transIdx++) {
+                        string[strIdx++] = (char)transStr[transIdx];
                     }
+                }
             } else {
                 // Convert UTF-8 byte to Unicode then check if it falls within
                 // the range of extended ASCII
@@ -146,7 +141,7 @@ void UtilsNormalizeText(char *string, const char *input)
             }
         } else if (unicodeChar > 0xC3BF) {
             unsigned char transChar = 0;
-            if (language == CONFIG_SETTING_BMBT_LANGUAGE_RUSSIAN) {
+            if (language == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
                 transChar = UtilsConvertCyrillicUnicodeToExtendedASCII(unicodeChar);
             }
             if (transChar != 0) {
