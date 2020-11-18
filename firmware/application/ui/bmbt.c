@@ -864,41 +864,39 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         );
     }
     unsigned char selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    char localeName[3];
+    memset(localeName, 0, sizeof(localeName));
+    switch (selectedLanguage) {
+        case CONFIG_SETTING_LANGUAGE_ENGLISH:
+            strncpy(localeName, "EN", 2);
+            break;
+        case CONFIG_SETTING_LANGUAGE_GERMAN:
+            strncpy(localeName, "DE", 2);
+            break;
+        case CONFIG_SETTING_LANGUAGE_RUSSIAN:
+            strncpy(localeName, "RU", 2);
+            break;
+        case CONFIG_SETTING_LANGUAGE_SPANISH:
+            strncpy(localeName, "ES", 2);
+            break;
+        default:
+            strncpy(localeName, "EN", 2);
+            break;
+    }
     char langStr[BMBT_MENU_STRING_MAX_SIZE];
     memset(langStr, 0, BMBT_MENU_STRING_MAX_SIZE);
-    if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
-        snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "EN");
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-            langStr,
-            2
-        );
-    } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_GERMAN) {
-        snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "DE");
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-            langStr,
-            2
-        );
-    } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
-        snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "RU");
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-            langStr,
-            2
-        );
-    } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_SPANISH) {
-        snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "ES");
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-            langStr,
-            2
-        );
-    }
+    snprintf(
+        langStr,
+        BMBT_MENU_STRING_MAX_SIZE - 1,
+        LocaleGetText(LOCALE_STRING_LANG),
+        localeName
+    );
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
+        langStr,
+        2
+    );
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
     IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_UI));
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
@@ -1147,44 +1145,14 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE) {
         unsigned char selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-        char langStr[BMBT_MENU_STRING_MAX_SIZE];
-        memset(langStr, 0, BMBT_MENU_STRING_MAX_SIZE);
         if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_GERMAN;
-            snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "DE");
-            BMBTGTWriteIndex(
-                context,
-                BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-                langStr,
-                2
-            );
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_GERMAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_RUSSIAN;
-            snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "RU");
-            BMBTGTWriteIndex(
-                context,
-                BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-                langStr,
-                2
-            );
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_SPANISH;
-            snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "ES");
-            BMBTGTWriteIndex(
-                context,
-                BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-                langStr,
-                2
-            );
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_SPANISH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
-            snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "EN");
-            BMBTGTWriteIndex(
-                context,
-                BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-                langStr,
-                2
-            );
         }
         ConfigSetSetting(CONFIG_SETTING_LANGUAGE, selectedLanguage);
         // Change the UI Language
