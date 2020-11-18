@@ -64,11 +64,7 @@ char *LOCALE_LANG_ENGLISH[] = {
     "Volume: +%ddB",
     "Volume: +24dB",
     "Volume: 0dB",
-    "Apply",
-    "Lang: English",
-    "Lang: German",
-    "Lang: Russian",
-    "Lang: Spanish"
+    "Lang: %s",
 };
 
 char LOCALE_LANG_RUSSIAN[][24] = {
@@ -129,95 +125,97 @@ char LOCALE_LANG_RUSSIAN[][24] = {
     {195,240,238,236,234,':',' ','+','%','d','d','B',0},
     {195,240,238,236,234,':',' ','+','2','4','d','B',0},
     {195,240,238,236,234,':',' ','0','d','B',0},
-    {207,240,232,236,229,237,232,242,252,0}
+    {207,240,232,236,229,237,232,242,252,0},
+    {223,231,251,234,':',' ','%','s',0}
 };
 
 char *LOCALE_LANG_GERMAN[] = {
-    "- Not Playing -",
-    "About",
+    "- Keine Wiedergabe -",
+    "\xdc""ber",
     "Audio",
-    "Autoplay: Off",
-    "Autoplay: On",
-    "Back",
-    "Blinkers: %d",
+    "Autoplay: Aus",
+    "Autoplay: An",
+    "Zur\xfc""ck",
+    "Blinker",
     "Bluetooth",
-    "Built: %d/%d",
-    "Calling",
-    "Car: E3x/E53",
-    "Car: E46/Z4",
-    "Car: Unset",
-    "Clear Pairings",
-    "Comfort",
-    "Dashboard",
-    "Devices",
+    "Herst.-D.: %d/%d",
+    "Anruf",
+    "Fhrz.: E3x/E53",
+    "Fhrz.: E46/Z4",
+    "Fhrz.: keins",
+    "Zur\xfc""cksetzen",
+    "Komfort",
+    "\xdc""bersicht",
+    "Ger\xe4""te",
     "DSP: Analog",
     "DSP: Digital",
     "FW: %s",
-    "Handsfree: Off",
-    "Handsfree: On",
-    "Lock: 10km/h",
-    "Lock: 20km/h",
-    "Lock: Off",
-    "Main Menu",
-    "Menu: Dashboard",
-    "Menu: Main",
-    "Metadata: Chunk",
-    "Metadata: Off",
-    "Metadata: Party",
-    "Mic Bias: Off",
-    "Mic Bias: On",
-    "Mic Gain: %idB",
-    "No Device",
-    "Pairing: Off",
-    "Pairing: On",
+    "FSE: Aus",
+    "FSE: An",
+    "Verrieg.: 10km/h",
+    "Verrieg.: 20km/h",
+    "Verrieg.: aus",
+    "Hauptmen\xfc""",
+    "Men\xfc"": \xdc""bersicht",
+    "Men\xfc"": Haupt",
+    "Metadaten: St\xfc""ck",
+    "Metadaten: Aus",
+    "Metadaten: Party",
+    "Mikro Bias: Aus",
+    "Mikro Bias: Ein",
+    "Mikro Zuw.: %idB",
+    "Kein Ger\xe4""t",
+    "Kopplung: Aus",
+    "Kopplung: Ein",
     "S/N: %u",
-    "Settings",
-    "Settings > About",
-    "Settings > Audio",
-    "Settings > Calling",
-    "Settings > Comfort",
-    "Settings > UI",
-    "Temps: Coolant",
-    "Temps: Off",
+    "Einstellungen ",
+    "Einst. > \xdc""ber",
+    "Einst. > Audio",
+    "Einst. > Anruf",
+    "Einst. > Komfort",
+    "Einst. > UI",
+    "Temp: K\xfc""hlwasser",
+    "Temp: Aus",
     "UI",
-    "Unknown Album",
-    "Unknown Artist",
-    "Unknown Title",
-    "Unlock: Off",
-    "Unlock: Pos 0",
-    "Unlock: Pos 1",
-    "Volume: -%ddB",
-    "Volume: +%ddB",
-    "Volume: +24dB",
-    "Volume: 0dB"
+    "Unbek. Album",
+    "Unbek. K\xfc""nstler",
+    "Unbek. Titel",
+    "Entriegeln: Aus",
+    "Entrieg: Pos 0",
+    "Entrieg: Pos 1",
+    "Lautst.: -%ddB",
+    "Lautst.: +%ddB",
+    "Lautst.: + 24dB",
+    "Lautst.: 0dB",
+    "Sprache: %s"
 };
 
 char *LOCALE_LANG_SPANISH[] = {
-    "- Not Playing -",
-    "About",
+    "- En Pausa -",
+    "Acerca de",
     "Audio",
     "Autoplay: Off",
     "Autoplay: On",
-    "Back",
+    "Atr\xe1""s",
     "Blinkers: %d",
     "Bluetooth",
     "Built: %d/%d",
-    "Calling",
-    "Car: E3x/E53",
-    "Car: E46/Z4",
-    "Car: Unset",
+    "Llamando",
+    "Modelo: E3x/E53",
+    "Modelo: E46/Z4",
+    "Modelo: Unset",
     "Clear Pairings",
-    "Comfort",
+    "Confort",
     "Dashboard",
-    "Devices",
-    "DSP: Analog",
+    "Dispositivos",
+    "DSP: Anal\xd3""gico",
     "DSP: Digital",
     "FW: %s",
     "Handsfree: Off",
     "Handsfree: On",
-    "Lock: 10km/h",
-    "Lock: 20km/h",
-    "Lock: Off",
+    "Cierre: 10km/h",
+    "Cierre: 20km/h",
+    "Cierre: des.",
     "Main Menu",
     "Menu: Dashboard",
     "Menu: Main",
@@ -227,32 +225,38 @@ char *LOCALE_LANG_SPANISH[] = {
     "Mic Bias: Off",
     "Mic Bias: On",
     "Mic Gain: %idB",
-    "No Device",
+    "Sin Dispositivo",
     "Pairing: Off",
     "Pairing: On",
     "S/N: %u",
-    "Settings",
-    "Settings > About",
-    "Settings > Audio",
-    "Settings > Calling",
-    "Settings > Comfort",
-    "Settings > UI",
-    "Temps: Coolant",
-    "Temps: Off",
-    "UI",
-    "Unknown Album",
-    "Unknown Artist",
-    "Unknown Title",
+    "Ajustes",
+    "Ajustes > About",
+    "Ajustes > Audio",
+    "Ajustes > Llamada",
+    "Ajustes > Confort",
+    "Ajustes > Interfaz",
+    "Temper.: Refrig.",
+    "Temper.: Off",
+    "Interfaz",
+    "Album ignoto",
+    "Artista ignoto",
+    "Titulo ignoto",
     "Unlock: Off",
     "Unlock: Pos 0",
     "Unlock: Pos 1",
-    "Volume: -%ddB",
-    "Volume: +%ddB",
-    "Volume: +24dB",
-    "Volume: 0dB",
+    "Volumen: -%ddB",
+    "Volumen: +%ddB",
+    "Volumen: +24dB",
+    "Volumen: 0dB",
+    "Idioma: %s"
 };
 
-char **LOCALE_LOCALIZATION_TABLE[] = {LOCALE_LANG_ENGLISH};
+char **LOCALE_LOCALIZATION_TABLE[] = {
+    LOCALE_LANG_ENGLISH,
+    LOCALE_LANG_GERMAN,
+    0, // LOCALE_LANG_RUSSIAN (Incompatible Pointer)
+    LOCALE_LANG_SPANISH
+};
 
 /**
  * LocaleGetText()
@@ -266,14 +270,15 @@ char **LOCALE_LOCALIZATION_TABLE[] = {LOCALE_LANG_ENGLISH};
 char *LocaleGetText(uint16_t stringIndex)
 {
     unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-    if (language < CONFIG_SETTING_LANGUAGE_ENGLISH ||
-        language > CONFIG_SETTING_LANGUAGE_RUSSIAN) {
-        language = CONFIG_SETTING_LANGUAGE_ENGLISH;
+    switch (language) {
+        case CONFIG_SETTING_LANGUAGE_ENGLISH:
+        case CONFIG_SETTING_LANGUAGE_GERMAN:
+        case CONFIG_SETTING_LANGUAGE_SPANISH:
+            return LOCALE_LOCALIZATION_TABLE[language - 0x01][stringIndex];
+        case CONFIG_SETTING_LANGUAGE_RUSSIAN:
+            return LOCALE_LANG_RUSSIAN[stringIndex];
+        default:
+            // Default to English
+            return LOCALE_LOCALIZATION_TABLE[0][stringIndex];
     }
-    // Catch Russian as its data structure is different to other languages
-    if (language == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
-        return LOCALE_LANG_RUSSIAN[stringIndex];
-    }
-
-    return LOCALE_LOCALIZATION_TABLE[language - 0x01][stringIndex];
 }

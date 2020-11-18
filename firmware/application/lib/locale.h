@@ -67,6 +67,7 @@
 #define LOCALE_STRING_VOLUME_POS_DB 54
 #define LOCALE_STRING_VOLUME_24_DB 55
 #define LOCALE_STRING_VOLUME_0_DB 56
+#define LOCALE_STRING_LANG 57
 
 char *LocaleGetText(uint16_t);
 #endif /* LOCALE_H */

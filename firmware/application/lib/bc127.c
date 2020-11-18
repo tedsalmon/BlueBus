@@ -1172,34 +1172,53 @@ void BC127Process(BC127_t *bt)
 
         if (strcmp(msgBuf[0], "AT") == 0) {
             if (strcmp(msgBuf[3], "+CLIP:") == 0) {
-                uint8_t delimeterCount = 0;
-                uint8_t cidDataLength = strlen(msgBuf[4]);
+                uint8_t cidDelimCounter = 0;
+                uint8_t cidDataLength = 0;
+                uint8_t msgBufSize = delimCount - 1;
+                while (msgBufSize >= 4) {
+                    cidDataLength = cidDataLength + strlen(msgBuf[msgBufSize]);
+                    msgBufSize--;
+                }
+                /// Add index for null termination
+                cidDataLength++;
                 char cidData[cidDataLength];
                 memset(cidData, 0, sizeof(cidData));
-                strncpy(cidData, msgBuf[4], cidDataLength);
+                uint8_t dataDelim = 4;
+                uint8_t cidDataIdx = 0;
+                uint8_t i = 0;
+                while (dataDelim < delimCount) {
+                    for (i = 0; i < strlen(msgBuf[dataDelim]); i++) {
+                        cidData[cidDataIdx++] = msgBuf[dataDelim][i];
+                    }
+                    // The space is removed when we explode the string
+                    // to form msgBuf[], so add it back
+                    cidData[cidDataIdx++] = 0x20;
+                    dataDelim++;
+                }
+                cidData[cidDataLength - 1] = '\0';
                 char *cidDataBuf[6];
                 memset(cidDataBuf, 0, sizeof(cidDataBuf));
                 char delimeter[] = ",";
                 char *p = strtok(cidData, delimeter);
                 while (p != NULL) {
-                    cidDataBuf[delimeterCount++] = p;
+                    cidDataBuf[cidDelimCounter++] = p;
                     p = strtok(NULL, delimeter);
                 }
                 // Set and clean up the variables to hold the new caller ID text
                 char callerId[BC127_CALLER_ID_FIELD_SIZE];
                 memset(callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
                 memset(bt->callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
-                if (delimeterCount == 2) {
+                if (cidDelimCounter == 2) {
                     // Remove the escaped quotes that come through
                     UtilsRemoveSubstring(cidDataBuf[0], "\\22");
                     // Clean the text up
                     UtilsNormalizeText(callerId, cidDataBuf[0]);
                 } else {
-                    if (cidDataBuf[delimeterCount - 1] != 0x00) {
+                    if (cidDataBuf[cidDelimCounter - 1] != 0x00) {
                         // Remove the escaped quotes that come through
-                        UtilsRemoveSubstring(cidDataBuf[delimeterCount - 1], "\\22");
+                        UtilsRemoveSubstring(cidDataBuf[cidDelimCounter - 1], "\\22");
                         // Clean the text up
-                        UtilsNormalizeText(callerId, cidDataBuf[delimeterCount - 1]);
+                        UtilsNormalizeText(callerId, cidDataBuf[cidDelimCounter - 1]);
                     }
                 }
                 if (strlen(callerId) > 0) {

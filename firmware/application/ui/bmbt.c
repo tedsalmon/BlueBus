@@ -864,18 +864,38 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         );
     }
     unsigned char selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    char langStr[BMBT_MENU_STRING_MAX_SIZE];
+    memset(langStr, 0, BMBT_MENU_STRING_MAX_SIZE);
     if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
+        snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "EN");
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-            "Lang: English",
+            langStr,
+            2
+        );
+    } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_GERMAN) {
+        snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "DE");
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
+            langStr,
             2
         );
     } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
+        snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "RU");
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
-            "Lang: Russian",
+            langStr,
+            2
+        );
+    } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_SPANISH) {
+        snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "ES");
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
+            langStr,
             2
         );
     }
@@ -1127,15 +1147,49 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE) {
         unsigned char selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+        char langStr[BMBT_MENU_STRING_MAX_SIZE];
+        memset(langStr, 0, BMBT_MENU_STRING_MAX_SIZE);
         if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_GERMAN;
+            snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "DE");
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
+                langStr,
+                2
+            );
+        } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_GERMAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_RUSSIAN;
-            BMBTGTWriteIndex(context, selectedIdx, "Lang: Russian", 0);
+            snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "RU");
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
+                langStr,
+                2
+            );
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_SPANISH;
+            snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "ES");
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
+                langStr,
+                2
+            );
+        } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_SPANISH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
-            BMBTGTWriteIndex(context, selectedIdx, "Lang: English", 0);
+            snprintf(langStr, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_LANG), "EN");
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
+                langStr,
+                2
+            );
         }
         ConfigSetSetting(CONFIG_SETTING_LANGUAGE, selectedLanguage);
+        // Change the UI Language
         BMBTMenuSettingsUI(context);
+        BMBTTriggerWriteHeader(context);
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
