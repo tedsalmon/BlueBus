@@ -42,7 +42,7 @@ void ProtocolFlashErase()
 {
     uint32_t address = BOOTLOADER_APPLICATION_START;
     while (address >= BOOTLOADER_APPLICATION_START &&
-           address < BOOTLOADER_APPLICATION_END
+           address <= BOOTLOADER_APPLICATION_END
     ) {
         FlashErasePage(address);
         // Pages are erased in 1024 instruction blocks
