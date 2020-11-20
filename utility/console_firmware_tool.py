@@ -11,6 +11,7 @@ from serial import Serial, PARITY_ODD, serialutil
 from struct import pack
 from time import time, sleep
 
+BLUEBUS_MAX_MEMORY_ADDR = 0xAA800
 PROTOCOL_CMD_PLATFORM_REQUEST = 0x00
 PROTOCOL_CMD_PLATFORM_RESPONSE = 0x01
 PROTOCOL_CMD_ERASE_FLASH_REQUEST = 0x02
@@ -110,8 +111,9 @@ def read_hexfile(filename):
     hp = HexParser(filename)
     address = 0x1800
     data = []
-    while address < (0x55e00 - 0x400) & bitwise_not(0x400 - 1):
+    while address < BLUEBUS_MAX_MEMORY_ADDR & bitwise_not(0x400 - 1):
         row_data = []
+        has_ops = False
         addr_bytes = [b for b in pack('>I', address)]
         addr_bytes.pop(0)
         for b in addr_bytes:
@@ -123,7 +125,10 @@ def read_hexfile(filename):
                 op_bytes.pop(0)
                 for b in op_bytes:
                     row_data.append(b)
-        data.append(row_data)
+                    if b != 255:
+                        has_ops = True
+        if has_ops:
+            data.append(row_data)
         address += 82 << 1
     return data
 
@@ -228,7 +233,8 @@ if __name__ == '__main__':
                         _ = rx_buffer.pop(0) # Remove the length
                         xor = rx_buffer.pop() # Remove the XOR
                         if command == PROTOCOL_CMD_PLATFORM_RESPONSE:
-                            print('Got Platform: %s' % ''.join(rx_buffer))
+                            string = [b.decode('ascii') for b in rx_buffer]
+                            print('Got Platform: %s' % ''.join(string))
                             has_response = True
                             if args.firmware:
                                 print('==== Begin Firmware Update ====')

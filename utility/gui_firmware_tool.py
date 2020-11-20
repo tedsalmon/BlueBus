@@ -14,8 +14,11 @@ from tk_tools import SmartOptionMenu
 
 BLUEBUS_PLATFORMS = [
     'BLUEBUS_BOOTLOADER_1_3',
-    'BLUEBUS_BOOTLOADER_1_4'
+    'BLUEBUS_BOOTLOADER_1_4',
+    'BLUEBUS_BOOTLOADER_1_5',
 ]
+
+BLUEBUS_MAX_MEMORY_ADDR = 0xAA800
 
 # Protocol definition
 PROTOCOL_CMD_PLATFORM_REQUEST = 0x00
@@ -76,8 +79,9 @@ def read_hexfile(filename):
     hp = HexParser(filename)
     address = 0x1800
     data = []
-    while address < (0x55e00 - 0x400) & bitwise_not(0x400 - 1):
+    while address < BLUEBUS_MAX_MEMORY_ADDR & bitwise_not(0x400 - 1):
         row_data = []
+        has_ops = False
         addr_bytes = [b for b in pack('>I', address)]
         addr_bytes.pop(0)
         for b in addr_bytes:
@@ -89,7 +93,10 @@ def read_hexfile(filename):
                 op_bytes.pop(0)
                 for b in op_bytes:
                     row_data.append(b)
-        data.append(row_data)
+                    if b != 255:
+                        has_ops = True
+        if has_ops:
+            data.append(row_data)
         address += 82 << 1
     return data
 
