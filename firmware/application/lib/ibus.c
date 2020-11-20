@@ -388,7 +388,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_CDC) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
             EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
-        } else if(pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_GET_STATUS) {
+        } else if (pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_GET_STATUS) {
             if (pkt[4] == IBUS_CDC_CMD_STOP_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
             } else if (pkt[4] == IBUS_CDC_CMD_PAUSE_PLAYING) {

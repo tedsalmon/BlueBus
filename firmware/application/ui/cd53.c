@@ -275,16 +275,13 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
         }
         if (nextMenu == CD53_SETTING_IDX_BLINKERS) {
             unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
-            if (blinkCount == 0x03) {
-                CD53SetMainDisplayText(context, "OT Blink: 3", 0);
-                context->settingValue = 0x03;
-            } else if (blinkCount == 0x05) {
-                CD53SetMainDisplayText(context, "OT Blink: 5", 0);
-                context->settingValue = 0x05;
-            } else {
-                CD53SetMainDisplayText(context, "OT Blink: 1", 0);
-                context->settingValue = CONFIG_SETTING_OFF;
+            if (blinkCount > 8 || blinkCount == 0) {
+                blinkCount = 1;
             }
+            char blinkerText[13];
+            memset(blinkerText, 0, sizeof(blinkerText));
+            snprintf(blinkerText, 12, "OT Blinks: %d", context->settingValue);
+            CD53SetMainDisplayText(context, blinkerText, 0);
             context->settingIdx = CD53_SETTING_IDX_BLINKERS;
         }
         if (nextMenu == CD53_SETTING_IDX_COMFORT_LOCKS) {
@@ -346,16 +343,14 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             }
         }
         if (context->settingIdx == CD53_SETTING_IDX_BLINKERS) {
-            if (context->settingValue == CONFIG_SETTING_OFF) {
-                CD53SetMainDisplayText(context, "OT Blink: 3", 0);
-                context->settingValue = 0x03;
-            } else if (context->settingValue == 0x03) {
-                CD53SetMainDisplayText(context, "OT Blink: 5", 0);
-                context->settingValue = 0x05;
-            } else {
-                CD53SetMainDisplayText(context, "OT Blink: 1", 0);
-                context->settingValue = CONFIG_SETTING_OFF;
+            context->settingValue++;
+            if (context->settingValue > 8) {
+                context->settingValue = 1;
             }
+            char blinkerText[13];
+            memset(blinkerText, 0, sizeof(blinkerText));
+            snprintf(blinkerText, 12, "OT Blinks: %d", context->settingValue);
+            CD53SetMainDisplayText(context, blinkerText, 0);
         }
         if (context->settingIdx == CD53_SETTING_IDX_COMFORT_LOCKS) {
             if (context->settingValue == CONFIG_SETTING_OFF) {

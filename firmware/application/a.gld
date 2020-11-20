@@ -33,12 +33,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * 
  */
-
-/*
- * Customizations:
- *     1. program (xr) moved to 0x1900 from 0x100
- *     2. Length set to original length - 0x1800
- *     3. Updated __CODE_BASE and __CODE_LENGTH
+
+/*
+ * Customizations:
+ *     1. program (xr) moved to 0x1900 from 0x100
+ *     2. Length set to original length - 0x1800
+ *     3. Updated __CODE_BASE and __CODE_LENGTH
 */
 
 OUTPUT_ARCH("24FJ1024GA606")
@@ -82,17 +82,17 @@ MEMORY
 
 #ifndef __DUAL_PARTITION
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
-  ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
-  program (xr)   : ORIGIN = 0x1900,        LENGTH = 0xA8F00
-  FSEC           : ORIGIN = 0xABF00,       LENGTH = 0x2
-  FBSLIM         : ORIGIN = 0xABF10,       LENGTH = 0x2
-  FSIGN          : ORIGIN = 0xABF14,       LENGTH = 0x2
-  FOSCSEL        : ORIGIN = 0xABF18,       LENGTH = 0x2
-  FOSC           : ORIGIN = 0xABF1C,       LENGTH = 0x2
-  FWDT           : ORIGIN = 0xABF20,       LENGTH = 0x2
-  FPOR           : ORIGIN = 0xABF24,       LENGTH = 0x2
-  FICD           : ORIGIN = 0xABF28,       LENGTH = 0x2
-  FDEVOPT1       : ORIGIN = 0xABF2C,       LENGTH = 0x2
+  ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
+  program (xr)   : ORIGIN = 0x1900,        LENGTH = 0xA8E00
+  FSEC           : ORIGIN = 0xAA700,       LENGTH = 0x2
+  FBSLIM         : ORIGIN = 0xAA710,       LENGTH = 0x2
+  FSIGN          : ORIGIN = 0xAA714,       LENGTH = 0x2
+  FOSCSEL        : ORIGIN = 0xAA718,       LENGTH = 0x2
+  FOSC           : ORIGIN = 0xAA71C,       LENGTH = 0x2
+  FWDT           : ORIGIN = 0xAA720,       LENGTH = 0x2
+  FPOR           : ORIGIN = 0xAA724,       LENGTH = 0x2
+  FICD           : ORIGIN = 0xAA728,       LENGTH = 0x2
+  FDEVOPT1       : ORIGIN = 0xAA72C,       LENGTH = 0x2
 #endif
 
 
@@ -102,7 +102,7 @@ MEMORY
 
 #ifdef __DUAL_PARTITION
   reset          : ORIGIN = 0x0,           LENGTH = 0x4
-  ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
+  ivt            : ORIGIN = 0x4,           LENGTH = 0xFC
   program (xr)   : ORIGIN = 0x1900,        LENGTH = 0x54600
   FSEC           : ORIGIN = 0x55F00,       LENGTH = 0x2
   FBSLIM         : ORIGIN = 0x55F10,       LENGTH = 0x2
@@ -130,18 +130,18 @@ __FBOOT = 0x801800;
  */
 
 #ifndef __DUAL_PARTITION
-__FSEC = 0xABF00;
-__FBSLIM = 0xABF10;
-__FSIGN = 0xABF14;
-__FOSCSEL = 0xABF18;
-__FOSC = 0xABF1C;
-__FWDT = 0xABF20;
-__FPOR = 0xABF24;
-__FICD = 0xABF28;
-__FDEVOPT1 = 0xABF2C;
+__FSEC = 0xAA700;
+__FBSLIM = 0xAA710;
+__FSIGN = 0xAA714;
+__FOSCSEL = 0xAA718;
+__FOSC = 0xAA71C;
+__FWDT = 0xAA720;
+__FPOR = 0xAA724;
+__FICD = 0xAA728;
+__FDEVOPT1 = 0xAA72C;
 __CODE_BASE = 0x1900;
-__CODE_LENGTH = 0xA8F00;
-__IVT_BASE  = 0x4;
+__CODE_LENGTH = 0xA8E00;
+__IVT_BASE  = 0x4;
 #endif
 
 
@@ -163,7 +163,7 @@ __FDEVOPT1 = 0x55F2C;
 __FBTSEQ = 0x55FFC;
 __CODE_BASE = 0x1900;
 __CODE_LENGTH = 0x54600;
-__IVT_BASE  = 0x4;
+__IVT_BASE  = 0x4;
 #endif
 
 
@@ -3016,4 +3016,4 @@ _OC6          = 0x266;
 _UART1        = 0x398;
  UART2        = 0x3AE;
 _UART2        = 0x3AE;
-
+

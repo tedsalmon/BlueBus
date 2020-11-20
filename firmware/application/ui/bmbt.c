@@ -867,6 +867,9 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
     char localeName[3];
     memset(localeName, 0, sizeof(localeName));
     switch (selectedLanguage) {
+        case CONFIG_SETTING_LANGUAGE_DUTCH:
+            strncpy(localeName, "NL", 2);
+            break;
         case CONFIG_SETTING_LANGUAGE_ENGLISH:
             strncpy(localeName, "EN", 2);
             break;
@@ -1145,14 +1148,16 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE) {
         unsigned char selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-        if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
+        if (selectedLanguage == CONFIG_SETTING_LANGUAGE_DUTCH) {
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
+        } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_GERMAN;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_GERMAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_RUSSIAN;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_SPANISH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_SPANISH) {
-            selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_DUTCH;
         }
         ConfigSetSetting(CONFIG_SETTING_LANGUAGE, selectedLanguage);
         // Change the UI Language

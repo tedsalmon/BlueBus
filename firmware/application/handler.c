@@ -1295,7 +1295,7 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
                         context->lightControlStatus.blinkCount,
                         configBlinkLimit
                     );
-                    if(context->lightControlStatus.blinkCount >= configBlinkLimit) {
+                    if (context->lightControlStatus.blinkCount >= configBlinkLimit) {
                         LogDebug(
                             CONFIG_DEVICE_LOG_SYSTEM,
                             "RIGHT > COMFORT_RIGHT > Blink limit"
@@ -1322,8 +1322,8 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
                    CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
         ) {
             LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unrelated activity");
-        } else if(CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                  CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
+        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
         ) {
             // OFF blinker (or anything non-blinker)
             // Only activate comfort blinkers after a single blink.
@@ -1497,7 +1497,7 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
                 BC127CommandCallAnswer(context->bt);
             } else if (context->bt->callStatus == BC127_CALL_OUTGOING) {
                 BC127CommandCallEnd(context->bt);
-            } else if(context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+            } else if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
                 if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                     BC127CommandPause(context->bt);
                 } else {
@@ -1512,7 +1512,7 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
         }
     } else {
         if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_REL) {
-            if(context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+            if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
                 if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                     BC127CommandPause(context->bt);
                 } else {

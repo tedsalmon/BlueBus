@@ -37,7 +37,7 @@ void I2CInit()
  * I2CReadByte()
  *     Description:
  *         Read a single byte from an I2C slave. The Slave should already
- *         be in an I2C read-ready state. Note that the Slave clock streching
+ *         be in an I2C read-ready state. Note that the Slave clock stretching
  *         can make this fail.
  *     Params:
  *         unsigned char ackFlag - Whether or not to send a NACK
@@ -203,7 +203,7 @@ int8_t I2CRead(
         return I2C_ERR_CommFail;
     }
     // Register Addr
-    if(I2CWriteByte((char)registerAddress) != I2C_STATUS_OK) {
+    if (I2CWriteByte((char)registerAddress) != I2C_STATUS_OK) {
         I2CStop();
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
@@ -424,7 +424,7 @@ int8_t I2CWrite(
         I2CStop();
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_BadAddr;
-    } else if(retval < 0) {
+    } else if (retval < 0) {
         I2CStop();
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
@@ -440,7 +440,7 @@ int8_t I2CWrite(
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
     }
-    if(I2CStop() != I2C_STATUS_OK) {
+    if (I2CStop() != I2C_STATUS_OK) {
         // Failed to close bus
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;

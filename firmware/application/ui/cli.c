@@ -121,7 +121,7 @@ void CLIProcess()
             } else if (UtilsStricmp(msgBuf[0], "BT") == 0) {
                 if (UtilsStricmp(msgBuf[1], "CONFIG") == 0) {
                     BC127SendCommand(cli.bt, "CONFIG");
-                } else if(UtilsStricmp(msgBuf[1], "CVC") == 0) {
+                } else if (UtilsStricmp(msgBuf[1], "CVC") == 0) {
                     if (delimCount == 2) {
                         cmdSuccess = 0;
                     } else {
@@ -452,7 +452,7 @@ void CLIProcess()
                     } else {
                         LogRaw("Invalid UI Mode specified\r\n");
                     }
-                } else if(UtilsStricmp(msgBuf[1], "IGN") == 0) {
+                } else if (UtilsStricmp(msgBuf[1], "IGN") == 0) {
                     if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         IBusCommandIgnitionStatus(cli.ibus, 0x00);
                         EventTriggerCallback(

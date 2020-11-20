@@ -204,9 +204,13 @@ static void MIDShowNextDevice(MIDContext_t *context, uint8_t direction)
 static void MIDShowNextSetting(MIDContext_t *context, uint8_t direction)
 {
     uint8_t nextMenu = 0;
-    if (context->settingIdx == MID_SETTING_IDX_HFP && direction != MID_BUTTON_NEXT_VAL) {
+    if (context->settingIdx == MID_SETTING_IDX_HFP &&
+        direction != MID_BUTTON_NEXT_VAL
+    ) {
         nextMenu = MID_SETTINGS_MENU[MID_SETTING_IDX_PAIRINGS];
-    } else if(context->settingIdx == MID_SETTING_IDX_PAIRINGS && direction == MID_BUTTON_NEXT_VAL) {
+    } else if (context->settingIdx == MID_SETTING_IDX_PAIRINGS &&
+               direction == MID_BUTTON_NEXT_VAL
+    ) {
         nextMenu = MID_SETTINGS_MENU[MID_SETTING_IDX_HFP];
     } else {
         if (direction == MID_BUTTON_NEXT_VAL) {
@@ -263,16 +267,13 @@ static void MIDShowNextSetting(MIDContext_t *context, uint8_t direction)
     }
     if (nextMenu == MID_SETTING_IDX_BLINKERS) {
         unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
-        if (blinkCount == 0x03) {
-            MIDSetMainDisplayText(context, "OT Blink: 3", 0);
-            context->settingValue = 0x03;
-        } else if (blinkCount == 0x05) {
-            MIDSetMainDisplayText(context, "OT Blink: 5", 0);
-            context->settingValue = 0x05;
-        } else {
-            MIDSetMainDisplayText(context, "OT Blink: 1", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
+        if (blinkCount > 8 || blinkCount == 0) {
+            blinkCount = 1;
         }
+        char blinkerText[13];
+        memset(blinkerText, 0, sizeof(blinkerText));
+        snprintf(blinkerText, 12, "OT Blinks: %d", context->settingValue);
+        MIDSetMainDisplayText(context, blinkerText, 0);
         context->settingIdx = MID_SETTING_IDX_BLINKERS;
     }
     if (nextMenu == MID_SETTING_IDX_COMFORT_LOCKS) {
@@ -338,16 +339,14 @@ static void MIDShowNextSettingValue(MIDContext_t *context, uint8_t direction)
         }
     }
     if (context->settingIdx == MID_SETTING_IDX_BLINKERS) {
-        if (context->settingValue == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "OT Blink: 3", 0);
-            context->settingValue = 0x03;
-        } else if (context->settingValue == 0x03) {
-            MIDSetMainDisplayText(context, "OT Blink: 5", 0);
-            context->settingValue = 0x05;
-        } else {
-            MIDSetMainDisplayText(context, "OT Blink: 1", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
+        context->settingValue++;
+        if (context->settingValue > 8) {
+            context->settingValue = 1;
         }
+        char blinkerText[13];
+        memset(blinkerText, 0, sizeof(blinkerText));
+        snprintf(blinkerText, 12, "OT Blinks: %d", context->settingValue);
+        MIDSetMainDisplayText(context, blinkerText, 0);
     }
     if (context->settingIdx == MID_SETTING_IDX_COMFORT_LOCKS) {
         if (context->settingValue == CONFIG_SETTING_OFF) {

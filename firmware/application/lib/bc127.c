@@ -1264,7 +1264,7 @@ void BC127Process(BC127_t *bt)
                 }
             }
             bt->metadataTimestamp = TimerGetMillis();
-        } else if(strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
+        } else if (strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             if (bt->activeDevice.deviceId == deviceId) {
                 bt->playbackStatus = BC127_AVRCP_STATUS_PLAYING;
@@ -1280,14 +1280,14 @@ void BC127Process(BC127_t *bt)
                     );
                 }
             }
-        } else if(strcmp(msgBuf[0], "AVRCP_PAUSE") == 0) {
+        } else if (strcmp(msgBuf[0], "AVRCP_PAUSE") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             if (bt->activeDevice.deviceId == deviceId) {
                 bt->playbackStatus = BC127_AVRCP_STATUS_PAUSED;
                 LogDebug(LOG_SOURCE_BT, "BT: Paused");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
-        } else if(strcmp(msgBuf[0], "A2DP_STREAM_START") == 0) {
+        } else if (strcmp(msgBuf[0], "A2DP_STREAM_START") == 0) {
             if (bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
                 bt->playbackStatus = BC127_AVRCP_STATUS_PLAYING;
                 LogDebug(LOG_SOURCE_BT, "BT: Playing [A2DP Stream Start]");
@@ -1302,13 +1302,13 @@ void BC127Process(BC127_t *bt)
                     );
                 }
             }
-        } else if(strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
+        } else if (strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
             if (bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
                 bt->playbackStatus = BC127_AVRCP_STATUS_PAUSED;
                 LogDebug(LOG_SOURCE_BT, "BT: Paused [A2DP Stream Suspend]");
                 EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
             }
-        } else if(strcmp(msgBuf[0], "CALL_ACTIVE") == 0) {
+        } else if (strcmp(msgBuf[0], "CALL_ACTIVE") == 0) {
             if (bt->callStatus != BC127_CALL_ACTIVE) {
                 bt->callStatus = BC127_CALL_ACTIVE;
                 EventTriggerCallback(
@@ -1316,7 +1316,7 @@ void BC127Process(BC127_t *bt)
                     (unsigned char *) BC127_CALL_ACTIVE
                 );
             }
-        } else if(strcmp(msgBuf[0], "CALL_END") == 0) {
+        } else if (strcmp(msgBuf[0], "CALL_END") == 0) {
             if (bt->callStatus != BC127_CALL_INACTIVE) {
                 bt->callStatus = BC127_CALL_INACTIVE;
                 memset(bt->callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
@@ -1325,7 +1325,7 @@ void BC127Process(BC127_t *bt)
                     (unsigned char *) BC127_CALL_INACTIVE
                 );
             }
-        } else if(strcmp(msgBuf[0], "CALL_INCOMING") == 0) {
+        } else if (strcmp(msgBuf[0], "CALL_INCOMING") == 0) {
             if (bt->callStatus != BC127_CALL_INCOMING) {
                 bt->callStatus = BC127_CALL_INCOMING;
                 EventTriggerCallback(
@@ -1341,7 +1341,7 @@ void BC127Process(BC127_t *bt)
                     (unsigned char *) BC127_CALL_OUTGOING
                 );
             }
-        } else if(strcmp(msgBuf[0], "LINK") == 0) {
+        } else if (strcmp(msgBuf[0], "LINK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             uint8_t isNew = 0;
             // No active device is configured
@@ -1377,12 +1377,12 @@ void BC127Process(BC127_t *bt)
             if (isNew == 1) {
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
-        } else if(strcmp(msgBuf[0], "LIST") == 0) {
+        } else if (strcmp(msgBuf[0], "LIST") == 0) {
             // Request the device name. Note that the name will only be returned
             // if the device is in range
             LogDebug(LOG_SOURCE_BT, "BT: Paired Device %s", msgBuf[1]);
             BC127CommandGetDeviceName(bt, msgBuf[1]);
-        } else if(strcmp(msgBuf[0], "CLOSE_OK") == 0) {
+        } else if (strcmp(msgBuf[0], "CLOSE_OK") == 0) {
             uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
             // If the open connection is closing, update the state
             if (bt->activeDevice.deviceId == deviceId) {
@@ -1479,7 +1479,7 @@ void BC127Process(BC127_t *bt)
             BC127PairedDeviceInit(bt, msgBuf[1], name);
             EventTriggerCallback(BC127Event_DeviceFound, (unsigned char *) msgBuf[1]);
             LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s -> %s", msgBuf[1], name);
-        } else if(strcmp(msgBuf[0], "Build:") == 0) {
+        } else if (strcmp(msgBuf[0], "Build:") == 0) {
             // Clear the Metadata
             BC127ClearMetadata(bt);
             // The device sometimes resets without sending the "Ready" message
@@ -1491,7 +1491,7 @@ void BC127Process(BC127_t *bt)
             LogDebug(LOG_SOURCE_BT, "BT: Boot Complete");
             EventTriggerCallback(BC127Event_Boot, 0);
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
-        } else if(strcmp(msgBuf[0], "SCO_OPEN") == 0) {
+        } else if (strcmp(msgBuf[0], "SCO_OPEN") == 0) {
             bt->scoStatus = BC127_CALL_SCO_OPEN;
             EventTriggerCallback(
                 BC127Event_CallStatus,
