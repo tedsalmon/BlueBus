@@ -8,7 +8,8 @@
 #define CONFIG_H
 #include "eeprom.h"
 
-#define CONFIG_CACHE_VALUES 96
+#define CONFIG_SETTING_CACHE_SIZE 96
+#define CONFIG_VALUE_CACHE_SIZE 16
 /* EEPROM 0x00 - 0x07: Reserved for the BlueBus */
 #define CONFIG_SN_ADDRESS_MSB 0x00
 #define CONFIG_SN_ADDRESS_LSB 0x01
@@ -26,7 +27,7 @@
 #define CONFIG_TRAP_NVM 0x0C
 #define CONFIG_TRAP_GEN 0x0D
 #define CONFIG_TRAP_LAST_ERR 0x0E
-/* EEPROM 0x0F - 0x19: IBus / Vehicle Data */
+/* EEPROM 0x0F - 0x19: I-Bus / Vehicle Data */
 #define CONFIG_UI_MODE_ADDRESS 0x0F
 #define CONFIG_NAV_TYPE_ADDRESS 0x10
 #define CONFIG_VEHICLE_TYPE_ADDRESS 0x11
@@ -61,6 +62,9 @@
 #define CONFIG_SETTING_AUTOPLAY_ADDRESS 0x40
 #define CONFIG_SETTING_DAC_AUDIO_VOL_ADDRESS 0x41
 #define CONFIG_SETTING_USE_SPDIF_INPUT_ADDRESS 0x42
+/* Values 0xA0 - 0xB0: Informational & Counters */
+#define CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB_ADDRESS 0xA0
+#define CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB_ADDRESS 0xA1
 
 #define CONFIG_DEVICE_LOG_BT 2
 #define CONFIG_DEVICE_LOG_IBUS 3
@@ -114,11 +118,17 @@
 #define CONFIG_SETTING_DAC_AUDIO_VOL CONFIG_SETTING_DAC_AUDIO_VOL_ADDRESS
 #define CONFIG_SETTING_DAC_TEL_VOL CONFIG_SETTING_DAC_TEL_VOL_ADDRESS
 #define CONFIG_SETTING_USE_SPDIF_INPUT CONFIG_SETTING_USE_SPDIF_INPUT_ADDRESS
-/* Data Boundary Helpers */
+/* Values 0xA0 - 0xB0: Informational & Counters */
+#define CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB_ADDRESS
+#define CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB_ADDRESS
+/* Settings Boundary Helpers */
 #define CONFIG_SETTING_START_ADDRESS 0x1A
 #define CONFIG_SETTING_END_ADDRESS 0x50
+#define CONFIG_VALUE_START_ADDRESS 0xA0
+#define CONFIG_VALUE_END_ADDRESS 0xB0
 
 
+uint16_t ConfigGetBC127BootFailures();
 unsigned char ConfigGetByte(unsigned char);
 unsigned char ConfigGetBuildWeek();
 unsigned char ConfigGetBuildYear();
@@ -138,9 +148,11 @@ unsigned char ConfigGetSetting(unsigned char);
 unsigned char ConfigGetTrapCount(unsigned char);
 unsigned char ConfigGetTrapLast();
 unsigned char ConfigGetUIMode();
+unsigned char ConfigGetValue(unsigned char);
 unsigned char ConfigGetVehicleType();
 unsigned char ConfigGetLanguage();
 void ConfigGetVehicleIdentity(unsigned char *);
+void ConfigSetBC127BootFailures(uint16_t);
 void ConfigSetBootloaderMode(unsigned char);
 void ConfigSetComfortLock(unsigned char);
 void ConfigSetComfortUnlock(unsigned char);
@@ -155,6 +167,7 @@ void ConfigSetTrapCount(unsigned char, unsigned char);
 void ConfigSetTrapIncrement(unsigned char);
 void ConfigSetTrapLast(unsigned char);
 void ConfigSetUIMode(unsigned char);
+void ConfigSetValue(unsigned char, unsigned char);
 void ConfigSetVehicleType(unsigned char);
 void ConfigSetVehicleIdentity(unsigned char *);
 void ConfigSetLanguage(unsigned char);

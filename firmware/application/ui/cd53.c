@@ -568,43 +568,46 @@ void CD53BC127DeviceReady(void *ctx, unsigned char *tmp)
 
 void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
 {
-    if (context->displayMetadata &&
-        context->mode == CD53_MODE_ACTIVE &&
-        strlen(context->bt->title) > 0
+    if (context->displayMetadata == CD53_DISPLAY_METADATA_ON &&
+        context->mode == CD53_MODE_ACTIVE
     ) {
-        char text[UTILS_DISPLAY_TEXT_SIZE];
-        if (strlen(context->bt->artist) > 0 && strlen(context->bt->album) > 0) {
-            snprintf(
-                text,
-                UTILS_DISPLAY_TEXT_SIZE,
-                "%s - %s on %s",
-                context->bt->title,
-                context->bt->artist,
-                context->bt->album
-            );
-        } else if (strlen(context->bt->artist) > 0) {
-            snprintf(
-                text,
-                UTILS_DISPLAY_TEXT_SIZE,
-                "%s - %s",
-                context->bt->title,
-                context->bt->artist
-            );
-        } else if (strlen(context->bt->album) > 0) {
-            snprintf(
-                text,
-                UTILS_DISPLAY_TEXT_SIZE,
-                "%s on %s",
-                context->bt->title,
-                context->bt->album
-            );
+        if (strlen(context->bt->title) > 0) {
+            char text[UTILS_DISPLAY_TEXT_SIZE];
+            if (strlen(context->bt->artist) > 0 && strlen(context->bt->album) > 0) {
+                snprintf(
+                    text,
+                    UTILS_DISPLAY_TEXT_SIZE,
+                    "%s - %s on %s",
+                    context->bt->title,
+                    context->bt->artist,
+                    context->bt->album
+                );
+            } else if (strlen(context->bt->artist) > 0) {
+                snprintf(
+                    text,
+                    UTILS_DISPLAY_TEXT_SIZE,
+                    "%s - %s",
+                    context->bt->title,
+                    context->bt->artist
+                );
+            } else if (strlen(context->bt->album) > 0) {
+                snprintf(
+                    text,
+                    UTILS_DISPLAY_TEXT_SIZE,
+                    "%s on %s",
+                    context->bt->title,
+                    context->bt->album
+                );
+            } else {
+                snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
+            }
+            context->mainDisplay.timeout = 0;
+            CD53SetMainDisplayText(context, text, 3000 / CD53_DISPLAY_SCROLL_SPEED);
+            if (context->mediaChangeState == CD53_MEDIA_STATE_CHANGE) {
+                context->mediaChangeState = CD53_MEDIA_STATE_METADATA_OK;
+            }
         } else {
-            snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
-        }
-        context->mainDisplay.timeout = 0;
-        CD53SetMainDisplayText(context, text, 3000 / CD53_DISPLAY_SCROLL_SPEED);
-        if (context->mediaChangeState == CD53_MEDIA_STATE_CHANGE) {
-            context->mediaChangeState = CD53_MEDIA_STATE_METADATA_OK;
+            CD53SetMainDisplayText(context, "Bluetooth", 0);
         }
     }
 }

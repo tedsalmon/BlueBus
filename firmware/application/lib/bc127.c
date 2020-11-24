@@ -53,11 +53,12 @@ BC127_t BC127Init()
     bt.connectable = BC127_STATE_ON;
     bt.discoverable = BC127_STATE_ON;
     bt.callStatus = BC127_CALL_INACTIVE;
+    bt.scoStatus = BC127_CALL_SCO_CLOSE;
     bt.metadataStatus = BC127_METADATA_STATUS_NEW;
     bt.pairedDevicesCount = 0;
     bt.playbackStatus = BC127_AVRCP_STATUS_PAUSED;
-    bt.scoStatus = BC127_CALL_SCO_CLOSE;
     bt.rxQueueAge = 0;
+    bt.powerState = BC127_STATE_OFF;
     memset(bt.callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
     memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
     // Make sure that we initialize the char arrays to all zeros
@@ -1140,6 +1141,8 @@ void BC127Process(BC127_t *bt)
 {
     uint16_t messageLength = CharQueueSeek(&bt->uart.rxQueue, BC127_MSG_END_CHAR);
     if (messageLength > 0) {
+        // We received a valid message, so set the power state to on
+        bt->powerState = BC127_STATE_ON;
         char msg[messageLength];
         uint16_t i;
         uint16_t delimCount = 1;

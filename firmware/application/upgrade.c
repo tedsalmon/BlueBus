@@ -128,6 +128,8 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 17) == 1) {
         // Set new `0x21` to English language by default
         ConfigSetSetting(CONFIG_SETTING_LANGUAGE, CONFIG_SETTING_LANGUAGE_ENGLISH);
+        // Set BC127 failure counters
+        ConfigSetBC127BootFailures(0);
         LogRaw("Ran Upgrade 1.1.17\r\n");
     }
     ConfigSetFirmwareVersion(

@@ -44,8 +44,8 @@
 #define BC127_METADATA_TITLE_OFFSET 22
 #define BC127_METADATA_ARTIST_OFFSET 23
 #define BC127_METADATA_ALBUM_OFFSET 22
-#define BC127_METADATA_STATUS_NEW 1
-#define BC127_METADATA_STATUS_CUR 2
+#define BC127_METADATA_STATUS_NEW 0
+#define BC127_METADATA_STATUS_CUR 1
 #define BC127_METADATA_TIMEOUT 500
 #define BC127_MSG_END_CHAR 0x0D
 #define BC127_MSG_LF_CHAR 0x0A
@@ -128,31 +128,35 @@ typedef struct BC127Connection_t {
  *         pairingErrors - The key indicates the profile in error and the value
  *             in error. This is used to track what profiles we need to re-attempt
  *             a connection with.
- *         callStatus - The call status
+ *         playbackStatus - If we're paused or playing
  *         metadataStatus - Tracks the state of the metadata through the process
  *             of gathering it from the device
- *         playbackStatus - If we're paused or playing
+ *         callStatus - The call status
  *         scoStatus - If the SCO channel is open or closed
+ *         powerState - 1/0 1 If we have seen ANY message from the BC127
+ *             to indicate that it is responsive
+ *         metadataTimestamp - The last time we got metadata of any kind
  *         rxQueueAge - Used to track how long data has been sitting on the
- *            RX queue without getting a MSG_END_CHAR.
+ *             RX queue without getting a MSG_END_CHAR.
  */
 typedef struct BC127_t {
     BC127Connection_t activeDevice;
     BC127PairedDevice_t pairedDevices[BC127_MAX_DEVICE_PAIRED];
-    uint8_t connectable;
-    uint8_t discoverable;
-    uint8_t pairedDevicesCount;
+    uint8_t connectable: 1;
+    uint8_t discoverable: 1;
+    uint8_t pairedDevicesCount: 4;
     uint8_t pairingErrors[BC127_PROFILE_COUNT];
-    uint8_t callStatus;
-    uint8_t metadataStatus;
-    uint8_t playbackStatus;
-    uint8_t scoStatus;
+    uint8_t metadataStatus: 1;
+    uint8_t playbackStatus: 1;
+    uint8_t callStatus: 4;
+    uint8_t scoStatus: 4;
+    uint8_t powerState: 1;
+    uint32_t metadataTimestamp;
     uint32_t rxQueueAge;
     char title[BC127_METADATA_FIELD_SIZE];
     char artist[BC127_METADATA_FIELD_SIZE];
     char album[BC127_METADATA_FIELD_SIZE];
     char callerId[BC127_CALLER_ID_FIELD_SIZE];
-    uint32_t metadataTimestamp;
     UART_t uart;
 } BC127_t;
 

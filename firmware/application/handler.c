@@ -43,6 +43,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     Context.lmDimmerChecksum = 0x00;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
     Context.telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
+    Context.btBootFailure = HANDLER_BT_BOOT_OK;
     memset(&Context.bodyModuleStatus, 0, sizeof(HandlerBodyModuleStatus_t));
     memset(&Context.lightControlStatus, 0, sizeof(HandlerLightControlStatus_t));
     memset(&Context.ibusModuleStatus, 0, sizeof(HandlerModuleStatus_t));
@@ -190,6 +191,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         IBUS_EVENT_TELVolumeChange,
         &HandlerIBusTELVolumeChange,
         &Context
+    );
+    TimerRegisterScheduledTask(
+        &HandlerTimerBC127State,
+        &Context,
+        HANDLER_INT_BC127_STATE
     );
     TimerRegisterScheduledTask(
         &HandlerTimerCDCAnnounce,
@@ -1797,6 +1803,7 @@ uint8_t HandlerIBusBroadcastTELStatus(
         if (context->telStatus != currentTelStatus ||
             sendFlag == HANDLER_TEL_STATUS_FORCE
         ) {
+            context->telStatus = currentTelStatus;
             // Do not set the active call flag for these UIs to allow
             // the radio volume controls to remain active
             if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE &&
@@ -1806,11 +1813,34 @@ uint8_t HandlerIBusBroadcastTELStatus(
                 return 1;
             }
             IBusCommandTELStatus(context->ibus, currentTelStatus);
-            context->telStatus = currentTelStatus;
             return 1;
         }
     }
     return 0;
+}
+
+/**
+ * HandlerTimerBC127State()
+ *     Description:
+ *         Ensure the BC127 has booted, and if not, blink the red TEL LED
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerBC127State(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bt->powerState == BC127_STATE_OFF &&
+        context->btBootFailure == HANDLER_BT_BOOT_OK
+    ) {
+        LogWarning("BC127 Boot Failure");
+        uint16_t bootFailCount = ConfigGetBC127BootFailures();
+        bootFailCount++;
+        ConfigSetBC127BootFailures(bootFailCount);
+        IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED_BLINKING);
+        context->btBootFailure = HANDLER_BT_BOOT_FAIL;
+    }
 }
 
 /**

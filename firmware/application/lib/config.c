@@ -6,7 +6,28 @@
  */
 #include "config.h"
 
-unsigned char CONFIG_CACHE[CONFIG_CACHE_VALUES] = {};
+unsigned char CONFIG_SETTING_CACHE[CONFIG_SETTING_CACHE_SIZE] = {};
+unsigned char CONFIG_VALUE_CACHE[CONFIG_VALUE_CACHE_SIZE] = {};
+
+/**
+ * ConfigGetBC127BootFailures()
+ *     Description:
+ *         Get the count of BC127 boot failures
+ *     Params:
+ *         None
+ *     Returns:
+ *         uint16_t
+ */
+uint16_t ConfigGetBC127BootFailures()
+{
+    uint8_t lsb = ConfigGetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB);
+    uint8_t msb = ConfigGetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB);
+    // 0xFFFF is the max allowable value, so reset the counter
+    if (lsb == 0xFF && msb == 0xFF) {
+        return 0;
+    }
+    return (msb << 8) + lsb;
+}
 
 /**
  * ConfigGetByte()
@@ -37,10 +58,10 @@ unsigned char ConfigGetByte(unsigned char address)
  */
 unsigned char ConfigGetBuildWeek()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_BUILD_DATE_ADDRESS_WEEK];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_BUILD_DATE_ADDRESS_WEEK];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_WEEK);        
-        CONFIG_CACHE[CONFIG_BUILD_DATE_ADDRESS_WEEK] = value;
+        CONFIG_SETTING_CACHE[CONFIG_BUILD_DATE_ADDRESS_WEEK] = value;
     }
     return value;
 }
@@ -56,10 +77,10 @@ unsigned char ConfigGetBuildWeek()
  */
 unsigned char ConfigGetBuildYear()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_BUILD_DATE_ADDRESS_YEAR];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_BUILD_DATE_ADDRESS_YEAR];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_YEAR);        
-        CONFIG_CACHE[CONFIG_BUILD_DATE_ADDRESS_YEAR] = value;
+        CONFIG_SETTING_CACHE[CONFIG_BUILD_DATE_ADDRESS_YEAR] = value;
     }
     return value;
 }
@@ -75,10 +96,10 @@ unsigned char ConfigGetBuildYear()
  */
 unsigned char ConfigGetComfortLock()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_SETTING_COMFORT_LOCKS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_SETTING_COMFORT_LOCKS);        
-        CONFIG_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = value;
     }
     return (value & 0xF0) >> 4;
 }
@@ -94,10 +115,10 @@ unsigned char ConfigGetComfortLock()
  */
 unsigned char ConfigGetComfortUnlock()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_SETTING_COMFORT_LOCKS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_SETTING_COMFORT_LOCKS);        
-        CONFIG_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = value;
     }
     return value & 0x0F;
 }
@@ -113,10 +134,10 @@ unsigned char ConfigGetComfortUnlock()
  */
 unsigned char ConfigGetFirmwareVersionMajor()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS);        
-        CONFIG_CACHE[CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS] = value;
     }
     return value;
 }
@@ -132,10 +153,10 @@ unsigned char ConfigGetFirmwareVersionMajor()
  */
 unsigned char ConfigGetFirmwareVersionMinor()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS);        
-        CONFIG_CACHE[CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS] = value;
     }
     return value;
 }
@@ -151,10 +172,10 @@ unsigned char ConfigGetFirmwareVersionMinor()
  */
 unsigned char ConfigGetFirmwareVersionPatch()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS);        
-        CONFIG_CACHE[CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS] = value;
     }
     return value;
 }
@@ -191,10 +212,10 @@ void ConfigGetFirmwareVersionString(char *version)
  */
 unsigned char ConfigGetIKEType()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);        
-        CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
     }
     return (value & 0xF0) >> 4;
 }
@@ -210,10 +231,10 @@ unsigned char ConfigGetIKEType()
  */
 unsigned char ConfigGetLMVariant()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_LM_VARIANT_ADDRESS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_LM_VARIANT_ADDRESS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_LM_VARIANT_ADDRESS);
-        CONFIG_CACHE[CONFIG_LM_VARIANT_ADDRESS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_LM_VARIANT_ADDRESS] = value;
     }
     return value;
 }
@@ -229,7 +250,7 @@ unsigned char ConfigGetLMVariant()
  */
 unsigned char ConfigGetLog(unsigned char system)
 {
-    unsigned char currentSetting = CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS];
+    unsigned char currentSetting = CONFIG_SETTING_CACHE[CONFIG_SETTING_LOG_ADDRESS];
     if (currentSetting == 0x00) {
         currentSetting = ConfigGetByte(CONFIG_SETTING_LOG_ADDRESS);
         if (currentSetting == 0x00) {
@@ -237,7 +258,7 @@ unsigned char ConfigGetLog(unsigned char system)
             currentSetting = 0x01;
             EEPROMWriteByte(CONFIG_SETTING_LOG_ADDRESS, currentSetting);
         }
-        CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS] = currentSetting;
+        CONFIG_SETTING_CACHE[CONFIG_SETTING_LOG_ADDRESS] = currentSetting;
     }
     return (currentSetting >> system) & 1;
 }
@@ -253,10 +274,10 @@ unsigned char ConfigGetLog(unsigned char system)
  */
 unsigned char ConfigGetNavType()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_NAV_TYPE_ADDRESS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_NAV_TYPE_ADDRESS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_NAV_TYPE_ADDRESS);
-        CONFIG_CACHE[CONFIG_NAV_TYPE_ADDRESS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_NAV_TYPE_ADDRESS] = value;
     }
     return value;
 }
@@ -296,8 +317,7 @@ uint16_t ConfigGetSerialNumber()
     // Do not use ConfigGetByte() because our LSB could very well be 0xFF
     unsigned char snMSB = EEPROMReadByte(CONFIG_SN_ADDRESS_MSB);
     unsigned char snLSB = EEPROMReadByte(CONFIG_SN_ADDRESS_LSB);
-    uint16_t serialNumber = (snMSB << 8) + snLSB;
-    return serialNumber;
+    return (snMSB << 8) + snLSB;
 }
 
 /**
@@ -305,7 +325,7 @@ uint16_t ConfigGetSerialNumber()
  *     Description:
  *         Get a given setting from the EEPROM
  *     Params:
- *         unsigned char setting - The setting to set
+ *         unsigned char setting - The setting to get
  *     Returns:
  *         unsigned char - The value
  */
@@ -316,10 +336,10 @@ unsigned char ConfigGetSetting(unsigned char setting)
     if (setting >= CONFIG_SETTING_START_ADDRESS &&
         setting <= CONFIG_SETTING_END_ADDRESS
     ) {
-        value = CONFIG_CACHE[setting];
+        value = CONFIG_SETTING_CACHE[setting];
         if (value == 0x00) {
             value = ConfigGetByte(setting);
-            CONFIG_CACHE[setting] = value;
+            CONFIG_SETTING_CACHE[setting] = value;
         }
     }
     return value;
@@ -364,10 +384,10 @@ unsigned char ConfigGetTrapLast()
  */
 unsigned char ConfigGetUIMode()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_UI_MODE_ADDRESS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_UI_MODE_ADDRESS);
-        CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_UI_MODE_ADDRESS] = value;
     }
     return value;
 }
@@ -383,12 +403,37 @@ unsigned char ConfigGetUIMode()
  */
 unsigned char ConfigGetVehicleType()
 {
-    unsigned char value = CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);
-        CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
+        CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
     }
     return value & 0x0F;
+}
+
+/**
+ * ConfigGetValue()
+ *     Description:
+ *         Get a given value from the EEPROM
+ *     Params:
+ *         unsigned char value - The value to get
+ *     Returns:
+ *         unsigned char - The value
+ */
+unsigned char ConfigGetValue(unsigned char value)
+{
+    unsigned char data = 0x00;
+    // Catch invalid setting addresses
+    if (value >= CONFIG_VALUE_START_ADDRESS &&
+        value <= CONFIG_VALUE_END_ADDRESS
+    ) {
+        data = CONFIG_VALUE_CACHE[value - CONFIG_VALUE_START_ADDRESS];
+        if (data == 0x00) {
+            data = EEPROMReadByte(value);
+            CONFIG_VALUE_CACHE[value - CONFIG_VALUE_START_ADDRESS] = data;
+        }
+    }
+    return data;
 }
 
 /**
@@ -407,6 +452,21 @@ void ConfigGetVehicleIdentity(unsigned char *vin)
     for (i = 0; i < 5; i++) {
         vin[i] = ConfigGetByte(vinAddress[i]);
     }
+}
+
+/**
+ * ConfigSetBC127BootFailures()
+ *     Description:
+ *         Set count of BC127 boot failures
+ *     Params:
+ *         uint16_t failureCount - The number of failed boots
+ *     Returns:
+ *         void
+ */
+void ConfigSetBC127BootFailures(uint16_t failureCount)
+{
+    ConfigSetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB, failureCount >> 8);
+    ConfigSetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB, failureCount & 0xFF);
 }
 
 /**
@@ -438,7 +498,7 @@ void ConfigSetComfortLock(unsigned char comfortLock)
     // Store the value in the upper nibble of the comfort locks setting
     currentValue &= 0x0F;
     currentValue |= (comfortLock << 4) & 0xF0;
-    CONFIG_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = currentValue;
+    CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = currentValue;
     EEPROMWriteByte(CONFIG_SETTING_COMFORT_LOCKS, currentValue);
 }
 
@@ -457,7 +517,7 @@ void ConfigSetComfortUnlock(unsigned char comfortUnlock)
     // Store the value in the lower nibble of the comfort locks setting
     currentValue &= 0xF0;
     currentValue |= comfortUnlock & 0x0F;
-    CONFIG_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = currentValue;
+    CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = currentValue;
     EEPROMWriteByte(CONFIG_SETTING_COMFORT_LOCKS, currentValue);
 }
 
@@ -477,11 +537,11 @@ void ConfigSetFirmwareVersion(
     unsigned char minor,
     unsigned char patch
 ) {
-    CONFIG_CACHE[CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS] = major;
+    CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS] = major;
     EEPROMWriteByte(CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS, major);
-    CONFIG_CACHE[CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS] = minor;
+    CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS] = minor;
     EEPROMWriteByte(CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS, minor);
-    CONFIG_CACHE[CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS] = patch;
+    CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS] = patch;
     EEPROMWriteByte(CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS, patch);
 }
 
@@ -500,7 +560,7 @@ void ConfigSetIKEType(unsigned char ikeType)
     // Store the value in the upper nibble of the vehicle type byte
     currentValue &= 0x0F;
     currentValue |= (ikeType << 4) & 0xF0;
-    CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = currentValue;
+    CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = currentValue;
     EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, currentValue);
 }
 
@@ -515,7 +575,7 @@ void ConfigSetIKEType(unsigned char ikeType)
  */
 void ConfigSetLMVariant(unsigned char variant)
 {
-    CONFIG_CACHE[CONFIG_LM_VARIANT_ADDRESS] = variant;
+    CONFIG_SETTING_CACHE[CONFIG_LM_VARIANT_ADDRESS] = variant;
     EEPROMWriteByte(CONFIG_LM_VARIANT_ADDRESS, variant);
 }
 
@@ -537,7 +597,7 @@ void ConfigSetLog(unsigned char system, unsigned char mode)
         currentSetting ^= 1 << system;
     }
     EEPROMWriteByte(CONFIG_SETTING_LOG_ADDRESS, currentSetting);
-    CONFIG_CACHE[CONFIG_SETTING_LOG_ADDRESS] = currentSetting;
+    CONFIG_SETTING_CACHE[CONFIG_SETTING_LOG_ADDRESS] = currentSetting;
 }
 
 
@@ -552,7 +612,7 @@ void ConfigSetLog(unsigned char system, unsigned char mode)
  */
 void ConfigSetNavType(unsigned char type)
 {
-    CONFIG_CACHE[CONFIG_NAV_TYPE_ADDRESS] = type;
+    CONFIG_SETTING_CACHE[CONFIG_NAV_TYPE_ADDRESS] = type;
     EEPROMWriteByte(CONFIG_NAV_TYPE_ADDRESS, type);
 }
 
@@ -589,7 +649,7 @@ void ConfigSetSetting(unsigned char setting, unsigned char value)
     if (setting >= CONFIG_SETTING_START_ADDRESS &&
         setting <= CONFIG_SETTING_END_ADDRESS
     ) {
-        CONFIG_CACHE[setting] = value;
+        CONFIG_SETTING_CACHE[setting] = value;
         EEPROMWriteByte(setting, value);
     }
 }
@@ -654,8 +714,29 @@ void ConfigSetTrapLast(unsigned char trap)
  */
 void ConfigSetUIMode(unsigned char uiMode)
 {
-    CONFIG_CACHE[CONFIG_UI_MODE_ADDRESS] = uiMode;
+    CONFIG_SETTING_CACHE[CONFIG_UI_MODE_ADDRESS] = uiMode;
     EEPROMWriteByte(CONFIG_UI_MODE_ADDRESS, uiMode);
+}
+
+/**
+ * ConfigSetValue()
+ *     Description:
+ *         Set a given value into the EEPROM
+ *     Params:
+ *         unsigned char value - The value to set
+ *         unsigned char data - The data to set
+ *     Returns:
+ *         void
+ */
+void ConfigSetValue(unsigned char value, unsigned char data)
+{
+    // Catch invalid setting addresses
+    if (value >= CONFIG_VALUE_START_ADDRESS &&
+        value <= CONFIG_VALUE_END_ADDRESS
+    ) {
+        CONFIG_VALUE_CACHE[value - CONFIG_VALUE_START_ADDRESS] = data;
+        EEPROMWriteByte(value, data);
+    }
 }
 
 /**
@@ -672,7 +753,7 @@ void ConfigSetVehicleType(unsigned char vehicleType)
     unsigned char currentValue = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);
     currentValue &= 0xF0;
     currentValue |= vehicleType & 0x0F;
-    CONFIG_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = currentValue;
+    CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = currentValue;
     EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, currentValue);
 }
 

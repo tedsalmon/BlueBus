@@ -281,6 +281,7 @@ void CLIProcess()
                     LogRaw("    NVM Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_NVM));
                     LogRaw("    General Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_GEN));
                     LogRaw("    Last Trap: %02x\r\n", ConfigGetTrapLast());
+                    LogRaw("BC127 Boot Failures: %u\r\n", ConfigGetBC127BootFailures());
                 } else if (UtilsStricmp(msgBuf[1], "UI") == 0) {
                     unsigned char uiMode = ConfigGetUIMode();
                     if (uiMode == IBus_UI_CD53) {

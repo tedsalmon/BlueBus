@@ -27,6 +27,8 @@
 #define HANDLER_LM_COMF_BLINK_RIGHT 0x02
 #define HANDLER_LCM_TRIGGER_OFF 0
 #define HANDLER_LCM_TRIGGER_ON 1
+#define HANDLER_BT_BOOT_OK 0
+#define HANDLER_BT_BOOT_FAIL 1
 #define HANDLER_BT_CONN_OFF 0
 #define HANDLER_BT_CONN_ON 1
 #define HANDLER_BT_CONN_CHANGE 2
@@ -37,6 +39,7 @@
 #define HANDLER_CDC_SEEK_MODE_REV 2
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
 #define HANDLER_DEVICE_MAX_RECONN 15
+#define HANDLER_INT_BC127_STATE 1000
 #define HANDLER_INT_CDC_ANOUNCE 1000
 #define HANDLER_INT_CDC_STATUS 500
 #define HANDLER_INT_DEVICE_CONN 30000
@@ -81,12 +84,13 @@ typedef struct HandlerContext_t {
     IBus_t *ibus;
     uint8_t btDeviceConnRetries;
     int8_t btSelectedDevice;
-    uint8_t btStartupIsRun;
-    uint8_t btConnectionStatus;
+    uint8_t btStartupIsRun: 1;
+    uint8_t btConnectionStatus: 2;
+    uint8_t btBootFailure: 1;
+    uint8_t mflButtonStatus: 1;
+    uint8_t seekMode: 2;
     uint8_t uiMode;
-    uint8_t seekMode;
     uint8_t lmDimmerChecksum;
-    uint8_t mflButtonStatus;
     uint8_t telStatus;
     HandlerBodyModuleStatus_t bodyModuleStatus;
     HandlerLightControlStatus_t lightControlStatus;
@@ -129,6 +133,7 @@ void HandlerIBusRADVolumeChange(void *, unsigned char *);
 void HandlerIBusTELVolumeChange(void *, unsigned char *);
 void HandlerIBusBroadcastCDCStatus(HandlerContext_t *);
 uint8_t HandlerIBusBroadcastTELStatus(HandlerContext_t *, unsigned char);
+void HandlerTimerBC127State(void *);
 void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
 void HandlerTimerBTStatus(void *);

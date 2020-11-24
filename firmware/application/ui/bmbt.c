@@ -814,7 +814,7 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU,
-            LocaleGetText(LOCALE_STRING_MAIN_MENU),
+            LocaleGetText(LOCALE_STRING_MENU_MAIN),
             0
         );
     } else {
@@ -1130,7 +1130,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_DASHBOARD), 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x00);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MAIN_MENU), 0);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_MAIN), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_TEMPS) {
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_OFF) {
