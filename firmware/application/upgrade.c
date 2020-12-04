@@ -130,6 +130,10 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         ConfigSetSetting(CONFIG_SETTING_LANGUAGE, CONFIG_SETTING_LANGUAGE_ENGLISH);
         // Set BC127 failure counters
         ConfigSetBC127BootFailures(0);
+        ConfigSetSetting(CONFIG_SETTING_AUTO_POWEROFF, CONFIG_SETTING_ON);
+        ConfigSetSetting(CONFIG_SETTING_IGN_ALWAYS_ON, ConfigGetSetting(0x1C));
+        // Reset to logging to all off
+        ConfigSetSetting(CONFIG_SETTING_LOG, 0x01);
         LogRaw("Ran Upgrade 1.1.17\r\n");
     }
     ConfigSetFirmwareVersion(

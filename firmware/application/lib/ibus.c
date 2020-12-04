@@ -388,7 +388,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_CDC) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
             EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
-        } else if (pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_GET_STATUS) {
+        } else if (pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_REQUEST) {
             if (pkt[4] == IBUS_CDC_CMD_STOP_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
             } else if (pkt[4] == IBUS_CDC_CMD_PAUSE_PLAYING) {
@@ -992,7 +992,7 @@ void IBusCommandCDCStatus(
 ) {
     function = function + 0x80;
     const unsigned char cdcStatus[] = {
-        IBUS_COMMAND_CDC_SET_STATUS,
+        IBUS_COMMAND_CDC_RESPONSE,
         status,
         function,
         0x00, // Errors
@@ -1585,7 +1585,7 @@ void IBusCommandGTWriteTitleArea(IBus_t *ibus, char *message)
 }
 
 /**
- * IBusCommandGTWriteTitleIndex().l
+ * IBusCommandGTWriteTitleIndex()
  *     Description:
  *        Write the title using the "new" UI "Index" update message.
  *     Params:
@@ -2129,7 +2129,7 @@ void IBusCommandMIDMenuWriteSingle(
 /**
  * IBusCommandMIDSetMode()
  *     Description:
- *        Tell the MID that the IKE wants to write to the screen
+ *        Tell the MID that the given system wants to write to the screen
  *        Parameters Known:
  *            0x00 - Enable the main display and menus buttons
  *            0x02 - Disable the main display and menus buttons
@@ -2146,7 +2146,7 @@ void IBusCommandMIDSetMode(
     unsigned char param
 ) {
     unsigned char msg[] = {
-        IBus_MID_CMD_SET_MODE,
+        IBUS_MID_CMD_SET_MODE,
         param
     };
     IBusSendCommand(
@@ -2180,6 +2180,28 @@ void IBusCommandRADC43ScreenModeSet(IBus_t *ibus, unsigned char mode)
         ibus,
         IBUS_DEVICE_RAD,
         IBUS_DEVICE_GT,
+        msg,
+        sizeof(msg)
+    );
+}
+
+/**
+ * IBusCommandRADCDCRequest()
+ *     IBusCommandRADCDCRequest:
+ *        Issue a command from the RAD to CDC
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         unsigned char command - The command to send the CD Changer
+ *     Returns:
+ *         void
+ */
+void IBusCommandRADCDCRequest(IBus_t *ibus, unsigned char command)
+{
+    unsigned char msg[] = {IBUS_COMMAND_CDC_REQUEST, command};
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_CDC,
         msg,
         sizeof(msg)
     );

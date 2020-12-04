@@ -1999,7 +1999,7 @@ void HandlerTimerOpenProfileErrors(void *ctx)
 void HandlerTimerPoweroff(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetPoweroffTimeout() == CONFIG_SETTING_ENABLED) {
+    if (ConfigGetSetting(CONFIG_SETTING_AUTO_POWEROFF) == CONFIG_SETTING_ON) {
         uint32_t lastRx = TimerGetMillis() - context->ibus->rxLastStamp;
         if (lastRx >= HANDLER_POWER_TIMEOUT_MILLIS) {
             if (context->powerStatus == HANDLER_POWER_ON) {

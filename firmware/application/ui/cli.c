@@ -320,10 +320,16 @@ void CLIProcess()
                     status = I2CRead(0x3A, 0x0B, &buffer);
                     LogRaw("WM8804: INTSTAT %02X (0x0B) [%d]\r\n", buffer, status);
                 } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
-                    if (ConfigGetPoweroffTimeout() == CONFIG_SETTING_ENABLED) {
+                    if (ConfigGetSetting(CONFIG_SETTING_AUTO_POWEROFF) == CONFIG_SETTING_ON) {
                         LogRaw("Auto-Power Off: On\r\n");
                     } else {
                         LogRaw("Auto-Power Off: Off\r\n");
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "SELFPLAY") == 0) {
+                    if (ConfigGetSetting(CONFIG_SETTING_SELF_PLAY) == CONFIG_SETTING_ON) {
+                        LogRaw("Self Play: On\r\n");
+                    } else {
+                        LogRaw("Self Play: Off\r\n");
                     }
                 } else if (UtilsStricmp(msgBuf[1], "VIN") == 0) {
                     // Get VIN
@@ -505,6 +511,18 @@ void CLIProcess()
                     } else {
                         LogRaw("Invalid Parameters for SET LOG\r\n");
                     }
+                } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
+                    if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                        ConfigSetSetting(CONFIG_SETTING_AUTO_POWEROFF, CONFIG_SETTING_ON);
+                    } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                        ConfigSetSetting(CONFIG_SETTING_AUTO_POWEROFF, CONFIG_SETTING_OFF);
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "SELFPLAY") == 0) {
+                    if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                        ConfigSetSetting(CONFIG_SETTING_SELF_PLAY, CONFIG_SETTING_ON);
+                    } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                        ConfigSetSetting(CONFIG_SETTING_SELF_PLAY, CONFIG_SETTING_OFF);
+                    }
                 } else if (UtilsStricmp(msgBuf[1], "TEL") == 0) {
                     if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                         // Enable the amp and mute the radio
@@ -521,26 +539,6 @@ void CLIProcess()
                         uint8_t hour = UtilsStrToInt(msgBuf[2]);
                         uint8_t minutes = UtilsStrToInt(msgBuf[3]);
                         IBusCommandIKESetTime(cli.ibus, hour, minutes);
-                    } else {
-                        cmdSuccess = 0;
-                    }
-                } else if (UtilsStricmp(msgBuf[1], "PWROFF") == 0) {
-                    if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                        ConfigSetPoweroffTimeout(CONFIG_SETTING_ENABLED);
-                    } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                        ConfigSetPoweroffTimeout(CONFIG_SETTING_DISABLED);
-                    }
-                } else if (UtilsStricmp(msgBuf[1], "LOCKS") == 0) {
-                    if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                        ConfigSetSetting(
-                            CONFIG_SETTING_COMFORT_LOCKS,
-                            CONFIG_SETTING_ON
-                        );
-                    } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                        ConfigSetSetting(
-                            CONFIG_SETTING_COMFORT_LOCKS,
-                            CONFIG_SETTING_OFF
-                        );
                     } else {
                         cmdSuccess = 0;
                     }
@@ -587,6 +585,8 @@ void CLIProcess()
                     idx++;
                 }
                 // Settings
+                // Enable Auto Power Off
+                ConfigSetSetting(CONFIG_SETTING_AUTO_POWEROFF, CONFIG_SETTING_ON);
                 // -10dB Gain for the DAC
                 ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, 0x44);
                 PCM51XXSetVolume(0x44);

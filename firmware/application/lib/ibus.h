@@ -57,8 +57,8 @@
 #define IBUS_PKT_DB2 5
 
 // IBus Commands
-#define IBUS_COMMAND_CDC_GET_STATUS 0x38
-#define IBUS_COMMAND_CDC_SET_STATUS 0x39
+#define IBUS_COMMAND_CDC_REQUEST 0x38
+#define IBUS_COMMAND_CDC_RESPONSE 0x39
 
 // CDC Commands
 #define IBUS_CDC_CMD_GET_STATUS 0x00
@@ -265,7 +265,9 @@
 #define IBus_MID_TITLE_MAX_CHARS 11
 #define IBus_MID_MENU_MAX_CHARS 4
 #define IBus_MID_CMD_MODE 0x20
-#define IBus_MID_CMD_SET_MODE 0x27
+#define IBUS_MID_CMD_SET_MODE 0x27
+#define IBUS_MID_MODE_REQUEST_TYPE_PHYSICAL 0x02
+#define IBUS_MID_MODE_REQUEST_TYPE_SELF 0x00
 #define IBus_MID_Button_Press 0x31
 #define IBus_MID_BTN_TEL_RIGHT_RELEASE 0x4D
 #define IBus_MID_BTN_TEL_LEFT_RELEASE 0x4C
@@ -461,6 +463,7 @@ void IBusCommandMIDMenuWriteMany(IBus_t *, uint8_t, unsigned char *, uint8_t);
 void IBusCommandMIDMenuWriteSingle(IBus_t *, uint8_t, char *);
 void IBusCommandMIDSetMode(IBus_t *, unsigned char, unsigned char);
 void IBusCommandRADC43ScreenModeSet(IBus_t *, unsigned char);
+void IBusCommandRADCDCRequest(IBus_t *, unsigned char);
 void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);

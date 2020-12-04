@@ -456,7 +456,16 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
     } else {
         IBusCommandGTWriteIndex(context->ibus, 0, f1);
         IBusCommandGTWriteIndex(context->ibus, 1, f2);
-        IBusCommandGTWriteIndex(context->ibus, 2, f3);
+        // Clear the rest of the screen by adding seven 0x06 chars to the end
+        // of the last message written to the screen, so the GT clears those
+        // seven indices. The 8th index is simply to hold the null terminator.
+        uint8_t f3Len = strlen(f3);
+        uint8_t newLength = f3Len + 8;
+        char newF3[newLength];
+        memset(newF3, 0x06, newLength);
+        strncpy(newF3, f3, f3Len);
+        newF3[newLength - 1] = 0x00;
+        IBusCommandGTWriteIndex(context->ibus, 2, newF3);
         context->status.navIndexType = IBUS_CMD_GT_WRITE_INDEX;
         IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
     }

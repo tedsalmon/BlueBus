@@ -701,7 +701,13 @@ void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
     if (pkt[IBUS_PKT_DB2] == 0x8E) {
-        context->mode = MID_MODE_ACTIVE_NEW;
+        if (pkt[IBUS_PKT_DB1] == IBUS_MID_MODE_REQUEST_TYPE_PHYSICAL) {
+            if (ConfigGetSetting(CONFIG_SETTING_SELF_PLAY) == CONFIG_SETTING_ON) {
+                IBusCommandRADCDCRequest(context->ibus, IBUS_CDC_CMD_START_PLAYING);
+            }
+        } else {
+            context->mode = MID_MODE_ACTIVE_NEW;
+        }
     } else if (pkt[IBUS_PKT_DB2] != 0x8F) {
         if (pkt[IBUS_PKT_DB2] == 0x00) {
             if (context->mode != MID_MODE_DISPLAY_OFF &&
@@ -717,6 +723,11 @@ void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
         ) {
             IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE);
             context->modeChangeStatus = MID_MODE_CHANGE_RELEASE;
+        }
+    } else {
+        // This should be 0x8F, which is "close TEL UI"
+        if (ConfigGetSetting(CONFIG_SETTING_SELF_PLAY) == CONFIG_SETTING_ON) {
+            IBusCommandRADCDCRequest(context->ibus, IBUS_CDC_CMD_STOP_PLAYING);
         }
     }
 }
