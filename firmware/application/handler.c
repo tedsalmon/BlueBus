@@ -643,9 +643,10 @@ void HandlerUICloseConnection(void *ctx, unsigned char *data)
     BC127ClearMetadata(context->bt);
     // Clear the actively paired device
     BC127ClearActiveDevice(context->bt);
+    // Close All connections
+    BC127CommandClose(context->bt, BC127_CLOSE_ALL);
     // Enable connectivity
     BC127CommandBtState(context->bt, BC127_STATE_ON, context->bt->discoverable);
-    BC127CommandClose(context->bt, BC127_CLOSE_ALL);
 
 }
 

@@ -280,17 +280,24 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             }
             char blinkerText[13];
             memset(blinkerText, 0, sizeof(blinkerText));
-            snprintf(blinkerText, 12, "OT Blinks: %d", context->settingValue);
+            snprintf(blinkerText, 12, "OT Blinks: %d", blinkCount);
             CD53SetMainDisplayText(context, blinkerText, 0);
             context->settingIdx = CD53_SETTING_IDX_BLINKERS;
+            context->settingValue = blinkCount;
         }
         if (nextMenu == CD53_SETTING_IDX_COMFORT_LOCKS) {
-            if (ConfigGetSetting(CONFIG_SETTING_COMFORT_LOCKS) == CONFIG_SETTING_OFF) {
-                CD53SetMainDisplayText(context, "Comfort Locks: 0", 0);
+            unsigned char comfortLock = ConfigGetComfortLock();
+            if (comfortLock == CONFIG_SETTING_OFF ||
+                comfortLock > CONFIG_SETTING_COMFORT_LOCK_20KM
+            ) {
+                CD53SetMainDisplayText(context, "Comfort Locks: Off", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
+            } else if (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM) {
+                CD53SetMainDisplayText(context, "Comfort Locks: 10km/h", 0);
+                context->settingValue = CONFIG_SETTING_COMFORT_LOCK_10KM;
             } else {
-                CD53SetMainDisplayText(context, "Comfort Locks: 1", 0);
-                context->settingValue = CONFIG_SETTING_ON;
+                CD53SetMainDisplayText(context, "Comfort Locks: 20km/h", 0);
+                context->settingValue = CONFIG_SETTING_COMFORT_LOCK_20KM;
             }
             context->settingIdx = CD53_SETTING_IDX_COMFORT_LOCKS;
         }
@@ -353,13 +360,18 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             CD53SetMainDisplayText(context, blinkerText, 0);
         }
         if (context->settingIdx == CD53_SETTING_IDX_COMFORT_LOCKS) {
-            if (context->settingValue == CONFIG_SETTING_OFF) {
-                CD53SetMainDisplayText(context, "Comfort Locks: 1", 0);
-                context->settingValue = CONFIG_SETTING_ON;
-            } else {
-                CD53SetMainDisplayText(context, "Comfort Locks: 0", 0);
+            unsigned char comfortLock = ConfigGetComfortLock();
+            if (comfortLock == CONFIG_SETTING_OFF) {
+                CD53SetMainDisplayText(context, "Comfort Locks: 10km/h", 0);
+                context->settingValue = CONFIG_SETTING_COMFORT_LOCK_10KM;
+            } else if (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM) {
+                CD53SetMainDisplayText(context, "Comfort Locks: 20km/h", 0);
+                context->settingValue = CONFIG_SETTING_COMFORT_LOCK_20KM;
+            } else if (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM) {
+                CD53SetMainDisplayText(context, "Comfort Locks: Off", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
             }
+            context->settingIdx = CD53_SETTING_IDX_COMFORT_LOCKS;
         }
         if (context->settingIdx == CD53_SETTING_IDX_PAIRINGS) {
             if (context->settingValue == CONFIG_SETTING_OFF) {
@@ -487,10 +499,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         if (context->mode != CD53_MODE_SETTINGS) {
             CD53SetTempDisplayText(context, "Settings", 2);
             if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
-                CD53SetMainDisplayText(context, "Handsfree: 0", 0);
+                CD53SetMainDisplayText(context, "Handsfree: Off", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
             } else {
-                CD53SetMainDisplayText(context, "Handsfree: 1", 0);
+                CD53SetMainDisplayText(context, "Handsfree: On", 0);
                 context->settingValue = CONFIG_SETTING_ON;
             }
             context->settingIdx = CD53_SETTING_IDX_HFP;
@@ -531,10 +543,8 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         } else {
             CD53SetTempDisplayText(context, "Pairing On", timeout);
             state = BC127_STATE_ON;
-            if (context->bt->activeDevice.deviceId != 0) {
-                // To pair a new device, we must disconnect the active one
-                EventTriggerCallback(UIEvent_CloseConnection, 0x00);
-            }
+            // To pair a new device, we must disconnect the active one
+            EventTriggerCallback(UIEvent_CloseConnection, 0x00);
         }
         BC127CommandBtState(context->bt, context->bt->connectable, state);
     } else {
