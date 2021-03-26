@@ -768,26 +768,21 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
                 IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
             }
-            uint32_t currentUptime = TimerGetMillis();
-            // Fallback for vehicle UI Identification
-            // If no UI has been detected and we have been
-            // running at least a minute, default to CD53 UI
-            if (context->ibusModuleStatus.MID == 0 &&
-                context->ibusModuleStatus.GT == 0 &&
-                ConfigGetUIMode() == 0 &&
-                currentUptime > 60000
-            ) {
-                LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
-                HandlerSwitchUI(context, IBus_UI_CD53);
-            }
-            if (context->ibusModuleStatus.GT == 1 &&
-                ConfigGetNavType() == 0 &&
-                currentUptime > 60000 &&
-                currentUptime < 80000
-            ) {
-                // Request the Navigation Identity
-                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
-                IBusCommandDIAGetOSIdentity(context->ibus, IBUS_DEVICE_GT);
+            // UI Identification
+            if (ConfigGetUIMode() == 0 && TimerGetMillis() > 60000) {
+                if (context->ibusModuleStatus.MID == 0 &&
+                    context->ibusModuleStatus.GT == 0
+                ) {
+                    // Fallback for vehicle UI Identification
+                    // If no UI has been detected and we have been
+                    // running at least a minute, default to CD53 UI
+                    LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
+                    HandlerSwitchUI(context, IBus_UI_CD53);
+                } else if (context->ibusModuleStatus.GT == 1) {
+                    // Request the Navigation Identity
+                    IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+                    IBusCommandDIAGetOSIdentity(context->ibus, IBUS_DEVICE_GT);
+                }
             }
         } else {
             curStatus = requestedCommand;

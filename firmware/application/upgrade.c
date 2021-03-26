@@ -79,7 +79,7 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
             BC127SendCommand(bt, "LICENSE CVC=3A6B CB90 E2D6 FC81 0000");
         } else if (serialNumber <= 880) {
             BC127SendCommand(bt, "LICENSE CVC=3A6B D812 D144 FC81 0000");
-        } else if (serialNumber <= 1180) {
+        } else if (serialNumber <= 1191) {
             BC127SendCommand(bt, "LICENSE CVC=3A6B B2F8 AB8F FC81 0000");
         }
         LogRaw("Ran Upgrade 1.1.7\r\n");

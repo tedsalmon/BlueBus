@@ -27,8 +27,9 @@
 #define CD53_MEDIA_STATE_METADATA_OK 2
 #define CD53_MODE_OFF 0
 #define CD53_MODE_ACTIVE 1
-#define CD53_MODE_DEVICE_SEL 2
-#define CD53_MODE_SETTINGS 3
+#define CD53_MODE_CALL 2
+#define CD53_MODE_DEVICE_SEL 3
+#define CD53_MODE_SETTINGS 4
 #define CD53_PAIRING_DEVICE_NONE -1
 #define CD53_SEEK_MODE_NONE 0
 #define CD53_SEEK_MODE_FWD 1
@@ -78,6 +79,8 @@ typedef struct CD53Context_t {
 } CD53Context_t;
 void CD53Init(BC127_t *, IBus_t *);
 void CD53Destroy();
+void CD53BC127CallerID(void *, unsigned char *);
+void CD53BC127CallStatus(void *, unsigned char *);
 void CD53BC127DeviceDisconnected(void *, unsigned char *);
 void CD53BC127DeviceReady(void *, unsigned char *);
 void CD53BC127Metadata(CD53Context_t *, unsigned char *);

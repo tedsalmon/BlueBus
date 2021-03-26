@@ -1167,6 +1167,8 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             selectedLanguage = CONFIG_SETTING_LANGUAGE_SPANISH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_SPANISH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_DUTCH;
+        } else {
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
         }
         ConfigSetSetting(CONFIG_SETTING_LANGUAGE, selectedLanguage);
         // Change the UI Language

@@ -41,6 +41,16 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
     Context.radioType = ConfigGetUIMode();
     Context.mediaChangeState = CD53_MEDIA_STATE_OK;
     EventRegisterCallback(
+        BC127Event_CallerID,
+        &CD53BC127CallerID,
+        &Context
+    );
+    EventRegisterCallback(
+        BC127Event_CallStatus,
+        &CD53BC127CallStatus,
+        &Context
+    );
+    EventRegisterCallback(
         BC127Event_Boot,
         &CD53BC127DeviceReady,
         &Context
@@ -101,6 +111,14 @@ void CD53Destroy()
     EventUnregisterCallback(
         BC127Event_Boot,
         &CD53BC127DeviceReady
+    );
+    EventUnregisterCallback(
+        BC127Event_CallerID,
+        &CD53BC127CallerID
+    );
+    EventUnregisterCallback(
+        BC127Event_CallStatus,
+        &CD53BC127CallStatus
     );
     EventUnregisterCallback(
         BC127Event_DeviceDisconnected,
@@ -557,6 +575,31 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
     }
 }
 
+void CD53BC127CallerID(void *ctx, unsigned char *tmp)
+{
+    CD53Context_t *context = (CD53Context_t *) ctx;
+    if (context->mode != CD53_MODE_CALL) {
+        context->mode = CD53_MODE_CALL;
+        context->mainDisplay.timeout = 0;
+        CD53SetMainDisplayText(
+            context,
+            context->bt->callerId,
+            3000 / CD53_DISPLAY_SCROLL_SPEED
+        );
+    }
+}
+
+void CD53BC127CallStatus(void *ctx, unsigned char *tmp)
+{
+    CD53Context_t *context = (CD53Context_t *) ctx;
+    if (context->mode == CD53_MODE_CALL &&
+        context->bt->scoStatus != BC127_CALL_SCO_OPEN
+    ) {
+        context->mode = CD53_MODE_ACTIVE;
+    }
+}
+
+
 void CD53BC127DeviceDisconnected(void *ctx, unsigned char *tmp)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
@@ -575,6 +618,7 @@ void CD53BC127DeviceReady(void *ctx, unsigned char *tmp)
         CD53SetMainDisplayText(context, "Bluetooth", 0);
     }
 }
+
 
 void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
 {
