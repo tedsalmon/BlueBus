@@ -1584,6 +1584,16 @@ FRAME-LETTER</description>
 <wire x1="-3" y1="-4.25" x2="-4.25" y2="-2.25" width="0.1" layer="21"/>
 <wire x1="-4.25" y1="2.25" x2="-3" y2="4.25" width="0.1" layer="21"/>
 </package>
+<package name="SOT323">
+<wire x1="-0.673" y1="0.7" x2="-1.1" y2="0.7" width="0.1" layer="21"/>
+<wire x1="-1.1" y1="0.7" x2="-1.1" y2="-0.354" width="0.1" layer="21"/>
+<wire x1="0.673" y1="0.7" x2="1.1" y2="0.7" width="0.1" layer="21"/>
+<wire x1="1.1" y1="0.7" x2="1.1" y2="-0.354" width="0.1" layer="21"/>
+<smd name="1" x="-0.65" y="-0.95" dx="0.7" dy="0.9" layer="1"/>
+<smd name="2" x="0.65" y="-0.95" dx="0.7" dy="0.9" layer="1"/>
+<smd name="3" x="0" y="0.95" dx="0.7" dy="0.9" layer="1"/>
+<text x="0" y="1.5" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
+</package>
 </packages>
 <symbols>
 <symbol name="RESISTOR">
@@ -2181,6 +2191,16 @@ Switches electrical signals</description>
 <attribute name="MFG" value="Diodes Inc" constant="no"/>
 <attribute name="MPN" value="DMP32D4S" constant="no"/>
 </technology>
+</technologies>
+</device>
+<device name="SOT323" package="SOT323">
+<connects>
+<connect gate="G$1" pin="D" pad="3"/>
+<connect gate="G$1" pin="G" pad="1"/>
+<connect gate="G$1" pin="S" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -3357,7 +3377,7 @@ Micro Type B Horizontal SMT - 3A current at Pin1 &amp; Pin 5 - with Pegs</descri
 <part name="R36" library="Passives" deviceset="4.7KOHM" device="" value="4.7k"/>
 <part name="Q1" library="Passives" deviceset="NMOSFET-BSS138K" device=""/>
 <part name="Q3" library="Passives" deviceset="NMOSFET-BSS138K" device=""/>
-<part name="Q2" library="Passives" deviceset="PMOSFET-DMP32D4S" device=""/>
+<part name="Q2" library="Passives" deviceset="PMOSFET-DMP32D4S" device="SOT323" value="PMOSFET-DMP32D4SSOT323"/>
 <part name="GND2" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="SUPPLY16" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="VIN" device=""/>
 <part name="GND16" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>

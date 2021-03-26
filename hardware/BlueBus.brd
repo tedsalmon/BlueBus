@@ -720,6 +720,16 @@
 <text x="0" y="-1" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
 <rectangle x1="-1.5875" y1="-0.889" x2="1.5875" y2="0.889" layer="39"/>
 </package>
+<package name="SOT323">
+<wire x1="-0.673" y1="0.7" x2="-1.1" y2="0.7" width="0.1" layer="21"/>
+<wire x1="-1.1" y1="0.7" x2="-1.1" y2="-0.354" width="0.1" layer="21"/>
+<wire x1="0.673" y1="0.7" x2="1.1" y2="0.7" width="0.1" layer="21"/>
+<wire x1="1.1" y1="0.7" x2="1.1" y2="-0.354" width="0.1" layer="21"/>
+<smd name="1" x="-0.65" y="-0.95" dx="0.7" dy="0.9" layer="1"/>
+<smd name="2" x="0.65" y="-0.95" dx="0.7" dy="0.9" layer="1"/>
+<smd name="3" x="0" y="0.95" dx="0.7" dy="0.9" layer="1"/>
+<text x="0" y="1.5" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
+</package>
 <package name="SOT-23">
 <description>&lt;b&gt;SOT23&lt;/b&gt;</description>
 <wire x1="-0.2" y1="-0.65" x2="0.2" y2="-0.65" width="0.1" layer="21"/>
@@ -1851,10 +1861,8 @@ design rules under a new name.</description>
 <element name="Q3" library="Passives" package="SOT-23" value="NMOSFET-BSS138K" x="27.5" y="29.25" smashed="yes" rot="R90">
 <attribute name="NAME" x="25.5" y="29.25" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center"/>
 </element>
-<element name="Q2" library="Passives" package="SOT-23" value="PMOSFET-DMP32D4S" x="22.5" y="30.7" smashed="yes">
-<attribute name="MFG" value="Diodes Inc" x="74.57" y="-23.91" size="1.778" layer="27" display="off"/>
-<attribute name="MPN" value="DMP32D4S" x="22.5" y="30.7" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="22.5" y="32.7" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
+<element name="Q2" library="Passives" package="SOT323" value="PMOSFET-DMP32D4SSOT323" x="22.5" y="30.7" smashed="yes">
+<attribute name="NAME" x="22.5" y="32.3" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center"/>
 </element>
 <element name="R6" library="Passives" package="0805" value="100k" x="29.2" y="9.55" smashed="yes" rot="R180">
 <attribute name="DEVICE" value="100KOHM-0805-1/8-1%" x="10.15" y="83.21" size="1.778" layer="27" rot="R180" display="off"/>
@@ -3633,7 +3641,6 @@ design rules under a new name.</description>
 <contactref element="Q3" pad="3"/>
 <contactref element="Q2" pad="1"/>
 <contactref element="R2" pad="1"/>
-<wire x1="21.55" y1="27.69" x2="21.55" y2="29.6" width="0.7" layer="1"/>
 <wire x1="21.55" y1="27.69" x2="19.634928125" y2="27.69" width="0.4" layer="1"/>
 <wire x1="19.634928125" y1="27.69" x2="19.4" y2="27.359184375" width="0.4" layer="1"/>
 <wire x1="19.4" y1="27.359184375" x2="19.4" y2="27.25" width="0.4" layer="1"/>
@@ -3647,15 +3654,18 @@ design rules under a new name.</description>
 <wire x1="24.4" y1="26.4" x2="19.6" y2="26.4" width="0.4" layer="16"/>
 <wire x1="25.35" y1="29.25" x2="24.875" y2="28.6" width="0.4" layer="1"/>
 <wire x1="24.875" y1="26.7" x2="24.4" y2="26.4" width="0.4" layer="16"/>
+<wire x1="21.85" y1="29.75" x2="21.85" y2="29" width="0.4" layer="1"/>
+<wire x1="21.85" y1="29" x2="21.55" y2="28.7" width="0.4" layer="1"/>
+<wire x1="21.55" y1="28.7" x2="21.55" y2="27.69" width="0.4" layer="1"/>
 </signal>
 <signal name="TEL_ON">
 <contactref element="R1" pad="1"/>
 <contactref element="Q2" pad="3"/>
-<wire x1="22.5" y1="31.8" x2="20.79" y2="31.79" width="0.4" layer="1"/>
 <wire x1="20.5" y1="29" x2="20.3" y2="28.8" width="0.4" layer="1"/>
 <wire x1="20.3" y1="28.8" x2="19.25" y2="28.8" width="0.4" layer="1"/>
-<wire x1="20.79" y1="31.79" x2="20.5" y2="31.5" width="0.4" layer="1"/>
-<wire x1="20.5" y1="31.5" x2="20.5" y2="29" width="0.4" layer="1"/>
+<wire x1="20.5" y1="31.248275" x2="20.5" y2="29" width="0.4" layer="1"/>
+<wire x1="22.5" y1="31.65" x2="20.901725" y2="31.65" width="0.4" layer="1"/>
+<wire x1="20.901725" y1="31.65" x2="20.5" y2="31.248275" width="0.4" layer="1"/>
 </signal>
 <signal name="I2S_LRCK">
 <contactref element="WM8804" pad="15"/>
@@ -4142,9 +4152,6 @@ design rules under a new name.</description>
 <contactref element="XC6702" pad="1"/>
 <contactref element="C4" pad="1"/>
 <contactref element="R36" pad="1"/>
-<wire x1="23.35" y1="27.69" x2="23.39" y2="28.52" width="0.5" layer="1"/>
-<wire x1="23.39" y1="28.52" x2="23.49" y2="28.62" width="0.5" layer="1"/>
-<wire x1="23.49" y1="28.62" x2="23.45" y2="29.6" width="0.5" layer="1"/>
 <wire x1="25.219" y1="25.7486" x2="23.5014" y2="25.7486" width="0.55" layer="1"/>
 <wire x1="23.5014" y1="25.7486" x2="23.5" y2="25.75" width="0.55" layer="1"/>
 <wire x1="23.5" y1="25.75" x2="23.35" y2="25.86" width="0.6" layer="1"/>
@@ -4166,6 +4173,9 @@ design rules under a new name.</description>
 <wire x1="13.1" y1="38.8" x2="13.4" y2="39.1" width="0.5" layer="1"/>
 <wire x1="13.4" y1="39.1" x2="13.4" y2="40.6" width="0.5" layer="1"/>
 <wire x1="11.3" y1="38.8" x2="13.1" y2="38.8" width="0.5" layer="1"/>
+<wire x1="23.15" y1="29.75" x2="23.15" y2="29" width="0.4" layer="1"/>
+<wire x1="23.15" y1="29" x2="23.35" y2="28.7" width="0.4" layer="1"/>
+<wire x1="23.35" y1="28.7" x2="23.35" y2="27.69" width="0.4" layer="1"/>
 </signal>
 <signal name="VCHG">
 <contactref element="BC127" pad="30"/>
