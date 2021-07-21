@@ -6,6 +6,67 @@
  */
 #include "locale.h"
 
+static char *LOCALE_LANG_ITALIAN[] = {
+    "- In Pausa -",
+    "Info su...",
+    "Audio",
+    "Autoplay: Off",
+    "Autoplay: On",
+    "Indietro",
+    "Lampeggi: %d",
+    "Bluetooth",
+    "Built: %d/%d",
+    "Chiamate",
+    "Auto: E3x/E53",
+    "Auto: E46/Z4",
+    "Auto: -?-",
+    "Disassocia",
+    "Comfort",
+    "Dashboard",
+    "Dispositivi",
+    "DSP: Analogico",
+    "DSP: Digitale",
+    "FW: %s",
+    "Vivavoce: Off",
+    "Vivavoce: On",
+    "Porte: 10km/h",
+    "Porte: 20kmh",
+    "Porte: Off",
+    "Menu Principale",
+    "Menu: Dashboard",
+    "Menu: Iniziale",
+    "Metadati: Chunk",
+    "Metadati: Off",
+    "Metadati: Party",
+    "Mic Bias: Off",
+    "Mic Bias: On",
+    "Mic Gain: %idB",
+    "Non Associato",
+    "Pairing: Off",
+    "Pairing: On",
+    "N. Seriale: %u",
+    "Impostazioni",
+    "Impostazioni > Info",
+    "Impostazioni > Audio",
+    "Impostazioni > Chiamate",
+    "Impostazioni > Comfort",
+    "Impostazioni > Aspetto",
+    "Temp: Acqua",
+    "Temp: ---",
+    "Interfaccia",
+    "Album non noto",
+    "Artista non noto",
+    "Brano non noto",
+    "Apertura: Off",
+    "Apertura: Pos 0",
+    "Apertura: Pos 1",
+    "Volume: -%ddB",
+    "Volume: +%ddB",
+    "Volume: +24dB",
+    "Volume: 0dB",
+    "Lingua: %s",
+};
+
 static char *LOCALE_LANG_DUTCH[] = {
     "Geen weergave",
     "Over",
@@ -324,6 +385,8 @@ char *LocaleGetText(uint16_t stringIndex)
 {
     unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
     switch (language) {
+        case CONFIG_SETTING_LANGUAGE_ITALIAN:
+            return LOCALE_LANG_ITALIAN[stringIndex];    
         case CONFIG_SETTING_LANGUAGE_DUTCH:
             return LOCALE_LANG_DUTCH[stringIndex];
         case CONFIG_SETTING_LANGUAGE_ENGLISH:
