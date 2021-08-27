@@ -1215,13 +1215,13 @@ void BC127Process(BC127_t *bt)
                     // Remove the escaped quotes that come through
                     UtilsRemoveSubstring(cidDataBuf[0], "\\22");
                     // Clean the text up
-                    UtilsNormalizeText(callerId, cidDataBuf[0],BC127_CALLER_ID_FIELD_SIZE);
+                    UtilsNormalizeText(callerId, cidDataBuf[0], BC127_CALLER_ID_FIELD_SIZE);
                 } else {
                     if (cidDataBuf[cidDelimCounter - 1] != 0x00) {
                         // Remove the escaped quotes that come through
                         UtilsRemoveSubstring(cidDataBuf[cidDelimCounter - 1], "\\22");
                         // Clean the text up
-                        UtilsNormalizeText(callerId, cidDataBuf[cidDelimCounter - 1],BC127_CALLER_ID_FIELD_SIZE);
+                        UtilsNormalizeText(callerId, cidDataBuf[cidDelimCounter - 1], BC127_CALLER_ID_FIELD_SIZE);
                     }
                 }
                 if (strlen(callerId) > 0) {
@@ -1238,18 +1238,18 @@ void BC127Process(BC127_t *bt)
                 bt->metadataStatus = BC127_METADATA_STATUS_NEW;
                 char title[BC127_METADATA_MAX_SIZE];
                 memset(title, 0, BC127_METADATA_MAX_SIZE);
-                UtilsNormalizeText(title, &msg[BC127_METADATA_TITLE_OFFSET],BC127_METADATA_MAX_SIZE);
+                UtilsNormalizeText(title, &msg[BC127_METADATA_TITLE_OFFSET], BC127_METADATA_MAX_SIZE);
                 strncpy(bt->title, title, BC127_METADATA_FIELD_SIZE - 1);
             } else if (strcmp(msgBuf[2], "ARTIST:") == 0) {
                 char artist[BC127_METADATA_MAX_SIZE];
                 memset(artist, 0, BC127_METADATA_MAX_SIZE);
-                UtilsNormalizeText(artist, &msg[BC127_METADATA_ARTIST_OFFSET],BC127_METADATA_MAX_SIZE);
+                UtilsNormalizeText(artist, &msg[BC127_METADATA_ARTIST_OFFSET], BC127_METADATA_MAX_SIZE);
                 strncpy(bt->artist, artist, BC127_METADATA_FIELD_SIZE - 1);
             } else {
                 if (strcmp(msgBuf[2], "ALBUM:") == 0) {
                     char album[BC127_METADATA_MAX_SIZE];
                     memset(album, 0, BC127_METADATA_MAX_SIZE);
-                    UtilsNormalizeText(album, &msg[BC127_METADATA_ALBUM_OFFSET],BC127_METADATA_MAX_SIZE);
+                    UtilsNormalizeText(album, &msg[BC127_METADATA_ALBUM_OFFSET], BC127_METADATA_MAX_SIZE);
                     strncpy(bt->album, album, BC127_METADATA_FIELD_SIZE - 1);
                 }
                 if (bt->metadataStatus == BC127_METADATA_STATUS_NEW) {
@@ -1472,7 +1472,7 @@ void BC127Process(BC127_t *bt)
             deviceName[strIdx] = '\0';
             char name[BC127_DEVICE_NAME_LEN];
             memset(name, 0, BC127_DEVICE_NAME_LEN);
-            UtilsNormalizeText(name, deviceName,BC127_DEVICE_NAME_LEN);
+            UtilsNormalizeText(name, deviceName, BC127_DEVICE_NAME_LEN);
             if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
                 // Clean the device name up
                 memset(bt->activeDevice.deviceName, 0, BC127_DEVICE_NAME_LEN);
