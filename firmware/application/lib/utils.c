@@ -48,6 +48,20 @@ static uint16_t *ROPR_PINS[] = {
     GET_RPOR(18)
 };
 
+static const char utils_char_latin[] =
+    "AAAAAAACEEEEIIII"
+    "DNOOOOO\xd7\xd8UUUUYI\xdf"
+    "aaaaaaaceeeeiiii"
+    "\xf0nooooo\xf7\xf8uuuuy\xfey"
+    "AaAaAaCcCcCcCcDd"
+    "DdEeEeEeEeEeGgGg"
+    "GgGgHhHhIiIiIiIi"
+    "IiJjJjKkkLlLlLlL"
+    "lLlNnNnNnnNnOoOo"
+    "OoOoRrRrRrSsSsSs"
+    "SsTtTtTtUuUuUuUu"
+    "UuUuWwYyYZzZzZzF";
+
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
 {
     UtilsAbstractDisplayValue_t value;
@@ -67,10 +81,11 @@ UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
  *     Params:
  *         char *string - The subject
  *         const char *input - The string to copy from
+ *         uint16_t max_len - Max output string size 
  *     Returns:
  *         void
  */
-void UtilsNormalizeText(char *string, const char *input)
+void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
 {
     uint16_t idx;
     uint16_t strIdx = 0;
@@ -85,6 +100,7 @@ void UtilsNormalizeText(char *string, const char *input)
     unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
 
     for (idx = 0; idx < strLength; idx++) {
+        if (strIdx+1>=max_len) break;
         uint8_t currentChar = (uint8_t) input[idx];
         unicodeChar = 0 | currentChar;
 
@@ -120,12 +136,16 @@ void UtilsNormalizeText(char *string, const char *input)
 
         if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
             string[strIdx++] = (char) unicodeChar;
+        } else if (unicodeChar >= 0xC0 && unicodeChar <= 0x017f) {
+            string[strIdx++] = utils_char_latin[unicodeChar-0xC0];
         } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC3BF) {
             if (language == CONFIG_SETTING_LANGUAGE_RUSSIAN &&
                 unicodeChar >= 0xC380
             ) {
                 transStr = UtilsTransliterateExtendedASCIIToASCII(unicodeChar);
                 transStrLength = strlen(transStr);
+                if (strIdx+transStrLength>=max_len) break;
+
                 if (transStrLength != 0) {
                     for (transIdx = 0; transIdx < transStrLength; transIdx++) {
                         string[strIdx++] = (char)transStr[transIdx];
@@ -135,8 +155,8 @@ void UtilsNormalizeText(char *string, const char *input)
                 // Convert UTF-8 byte to Unicode then check if it falls within
                 // the range of extended ASCII
                 uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
-                if (extendedChar < 0xFF) {
-                    string[strIdx++] = (char) extendedChar;
+                if (extendedChar >= 0xC0 && extendedChar <= 0x017f) {
+                    string[strIdx++] = utils_char_latin[extendedChar-0xC0];
                 }
             }
         } else if (unicodeChar > 0xC3BF) {
