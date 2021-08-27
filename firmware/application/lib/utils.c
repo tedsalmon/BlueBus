@@ -5,6 +5,7 @@
  *     Helper utils that may be useful in more than one place
  */
 #include "utils.h"
+#include "../handler.h"
 
 /* Hold a pin to register map for all programmable output pins */
 static uint16_t *ROPR_PINS[] = {
@@ -48,6 +49,20 @@ static uint16_t *ROPR_PINS[] = {
     GET_RPOR(18)
 };
 
+static const char utils_char_latin[] =
+/* 00C0-00CF */    "AAAA\xa1""AACEEEEIIII"
+/* 00D0-00DF */    "D\xaf""OOOO\xa2*\xa7UUU\xa3Yp\xa0"
+/* 00E0-00EF */    "aaaa\xa4""aaceeeeiiii"
+/* 00F0-00FF */    "dnoooo\xa5/\xa9uuu\xa6yby"
+/* 0100-010F */    "AaAaAaCcCcCcCcDd"
+/* 0110-011F */    "DdEeEeEeEeEeGgGg"
+/* 0120-012F */    "GgGgHhHhIiIiIiIi"
+/* 0130-013F */    "IiJjJjKkkLlLlLlL"
+/* 0140-014F */    "lLlNnNnNnnNnOoOo"
+/* 0150-015F */    "OoOoRrRrRrSsSsSs"
+/* 0160-016F */    "SsTtTtTtUuUuUuUu"
+/* 0170-017F */    "UuUuWwYyYZzZzZzF";
+
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
 {
     UtilsAbstractDisplayValue_t value;
@@ -67,10 +82,11 @@ UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
  *     Params:
  *         char *string - The subject
  *         const char *input - The string to copy from
+ *         uint16_t max_len - Max output buffer size 
  *     Returns:
  *         void
  */
-void UtilsNormalizeText(char *string, const char *input)
+void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
 {
     uint16_t idx;
     uint16_t strIdx = 0;
@@ -83,8 +99,11 @@ void UtilsNormalizeText(char *string, const char *input)
     uint16_t strLength = strlen(input);
     uint8_t bytesInChar = 0;
     unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    
+    
+    unsigned char uiMode = ConfigGetUIMode();
 
-    for (idx = 0; idx < strLength; idx++) {
+    for (idx = 0; (idx < strLength) && (strIdx<(max_len-1)); idx++) {
         uint8_t currentChar = (uint8_t) input[idx];
         unicodeChar = 0 | currentChar;
 
@@ -120,13 +139,18 @@ void UtilsNormalizeText(char *string, const char *input)
 
         if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
             string[strIdx++] = (char) unicodeChar;
+        } else if ((uiMode == IBus_UI_BMBT)&&(unicodeChar > 0x80)&& (unicodeChar <= 0xFF)) {
+            string[strIdx++] = (char) unicodeChar;
+        } else if (unicodeChar >= 0xC0 && unicodeChar <= 0x017F) {
+            string[strIdx++] = utils_char_latin[unicodeChar-0xC0];
         } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC3BF) {
             if (language == CONFIG_SETTING_LANGUAGE_RUSSIAN &&
                 unicodeChar >= 0xC380
             ) {
                 transStr = UtilsTransliterateExtendedASCIIToASCII(unicodeChar);
                 transStrLength = strlen(transStr);
-                if (transStrLength != 0) {
+
+                if ((transStrLength != 0)&&(strIdx+transStrLength<(max_len-1))) {
                     for (transIdx = 0; transIdx < transStrLength; transIdx++) {
                         string[strIdx++] = (char)transStr[transIdx];
                     }
@@ -135,8 +159,10 @@ void UtilsNormalizeText(char *string, const char *input)
                 // Convert UTF-8 byte to Unicode then check if it falls within
                 // the range of extended ASCII
                 uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
-                if (extendedChar < 0xFF) {
+                if ((uiMode == IBus_UI_BMBT)&&(extendedChar > 0x80)&& (extendedChar <= 0xFF)) {
                     string[strIdx++] = (char) extendedChar;
+                } else if (extendedChar >= 0xC0 && extendedChar <= 0x017F) {
+                    string[strIdx++] = utils_char_latin[extendedChar-0xC0];
                 }
             }
         } else if (unicodeChar > 0xC3BF) {
@@ -147,11 +173,18 @@ void UtilsNormalizeText(char *string, const char *input)
             if (transChar != 0) {
                 string[strIdx++] = transChar;
             } else {
-                transStr = UtilsTransliterateUnicodeToASCII(unicodeChar);
-                transStrLength = strlen(transStr);
-                if (transStrLength != 0) {
-                    for (transIdx = 0; transIdx < transStrLength; transIdx++) {
-                        string[strIdx++] = (char)transStr[transIdx];
+                uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
+                if ((uiMode == IBus_UI_BMBT)&&(extendedChar > 0x80)&& (extendedChar <= 0xFF)) {
+                    string[strIdx++] = (char) extendedChar;
+                } else if (extendedChar >= 0xC0 && extendedChar <= 0x017F) {
+                    string[strIdx++] = utils_char_latin[extendedChar-0xC0];
+                } else {
+                    transStr = UtilsTransliterateUnicodeToASCII(unicodeChar);
+                    transStrLength = strlen(transStr);
+                    if ((transStrLength != 0)&&(strIdx+transStrLength<(max_len-1))) {
+                        for (transIdx = 0; transIdx < transStrLength; transIdx++) {
+                            string[strIdx++] = (char)transStr[transIdx];
+                        }
                     }
                 }
             }
@@ -363,11 +396,11 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
         case UTILS_CHAR_CYRILLIC_CAPITAL_TSE:
             return "Ts";
             break;
-        case UTILS_CHAR_LATIN_CAPITAL_C_WITH_CARON:
+//        case UTILS_CHAR_LATIN_CAPITAL_C_WITH_CARON:
         case UTILS_CHAR_CYRILLIC_CAPITAL_CHE:
             return "Ch";
             break;
-        case UTILS_CHAR_LATIN_CAPITAL_S_WITH_CARON:
+//        case UTILS_CHAR_LATIN_CAPITAL_S_WITH_CARON:
         case UTILS_CHAR_CYRILLIC_CAPITAL_SHA:
             return "Sh";
             break;
@@ -465,11 +498,11 @@ char * UtilsTransliterateUnicodeToASCII(uint32_t input)
         case UTILS_CHAR_CYRILLIC_SMALL_TSE:
             return "ts";
             break;
-        case UTILS_CHAR_LATIN_SMALL_C_WITH_CARON:
+//        case UTILS_CHAR_LATIN_SMALL_C_WITH_CARON:
         case UTILS_CHAR_CYRILLIC_SMALL_CHE:
             return "ch";
             break;
-        case UTILS_CHAR_LATIN_SMALL_S_WITH_CARON:
+//        case UTILS_CHAR_LATIN_SMALL_S_WITH_CARON:
         case UTILS_CHAR_CYRILLIC_SMALL_SHA:
             return "sh";
             break;
