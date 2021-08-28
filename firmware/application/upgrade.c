@@ -136,6 +136,12 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         ConfigSetSetting(CONFIG_SETTING_LOG, 0x01);
         LogRaw("Ran Upgrade 1.1.17\r\n");
     }
+    // Changes in version 1.1.18
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 18) == 1) {
+        BC127SendCommand(bt, "SET COD=300420");
+        LogRaw("Ran Upgrade 1.1.18\r\n");
+    }
+    
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
         FIRMWARE_VERSION_MINOR,
