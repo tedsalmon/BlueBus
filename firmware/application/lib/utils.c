@@ -135,8 +135,8 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
 
         if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
             string[strIdx++] = (char) unicodeChar;
-        } else if (unicodeChar >= 0xC0 && unicodeChar <= 0x017F) {
-            string[strIdx++] = utils_char_latin[unicodeChar-0xC0];
+//        } else if (unicodeChar >= 0xC0 && unicodeChar <= 0x017F) {
+//            string[strIdx++] = utils_char_latin[unicodeChar-0xC0];
         } else if (unicodeChar >= 0xC280 && unicodeChar <= 0xC3BF) {
             if (language == CONFIG_SETTING_LANGUAGE_RUSSIAN &&
                 unicodeChar >= 0xC380
@@ -153,8 +153,10 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
                 // Convert UTF-8 byte to Unicode then check if it falls within
                 // the range of extended ASCII
                 uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
-                if (extendedChar >= 0xC0 && extendedChar <= 0x017F) {
-                    string[strIdx++] = utils_char_latin[extendedChar-0xC0];
+//                if (extendedChar >= 0xC0 && extendedChar <= 0x017F) {
+//                    string[strIdx++] = utils_char_latin[extendedChar-0xC0];
+                if (extendedChar >= 0xC0 && extendedChar <= 0x0FF) {
+                    string[strIdx++] = extendedChar;
                 }
             }
         } else if (unicodeChar > 0xC3BF) {
