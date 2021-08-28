@@ -1419,6 +1419,8 @@ void BC127Process(BC127_t *bt)
                 }
                 EventTriggerCallback(BC127Event_DeviceConnected, 0);
             }
+            BC127ConnectionOpenProfile(&bt->activeDevice, msgBuf[2], linkId);
+
             // Clear the pairing error
             if (strcmp(msgBuf[2], "A2DP") == 0) {
                 bt->pairingErrors[BC127_LINK_A2DP] = 0;
@@ -1428,6 +1430,13 @@ void BC127Process(BC127_t *bt)
             }
             if (strcmp(msgBuf[2], "HFP") == 0) {
                 bt->pairingErrors[BC127_LINK_HFP] = 0;
+                // setup the UTF-8 on HFP channel for CLIP
+                char command[32];
+                snprintf(command, 32, "AT %d AT+CSCS=\"UTF-8\"", linkId);
+                BC127SendCommand(bt, command);
+                snprintf(command, 32, "AT %d AT+CLIP=1", linkId);
+                BC127SendCommand(bt, command);
+
             }
             if (strcmp(msgBuf[2], "BLE") == 0) {
                 bt->pairingErrors[BC127_LINK_BLE] = 0;
@@ -1435,7 +1444,6 @@ void BC127Process(BC127_t *bt)
             if (strcmp(msgBuf[2], "MAP") == 0) {
                 bt->pairingErrors[BC127_LINK_BLE] = 0;
             }
-            BC127ConnectionOpenProfile(&bt->activeDevice, msgBuf[2], linkId);
             LogDebug(LOG_SOURCE_BT, "BT: Open %s for ID %s", msgBuf[2], msgBuf[1]);
             EventTriggerCallback(
                 BC127Event_DeviceLinkConnected,
