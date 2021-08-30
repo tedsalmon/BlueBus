@@ -127,8 +127,7 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 18) == 1) {
         ConfigSetSetting(CONFIG_SETTING_MANAGE_VOLUME, CONFIG_SETTING_ON);
         ConfigSetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV, CONFIG_SETTING_ON);
-        // Default to 0b01011000
-        ConfigSetSetting(CONFIG_SETTING_VOLUME_I2S_MODE, 0x58);
+        LogRaw("Ran Upgrade 1.1.18\r\n");
     }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
