@@ -14,7 +14,7 @@ uint8_t SETTINGS_MENU[] = {
     CD53_SETTING_IDX_VEH_TYPE,
     CD53_SETTING_IDX_BLINKERS,
     CD53_SETTING_IDX_COMFORT_LOCKS,
-    CD53_SETTING_IDX_PAIRINGS
+    CD53_SETTING_IDX_COMFORT_UNLOCK
 };
 
 uint8_t SETTINGS_TO_MENU[] = {
@@ -22,8 +22,7 @@ uint8_t SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_METADATA_MODE,
     CONFIG_SETTING_AUTOPLAY,
     CONFIG_VEHICLE_TYPE_ADDRESS,
-    CONFIG_SETTING_COMFORT_BLINKERS,
-    CONFIG_SETTING_COMFORT_LOCKS
+    CONFIG_SETTING_COMFORT_BLINKERS
 };
 
 void CD53Init(BC127_t *bt, IBus_t *ibus)
@@ -298,7 +297,7 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             }
             char blinkerText[13];
             memset(blinkerText, 0, sizeof(blinkerText));
-            snprintf(blinkerText, 12, "OT Blinks: %d", blinkCount);
+            snprintf(blinkerText, 13, "OT Blinks: %d", blinkCount);
             CD53SetMainDisplayText(context, blinkerText, 0);
             context->settingIdx = CD53_SETTING_IDX_BLINKERS;
             context->settingValue = blinkCount;
@@ -318,6 +317,20 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
                 context->settingValue = CONFIG_SETTING_COMFORT_LOCK_20KM;
             }
             context->settingIdx = CD53_SETTING_IDX_COMFORT_LOCKS;
+        }
+        if (nextMenu == CD53_SETTING_IDX_COMFORT_UNLOCK) {
+            unsigned char comfortUnlock = ConfigGetComfortUnlock();
+            if (comfortUnlock == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
+                CD53SetMainDisplayText(context, "Comfort Unlock: Pos 1", 0);
+                context->settingValue = CONFIG_SETTING_COMFORT_UNLOCK_POS_1;
+            } else if (comfortUnlock == CONFIG_SETTING_COMFORT_UNLOCK_POS_0) {
+                CD53SetMainDisplayText(context, "Comfort Unlock: Pos 0", 0);
+                context->settingValue = CONFIG_SETTING_COMFORT_UNLOCK_POS_0;
+            } else {
+                CD53SetMainDisplayText(context, "Comfort Unlock: Off", 0);
+                context->settingValue = CONFIG_SETTING_OFF;
+            }
+            context->settingIdx = CD53_SETTING_IDX_COMFORT_UNLOCK;
         }
         if (nextMenu== CD53_SETTING_IDX_PAIRINGS) {
             CD53SetMainDisplayText(context, "Clear Pairings", 0);
@@ -374,7 +387,7 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             }
             char blinkerText[13];
             memset(blinkerText, 0, sizeof(blinkerText));
-            snprintf(blinkerText, 12, "OT Blinks: %d", context->settingValue);
+            snprintf(blinkerText, 13, "OT Blinks: %d", context->settingValue);
             CD53SetMainDisplayText(context, blinkerText, 0);
         }
         if (context->settingIdx == CD53_SETTING_IDX_COMFORT_LOCKS) {
@@ -389,7 +402,19 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
                 CD53SetMainDisplayText(context, "Comfort Locks: Off", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
             }
-            context->settingIdx = CD53_SETTING_IDX_COMFORT_LOCKS;
+        }
+        if (context->settingIdx == CD53_SETTING_IDX_COMFORT_UNLOCK) {
+            unsigned char comfortUnlock = ConfigGetComfortUnlock();
+            if (comfortUnlock == CONFIG_SETTING_OFF) {
+                CD53SetMainDisplayText(context, "Comfort Unlock: Pos 1", 0);
+                context->settingValue = CONFIG_SETTING_COMFORT_UNLOCK_POS_1;
+            } else if (comfortUnlock == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
+                CD53SetMainDisplayText(context, "Comfort Unlock: Pos 0", 0);
+                context->settingValue = CONFIG_SETTING_COMFORT_UNLOCK_POS_0;
+            } else {
+                CD53SetMainDisplayText(context, "Comfort Unlock: Off", 0);
+                context->settingValue = CONFIG_SETTING_OFF;
+            }
         }
         if (context->settingIdx == CD53_SETTING_IDX_PAIRINGS) {
             if (context->settingValue == CONFIG_SETTING_OFF) {
@@ -459,6 +484,12 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                     }
                 } else if (context->settingIdx == CD53_SETTING_IDX_VEH_TYPE) {
                     ConfigSetVehicleType(context->settingValue);
+                    CD53SetTempDisplayText(context, "Saved", 1);
+                } else if (context->settingIdx == CD53_SETTING_IDX_COMFORT_LOCKS) {
+                    ConfigSetComfortLock(context->settingValue);
+                    CD53SetTempDisplayText(context, "Saved", 1);
+                } else if (context->settingIdx == CD53_SETTING_IDX_COMFORT_UNLOCK) {
+                    ConfigSetComfortUnlock(context->settingValue);
                     CD53SetTempDisplayText(context, "Saved", 1);
                 } else {
                     ConfigSetSetting(
@@ -595,6 +626,12 @@ void CD53BC127CallStatus(void *ctx, unsigned char *tmp)
     if (context->mode == CD53_MODE_CALL &&
         context->bt->scoStatus != BC127_CALL_SCO_OPEN
     ) {
+        // Clear Caller ID
+        if (context->displayMetadata == CD53_DISPLAY_METADATA_ON) {
+            CD53BC127Metadata(context, 0x00);
+        } else {
+            CD53SetMainDisplayText(context, "Bluetooth", 0);
+        }
         context->mode = CD53_MODE_ACTIVE;
     }
 }
@@ -627,10 +664,11 @@ void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
     ) {
         if (strlen(context->bt->title) > 0) {
             char text[UTILS_DISPLAY_TEXT_SIZE];
+            memset(&text, 0, UTILS_DISPLAY_TEXT_SIZE);
             if (strlen(context->bt->artist) > 0 && strlen(context->bt->album) > 0) {
                 snprintf(
                     text,
-                    UTILS_DISPLAY_TEXT_SIZE,
+                    UTILS_DISPLAY_TEXT_SIZE - 1,
                     "%s - %s on %s",
                     context->bt->title,
                     context->bt->artist,
@@ -639,7 +677,7 @@ void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
             } else if (strlen(context->bt->artist) > 0) {
                 snprintf(
                     text,
-                    UTILS_DISPLAY_TEXT_SIZE,
+                    UTILS_DISPLAY_TEXT_SIZE - 1,
                     "%s - %s",
                     context->bt->title,
                     context->bt->artist
@@ -647,13 +685,13 @@ void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
             } else if (strlen(context->bt->album) > 0) {
                 snprintf(
                     text,
-                    UTILS_DISPLAY_TEXT_SIZE,
+                    UTILS_DISPLAY_TEXT_SIZE - 1,
                     "%s on %s",
                     context->bt->title,
                     context->bt->album
                 );
             } else {
-                snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
+                snprintf(text, UTILS_DISPLAY_TEXT_SIZE - 1, "%s", context->bt->title);
             }
             context->mainDisplay.timeout = 0;
             CD53SetMainDisplayText(context, text, 3000 / CD53_DISPLAY_SCROLL_SPEED);
@@ -755,10 +793,11 @@ void CD53IBusMFLButton(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
+        // 0x00 = R/T Mode RAD
         if (pkt[IBUS_PKT_DB1] == 0x00 &&
             context->displayMetadata == CD53_DISPLAY_METADATA_ON
         ) {
-            CD53RedisplayText(context);
+            //CD53RedisplayText(context);
         } else if (pkt[IBUS_PKT_DB1] == IBUS_MFL_BTN_EVENT_NEXT_REL ||
                    pkt[IBUS_PKT_DB1] == IBUS_MFL_BTN_EVENT_PREV_REL
         ) {

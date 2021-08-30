@@ -42,8 +42,8 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Mic Bias: Aan",
     "Mic Gain: %idB",
     "Geen Apparaat",
-    "Koppelen: Aan",
     "Koppelen: Uit",
+    "Koppelen: Aan",
     "Serienr: %u",
     "Instellingen",
     "Instellingen > Over",
@@ -64,7 +64,13 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Volume: +%ddB",
     "Volume: +24dB",
     "Volume: -%ddB",
-    "Taal: %s"
+    "Taal: %s",
+    "Park Lts.: Uit",
+    "Park Lts.: Aan",
+    "Vol. Mgmt: Uit",
+    "Vol. Mgmt: Aan",
+    "Vol. Rev: Uit"
+    "Vol. Rev: Aan",
 };
 
 static char *LOCALE_LANG_ENGLISH[] = {
@@ -126,6 +132,79 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Volume: +24dB",
     "Volume: 0dB",
     "Lang: %s",
+    "Park Lts.: On",
+    "Park Lts.: Off",
+    "Vol. Mgmt: On",
+    "Vol. Mgmt: Off",
+    "Vol. Rev: On",
+    "Vol. Rev: Off"
+};
+
+static char *LOCALE_LANG_ESTONIAN[] = {
+    "- Ei mängi -",
+    "Teave",
+    "Audio",
+    "Aut.esitlus: Off",
+    "Aut.esitlus: On",
+    "Tagasi",
+    "Suunatuled: %d",
+    "Bluetooth",
+    "Andmestik: %d/%d",
+    "Kõne",
+    "Auto: E3x/E53",
+    "Auto: E46/Z4",
+    "Auto: Määramata",
+    "Katkesta ühendus",
+    "Mugavus",
+    "Audio inf",
+    "Seadmed",
+    "DSP: Analoogne",
+    "DSP: Digitaalne",
+    "Püsivara: %s",
+    "Handsfree: Off",
+    "Handsfree: On",
+    "Aut.lukk: 10km/h",
+    "Aut.lukk: 20km/h",
+    "Aut.lukk: OFF",
+    "Peamenüü",
+    "Menüü: Audio inf",
+    "Menüü: Põhi",
+    "Metandmed: Osal.",
+    "Metandmed: OFF",
+    "Metandmed: Järj.",
+    "Mikri Bias: Off",
+    "Mikri Bias: On",
+    "Mikri Võim: %idB",
+    "Seadet pole",
+    "Ühilduvus: Off",
+    "Ühilduvus: On",
+    "S/N: %u",
+    "Seaded",
+    "Seaded > Teave",
+    "Seaded > Audio",
+    "Seaded > Kõne",
+    "Seaded > Mugavus",
+    "Seaded > KasLiid",
+    "Temp: Jahutusved",
+    "Temp: OFF",
+    "Kasutajaliides",
+    "Tundmatu Album",
+    "Tundmatu Artist",
+    "Tundmatu Tiitel",
+    "Lukuvaba: Off",
+    "Lukuvaba: Asend0",
+    "Lukuvaba: Asend1",
+    "Heli: -%ddB",
+    "Heli: +%ddB",
+    "Heli: +24dB",
+    "Heli: 0dB",
+    "Keel: %s",
+    "Park Lts.: On",
+    "Park Lts: Off",
+    "Vol. Mgmt: On",
+    "Vol. Mgmt: Off",
+    "Rev. Vol.: On",
+    "Rev. Vol.: Off"
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -186,7 +265,13 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     {195,240,238,236,234,':',' ','+','%','d','d','B',0},
     {195,240,238,236,234,':',' ','+','2','4','d','B',0},
     {195,240,238,236,234,':',' ','0','d','B',0},
-    {223,231,251,234,':',' ','%','s',0}
+    {223,231,251,234,':',' ','%','s',0},
+    {'P','a','r','k',' ','L','a','m','p','s',':',' ','O','n'},
+    {'P','a','r','k',' ','L','a','m','p','s',':',' ','O','f','f'},
+    {'M','a','n','a','g','e',' ','V','o','l',':',' ','O','n'},
+    {'M','a','n','a','g','e',' ','V','o','l',':',' ','O','f','f'},
+    {'L','o','w',' ','V','o','l',' ','R','e','v',':',' ','O','n'},
+    {'L','o','w',' ','V','o','l',' ','R','e','v',':',' ','O','f','f'}
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -247,7 +332,13 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Lautst: +%ddB",
     "Lautst: + 24dB",
     "Lautst: 0dB",
-    "Sprache: %s"
+    "Sprache: %s",
+    "Park Lts.: On",
+    "Park Lts.: Off",
+    "Vol. Mgmt: On",
+    "Vol. Mgmt: Off",
+    "Vol. Rev: On",
+    "Vol. Rev: Off"
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -308,7 +399,13 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Volumen: +%ddB",
     "Volumen: +24dB",
     "Volumen: 0dB",
-    "Idioma: %s"
+    "Idioma: %s",
+    "Park Lts.: On",
+    "Park Lts.: Off",
+    "Vol. Mgmt: On",
+    "Vol. Mgmt: Off",
+    "Vol. Rev: On",
+    "Vol. Rev: Off"
 };
 
 /**
@@ -328,6 +425,8 @@ char *LocaleGetText(uint16_t stringIndex)
             return LOCALE_LANG_DUTCH[stringIndex];
         case CONFIG_SETTING_LANGUAGE_ENGLISH:
             return LOCALE_LANG_ENGLISH[stringIndex];
+        case CONFIG_SETTING_LANGUAGE_ESTONIAN:
+            return LOCALE_LANG_ESTONIAN[stringIndex];
         case CONFIG_SETTING_LANGUAGE_GERMAN:
             return LOCALE_LANG_GERMAN[stringIndex];
         case CONFIG_SETTING_LANGUAGE_RUSSIAN:

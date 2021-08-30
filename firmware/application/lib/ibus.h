@@ -30,6 +30,7 @@
 #define IBUS_DEVICE_CID 0x46 /* Central information display (flip-up LCD screen) */
 #define IBUS_DEVICE_MFL 0x50 /* Multi function steering wheel */
 #define IBUS_DEVICE_IHK 0x5B /* HVAC */
+#define IBUS_DEVICE_PDC 0x60 /* Park Distance Control */
 #define IBUS_DEVICE_RAD 0x68 /* Radio */
 #define IBUS_DEVICE_DSP 0x6A /* DSP */
 #define IBUS_DEVICE_SM0 0x72 /* Seat memory - 0 */
@@ -151,6 +152,8 @@
 
 #define IBUS_CMD_IKE_IGN_STATUS_REQ 0x10
 #define IBUS_CMD_IKE_IGN_STATUS_RESP 0x11
+#define IBUS_CMD_IKE_SENSOR_REQ 0x12
+#define IBUS_CMD_IKE_SENSOR_RESP 0x13
 #define IBUS_CMD_IKE_REQ_VEHICLE_TYPE 0x14
 #define IBUS_CMD_IKE_RESP_VEHICLE_TYPE 0x15
 #define IBUS_CMD_IKE_SPEED_RPM_UPDATE 0x18
@@ -160,9 +163,12 @@
 
 #define IBUS_CMD_LCM_REQ_REDUNDANT_DATA 0x53
 #define IBUS_CMD_LCM_RESP_REDUNDANT_DATA 0x54
+#define IBUS_CMD_LCM_BULB_IND_REQ 0x5A
 
 #define IBUS_CMD_MOD_STATUS_REQ 0x01
 #define IBUS_CMD_MOD_STATUS_RESP 0x02
+
+#define IBUS_CMD_PDC_STATUS 0x07
 
 #define IBUS_CMD_RAD_SCREEN_MODE_UPDATE 0x46
 #define IBUS_CMD_RAD_UPDATE_MAIN_AREA 0x23
@@ -197,7 +203,8 @@
 #define IBUS_IGNITION_KL15 0x03
 #define IBUS_IGNITION_KL50 0x07
 
-#define IBUS_LCM_LIGHT_STATUS 0x5B
+#define IBUS_LCM_LIGHT_STATUS_REQ 0x5A
+#define IBUS_LCM_LIGHT_STATUS_RESP 0x5B
 #define IBUS_LCM_DIMMER_STATUS 0x5C
 #define IBUS_LCM_IO_STATUS 0x90
 
@@ -205,16 +212,22 @@
 #define IBUS_LM_LEFT_SIG_BIT 5
 #define IBUS_LM_RIGHT_SIG_BIT 6
 #define IBUS_LM_BLINK_SIG_BIT 2
+#define IBUS_LM_PARKING_SIG_BIT 0
 
 // LM diagnostics activate (0x0C)
 #define IBUS_LM_BLINKER_OFF 0
 #define IBUS_LM_BLINKER_LEFT 1
 #define IBUS_LM_BLINKER_RIGHT 2
 
+#define IBUS_LM_BULB_OFF 0x00
+
 // LME38 (Byte 0)
 #define IBUS_LME38_BLINKER_OFF 0x00
 #define IBUS_LME38_BLINKER_LEFT 0x01
 #define IBUS_LME38_BLINKER_RIGHT 0x02
+// Side Marker Left = Byte 2, Side Marker Right = Byte 3
+#define IBUS_LME38_SIDE_MARKER_LEFT 0x02
+#define IBUS_LME38_SIDE_MARKER_RIGHT 0x40
 
 // LCM, LCM_A
 // Different bytes! Update the blinker msg if alternating.
@@ -224,7 +237,10 @@
 // Byte 1 (S2_BLK_L switch No.1 left turn / S2_BLK_R switch No.1 right turn)
 #define IBUS_LCM_BLINKER_OFF 0x00
 #define IBUS_LCM_BLINKER_LEFT 0x01
-#define IBUS_LCM_BLINKER_RIGHT 0x02
+#define IBUS_LCM_BLINKER_RIGHT 0x0
+// Side Marker Left = Byte 5, Side Marker Right = Byte 6
+#define IBUS_LCM_SIDE_MARKER_LEFT 0x01
+#define IBUS_LCM_SIDE_MARKER_RIGHT 0x20
 
 // LCM_II, LCM_III, LCM_IV (Byte 2)
 #define IBUS_LCM_II_BLINKER_OFF 0x00
@@ -234,8 +250,12 @@
 // LSZ, LSZ_2 (Headlight Status = Byte 2, Blinker Status = Byte 3)
 #define IBUS_LSZ_HEADLIGHT_OFF 0xFF
 #define IBUS_LSZ_BLINKER_LEFT 0x50
+// Blinker Left = Byte 2, Blinker Right = Byte 3
 #define IBUS_LSZ_BLINKER_RIGHT 0x80
 #define IBUS_LSZ_BLINKER_OFF 0xFF
+// Front Side Marker Left = Byte 5, Front Side Marker Right = Byte 4
+#define IBUS_LSZ_SIDE_MARKER_LEFT 0x08
+#define IBUS_LSZ_SIDE_MARKER_RIGHT 0x02
 
 // Ident (0x00) parameter offsets
 #define IBUS_LM_CI_ID_OFFSET 9
@@ -319,6 +339,16 @@
 #define IBUS_VEHICLE_TYPE_E46_Z4 0x02
 #define IBUS_IKE_TYPE_LOW 0x00
 #define IBUS_IKE_TYPE_HIGH 0x0F
+#define IBUS_IKE_GEAR_NONE 0x00
+#define IBUS_IKE_GEAR_PARK 0x0B
+#define IBUS_IKE_GEAR_REVERSE 0x01
+#define IBUS_IKE_GEAR_NEUTRAL 0x07
+#define IBUS_IKE_GEAR_FIRST 0x10
+#define IBUS_IKE_GEAR_SECOND 0x06
+#define IBUS_IKE_GEAR_THIRD 0x0D
+#define IBUS_IKE_GEAR_FOURTH 0x0C
+#define IBUS_IKE_GEAR_FIFTH 0x0E
+#define IBUS_IKE_GEAR_SIXTH 0x0F
 
 #define IBUS_GM_ZKE3_GM1 1
 #define IBUS_GM_ZKE3_GM4 2
@@ -369,6 +399,8 @@
 #define IBUS_EVENT_RADVolumeChange 67
 #define IBUS_EVENT_LMIdentResponse 68
 #define IBUS_EVENT_TV_STATUS 69
+#define IBUS_EVENT_PDC_STATUS 70
+#define IBUS_EVENT_IKE_SENSOR_UPDATE 71
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -409,6 +441,7 @@ typedef struct IBus_t {
     unsigned char lmPhotoVoltage;
     unsigned char oilTemperature;
     unsigned char coolantTemperature;
+    unsigned char gear: 4;
 } IBus_t;
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
@@ -454,7 +487,8 @@ void IBusCommandIKEGetVehicleType(IBus_t *);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
-void IBusCommandLMActivateBulbs(IBus_t *, unsigned char);
+void IBusCommandLMActivateBulbs(IBus_t *, unsigned char, unsigned char);
+void IBusCommandLMGetClusterIndicators(IBus_t *);
 void IBusCommandLMGetRedundantData(IBus_t *);
 void IBusCommandMIDButtonPress(IBus_t *, unsigned char, unsigned char);
 void IBusCommandMIDDisplayRADTitleText(IBus_t *, char *);

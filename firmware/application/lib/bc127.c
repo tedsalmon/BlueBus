@@ -907,10 +907,12 @@ void BC127CommandSetModuleName(BC127_t *bt, char *name)
     snprintf(nameSetCommand, 42, "SET NAME=%s", name);
     BC127SendCommand(bt, nameSetCommand);
     // Set the "short" name
-    char nameShortSetCommand[23];
+    char nameShortSetCommand[24];
     char shortName[9];
+    memset(nameShortSetCommand, 0, 24);
+    memset(shortName, 0, 9);
     strncpy(shortName, name, BC127_SHORT_NAME_MAX_LEN);
-    snprintf(nameShortSetCommand, 23, "SET NAME_SHORT=%s", shortName);
+    snprintf(nameShortSetCommand, 24, "SET NAME_SHORT=%s", shortName);
     BC127SendCommand(bt, nameShortSetCommand);
     BC127CommandWrite(bt);
 }
@@ -1082,7 +1084,8 @@ void BC127CommandVersion(BC127_t *bt)
 /**
  * BC127CommandStatus()
  *     Description:
- *         Set the volume on the given link ID
+ *         Set the volume on the given link ID. No link ID / volume will get
+ *         the values instead
  *     Params:
  *         BC127_t *bt - A pointer to the module object
  *         uint8_t linkId - The Link ID to set the volume for
@@ -1092,9 +1095,14 @@ void BC127CommandVersion(BC127_t *bt)
  */
 void BC127CommandVolume(BC127_t *bt, uint8_t linkId, char *volume)
 {
-    char command[15];
-    snprintf(command, 15, "VOLUME %d %s", linkId, volume);
-    BC127SendCommand(bt, command);
+    if (linkId == 0 && volume == 0) {
+        char command[7] = "VOLUME";
+        BC127SendCommand(bt, command);
+    } else {
+        char command[15];
+        snprintf(command, 15, "VOLUME %d %s", linkId, volume);
+        BC127SendCommand(bt, command);
+    }
 }
 
 
@@ -1172,8 +1180,10 @@ void BC127Process(BC127_t *bt)
             p = strtok(NULL, delimeter);
         }
         LogDebug(LOG_SOURCE_BT, "BT: %s", msg);
-
-        if (strcmp(msgBuf[0], "AT") == 0) {
+        if (strcmp(msgBuf[0], "ABS_VOL") == 0) {
+            bt->activeDevice.a2dpVolume = UtilsStrToInt(msgBuf[2]);
+            EventTriggerCallback(BC127Event_VolumeChange, 0);
+        } else if (strcmp(msgBuf[0], "AT") == 0) {
             if (strcmp(msgBuf[3], "+CLIP:") == 0) {
                 uint8_t cidDelimCounter = 0;
                 uint8_t cidDataLength = 0;
@@ -1208,8 +1218,12 @@ void BC127Process(BC127_t *bt)
                     p = strtok(NULL, delimeter);
                 }
                 // Set and clean up the variables to hold the new caller ID text
-                char callerId[BC127_CALLER_ID_FIELD_SIZE];
-                memset(callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
+                uint16_t cidLen = strlen(cidDataBuf[0]);
+                if (cidDelimCounter > 2) {
+                    cidLen = strlen(cidDataBuf[cidDelimCounter - 1]);
+                }
+                char callerId[cidLen + 1];
+                memset(callerId, 0, cidLen + 1);
                 memset(bt->callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
                 if (cidDelimCounter == 2) {
                     // Remove the escaped quotes that come through
@@ -1394,6 +1408,7 @@ void BC127Process(BC127_t *bt)
                     msgBuf[2]
                 );
                 if (status == BC127_CONN_STATE_DISCONNECTED) {
+                    LogDebug(LOG_SOURCE_BT, "BT: Device State Disconnected");
                     bt->playbackStatus = BC127_AVRCP_STATUS_PAUSED;
                     // Notify the world that the device disconnected
                     memset(&bt->activeDevice, 0, sizeof(BC127Connection_t));
@@ -1540,17 +1555,15 @@ void BC127Process(BC127_t *bt)
         }
     }
     /* Sometimes there is not more than a Title or Album, which does not give
-     * us sufficient information to push a metadata update. Sometimes, this is
-     * because the data is stuck in a buffer, and other times it's because it's
-     * not available. Therefore, we send a blank command to try to push data
-     * out of the buffer. Otherwise, request the full metadata if we have
-     * partial metadata for more than the specified timeout value.
+     * us sufficient information to push a metadata update. We request the full
+     * metadata if we have partial metadata for more than the specified timeout value.
      **/
     uint32_t now = TimerGetMillis();
     if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT &&
         bt->metadataStatus == BC127_METADATA_STATUS_NEW &&
         bt->activeDevice.avrcpLinkId != 0 &&
-        bt->callStatus == BC127_CALL_INACTIVE
+        bt->callStatus == BC127_CALL_INACTIVE &&
+        bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING
     ) {
         BC127CommandGetMetadata(bt);
         bt->metadataTimestamp = now;
@@ -1667,6 +1680,8 @@ BC127Connection_t BC127ConnectionInit()
 {
     BC127Connection_t conn;
     memset(&conn, 0, sizeof(BC127Connection_t));
+    // Assume the volume is halfway
+    conn.a2dpVolume = 64;
     return conn;
 }
 

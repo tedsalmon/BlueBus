@@ -46,7 +46,7 @@
 #define BC127_METADATA_ALBUM_OFFSET 22
 #define BC127_METADATA_STATUS_NEW 0
 #define BC127_METADATA_STATUS_CUR 1
-#define BC127_METADATA_TIMEOUT 500
+#define BC127_METADATA_TIMEOUT 1000
 #define BC127_MSG_END_CHAR 0x0D
 #define BC127_MSG_LF_CHAR 0x0A
 #define BC127_MSG_DELIMETER 0x20
@@ -71,6 +71,8 @@
 #define BC127Event_CallStatus 7
 #define BC127Event_BootStatus 8
 #define BC127Event_CallerID 9
+#define BC127Event_VolumeChange 10
+
 extern int8_t BC127CVCGainTable[];
 /**
  * BC127PairedDevice_t
@@ -98,6 +100,7 @@ typedef struct BC127PairedDevice_t {
  *         hfpLinkId - The Melody Link ID for the HFP connection
  *         bleLinkId - The Melody Link ID for the BLE connection
  *         mapLinkId - The Melody Link ID for the MAP connection
+ *         a2dpVolume - A2DP volume
  */
 typedef struct BC127Connection_t {
     char macId[13];
@@ -108,6 +111,7 @@ typedef struct BC127Connection_t {
     uint8_t hfpLinkId;
     uint8_t bleLinkId;
     uint8_t mapLinkId;
+    uint8_t a2dpVolume;
 } BC127Connection_t;
 
 /**

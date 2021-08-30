@@ -221,6 +221,25 @@ unsigned char ConfigGetIKEType()
 }
 
 /**
+ * ConfigGetLightingFeaturesActive()
+ *     Description:
+ *         Check if any lighting features are active and return a boolean
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetLightingFeaturesActive()
+{
+    if (ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS) > 0x01 ||
+        ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS) > 0x01
+    ) {
+        return CONFIG_SETTING_ON;
+    }
+    return CONFIG_SETTING_OFF;
+}
+
+/**
  * ConfigGetLMVariant()
  *     Description:
  *         Get the Light Module variant

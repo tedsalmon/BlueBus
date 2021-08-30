@@ -177,7 +177,7 @@ void CLIProcess()
                         memset(license, 0, 25);
                         snprintf(
                             license,
-                            24,
+                            25,
                             "%s %s %s %s %s",
                             msgBuf[3],
                             msgBuf[4],
@@ -249,10 +249,35 @@ void CLIProcess()
                 } else if (UtilsStricmp(msgBuf[1], "UNPAIR") == 0) {
                     BC127CommandUnpair(cli.bt);
                 } else if (UtilsStricmp(msgBuf[1], "NAME") == 0) {
-                    if (strlen(msgBuf[2]) <= 32) {
-                        BC127CommandSetModuleName(cli.bt, msgBuf[2]);
-                    } else {
-                        cmdSuccess = 0;
+                    char nameBuf[33];
+                    memset(nameBuf, 0, 33);
+                    uint8_t wordLength = delimCount - 2;
+                    uint8_t wordCounter = 2;
+                    while (wordLength != 0) {
+                        uint8_t wordStrLen = strlen(msgBuf[wordCounter]);
+                        uint8_t nameStrLen = strlen(nameBuf);
+                        if (nameStrLen + wordStrLen <= 32) {
+                            uint8_t i = 0;
+                            for (i = 0; i < wordStrLen; i++) {
+                                nameBuf[nameStrLen + i] = msgBuf[wordCounter][i];
+                            }
+                        } else {
+                            wordLength = 0;
+                            cmdSuccess = 0;
+                        }
+                        wordLength--;
+                        wordCounter++;
+                        if (cmdSuccess != 0 && wordLength != 0) {
+                            nameStrLen = strlen(nameBuf);
+                            // Ensure we do not overflow the buffer
+                            if (nameStrLen <= 32) {
+                                // Add the space we will have taken away
+                                nameBuf[nameStrLen] = ' ';
+                            }
+                        }
+                    }
+                    if (cmdSuccess != 0) {
+                        BC127CommandSetModuleName(cli.bt, nameBuf);
                     }
                 } else if (UtilsStricmp(msgBuf[1], "PIN") == 0) {
                     if (strlen(msgBuf[2]) == 4) {
@@ -266,7 +291,17 @@ void CLIProcess()
                     cmdSuccess = 0;
                 }
             } else if (UtilsStricmp(msgBuf[0], "GET") == 0) {
-                if (UtilsStricmp(msgBuf[1], "IBUS") == 0) {
+                if (UtilsStricmp(msgBuf[1], "BYTE") == 0 && delimCount == 3) {
+                    unsigned char byte = UtilsStrToHex(msgBuf[2]);
+                    if (byte >= CONFIG_SETTING_START_ADDRESS &&
+                        byte <= CONFIG_SETTING_END_ADDRESS
+                    ) {
+                        unsigned char value = ConfigGetSetting(byte);
+                        LogRaw("Byte 0x%02X = 0x%02X\r\n", byte, value);
+                    } else {
+                        cmdSuccess = 0;
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "IBUS") == 0) {
                     IBusCommandDIAGetIdentity(cli.ibus, IBUS_DEVICE_GT);
                     IBusCommandDIAGetIdentity(cli.ibus, IBUS_DEVICE_RAD);
                 } else if (UtilsStricmp(msgBuf[1], "LCM") == 0) {
@@ -386,7 +421,17 @@ void CLIProcess()
                     }
                 }
             } else if (UtilsStricmp(msgBuf[0], "SET") == 0) {
-                if (UtilsStricmp(msgBuf[1], "COMFORT") == 0) {
+                if (UtilsStricmp(msgBuf[1], "BYTE") == 0 && delimCount == 4) {
+                    unsigned char byte = UtilsStrToHex(msgBuf[2]);
+                    unsigned char value = UtilsStrToHex(msgBuf[3]);
+                    if (byte >= CONFIG_SETTING_START_ADDRESS &&
+                        byte <= CONFIG_SETTING_END_ADDRESS
+                    ) {
+                        ConfigSetSetting(byte, value);
+                    } else {
+                        cmdSuccess = 0;
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "COMFORT") == 0) {
                     if (UtilsStricmp(msgBuf[2], "BLINKERS") == 0) {
                         uint8_t blinks = UtilsStrToInt(msgBuf[3]);
                         if (blinks > 1 && blinks <= 8) {
@@ -456,6 +501,10 @@ void CLIProcess()
                         ConfigSetUIMode(IBus_UI_MID_BMBT);
                     } else if (UtilsStricmp(msgBuf[2], "5") == 0) {
                         ConfigSetUIMode(IBus_UI_BUSINESS_NAV);
+                    } else if (UtilsStricmp(msgBuf[2], "6") == 0) {
+                        // Force static GT UI mode
+                        ConfigSetUIMode(IBus_UI_BMBT);
+                        ConfigSetNavType(IBUS_GT_MKIV_STATIC);
                     } else {
                         LogRaw("Invalid UI Mode specified\r\n");
                     }

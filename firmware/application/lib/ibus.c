@@ -100,9 +100,9 @@ static void IBusHandleEWSMessage(unsigned char *pkt)
 }
 
 /**
- * IBusHandleIKEMessage()
+ * IBusHandleGMMessage()
  *     Description:
- *         Handle any messages received from the IKE (Instrument Cluster)
+ *         Handle any messages received from the GM (Body Module)
  *     Params:
  *         unsigned char *pkt - The frame received on the IBus
  *     Returns:
@@ -255,6 +255,9 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
             &ignitionStatus
         );
         ibus->ignitionStatus = ignitionStatus;
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SENSOR_RESP) {
+        ibus->gear = pkt[IBUS_PKT_DB2] >> 4;
+        EventTriggerCallback(IBUS_EVENT_IKE_SENSOR_UPDATE, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_RESP_VEHICLE_TYPE) {
         ibus->vehicleType = IBusGetVehicleType(pkt);
         EventTriggerCallback(IBUS_EVENT_IKEVehicleType, pkt);
@@ -283,7 +286,7 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO &&
-        pkt[IBUS_PKT_CMD] == IBUS_LCM_LIGHT_STATUS
+        pkt[IBUS_PKT_CMD] == IBUS_LCM_LIGHT_STATUS_RESP
     ) {
         EventTriggerCallback(IBUS_EVENT_LCMLightStatus, pkt);
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO &&
@@ -378,6 +381,18 @@ static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
         }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_VOL_CTRL) {
         EventTriggerCallback(IBUS_EVENT_RADVolumeChange, pkt);
+    }
+}
+
+static void IBusHandlerPDCMessage(unsigned char *pkt)
+{
+    // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
+    // any time we see 0x5A from the PDC. Keep this above all other code to
+    // ensure event listeners know the PDC is alive before performing work
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_LCM_BULB_IND_REQ) {
+        EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS) {
+        EventTriggerCallback(IBUS_EVENT_PDC_STATUS, pkt);
     }
 }
 
@@ -573,6 +588,9 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_VM) {
                         IBusHandleVMMessage(pkt);
+                    }
+                    if (srcSystem == IBUS_DEVICE_PDC) {
+                        IBusHandlerPDCMessage(pkt);
                     }
                     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
                         IBusHandleTELMessage(pkt);
@@ -909,7 +927,7 @@ uint8_t IBusGetNavType(unsigned char *packet)
         navType = IBUS_GT_MKIII_NEW_UI;
     }
     if (navType == IBUS_GT_MKIV &&
-        (softwareVersion == 0 || softwareVersion >= 40)
+        (softwareVersion == 0 || softwareVersion == 1 || softwareVersion >= 40)
     ) {
         navType = IBUS_GT_MKIV_STATIC;
     }
@@ -1774,11 +1792,18 @@ void IBusCommandIKETextClear(IBus_t *ibus)
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         unsigned char blinkerSide - left or right blinker
+ *         unsigned char parkingLights - Activate the parking lights
  *     Returns:
  *         void
  */
-void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
+void IBusCommandLMActivateBulbs(
+    IBus_t *ibus,
+    unsigned char blinkerSide,
+    unsigned char parkingLights
+) {
     unsigned char blinker = IBUS_LSZ_BLINKER_OFF;
+    unsigned char parkingLightLeft = IBUS_LM_BULB_OFF;
+    unsigned char parkingLightRight = IBUS_LM_BULB_OFF;
     if (ibus->lmVariant == IBUS_LM_LME38) {
         switch (blinkerSide) {
             case IBUS_LM_BLINKER_LEFT:
@@ -1791,13 +1816,17 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
                 blinker = IBUS_LME38_BLINKER_OFF;
                 break;
         }
+        if (parkingLights == 0x01) {
+            parkingLightLeft = IBUS_LME38_SIDE_MARKER_LEFT;
+            parkingLightRight = IBUS_LME38_SIDE_MARKER_RIGHT;
+        }
         // No LWR load sensor/HVAC pot voltage for LME38
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             blinker,
             0x00,
-            0x00,
-            0x00,
+            parkingLightLeft,
+            parkingLightRight,
             0x00,
             0x00,
             0x00,
@@ -1828,17 +1857,21 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
                 blinker = IBUS_LCM_BLINKER_OFF;
                 break;
         }
+        if (parkingLights == 0x01) {
+            parkingLightLeft = IBUS_LCM_SIDE_MARKER_LEFT;
+            parkingLightRight = IBUS_LCM_SIDE_MARKER_RIGHT;
+        }
         // This is an issue! I'm not sure what differentiates S1 and S2.
         // It's meaningful enough a distinction that it is displayed in INPA.
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
-            0x00, // S2_BLK_L, S2_BLK_R
-            blinker, // S1_BLK_L, S1_BLK_R
+            0x00, // S2_BLK_L, S2_BLK_R 0
+            blinker, // S1_BLK_L, S1_BLK_R 1
             0x00,
             0x00,
             0x00,
-            0x00,
-            0x00,
+            parkingLightLeft,
+            parkingLightRight,
             0x00,
             0x00,
             ibus->lmDimmerVoltage,
@@ -1867,6 +1900,10 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
                 blinker = IBUS_LCM_II_BLINKER_OFF;
                 break;
         }
+        if (parkingLights == 0x01) {
+            parkingLightLeft = IBUS_LCM_SIDE_MARKER_LEFT;
+            parkingLightRight = IBUS_LCM_SIDE_MARKER_RIGHT;
+        }
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00,
@@ -1874,8 +1911,8 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
             blinker,
             0x00,
             0x00,
-            0x00,
-            0x00,
+            parkingLightLeft,
+            parkingLightRight,
             0x00,
             0x00,
             ibus->lmDimmerVoltage,
@@ -1904,14 +1941,18 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
                 blinker = IBUS_LSZ_BLINKER_OFF;
                 break;
         }
+        if (parkingLights == 0x01) {
+            parkingLightLeft = IBUS_LSZ_SIDE_MARKER_LEFT;
+            parkingLightRight = IBUS_LSZ_SIDE_MARKER_RIGHT;
+        }
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00,
             0x00,
             IBUS_LSZ_HEADLIGHT_OFF,
             blinker,
-            0x00,
-            0x00,
+            parkingLightRight,
+            parkingLightLeft,
             0x00,
             ibus->lmLoadFrontVoltage,
             0x00,
@@ -1934,9 +1975,32 @@ void IBusCommandLMActivateBulbs(IBus_t *ibus, unsigned char blinkerSide) {
 
 
 /**
+ * IBusCommandLMGetClusterIndicators()
+ *     Description:
+ *        Query the Light Module for the cluster indicators
+ *        Raw: 80 03 D0 53 00
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandLMGetClusterIndicators(IBus_t *ibus)
+{
+    unsigned char msg[] = {IBUS_LCM_LIGHT_STATUS_REQ};
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_BMBT,
+        IBUS_DEVICE_LCM,
+        msg,
+        sizeof(msg)
+    );
+}
+
+
+/**
  * IBusCommandLMGetRedundantData()
  *     Description:
- *        Query the Light Module for the vehicle vehicle
+ *        Query the Light Module for the vehicle redundant data (VIN, Mileage)
  *        Raw: 80 03 D0 53 00
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object

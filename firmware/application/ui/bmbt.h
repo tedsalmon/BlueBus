@@ -11,11 +11,13 @@
 #include "../lib/bc127.h"
 #include "../lib/config.h"
 #include "../lib/event.h"
+#include "../lib/i2c.h"
 #include "../lib/ibus.h"
 #include "../lib/locale.h"
 #include "../lib/pcm51xx.h"
 #include "../lib/timer.h"
 #include "../lib/utils.h"
+#include "../lib/wm88xx.h"
 #define BMBT_DISPLAY_OFF 0x00
 #define BMBT_DISPLAY_TONE_SEL 0x01
 #define BMBT_DISPLAY_INFO 0x02
@@ -52,6 +54,8 @@
 #define BMBT_MENU_IDX_SETTINGS_AUDIO_AUTOPLAY 0
 #define BMBT_MENU_IDX_SETTINGS_AUDIO_DAC_GAIN 1
 #define BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT 2
+#define BMBT_MENU_IDX_SETTINGS_AUDIO_MANAGE_VOL 3
+#define BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL 4
 /* Call Settings */
 #define BMBT_MENU_IDX_SETTINGS_CALLING_HFP 0
 #define BMBT_MENU_IDX_SETTINGS_CALLING_MIC_BIAS 1
@@ -60,7 +64,7 @@
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_LOCK 0
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_UNLOCK 1
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS 2
-#define BMBT_MENU_IDX_SETTINGS_COMFORT_VEHICLE_TYPE 3
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS 3
 /* UI Settings */
 #define BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU 0
 #define BMBT_MENU_IDX_SETTINGS_UI_METADATA_MODE 1

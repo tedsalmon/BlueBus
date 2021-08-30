@@ -125,10 +125,10 @@ static void MIDSetMainDisplayText(
     int8_t timeout
 ) {
     char text[UTILS_DISPLAY_TEXT_SIZE];
-    memset(&text, 0, sizeof(text));
+    memset(&text, 0, UTILS_DISPLAY_TEXT_SIZE);
     snprintf(
         text,
-        UTILS_DISPLAY_TEXT_SIZE,
+        UTILS_DISPLAY_TEXT_SIZE - 1,
         "%s %s",
         context->mainText,
         str
@@ -146,10 +146,10 @@ static void MIDSetTempDisplayText(
     int8_t timeout
 ) {
     char text[UTILS_DISPLAY_TEXT_SIZE];
-    memset(&text, 0, sizeof(text));
+    memset(&text, 0, UTILS_DISPLAY_TEXT_SIZE);
     snprintf(
         text,
-        UTILS_DISPLAY_TEXT_SIZE,
+        UTILS_DISPLAY_TEXT_SIZE - 1,
         "%s %s",
         context->mainText,
         str
@@ -272,7 +272,7 @@ static void MIDShowNextSetting(MIDContext_t *context, uint8_t direction)
         }
         char blinkerText[13];
         memset(blinkerText, 0, sizeof(blinkerText));
-        snprintf(blinkerText, 12, "OT Blinks: %d", context->settingValue);
+        snprintf(blinkerText, 13, "OT Blinks: %d", context->settingValue);
         MIDSetMainDisplayText(context, blinkerText, 0);
         context->settingIdx = MID_SETTING_IDX_BLINKERS;
     }
@@ -345,7 +345,7 @@ static void MIDShowNextSettingValue(MIDContext_t *context, uint8_t direction)
         }
         char blinkerText[13];
         memset(blinkerText, 0, sizeof(blinkerText));
-        snprintf(blinkerText, 12, "OT Blinks: %d", context->settingValue);
+        snprintf(blinkerText, 13, "OT Blinks: %d", context->settingValue);
         MIDSetMainDisplayText(context, blinkerText, 0);
     }
     if (context->settingIdx == MID_SETTING_IDX_COMFORT_LOCKS) {
@@ -449,10 +449,11 @@ void MIDBC127MetadataUpdate(void *ctx, unsigned char *tmp)
         ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MID_SETTING_METADATA_MODE_OFF
     ) {
         char text[UTILS_DISPLAY_TEXT_SIZE];
+        memset(&text, 0, UTILS_DISPLAY_TEXT_SIZE);
         if (strlen(context->bt->artist) > 0 && strlen(context->bt->album) > 0) {
             snprintf(
                 text,
-                UTILS_DISPLAY_TEXT_SIZE,
+                UTILS_DISPLAY_TEXT_SIZE - 1,
                 "%s - %s on %s",
                 context->bt->title,
                 context->bt->artist,
@@ -461,7 +462,7 @@ void MIDBC127MetadataUpdate(void *ctx, unsigned char *tmp)
         } else if (strlen(context->bt->artist) > 0) {
             snprintf(
                 text,
-                UTILS_DISPLAY_TEXT_SIZE,
+                UTILS_DISPLAY_TEXT_SIZE - 1,
                 "%s - %s",
                 context->bt->title,
                 context->bt->artist
@@ -469,13 +470,13 @@ void MIDBC127MetadataUpdate(void *ctx, unsigned char *tmp)
         } else if (strlen(context->bt->album) > 0) {
             snprintf(
                 text,
-                UTILS_DISPLAY_TEXT_SIZE,
+                UTILS_DISPLAY_TEXT_SIZE - 1,
                 "%s on %s",
                 context->bt->title,
                 context->bt->album
             );
         } else {
-            snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
+            snprintf(text, UTILS_DISPLAY_TEXT_SIZE - 1, "%s", context->bt->title);
         }
         MIDSetMainDisplayText(context, text, 3000 / MID_DISPLAY_SCROLL_SPEED);
         TimerTriggerScheduledTask(context->displayUpdateTaskId);

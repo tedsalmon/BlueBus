@@ -38,20 +38,23 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     Context.btStartupIsRun = 0;
     Context.btConnectionStatus = HANDLER_BT_CONN_OFF;
     Context.btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
+    Context.volumeMode = HANDLER_VOLUME_MODE_NORMAL;
     Context.uiMode = ConfigGetUIMode();
     Context.seekMode = HANDLER_CDC_SEEK_MODE_NONE;
     Context.lmDimmerChecksum = 0x00;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
     Context.telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
     Context.btBootFailure = HANDLER_BT_BOOT_OK;
-    memset(&Context.bodyModuleStatus, 0, sizeof(HandlerBodyModuleStatus_t));
-    memset(&Context.lightControlStatus, 0, sizeof(HandlerLightControlStatus_t));
+    memset(&Context.gmState, 0, sizeof(HandlerBodyModuleStatus_t));
+    memset(&Context.lmState, 0, sizeof(HandlerLightControlStatus_t));
     memset(&Context.ibusModuleStatus, 0, sizeof(HandlerModuleStatus_t));
     Context.powerStatus = HANDLER_POWER_ON;
     Context.scanIntervals = 0;
     Context.lmLastIOStatus = now;
     Context.cdChangerLastPoll = now;
     Context.cdChangerLastStatus = now;
+    Context.pdcLastStatus = 0;
+    Context.lmLastStatusSet = 0;
     EventRegisterCallback(
         BC127Event_Boot,
         &HandlerBC127Boot,
@@ -138,6 +141,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_IKE_SENSOR_UPDATE,
+        &HandlerIBusIKESensorStatus,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_IKESpeedRPMUpdate,
         &HandlerIBusIKESpeedRPMUpdate,
         &Context
@@ -180,6 +188,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBUS_EVENT_ModuleStatusResponse,
         &HandlerIBusModuleStatusResponse,
+        &Context
+    );
+    EventRegisterCallback(
+        IBUS_EVENT_PDC_STATUS,
+        &HandlerIBusPDCStatus,
         &Context
     );
     EventRegisterCallback(
@@ -232,7 +245,16 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context,
         HANDLER_INT_DEVICE_SCAN
     );
-
+    TimerRegisterScheduledTask(
+        &HandlerTimerVolumeManagement,
+        &Context,
+        HANDLER_INT_VOL_MGMT
+    );
+    Context.lightingStateTimerId = TimerRegisterScheduledTask(
+        &HandlerTimerLightingState,
+        &Context,
+        HANDLER_INT_LIGHTING_STATE
+    );
     BC127CommandStatus(Context.bt);
     if (Context.uiMode == IBus_UI_CD53 ||
         Context.uiMode == IBus_UI_BUSINESS_NAV
@@ -489,6 +511,12 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
         if (context->bt->activeDevice.avrcpLinkId != 0 &&
             context->bt->activeDevice.a2dpLinkId != 0
         ) {
+            // Raise the volume one step to trigger the absolute volume notification
+            BC127CommandVolume(
+                context->bt,
+                context->bt->activeDevice.a2dpLinkId,
+                "UP"
+            );
             if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF ||
                 context->bt->activeDevice.hfpLinkId != 0
             ) {
@@ -696,6 +724,24 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
         } else if (curFunction == IBUS_CDC_FUNC_PAUSE) {
             curStatus = IBUS_CDC_STAT_PAUSE;
         }
+        if (TimerGetMillis() > 30000) {
+            if (context->ibusModuleStatus.MID == 0 &&
+                context->ibusModuleStatus.GT == 0 &&
+                context->ibusModuleStatus.BMBT == 0 &&
+                context->ibusModuleStatus.VM == 0
+            ) {
+                // Fallback for vehicle UI Identification
+                // If no UI has been detected and we have been
+                // running at least 30s, default to CD53 UI
+                LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
+                HandlerSwitchUI(context, IBus_UI_CD53);
+            } else if (context->ibusModuleStatus.GT == 1 &&
+                       ConfigGetUIMode() == 0
+            ) {
+                // Request the Navigation Identity
+                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+            }
+        }
     } else if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
         if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
             BC127CommandPause(context->bt);
@@ -764,24 +810,13 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
                 BC127CommandBackwardSeekRelease(context->bt);
                 context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
             }
-            // Set the Input to S/PDIF once told to start playback, if enabled
-            if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
-                IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
-            }
-            // UI Identification
-            if (ConfigGetUIMode() == 0 && TimerGetMillis() > 60000) {
-                if (context->ibusModuleStatus.MID == 0 &&
-                    context->ibusModuleStatus.GT == 0
-                ) {
-                    // Fallback for vehicle UI Identification
-                    // If no UI has been detected and we have been
-                    // running at least a minute, default to CD53 UI
-                    LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
-                    HandlerSwitchUI(context, IBus_UI_CD53);
-                } else if (context->ibusModuleStatus.GT == 1) {
-                    // Request the Navigation Identity
-                    IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
-                    IBusCommandDIAGetOSIdentity(context->ibus, IBUS_DEVICE_GT);
+            if (context->ibusModuleStatus.DSP == 1) {
+                // Set the Input to S/PDIF once told to start playback, if enabled
+                if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
+                    IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+                } else {
+                    // Set the Input to the radio if we are overridden
+                    IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
                 }
             }
         } else {
@@ -794,7 +829,6 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
     unsigned char discNumber = 0x07;
     if (context->uiMode == IBus_UI_BMBT) {
         discCount = IBUS_CDC_DISC_COUNT_1;
-        discNumber = 0x01;
     }
     IBusCommandCDCStatus(
         context->ibus,
@@ -821,12 +855,21 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusDSPConfigSet(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
-        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
-        ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON
+    if (context->ibusModuleStatus.DSP == 1 &&
+        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
     ) {
-        // Set the Input to S/PDIF if we are overridden
-        IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+        if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
+            ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON
+        ) {
+            // Set the Input to S/PDIF if we are overridden
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+        }
+        if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF &&
+            ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_OFF
+        ) {
+            // Set the Input to the radio if we are overridden
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
+        }
     }
 }
 
@@ -893,19 +936,19 @@ void HandlerIBusFirstMessageReceived(void *ctx, unsigned char *pkt)
 void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->bodyModuleStatus.lowSideDoors == 0) {
+    if (context->gmState.lowSideDoors == 0) {
         unsigned char doorStatus = pkt[4] & 0x0F;
         if (doorStatus > 0x01) {
-            context->bodyModuleStatus.lowSideDoors = 1;
+            context->gmState.lowSideDoors = 1;
         }
     }
     // The 5th bit in the first data byte contains the lock status
     if (CHECK_BIT(pkt[4], 5) != 0) {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks locked");
-        context->bodyModuleStatus.doorsLocked = 1;
+        context->gmState.doorsLocked = 1;
     } else {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks unlocked");
-        context->bodyModuleStatus.doorsLocked = 0;
+        context->gmState.doorsLocked = 0;
     }
 }
 
@@ -921,16 +964,36 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, unsigned char *pkt)
  */
 void HandlerIBusGTDIAIdentityResponse(void *ctx, unsigned char *type)
 {
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char navType = *type;
     if (ConfigGetNavType() != navType) {
         ConfigSetNavType(navType);
     }
+    if (navType != IBUS_GT_DETECT_ERROR && navType < IBUS_GT_MKIII_NEW_UI) {
+        // Assume this is a color graphic terminal as GT's < IBUS_GT_MKIII_NEW_UI
+        // do not support the OS identity request
+        if (context->ibusModuleStatus.MID == 0) {
+            if (ConfigGetUIMode() != IBus_UI_BMBT) {
+                LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT UI");
+                HandlerSwitchUI(context, IBus_UI_BMBT);
+            }
+        } else {
+            if (ConfigGetUIMode() != IBus_UI_MID_BMBT) {
+                LogInfo(LOG_SOURCE_SYSTEM, "Detected MID / BMBT UI");
+                HandlerSwitchUI(context, IBus_UI_MID_BMBT);
+            }
+        }
+    }
+    // Request the OS Identity (Color or Monochrome Nav)
+    IBusCommandDIAGetOSIdentity(context->ibus, IBUS_DEVICE_GT);
 }
 
 /**
  * HandlerIBusGTDIAOSIdentityResponse()
  *     Description:
- *         Identify the navigation module type from its OS
+ *         Identify the navigation module type from its OS.
+ *         Note: MKII, and presumably older OS modules do NOT respond to this
+ *         query
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *pkt - Data packet
@@ -1000,36 +1063,41 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
             BC127ClearPairedDevices(context->bt);
             // Unlock the vehicle
             if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_0 &&
-                context->bodyModuleStatus.doorsLocked == 1
+                context->gmState.doorsLocked == 1
             ) {
                 if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
                     IBusCommandGMDoorCenterLockButton(context->ibus);
                 } else if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-                    if (context->bodyModuleStatus.lowSideDoors == 1) {
+                    if (context->gmState.lowSideDoors == 1) {
                         IBusCommandGMDoorUnlockAll(context->ibus);
                     } else {
                         IBusCommandGMDoorUnlockHigh(context->ibus);
                     }
                 }
             }
-            context->bodyModuleStatus.lowSideDoors = 0;
+            context->gmState.lowSideDoors = 0;
         // If the engine was on, but now it's in position 1
         } else if (context->ibus->ignitionStatus >= IBUS_IGNITION_KL15 &&
                    ignitionStatus == IBUS_IGNITION_KLR
         ) {
             // Unlock the vehicle
             if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_1 &&
-                context->bodyModuleStatus.doorsLocked == 1
+                context->gmState.doorsLocked == 1
             ) {
                 if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
                     IBusCommandGMDoorCenterLockButton(context->ibus);
                 } else if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-                    if (context->bodyModuleStatus.lowSideDoors == 1) {
+                    if (context->gmState.lowSideDoors == 1) {
                         IBusCommandGMDoorUnlockAll(context->ibus);
                     } else {
                         IBusCommandGMDoorUnlockHigh(context->ibus);
                     }
                 }
+            }
+            if (context->lmState.comfortBlinkerStatus != HANDLER_LM_COMF_BLINK_OFF ||
+                context->lmState.comfortParkingLampsStatus != HANDLER_LM_COMF_PARKING_OFF
+            ) {
+                HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_ALL_OFF);
             }
         // If the ignition WAS off, but now it's not, then run these actions.
         // I realize the second condition is frivolous, but it helps with
@@ -1118,7 +1186,7 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char comfortLock = ConfigGetComfortLock();
     if (comfortLock != CONFIG_SETTING_OFF &&
-        context->bodyModuleStatus.doorsLocked == 0x00
+        context->gmState.doorsLocked == 0x00
     ) {
         uint16_t speed = pkt[4] * 2;
         if ((comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM && speed >= 10) ||
@@ -1129,6 +1197,44 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
             } else {
                 IBusCommandGMDoorLockAll(context->ibus);
             }
+        }
+    }
+}
+
+/**
+ * HandlerIBusIKESensorStatus()
+ *     Description:
+ *         Parse Sensor Status
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *pkt - The IBus Packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusIKESensorStatus(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // Lower volume when the transmission is in reverse
+    if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
+        context->bt->activeDevice.a2dpLinkId != 0
+    ) {
+        if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
+            context->ibus->gear != IBUS_IKE_GEAR_REVERSE
+        ) {
+            LogWarning(
+                "TRANS OUT OF REV - RAISE VOLUME -- Currently %d",
+                context->bt->activeDevice.a2dpVolume
+            );
+            HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_UP);
+        }
+        if (context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
+            context->ibus->gear == IBUS_IKE_GEAR_REVERSE
+        ) {
+            LogWarning(
+                "TRANS IN REV - LOWER VOLUME -- Currently %d",
+                context->bt->activeDevice.a2dpVolume
+            );
+            HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_DOWN);
         }
     }
 }
@@ -1206,12 +1312,11 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
 {
     // Changed identifier as to not confuse it with the blink counter.
     uint8_t configBlinkLimit = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
-
+    unsigned char parkingLamps = ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS);
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (configBlinkLimit > 1) {
-        HandlerContext_t *context = (HandlerContext_t *) ctx;
         unsigned char lightStatus = pkt[4];
         unsigned char lightStatus2 = pkt[6];
-
         // Left blinker
         if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
             CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
@@ -1219,36 +1324,35 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
         ) {
             // If quickly switching blinker direction the LM will activate the
             // opposing blinker immediately, bypassing the "off" message.
-            if (context->lightControlStatus.blinkStatus == HANDLER_LM_BLINK_RIGHT) {
+            if (context->lmState.blinkStatus == HANDLER_LM_BLINK_RIGHT) {
                 LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Quick Switch > Reset");
-                context->lightControlStatus.blinkCount = 0;
+                context->lmState.blinkCount = 0;
             }
-            context->lightControlStatus.blinkCount++;
-            context->lightControlStatus.blinkStatus = HANDLER_LM_BLINK_LEFT;
+            context->lmState.blinkCount++;
+            context->lmState.blinkStatus = HANDLER_LM_BLINK_LEFT;
 
-            switch (context->lightControlStatus.comfortStatus) {
-                case HANDLER_LM_COMF_BLINK_INACTIVE:
+            switch (context->lmState.comfortBlinkerStatus) {
+                case HANDLER_LM_COMF_BLINK_OFF:
                     LogDebug(
                         CONFIG_DEVICE_LOG_SYSTEM,
-                        "LEFT > COMFORT_INACTIVE > %hhu/%hhu",
-                        context->lightControlStatus.blinkCount,
+                        "LEFT > COMFORT_INACTIVE > %d/%d",
+                        context->lmState.blinkCount,
                         configBlinkLimit
                     );
                     break;
                 case HANDLER_LM_COMF_BLINK_LEFT:
                     LogDebug(
                         CONFIG_DEVICE_LOG_SYSTEM,
-                        "LEFT > COMFORT_LEFT > %hhu/%hhu",
-                        context->lightControlStatus.blinkCount,
+                        "LEFT > COMFORT_LEFT > %d/%d",
+                        context->lmState.blinkCount,
                         configBlinkLimit
                     );
-                    if (context->lightControlStatus.blinkCount >= configBlinkLimit) {
+                    if (context->lmState.blinkCount >= configBlinkLimit) {
                         LogDebug(
                             CONFIG_DEVICE_LOG_SYSTEM,
                             "LEFT > COMFORT_LEFT > Blink limit"
                         );
-                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
-                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                        HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_BLINK_OFF);
                     }
                     break;
                 case HANDLER_LM_COMF_BLINK_RIGHT:
@@ -1258,9 +1362,8 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
                     );
                     // If comfort blinkers are active, the first opposing blink
                     // will cancel comfort blinkers, and not count towards the blink count.
-                    context->lightControlStatus.blinkCount = 0;
-                    context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
-                    IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                    context->lmState.blinkCount = 0;
+                    HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_BLINK_OFF);
                     break;
                 default:
                     LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Unknown State");
@@ -1275,35 +1378,34 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
                   CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
         ) {
-            if (context->lightControlStatus.blinkStatus == HANDLER_LM_BLINK_LEFT) {
+            if (context->lmState.blinkStatus == HANDLER_LM_BLINK_LEFT) {
                 LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Quick Switch > Reset");
-                context->lightControlStatus.blinkCount = 0;
+                context->lmState.blinkCount = 0;
             }
-            context->lightControlStatus.blinkCount++;
-            context->lightControlStatus.blinkStatus = HANDLER_LM_BLINK_RIGHT;
-            switch (context->lightControlStatus.comfortStatus) {
-                case HANDLER_LM_COMF_BLINK_INACTIVE:
+            context->lmState.blinkCount++;
+            context->lmState.blinkStatus = HANDLER_LM_BLINK_RIGHT;
+            switch (context->lmState.comfortBlinkerStatus) {
+                case HANDLER_LM_COMF_BLINK_OFF:
                     LogDebug(
                         CONFIG_DEVICE_LOG_SYSTEM,
-                        "RIGHT > COMFORT_INACTIVE > %hhu/%hhu",
-                        context->lightControlStatus.blinkCount,
+                        "RIGHT > COMFORT_INACTIVE > %d/%d",
+                        context->lmState.blinkCount,
                         configBlinkLimit
                     );
                     break;
                 case HANDLER_LM_COMF_BLINK_RIGHT:
                     LogDebug(
                         CONFIG_DEVICE_LOG_SYSTEM,
-                        "RIGHT > COMFORT_RIGHT > %hhu/%hhu",
-                        context->lightControlStatus.blinkCount,
+                        "RIGHT > COMFORT_RIGHT > %d/%d",
+                        context->lmState.blinkCount,
                         configBlinkLimit
                     );
-                    if (context->lightControlStatus.blinkCount >= configBlinkLimit) {
+                    if (context->lmState.blinkCount >= configBlinkLimit) {
                         LogDebug(
                             CONFIG_DEVICE_LOG_SYSTEM,
                             "RIGHT > COMFORT_RIGHT > Blink limit"
                         );
-                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
-                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                        HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_BLINK_OFF);
                     }
                     break;
                 case HANDLER_LM_COMF_BLINK_LEFT:
@@ -1311,9 +1413,8 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
                         CONFIG_DEVICE_LOG_SYSTEM,
                         "RIGHT > COMFORT_LEFT > Cancel"
                     );
-                    context->lightControlStatus.blinkCount = 0;
-                    context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
-                    IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                    context->lmState.blinkCount = 0;
+                    HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_BLINK_OFF);
                     break;
                 default:
                     LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unknown State");
@@ -1329,66 +1430,73 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
         ) {
             // OFF blinker (or anything non-blinker)
             // Only activate comfort blinkers after a single blink.
-            if (context->lightControlStatus.blinkCount == 1) {
+            if (context->lmState.blinkCount == 1) {
                 LogDebug(
                     CONFIG_DEVICE_LOG_SYSTEM,
-                    "OFF > Blinks: %hhu => Activate",
-                    context->lightControlStatus.blinkCount
+                    "OFF > Blinks: %d => Activate",
+                    context->lmState.blinkCount
                 );
                 // I believe this is redundant, but better safe than sorry.
-                switch (context->lightControlStatus.comfortStatus) {
+                switch (context->lmState.comfortBlinkerStatus) {
                     case HANDLER_LM_COMF_BLINK_RIGHT:
                         LogDebug(
                             CONFIG_DEVICE_LOG_SYSTEM,
-                            "OFF > Blinks: %hhu > COMFORT_RIGHT > Cancel",
-                            context->lightControlStatus.blinkCount
+                            "OFF > Blinks: %d > COMFORT_RIGHT > Cancel",
+                            context->lmState.blinkCount
                         );
-                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
-                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                        HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_BLINK_OFF);
                         break;
                     case HANDLER_LM_COMF_BLINK_LEFT:
                         LogDebug(
                             CONFIG_DEVICE_LOG_SYSTEM,
-                            "OFF > Blinks: %hhu > COMFORT_LEFT > Cancel",
-                            context->lightControlStatus.blinkCount
+                            "OFF > Blinks: %d > COMFORT_LEFT > Cancel",
+                            context->lmState.blinkCount
                         );
-                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_INACTIVE;
-                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_OFF);
+                        HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_BLINK_OFF);
                         break;
                 }
                 // Activate comfort
-                switch (context->lightControlStatus.blinkStatus) {
+                switch (context->lmState.blinkStatus) {
                     case HANDLER_LM_BLINK_LEFT:
                         LogDebug(
                             CONFIG_DEVICE_LOG_SYSTEM,
-                            "OFF > Blinks: %hhu > BLINK_LEFT => Activate",
-                            context->lightControlStatus.blinkCount
+                            "OFF > Blinks: %d > BLINK_LEFT => Activate",
+                            context->lmState.blinkCount
                         );
-                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_LEFT;
-                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_LEFT);
+                        HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_BLINK_LEFT);
                         break;
                     case HANDLER_LM_BLINK_RIGHT:
                         LogDebug(
                             CONFIG_DEVICE_LOG_SYSTEM,
-                            "OFF > Blinks: %hhu > BLINK_RIGHT => Activate",
-                            context->lightControlStatus.blinkCount
+                            "OFF > Blinks: %d > BLINK_RIGHT => Activate",
+                            context->lmState.blinkCount
                         );
-                        context->lightControlStatus.comfortStatus = HANDLER_LM_COMF_BLINK_RIGHT;
-                        IBusCommandLMActivateBulbs(context->ibus, IBUS_LM_BLINKER_RIGHT);
+                        HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_BLINK_RIGHT);
                         break;
                 }
-            } else if (context->lightControlStatus.blinkCount > 1) {
+            } else if (context->lmState.blinkCount > 1) {
                 LogDebug(
                     CONFIG_DEVICE_LOG_SYSTEM,
-                    "OFF > Blinks: %hhu => Do not activate comfort",
-                    context->lightControlStatus.blinkCount
+                    "OFF > Blinks: %d => Do not activate comfort",
+                    context->lmState.blinkCount
                 );
-                context->lightControlStatus.blinkCount = 0;
+                context->lmState.blinkCount = 0;
             } else {
                 // Sequential non-blinker lamp activity
                 LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "OFF > Unrelated activity!");
             }
-            context->lightControlStatus.blinkStatus = HANDLER_LM_BLINK_OFF;
+            context->lmState.blinkStatus = HANDLER_LM_BLINK_OFF;
+        }
+    }
+    // Engage ANGEL EYEZ
+    if (parkingLamps == CONFIG_SETTING_ON) {
+        unsigned char lightStatus = pkt[4];
+        if (CHECK_BIT(lightStatus, IBUS_LM_PARKING_SIG_BIT) == 0) {
+            HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_ON);
+        }
+    } else {
+        if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON) {
+            HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_OFF);
         }
     }
 }
@@ -1397,7 +1505,7 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
  * HandlerIBusLCMDimmerStatus()
  *     Description:
  *         Track the Dimmer Status messages so we can correctly set the
- *         dimming state when messing with the lighting
+ *         dimming state when issuing lighting diagnostics requests
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *tmp - Any event data
@@ -1407,11 +1515,13 @@ void HandlerIBusLMLightStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusLMDimmerStatus(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    uint8_t checksum = IBusGetLMDimmerChecksum(pkt);
-    if (checksum != context->lmDimmerChecksum) {
-        IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+    if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
+        uint8_t checksum = IBusGetLMDimmerChecksum(pkt);
+        if (checksum != context->lmDimmerChecksum) {
+            IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+            context->lmDimmerChecksum = checksum;
+        }
         context->lmLastIOStatus = TimerGetMillis();
-        context->lmDimmerChecksum = checksum;
     }
 }
 
@@ -1454,12 +1564,11 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
         ConfigSetVehicleIdentity(vehicleId);
         // Request the vehicle type
         IBusCommandIKEGetVehicleType(context->ibus);
-        // Reset the Nav Type
-        ConfigSetNavType(0x00);
         // Fallback to the CD53 UI as appropriate
         if (context->ibusModuleStatus.MID == 0 &&
             context->ibusModuleStatus.GT == 0 &&
-            context->ibusModuleStatus.BMBT == 0
+            context->ibusModuleStatus.BMBT == 0 &&
+            context->ibusModuleStatus.VM == 0
         ) {
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
             HandlerSwitchUI(context, IBus_UI_CD53);
@@ -1559,6 +1668,36 @@ void HandlerIBusModuleStatusRequest(void *ctx, unsigned char *pkt)
     }
 }
 
+/**
+ * HandlerIBusPDCStatus()
+ *     Description:
+ *         Handle PDC Status Updates
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusPDCStatus(void *ctx, unsigned char *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    context->pdcLastStatus = TimerGetMillis();
+    if (context->ibusModuleStatus.PDC == 0) {
+        context->ibusModuleStatus.PDC = 1;
+    }
+    LogWarning("PDC Data?");
+    if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
+        context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
+        context->bt->activeDevice.a2dpLinkId != 0
+    ) {
+        LogWarning(
+            "PDC START - LOWER VOLUME -- Currently %d",
+            context->bt->activeDevice.a2dpVolume
+        );
+        HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_DOWN);
+    }
+}
+
 
 /**
  * HandlerIBusRADVolumeChange()
@@ -1623,6 +1762,8 @@ void HandlerIBusTELVolumeChange(void *ctx, unsigned char *pkt)
             )
         )
     )  {
+        // Drop Telephony mode so the radio acknowledges the volume changes
+        IBusCommandTELStatus(context->ibus, IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE);
         unsigned char sourceSystem = IBUS_DEVICE_BMBT;
         if (context->ibusModuleStatus.MID == 1) {
             sourceSystem = IBUS_DEVICE_MID;
@@ -1647,6 +1788,9 @@ void HandlerIBusTELVolumeChange(void *ctx, unsigned char *pkt)
             }
         }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
+        // Re-enable telephony mode
+        IBusCommandTELStatus(context->ibus, IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE);
+        IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
     } else if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING) {
         unsigned char volumeConfig = CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL;
         unsigned char volume = ConfigGetSetting(volumeConfig);
@@ -1675,16 +1819,27 @@ void HandlerIBusModuleStatusResponse(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     unsigned char module = pkt[IBUS_PKT_SRC];
-    if (module == IBUS_DEVICE_DSP &&
-        context->ibusModuleStatus.DSP == 0
-    ) {
+    if (module == IBUS_DEVICE_DSP && context->ibusModuleStatus.DSP == 0) {
         context->ibusModuleStatus.DSP = 1;
         LogInfo(LOG_SOURCE_SYSTEM, "DSP Detected");
-    } else if (module == IBUS_DEVICE_GT &&
-        context->ibusModuleStatus.GT == 0
+    } else if (module == IBUS_DEVICE_BMBT ||
+               module == IBUS_DEVICE_GT ||
+               module == IBUS_DEVICE_VM
     ) {
-        context->ibusModuleStatus.GT = 1;
-        LogInfo(LOG_SOURCE_SYSTEM, "GT Detected");
+        if (context->ibusModuleStatus.BMBT == 0) {
+            context->ibusModuleStatus.BMBT = 1;
+            LogInfo(LOG_SOURCE_SYSTEM, "BMBT Detected");
+        }
+        if (context->ibusModuleStatus.GT == 0) {
+            context->ibusModuleStatus.GT = 1;
+            LogInfo(LOG_SOURCE_SYSTEM, "GT Detected");
+        }
+        if (context->ibusModuleStatus.VM == 0) {
+            context->ibusModuleStatus.VM = 1;
+            LogInfo(LOG_SOURCE_SYSTEM, "VM Detected");
+        }
+        // The GT is slow to boot, so continue to query
+        // for the ident until we get it
         unsigned char uiMode = ConfigGetUIMode();
         if (uiMode != IBus_UI_BMBT &&
             uiMode != IBus_UI_MID_BMBT &&
@@ -1692,11 +1847,8 @@ void HandlerIBusModuleStatusResponse(void *ctx, unsigned char *pkt)
         ) {
             // Request the Navigation Identity
             IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
-            IBusCommandDIAGetOSIdentity(context->ibus, IBUS_DEVICE_GT);
         }
-    } else if (module == IBUS_DEVICE_LCM &&
-        context->ibusModuleStatus.LCM == 0
-    ) {
+    } else if (module == IBUS_DEVICE_LCM && context->ibusModuleStatus.LCM == 0) {
         LogInfo(LOG_SOURCE_SYSTEM, "LCM Detected");
         context->ibusModuleStatus.LCM = 1;
     } else if (module == IBUS_DEVICE_MID &&
@@ -1716,24 +1868,10 @@ void HandlerIBusModuleStatusResponse(void *ctx, unsigned char *pkt)
                 HandlerSwitchUI(context, IBus_UI_MID);
             }
         }
-    } else if (module == IBUS_DEVICE_BMBT &&
-        context->ibusModuleStatus.BMBT == 0
-    ) {
-        context->ibusModuleStatus.BMBT = 1;
-        LogInfo(LOG_SOURCE_SYSTEM, "BMBT Detected");
-        // If a BMBT is in the car, we probably have a Nav...
-        unsigned char uiMode = ConfigGetUIMode();
-        if (uiMode != IBus_UI_BMBT &&
-            uiMode != IBus_UI_MID_BMBT &&
-            uiMode != IBus_UI_BUSINESS_NAV
-        ) {
-            // Request the Navigation Identity
-            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
-            IBusCommandDIAGetOSIdentity(context->ibus, IBUS_DEVICE_GT);
-        }
-    } else if (module == IBUS_DEVICE_RAD &&
-        context->ibusModuleStatus.RAD == 0
-    ) {
+    } else if (module == IBUS_DEVICE_PDC && context->ibusModuleStatus.PDC == 0) {
+        context->ibusModuleStatus.PDC = 1;
+        LogInfo(LOG_SOURCE_SYSTEM, "PDC Detected");
+    } else if (module == IBUS_DEVICE_RAD && context->ibusModuleStatus.RAD == 0) {
         context->ibusModuleStatus.RAD = 1;
         LogInfo(LOG_SOURCE_SYSTEM, "RAD Detected");
     }
@@ -1762,7 +1900,6 @@ void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
     unsigned char discNumber = 0x07;
     if (context->uiMode == IBus_UI_BMBT) {
         discCount = IBUS_CDC_DISC_COUNT_1;
-        discNumber = 0x01;
     }
     IBusCommandCDCStatus(
         context->ibus,
@@ -1933,7 +2070,8 @@ void HandlerTimerDeviceConnection(void *ctx)
 /**
  * HandlerTimerLCMIOStatus()
  *     Description:
- *         Request the LCM I/O Status when the key is in position 2 or above
+ *         Request the LM I/O Status when the key is in position 1 or above
+ *         every 30 seconds if we have not seen it
  *     Params:
  *         void *ctx - The context provided at registration
  *     Returns:
@@ -1942,14 +2080,40 @@ void HandlerTimerDeviceConnection(void *ctx)
 void HandlerTimerLCMIOStatus(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    uint32_t now = TimerGetMillis();
-    if (context->ibusModuleStatus.LCM != 0 &&
-        context->ibus->ignitionStatus != IBUS_IGNITION_OFF &&
-        (now - context->lmLastIOStatus) >= 20000
-    ) {
-        // Ask the LCM for the I/O Status of all lamps
-        IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
-        context->lmLastIOStatus = now;
+    if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
+        uint32_t now = TimerGetMillis();
+        if (context->ibus->ignitionStatus != IBUS_IGNITION_OFF &&
+            (now - context->lmLastIOStatus) >= 30000
+        ) {
+            IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+            context->lmLastIOStatus = now;
+        }
+    }
+}
+
+/**
+ * HandlerTimerLightingState()
+ *     Description:
+ *         Periodically update the LM I/O state to enable the lamps we want
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerLightingState(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
+        uint32_t now = TimerGetMillis();
+        if (context->ibus->ignitionStatus != IBUS_IGNITION_OFF &&
+            (now - context->lmLastStatusSet) >= 10000 &&
+            (
+                context->lmState.comfortBlinkerStatus != HANDLER_LM_COMF_BLINK_OFF ||
+                context->lmState.comfortParkingLampsStatus != HANDLER_LM_COMF_PARKING_OFF
+            )
+        ) {
+            HandlerLMActivateBulbs(context, HANDLER_LM_EVENT_REFRESH);
+        }
     }
 }
 
@@ -2040,4 +2204,134 @@ void HandlerTimerScanDevices(void *ctx)
     } else {
         context->scanIntervals += 1;
     }
+}
+
+/**
+ * HandlerTimerVolumeManagement()
+ *     Description:
+ *         Manage the A2DP volume per user settings
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerVolumeManagement(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
+        context->volumeMode != HANDLER_VOLUME_MODE_LOWERED &&
+        context->bt->activeDevice.a2dpLinkId != 0
+    ) {
+        if (context->bt->activeDevice.a2dpVolume < 127) {
+            LogWarning("SET MAX VOLUME -- Currently %d", context->bt->activeDevice.a2dpVolume);
+            BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpLinkId, "F");
+            context->bt->activeDevice.a2dpVolume = 127;
+        }
+    }
+    // Lower volume when PDC is active
+    if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
+        context->ibusModuleStatus.PDC == 1 &&
+        context->bt->activeDevice.a2dpLinkId != 0
+    ) {
+        uint32_t now = TimerGetMillis();
+        if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
+            (now - context->pdcLastStatus) > 1500
+        ) {
+            LogWarning(
+                "PDC DONE - RAISE VOLUME -- Currently %d",
+                context->bt->activeDevice.a2dpVolume
+            );
+            HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_UP);
+        }
+        if (context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
+            (now - context->pdcLastStatus) <= 1000
+        ) {
+            LogWarning(
+                "PDC START - LOWER VOLUME -- Currently %d",
+                context->bt->activeDevice.a2dpVolume
+            );
+            HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_DOWN);
+        }
+    }
+}
+
+/**
+ * HandlerLMActivateBulbs()
+ *     Description:
+ *         Abstract function to set the LM Bulb I/O status and
+ *         reset the lighting timer
+ *     Params:
+ *         HandlerContext_t *context - The handler context
+ *         uint8_t event - The event that occurred
+ *     Returns:
+ *         void
+ */
+void HandlerLMActivateBulbs(
+    HandlerContext_t *context,
+    unsigned char event
+) {
+    context->lmLastStatusSet = TimerGetMillis();
+    TimerResetScheduledTask(context->lightingStateTimerId);
+    unsigned char blinkers = context->lmState.comfortBlinkerStatus;
+    unsigned char parkingLamps = context->lmState.comfortParkingLampsStatus;
+    switch (event) {
+        case HANDLER_LM_EVENT_ALL_OFF:
+            parkingLamps = HANDLER_LM_COMF_PARKING_OFF;
+            context->lmState.comfortParkingLampsStatus = HANDLER_LM_COMF_PARKING_OFF;
+            blinkers = HANDLER_LM_COMF_BLINK_OFF;
+            context->lmState.comfortBlinkerStatus = HANDLER_LM_COMF_BLINK_OFF;
+            break;
+        case HANDLER_LM_EVENT_BLINK_OFF:
+            blinkers = HANDLER_LM_COMF_BLINK_OFF;
+            context->lmState.comfortBlinkerStatus = HANDLER_LM_COMF_BLINK_OFF;
+            break;
+        case HANDLER_LM_EVENT_BLINK_LEFT:
+            blinkers = HANDLER_LM_COMF_BLINK_LEFT;
+            context->lmState.comfortBlinkerStatus = HANDLER_LM_COMF_BLINK_LEFT;
+            break;
+        case HANDLER_LM_EVENT_BLINK_RIGHT:
+            blinkers = HANDLER_LM_COMF_BLINK_RIGHT;
+            context->lmState.comfortBlinkerStatus = HANDLER_LM_COMF_BLINK_RIGHT;
+            break;
+        case HANDLER_LM_EVENT_PARKING_OFF:
+            parkingLamps = HANDLER_LM_COMF_PARKING_OFF;
+            context->lmState.comfortParkingLampsStatus = HANDLER_LM_COMF_PARKING_OFF;
+            break;
+        case HANDLER_LM_EVENT_PARKING_ON:
+            parkingLamps = HANDLER_LM_COMF_PARKING_ON;
+            context->lmState.comfortParkingLampsStatus = HANDLER_LM_COMF_PARKING_ON;
+            break;
+    }
+    IBusCommandLMActivateBulbs(context->ibus, blinkers, parkingLamps);
+}
+
+/**
+ * HandlerVolumeChange()
+ *     Description:
+ *         Abstract function to raise and lower the A2DP volume
+ *     Params:
+ *         HandlerContext_t *context - The handler context
+ *         uint8_t direction - Lower / Raise volume flag
+ *     Returns:
+ *         void
+ */
+void HandlerVolumeChange(HandlerContext_t *context, uint8_t direction)
+{
+    uint8_t newVolume = 0;
+    if (direction == HANDLER_VOLUME_DIRECTION_DOWN) {
+        newVolume = context->bt->activeDevice.a2dpVolume / 2;
+        context->volumeMode = HANDLER_VOLUME_MODE_LOWERED;
+    } else {
+        newVolume = context->bt->activeDevice.a2dpVolume * 2;
+        context->volumeMode = HANDLER_VOLUME_MODE_NORMAL;
+    }
+    char hexVolString[2];
+    hexVolString[1] = '\0';
+    snprintf(hexVolString, 1, "%X", newVolume);
+    BC127CommandVolume(
+        context->bt,
+        context->bt->activeDevice.a2dpLinkId,
+        hexVolString
+    );
+    context->bt->activeDevice.a2dpVolume = newVolume;
 }

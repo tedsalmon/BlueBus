@@ -349,7 +349,7 @@ static void BMBTHeaderWriteDeviceName(BMBTContext_t *context, char *text)
  *         BMBTContext_t *context - The context
  *         uint8_t index - The index to write to
  *         char *text - The text to write
- *         uint8_t clearIdxs - Number of additional
+ *         uint8_t clearIdxs - Number of additional rows to clear
  *     Returns:
  *         void
  */
@@ -660,14 +660,44 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
             context,
             BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT,
             LocaleGetText(LOCALE_STRING_DSP_DIGITAL),
-            2
+            0
         );
     } else {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT,
             LocaleGetText(LOCALE_STRING_DSP_ANALOG),
+            0
+        );
+    }
+    if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON) {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_AUDIO_MANAGE_VOL,
+            LocaleGetText(LOCALE_STRING_MANAGE_VOL_ON),
+            0
+        );
+    } else {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_AUDIO_MANAGE_VOL,
+            LocaleGetText(LOCALE_STRING_MANAGE_VOL_OFF),
+            0
+        );
+    }
+    if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON) {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL,
+            LocaleGetText(LOCALE_STRING_REV_VOL_LOW_ON),
             2
+        );
+    } else {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL,
+            LocaleGetText(LOCALE_STRING_REV_VOL_LOW_OFF),
+            1
         );
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
@@ -737,26 +767,18 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         blinkerText,
         0
     );
-    unsigned char vehicleType = ConfigGetVehicleType();
-    if (vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+    if (ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS) == CONFIG_SETTING_ON) {
         BMBTGTWriteIndex(
             context,
-            BMBT_MENU_IDX_SETTINGS_COMFORT_VEHICLE_TYPE,
-            LocaleGetText(LOCALE_STRING_CAR_E3X_E53),
-            2
-        );
-    } else if (vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_COMFORT_VEHICLE_TYPE,
-            LocaleGetText(LOCALE_STRING_CAR_E46_Z4),
+            BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS,
+            LocaleGetText(LOCALE_STRING_PARK_LAMPS_ON),
             2
         );
     } else {
         BMBTGTWriteIndex(
             context,
-            BMBT_MENU_IDX_SETTINGS_COMFORT_VEHICLE_TYPE,
-            LocaleGetText(LOCALE_STRING_CAR_UNSET),
+            BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS,
+            LocaleGetText(LOCALE_STRING_PARK_LAMPS_OFF),
             2
         );
     }
@@ -882,6 +904,9 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         case CONFIG_SETTING_LANGUAGE_ENGLISH:
             strncpy(localeName, "EN", 2);
             break;
+        case CONFIG_SETTING_LANGUAGE_ESTONIAN:
+            strncpy(localeName, "ET", 2);
+            break;
         case CONFIG_SETTING_LANGUAGE_GERMAN:
             strncpy(localeName, "DE", 2);
             break;
@@ -964,6 +989,22 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
             ConfigSetSetting(CONFIG_SETTING_AUTOPLAY, CONFIG_SETTING_OFF);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_AUTOPLAY_OFF), 0);
         }
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_MANAGE_VOL) {
+        if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_OFF) {
+            ConfigSetSetting(CONFIG_SETTING_MANAGE_VOLUME, CONFIG_SETTING_ON);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MANAGE_VOL_ON), 0);
+        } else {
+            ConfigSetSetting(CONFIG_SETTING_MANAGE_VOLUME, CONFIG_SETTING_OFF);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MANAGE_VOL_OFF), 0);
+        }
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL) {
+        if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_OFF) {
+            ConfigSetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV, CONFIG_SETTING_ON);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_REV_VOL_LOW_ON), 0);
+        } else {
+            ConfigSetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV, CONFIG_SETTING_OFF);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_REV_VOL_LOW_OFF), 0);
+        }
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
@@ -974,16 +1015,7 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
 
 static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedIdx)
 {
-    if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_VEHICLE_TYPE) {
-        unsigned char value = ConfigGetVehicleType();
-        if (value == 0 || value == 0xFF || value == IBUS_VEHICLE_TYPE_E46_Z4) {
-            ConfigSetVehicleType(IBUS_VEHICLE_TYPE_E38_E39_E53);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_CAR_E3X_E53), 0);
-        } else {
-            ConfigSetVehicleType(IBUS_VEHICLE_TYPE_E46_Z4);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_CAR_E46_Z4), 0);
-        }
-    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS) {
+    if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS) {
         unsigned char value = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
         if (value == 0) {
             value = 1;
@@ -996,6 +1028,19 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         memset(blinkerText, 0, BMBT_MENU_STRING_MAX_SIZE);
         snprintf(blinkerText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_BLINKERS), value);
         BMBTGTWriteIndex(context, selectedIdx, blinkerText, 0);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS) {
+        unsigned char value = ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS);
+        if (value == CONFIG_SETTING_OFF) {
+            value = CONFIG_SETTING_ON;
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_ON), 0);
+        } else {
+            value = CONFIG_SETTING_OFF;
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_OFF), 0);
+        }
+        // Request cluster indicators so we can trigger the new light setting
+        // when the response (0x5B) is received
+        IBusCommandLMGetClusterIndicators(context->ibus);
+        ConfigSetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS, value);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_LOCK) {
         unsigned char comfortLock = ConfigGetComfortLock();
         if (comfortLock == CONFIG_SETTING_OFF ||
@@ -1160,6 +1205,8 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         if (selectedLanguage == CONFIG_SETTING_LANGUAGE_DUTCH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_ESTONIAN;
+        } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ESTONIAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_GERMAN;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_GERMAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_RUSSIAN;

@@ -71,19 +71,6 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x03);
         LogRaw("Ran Upgrade 1.1.1\r\n");
     }
-    // Changes in version 1.1.7
-    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 7) == 1) {
-        uint16_t serialNumber = ConfigGetSerialNumber();
-        // Install the cVc license
-        if (serialNumber <= 500) {
-            BC127SendCommand(bt, "LICENSE CVC=3A6B CB90 E2D6 FC81 0000");
-        } else if (serialNumber <= 880) {
-            BC127SendCommand(bt, "LICENSE CVC=3A6B D812 D144 FC81 0000");
-        } else if (serialNumber <= 1191) {
-            BC127SendCommand(bt, "LICENSE CVC=3A6B B2F8 AB8F FC81 0000");
-        }
-        LogRaw("Ran Upgrade 1.1.7\r\n");
-    }
     // Changes in version 1.1.8
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 8) == 1) {
         // Enable cVc by default
@@ -135,6 +122,13 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         // Reset to logging to all off
         ConfigSetSetting(CONFIG_SETTING_LOG, 0x01);
         LogRaw("Ran Upgrade 1.1.17\r\n");
+    }
+    // Changes in version 1.1.18
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 18) == 1) {
+        ConfigSetSetting(CONFIG_SETTING_MANAGE_VOLUME, CONFIG_SETTING_ON);
+        ConfigSetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV, CONFIG_SETTING_ON);
+        // Default to 0b01011000
+        ConfigSetSetting(CONFIG_SETTING_VOLUME_I2S_MODE, 0x58);
     }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
