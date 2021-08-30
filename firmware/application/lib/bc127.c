@@ -794,6 +794,23 @@ void BC127CommandSetBtVolConfig(
 }
 
  /**
+  * BC127CommandSetCOD()
+  *     Description:
+  *         Set the class of device
+  *     Params:
+  *         BC127_t *bt - A pointer to the module object
+  *         uint32_t value - The COD value
+  *     Returns:
+  *         void
+  */
+void BC127CommandSetCOD(BC127_t *bt, uint32_t value) {
+    char command[12];
+    memset(&command, 0, 12);
+    snprintf(command, 11, "COD=%d", value);
+    BC127SendCommand(bt, command);
+}
+
+ /**
   * BC127CommandSetCodec()
   *     Description:
   *         Set the codec confiuration value

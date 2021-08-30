@@ -199,6 +199,7 @@ void BC127CommandSetAudioDigital(BC127_t *, char *,char *, char *, char *);
 void BC127CommandSetAutoConnect(BC127_t *, uint8_t);
 void BC127CommandSetBtState(BC127_t *, uint8_t, uint8_t);
 void BC127CommandSetBtVolConfig(BC127_t *, uint8_t, uint8_t, uint8_t, uint8_t);
+void BC127CommandSetCOD(BC127_t *, uint32_t);
 void BC127CommandSetCodec(BC127_t *, uint8_t, char *);
 void BC127CommandSetMetadata(BC127_t *, uint8_t);
 void BC127CommandSetMicGain(BC127_t *, unsigned char, unsigned char, unsigned char);

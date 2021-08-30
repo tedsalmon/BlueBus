@@ -619,7 +619,7 @@ void CLIProcess()
                 BC127CommandSetMetadata(cli.bt, 1);
                 BC127CommandSetModuleName(cli.bt, "BlueBus");
                 BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
-                BC127SendCommand(cli.bt, "SET COD=300420");
+                BC127CommandSetCOD(bt, 300420);
                 
                 // Save
                 BC127CommandWrite(cli.bt);
