@@ -829,6 +829,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
     unsigned char discNumber = 0x07;
     if (context->uiMode == IBus_UI_BMBT) {
         discCount = IBUS_CDC_DISC_COUNT_1;
+        discNumber = 0x01;
     }
     IBusCommandCDCStatus(
         context->ibus,
@@ -1900,6 +1901,7 @@ void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
     unsigned char discNumber = 0x07;
     if (context->uiMode == IBus_UI_BMBT) {
         discCount = IBUS_CDC_DISC_COUNT_1;
+        discNumber = 0x01;
     }
     IBusCommandCDCStatus(
         context->ibus,
