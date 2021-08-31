@@ -8,7 +8,7 @@
 
 /** BC127CVCGainTable
  * C0 - D6 (22 Settings)
- * 
+ *
  *
  */
 int8_t BC127CVCGainTable[] = {
@@ -306,7 +306,7 @@ void BC127CommandClose(BC127_t *bt, uint8_t id)
 void BC127CommandCVC(BC127_t *bt, char *band, uint8_t index, uint8_t length)
 {
     char command[16];
-    if (length == 0) {        
+    if (length == 0) {
         snprintf(command, 16, "CVC_CFG %s", band);
     } else {
         snprintf(command, 16, "CVC_CFG %s %d %d", band, index, length);
@@ -806,7 +806,7 @@ void BC127CommandSetBtVolConfig(
 void BC127CommandSetCOD(BC127_t *bt, uint32_t value) {
     char command[12];
     memset(&command, 0, 12);
-    snprintf(command, 11, "COD=%d", value);
+    snprintf(command, 11, "COD=%lu", value);
     BC127SendCommand(bt, command);
 }
 

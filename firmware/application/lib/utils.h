@@ -12,7 +12,6 @@
 #include <string.h>
 #include <xc.h>
 #include "config.h"
-#include "ibus.h"
 
 #define UTILS_CHAR_LATIN_CAPITAL_A_WITH_GRAVE 0xC380
 #define UTILS_CHAR_LATIN_CAPITAL_A_WITH_ACUTE 0xC381
@@ -158,6 +157,13 @@
 #define UTILS_CHAR_RIGHT_SINGLE_QUOTATION_MARK 0xE28099
 #define UTILS_CHAR_HORIZONTAL_ELLIPSIS 0xE280A6
 #define UTILS_DISPLAY_TEXT_SIZE 255
+
+#define IBus_UI_CD53 1
+#define IBus_UI_BMBT 2
+#define IBus_UI_MID 3
+#define IBus_UI_MID_BMBT 4
+#define IBus_UI_BUSINESS_NAV 5
+
 /* Check if a bit is set in a byte */
 #define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
 /* Return a programmable output port register */
