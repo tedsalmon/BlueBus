@@ -779,7 +779,7 @@ void BC127CommandSetBtVolConfig(
     uint8_t a2dpSteps,
     uint8_t volumeScaling
 ) {
-    char command[30];
+    char command[30] = {0};
     snprintf(
         command,
         30,
@@ -804,8 +804,7 @@ void BC127CommandSetBtVolConfig(
   *         void
   */
 void BC127CommandSetCOD(BC127_t *bt, uint32_t value) {
-    char command[12];
-    memset(&command, 0, 12);
+    char command[11] = {0};
     snprintf(command, 11, "COD=%lu", value);
     BC127SendCommand(bt, command);
 }
@@ -822,7 +821,7 @@ void BC127CommandSetCOD(BC127_t *bt, uint32_t value) {
   *         void
   */
 void BC127CommandSetCodec(BC127_t *bt, uint8_t bitmask, char *talkback) {
-    char command[17];
+    char command[17] = {0};
     snprintf(command, 17, "SET CODEC=%d %s", bitmask, talkback);
     BC127SendCommand(bt, command);
     BC127CommandWrite(bt);
@@ -874,7 +873,7 @@ void BC127CommandSetMicGain(
         cvcPreamp = 0x80;
     }
     BC127CommandCVC(bt, "NB", 0, 14);
-    char params[70];
+    char params[70] = {0};
     snprintf(
         params,
         70,
@@ -920,14 +919,12 @@ void BC127CommandSetMicGain(
  */
 void BC127CommandSetModuleName(BC127_t *bt, char *name)
 {
-    char nameSetCommand[42];
+    char nameSetCommand[42] = {0};
     snprintf(nameSetCommand, 42, "SET NAME=%s", name);
     BC127SendCommand(bt, nameSetCommand);
     // Set the "short" name
-    char nameShortSetCommand[24];
-    char shortName[9];
-    memset(nameShortSetCommand, 0, 24);
-    memset(shortName, 0, 9);
+    char nameShortSetCommand[24] = {0};
+    char shortName[9] = {0};
     strncpy(shortName, name, BC127_SHORT_NAME_MAX_LEN);
     snprintf(nameShortSetCommand, 24, "SET NAME_SHORT=%s", shortName);
     BC127SendCommand(bt, nameShortSetCommand);
@@ -946,7 +943,7 @@ void BC127CommandSetModuleName(BC127_t *bt, char *name)
  */
 void BC127CommandSetPin(BC127_t *bt, char *pin)
 {
-    char command[13];
+    char command[13] = {0};
     snprintf(command, 13, "SET PIN=%s", pin);
     BC127SendCommand(bt, command);
     BC127CommandWrite(bt);
@@ -1002,7 +999,7 @@ void BC127CommandSetUART(
     uint8_t parity
 ) {
     long long unsigned int baud = (long long unsigned int) baudRate;
-    char command[29];
+    char command[29] = {0};
     snprintf(
         command,
         29,
@@ -1239,9 +1236,7 @@ void BC127Process(BC127_t *bt)
                 if (cidDelimCounter > 2) {
                     cidLen = strlen(cidDataBuf[cidDelimCounter - 1]);
                 }
-                char callerId[cidLen + 1];
-                memset(callerId, 0, cidLen + 1);
-                memset(bt->callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
+                char callerId[BC127_CALLER_ID_FIELD_SIZE + 1]  = {0};
                 if (cidDelimCounter == 2) {
                     // Remove the escaped quotes that come through
                     UtilsRemoveSubstring(cidDataBuf[0], "\\22");
@@ -1256,7 +1251,9 @@ void BC127Process(BC127_t *bt)
                     }
                 }
                 if (strlen(callerId) > 0) {
-                    strncpy(bt->callerId, callerId, BC127_CALLER_ID_FIELD_SIZE - 1);
+                    // Clear the existing buffer
+                    memset(bt->callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
+                    strncpy(bt->callerId, callerId, BC127_CALLER_ID_FIELD_SIZE);
                     EventTriggerCallback(BC127Event_CallerID, 0);
                 }
             }
@@ -1267,21 +1264,18 @@ void BC127Process(BC127_t *bt)
                 // Clear Metadata since we're receiving new data
                 BC127ClearMetadata(bt);
                 bt->metadataStatus = BC127_METADATA_STATUS_NEW;
-                char title[BC127_METADATA_MAX_SIZE];
-                memset(title, 0, BC127_METADATA_MAX_SIZE);
+                char title[BC127_METADATA_MAX_SIZE] = {0};
                 UtilsNormalizeText(title, &msg[BC127_METADATA_TITLE_OFFSET], BC127_METADATA_MAX_SIZE);
-                strncpy(bt->title, title, BC127_METADATA_FIELD_SIZE - 1);
+                strncpy(bt->title, title, BC127_METADATA_FIELD_SIZE);
             } else if (strcmp(msgBuf[2], "ARTIST:") == 0) {
-                char artist[BC127_METADATA_MAX_SIZE];
-                memset(artist, 0, BC127_METADATA_MAX_SIZE);
+                char artist[BC127_METADATA_MAX_SIZE] = {0};
                 UtilsNormalizeText(artist, &msg[BC127_METADATA_ARTIST_OFFSET], BC127_METADATA_MAX_SIZE);
-                strncpy(bt->artist, artist, BC127_METADATA_FIELD_SIZE - 1);
+                strncpy(bt->artist, artist, BC127_METADATA_FIELD_SIZE);
             } else {
                 if (strcmp(msgBuf[2], "ALBUM:") == 0) {
-                    char album[BC127_METADATA_MAX_SIZE];
-                    memset(album, 0, BC127_METADATA_MAX_SIZE);
+                    char album[BC127_METADATA_MAX_SIZE] = {0};
                     UtilsNormalizeText(album, &msg[BC127_METADATA_ALBUM_OFFSET], BC127_METADATA_MAX_SIZE);
-                    strncpy(bt->album, album, BC127_METADATA_FIELD_SIZE - 1);
+                    strncpy(bt->album, album, BC127_METADATA_FIELD_SIZE);
                 }
                 if (bt->metadataStatus == BC127_METADATA_STATUS_NEW) {
                     LogDebug(

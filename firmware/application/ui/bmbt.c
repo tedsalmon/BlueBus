@@ -261,7 +261,8 @@ static void BMBTSetMainDisplayText(
     int8_t timeout,
     uint8_t autoUpdate
 ) {
-    strncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE - 1);
+    memset(context->mainDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
+    strncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
     context->mainDisplay.length = strlen(context->mainDisplay.text);
     context->mainDisplay.index = 0;
     if (autoUpdate == 1) {
@@ -419,7 +420,7 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_ON &&
         context->ibus->coolantTemperature > 0
     ) {
-        char temperature[7];
+        char temperature[6] = {0};
         snprintf(temperature, 6, "%d%cC", context->ibus->coolantTemperature, 176);
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
     }
@@ -585,27 +586,24 @@ static void BMBTMenuSettingsAbout(BMBTContext_t *context)
 {
     char version[9];
     ConfigGetFirmwareVersionString(version);
-    char versionString[BMBT_MENU_STRING_MAX_SIZE];
-    memset(versionString, 0, BMBT_MENU_STRING_MAX_SIZE);
-    snprintf(versionString, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_FW), version);
+    char versionString[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(versionString, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_FW), version);
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_ABOUT_FW_VERSION,
         versionString,
         0
     );
-    char buildString[BMBT_MENU_STRING_MAX_SIZE];
-    memset(buildString, 0, BMBT_MENU_STRING_MAX_SIZE);
-    snprintf(buildString, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_BUILT), ConfigGetBuildWeek(), ConfigGetBuildYear());
+    char buildString[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(buildString, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_BUILT), ConfigGetBuildWeek(), ConfigGetBuildYear());
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_ABOUT_BUILD_DATE,
         buildString,
         0
     );
-    char serialNumberString[BMBT_MENU_STRING_MAX_SIZE];
-    memset(serialNumberString, 0, BMBT_MENU_STRING_MAX_SIZE);
-    snprintf(serialNumberString, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_SN), ConfigGetSerialNumber());
+    char serialNumberString[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(serialNumberString, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_SN), ConfigGetSerialNumber());
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_ABOUT_SERIAL,
@@ -636,18 +634,17 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
         );
     }
     unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
-    char volText[BMBT_MENU_STRING_MAX_SIZE];
-    memset(volText, 0, BMBT_MENU_STRING_MAX_SIZE);
+    char volText[BMBT_MENU_STRING_MAX_SIZE] = {0};
     if (currentVolume > 0x30) {
         unsigned char gain = (currentVolume - 0x30) / 2;
-        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
+        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
     } else if (currentVolume == 0) {
-        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
+        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
     } else if (currentVolume == 0x30) {
-        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
+        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
     } else {
         unsigned char gain = (0x30 - currentVolume) / 2;
-        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
+        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
     }
     BMBTGTWriteIndex(
         context,
@@ -758,9 +755,8 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
     if (blinkCount == 0) {
         blinkCount = 1;
     }
-    char blinkerText[BMBT_MENU_STRING_MAX_SIZE];
-    memset(blinkerText, 0, BMBT_MENU_STRING_MAX_SIZE);
-    snprintf(blinkerText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_BLINKERS), blinkCount);
+    char blinkerText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(blinkerText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_BLINKERS), blinkCount);
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS,
@@ -824,9 +820,8 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
     if (micGain > 21) {
         micGain = 0;
     }
-    char micGainText[BMBT_MENU_STRING_MAX_SIZE];
-    memset(micGainText, 0, BMBT_MENU_STRING_MAX_SIZE);
-    snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t)BC127CVCGainTable[micGain]);
+    char micGainText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t)BC127CVCGainTable[micGain]);
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN,
@@ -920,11 +915,10 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             strncpy(localeName, "EN", 2);
             break;
     }
-    char langStr[BMBT_MENU_STRING_MAX_SIZE];
-    memset(langStr, 0, BMBT_MENU_STRING_MAX_SIZE);
+    char langStr[BMBT_MENU_STRING_MAX_SIZE] = {0};
     snprintf(
         langStr,
-        BMBT_MENU_STRING_MAX_SIZE - 1,
+        BMBT_MENU_STRING_MAX_SIZE,
         LocaleGetText(LOCALE_STRING_LANG),
         localeName
     );
@@ -956,18 +950,17 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
             currentVolume = 0;
         }
         ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, currentVolume);
-        char volText[BMBT_MENU_STRING_MAX_SIZE];
-        memset(volText, 0, BMBT_MENU_STRING_MAX_SIZE);
+        char volText[BMBT_MENU_STRING_MAX_SIZE] = {0};
         if (currentVolume > 0x30) {
             unsigned char gain = (currentVolume - 0x30) / 2;
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
         } else if (currentVolume == 0) {
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
         } else if (currentVolume == 0x30) {
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
         } else {
             unsigned char gain = (0x30 - currentVolume) / 2;
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
         }
         BMBTGTWriteIndex(context, selectedIdx, volText, 0);
         PCM51XXSetVolume(currentVolume);
@@ -1024,9 +1017,8 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         }
         value = value + 1;
         ConfigSetSetting(CONFIG_SETTING_COMFORT_BLINKERS, value);
-        char blinkerText[BMBT_MENU_STRING_MAX_SIZE];
-        memset(blinkerText, 0, BMBT_MENU_STRING_MAX_SIZE);
-        snprintf(blinkerText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_BLINKERS), value);
+        char blinkerText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+        snprintf(blinkerText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_BLINKERS), value);
         BMBTGTWriteIndex(context, selectedIdx, blinkerText, 0);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS) {
         unsigned char value = ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS);
@@ -1106,9 +1098,8 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             micBias,
             micPreamp
         );
-        char micGainText[BMBT_MENU_STRING_MAX_SIZE];
-        memset(micGainText, 0, BMBT_MENU_STRING_MAX_SIZE);
-        snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE - 1, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t)BC127CVCGainTable[micGain]);
+        char micGainText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+        snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t)BC127CVCGainTable[micGain]);
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN,
@@ -1164,7 +1155,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             strlen(context->bt->title) > 0 &&
             context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING
         ) {
-            char text[UTILS_DISPLAY_TEXT_SIZE];
+            char text[UTILS_DISPLAY_TEXT_SIZE] = {0};
             snprintf(
                 text,
                 UTILS_DISPLAY_TEXT_SIZE,
@@ -1189,7 +1180,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_TEMPS) {
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_OFF) {
             ConfigSetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS, CONFIG_SETTING_ON);
-            char temperature[7];
+            char temperature[6] = {0};
             snprintf(temperature, 6, "%d%cC", context->ibus->coolantTemperature, 176);
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
@@ -1295,7 +1286,7 @@ void BMBTBC127Metadata(void *ctx, unsigned char *data)
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
         if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != CONFIG_SETTING_OFF) {
-            char text[UTILS_DISPLAY_TEXT_SIZE];
+            char text[UTILS_DISPLAY_TEXT_SIZE] = {0};
             snprintf(
                 text,
                 UTILS_DISPLAY_TEXT_SIZE,
@@ -1518,7 +1509,7 @@ void BMBTIBusIKECoolantTempUpdate(void *ctx, unsigned char *pkt)
     if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_ON &&
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
-        char temperature[7];
+        char temperature[6] = {0};
         snprintf(temperature, 6, "%d%cC", context->ibus->coolantTemperature, 176);
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
         IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
@@ -1713,9 +1704,8 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
 void BMBTIBusValueUpdate(void *ctx, unsigned char *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    char oilTemp[4];
+    char oilTemp[4] = {0};
     snprintf(oilTemp, 4, "%d", context->ibus->oilTemperature);
-    oilTemp[3] = '\0';
     //IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_GAIN, oilTemp);
     //IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
 }

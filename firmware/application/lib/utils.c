@@ -65,7 +65,7 @@ static const char UTILS_CHARS_LATIN[] =
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
 {
     UtilsAbstractDisplayValue_t value;
-    strncpy(value.text, text, UTILS_DISPLAY_TEXT_SIZE - 1);
+    strncpy(value.text, text, UTILS_DISPLAY_TEXT_SIZE);
     value.index = 0;
     value.timeout = 0;
     value.status = status;
@@ -138,7 +138,7 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
 
         if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
             string[strIdx++] = (char) unicodeChar;
-        } else if ((uiMode == IBus_UI_BMBT)&&(unicodeChar > 0x80)&& (unicodeChar <= 0xFF)) {
+        } else if ((uiMode == CONFIG_UI_BMBT)&&(unicodeChar > 0x80)&& (unicodeChar <= 0xFF)) {
             string[strIdx++] = (char) unicodeChar;
         } else if (unicodeChar >= 0xC0 && unicodeChar <= 0x017F) {
             string[strIdx++] = UTILS_CHARS_LATIN[unicodeChar - 0xC0];
@@ -158,7 +158,7 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
                 // Convert UTF-8 byte to Unicode then check if it falls within
                 // the range of extended ASCII
                 uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
-                if (uiMode == IBus_UI_BMBT && extendedChar > 0x80 && extendedChar <= 0xFF) {
+                if (uiMode == CONFIG_UI_BMBT && extendedChar > 0x80 && extendedChar <= 0xFF) {
                     string[strIdx++] = (char) extendedChar;
                 } else if (extendedChar >= 0xC0 && extendedChar <= 0x017F) {
                     string[strIdx++] = UTILS_CHARS_LATIN[extendedChar - 0xC0];
@@ -173,7 +173,7 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
                 string[strIdx++] = transChar;
             } else {
                 uint32_t extendedChar = (unicodeChar & 0xFF) + ((unicodeChar >> 8) - 0xC2) * 64;
-                if (uiMode == IBus_UI_BMBT && extendedChar > 0x80 && extendedChar <= 0xFF) {
+                if (uiMode == CONFIG_UI_BMBT && extendedChar > 0x80 && extendedChar <= 0xFF) {
                     string[strIdx++] = (char) extendedChar;
                 } else if (extendedChar >= 0xC0 && extendedChar <= 0x017F) {
                     string[strIdx++] = UTILS_CHARS_LATIN[extendedChar - 0xC0];

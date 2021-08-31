@@ -319,15 +319,15 @@ void CLIProcess()
                     LogRaw("BC127 Boot Failures: %u\r\n", ConfigGetBC127BootFailures());
                 } else if (UtilsStricmp(msgBuf[1], "UI") == 0) {
                     unsigned char uiMode = ConfigGetUIMode();
-                    if (uiMode == IBus_UI_CD53) {
+                    if (uiMode == CONFIG_UI_CD53) {
                         LogRaw("UI Mode: CD53\r\n");
-                    } else if (uiMode == IBus_UI_BMBT) {
+                    } else if (uiMode == CONFIG_UI_BMBT) {
                         LogRaw("UI Mode: Navigation\r\n");
-                    } else if (uiMode == IBus_UI_MID) {
+                    } else if (uiMode == CONFIG_UI_MID) {
                         LogRaw("UI Mode: MID\r\n");
-                    } else if (uiMode == IBus_UI_MID_BMBT) {
+                    } else if (uiMode == CONFIG_UI_MID_BMBT) {
                         LogRaw("UI Mode: MID / Navigation\r\n");
-                    } else if (uiMode == IBus_UI_BUSINESS_NAV) {
+                    } else if (uiMode == CONFIG_UI_BUSINESS_NAV) {
                         LogRaw("UI Mode: Business Navigation\r\n");
                     } else {
                         LogRaw("UI Mode: Not set or Invalid\r\n");
@@ -492,18 +492,18 @@ void CLIProcess()
                     }
                 } else if (UtilsStricmp(msgBuf[1], "UI") == 0) {
                     if (UtilsStricmp(msgBuf[2], "1") == 0) {
-                        ConfigSetUIMode(IBus_UI_CD53);
+                        ConfigSetUIMode(CONFIG_UI_CD53);
                     } else if (UtilsStricmp(msgBuf[2], "2") == 0) {
-                        ConfigSetUIMode(IBus_UI_BMBT);
+                        ConfigSetUIMode(CONFIG_UI_BMBT);
                     } else if (UtilsStricmp(msgBuf[2], "3") == 0) {
-                        ConfigSetUIMode(IBus_UI_MID);
+                        ConfigSetUIMode(CONFIG_UI_MID);
                     } else if (UtilsStricmp(msgBuf[2], "4") == 0) {
-                        ConfigSetUIMode(IBus_UI_MID_BMBT);
+                        ConfigSetUIMode(CONFIG_UI_MID_BMBT);
                     } else if (UtilsStricmp(msgBuf[2], "5") == 0) {
-                        ConfigSetUIMode(IBus_UI_BUSINESS_NAV);
+                        ConfigSetUIMode(CONFIG_UI_BUSINESS_NAV);
                     } else if (UtilsStricmp(msgBuf[2], "6") == 0) {
                         // Force static GT UI mode
-                        ConfigSetUIMode(IBus_UI_BMBT);
+                        ConfigSetUIMode(CONFIG_UI_BMBT);
                         ConfigSetNavType(IBUS_GT_MKIV_STATIC);
                     } else {
                         LogRaw("Invalid UI Mode specified\r\n");

@@ -156,7 +156,9 @@ static void CD53SetMainDisplayText(
     const char *str,
     int8_t timeout
 ) {
-    strncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE - 1);
+    strncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
+    // If the source is longer than the destination, we would not null terminate
+    context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
     context->mainDisplay.length = strlen(context->mainDisplay.text);
     context->mainDisplay.index = 0;
     TimerTriggerScheduledTask(context->displayUpdateTaskId);
@@ -168,7 +170,9 @@ static void CD53SetTempDisplayText(
     char *str,
     int8_t timeout
 ) {
-    strncpy(context->tempDisplay.text, str, CD53_DISPLAY_TEXT_LEN - 1);
+    strncpy(context->tempDisplay.text, str, CD53_DISPLAY_TEXT_LEN);
+    // If the source is longer than the destination, we would not null terminate
+    context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
     context->tempDisplay.length = strlen(context->tempDisplay.text);
     context->tempDisplay.index = 0;
     context->tempDisplay.status = CD53_DISPLAY_STATUS_NEW;
@@ -200,7 +204,7 @@ static void CD53ShowNextAvailableDevice(CD53Context_t *context, uint8_t directio
         }
     }
     BC127PairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
-    char text[CD53_DISPLAY_TEXT_LEN + 1];
+    char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};
     strncpy(text, dev->deviceName, CD53_DISPLAY_TEXT_LEN);
     text[CD53_DISPLAY_TEXT_LEN] = '\0';
     // Add a space and asterisks to the end of the device name
@@ -295,8 +299,7 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             if (blinkCount > 8 || blinkCount == 0) {
                 blinkCount = 1;
             }
-            char blinkerText[13];
-            memset(blinkerText, 0, sizeof(blinkerText));
+            char blinkerText[13] = {0};
             snprintf(blinkerText, 13, "OT Blinks: %d", blinkCount);
             CD53SetMainDisplayText(context, blinkerText, 0);
             context->settingIdx = CD53_SETTING_IDX_BLINKERS;
@@ -385,8 +388,7 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             if (context->settingValue > 8) {
                 context->settingValue = 1;
             }
-            char blinkerText[13];
-            memset(blinkerText, 0, sizeof(blinkerText));
+            char blinkerText[13] = {0};
             snprintf(blinkerText, 13, "OT Blinks: %d", context->settingValue);
             CD53SetMainDisplayText(context, blinkerText, 0);
         }
@@ -663,12 +665,11 @@ void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
         context->mode == CD53_MODE_ACTIVE
     ) {
         if (strlen(context->bt->title) > 0) {
-            char text[UTILS_DISPLAY_TEXT_SIZE];
-            memset(&text, 0, UTILS_DISPLAY_TEXT_SIZE);
+            char text[UTILS_DISPLAY_TEXT_SIZE] = {0};
             if (strlen(context->bt->artist) > 0 && strlen(context->bt->album) > 0) {
                 snprintf(
                     text,
-                    UTILS_DISPLAY_TEXT_SIZE - 1,
+                    UTILS_DISPLAY_TEXT_SIZE,
                     "%s - %s on %s",
                     context->bt->title,
                     context->bt->artist,
@@ -677,7 +678,7 @@ void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
             } else if (strlen(context->bt->artist) > 0) {
                 snprintf(
                     text,
-                    UTILS_DISPLAY_TEXT_SIZE - 1,
+                    UTILS_DISPLAY_TEXT_SIZE,
                     "%s - %s",
                     context->bt->title,
                     context->bt->artist
@@ -685,13 +686,13 @@ void CD53BC127Metadata(CD53Context_t *context, unsigned char *metadata)
             } else if (strlen(context->bt->album) > 0) {
                 snprintf(
                     text,
-                    UTILS_DISPLAY_TEXT_SIZE - 1,
+                    UTILS_DISPLAY_TEXT_SIZE,
                     "%s on %s",
                     context->bt->title,
                     context->bt->album
                 );
             } else {
-                snprintf(text, UTILS_DISPLAY_TEXT_SIZE - 1, "%s", context->bt->title);
+                snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
             }
             context->mainDisplay.timeout = 0;
             CD53SetMainDisplayText(context, text, 3000 / CD53_DISPLAY_SCROLL_SPEED);
@@ -814,7 +815,7 @@ void CD53IBusRADUpdateMainArea(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == 0xC4) {
-        context->radioType = IBus_UI_BUSINESS_NAV;
+        context->radioType = CONFIG_UI_BUSINESS_NAV;
         CD53RedisplayText(context);
     }
 }
@@ -833,12 +834,12 @@ void CD53TimerDisplay(void *ctx)
                 context->tempDisplay.status = CD53_DISPLAY_STATUS_OFF;
             }
             if (context->tempDisplay.status == CD53_DISPLAY_STATUS_NEW) {
-                if (context->radioType == IBus_UI_CD53) {
+                if (context->radioType == CONFIG_UI_CD53) {
                     IBusCommandIKEText(
                         context->ibus,
                         context->tempDisplay.text
                     );
-                } else if (context->radioType == IBus_UI_BUSINESS_NAV) {
+                } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
                     IBusCommandGTWriteBusinessNavTitle(context->ibus, context->tempDisplay.text);
                 }
                 context->tempDisplay.status = CD53_DISPLAY_STATUS_ON;
@@ -852,16 +853,16 @@ void CD53TimerDisplay(void *ctx)
                 context->mainDisplay.timeout--;
             } else {
                 if (context->mainDisplay.length > CD53_DISPLAY_TEXT_LEN) {
-                    char text[CD53_DISPLAY_TEXT_LEN + 1];
+                    char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};
                     strncpy(
                         text,
                         &context->mainDisplay.text[context->mainDisplay.index],
                         CD53_DISPLAY_TEXT_LEN
                     );
                     text[CD53_DISPLAY_TEXT_LEN] = '\0';
-                    if (context->radioType == IBus_UI_CD53) {
+                    if (context->radioType == CONFIG_UI_CD53) {
                         IBusCommandIKEText(context->ibus, text);
-                    } else if (context->radioType == IBus_UI_BUSINESS_NAV) {
+                    } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
                         IBusCommandGTWriteBusinessNavTitle(context->ibus, text);
                     }
                     // Pause at the beginning of the text
@@ -885,9 +886,9 @@ void CD53TimerDisplay(void *ctx)
                     }
                 } else {
                     if (context->mainDisplay.index == 0) {
-                        if (context->radioType == IBus_UI_CD53) {
+                        if (context->radioType == CONFIG_UI_CD53) {
                             IBusCommandIKEText(context->ibus, context->mainDisplay.text);
-                        } else if (context->radioType == IBus_UI_BUSINESS_NAV) {
+                        } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
                             IBusCommandGTWriteBusinessNavTitle(context->ibus, context->mainDisplay.text);
                         }
                     }

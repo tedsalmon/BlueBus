@@ -256,15 +256,15 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         HANDLER_INT_LIGHTING_STATE
     );
     BC127CommandStatus(Context.bt);
-    if (Context.uiMode == IBus_UI_CD53 ||
-        Context.uiMode == IBus_UI_BUSINESS_NAV
+    if (Context.uiMode == CONFIG_UI_CD53 ||
+        Context.uiMode == CONFIG_UI_BUSINESS_NAV
     ) {
         CD53Init(bt, ibus);
-    } else if (Context.uiMode == IBus_UI_BMBT) {
+    } else if (Context.uiMode == CONFIG_UI_BMBT) {
         BMBTInit(bt, ibus);
-    } else if (Context.uiMode == IBus_UI_MID) {
+    } else if (Context.uiMode == CONFIG_UI_MID) {
         MIDInit(bt, ibus);
-    } else if (Context.uiMode == IBus_UI_MID_BMBT) {
+    } else if (Context.uiMode == CONFIG_UI_MID_BMBT) {
         MIDInit(bt, ibus);
         BMBTInit(bt, ibus);
     }
@@ -281,25 +281,25 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
 static void HandlerSwitchUI(HandlerContext_t *context, unsigned char newUi)
 {
     // Unregister the previous UI
-    if (context->uiMode == IBus_UI_CD53 ||
-        context->uiMode == IBus_UI_BUSINESS_NAV
+    if (context->uiMode == CONFIG_UI_CD53 ||
+        context->uiMode == CONFIG_UI_BUSINESS_NAV
     ) {
         CD53Destroy();
-    } else if (context->uiMode == IBus_UI_BMBT) {
+    } else if (context->uiMode == CONFIG_UI_BMBT) {
         BMBTDestroy();
-    } else if (context->uiMode == IBus_UI_MID) {
+    } else if (context->uiMode == CONFIG_UI_MID) {
         MIDDestroy();
-    } else if (context->uiMode == IBus_UI_MID_BMBT) {
+    } else if (context->uiMode == CONFIG_UI_MID_BMBT) {
         MIDDestroy();
         BMBTDestroy();
     }
-    if (newUi == IBus_UI_CD53 || newUi == IBus_UI_BUSINESS_NAV) {
+    if (newUi == CONFIG_UI_CD53 || newUi == CONFIG_UI_BUSINESS_NAV) {
         CD53Init(context->bt, context->ibus);
-    } else if (newUi == IBus_UI_BMBT) {
+    } else if (newUi == CONFIG_UI_BMBT) {
         BMBTInit(context->bt, context->ibus);
-    } else if (newUi == IBus_UI_MID) {
+    } else if (newUi == CONFIG_UI_MID) {
         MIDInit(context->bt, context->ibus);
-    } else if (newUi == IBus_UI_MID_BMBT) {
+    } else if (newUi == CONFIG_UI_MID_BMBT) {
         MIDInit(context->bt, context->ibus);
         BMBTInit(context->bt, context->ibus);
     }
@@ -401,9 +401,9 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
             }
         } else {
             unsigned char volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
-            if (context->uiMode == IBus_UI_BMBT ||
-                context->uiMode == IBus_UI_MID ||
-                context->uiMode == IBus_UI_MID_BMBT
+            if (context->uiMode == CONFIG_UI_BMBT ||
+                context->uiMode == CONFIG_UI_MID ||
+                context->uiMode == CONFIG_UI_MID_BMBT
             ) {
                 LogDebug(LOG_SOURCE_SYSTEM, "Call > NAV_MID");
                 if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
@@ -734,7 +734,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
                 // If no UI has been detected and we have been
                 // running at least 30s, default to CD53 UI
                 LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
-                HandlerSwitchUI(context, IBus_UI_CD53);
+                HandlerSwitchUI(context, CONFIG_UI_CD53);
             } else if (context->ibusModuleStatus.GT == 1 &&
                        ConfigGetUIMode() == 0
             ) {
@@ -759,7 +759,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
         curStatus = IBUS_CDC_STAT_PLAYING;
         // Do not go backwards/forwards if the UI is CD53 because
         // those actions can be used to use the UI
-        if (context->uiMode != IBus_UI_CD53) {
+        if (context->uiMode != CONFIG_UI_CD53) {
             if (pkt[5] == 0x00) {
                 BC127CommandForward(context->bt);
             } else {
@@ -827,7 +827,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
     // Report disc 7 loaded so any button press causes a CD Changer command
     // to be sent by the RAD (since there is no 7th disc)
     unsigned char discNumber = 0x07;
-    if (context->uiMode == IBus_UI_BMBT) {
+    if (context->uiMode == CONFIG_UI_BMBT) {
         discCount = IBUS_CDC_DISC_COUNT_1;
         discNumber = 0x01;
     }
@@ -974,14 +974,14 @@ void HandlerIBusGTDIAIdentityResponse(void *ctx, unsigned char *type)
         // Assume this is a color graphic terminal as GT's < IBUS_GT_MKIII_NEW_UI
         // do not support the OS identity request
         if (context->ibusModuleStatus.MID == 0) {
-            if (ConfigGetUIMode() != IBus_UI_BMBT) {
+            if (ConfigGetUIMode() != CONFIG_UI_BMBT) {
                 LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT UI");
-                HandlerSwitchUI(context, IBus_UI_BMBT);
+                HandlerSwitchUI(context, CONFIG_UI_BMBT);
             }
         } else {
-            if (ConfigGetUIMode() != IBus_UI_MID_BMBT) {
+            if (ConfigGetUIMode() != CONFIG_UI_MID_BMBT) {
                 LogInfo(LOG_SOURCE_SYSTEM, "Detected MID / BMBT UI");
-                HandlerSwitchUI(context, IBus_UI_MID_BMBT);
+                HandlerSwitchUI(context, CONFIG_UI_MID_BMBT);
             }
         }
     }
@@ -1013,20 +1013,20 @@ void HandlerIBusGTDIAOSIdentityResponse(void *ctx, unsigned char *pkt)
     navigationOS[7] = '\0';
     if (UtilsStricmp(navigationOS, "BMWC01S") == 0) {
         if (context->ibusModuleStatus.MID == 0) {
-            if (ConfigGetUIMode() != IBus_UI_BMBT) {
+            if (ConfigGetUIMode() != CONFIG_UI_BMBT) {
                 LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT UI");
-                HandlerSwitchUI(context, IBus_UI_BMBT);
+                HandlerSwitchUI(context, CONFIG_UI_BMBT);
             }
         } else {
-            if (ConfigGetUIMode() != IBus_UI_MID_BMBT) {
+            if (ConfigGetUIMode() != CONFIG_UI_MID_BMBT) {
                 LogInfo(LOG_SOURCE_SYSTEM, "Detected MID / BMBT UI");
-                HandlerSwitchUI(context, IBus_UI_MID_BMBT);
+                HandlerSwitchUI(context, CONFIG_UI_MID_BMBT);
             }
         }
     } else if (UtilsStricmp(navigationOS, "BMWM01S") == 0) {
-        if (ConfigGetUIMode() != IBus_UI_BUSINESS_NAV) {
+        if (ConfigGetUIMode() != CONFIG_UI_BUSINESS_NAV) {
             LogInfo(LOG_SOURCE_SYSTEM, "Detected Business Nav UI");
-            HandlerSwitchUI(context, IBus_UI_BUSINESS_NAV);
+            HandlerSwitchUI(context, CONFIG_UI_BUSINESS_NAV);
         }
     } else {
         LogError("Unable to identify GT OS: %s", navigationOS);
@@ -1572,7 +1572,7 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
             context->ibusModuleStatus.VM == 0
         ) {
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
-            HandlerSwitchUI(context, IBus_UI_CD53);
+            HandlerSwitchUI(context, CONFIG_UI_CD53);
         }
     } else if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
         // Identify the LM if we do not have an ID for it
@@ -1752,9 +1752,9 @@ void HandlerIBusTELVolumeChange(void *ctx, unsigned char *pkt)
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x0F;
     // Forward volume changes to the RAD / DSP when in Bluetooth mode OR
     // when in radio mode if the S/PDIF input is selected and the DSP is found
-    if ((context->uiMode == IBus_UI_BMBT ||
-         context->uiMode == IBus_UI_MID ||
-         context->uiMode == IBus_UI_MID_BMBT)
+    if ((context->uiMode == CONFIG_UI_BMBT ||
+         context->uiMode == CONFIG_UI_MID ||
+         context->uiMode == CONFIG_UI_MID_BMBT)
         && (
             context->ibus->cdChangerFunction != IBUS_CDC_FUNC_NOT_PLAYING ||
             (
@@ -1842,9 +1842,9 @@ void HandlerIBusModuleStatusResponse(void *ctx, unsigned char *pkt)
         // The GT is slow to boot, so continue to query
         // for the ident until we get it
         unsigned char uiMode = ConfigGetUIMode();
-        if (uiMode != IBus_UI_BMBT &&
-            uiMode != IBus_UI_MID_BMBT &&
-            uiMode != IBus_UI_BUSINESS_NAV
+        if (uiMode != CONFIG_UI_BMBT &&
+            uiMode != CONFIG_UI_MID_BMBT &&
+            uiMode != CONFIG_UI_BUSINESS_NAV
         ) {
             // Request the Navigation Identity
             IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
@@ -1858,15 +1858,15 @@ void HandlerIBusModuleStatusResponse(void *ctx, unsigned char *pkt)
         context->ibusModuleStatus.MID = 1;
         LogInfo(LOG_SOURCE_SYSTEM, "MID Detected");
         unsigned char uiMode = ConfigGetUIMode();
-        if (uiMode != IBus_UI_MID &&
-            uiMode != IBus_UI_MID_BMBT
+        if (uiMode != CONFIG_UI_MID &&
+            uiMode != CONFIG_UI_MID_BMBT
         ) {
             if (context->ibusModuleStatus.GT == 1) {
                 LogInfo(LOG_SOURCE_SYSTEM, "Detected MID / BMBT UI");
-                HandlerSwitchUI(context, IBus_UI_MID_BMBT);
+                HandlerSwitchUI(context, CONFIG_UI_MID_BMBT);
             } else {
                 LogInfo(LOG_SOURCE_SYSTEM, "Detected MID UI");
-                HandlerSwitchUI(context, IBus_UI_MID);
+                HandlerSwitchUI(context, CONFIG_UI_MID);
             }
         }
     } else if (module == IBUS_DEVICE_PDC && context->ibusModuleStatus.PDC == 0) {
@@ -1899,7 +1899,7 @@ void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
     // Report disc 7 loaded so any button press causes a CD Changer command
     // to be sent by the RAD (since there is no 7th disc)
     unsigned char discNumber = 0x07;
-    if (context->uiMode == IBus_UI_BMBT) {
+    if (context->uiMode == CONFIG_UI_BMBT) {
         discCount = IBUS_CDC_DISC_COUNT_1;
         discNumber = 0x01;
     }
@@ -1942,8 +1942,8 @@ uint8_t HandlerIBusBroadcastTELStatus(
             // Do not set the active call flag for these UIs to allow
             // the radio volume controls to remain active
             if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE &&
-                (context->uiMode == IBus_UI_CD53 ||
-                 context->uiMode == IBus_UI_BUSINESS_NAV)
+                (context->uiMode == CONFIG_UI_CD53 ||
+                 context->uiMode == CONFIG_UI_BUSINESS_NAV)
             ) {
                 return 1;
             }
@@ -2023,7 +2023,7 @@ void HandlerTimerCDCSendStatus(void *ctx)
     uint32_t now = TimerGetMillis();
     if ((now - context->cdChangerLastStatus) >= HANDLER_CDC_STATUS_TIMEOUT &&
         context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
-        (context->uiMode == IBus_UI_BMBT || context->uiMode == IBus_UI_MID_BMBT)
+        (context->uiMode == CONFIG_UI_BMBT || context->uiMode == CONFIG_UI_MID_BMBT)
     ) {
         HandlerIBusBroadcastCDCStatus(context);
         LogDebug(LOG_SOURCE_SYSTEM, "Handler: Send CDC status preemptively");
