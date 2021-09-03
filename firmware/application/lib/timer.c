@@ -35,7 +35,7 @@ void TimerInit()
  *         Block for the given amount of microseconds. You really should not
  *         block the application for more than 10us at a time.
  *     Params:
- *         None
+ *         uint16_t delay - Delay for x amoount of microseconds
  *     Returns:
  *         void
  */

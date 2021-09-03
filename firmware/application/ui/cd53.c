@@ -156,6 +156,7 @@ static void CD53SetMainDisplayText(
     const char *str,
     int8_t timeout
 ) {
+    memset(context->mainDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
     strncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
     // If the source is longer than the destination, we would not null terminate
     context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
@@ -170,9 +171,10 @@ static void CD53SetTempDisplayText(
     char *str,
     int8_t timeout
 ) {
-    strncpy(context->tempDisplay.text, str, CD53_DISPLAY_TEXT_LEN);
+    memset(context->tempDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
+    strncpy(context->tempDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
     // If the source is longer than the destination, we would not null terminate
-    context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
+    context->tempDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
     context->tempDisplay.length = strlen(context->tempDisplay.text);
     context->tempDisplay.index = 0;
     context->tempDisplay.status = CD53_DISPLAY_STATUS_NEW;

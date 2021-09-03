@@ -303,12 +303,6 @@
 #define IBUS_TEL_LED_STATUS_GREEN 0x10
 #define IBUS_TEL_SIG_EVEREST 0x38
 
-#define IBus_UI_CD53 1
-#define IBus_UI_BMBT 2
-#define IBus_UI_MID 3
-#define IBus_UI_MID_BMBT 4
-#define IBus_UI_BUSINESS_NAV 5
-
 #define IBUS_C43_TITLE_MODE 0xC4
 
 #define IBUS_RADIO_TYPE_C43 1

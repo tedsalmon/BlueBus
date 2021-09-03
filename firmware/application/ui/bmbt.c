@@ -263,6 +263,7 @@ static void BMBTSetMainDisplayText(
 ) {
     memset(context->mainDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
     strncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
+    context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
     context->mainDisplay.length = strlen(context->mainDisplay.text);
     context->mainDisplay.index = 0;
     if (autoUpdate == 1) {
@@ -365,12 +366,13 @@ static void BMBTGTWriteIndex(
         uint8_t stringLength = strlen(text);
         uint8_t newTextLength = stringLength + clearIdxs + 1;
         char newText[newTextLength];
+        memset(&newText, 0, newTextLength);
         strncpy(newText, text, stringLength);
         while (stringLength < newTextLength) {
             newText[stringLength] = 0x06;
             stringLength++;
         }
-        newText[newTextLength - 1] = 0x00;
+        newText[newTextLength - 1] = '\0';
         IBusCommandGTWriteIndexTMC(context->ibus, index, newText);
     } else {
         IBusCommandGTWriteIndexTMC(context->ibus, index, text);
@@ -474,12 +476,9 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
 
 static void BMBTMenuDashboard(BMBTContext_t *context)
 {
-    char title[BC127_METADATA_FIELD_SIZE];
-    char artist[BC127_METADATA_FIELD_SIZE];
-    char album[BC127_METADATA_FIELD_SIZE];
-    memset(title, 0, BC127_METADATA_FIELD_SIZE);
-    memset(artist, 0, BC127_METADATA_FIELD_SIZE);
-    memset(album, 0, BC127_METADATA_FIELD_SIZE);
+    char title[BC127_METADATA_FIELD_SIZE] = {0};
+    char artist[BC127_METADATA_FIELD_SIZE] = {0};
+    char album[BC127_METADATA_FIELD_SIZE] = {0};
     strncpy(title, context->bt->title, BC127_METADATA_FIELD_SIZE - 1);
     strncpy(artist, context->bt->artist, BC127_METADATA_FIELD_SIZE - 1);
     strncpy(album, context->bt->album, BC127_METADATA_FIELD_SIZE - 1);
@@ -532,7 +531,7 @@ static void BMBTMenuDeviceSelection(BMBTContext_t *context)
             if (devicesCount > 0) {
                 devicesCount--;
             }
-            char deviceName[23];
+            char deviceName[23] = {0};
             strncpy(deviceName, dev->deviceName, 11);
             deviceName[22] = '\0';
             // Add a space and asterisks to the end of the device name
@@ -890,8 +889,7 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         );
     }
     unsigned char selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-    char localeName[3];
-    memset(localeName, 0, sizeof(localeName));
+    char localeName[3] = {0};
     switch (selectedLanguage) {
         case CONFIG_SETTING_LANGUAGE_DUTCH:
             strncpy(localeName, "NL", 2);
@@ -1906,7 +1904,7 @@ void BMBTTimerScrollDisplay(void *ctx)
             context->mainDisplay.timeout--;
         } else {
             if (context->mainDisplay.length > 9) {
-                char text[10];
+                char text[10] = {0};
                 strncpy(
                     text,
                     &context->mainDisplay.text[context->mainDisplay.index],
