@@ -428,7 +428,12 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     } else {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
     }
-    IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "BT  ");
+    
+    if ((ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF)&&(ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS)!=CONFIG_SETTING_OFF)) {
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "    ");
+    } else {
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "BT  ");
+    }
     IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
     BMBTIBusIKECoolantTempUpdate(context, 0);
     BMBTIBusIKEAmbientTempUpdate(context, 0);
