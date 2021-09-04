@@ -267,6 +267,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
             ConfigSetSetting(CONFIG_SETTING_TEMPERATURE,tempUnit);
             EventTriggerCallback(IBUS_EVENT_IKEAmbientTempUpdate, pkt);
             EventTriggerCallback(IBUS_EVENT_IKECoolantTempUpdate, pkt);
+            EventTriggerCallback(IBUS_EVENT_IKEOilTempUpdate, pkt);
         }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SPEED_RPM_UPDATE) {
         EventTriggerCallback(IBUS_EVENT_IKESpeedRPMUpdate, pkt);
@@ -276,8 +277,9 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
             ibus->coolantTemperature = pkt[5];
             EventTriggerCallback(IBUS_EVENT_IKECoolantTempUpdate, pkt);
         }
-        if (ibus->ambientTemperature != pkt[4] && pkt[4] > -100 && pkt[4] < 100) {
-            ibus->ambientTemperature = pkt[4];
+        signed char tmp = pkt[4];
+        if (ibus->ambientTemperature != tmp && tmp > -100 && tmp < 100) {
+            ibus->ambientTemperature = tmp;
             EventTriggerCallback(IBUS_EVENT_IKEAmbientTempUpdate, pkt);
         }
     }
