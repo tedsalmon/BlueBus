@@ -69,8 +69,10 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Park Lts.: Aan",
     "Vol. Mgmt: Uit",
     "Vol. Mgmt: Aan",
-    "Vol. Rev: Uit"
+    "Vol. Rev: Uit",
     "Vol. Rev: Aan",
+    "Celcius: Ambient",
+    "Celcius: Oil"
 };
 
 static char *LOCALE_LANG_ENGLISH[] = {
@@ -137,7 +139,9 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Vol. Mgmt: On",
     "Vol. Mgmt: Off",
     "Vol. Rev: On",
-    "Vol. Rev: Off"
+    "Vol. Rev: Off",
+    "Temps: Ambient",
+    "Temps: Oil"
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -204,7 +208,9 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Vol. Mgmt: On",
     "Vol. Mgmt: Off",
     "Rev. Vol.: On",
-    "Rev. Vol.: Off"
+    "Rev. Vol.: Off",
+    "Temp: Ambient",
+    "Temp: Oil"
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -271,7 +277,9 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     {'M','a','n','a','g','e',' ','V','o','l',':',' ','O','n'},
     {'M','a','n','a','g','e',' ','V','o','l',':',' ','O','f','f'},
     {'L','o','w',' ','V','o','l',' ','R','e','v',':',' ','O','n'},
-    {'L','o','w',' ','V','o','l',' ','R','e','v',':',' ','O','f','f'}
+    {'L','o','w',' ','V','o','l',' ','R','e','v',':',' ','O','f','f'},
+    "Temp: Ambient",
+    "Temp: Oil"
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -338,7 +346,9 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Vol. Mgmt: On",
     "Vol. Mgmt: Off",
     "Vol. Rev: On",
-    "Vol. Rev: Off"
+    "Vol. Rev: Off",
+    "Temp: Ambient",
+    "Temp: Oil"
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -405,7 +415,9 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Vol. Mgmt: On",
     "Vol. Mgmt: Off",
     "Vol. Rev: On",
-    "Vol. Rev: Off"
+    "Vol. Rev: Off",
+    "Temper.: Ambient",
+    "Temper.: Oil"
 };
 
 /**
