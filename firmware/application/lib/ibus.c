@@ -1239,7 +1239,7 @@ void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
+            IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
@@ -1268,7 +1268,7 @@ void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_UNLOCK_LOW, // Job
+            IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
@@ -1355,7 +1355,7 @@ void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
         unsigned char msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
+            IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
