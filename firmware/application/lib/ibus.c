@@ -258,16 +258,16 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         ibus->ignitionStatus = ignitionStatus;
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SENSOR_RESP) {
         ibus->gear = pkt[IBUS_PKT_DB2] >> 4;
-        EventTriggerCallback(IBUS_EVENT_IKE_SENSOR_UPDATE, pkt);
+        unsigned char valueType = IBUS_SENSOR_VALUE_GEAR_POS;
+        EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_RESP_VEHICLE_TYPE) {
         ibus->vehicleType = IBusGetVehicleType(pkt);
         EventTriggerCallback(IBUS_EVENT_IKEVehicleType, pkt);
         unsigned char tempUnit = IBusGetConfigTemp(pkt);
         if (tempUnit != ConfigGetSetting(CONFIG_SETTING_TEMPERATURE)) {
-            ConfigSetSetting(CONFIG_SETTING_TEMPERATURE,tempUnit);
-            EventTriggerCallback(IBUS_EVENT_IKEAmbientTempUpdate, pkt);
-            EventTriggerCallback(IBUS_EVENT_IKECoolantTempUpdate, pkt);
-            EventTriggerCallback(IBUS_EVENT_IKEOilTempUpdate, pkt);
+            ConfigSetSetting(CONFIG_SETTING_TEMPERATURE, tempUnit);
+            unsigned char valueType = IBUS_SENSOR_VALUE_TEMP_UNIT;
+            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SPEED_RPM_UPDATE) {
         EventTriggerCallback(IBUS_EVENT_IKESpeedRPMUpdate, pkt);
@@ -275,12 +275,14 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         // Do not update the system if the value is the same
         if (ibus->coolantTemperature != pkt[5] && pkt[5] < 0x80) {
             ibus->coolantTemperature = pkt[5];
-            EventTriggerCallback(IBUS_EVENT_IKECoolantTempUpdate, pkt);
+            unsigned char valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
+            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
         signed char tmp = pkt[4];
         if (ibus->ambientTemperature != tmp && tmp > -100 && tmp < 100) {
             ibus->ambientTemperature = tmp;
-            EventTriggerCallback(IBUS_EVENT_IKEAmbientTempUpdate, pkt);
+            unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
+            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
     }
 }
@@ -338,7 +340,8 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
             unsigned char oilTemperature = 1.0 * 67.2529 * log(rawTemperature) + 310.0;
             if (oilTemperature != ibus->oilTemperature) {
                 ibus->oilTemperature = oilTemperature;
-                EventTriggerCallback(IBUS_EVENT_IKEOilTempUpdate, 0);
+                unsigned char valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
+                EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
             }
         }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&

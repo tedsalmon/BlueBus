@@ -141,8 +141,8 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_IKE_SENSOR_UPDATE,
-        &HandlerIBusIKESensorStatus,
+        IBUS_EVENT_SENSOR_VALUE_UPDATE,
+        &HandlerIBusSensorValueUpdate,
         &Context
     );
     EventRegisterCallback(
@@ -1203,21 +1203,22 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
 }
 
 /**
- * HandlerIBusIKESensorStatus()
+ * HandlerIBusSensorValueUpdate()
  *     Description:
  *         Parse Sensor Status
  *     Params:
  *         void *ctx - The context provided at registration
- *         unsigned char *pkt - The IBus Packet
+ *         unsigned char *type - The Update Type
  *     Returns:
  *         void
  */
-void HandlerIBusIKESensorStatus(void *ctx, unsigned char *pkt)
+void HandlerIBusSensorValueUpdate(void *ctx, unsigned char *type)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // Lower volume when the transmission is in reverse
     if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
-        context->bt->activeDevice.a2dpLinkId != 0
+        context->bt->activeDevice.a2dpLinkId != 0 &&
+        *type == IBUS_SENSOR_VALUE_GEAR_POS
     ) {
         if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
             context->ibus->gear != IBUS_IKE_GEAR_REVERSE

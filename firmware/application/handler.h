@@ -142,7 +142,7 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *, unsigned char *);
 void HandlerIBusGTDIAIdentityResponse(void *, unsigned char *);
 void HandlerIBusGTDIAOSIdentityResponse(void *, unsigned char *);
 void HandlerIBusIKEIgnitionStatus(void *, unsigned char *);
-void HandlerIBusIKESensorStatus(void *, unsigned char *);
+void HandlerIBusSensorValueUpdate(void *, unsigned char *);
 void HandlerIBusIKESpeedRPMUpdate(void *, unsigned char *);
 void HandlerIBusIKEVehicleType(void *, unsigned char *);
 void HandlerIBusLMLightStatus(void *, unsigned char *);

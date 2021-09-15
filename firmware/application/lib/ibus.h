@@ -315,6 +315,12 @@
 #define IBUS_RAD_VOLUME_DOWN 0x00
 #define IBUS_RAD_VOLUME_UP 0x01
 
+#define IBUS_SENSOR_VALUE_COOLANT_TEMP 0x01
+#define IBUS_SENSOR_VALUE_AMBIENT_TEMP 0x02
+#define IBUS_SENSOR_VALUE_OIL_TEMP 0x03
+#define IBUS_SENSOR_VALUE_TEMP_UNIT 0x04
+#define IBUS_SENSOR_VALUE_GEAR_POS 0x05
+
 
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
 #define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
@@ -382,20 +388,17 @@
 #define IBUS_EVENT_FirstMessageReceived 57
 #define IBUS_EVENT_GTDIAOSIdentityResponse 58
 #define IBUS_EVENT_IKESpeedRPMUpdate 59
-#define IBUS_EVENT_IKECoolantTempUpdate 60
-#define IBUS_EVENT_ModuleStatusRequest 61
-#define IBUS_EVENT_GTChangeUIRequest 62
-#define IBUS_EVENT_DoorsFlapsStatusResponse 63
-#define IBUS_EVENT_LCMDiagnosticsAcknowledge 64
-#define IBUS_EVENT_DSPConfigSet 65
-#define IBUS_EVENT_TELVolumeChange 66
-#define IBUS_EVENT_RADVolumeChange 67
-#define IBUS_EVENT_LMIdentResponse 68
-#define IBUS_EVENT_TV_STATUS 69
-#define IBUS_EVENT_PDC_STATUS 70
-#define IBUS_EVENT_IKE_SENSOR_UPDATE 71
-#define IBUS_EVENT_IKEAmbientTempUpdate 72
-#define IBUS_EVENT_IKEOilTempUpdate 73
+#define IBUS_EVENT_ModuleStatusRequest 60
+#define IBUS_EVENT_GTChangeUIRequest 61
+#define IBUS_EVENT_DoorsFlapsStatusResponse 62
+#define IBUS_EVENT_LCMDiagnosticsAcknowledge 63
+#define IBUS_EVENT_DSPConfigSet 64
+#define IBUS_EVENT_TELVolumeChange 65
+#define IBUS_EVENT_RADVolumeChange 66
+#define IBUS_EVENT_LMIdentResponse 67
+#define IBUS_EVENT_TV_STATUS 68
+#define IBUS_EVENT_PDC_STATUS 69
+#define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
