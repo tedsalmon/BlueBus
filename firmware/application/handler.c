@@ -13,7 +13,7 @@ static char *PROFILES[] = {
     "HFP",
     "BLE",
     "",
-    "",
+    "PBAP",
     "",
     "MAP"
 };
@@ -534,12 +534,23 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
             } else if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
                        context->bt->activeDevice.hfpLinkId == 0
             ) {
-                char *macId = (char *) context->bt->activeDevice.macId;
-                BC127CommandProfileOpen(context->bt, macId, "HFP");
+                BC127CommandProfileOpen(
+                    context->bt,
+                    context->bt->activeDevice.macId,
+                    "HFP"
+                );
             }
             if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
                 IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
             }
+        }
+        // @TODO Handle cases where PBAP access is not given
+        if (context->bt->activeDevice.hfpLinkId != 0) {
+            BC127CommandProfileOpen(
+                context->bt,
+                context->bt->activeDevice.macId,
+                "PBAP"
+            );
         }
     } else {
         BC127CommandClose(context->bt, BC127_CLOSE_ALL);
@@ -2085,7 +2096,7 @@ void HandlerTimerLCMIOStatus(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
         uint32_t now = TimerGetMillis();
-        if (context->ibus->ignitionStatus != IBUS_IGNITION_OFF &&
+        if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
             (now - context->lmLastIOStatus) >= 30000
         ) {
             IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
@@ -2108,7 +2119,7 @@ void HandlerTimerLightingState(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
         uint32_t now = TimerGetMillis();
-        if (context->ibus->ignitionStatus != IBUS_IGNITION_OFF &&
+        if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
             (now - context->lmLastStatusSet) >= 10000 &&
             (
                 context->lmState.comfortBlinkerStatus != HANDLER_LM_COMF_BLINK_OFF ||
