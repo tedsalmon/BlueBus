@@ -2327,9 +2327,8 @@ void HandlerVolumeChange(HandlerContext_t *context, uint8_t direction)
         newVolume = context->bt->activeDevice.a2dpVolume * 2;
         context->volumeMode = HANDLER_VOLUME_MODE_NORMAL;
     }
-    char hexVolString[2];
-    hexVolString[1] = '\0';
-    snprintf(hexVolString, 1, "%X", newVolume);
+    char hexVolString[3] = {0};
+    snprintf(hexVolString, 3, "%X", newVolume);
     BC127CommandVolume(
         context->bt,
         context->bt->activeDevice.a2dpLinkId,
