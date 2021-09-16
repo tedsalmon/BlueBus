@@ -29,11 +29,20 @@
 #define HANDLER_CDC_SEEK_MODE_REV 2
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
 #define HANDLER_DEVICE_MAX_RECONN 15
+#define HANDLER_IBUS_MODULE_PING_STATE_OFF 0
+#define HANDLER_IBUS_MODULE_PING_STATE_READY 1
+#define HANDLER_IBUS_MODULE_PING_STATE_IKE 2
+#define HANDLER_IBUS_MODULE_PING_STATE_GT 3
+#define HANDLER_IBUS_MODULE_PING_STATE_MID 4
+#define HANDLER_IBUS_MODULE_PING_STATE_RAD 5
+#define HANDLER_IBUS_MODULE_PING_STATE_LM 6
+#define HANDLER_IBUS_MODULE_PING_STATE_TEL 7
 #define HANDLER_INT_BC127_STATE 1000
 #define HANDLER_INT_CDC_ANOUNCE 1000
 #define HANDLER_INT_CDC_STATUS 500
 #define HANDLER_INT_DEVICE_CONN 30000
 #define HANDLER_INT_DEVICE_SCAN 10000
+#define HANDLER_INT_IBUS_PINGS 250
 #define HANDLER_INT_LCM_IO_STATUS 15000
 #define HANDLER_INT_LIGHTING_STATE 1000
 #define HANDLER_INT_PROFILE_ERROR 2500
@@ -105,6 +114,7 @@ typedef struct HandlerContext_t {
     uint8_t btStartupIsRun: 1;
     uint8_t btConnectionStatus: 2;
     uint8_t btBootFailure: 1;
+    uint8_t ibusModulePingState: 3;
     uint8_t mflButtonStatus: 1;
     uint8_t seekMode: 2;
     uint8_t volumeMode: 1;
@@ -162,6 +172,7 @@ void HandlerTimerCDCAnnounce(void *);
 void HandlerTimerCDCSendStatus(void *);
 void HandlerTimerBTStatus(void *);
 void HandlerTimerDeviceConnection(void *);
+void HandlerTimerIBusPings(void *);
 void HandlerTimerLCMIOStatus(void *);
 void HandlerTimerLightingState(void *);
 void HandlerTimerOpenProfileErrors(void *);

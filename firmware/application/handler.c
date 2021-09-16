@@ -226,6 +226,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         HANDLER_INT_DEVICE_CONN
     );
     TimerRegisterScheduledTask(
+        &HandlerTimerIBusPings,
+        &Context,
+        HANDLER_INT_IBUS_PINGS
+    );
+    TimerRegisterScheduledTask(
         &HandlerTimerLCMIOStatus,
         &Context,
         HANDLER_INT_LCM_IO_STATUS
@@ -899,40 +904,9 @@ void HandlerIBusDSPConfigSet(void *ctx, unsigned char *pkt)
 void HandlerIBusFirstMessageReceived(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    IBusCommandGetModuleStatus(
-        context->ibus,
-        IBUS_DEVICE_RAD,
-        IBUS_DEVICE_IKE
-    );
-    IBusCommandGetModuleStatus(
-        context->ibus,
-        IBUS_DEVICE_RAD,
-        IBUS_DEVICE_GT
-    );
-    IBusCommandGetModuleStatus(
-        context->ibus,
-        IBUS_DEVICE_RAD,
-        IBUS_DEVICE_MID
-    );
-    IBusCommandGetModuleStatus(
-        context->ibus,
-        IBUS_DEVICE_CDC,
-        IBUS_DEVICE_RAD
-    );
-    IBusCommandGetModuleStatus(
-        context->ibus,
-        IBUS_DEVICE_IKE,
-        IBUS_DEVICE_LCM
-    );
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-        IBusCommandSetModuleStatus(
-            context->ibus,
-            IBUS_DEVICE_TEL,
-            IBUS_DEVICE_LOC,
-            IBUS_TEL_SIG_EVEREST | 0x01
-        );
+    if (context->ibusModulePingState == HANDLER_IBUS_MODULE_PING_STATE_OFF) {
+        context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_READY;
     }
-    IBusCommandIKEGetIgnitionStatus(context->ibus);
 }
 
 /**
@@ -2078,6 +2052,90 @@ void HandlerTimerDeviceConnection(void *ctx)
         }
     } else if (context->btDeviceConnRetries > 0) {
         context->btDeviceConnRetries = 0;
+    }
+}
+
+/**
+ * HandlerTimerIBusPings()
+ *     Description:
+ *         Request various pongs from different modules. Also send the TEL
+ *         broadcast to the system and request the ignition status
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerIBusPings(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    switch(context->ibusModulePingState) {
+        case HANDLER_IBUS_MODULE_PING_STATE_READY: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_IKE;
+            if (context->ibusModuleStatus.IKE == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_RAD,
+                    IBUS_DEVICE_IKE
+                );
+            }
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_IKE: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_GT;
+            if (context->ibusModuleStatus.GT == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_RAD,
+                    IBUS_DEVICE_GT
+                );
+            }
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_GT: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_MID;
+            if (context->ibusModuleStatus.MID == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_RAD,
+                    IBUS_DEVICE_MID
+                );
+            }
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_MID: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_RAD;
+            if (context->ibusModuleStatus.RAD == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_CDC,
+                    IBUS_DEVICE_RAD
+                );
+            }
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_RAD: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_LM;
+            if (context->ibusModuleStatus.LCM == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_IKE,
+                    IBUS_DEVICE_LCM
+                );
+            }
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_LM: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_TEL;
+            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                IBusCommandSetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_TEL,
+                    IBUS_DEVICE_LOC,
+                    IBUS_TEL_SIG_EVEREST | 0x01
+                );
+            }
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_TEL: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_OFF;
+            IBusCommandIKEGetIgnitionStatus(context->ibus);
+            // Unregister this timer so we do not waste resources on it
+            TimerUnregisterScheduledTask(&HandlerTimerIBusPings);
+        }
     }
 }
 

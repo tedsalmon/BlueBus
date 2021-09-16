@@ -22,6 +22,7 @@ CharQueue_t CharQueueInit()
     queue.size = 0;
     queue.readCursor = 0;
     queue.writeCursor = 0;
+    memset(queue.data, 0, CHAR_QUEUE_SIZE);
     return queue;
 }
 
