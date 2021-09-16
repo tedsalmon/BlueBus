@@ -157,7 +157,7 @@
 #define IBUS_CMD_IKE_REQ_VEHICLE_TYPE 0x14
 #define IBUS_CMD_IKE_RESP_VEHICLE_TYPE 0x15
 #define IBUS_CMD_IKE_SPEED_RPM_UPDATE 0x18
-#define IBUS_CMD_IKE_COOLANT_TEMP_UPDATE 0x19
+#define IBUS_CMD_IKE_TEMP_UPDATE 0x19
 #define IBUS_CMD_IKE_SET_REQUEST 0x40
 #define IBUS_CMD_IKE_SET_REQUEST_TIME 0x01
 
@@ -315,6 +315,12 @@
 #define IBUS_RAD_VOLUME_DOWN 0x00
 #define IBUS_RAD_VOLUME_UP 0x01
 
+#define IBUS_SENSOR_VALUE_COOLANT_TEMP 0x01
+#define IBUS_SENSOR_VALUE_AMBIENT_TEMP 0x02
+#define IBUS_SENSOR_VALUE_OIL_TEMP 0x03
+#define IBUS_SENSOR_VALUE_TEMP_UNIT 0x04
+#define IBUS_SENSOR_VALUE_GEAR_POS 0x05
+
 
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
 #define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
@@ -376,25 +382,23 @@
 #define IBUS_EVENT_MFLVolume 50
 #define IBUS_EVENT_MIDButtonPress 51
 #define IBUS_EVENT_MIDModeChange 52
-#define IBUS_EVENT_ValueUpdate 53
 #define IBUS_EVENT_ModuleStatusResponse 54
 #define IBUS_EVENT_IKEVehicleType 55
 #define IBUS_EVENT_LCMRedundantData 56
 #define IBUS_EVENT_FirstMessageReceived 57
 #define IBUS_EVENT_GTDIAOSIdentityResponse 58
 #define IBUS_EVENT_IKESpeedRPMUpdate 59
-#define IBUS_EVENT_IKECoolantTempUpdate 60
-#define IBUS_EVENT_ModuleStatusRequest 61
-#define IBUS_EVENT_GTChangeUIRequest 62
-#define IBUS_EVENT_DoorsFlapsStatusResponse 63
-#define IBUS_EVENT_LCMDiagnosticsAcknowledge 64
-#define IBUS_EVENT_DSPConfigSet 65
-#define IBUS_EVENT_TELVolumeChange 66
-#define IBUS_EVENT_RADVolumeChange 67
-#define IBUS_EVENT_LMIdentResponse 68
-#define IBUS_EVENT_TV_STATUS 69
-#define IBUS_EVENT_PDC_STATUS 70
-#define IBUS_EVENT_IKE_SENSOR_UPDATE 71
+#define IBUS_EVENT_ModuleStatusRequest 60
+#define IBUS_EVENT_GTChangeUIRequest 61
+#define IBUS_EVENT_DoorsFlapsStatusResponse 62
+#define IBUS_EVENT_LCMDiagnosticsAcknowledge 63
+#define IBUS_EVENT_DSPConfigSet 64
+#define IBUS_EVENT_TELVolumeChange 65
+#define IBUS_EVENT_RADVolumeChange 66
+#define IBUS_EVENT_LMIdentResponse 67
+#define IBUS_EVENT_TV_STATUS 68
+#define IBUS_EVENT_PDC_STATUS 69
+#define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -435,6 +439,7 @@ typedef struct IBus_t {
     unsigned char lmPhotoVoltage;
     unsigned char oilTemperature;
     unsigned char coolantTemperature;
+    signed char ambientTemperature;
     unsigned char gear: 4;
 } IBus_t;
 IBus_t IBusInit();
@@ -449,6 +454,7 @@ uint8_t IBusGetNavHWVersion(unsigned char *);
 uint8_t IBusGetNavSWVersion(unsigned char *);
 uint8_t IBusGetNavType(unsigned char *);
 uint8_t IBusGetVehicleType(unsigned char *);
+uint8_t IBusGetConfigTemp(unsigned char *);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, unsigned char, unsigned char, unsigned char, unsigned char);
 void IBusCommandDIAGetCodingData(IBus_t *, unsigned char, unsigned char, unsigned char);

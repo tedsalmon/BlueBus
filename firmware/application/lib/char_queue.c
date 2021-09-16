@@ -18,7 +18,7 @@
 CharQueue_t CharQueueInit()
 {
     CharQueue_t queue;
-    // Initialize size, capacity and cursors
+    // Initialize size and cursors
     queue.size = 0;
     queue.readCursor = 0;
     queue.writeCursor = 0;
@@ -37,8 +37,8 @@ CharQueue_t CharQueueInit()
  */
 void CharQueueAdd(CharQueue_t *queue, const unsigned char value)
 {
-    if (queue->size != CHAR_QUEUE_SIZE) {
-        if (queue->writeCursor == CHAR_QUEUE_SIZE) {
+    if (queue->size < CHAR_QUEUE_SIZE) {
+        if (queue->writeCursor >= CHAR_QUEUE_SIZE) {
             queue->writeCursor = 0;
         }
         queue->data[queue->writeCursor] = value;
@@ -95,7 +95,7 @@ unsigned char CharQueueNext(CharQueue_t *queue)
 /**
  * CharQueueRemoveLast()
  *     Description:
- *         Remove the last character in the buffer
+ *         Remove the last byte in the buffer
  *     Params:
  *         CharQueue_t queue - The queue
  *     Returns:
@@ -105,6 +105,7 @@ void CharQueueRemoveLast(CharQueue_t *queue)
 {
     if (queue->size > 0) {
         queue->size--;
+        queue->data[queue->writeCursor] = 0x00;
         if (queue->writeCursor == 0) {
             queue->writeCursor = CHAR_QUEUE_SIZE - 1;
         } else {
@@ -145,18 +146,18 @@ void CharQueueReset(CharQueue_t *queue)
 uint16_t CharQueueSeek(CharQueue_t *queue, const unsigned char needle)
 {
     uint16_t readCursor = queue->readCursor;
-    uint16_t size = queue->size;
+    uint16_t size = queue->size + 1;
     uint16_t cnt = 1;
     while (size > 0) {
         if (queue->data[readCursor] == needle) {
             return cnt;
         }
+        readCursor++;
         if (readCursor >= CHAR_QUEUE_SIZE) {
             readCursor = 0;
         }
         cnt++;
         size--;
-        readCursor++;
     }
     return 0;
 }

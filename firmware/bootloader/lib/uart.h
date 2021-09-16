@@ -46,6 +46,5 @@ unsigned char UARTGetNextByte(UART_t *);
 unsigned char UARTGetOffsetByte(UART_t *, uint16_t);
 void UARTReadData(UART_t *);
 void UARTResetRxQueue(UART_t *);
-uint16_t UARTRxQueueSeek(UART_t *, const unsigned char);
 void UARTSendData(UART_t *, unsigned char *, uint8_t);
 #endif /* UART_H */

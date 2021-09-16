@@ -13,7 +13,7 @@ static char *PROFILES[] = {
     "HFP",
     "BLE",
     "",
-    "",
+    "PBAP",
     "",
     "MAP"
 };
@@ -141,8 +141,8 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_IKE_SENSOR_UPDATE,
-        &HandlerIBusIKESensorStatus,
+        IBUS_EVENT_SENSOR_VALUE_UPDATE,
+        &HandlerIBusSensorValueUpdate,
         &Context
     );
     EventRegisterCallback(
@@ -534,12 +534,23 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
             } else if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
                        context->bt->activeDevice.hfpLinkId == 0
             ) {
-                char *macId = (char *) context->bt->activeDevice.macId;
-                BC127CommandProfileOpen(context->bt, macId, "HFP");
+                BC127CommandProfileOpen(
+                    context->bt,
+                    context->bt->activeDevice.macId,
+                    "HFP"
+                );
             }
             if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
                 IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
             }
+        }
+        // @TODO Handle cases where PBAP access is not given
+        if (context->bt->activeDevice.hfpLinkId != 0) {
+            BC127CommandProfileOpen(
+                context->bt,
+                context->bt->activeDevice.macId,
+                "PBAP"
+            );
         }
     } else {
         BC127CommandClose(context->bt, BC127_CLOSE_ALL);
@@ -1203,21 +1214,22 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
 }
 
 /**
- * HandlerIBusIKESensorStatus()
+ * HandlerIBusSensorValueUpdate()
  *     Description:
  *         Parse Sensor Status
  *     Params:
  *         void *ctx - The context provided at registration
- *         unsigned char *pkt - The IBus Packet
+ *         unsigned char *type - The Update Type
  *     Returns:
  *         void
  */
-void HandlerIBusIKESensorStatus(void *ctx, unsigned char *pkt)
+void HandlerIBusSensorValueUpdate(void *ctx, unsigned char *type)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // Lower volume when the transmission is in reverse
     if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
-        context->bt->activeDevice.a2dpLinkId != 0
+        context->bt->activeDevice.a2dpLinkId != 0 &&
+        *type == IBUS_SENSOR_VALUE_GEAR_POS
     ) {
         if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
             context->ibus->gear != IBUS_IKE_GEAR_REVERSE
@@ -2084,7 +2096,7 @@ void HandlerTimerLCMIOStatus(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
         uint32_t now = TimerGetMillis();
-        if (context->ibus->ignitionStatus != IBUS_IGNITION_OFF &&
+        if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
             (now - context->lmLastIOStatus) >= 30000
         ) {
             IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
@@ -2107,7 +2119,7 @@ void HandlerTimerLightingState(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
         uint32_t now = TimerGetMillis();
-        if (context->ibus->ignitionStatus != IBUS_IGNITION_OFF &&
+        if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
             (now - context->lmLastStatusSet) >= 10000 &&
             (
                 context->lmState.comfortBlinkerStatus != HANDLER_LM_COMF_BLINK_OFF ||
@@ -2327,9 +2339,8 @@ void HandlerVolumeChange(HandlerContext_t *context, uint8_t direction)
         newVolume = context->bt->activeDevice.a2dpVolume * 2;
         context->volumeMode = HANDLER_VOLUME_MODE_NORMAL;
     }
-    char hexVolString[2];
-    hexVolString[1] = '\0';
-    snprintf(hexVolString, 1, "%X", newVolume);
+    char hexVolString[3] = {0};
+    snprintf(hexVolString, 3, "%X", newVolume / 8);
     BC127CommandVolume(
         context->bt,
         context->bt->activeDevice.a2dpLinkId,

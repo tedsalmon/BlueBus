@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <string.h>
 /* The maximum amount of elements that the queue can hold */
-#define CHAR_QUEUE_SIZE 512
+#define CHAR_QUEUE_SIZE 640
 
 /**
  * CharQueue_t

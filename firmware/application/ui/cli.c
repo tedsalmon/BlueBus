@@ -47,8 +47,10 @@ void CLIProcess()
 {
     while (cli.lastChar != cli.uart->rxQueue.writeCursor) {
         unsigned char nextChar = CharQueueGet(&cli.uart->rxQueue, cli.lastChar);
-        UARTSendChar(cli.uart, nextChar);
-        if (cli.lastChar >= (CHAR_QUEUE_SIZE - 1)) {
+        if (nextChar != CLI_MSG_DELETE_CHAR) {
+            UARTSendChar(cli.uart, nextChar);
+        }
+        if (cli.lastChar >= CHAR_QUEUE_SIZE) {
             cli.lastChar = 0;
         } else {
             cli.lastChar++;

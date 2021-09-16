@@ -38,6 +38,7 @@ IBus_t IBusInit()
     ibus.lmPhotoVoltage = 0xFF; // Photosensor voltage (LSZ)
     ibus.oilTemperature = 0x00;
     ibus.coolantTemperature = 0x00;
+    ibus.ambientTemperature = 0x00;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -257,17 +258,31 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         ibus->ignitionStatus = ignitionStatus;
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SENSOR_RESP) {
         ibus->gear = pkt[IBUS_PKT_DB2] >> 4;
-        EventTriggerCallback(IBUS_EVENT_IKE_SENSOR_UPDATE, pkt);
+        unsigned char valueType = IBUS_SENSOR_VALUE_GEAR_POS;
+        EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_RESP_VEHICLE_TYPE) {
         ibus->vehicleType = IBusGetVehicleType(pkt);
         EventTriggerCallback(IBUS_EVENT_IKEVehicleType, pkt);
+        unsigned char tempUnit = IBusGetConfigTemp(pkt);
+        if (tempUnit != ConfigGetSetting(CONFIG_SETTING_TEMPERATURE)) {
+            ConfigSetSetting(CONFIG_SETTING_TEMPERATURE, tempUnit);
+            unsigned char valueType = IBUS_SENSOR_VALUE_TEMP_UNIT;
+            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+        }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SPEED_RPM_UPDATE) {
         EventTriggerCallback(IBUS_EVENT_IKESpeedRPMUpdate, pkt);
-    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_COOLANT_TEMP_UPDATE) {
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_TEMP_UPDATE) {
         // Do not update the system if the value is the same
         if (ibus->coolantTemperature != pkt[5] && pkt[5] < 0x80) {
             ibus->coolantTemperature = pkt[5];
-            EventTriggerCallback(IBUS_EVENT_IKECoolantTempUpdate, pkt);
+            unsigned char valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
+            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+        }
+        signed char tmp = pkt[4];
+        if (ibus->ambientTemperature != tmp && tmp > -100 && tmp < 100) {
+            ibus->ambientTemperature = tmp;
+            unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
+            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
     }
 }
@@ -325,11 +340,8 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
             unsigned char oilTemperature = 1.0 * 67.2529 * log(rawTemperature) + 310.0;
             if (oilTemperature != ibus->oilTemperature) {
                 ibus->oilTemperature = oilTemperature;
-                unsigned char updateType = 0x01;
-                EventTriggerCallback(
-                    IBUS_EVENT_ValueUpdate,
-                    &updateType
-                );
+                unsigned char valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
+                EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
             }
         }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
@@ -954,6 +966,21 @@ uint8_t IBusGetVehicleType(unsigned char *packet)
         detectedVehicleType = IBUS_VEHICLE_TYPE_E38_E39_E53;
     }
     return detectedVehicleType;
+}
+
+/**
+ * IBusGetConfigTemp()
+ *     Description:
+ *        Get the configured temperature unit from cluster type response
+ *     Params:
+ *         unsigned char *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - the Celsius or Fahrhenheit configuration
+ */
+uint8_t IBusGetConfigTemp(unsigned char *packet)
+{
+    unsigned char tempUnit = (packet[5] >> 1) & 0x1;
+    return tempUnit;
 }
 
 /**

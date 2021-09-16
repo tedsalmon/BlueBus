@@ -182,8 +182,8 @@ void UARTReadData(UART_t *uart)
             uart->registers->uxsta ^= 0x2;
         }
         unsigned char byte = uart->registers->uxrxreg;
-        if (uart->rxQueueSize != (UART_RX_QUEUE_SIZE + 1) && !hasErr) {
-            if (uart->rxQueueWriteCursor == UART_RX_QUEUE_SIZE) {
+        if (uart->rxQueueSize < UART_RX_QUEUE_SIZE && !hasErr) {
+            if (uart->rxQueueWriteCursor >= UART_RX_QUEUE_SIZE) {
                 uart->rxQueueWriteCursor = 0;
             }
             uart->rxQueue[uart->rxQueueWriteCursor] = byte;
@@ -208,37 +208,6 @@ void UARTResetRxQueue(UART_t *uart)
     uart->rxQueueSize = 0;
     uart->rxQueueWriteCursor = 0;
     uart->rxQueueReadCursor = 0;
-}
-
-/**
- * UARTRxQueueSeek()
- *     Description:
- *         Checks if a given byte is in the queue and return the length of
- *         characters prior to it.
- *     Params:
- *         CharQueue_t *queue - The queue
- *         const unsigned char needle - The character to look for
- *     Returns:
- *         uint16_t - The length of characters prior to the needle or zero if
- *                   the needle wasn't found
- */
-uint16_t UARTRxQueueSeek(UART_t *uart, const unsigned char needle)
-{
-    uint16_t readCursor = uart->rxQueueReadCursor;
-    uint16_t size = uart->rxQueueSize;
-    uint16_t cnt = 1;
-    while (size > 0) {
-        if (uart->rxQueue[readCursor] == needle) {
-            return cnt;
-        }
-        if (readCursor >= UART_RX_QUEUE_SIZE) {
-            readCursor = 0;
-        }
-        cnt++;
-        size--;
-        readCursor++;
-    }
-    return 0;
 }
 
 /**
