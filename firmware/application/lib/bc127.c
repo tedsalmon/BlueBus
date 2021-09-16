@@ -1492,30 +1492,35 @@ void BC127Process(BC127_t *bt)
                 bt->pairingErrors[BC127_LINK_MAP] = 1;
             }
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
-            char deviceName[BC127_DEVICE_NAME_LEN];
+            char deviceName[BC127_DEVICE_NAME_LEN] = {0};
             uint8_t idx;
             uint8_t strIdx = 0;
-            for (idx = 0; idx < strlen(msg) - BC127_DEVICE_NAME_OFFSET; idx++) {
-                char c = msg[idx + BC127_DEVICE_NAME_OFFSET];
-                // 0x22 (") is the character that wraps the device name
-                if (c != 0x22) {
-                    deviceName[strIdx] = c;
-                    strIdx++;
+            uint8_t nameLen = strlen(msg);
+            if (nameLen > BC127_DEVICE_NAME_OFFSET) {
+                for (idx = 0; idx < nameLen - BC127_DEVICE_NAME_OFFSET; idx++) {
+                    char c = msg[idx + BC127_DEVICE_NAME_OFFSET];
+                    // 0x22 (") is the character that wraps the device name
+                    if (c != 0x22) {
+                        deviceName[strIdx] = c;
+                        strIdx++;
+                    }
                 }
+                deviceName[strIdx] = '\0';
+                char name[BC127_DEVICE_NAME_LEN] = {0};
+                UtilsNormalizeText(name, deviceName, BC127_DEVICE_NAME_LEN);
+                LogDebug(LOG_SOURCE_BT, "Process Name");
+                if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
+                    // Clean the device name up
+                    memset(bt->activeDevice.deviceName, 0, BC127_DEVICE_NAME_LEN);
+                    strncpy(bt->activeDevice.deviceName, name, BC127_DEVICE_NAME_LEN - 1);
+                    EventTriggerCallback(BC127Event_DeviceConnected, 0);
+                }
+                BC127PairedDeviceInit(bt, msgBuf[1], name);
+                EventTriggerCallback(BC127Event_DeviceFound, (unsigned char *) msgBuf[1]);
+                LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s -> %s", msgBuf[1], name);
+            } else {
+                LogError("BT: Bad NAME Packet");
             }
-            deviceName[strIdx] = '\0';
-            char name[BC127_DEVICE_NAME_LEN];
-            memset(name, 0, BC127_DEVICE_NAME_LEN);
-            UtilsNormalizeText(name, deviceName, BC127_DEVICE_NAME_LEN);
-            if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
-                // Clean the device name up
-                memset(bt->activeDevice.deviceName, 0, BC127_DEVICE_NAME_LEN);
-                strncpy(bt->activeDevice.deviceName, name, BC127_DEVICE_NAME_LEN - 1);
-                EventTriggerCallback(BC127Event_DeviceConnected, 0);
-            }
-            BC127PairedDeviceInit(bt, msgBuf[1], name);
-            EventTriggerCallback(BC127Event_DeviceFound, (unsigned char *) msgBuf[1]);
-            LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s -> %s", msgBuf[1], name);
         } else if (strcmp(msgBuf[0], "Build:") == 0) {
             // Clear the Metadata
             BC127ClearMetadata(bt);
