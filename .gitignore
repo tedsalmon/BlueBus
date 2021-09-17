@@ -8,12 +8,10 @@
 /firmware/bootloader/disassembly/
 /firmware/application/nbproject/private/
 /firmware/bootloader/nbproject/private/
-/firmware/bootloader/nbproject/Makefile-local*
-/firmware/application/nbproject/Makefile-local*
-/firmware/bootloader/nbproject/Makefile-variables*
-/firmware/application/nbproject/Makefile-variables*
-/firmware/bootloader/nbproject/Makefile-genesis*
-/firmware/application/nbproject/Makefile-genesis*
+/firmware/bootloader/nbproject/Makefile-*.mk
+/firmware/application/nbproject/Makefile-*.mk
+/firmware/bootloader/nbproject/Makefile-genesis.properties
+/firmware/application/nbproject/Makefile-genesis.properties
 /firmware/application/nbproject/Package*
 /firmware/bootloader/nbproject/Package*
 /hardware/BlueBus.*#*
