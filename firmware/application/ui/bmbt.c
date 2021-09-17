@@ -1616,56 +1616,43 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     unsigned char updateType = *type;
-    if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_TEMP_COOLANT &&
-        context->status.displayMode == BMBT_DISPLAY_ON &&
-        updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP
-    ) {
-        char temp = context->ibus->coolantTemperature;
-        if (temp!=0) {
-            char tempScale = 'C';
-            unsigned char temp_f = ConfigGetSetting(CONFIG_SETTING_TEMPERATURE);
-            if ( temp_f == CONFIG_SETTING_TEMP_FAHRENHEIT ) {
-                tempScale = 'F';
-                temp = (temp * 1.8 + 32);
-            }
+    int temp = 0;
+    char tempUnit = 'C';
+    char redraw = 0;
 
-            char temperature[6] = {0};
-            snprintf(temperature, 6, "%u\xB0%c", temp,tempScale);
-            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
-            IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
-        }
-    }
-    if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_TEMP_AMBIENT &&
-        context->status.displayMode == BMBT_DISPLAY_ON &&
-        updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP
-    ) {
-        char temp = context->ibus->ambientTemperature;
-        char tempScale = 'C';
-        unsigned char temp_f = ConfigGetSetting(CONFIG_SETTING_TEMPERATURE);
-        if ( temp_f == CONFIG_SETTING_TEMP_FAHRENHEIT ) {
-            tempScale = 'F';
-            temp = (temp * 1.8 + 32);
+    if (context->status.displayMode == BMBT_DISPLAY_ON) {
+
+        if (ConfigGetSetting(CONFIG_SETTING_TEMPERATURE) == CONFIG_SETTING_TEMP_FAHRENHEIT ) {
+            tempUnit = 'F';
         }
 
-        char temperature[6] = {0};
-        snprintf(temperature, 6, "%d\xB0%c", temp,tempScale);
-        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
-        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
-    }
-    if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_TEMP_OIL &&
-        context->status.displayMode == BMBT_DISPLAY_ON &&
-        updateType == IBUS_SENSOR_VALUE_OIL_TEMP
-    ) {
-        char temp = context->ibus->oilTemperature;
-        if (temp > 0) {
-            char tempScale = 'C';
-            unsigned char temp_f = ConfigGetSetting(CONFIG_SETTING_TEMPERATURE);
-            if ( temp_f == CONFIG_SETTING_TEMP_FAHRENHEIT ) {
-                tempScale = 'F';
+        if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_TEMP_COOLANT &&
+            updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP
+        ) {
+            temp = context->ibus->coolantTemperature;
+            if (temp != 0) {
+                redraw = 1;
+            }
+        } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_TEMP_AMBIENT &&
+            updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP
+        ) {
+            temp = context->ibus->ambientTemperature;
+            redraw = 1;
+        } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_TEMP_OIL &&
+            updateType == IBUS_SENSOR_VALUE_OIL_TEMP
+        ) {
+            temp = context->ibus->oilTemperature;
+            if (temp != 0) {
+                redraw = 1;
+            }
+        }
+
+        if (redraw == 1) {
+            char temperature[6] = {0};
+            if ( tempUnit == 'F' ) {
                 temp = (temp * 1.8 + 32);
             }
-            char temperature[6] = {0};
-            snprintf(temperature, 6, "%d\xB0%c", temp, tempScale);
+            snprintf(temperature, 6, "%d\xB0%c", temp, tempUnit);
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
         }
