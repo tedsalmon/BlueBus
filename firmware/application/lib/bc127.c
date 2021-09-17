@@ -1732,13 +1732,16 @@ uint8_t BC127ConnectionCloseProfile(BC127Connection_t *conn, char *profile)
         conn->bleLinkId = 0;
     } else if (strcmp(profile, "MAP") == 0) {
         conn->mapLinkId = 0;
+    } else if (strcmp(profile, "PBAP") == 0) {
+        conn->pbapLinkId = 0;
     }
     // Clear the connection once all the links are closed
     if (conn->a2dpLinkId == 0 &&
         conn->avrcpLinkId == 0 &&
         conn->hfpLinkId == 0 &&
         conn->bleLinkId == 0 &&
-        conn->mapLinkId == 0
+        conn->mapLinkId == 0 &&
+        conn->pbapLinkId == 0
     ) {
         conn->deviceId = 0;
         return BC127_CONN_STATE_DISCONNECTED;
@@ -1768,5 +1771,7 @@ void BC127ConnectionOpenProfile(BC127Connection_t *conn, char *profile, uint8_t 
         conn->bleLinkId = linkId;
     } else if (strcmp(profile, "MAP") == 0) {
         conn->mapLinkId = linkId;
+    } else if (strcmp(profile, "PBAP") == 0) {
+        conn->pbapLinkId = linkId;
     }
 }

@@ -100,6 +100,7 @@ typedef struct BC127PairedDevice_t {
  *         hfpLinkId - The Melody Link ID for the HFP connection
  *         bleLinkId - The Melody Link ID for the BLE connection
  *         mapLinkId - The Melody Link ID for the MAP connection
+ *         pbapLinkId - The Melody Link ID for the PBAP connection
  *         a2dpVolume - A2DP volume
  */
 typedef struct BC127Connection_t {
@@ -111,6 +112,7 @@ typedef struct BC127Connection_t {
     uint8_t hfpLinkId;
     uint8_t bleLinkId;
     uint8_t mapLinkId;
+    uint8_t pbapLinkId;
     uint8_t a2dpVolume;
 } BC127Connection_t;
 

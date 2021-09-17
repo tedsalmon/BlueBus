@@ -14,12 +14,12 @@
 /**
  * CharQueue_t
  *     Description:
- *         This object holds QUEUE_SIZE amounts of unsigned chars. It operates
+ *         This object holds CHAR_QUEUE_SIZE amounts of unsigned chars. It operates
  *         with a read and write cursor to keep track of where the next byte
  *         needs to be read from and where the next byte should be added.
  *         Once those cursors are exhausted, meaning they've hit capacity, they
  *         are reset. If data is not removed from the buffer before it hits
- *         capacity, the data will be lost and an error will be logged.
+ *         capacity, the data will be lost.
  */
 typedef struct CharQueue_t {
     uint16_t size;

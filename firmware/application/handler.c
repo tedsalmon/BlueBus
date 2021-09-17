@@ -550,7 +550,9 @@ void HandlerBC127DeviceLinkConnected(void *ctx, unsigned char *data)
             }
         }
         // @TODO Handle cases where PBAP access is not given
-        if (context->bt->activeDevice.hfpLinkId != 0) {
+        if (context->bt->activeDevice.hfpLinkId != 0 &&
+            context->bt->activeDevice.pbapLinkId == 0
+        ) {
             BC127CommandProfileOpen(
                 context->bt,
                 context->bt->activeDevice.macId,
@@ -2077,7 +2079,10 @@ void HandlerTimerIBusPings(void *ctx)
                     IBUS_DEVICE_RAD,
                     IBUS_DEVICE_IKE
                 );
+            } else {
+                HandlerTimerIBusPings(ctx);
             }
+            break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_IKE: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_GT;
@@ -2087,7 +2092,10 @@ void HandlerTimerIBusPings(void *ctx)
                     IBUS_DEVICE_RAD,
                     IBUS_DEVICE_GT
                 );
+            } else {
+                HandlerTimerIBusPings(ctx);
             }
+            break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_GT: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_MID;
@@ -2097,7 +2105,10 @@ void HandlerTimerIBusPings(void *ctx)
                     IBUS_DEVICE_RAD,
                     IBUS_DEVICE_MID
                 );
+            } else {
+                HandlerTimerIBusPings(ctx);
             }
+            break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_MID: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_RAD;
@@ -2107,7 +2118,10 @@ void HandlerTimerIBusPings(void *ctx)
                     IBUS_DEVICE_CDC,
                     IBUS_DEVICE_RAD
                 );
+            } else {
+                HandlerTimerIBusPings(ctx);
             }
+            break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_RAD: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_LM;
@@ -2117,7 +2131,10 @@ void HandlerTimerIBusPings(void *ctx)
                     IBUS_DEVICE_IKE,
                     IBUS_DEVICE_LCM
                 );
+            } else {
+                HandlerTimerIBusPings(ctx);
             }
+            break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_LM: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_TEL;
@@ -2128,13 +2145,17 @@ void HandlerTimerIBusPings(void *ctx)
                     IBUS_DEVICE_LOC,
                     IBUS_TEL_SIG_EVEREST | 0x01
                 );
+            } else {
+                HandlerTimerIBusPings(ctx);
             }
+            break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_TEL: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_OFF;
             IBusCommandIKEGetIgnitionStatus(context->ibus);
             // Unregister this timer so we do not waste resources on it
             TimerUnregisterScheduledTask(&HandlerTimerIBusPings);
+            break;
         }
     }
 }

@@ -19,10 +19,7 @@ CharQueue_t CharQueueInit()
 {
     CharQueue_t queue;
     // Initialize size and cursors
-    queue.size = 0;
-    queue.readCursor = 0;
-    queue.writeCursor = 0;
-    memset(queue.data, 0, CHAR_QUEUE_SIZE);
+    CharQueueReset(&queue);
     return queue;
 }
 
@@ -126,10 +123,10 @@ void CharQueueRemoveLast(CharQueue_t *queue)
  */
 void CharQueueReset(CharQueue_t *queue)
 {
-    memset(queue->data, 0, CHAR_QUEUE_SIZE);
-    queue->readCursor = 0;
     queue->size = 0;
+    queue->readCursor = 0;
     queue->writeCursor = 0;
+    memset(queue->data, 0, CHAR_QUEUE_SIZE);
 }
 
 /**

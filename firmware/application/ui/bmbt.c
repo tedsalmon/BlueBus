@@ -83,6 +83,11 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_SENSOR_VALUE_UPDATE,
+        &BMBTIBusSensorValueUpdate,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_RADDisplayMenu,
         &BMBTRADDisplayMenu,
         &Context
