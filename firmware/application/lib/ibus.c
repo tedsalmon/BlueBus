@@ -279,7 +279,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
         signed char tmp = pkt[4];
-        if (ibus->ambientTemperature != tmp && tmp > -100 && tmp < 100) {
+        if (ibus->ambientTemperature != tmp && tmp > -60 && tmp < 60) {
             ibus->ambientTemperature = tmp;
             unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
