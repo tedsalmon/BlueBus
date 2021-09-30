@@ -290,6 +290,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         if (property == IBUS_IKE_TEXT_TEMPERATURE) {
             memset(ibus->ambientTemperature2,6,0);
             memcpy(ibus->ambientTemperature2,pkt+6,5);
+            LogRawDebug(LOG_SOURCE_IBUS, "got temp: %s\r\n", ibus->ambientTemperature2);
             unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT2_TEMP;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }

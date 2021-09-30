@@ -1730,16 +1730,17 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
     char tempUnit = 'C';
     char redraw = 0;
     char temperature[8] = {0};
+    char config = ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS);
 
     if (context->status.displayMode == BMBT_DISPLAY_ON) {
 
-        if (ConfigGetSetting(CONFIG_SETTING_TEMPERATURE) == CONFIG_SETTING_TEMP_FAHRENHEIT ) {
+        if (ConfigGetSetting(CONFIG_SETTING_TEMPERATURE) == CONFIG_SETTING_TEMP_FAHRENHEIT) {
             tempUnit = 'F';
         }
 
-        char config = ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS);
-
-        if (config == CONFIG_SETTING_TEMP_AMBIENT2 && updateType == IBUS_SENSOR_VALUE_AMBIENT2_TEMP && context->ibus->ambientTemperature2[0] != 0) {
+        if (config == CONFIG_SETTING_TEMP_AMBIENT2 && 
+            (updateType == IBUS_SENSOR_VALUE_AMBIENT2_TEMP || updateType == IBUS_SENSOR_VALUE_TEMP_UNIT) && 
+            context->ibus->ambientTemperature2[0] != 0) {
                 snprintf(temperature, 8, "%s\xB0%c", context->ibus->ambientTemperature2, tempUnit);
                 redraw = 1;
         } else {

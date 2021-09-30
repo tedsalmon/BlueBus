@@ -73,7 +73,7 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Vol. Rev: Aan",
     "Celcius: Ambient",
     "Celcius: Oil",
-    "Celcius: Ambient+"
+    "Celcius: Amb+"
 };
 
 static char *LOCALE_LANG_ENGLISH[] = {
@@ -143,7 +143,7 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Vol. Rev: Off",
     "Temps: Ambient",
     "Temps: Oil",
-    "Temps: Ambient+"
+    "Temps: Amb+"
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -213,7 +213,7 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Rev. Vol.: Off",
     "Temp: Ambient",
     "Temp: Oil",
-    "Temp: Ambient+"
+    "Temp: Amb+"
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -283,7 +283,7 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     {'L','o','w',' ','V','o','l',' ','R','e','v',':',' ','O','f','f'},
     "Temp: Ambient",
     "Temp: Oil",
-    "Temp: Ambient+"
+    "Temp: Amb+"
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -353,7 +353,7 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Vol. Rev: Off",
     "Temp: Ambient",
     "Temp: Oil",
-    "Temp: Ambient+"
+    "Temp: Amb+"
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -423,7 +423,7 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Vol. Rev: Off",
     "Temper.: Ambient",
     "Temper.: Oil",
-    "Temper.: Ambient+"
+    "Temper.: Amb+"
 };
 
 /**
