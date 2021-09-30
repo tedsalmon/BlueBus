@@ -158,6 +158,7 @@
 #define IBUS_CMD_IKE_RESP_VEHICLE_TYPE 0x15
 #define IBUS_CMD_IKE_SPEED_RPM_UPDATE 0x18
 #define IBUS_CMD_IKE_TEMP_UPDATE 0x19
+#define IBUS_CMD_IKE_OBC_TEXT 0x24
 #define IBUS_CMD_IKE_SET_REQUEST 0x40
 #define IBUS_CMD_IKE_SET_REQUEST_TIME 0x01
 
@@ -320,6 +321,7 @@
 #define IBUS_SENSOR_VALUE_OIL_TEMP 0x03
 #define IBUS_SENSOR_VALUE_TEMP_UNIT 0x04
 #define IBUS_SENSOR_VALUE_GEAR_POS 0x05
+#define IBUS_SENSOR_VALUE_AMBIENT2_TEMP 0x06
 
 
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
@@ -349,6 +351,8 @@
 #define IBUS_IKE_GEAR_FOURTH 0x0C
 #define IBUS_IKE_GEAR_FIFTH 0x0E
 #define IBUS_IKE_GEAR_SIXTH 0x0F
+
+#define IBUS_IKE_TEXT_TEMPERATURE 0x03
 
 #define IBUS_GM_ZKE3_GM1 1
 #define IBUS_GM_ZKE3_GM4 2
@@ -440,6 +444,7 @@ typedef struct IBus_t {
     unsigned char oilTemperature;
     unsigned char coolantTemperature;
     signed char ambientTemperature;
+    char ambientTemperature2[6];
     unsigned char gear: 4;
 } IBus_t;
 IBus_t IBusInit();
