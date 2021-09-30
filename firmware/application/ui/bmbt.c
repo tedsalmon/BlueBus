@@ -463,40 +463,42 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
         IBusCommandGTWriteIndexStatic(context->ibus, 0x42, f2);
         IBusCommandGTWriteIndexStatic(context->ibus, 0x43, f3);
 
-        char tempUnit = 'C';
-        char ambtempstr[11] = {0};
-        char oiltempstr[11] = {0};
-        char cooltempstr[12] = {0};
-        
-        if (ConfigGetSetting(CONFIG_SETTING_TEMPERATURE) == CONFIG_SETTING_TEMP_FAHRENHEIT ) {
-            tempUnit = 'F';
-        }
-
-        int ambtemp = context->ibus->ambientTemperature;
-        int oiltemp = context->ibus->oilTemperature;
-        int cooltemp = context->ibus->coolantTemperature;
-
-        if ( tempUnit == 'F' ) {
-            ambtemp = (ambtemp * 1.8 + 32);
-            if (oiltemp>0) {
-                oiltemp = (oiltemp * 1.8 + 32);
+        if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) != CONFIG_SETTING_OFF) {
+            char tempUnit = 'C';
+            char ambtempstr[11] = {0};
+            char oiltempstr[11] = {0};
+            char cooltempstr[12] = {0};
+            
+            if (ConfigGetSetting(CONFIG_SETTING_TEMPERATURE) == CONFIG_SETTING_TEMP_FAHRENHEIT) {
+                tempUnit = 'F';
             }
-            if (cooltemp>0) {
-                cooltemp = (cooltemp * 1.8 + 32);
+
+            int ambtemp = context->ibus->ambientTemperature;
+            int oiltemp = context->ibus->oilTemperature;
+            int cooltemp = context->ibus->coolantTemperature;
+
+            if (tempUnit == 'F') {
+                ambtemp = (ambtemp * 1.8 + 32);
+                if (oiltemp > 0) {
+                    oiltemp = (oiltemp * 1.8 + 32);
+                }
+                if (cooltemp > 0) {
+                    cooltemp = (cooltemp * 1.8 + 32);
+                }
             }
-        }
 
-        snprintf(ambtempstr, 11, "A:%d", ambtemp);
-        if (cooltemp>0) { 
-            snprintf(cooltempstr, 12, "C:%d, ", cooltemp);
-        }
-        if (oiltemp>0) {
-            snprintf(oiltempstr, 11, "O:%d, ", oiltemp);
-        };
-        char temperature[38]={0};
+            snprintf(ambtempstr, 11, "A:%d", ambtemp);
+            if (cooltemp > 0) { 
+                snprintf(cooltempstr, 12, "C:%d, ", cooltemp);
+            }
+            if (oiltemp > 0) {
+                snprintf(oiltempstr, 11, "O:%d, ", oiltemp);
+            };
+            char temperature[38]={0};
 
-        snprintf(temperature,38,"Temp %s%s%s\xB0%c",oiltempstr,cooltempstr,ambtempstr,tempUnit);
-        IBusCommandGTWriteIndexStatic(context->ibus, 0x45, temperature);
+            snprintf(temperature, 38, "Temp: %s%s%s\xB0%c", oiltempstr, cooltempstr, ambtempstr, tempUnit);
+            IBusCommandGTWriteIndexStatic(context->ibus, 0x45, temperature);
+        }
 
         IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_STATIC);
     } else {
@@ -513,41 +515,42 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
         newF3[newLength - 1] = 0x00;
         IBusCommandGTWriteIndex(context->ibus, 2, newF3);
 
-        char tempUnit = 'C';
-        char ambtempstr[11] = {0};
-        char oiltempstr[11] = {0};
-        char cooltempstr[12] = {0};
-        
-        if (ConfigGetSetting(CONFIG_SETTING_TEMPERATURE) == CONFIG_SETTING_TEMP_FAHRENHEIT ) {
-            tempUnit = 'F';
-        }
-
-        int ambtemp = context->ibus->ambientTemperature;
-        int oiltemp = context->ibus->oilTemperature;
-        int cooltemp = context->ibus->coolantTemperature;
-
-        if ( tempUnit == 'F' ) {
-            ambtemp = (ambtemp * 1.8 + 32);
-            if (oiltemp>0) {
-                oiltemp = (oiltemp * 1.8 + 32);
+        if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) != CONFIG_SETTING_OFF) {
+            char tempUnit = 'C';
+            char ambtempstr[11] = {0};
+            char oiltempstr[11] = {0};
+            char cooltempstr[12] = {0};
+            
+            if (ConfigGetSetting(CONFIG_SETTING_TEMPERATURE) == CONFIG_SETTING_TEMP_FAHRENHEIT) {
+                tempUnit = 'F';
             }
-            if (cooltemp>0) {
-                cooltemp = (cooltemp * 1.8 + 32);
+
+            int ambtemp = context->ibus->ambientTemperature;
+            int oiltemp = context->ibus->oilTemperature;
+            int cooltemp = context->ibus->coolantTemperature;
+
+            if (tempUnit == 'F') {
+                ambtemp = (ambtemp * 1.8 + 32);
+                if (oiltemp > 0) {
+                    oiltemp = (oiltemp * 1.8 + 32);
+                }
+                if (cooltemp > 0) {
+                    cooltemp = (cooltemp * 1.8 + 32);
+                }
             }
+
+            snprintf(ambtempstr, 11, "A:%d", ambtemp);
+            if (cooltemp > 0) { 
+                snprintf(cooltempstr, 12, "C:%d, ", cooltemp);
+            }
+            if (oiltemp > 0) {
+                snprintf(oiltempstr, 11, "O:%d, ", oiltemp);
+            };
+            char temperature[38]={0};
+
+            snprintf(temperature, 38, "Temp: %s%s%s\xB0%c", oiltempstr, cooltempstr, ambtempstr, tempUnit);
+            IBusCommandGTWriteIndex(context->ibus, 4, temperature);
         }
-
-        snprintf(ambtempstr, 11, "A:%d", ambtemp);
-        if (cooltemp>0) { 
-            snprintf(cooltempstr, 12, "C:%d, ", cooltemp);
-        }
-        if (oiltemp>0) {
-            snprintf(oiltempstr, 11, "O:%d, ", oiltemp);
-        };
-        char temperature[38]={0};
-
-        snprintf(temperature,38,"Temp %s%s%s\xB0%c",oiltempstr,cooltempstr,ambtempstr,tempUnit);
-        IBusCommandGTWriteIndex(context->ibus, 4, temperature);
-
         context->status.navIndexType = IBUS_CMD_GT_WRITE_INDEX;
         IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
     }
@@ -1721,19 +1724,19 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
         }
 
         if (config == CONFIG_SETTING_TEMP_COOLANT &&
-            updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP
+            (updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP || updateType == IBUS_SENSOR_VALUE_TEMP_UNIT)
         ) {
             temp = context->ibus->coolantTemperature;
             if (temp != 0) {
                 redraw = 1;
             }
         } else if (config == CONFIG_SETTING_TEMP_AMBIENT &&
-            updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP
+            (updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP || updateType == IBUS_SENSOR_VALUE_TEMP_UNIT)
         ) {
             temp = context->ibus->ambientTemperature;
             redraw = 1;
         } else if (config == CONFIG_SETTING_TEMP_OIL &&
-            updateType == IBUS_SENSOR_VALUE_OIL_TEMP
+            (updateType == IBUS_SENSOR_VALUE_OIL_TEMP || updateType == IBUS_SENSOR_VALUE_TEMP_UNIT)
         ) {
             temp = context->ibus->oilTemperature;
             if (temp != 0) {
@@ -1749,13 +1752,14 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
             snprintf(temperature, 6, "%d\xB0%c", temp, tempUnit);
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+
+            if (context->menu == BMBT_MENU_DASHBOARD ||
+                context->menu == BMBT_MENU_DASHBOARD_FRESH
+            ) {
+                BMBTMenuDashboard(context);
+            }
         }
 
-        if (context->menu == BMBT_MENU_DASHBOARD ||
-            context->menu == BMBT_MENU_DASHBOARD_FRESH
-        ) {
-            BMBTMenuDashboard(context);
-        }
     }    
 }
 
