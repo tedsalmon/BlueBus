@@ -428,9 +428,6 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
         case CONFIG_SETTING_TEMP_AMBIENT:
             valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
             break;
-        case CONFIG_SETTING_TEMP_AMBIENT2:
-            valueType = IBUS_SENSOR_VALUE_AMBIENT2_TEMP;
-            break;
         case CONFIG_SETTING_TEMP_OIL:
             valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
             break;
@@ -481,12 +478,12 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
             int cooltemp = context->ibus->coolantTemperature;
 
             if (tempUnit == 'F') {
-                ambtemp = (ambtemp * 1.8 + 32);
+                ambtemp = (ambtemp * 1.8 + 32+0.5);
                 if (oiltemp > 0) {
-                    oiltemp = (oiltemp * 1.8 + 32);
+                    oiltemp = (oiltemp * 1.8 + 32+0.5);
                 }
                 if (cooltemp > 0) {
-                    cooltemp = (cooltemp * 1.8 + 32);
+                    cooltemp = (cooltemp * 1.8 + 32+0.5);
                 }
             }
 
@@ -533,12 +530,12 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
             int cooltemp = context->ibus->coolantTemperature;
 
             if (tempUnit == 'F') {
-                ambtemp = (ambtemp * 1.8 + 32);
+                ambtemp = (ambtemp * 1.8 + 32+0.5);
                 if (oiltemp > 0) {
-                    oiltemp = (oiltemp * 1.8 + 32);
+                    oiltemp = (oiltemp * 1.8 + 32+0.5);
                 }
                 if (cooltemp > 0) {
-                    cooltemp = (cooltemp * 1.8 + 32);
+                    cooltemp = (cooltemp * 1.8 + 32+0.5);
                 }
             }
 
@@ -980,13 +977,6 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT),
             0
         );       
-    } else if (tempMode == CONFIG_SETTING_TEMP_AMBIENT2) {
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_UI_TEMPS,
-            LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT2),
-            0
-        );       
     } else if (tempMode == CONFIG_SETTING_TEMP_OIL) {
         BMBTGTWriteIndex(
             context,
@@ -1294,13 +1284,8 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT), 0);
-        } else if (tempMode == CONFIG_SETTING_TEMP_AMBIENT) {
-            ConfigSetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS, CONFIG_SETTING_TEMP_AMBIENT2);
-            unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT2_TEMP;
-            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT2), 0);
         } else if (
-                tempMode == CONFIG_SETTING_TEMP_AMBIENT2 &&
+                tempMode == CONFIG_SETTING_TEMP_AMBIENT &&
                 context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E46_Z4
         ) {
             ConfigSetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS, CONFIG_SETTING_TEMP_OIL);
@@ -1738,8 +1723,8 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
             tempUnit = 'F';
         }
 
-        if (config == CONFIG_SETTING_TEMP_AMBIENT2 && 
-            (updateType == IBUS_SENSOR_VALUE_AMBIENT2_TEMP || updateType == IBUS_SENSOR_VALUE_TEMP_UNIT) && 
+        if (config == CONFIG_SETTING_TEMP_AMBIENT && 
+            (updateType == IBUS_SENSOR_VALUE_AMBIENT2_TEMP || updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP || updateType == IBUS_SENSOR_VALUE_TEMP_UNIT) && 
             context->ibus->ambientTemperature2[0] != 0) {
                 snprintf(temperature, 8, "%s\xB0%c", context->ibus->ambientTemperature2, tempUnit);
                 redraw = 1;
@@ -1752,7 +1737,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
                     redraw = 1;
                 }
             } else if (config == CONFIG_SETTING_TEMP_AMBIENT &&
-                (updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP || updateType == IBUS_SENSOR_VALUE_TEMP_UNIT)
+                (updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP || updateType == IBUS_SENSOR_VALUE_AMBIENT2_TEMP || updateType == IBUS_SENSOR_VALUE_TEMP_UNIT)
             ) {
                 temp = context->ibus->ambientTemperature;
                 redraw = 1;
@@ -1767,21 +1752,27 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
 
             if (redraw == 1) {
                 if ( tempUnit == 'F' ) {
-                    temp = (temp * 1.8 + 32);
+                    temp = 2.0*(temp * 1.8 + 32)+1;
+                } else {
+                    temp = 2*temp+1;
                 }
-                snprintf(temperature, 8, "%d\xB0%c", temp, tempUnit);
+                if (config == CONFIG_SETTING_TEMP_AMBIENT) {
+                    snprintf(temperature, 8, "%+.1f\xB0%c", (double) temp/2, tempUnit);
+                } else {
+                    snprintf(temperature, 8, "%.1f\xB0%c", (double) temp/2, tempUnit);                 
+                }
             }
         }
 
         if (redraw == 1) {
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+        }
 
-            if (context->menu == BMBT_MENU_DASHBOARD ||
-                context->menu == BMBT_MENU_DASHBOARD_FRESH
-            ) {
-                BMBTMenuDashboard(context);
-            }
+        if (context->menu == BMBT_MENU_DASHBOARD ||
+            context->menu == BMBT_MENU_DASHBOARD_FRESH
+        ) {
+            BMBTMenuDashboard(context);
         }
     }    
 }
