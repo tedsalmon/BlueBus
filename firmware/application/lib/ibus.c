@@ -1798,6 +1798,91 @@ void IBusCommandIKEText(IBus_t *ibus, char *message)
     );
 }
 
+/*
+ * IBusCommandIKETextAsCCM()
+ *     Description:
+ *          Send text to the IKE display as sender CCM 
+ *          Message is persistant, does not disappear until revoke command is sent
+ *     Params:
+ *          IBus_t *ibus     The pointer to the IBus_t object
+ *          char *message    Text which should be displayed at the IKE
+ *                          Max 20 chars, will be filled up with spaces 0x20   
+ *     Returns:
+ *          void
+ */
+void IBusCommandIKETextAsCCM(IBus_t *ibus, char *message)
+{
+    unsigned char displayText[23];
+    displayText[0] = 0x1A; // Unknown
+    displayText[1] = 0x35; // Display without GONG
+    displayText[2] = 0x00; // Display without GONG
+    
+    uint8_t idx;
+    for (idx = 0; idx < 20; idx++) 
+    {
+        // Check if message is long enough, otherwise fill up with blanks 0x20
+        if(idx < strlen(message))
+        {
+            displayText[idx + 3] = message[idx];
+        }
+        else
+        {
+            displayText[idx + 3] = 0x20;
+        }        
+    }
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_CCM,
+        IBUS_DEVICE_IKE,
+        displayText,
+        sizeof(displayText)
+    );
+}
+
+/*
+ * IBusCommandIKETextAsRAD()
+ *     Description:
+ *          Send text to the IKE display as sender RAD
+ *          Message disappears itself after certain time (5? or 10s)
+ *     Params:
+ *          IBus_t *ibus    The pointer to the IBus_t object
+ *          char *message   Text which should be displayed at the IKE
+ *                          Max 20 chars, will be filled up with spaces 0x20   
+ *     Returns:
+ *          void
+ */
+void IBusCommandIKETextAsRAD(IBus_t *ibus, char *message)
+{
+    unsigned char displayText[strlen(message) + 4];
+    displayText[0] = 0x23; 
+    displayText[1] = 0x62;
+    displayText[2] = 0x30;  // Display without GONG 
+    displayText[3] = 0x07;     
+    uint8_t idx;    
+    
+    // Copy each char to be displayed in the payload
+    for (idx = 0; idx < 20; idx++) 
+    {
+        // Check if message is long enough, otherwise fill up with blanks 0x20
+        if(idx < strlen(message))
+        {
+            displayText[idx + 4] = message[idx];
+        }
+        else
+        {
+            displayText[idx + 4] = 0x20;
+        }        
+    }
+   
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_IKE,
+        displayText,
+        sizeof(displayText)
+    );
+}
+
 /**
  * IBusCommandIKETextClear()
  *     Description:

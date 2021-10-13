@@ -486,6 +486,8 @@ void IBusCommandIKEGetIgnitionStatus(IBus_t *);
 void IBusCommandIKEGetVehicleType(IBus_t *);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKEText(IBus_t *, char *);
+void IBusCommandIKETextAsCCM(IBus_t *, char *);
+void IBusCommandIKETextAsRAD(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
 void IBusCommandLMActivateBulbs(IBus_t *, unsigned char, unsigned char);
 void IBusCommandLMGetClusterIndicators(IBus_t *);
