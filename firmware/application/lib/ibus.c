@@ -290,11 +290,11 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         if ((property == IBUS_IKE_TEXT_TEMPERATURE)&&(pkt[IBUS_PKT_LEN]>=7)&&(pkt[IBUS_PKT_LEN]<=10)) {
             memset(ibus->ambientTemperature2,0,6);
             memcpy(ibus->ambientTemperature2,pkt+6,pkt[IBUS_PKT_LEN]-5);
-            if (ibus->ambientTemperature2[4]==0x20) {
+            if (ibus->ambientTemperature2[4]==' ' || ibus->ambientTemperature2[4]=='.') {
                 ibus->ambientTemperature2[4]=0;
-                if (ibus->ambientTemperature2[3]==0x20) {
+                if (ibus->ambientTemperature2[3]==' ') {
                     ibus->ambientTemperature2[3]=0;
-                    if (ibus->ambientTemperature2[2]==0x20) {
+                    if (ibus->ambientTemperature2[2]==' ') {
                         ibus->ambientTemperature2[2]=0;
                     }
                 }
