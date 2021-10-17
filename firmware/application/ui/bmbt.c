@@ -1294,7 +1294,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OIL), 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS, CONFIG_SETTING_OFF);          
-            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, "      ");
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, "       ");
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OFF), 0);
         }
@@ -1750,12 +1750,12 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
                 }
             }
 
-            if (redraw == 1) {
-                if ( tempUnit == 'F' ) {
-                    temp = temp * 1.8 + 32;
-                }
-                if (config == CONFIG_SETTING_TEMP_AMBIENT) {
-                    snprintf(temperature, 8, "%+d\xB0%c", temp, tempUnit);
+        if (redraw == 1) {
+            if ( tempUnit == 'F' ) {
+                temp = temp * 1.8 + 32 + 0.5;
+            }
+            if (config == CONFIG_SETTING_TEMP_AMBIENT) {
+                snprintf(temperature, 8, "%+d\xB0%c", temp, tempUnit);
                 } else {
                     snprintf(temperature, 8, "%d\xB0%c", temp, tempUnit);                 
                 }
