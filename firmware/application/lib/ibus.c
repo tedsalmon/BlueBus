@@ -478,10 +478,6 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_DISPLAY_RADIO_MENU) {
             EventTriggerCallback(IBUS_EVENT_RADDisplayMenu, pkt);
         }
-        if ((pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_WITH_CURSOR)&&(pkt[IBUS_PKT_CMD+1]==IBUS_CMD_GT_WRITE_ZONE)&&(pkt[IBUS_PKT_CMD+3]==0x45)&&(ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS)!=CONFIG_SETTING_OFF)) {
-            unsigned char valueType = IBUS_SENSOR_VALUE_SCREEN_FORCE_UPDATE;
-            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
-        }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_LOC) {
         if (pkt[IBUS_PKT_CMD] == 0x3B) {
             EventTriggerCallback(IBUS_EVENT_CDClearDisplay, pkt);
