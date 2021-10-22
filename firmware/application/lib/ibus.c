@@ -287,8 +287,8 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_OBC_TEXT) {
         char property = pkt[IBUS_PKT_DB1];
-        if ((property == IBUS_IKE_TEXT_TEMPERATURE)&&(pkt[IBUS_PKT_LEN]>=7)&&(pkt[IBUS_PKT_LEN]<=10)) {
-            memset(ibus->ambientTemperature2,0,6);
+        if ((property == IBUS_IKE_TEXT_TEMPERATURE)&&(pkt[IBUS_PKT_LEN]>=7)&&(pkt[IBUS_PKT_LEN]<=11)) {
+            memset(ibus->ambientTemperature2,0,7);
             memcpy(ibus->ambientTemperature2,pkt+6,pkt[IBUS_PKT_LEN]-5);
             if (ibus->ambientTemperature2[4]==' ' || ibus->ambientTemperature2[4]=='.') {
                 ibus->ambientTemperature2[4]=0;

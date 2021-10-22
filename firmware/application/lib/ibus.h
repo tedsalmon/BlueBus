@@ -443,7 +443,7 @@ typedef struct IBus_t {
     unsigned char oilTemperature;
     unsigned char coolantTemperature;
     signed char ambientTemperature;
-    char ambientTemperature2[6];
+    char ambientTemperature2[7];
     unsigned char gear: 4;
 } IBus_t;
 IBus_t IBusInit();
