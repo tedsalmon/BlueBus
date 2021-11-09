@@ -7,6 +7,7 @@
 #ifndef UART_H
 #define UART_H
 #include <stdint.h>
+#include <string.h>
 #include <xc.h>
 #include "../mappings.h"
 #include "sfr_setters.h"

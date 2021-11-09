@@ -205,6 +205,7 @@ void UARTReadData(UART_t *uart)
  */
 void UARTResetRxQueue(UART_t *uart)
 {
+    memset(uart->rxQueue, 0, UART_RX_QUEUE_SIZE);
     uart->rxQueueSize = 0;
     uart->rxQueueWriteCursor = 0;
     uart->rxQueueReadCursor = 0;

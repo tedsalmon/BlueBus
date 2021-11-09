@@ -116,7 +116,7 @@ void ProtocolProcessMessage(
         UARTResetRxQueue(uart);
         ProtocolSendPacket(
             uart,
-            (unsigned char) PROTOCOL_BAD_PACKET_RESPONSE,
+            (unsigned char) PROTOCOL_ERR_PACKET_TIMEOUT,
             0,
             0
         );
@@ -167,12 +167,8 @@ void ProtocolProcessMessage(
                 0,
                 0
             );
-            // Nop() So the packet makes it to the receiver
-            uint16_t i = 0;
-            while (i < NOP_COUNT) {
-                Nop();
-                i++;
-            }
+            uint32_t now = TimerGetMillis();
+            while (TimerGetMillis() - now < PROTOCOL_PACKET_WAIT_MS);
             ProtocolBC127Mode();
         } else if (packet.command == PROTOCOL_CMD_START_APP_REQUEST) {
             ProtocolSendPacket(
@@ -181,12 +177,8 @@ void ProtocolProcessMessage(
                 0,
                 0
             );
-            // Nop() So the packet makes it to the receiver
-            uint16_t i = 0;
-            while (i < NOP_COUNT) {
-                Nop();
-                i++;
-            }
+            uint32_t now = TimerGetMillis();
+            while (TimerGetMillis() - now < PROTOCOL_PACKET_WAIT_MS);
             *BOOT_MODE = BOOT_MODE_NOW;
         } else if (packet.command == PROTOCOL_CMD_FIRMWARE_VERSION_REQUEST) {
             unsigned char response[] = {
