@@ -39,6 +39,7 @@ IBus_t IBusInit()
     ibus.oilTemperature = 0x00;
     ibus.coolantTemperature = 0x00;
     ibus.ambientTemperature = 0x00;
+    ibus.ambientTemperature2[0] = 0;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -271,15 +272,37 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         EventTriggerCallback(IBUS_EVENT_IKESpeedRPMUpdate, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_TEMP_UPDATE) {
         // Do not update the system if the value is the same
-        if (ibus->coolantTemperature != pkt[5] && pkt[5] < 0x80) {
-            ibus->coolantTemperature = pkt[5];
+        if (ibus->coolantTemperature != pkt[IBUS_PKT_DB2] && pkt[IBUS_PKT_DB2] <= 0x7F) {
+            ibus->coolantTemperature = pkt[IBUS_PKT_DB2];
             unsigned char valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
-        signed char tmp = pkt[4];
-        if (ibus->ambientTemperature != tmp && tmp > -100 && tmp < 100) {
+        signed char tmp = pkt[IBUS_PKT_DB1];
+        if (ibus->ambientTemperature != tmp && tmp > -60 && tmp < 60) {
             ibus->ambientTemperature = tmp;
             unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
+            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+        }
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_OBC_TEXT) {
+        char property = pkt[IBUS_PKT_DB1];
+        if (property == IBUS_IKE_TEXT_TEMPERATURE &&
+            pkt[IBUS_PKT_LEN] >= 7 &&
+            pkt[IBUS_PKT_LEN] <= 11
+        ) {
+            memset(ibus->ambientTemperature2, 0, 7);
+            memcpy(ibus->ambientTemperature2, pkt+6, pkt[IBUS_PKT_LEN]-5);
+            if (ibus->ambientTemperature2[4] == ' ' ||
+                ibus->ambientTemperature2[4] == '.'
+            ) {
+                ibus->ambientTemperature2[4] = 0;
+                if (ibus->ambientTemperature2[3] == ' ') {
+                    ibus->ambientTemperature2[3] = 0;
+                    if (ibus->ambientTemperature2[2] == ' ') {
+                        ibus->ambientTemperature2[2] = 0;
+                    }
+                }
+            }
+            unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT2_TEMP;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
     }
