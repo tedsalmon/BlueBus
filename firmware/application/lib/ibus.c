@@ -39,7 +39,7 @@ IBus_t IBusInit()
     ibus.oilTemperature = 0x00;
     ibus.coolantTemperature = 0x00;
     ibus.ambientTemperature = 0x00;
-    ibus.ambientTemperature2[0] = 0;
+    memset(ibus.ambientTemperatureCalculated, 0, 7);
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -259,15 +259,9 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         ibus->gearPosition = pkt[IBUS_PKT_DB2] >> 4;
         unsigned char valueType = IBUS_SENSOR_VALUE_GEAR_POS;
         EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
-    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_RESP_VEHICLE_TYPE) {
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_RESP_VEHICLE_CONFIG) {
         ibus->vehicleType = IBusGetVehicleType(pkt);
-        EventTriggerCallback(IBUS_EVENT_IKEVehicleType, pkt);
-        unsigned char tempUnit = IBusGetConfigTemp(pkt);
-        if (tempUnit != ConfigGetSetting(CONFIG_SETTING_TEMPERATURE)) {
-            ConfigSetSetting(CONFIG_SETTING_TEMPERATURE, tempUnit);
-            unsigned char valueType = IBUS_SENSOR_VALUE_TEMP_UNIT;
-            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
-        }
+        EventTriggerCallback(IBUS_EVENT_IKE_VEHICLE_CONFIG, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SPEED_RPM_UPDATE) {
         EventTriggerCallback(IBUS_EVENT_IKESpeedRPMUpdate, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_TEMP_UPDATE) {
@@ -285,24 +279,29 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_OBC_TEXT) {
         char property = pkt[IBUS_PKT_DB1];
+        // @todo: Refactor this
         if (property == IBUS_IKE_TEXT_TEMPERATURE &&
             pkt[IBUS_PKT_LEN] >= 7 &&
             pkt[IBUS_PKT_LEN] <= 11
         ) {
-            memset(ibus->ambientTemperature2, 0, 7);
-            memcpy(ibus->ambientTemperature2, pkt+6, pkt[IBUS_PKT_LEN]-5);
-            if (ibus->ambientTemperature2[4] == ' ' ||
-                ibus->ambientTemperature2[4] == '.'
+            memset(ibus->ambientTemperatureCalculated, 0, 7);
+            memcpy(
+                ibus->ambientTemperatureCalculated,
+                pkt + 6,
+                pkt[IBUS_PKT_LEN] - 5
+            );
+            if (ibus->ambientTemperatureCalculated[4] == ' ' ||
+                ibus->ambientTemperatureCalculated[4] == '.'
             ) {
-                ibus->ambientTemperature2[4] = 0;
-                if (ibus->ambientTemperature2[3] == ' ') {
-                    ibus->ambientTemperature2[3] = 0;
-                    if (ibus->ambientTemperature2[2] == ' ') {
-                        ibus->ambientTemperature2[2] = 0;
+                ibus->ambientTemperatureCalculated[4] = 0;
+                if (ibus->ambientTemperatureCalculated[3] == ' ') {
+                    ibus->ambientTemperatureCalculated[3] = 0;
+                    if (ibus->ambientTemperatureCalculated[2] == ' ') {
+                        ibus->ambientTemperatureCalculated[2] = 0;
                     }
                 }
             }
-            unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT2_TEMP;
+            unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
     }
@@ -1761,16 +1760,16 @@ void IBusCommandIKEGetIgnitionStatus(IBus_t *ibus)
 }
 
 /**
- * IBusCommandIKEGetVehicleType()
+ * IBusCommandIKEGetVehicleConfig()
  *     Description:
- *        Request the vehicle type from the IKE
+ *        Request the vehicle configuration from the IKE
  *        Raw: 68 03 80 14 FF
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *     Returns:
  *         void
  */
-void IBusCommandIKEGetVehicleType(IBus_t *ibus)
+void IBusCommandIKEGetVehicleConfig(IBus_t *ibus)
 {
     unsigned char msg[] = {IBUS_CMD_IKE_REQ_VEHICLE_TYPE};
     IBusSendCommand(

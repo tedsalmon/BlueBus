@@ -157,7 +157,7 @@ void HandlerIBusGTDIAOSIdentityResponse(void *, unsigned char *);
 void HandlerIBusIKEIgnitionStatus(void *, unsigned char *);
 void HandlerIBusSensorValueUpdate(void *, unsigned char *);
 void HandlerIBusIKESpeedRPMUpdate(void *, unsigned char *);
-void HandlerIBusIKEVehicleType(void *, unsigned char *);
+void HandlerIBusIKEVehicleConfig(void *, unsigned char *);
 void HandlerIBusLMLightStatus(void *, unsigned char *);
 void HandlerIBusLMDimmerStatus(void *, unsigned char *);
 void HandlerIBusLMIdentResponse(void *, unsigned char *);

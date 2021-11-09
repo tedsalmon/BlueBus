@@ -65,6 +65,17 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Volume: +24dB",
     "Volume: 0dB",
     "Lingua: %s",
+    "Park Lts.: Off",
+    "Park Lts.: On",
+    "Vol. Mgmt: Off",
+    "Vol. Mgmt: On",
+    "Vol. Rev: Off",
+    "Vol. Rev: On",
+    "Temp: Ambient",
+    "Temp: Oil",
+    "DSP: Predefini."
+    "Dash. OBC: On",
+    "Dash. OBC: Off",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -134,7 +145,9 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Vol. Rev: Aan",
     "Celcius: Ambient",
     "Celcius: Oil",
-    "DSP: Standaard"
+    "DSP: Standaard",
+    "Hoofdme. OBC: Aan",
+    "Hoofdme. OBC: Uit"
 };
 
 static char *LOCALE_LANG_ENGLISH[] = {
@@ -204,7 +217,9 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Vol. Rev: Off",
     "Temps: Ambient",
     "Temps: Oil",
-    "DSP: Default"
+    "DSP: Default",
+    "Dash. OBC: On",
+    "Dash. OBC: Off",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -274,7 +289,9 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Rev. Vol.: Off",
     "Temp: Ambient",
     "Temp: Oil",
-    "DSP: Vaikimisi"
+    "DSP: Vaikimisi",
+    "Põhi OBC: On",
+    "Põhi OBC: Off",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -336,15 +353,17 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     {195,240,238,236,234,':',' ','+','2','4','d','B',0},
     {195,240,238,236,234,':',' ','0','d','B',0},
     {223,231,251,234,':',' ','%','s',0},
-    {'P','a','r','k',' ','L','a','m','p','s',':',' ','O','n'},
-    {'P','a','r','k',' ','L','a','m','p','s',':',' ','O','f','f'},
-    {'M','a','n','a','g','e',' ','V','o','l',':',' ','O','n'},
-    {'M','a','n','a','g','e',' ','V','o','l',':',' ','O','f','f'},
-    {'L','o','w',' ','V','o','l',' ','R','e','v',':',' ','O','n'},
-    {'L','o','w',' ','V','o','l',' ','R','e','v',':',' ','O','f','f'},
+    "Park Lts.: Off",
+    "Park Lts.: On",
+    "Vol. Mgmt: Off",
+    "Vol. Mgmt: On",
+    "Vol. Rev: Off",
+    "Vol. Rev: On",
     "Temp: Ambient",
     "Temp: Oil",
-    "DSP: Default"
+    "DSP: Default",
+    "Dash. OBC: On",
+    "Dash. OBC: Off"
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -406,15 +425,17 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Lautst: + 24dB",
     "Lautst: 0dB",
     "Sprache: %s",
-    "Park Lts.: On",
-    "Park Lts.: Off",
-    "Vol. Mgmt: On",
-    "Vol. Mgmt: Off",
-    "Vol. Rev: On",
-    "Vol. Rev: Off",
+    "Park Lts.: Ein",
+    "Park Lts.: Aus",
+    "Vol. Mgmt: Ein",
+    "Vol. Mgmt: Aus",
+    "Vol. Rev: Ein",
+    "Vol. Rev: Aus",
     "Temp: Ambient",
     "Temp: Oil",
-    "DSP: Standard"
+    "DSP: Standard",
+    "Haupt OBC: Ein",
+    "Haupt OBC: Aus"
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -476,15 +497,17 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Volumen: +24dB",
     "Volumen: 0dB",
     "Idioma: %s",
-    "Park Lts.: On",
-    "Park Lts.: Off",
-    "Vol. Mgmt: On",
-    "Vol. Mgmt: Off",
-    "Vol. Rev: On",
-    "Vol. Rev: Off",
+    "Park Lts.: Enc.",
+    "Park Lts.: Apg.",
+    "Vol. Mgmt: Enc.",
+    "Vol. Mgmt: Apg.",
+    "Vol. Rev: Enc.",
+    "Vol. Rev: Apg.",
     "Temper.: Ambient",
     "Temper.: Oil",
     "DSP: Est\xe1ndar"
+    "Dash. OBC: Enc.",
+    "Dash. OBC: Apg."
 };
 
 /**
@@ -500,8 +523,6 @@ char *LocaleGetText(uint16_t stringIndex)
 {
     unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
     switch (language) {
-        case CONFIG_SETTING_LANGUAGE_ITALIAN:
-            return LOCALE_LANG_ITALIAN[stringIndex];    
         case CONFIG_SETTING_LANGUAGE_DUTCH:
             return LOCALE_LANG_DUTCH[stringIndex];
         case CONFIG_SETTING_LANGUAGE_ENGLISH:
@@ -510,6 +531,8 @@ char *LocaleGetText(uint16_t stringIndex)
             return LOCALE_LANG_ESTONIAN[stringIndex];
         case CONFIG_SETTING_LANGUAGE_GERMAN:
             return LOCALE_LANG_GERMAN[stringIndex];
+        case CONFIG_SETTING_LANGUAGE_ITALIAN:
+            return LOCALE_LANG_ITALIAN[stringIndex];
         case CONFIG_SETTING_LANGUAGE_RUSSIAN:
             return LOCALE_LANG_RUSSIAN[stringIndex];
         case CONFIG_SETTING_LANGUAGE_SPANISH:

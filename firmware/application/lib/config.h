@@ -38,9 +38,8 @@
 #define CONFIG_SETTING_METADATA_MODE_ADDRESS 0x1D
 #define CONFIG_SETTING_BMBT_DEFAULT_MENU_ADDRESS 0x1E
 #define CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS 0x1F
-#define CONFIG_SETTING_BMBT_TEMP_HEADERS_ADDRESS 0x20
+#define CONFIG_SETTING_BMBT_TEMP_DISPLAY_ADDRESS 0x20
 #define CONFIG_SETTING_LANGUAGE_ADDRESS 0x21
-#define CONFIG_SETTING_TEMPERATURE_ADDRESS 0x22
 /* Config 0x25 - 0x35: Comfort Settings */
 #define CONFIG_SETTING_COMFORT_BLINKERS_ADDRESS 0x25
 #define CONFIG_SETTING_COMFORT_LOCKS_ADDRESS 0x26
@@ -98,6 +97,7 @@
 #define CONFIG_SETTING_LANGUAGE_SPANISH 0x08
 #define CONFIG_SETTING_LANGUAGE_SWEDISH 0x09
 #define CONFIG_SETTING_LANGUAGE_ESTONIAN 0x10
+#define CONFIG_SETTING_LANGUAGE_ITALIAN 0x11
 #define CONFIG_SETTING_TEMP_COOLANT 0x01
 #define CONFIG_SETTING_TEMP_AMBIENT 0x02
 #define CONFIG_SETTING_TEMP_OIL 0x03
@@ -111,9 +111,8 @@
 #define CONFIG_SETTING_METADATA_MODE CONFIG_SETTING_METADATA_MODE_ADDRESS
 #define CONFIG_SETTING_BMBT_DEFAULT_MENU CONFIG_SETTING_BMBT_DEFAULT_MENU_ADDRESS
 #define CONFIG_SETTING_BMBT_DASHBOARD_OBC CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS
-#define CONFIG_SETTING_BMBT_TEMP_HEADERS CONFIG_SETTING_BMBT_TEMP_HEADERS_ADDRESS
+#define CONFIG_SETTING_BMBT_TEMP_DISPLAY CONFIG_SETTING_BMBT_TEMP_DISPLAY_ADDRESS
 #define CONFIG_SETTING_LANGUAGE CONFIG_SETTING_LANGUAGE_ADDRESS
-#define CONFIG_SETTING_TEMPERATURE CONFIG_SETTING_TEMPERATURE_ADDRESS
 /* Config 0x25 - 0x35: Comfort Settings */
 #define CONFIG_SETTING_COMFORT_BLINKERS CONFIG_SETTING_COMFORT_BLINKERS_ADDRESS
 #define CONFIG_SETTING_COMFORT_LOCKS CONFIG_SETTING_COMFORT_LOCKS_ADDRESS
@@ -153,6 +152,8 @@
 
 uint16_t ConfigGetBC127BootFailures();
 unsigned char ConfigGetByte(unsigned char);
+unsigned char ConfigGetByteLowerNibble(unsigned char);
+unsigned char ConfigGetByteUpperNibble(unsigned char);
 unsigned char ConfigGetBuildWeek();
 unsigned char ConfigGetBuildYear();
 unsigned char ConfigGetComfortLock();
@@ -169,6 +170,8 @@ unsigned char ConfigGetNavType();
 uint16_t ConfigGetSerialNumber();
 unsigned char ConfigGetSetting(unsigned char);
 unsigned char ConfigGetTelephonyFeaturesActive();
+unsigned char ConfigGetTempDisplay();
+unsigned char ConfigGetTempUnit();
 unsigned char ConfigGetTrapCount(unsigned char);
 unsigned char ConfigGetTrapLast();
 unsigned char ConfigGetUIMode();
@@ -177,6 +180,8 @@ unsigned char ConfigGetVehicleType();
 unsigned char ConfigGetLanguage();
 void ConfigGetVehicleIdentity(unsigned char *);
 void ConfigSetBC127BootFailures(uint16_t);
+void ConfigSetByteLowerNibble(unsigned char, unsigned char);
+void ConfigSetByteUpperNibble(unsigned char, unsigned char);
 void ConfigSetBootloaderMode(unsigned char);
 void ConfigSetComfortLock(unsigned char);
 void ConfigSetComfortUnlock(unsigned char);
@@ -186,11 +191,12 @@ void ConfigSetLMVariant(unsigned char);
 void ConfigSetLog(unsigned char, unsigned char);
 void ConfigSetSetting(unsigned char, unsigned char);
 void ConfigSetNavType(unsigned char);
+void ConfigSetTempDisplay(unsigned char);
+void ConfigSetTempUnit(unsigned char);
 void ConfigSetTrapCount(unsigned char, unsigned char);
 void ConfigSetTrapIncrement(unsigned char);
 void ConfigSetTrapLast(unsigned char);
 void ConfigSetUIMode(unsigned char);
-void ConfigSetValue(unsigned char, unsigned char);
 void ConfigSetVehicleType(unsigned char);
 void ConfigSetVehicleIdentity(unsigned char *);
 void ConfigSetLanguage(unsigned char);

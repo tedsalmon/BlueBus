@@ -69,7 +69,8 @@
 #define BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU 0
 #define BMBT_MENU_IDX_SETTINGS_UI_METADATA_MODE 1
 #define BMBT_MENU_IDX_SETTINGS_UI_TEMPS 2
-#define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 3
+#define BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC 3
+#define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 4
 
 #define BMBT_MENU_IDX_PAIRING_MODE 0
 #define BMBT_MENU_IDX_CLEAR_PAIRING 1
@@ -132,6 +133,7 @@ void BMBTRADUpdateMainArea(void *, unsigned char *);
 void BMBTScreenModeUpdate(void *, unsigned char *);
 void BMBTScreenModeSet(void *, unsigned char *);
 void BMBTTVStatusUpdate(void *, unsigned char *);
+void BMBTIBusVehicleConfig(void *, unsigned char *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);
 void BMBTTimerScrollDisplay(void *);

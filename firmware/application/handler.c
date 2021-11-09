@@ -151,8 +151,8 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_IKEVehicleType,
-        &HandlerIBusIKEVehicleType,
+        IBUS_EVENT_IKE_VEHICLE_CONFIG,
+        &HandlerIBusIKEVehicleConfig,
         &Context
     );
     EventRegisterCallback(
@@ -1227,16 +1227,16 @@ void HandlerIBusSensorValueUpdate(void *ctx, unsigned char *type)
 }
 
 /**
- * HandlerIBusIKEVehicleType()
+ * HandlerIBusIKEVehicleConfig()
  *     Description:
- *         Set the vehicle type
+ *         Handle updates to the vehicle configuration values
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *pkt - The IBus Packet
  *     Returns:
  *         void
  */
-void HandlerIBusIKEVehicleType(void *ctx, unsigned char *pkt)
+void HandlerIBusIKEVehicleConfig(void *ctx, unsigned char *pkt)
 {
     unsigned char rawVehicleType = (pkt[4] >> 4) & 0xF;
     unsigned char detectedVehicleType = IBusGetVehicleType(pkt);
@@ -1549,8 +1549,8 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
         IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
         // Save the new VIN
         ConfigSetVehicleIdentity(vehicleId);
-        // Request the vehicle type
-        IBusCommandIKEGetVehicleType(context->ibus);
+        // Request the vehicle configuration
+        IBusCommandIKEGetVehicleConfig(context->ibus);
         // Fallback to the CD53 UI as appropriate
         if (context->ibusModuleStatus.MID == 0 &&
             context->ibusModuleStatus.GT == 0 &&

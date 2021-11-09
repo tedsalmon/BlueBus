@@ -48,6 +48,44 @@ unsigned char ConfigGetByte(unsigned char address)
 }
 
 /**
+ * ConfigGetByteLowerNibble()
+ *     Description:
+ *         Get the lower nibble of a given byte from the EEPROM
+ *     Params:
+ *         unsigned char byte - The byte to get
+ *     Returns:
+ *         unsigned char - The value
+ */
+unsigned char ConfigGetByteLowerNibble(unsigned char byte)
+{
+    unsigned char value = CONFIG_SETTING_CACHE[byte];
+    if (value == 0x00) {
+        value = ConfigGetByte(byte);
+        CONFIG_SETTING_CACHE[byte] = value;
+    }
+    return value & 0x0F;
+}
+
+/**
+ * ConfigGetByteUpperNibble()
+ *     Description:
+ *         Get the upper nibble of a given byte from the EEPROM
+ *     Params:
+ *         unsigned char byte - The byte to get
+ *     Returns:
+ *         unsigned char - The value
+ */
+unsigned char ConfigGetByteUpperNibble(unsigned char byte)
+{
+    unsigned char value = CONFIG_SETTING_CACHE[byte];
+    if (value == 0x00) {
+        value = ConfigGetByte(byte);        
+        CONFIG_SETTING_CACHE[byte] = value;
+    }
+    return (value & 0xF0) >> 4;
+}
+
+/**
  * ConfigGetBuildWeek()
  *     Description:
  *         Get the build week
@@ -96,12 +134,7 @@ unsigned char ConfigGetBuildYear()
  */
 unsigned char ConfigGetComfortLock()
 {
-    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS];
-    if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_SETTING_COMFORT_LOCKS);        
-        CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = value;
-    }
-    return (value & 0xF0) >> 4;
+    return ConfigGetByteUpperNibble(CONFIG_SETTING_COMFORT_LOCKS);
 }
 
 /**
@@ -115,12 +148,7 @@ unsigned char ConfigGetComfortLock()
  */
 unsigned char ConfigGetComfortUnlock()
 {
-    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS];
-    if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_SETTING_COMFORT_LOCKS);        
-        CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = value;
-    }
-    return value & 0x0F;
+    return ConfigGetByteLowerNibble(CONFIG_SETTING_COMFORT_LOCKS);
 }
 
 /**
@@ -212,12 +240,7 @@ void ConfigGetFirmwareVersionString(char *version)
  */
 unsigned char ConfigGetIKEType()
 {
-    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
-    if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);        
-        CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
-    }
-    return (value & 0xF0) >> 4;
+    return ConfigGetByteUpperNibble(CONFIG_VEHICLE_TYPE_ADDRESS);
 }
 
 /**
@@ -363,6 +386,34 @@ unsigned char ConfigGetTelephonyFeaturesActive()
 }
 
 /**
+ * ConfigGetTempDisplay()
+ *     Description:
+ *         Return the temperature display configuration value
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetTempDisplay()
+{
+    return ConfigGetByteLowerNibble(CONFIG_SETTING_BMBT_TEMP_DISPLAY);
+}
+
+/**
+ * ConfigGetTempUnit()
+ *     Description:
+ *         Return the temperature units that the vehicle is configured for
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetTempUnit()
+{
+    return ConfigGetByteUpperNibble(CONFIG_SETTING_BMBT_TEMP_DISPLAY);
+}
+
+/**
  * ConfigGetTrapCount()
  *     Description:
  *         Get the number of times a trap has been triggered
@@ -420,12 +471,7 @@ unsigned char ConfigGetUIMode()
  */
 unsigned char ConfigGetVehicleType()
 {
-    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS];
-    if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);
-        CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = value;
-    }
-    return value & 0x0F;
+    return ConfigGetByteLowerNibble(CONFIG_VEHICLE_TYPE_ADDRESS);
 }
 
 /**
@@ -482,8 +528,8 @@ void ConfigGetVehicleIdentity(unsigned char *vin)
  */
 void ConfigSetBC127BootFailures(uint16_t failureCount)
 {
-    ConfigSetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB, failureCount >> 8);
-    ConfigSetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB, failureCount & 0xFF);
+    ConfigSetSetting(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB, failureCount >> 8);
+    ConfigSetSetting(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB, failureCount & 0xFF);
 }
 
 /**
@@ -501,6 +547,46 @@ void ConfigSetBootloaderMode(unsigned char bootloaderMode)
 }
 
 /**
+ * ConfigSetByteLowerNibble()
+ *     Description:
+ *         Set a given setting into the lower nibble of a byte in the EEPROM
+ *     Params:
+ *         unsigned char setting - The setting to set
+ *         unsigned char value - The value to set
+ *     Returns:
+ *         void
+ */
+void ConfigSetByteLowerNibble(unsigned char setting, unsigned char value)
+{
+    unsigned char currentValue = ConfigGetByte(setting);
+    // Store the value in the lower nibble of the comfort locks setting
+    currentValue &= 0xF0;
+    currentValue |= value & 0x0F;
+    CONFIG_SETTING_CACHE[setting] = currentValue;
+    EEPROMWriteByte(setting, currentValue);
+}
+
+/**
+ * ConfigSetByteUpperNibble()
+ *     Description:
+ *         Set a given setting into the upper nibble of a byte in the EEPROM
+ *     Params:
+ *         unsigned char setting - The setting to set
+ *         unsigned char value - The value to set
+ *     Returns:
+ *         void
+ */
+void ConfigSetByteUpperNibble(unsigned char setting, unsigned char value)
+{
+    unsigned char currentValue = ConfigGetByte(setting);
+    // Store the value in the upper nibble of the vehicle type byte
+    currentValue &= 0x0F;
+    currentValue |= (value << 4) & 0xF0;
+    CONFIG_SETTING_CACHE[setting] = currentValue;
+    EEPROMWriteByte(setting, currentValue);
+}
+
+/**
  * ConfigSetComfortLock()
  *     Description:
  *         Set the comfort lock setting
@@ -511,12 +597,7 @@ void ConfigSetBootloaderMode(unsigned char bootloaderMode)
  */
 void ConfigSetComfortLock(unsigned char comfortLock)
 {
-    unsigned char currentValue = ConfigGetByte(CONFIG_SETTING_COMFORT_LOCKS);
-    // Store the value in the upper nibble of the comfort locks setting
-    currentValue &= 0x0F;
-    currentValue |= (comfortLock << 4) & 0xF0;
-    CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = currentValue;
-    EEPROMWriteByte(CONFIG_SETTING_COMFORT_LOCKS, currentValue);
+    ConfigSetByteUpperNibble(CONFIG_SETTING_COMFORT_LOCKS, comfortLock);
 }
 
 /**
@@ -530,12 +611,7 @@ void ConfigSetComfortLock(unsigned char comfortLock)
  */
 void ConfigSetComfortUnlock(unsigned char comfortUnlock)
 {
-    unsigned char currentValue = ConfigGetByte(CONFIG_SETTING_COMFORT_LOCKS);
-    // Store the value in the lower nibble of the comfort locks setting
-    currentValue &= 0xF0;
-    currentValue |= comfortUnlock & 0x0F;
-    CONFIG_SETTING_CACHE[CONFIG_SETTING_COMFORT_LOCKS] = currentValue;
-    EEPROMWriteByte(CONFIG_SETTING_COMFORT_LOCKS, currentValue);
+    ConfigSetByteLowerNibble(CONFIG_SETTING_COMFORT_LOCKS, comfortUnlock);
 }
 
 /**
@@ -573,12 +649,7 @@ void ConfigSetFirmwareVersion(
  */
 void ConfigSetIKEType(unsigned char ikeType)
 {
-    unsigned char currentValue = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);
-    // Store the value in the upper nibble of the vehicle type byte
-    currentValue &= 0x0F;
-    currentValue |= (ikeType << 4) & 0xF0;
-    CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = currentValue;
-    EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, currentValue);
+    ConfigSetByteUpperNibble(CONFIG_VEHICLE_TYPE_ADDRESS, ikeType);
 }
 
 /***
@@ -655,6 +726,34 @@ void ConfigSetSetting(unsigned char setting, unsigned char value)
 }
 
 /**
+ * ConfigSetTempDisplay()
+ *     Description:
+ *         Set the temperature display setting
+ *     Params:
+ *         unsigned char tempDisplay - The temperature display setting
+ *     Returns:
+ *         void
+ */
+void ConfigSetTempDisplay(unsigned char tempDisplay)
+{
+    ConfigSetByteLowerNibble(CONFIG_SETTING_BMBT_TEMP_DISPLAY, tempDisplay);
+}
+
+/**
+ * ConfigSetTempUnit()
+ *     Description:
+ *         Set the temperature unit setting
+ *     Params:
+ *         unsigned char tempUnit - The temperature unit
+ *     Returns:
+ *         void
+ */
+void ConfigSetTempUnit(unsigned char tempUnit)
+{
+    ConfigSetByteUpperNibble(CONFIG_SETTING_BMBT_TEMP_DISPLAY, tempUnit);
+}
+
+/**
  * ConfigSetTrapCount()
  *     Description:
  *         Set the trap count for the given trap
@@ -719,27 +818,6 @@ void ConfigSetUIMode(unsigned char uiMode)
 }
 
 /**
- * ConfigSetValue()
- *     Description:
- *         Set a given value into the EEPROM
- *     Params:
- *         unsigned char value - The value to set
- *         unsigned char data - The data to set
- *     Returns:
- *         void
- */
-void ConfigSetValue(unsigned char value, unsigned char data)
-{
-    // Catch invalid setting addresses
-    if (value >= CONFIG_VALUE_START_ADDRESS &&
-        value <= CONFIG_VALUE_END_ADDRESS
-    ) {
-        CONFIG_VALUE_CACHE[value - CONFIG_VALUE_START_ADDRESS] = data;
-        EEPROMWriteByte(value, data);
-    }
-}
-
-/**
  * ConfigSetVehicleType()
  *     Description:
  *         Set the vehicle type
@@ -750,11 +828,7 @@ void ConfigSetValue(unsigned char value, unsigned char data)
  */
 void ConfigSetVehicleType(unsigned char vehicleType)
 {
-    unsigned char currentValue = ConfigGetByte(CONFIG_VEHICLE_TYPE_ADDRESS);
-    currentValue &= 0xF0;
-    currentValue |= vehicleType & 0x0F;
-    CONFIG_SETTING_CACHE[CONFIG_VEHICLE_TYPE_ADDRESS] = currentValue;
-    EEPROMWriteByte(CONFIG_VEHICLE_TYPE_ADDRESS, currentValue);
+    ConfigSetByteLowerNibble(CONFIG_VEHICLE_TYPE_ADDRESS, vehicleType);
 }
 
 /**

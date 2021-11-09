@@ -155,7 +155,7 @@
 #define IBUS_CMD_IKE_SENSOR_REQ 0x12
 #define IBUS_CMD_IKE_SENSOR_RESP 0x13
 #define IBUS_CMD_IKE_REQ_VEHICLE_TYPE 0x14
-#define IBUS_CMD_IKE_RESP_VEHICLE_TYPE 0x15
+#define IBUS_CMD_IKE_RESP_VEHICLE_CONFIG 0x15
 #define IBUS_CMD_IKE_SPEED_RPM_UPDATE 0x18
 #define IBUS_CMD_IKE_TEMP_UPDATE 0x19
 #define IBUS_CMD_IKE_OBC_TEXT 0x24
@@ -324,7 +324,7 @@
 #define IBUS_SENSOR_VALUE_OIL_TEMP 0x03
 #define IBUS_SENSOR_VALUE_TEMP_UNIT 0x04
 #define IBUS_SENSOR_VALUE_GEAR_POS 0x05
-#define IBUS_SENSOR_VALUE_AMBIENT2_TEMP 0x06
+#define IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED 0x06
 
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
 #define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
@@ -389,7 +389,7 @@
 #define IBUS_EVENT_MIDButtonPress 51
 #define IBUS_EVENT_MIDModeChange 52
 #define IBUS_EVENT_ModuleStatusResponse 54
-#define IBUS_EVENT_IKEVehicleType 55
+#define IBUS_EVENT_IKE_VEHICLE_CONFIG 55
 #define IBUS_EVENT_LCMRedundantData 56
 #define IBUS_EVENT_FirstMessageReceived 57
 #define IBUS_EVENT_GTDIAOSIdentityResponse 58
@@ -435,7 +435,7 @@ typedef struct IBus_t {
     uint32_t rxLastStamp;
     uint32_t txLastStamp;
     signed char ambientTemperature;
-    char ambientTemperature2[7];
+    char ambientTemperatureCalculated[7];
     unsigned char coolantTemperature;
     unsigned char cdChangerFunction;
     unsigned char gearPosition: 4;
@@ -492,7 +492,7 @@ void IBusCommandGTWriteTitleIndex(IBus_t *, char *);
 void IBusCommandGTWriteTitleC43(IBus_t *, char *);
 void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnitionStatus(IBus_t *);
-void IBusCommandIKEGetVehicleType(IBus_t *);
+void IBusCommandIKEGetVehicleConfig(IBus_t *);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKEText(IBus_t *, char *);
 void IBusCommandIKETextClear(IBus_t *);
