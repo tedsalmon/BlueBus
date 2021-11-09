@@ -35,6 +35,7 @@ PROTOCOL_CMD_READ_BUILD_DATE_RESPONSE = 0x13
 PROTOCOL_CMD_WRITE_BUILD_DATE_REQUEST = 0x14
 PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK = 0x15
 PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_ERR = 0x16
+PROTOCOL_ERR_PACKET_TIMEOUT = 0xFE
 PROTOCOL_BAD_PACKET_RESPONSE = 0xFF
 
 rx_buffer = []
@@ -314,6 +315,9 @@ if __name__ == '__main__':
                         if command == PROTOCOL_CMD_START_APP_RESPONSE:
                             print('App Started')
                             sys.exit(0)
+                        if command == PROTOCOL_ERR_PACKET_TIMEOUT:
+                            print("ERR: Packet Timeout")
+                            exit(1)
                         if command == PROTOCOL_BAD_PACKET_RESPONSE:
                             print("ERR: Please try again")
                             tx_buffer = list(last_tx)
