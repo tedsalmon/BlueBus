@@ -11,18 +11,25 @@ uint8_t SETTINGS_MENU[] = {
     CD53_SETTING_IDX_HFP,
     CD53_SETTING_IDX_METADATA_MODE,
     CD53_SETTING_IDX_AUTOPLAY,
+    CD53_SETTING_IDX_LOWER_VOL_REV,
     CD53_SETTING_IDX_VEH_TYPE,
     CD53_SETTING_IDX_BLINKERS,
     CD53_SETTING_IDX_COMFORT_LOCKS,
-    CD53_SETTING_IDX_COMFORT_UNLOCK
+    CD53_SETTING_IDX_COMFORT_UNLOCK,
+    CD53_SETTING_IDX_TEL_VOL_OFFSET,
+    CD53_SETTING_IDX_PAIRINGS
 };
 
 uint8_t SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_HFP,
     CONFIG_SETTING_METADATA_MODE,
     CONFIG_SETTING_AUTOPLAY,
+    CONFIG_SETTING_VOLUME_LOWER_ON_REV,
     CONFIG_VEHICLE_TYPE_ADDRESS,
-    CONFIG_SETTING_COMFORT_BLINKERS
+    CONFIG_SETTING_COMFORT_BLINKERS,
+    0x00,
+    0x00,
+    CONFIG_SETTING_TEL_VOL
 };
 
 void CD53Init(BC127_t *bt, IBus_t *ibus)
@@ -264,18 +271,18 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
                 CONFIG_SETTING_METADATA_MODE
             );
             if (value == CD53_METADATA_MODE_PARTY) {
-                CD53SetMainDisplayText(context, "Meta: Party", 0);
+                CD53SetMainDisplayText(context, "Metadata: Party", 0);
             } else if (value == CD53_METADATA_MODE_CHUNK) {
-                CD53SetMainDisplayText(context, "Meta: Chunk", 0);
+                CD53SetMainDisplayText(context, "Metadata: Chunk", 0);
             } else {
-                CD53SetMainDisplayText(context, "Meta: Party", 0);
+                CD53SetMainDisplayText(context, "Metadata: Party", 0);
                 value = CD53_METADATA_MODE_PARTY;
             }
             context->settingIdx = CD53_SETTING_IDX_METADATA_MODE;
             context->settingValue = value;
         }
         if (nextMenu == CD53_SETTING_IDX_AUTOPLAY) {
-            if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == 0x00) {
+            if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_OFF) {
                 CD53SetMainDisplayText(context, "Autoplay: Off", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
             } else {
@@ -283,6 +290,16 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
                 context->settingValue = CONFIG_SETTING_ON;
             }
             context->settingIdx = CD53_SETTING_IDX_AUTOPLAY;
+        }
+        if (nextMenu == CD53_SETTING_IDX_LOWER_VOL_REV) {
+            if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_OFF) {
+                CD53SetMainDisplayText(context, "Lower Volume On Reverse: Off", 0);
+                context->settingValue = CONFIG_SETTING_OFF;
+            } else {
+                CD53SetMainDisplayText(context, "Lower Vol. On Reverse: On", 0);
+                context->settingValue = CONFIG_SETTING_ON;
+            }
+            context->settingIdx = CD53_SETTING_IDX_LOWER_VOL_REV;
         }
         if (nextMenu == CD53_SETTING_IDX_VEH_TYPE) {
             unsigned char vehicleType = ConfigGetVehicleType();
@@ -301,8 +318,8 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             if (blinkCount > 8 || blinkCount == 0) {
                 blinkCount = 1;
             }
-            char blinkerText[13] = {0};
-            snprintf(blinkerText, 13, "OT Blinks: %d", blinkCount);
+            char blinkerText[19] = {0};
+            snprintf(blinkerText, 19, "Comfort Blinks: %d", blinkCount);
             CD53SetMainDisplayText(context, blinkerText, 0);
             context->settingIdx = CD53_SETTING_IDX_BLINKERS;
             context->settingValue = blinkCount;
@@ -337,6 +354,17 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             }
             context->settingIdx = CD53_SETTING_IDX_COMFORT_UNLOCK;
         }
+        if (nextMenu == CD53_SETTING_IDX_TEL_VOL_OFFSET) {
+            unsigned char telephoneVolume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+            if (telephoneVolume > 0xF || telephoneVolume == 0) {
+                telephoneVolume = 1;
+            }
+            char telephoneVolumeText[21] = {0};
+            snprintf(telephoneVolumeText, 21, "Call Vol. Offset: %d", telephoneVolume);
+            CD53SetMainDisplayText(context, telephoneVolumeText, 0);
+            context->settingIdx = CD53_SETTING_IDX_TEL_VOL_OFFSET;
+            context->settingValue = telephoneVolume;
+        }
         if (nextMenu== CD53_SETTING_IDX_PAIRINGS) {
             CD53SetMainDisplayText(context, "Clear Pairings", 0);
             context->settingIdx = CD53_SETTING_IDX_PAIRINGS;
@@ -348,19 +376,19 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
         // Select different configuration options
         if (context->settingIdx == CD53_SETTING_IDX_HFP) {
             if (context->settingValue == CONFIG_SETTING_OFF) {
-                CD53SetMainDisplayText(context, "Handsfree: On", 0);
+                CD53SetMainDisplayText(context, "On", 0);
                 context->settingValue = CONFIG_SETTING_ON;
             } else {
-                CD53SetMainDisplayText(context, "Handsfree: Off", 0);
+                CD53SetMainDisplayText(context, "Off", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
             }
         }
         if (context->settingIdx == CD53_SETTING_IDX_METADATA_MODE) {
             if (context->settingValue == CD53_METADATA_MODE_CHUNK) {
-                CD53SetMainDisplayText(context, "Meta: Party", 0);
+                CD53SetMainDisplayText(context, "Party", 0);
                 context->settingValue = CD53_METADATA_MODE_PARTY;
             } else if (context->settingValue == CD53_METADATA_MODE_PARTY) {
-                CD53SetMainDisplayText(context, "Meta: Chunk", 0);
+                CD53SetMainDisplayText(context, "Chunk", 0);
                 context->settingValue = CD53_METADATA_MODE_CHUNK;
             }
         }
@@ -370,6 +398,15 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
                 context->settingValue = CONFIG_SETTING_ON;
             } else {
                 CD53SetMainDisplayText(context, "Autoplay: Off", 0);
+                context->settingValue = CONFIG_SETTING_OFF;
+            }
+        }
+        if (context->settingIdx == CD53_SETTING_IDX_LOWER_VOL_REV) {
+            if (context->settingValue == CONFIG_SETTING_OFF) {
+                CD53SetMainDisplayText(context, "On", 0);
+                context->settingValue = CONFIG_SETTING_ON;
+            } else {
+                CD53SetMainDisplayText(context, "Off", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
             }
         }
@@ -390,35 +427,44 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
             if (context->settingValue > 8) {
                 context->settingValue = 1;
             }
-            char blinkerText[13] = {0};
-            snprintf(blinkerText, 13, "OT Blinks: %d", context->settingValue);
+            char blinkerText[2] = {0};
+            snprintf(blinkerText, 2, "%d", context->settingValue);
             CD53SetMainDisplayText(context, blinkerText, 0);
         }
         if (context->settingIdx == CD53_SETTING_IDX_COMFORT_LOCKS) {
             unsigned char comfortLock = ConfigGetComfortLock();
             if (comfortLock == CONFIG_SETTING_OFF) {
-                CD53SetMainDisplayText(context, "Comfort Locks: 10km/h", 0);
+                CD53SetMainDisplayText(context, "10km/h", 0);
                 context->settingValue = CONFIG_SETTING_COMFORT_LOCK_10KM;
             } else if (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM) {
-                CD53SetMainDisplayText(context, "Comfort Locks: 20km/h", 0);
+                CD53SetMainDisplayText(context, "20km/h", 0);
                 context->settingValue = CONFIG_SETTING_COMFORT_LOCK_20KM;
             } else if (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM) {
-                CD53SetMainDisplayText(context, "Comfort Locks: Off", 0);
+                CD53SetMainDisplayText(context, "Off", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
             }
         }
         if (context->settingIdx == CD53_SETTING_IDX_COMFORT_UNLOCK) {
             unsigned char comfortUnlock = ConfigGetComfortUnlock();
             if (comfortUnlock == CONFIG_SETTING_OFF) {
-                CD53SetMainDisplayText(context, "Comfort Unlock: Pos 1", 0);
+                CD53SetMainDisplayText(context, "Pos 1", 0);
                 context->settingValue = CONFIG_SETTING_COMFORT_UNLOCK_POS_1;
             } else if (comfortUnlock == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
-                CD53SetMainDisplayText(context, "Comfort Unlock: Pos 0", 0);
+                CD53SetMainDisplayText(context, "Pos 0", 0);
                 context->settingValue = CONFIG_SETTING_COMFORT_UNLOCK_POS_0;
             } else {
-                CD53SetMainDisplayText(context, "Comfort Unlock: Off", 0);
+                CD53SetMainDisplayText(context, "Off", 0);
                 context->settingValue = CONFIG_SETTING_OFF;
             }
+        }
+        if (context->settingIdx == CD53_SETTING_IDX_TEL_VOL_OFFSET) {
+            context->settingValue++;
+            if (context->settingValue > 0xF) {
+                context->settingValue = 1;
+            }
+            char telephoneVolumeText[3] = {0};
+            snprintf(telephoneVolumeText, 3, "%d", context->settingValue);
+            CD53SetMainDisplayText(context, telephoneVolumeText, 0);
         }
         if (context->settingIdx == CD53_SETTING_IDX_PAIRINGS) {
             if (context->settingValue == CONFIG_SETTING_OFF) {

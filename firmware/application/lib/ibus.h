@@ -202,6 +202,9 @@
 #define IBUS_IGNITION_KLR 0x01
 #define IBUS_IGNITION_KL15 0x03
 #define IBUS_IGNITION_KL50 0x07
+// Make up an ignition status for when the ignition
+// is off but the radio requests playback to begin
+#define IBUS_IGNITION_KL99 0x08
 
 #define IBUS_LCM_LIGHT_STATUS_REQ 0x5A
 #define IBUS_LCM_LIGHT_STATUS_RESP 0x5B
@@ -428,23 +431,25 @@ typedef struct IBus_t {
     uint8_t txBufferWriteIdx;
     uint32_t rxLastStamp;
     uint32_t txLastStamp;
+    signed char ambientTemperature;
+    unsigned char coolantTemperature;
     unsigned char cdChangerFunction;
+    unsigned char gearPosition: 4;
     unsigned char gtVersion;
-    unsigned char vehicleType;
-    unsigned char lmVariant;
-    unsigned char ignitionStatus;
-    unsigned char lmLoadFrontVoltage;
+    unsigned char ignitionStatus: 4;
     unsigned char lmDimmerVoltage;
+    unsigned char lmLoadFrontVoltage;
     unsigned char lmLoadRearVoltage;
     unsigned char lmPhotoVoltage;
+    unsigned char lmVariant;
     unsigned char oilTemperature;
-    unsigned char coolantTemperature;
-    signed char ambientTemperature;
-    unsigned char gear: 4;
+    unsigned char vehicleType;
 } IBus_t;
+
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
 void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, const size_t);
+void IBusSetInternalIgnitionStatus(IBus_t *, unsigned char);
 uint8_t IBusGetLMCodingIndex(unsigned char *);
 uint8_t IBusGetLMDiagnosticIndex(unsigned char *);
 uint8_t IBusGetLMDimmerChecksum(unsigned char *);

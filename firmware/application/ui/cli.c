@@ -287,6 +287,8 @@ void CLIProcess()
                     } else {
                         cmdSuccess = 0;
                     }
+                } else if (UtilsStricmp(msgBuf[1], "PBAP") == 0) {
+                    BC127SendCommand(cli.bt, "PB_PULL 16 3 1 5 0 87");
                 } else if (UtilsStricmp(msgBuf[1], "VERSION") == 0) {
                     BC127CommandVersion(cli.bt);
                 } else {
@@ -478,13 +480,18 @@ void CLIProcess()
                     if (UtilsStricmp(msgBuf[2], "INPUT") == 0) {
                         if (UtilsStricmp(msgBuf[3], "ANALOG") == 0) {
                             ConfigSetSetting(
-                                CONFIG_SETTING_USE_SPDIF_INPUT,
-                                CONFIG_SETTING_OFF
+                                CONFIG_SETTING_DSP_INPUT_SRC,
+                                CONFIG_SETTING_DSP_INPUT_ANALOG
                             );
                         } else if (UtilsStricmp(msgBuf[3], "DIGITAL") == 0) {
                             ConfigSetSetting(
-                                CONFIG_SETTING_USE_SPDIF_INPUT,
-                                CONFIG_SETTING_ON
+                                CONFIG_SETTING_DSP_INPUT_SRC,
+                                CONFIG_SETTING_DSP_INPUT_SPDIF
+                            );
+                        } else if (UtilsStricmp(msgBuf[3], "DEFAULT") == 0) {
+                            ConfigSetSetting(
+                                CONFIG_SETTING_DSP_INPUT_SRC,
+                                CONFIG_SETTING_OFF
                             );
                         } else {
                             cmdSuccess = 0;
@@ -680,7 +687,7 @@ void CLIProcess()
                 LogRaw("    SET COMFORT LOCK x - Lock the car at the given KM/h. 10, 20 or OFF\r\n");
                 LogRaw("    SET COMFORT UNLOCK x - Unock the car at the given ignition position. POS0, POS1 or OFF\r\n");
                 LogRaw("    SET DAC GAIN xx - Set the PCM5122 gain from 0x00 - 0xCF (higher is lower)\r\n");
-                LogRaw("    SET DSP INPUT ANALOG/DIGITAL - Set the CD Changer DSP input\r\n");
+                LogRaw("    SET DSP INPUT ANALOG/DIGITAL/DEFAULT - Set the CD Changer DSP input\r\n");
                 LogRaw("    SET IGN ON/OFF/ALWAYSON - Send the ignition status message or configure the BlueBus to assume the ignition is always on\r\n");
                 LogRaw("    SET LOG x ON/OFF - Change logging for x (BT, IBUS, SYS, UI)\r\n");
                 LogRaw("    SET PWROFF ON/OFF - Enable or disable auto power off\r\n");

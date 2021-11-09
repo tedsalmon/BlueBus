@@ -274,12 +274,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         BMBTInit(bt, ibus);
     }
     if (ConfigGetSetting(CONFIG_SETTING_IGN_ALWAYS_ON) == CONFIG_SETTING_ON) {
-        unsigned char ignitionStatus = 0x01;
-        EventTriggerCallback(
-            IBUS_EVENT_IKEIgnitionStatus,
-            (unsigned char *)&ignitionStatus
-        );
-        ibus->ignitionStatus = ignitionStatus;
+        IBusSetInternalIgnitionStatus(ibus, IBUS_IGNITION_KL15);
     }
 }
 
@@ -384,7 +379,7 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
         // Handle volume control
         if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
             (
-                ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_OFF ||
+                ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC) == CONFIG_SETTING_DSP_INPUT_ANALOG ||
                 context->ibusModuleStatus.DSP == 0
             )
         ) {
@@ -406,71 +401,82 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
             }
         } else {
             unsigned char volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
-            if (context->uiMode == CONFIG_UI_BMBT ||
-                context->uiMode == CONFIG_UI_MID ||
-                context->uiMode == CONFIG_UI_MID_BMBT
-            ) {
-                LogDebug(LOG_SOURCE_SYSTEM, "Call > NAV_MID");
-                if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
-                    if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING) {
-                        IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+            unsigned char dspMode = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
+            if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+                if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
+                    dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
+                    context->ibusModuleStatus.DSP == 1
+                ) {
+                    IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+                }
+                LogDebug(LOG_SOURCE_SYSTEM, "Call > Begin");
+                if (strlen(context->bt->callerId) > 0 &&
+                    context->uiMode != CONFIG_UI_CD53
+                ) {
+                    IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
+                }
+                if (volume > HANDLER_TEL_VOL_OFFSET_MAX) {
+                    volume = HANDLER_TEL_VOL_OFFSET_MAX;
+                    ConfigSetSetting(CONFIG_SETTING_TEL_VOL, HANDLER_TEL_VOL_OFFSET_MAX);
+                }
+                LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %d", volume);
+                unsigned char sourceSystem = IBUS_DEVICE_BMBT;
+                unsigned char volStepMax = 0x03;
+                if (context->ibusModuleStatus.MID == 1) {
+                    sourceSystem = IBUS_DEVICE_MID;
+                }
+                if (context->uiMode == CONFIG_UI_CD53) {
+                    sourceSystem = IBUS_DEVICE_MFL;
+                    volStepMax = 0x01;
+                }
+                while (volume > 0) {
+                    unsigned char volStep = volume;
+                    if (volStep > volStepMax) {
+                        volStep = volStepMax;
                     }
-                    LogDebug(LOG_SOURCE_SYSTEM, "Call > NAV_MID > Begin");
-                    if (strlen(context->bt->callerId) > 0) {
-                        IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
-                    }
-                    if (volume > HANDLER_TEL_VOL_OFFSET_MAX) {
-                        volume = HANDLER_TEL_VOL_OFFSET_MAX;
-                        ConfigSetSetting(CONFIG_SETTING_TEL_VOL, HANDLER_TEL_VOL_OFFSET_MAX);
-                    }
-                    LogDebug(LOG_SOURCE_SYSTEM, "Call > NAV_MID > Volume: %d", volume);
-                    unsigned char sourceSystem = IBUS_DEVICE_BMBT;
-                    if (context->ibusModuleStatus.MID == 1) {
-                        sourceSystem = IBUS_DEVICE_MID;
-                    }
-                    while (volume > 0) {
-                        unsigned char volStep = volume;
-                        if (volStep > 0x03) {
-                            volStep = 0x03;
-                        }
-                        IBusCommandSetVolume(
-                            context->ibus,
-                            sourceSystem,
-                            IBUS_DEVICE_RAD,
-                            (volStep << 4) | 0x01
-                        );
-                        volume = volume - volStep;
-                    }
-                } else {
-                    LogDebug(LOG_SOURCE_SYSTEM, "Call > NAV_MID > End");
-                    // Reset the NAV / DSP / MID volume
-                    // Temporarily set the call status flag to on so we do not alter
-                    // the volume we are lowering ourselves
-                    context->telStatus = HANDLER_TEL_STATUS_VOL_CHANGE;
-                    while (volume > 0) {
-                        unsigned char sourceSystem = IBUS_DEVICE_BMBT;
-                        if (context->ibusModuleStatus.MID == 1) {
-                            sourceSystem = IBUS_DEVICE_MID;
-                        }
-                        unsigned char volStep = volume;
-                        if (volStep > 0x03) {
-                            volStep = 0x03;
-                        }
-                        IBusCommandSetVolume(
-                            context->ibus,
-                            sourceSystem,
-                            IBUS_DEVICE_RAD,
-                            volStep << 4
-                        );
-                        volume = volume - volStep;
-                    }
-                    context->telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
-                    if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING) {
-                        IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
-                    }
+                    IBusCommandSetVolume(
+                        context->ibus,
+                        sourceSystem,
+                        IBUS_DEVICE_RAD,
+                        (volStep << 4) | 0x01
+                    );
+                    volume = volume - volStep;
                 }
             } else {
-                LogDebug(LOG_SOURCE_SYSTEM, "Call > CD53 > Begin");
+                LogDebug(LOG_SOURCE_SYSTEM, "Call > End");
+                // Reset the volume
+                // Temporarily set the call status flag to on so we do not alter
+                // the volume we are lowering ourselves
+                context->telStatus = HANDLER_TEL_STATUS_VOL_CHANGE;
+                unsigned char sourceSystem = IBUS_DEVICE_BMBT;
+                unsigned char volStepMax = 0x03;
+                if (context->ibusModuleStatus.MID == 1) {
+                    sourceSystem = IBUS_DEVICE_MID;
+                }
+                if (context->uiMode == CONFIG_UI_CD53) {
+                    sourceSystem = IBUS_DEVICE_MFL;
+                    volStepMax = 0x01;
+                }
+                while (volume > 0) {
+                    unsigned char volStep = volume;
+                    if (volStep > volStepMax) {
+                        volStep = volStepMax;
+                    }
+                    IBusCommandSetVolume(
+                        context->ibus,
+                        sourceSystem,
+                        IBUS_DEVICE_RAD,
+                        volStep << 4
+                    );
+                    volume = volume - volStep;
+                }
+                context->telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
+                if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
+                    dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
+                    context->ibusModuleStatus.DSP == 1
+                ) {
+                    IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
+                }
             }
         }
     }
@@ -767,8 +773,11 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
         curStatus = IBUS_CDC_STAT_STOP;
         curFunction = IBUS_CDC_FUNC_NOT_PLAYING;
         // Return to non-S/PDIF input once told to stop playback, if enabled
-        if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
+        if (ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC) == CONFIG_SETTING_DSP_INPUT_SPDIF) {
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
+        }
+        if (context->ibus->ignitionStatus == IBUS_IGNITION_KL99) {
+            IBusSetInternalIgnitionStatus(context->ibus, IBUS_IGNITION_OFF);
         }
     } else if (requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
                requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
@@ -829,13 +838,17 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
                 context->seekMode = HANDLER_CDC_SEEK_MODE_NONE;
             }
             if (context->ibusModuleStatus.DSP == 1) {
+                unsigned char dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
                 // Set the Input to S/PDIF once told to start playback, if enabled
-                if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
+                if (dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF) {
                     IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
-                } else {
+                } else if (dspInput == CONFIG_SETTING_DSP_INPUT_ANALOG) {
                     // Set the Input to the radio if we are overridden
                     IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
                 }
+            }
+            if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
+                IBusSetInternalIgnitionStatus(context->ibus, IBUS_IGNITION_KL99);
             }
         } else {
             curStatus = requestedCommand;
@@ -874,21 +887,29 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
 void HandlerIBusDSPConfigSet(void *ctx, unsigned char *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    unsigned char dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
     if (context->ibusModuleStatus.DSP == 1 &&
         context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
     ) {
         if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
-            ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON
+            dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF
         ) {
             // Set the Input to S/PDIF if we are overridden
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
         }
         if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF &&
-            ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_OFF
+            dspInput == CONFIG_SETTING_DSP_INPUT_ANALOG
         ) {
             // Set the Input to the radio if we are overridden
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
         }
+    }
+    // Identify the vehicle using S/PDIF so we can use additional features
+    if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF && dspInput == CONFIG_SETTING_OFF) {
+        ConfigSetSetting(
+            CONFIG_SETTING_DSP_INPUT_SRC,
+            CONFIG_SETTING_DSP_INPUT_SPDIF
+        );
     }
 }
 
@@ -1098,8 +1119,6 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
             BC127CommandTone(Context.bt, "V 0 N C6 L 4");
             // Enable Telephone On
             TEL_ON = 1;
-            // Anounce the CDC to the network
-            HandlerIBusBroadcastCDCStatus(context);
             // Reset the metadata so we don't display the wrong data
             BC127ClearMetadata(context->bt);
             // Set the BT module connectable
@@ -1108,7 +1127,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
             BC127CommandStatus(context->bt);
             BC127CommandList(context->bt);
             // Enable the TEL LEDs
-            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+            if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {
                 if (context->bt->activeDevice.avrcpLinkId == 0 &&
                     context->bt->activeDevice.a2dpLinkId == 0
                 ) {
@@ -1131,7 +1150,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
     } else {
         if (ignitionStatus > IBUS_IGNITION_OFF) {
             HandlerIBusBroadcastCDCStatus(context);
-            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+            if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {
                 HandlerIBusBroadcastTELStatus(context, HANDLER_TEL_STATUS_FORCE);
                 if (context->bt->activeDevice.avrcpLinkId != 0 &&
                     context->bt->activeDevice.a2dpLinkId != 0
@@ -1202,29 +1221,8 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
 void HandlerIBusSensorValueUpdate(void *ctx, unsigned char *type)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    // Lower volume when the transmission is in reverse
-    if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
-        context->bt->activeDevice.a2dpLinkId != 0 &&
-        *type == IBUS_SENSOR_VALUE_GEAR_POS
-    ) {
-        if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
-            context->ibus->gear != IBUS_IKE_GEAR_REVERSE
-        ) {
-            LogWarning(
-                "TRANS OUT OF REV - RAISE VOLUME -- Currently %d",
-                context->bt->activeDevice.a2dpVolume
-            );
-            HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_UP);
-        }
-        if (context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
-            context->ibus->gear == IBUS_IKE_GEAR_REVERSE
-        ) {
-            LogWarning(
-                "TRANS IN REV - LOWER VOLUME -- Currently %d",
-                context->bt->activeDevice.a2dpVolume
-            );
-            HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_DOWN);
-        }
+    if (*type == IBUS_SENSOR_VALUE_GEAR_POS) {
+        context->gearLastStatus = TimerGetMillis();
     }
 }
 
@@ -1584,13 +1582,11 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
     unsigned char mflButton = pkt[IBUS_PKT_DB1];
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_PRESS) {
-            LogDebug(LOG_SOURCE_SYSTEM, "MFL OFF");
             context->mflButtonStatus = HANDLER_MFL_STATUS_OFF;
         }
         if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_REL &&
             context->mflButtonStatus == HANDLER_MFL_STATUS_OFF
         ) {
-            LogDebug(LOG_SOURCE_SYSTEM, "MFL PRESS");
             if (context->bt->callStatus == BC127_CALL_ACTIVE) {
                 BC127CommandCallEnd(context->bt);
             } else if (context->bt->callStatus == BC127_CALL_INCOMING) {
@@ -1605,9 +1601,7 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
                 }
             }
         } else if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_HOLD) {
-            LogDebug(LOG_SOURCE_SYSTEM, "MFL HOLD");
             context->mflButtonStatus = HANDLER_MFL_STATUS_SPEAK_HOLD;
-            LogDebug(LOG_SOURCE_SYSTEM, "Toggle VR");
             BC127CommandToggleVR(context->bt);
         }
     } else {
@@ -1646,7 +1640,7 @@ void HandlerIBusModuleStatusRequest(void *ctx, unsigned char *pkt)
         );
         context->cdChangerLastPoll = TimerGetMillis();
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL &&
-               ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON
+               ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON
     ) {
         IBusCommandSetModuleStatus(
             context->ibus,
@@ -1746,7 +1740,7 @@ void HandlerIBusTELVolumeChange(void *ctx, unsigned char *pkt)
         && (
             context->ibus->cdChangerFunction != IBUS_CDC_FUNC_NOT_PLAYING ||
             (
-                ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON &&
+                ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC) == CONFIG_SETTING_DSP_INPUT_SPDIF &&
                 context->ibusModuleStatus.DSP == 1
             )
         )
@@ -1863,6 +1857,8 @@ void HandlerIBusModuleStatusResponse(void *ctx, unsigned char *pkt)
     } else if (module == IBUS_DEVICE_RAD && context->ibusModuleStatus.RAD == 0) {
         context->ibusModuleStatus.RAD = 1;
         LogInfo(LOG_SOURCE_SYSTEM, "RAD Detected");
+        // If the radio responds, announce that the CD Changer is present
+        IBusCommandCDCAnnounce(context->ibus);
     }
 }
 
@@ -1916,7 +1912,7 @@ uint8_t HandlerIBusBroadcastTELStatus(
     HandlerContext_t *context,
     unsigned char sendFlag
 ) {
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+    if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {
         unsigned char currentTelStatus = 0x00;
         if (context->bt->scoStatus == BC127_CALL_SCO_OPEN) {
             currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE;
@@ -2138,7 +2134,7 @@ void HandlerTimerIBusPings(void *ctx)
         }
         case HANDLER_IBUS_MODULE_PING_STATE_LM: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_TEL;
-            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+            if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {
                 IBusCommandSetModuleStatus(
                     context->ibus,
                     IBUS_DEVICE_TEL,
@@ -2321,14 +2317,16 @@ void HandlerTimerVolumeManagement(void *ctx)
             context->bt->activeDevice.a2dpVolume = 127;
         }
     }
+    unsigned char lowerVolumeOnReverse = ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV);
+    uint32_t now = TimerGetMillis();
     // Lower volume when PDC is active
-    if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
+    if (lowerVolumeOnReverse == CONFIG_SETTING_ON &&
         context->ibusModuleStatus.PDC == 1 &&
         context->bt->activeDevice.a2dpLinkId != 0
     ) {
-        uint32_t now = TimerGetMillis();
-        if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
-            (now - context->pdcLastStatus) > 1500
+        uint32_t timeSinceUpdate = now - context->pdcLastStatus;
+        if (context->volumeMode == HANDLER_WAIT_REV_VOL &&
+            timeSinceUpdate >= HANDLER_WAIT_REV_VOL
         ) {
             LogWarning(
                 "PDC DONE - RAISE VOLUME -- Currently %d",
@@ -2337,10 +2335,36 @@ void HandlerTimerVolumeManagement(void *ctx)
             HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_UP);
         }
         if (context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
-            (now - context->pdcLastStatus) <= 1000
+            timeSinceUpdate <= HANDLER_WAIT_REV_VOL
         ) {
             LogWarning(
                 "PDC START - LOWER VOLUME -- Currently %d",
+                context->bt->activeDevice.a2dpVolume
+            );
+            HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_DOWN);
+        }
+    }
+    // Lower volume when the transmission is in reverse
+    if (lowerVolumeOnReverse == CONFIG_SETTING_ON &&
+        context->bt->activeDevice.a2dpLinkId != 0
+    ) {
+        uint32_t timeSinceUpdate = now - context->gearLastStatus;
+        if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
+            context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE &&
+            timeSinceUpdate >= HANDLER_WAIT_REV_VOL
+        ) {
+            LogWarning(
+                "TRANS OUT OF REV - RAISE VOLUME -- Currently %d",
+                context->bt->activeDevice.a2dpVolume
+            );
+            HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_UP);
+        }
+        if (context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
+            context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE &&
+            timeSinceUpdate >= HANDLER_WAIT_REV_VOL
+        ) {
+            LogWarning(
+                "TRANS IN REV - LOWER VOLUME -- Currently %d",
                 context->bt->activeDevice.a2dpVolume
             );
             HandlerVolumeChange(context, HANDLER_VOLUME_DIRECTION_DOWN);

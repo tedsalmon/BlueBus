@@ -410,16 +410,17 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     } else {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
     }
-    
-    if ((ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF)&&(ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS)!=CONFIG_SETTING_OFF)) {
-        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "    ");
-    } else {
-        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "BT  ");
-    }
+    IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "    ");
     IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
-    //BMBTIBusIKECoolantTempUpdate(context, 0);
-    //BMBTIBusIKEAmbientTempUpdate(context, 0);
-    //BMBTIBusIKEOilTempUpdate(context, 0);
+    uint8_t updates[3] = {
+        IBUS_SENSOR_VALUE_COOLANT_TEMP,
+        IBUS_SENSOR_VALUE_AMBIENT_TEMP,
+        IBUS_SENSOR_VALUE_OIL_TEMP
+    };
+    uint8_t i = 0;
+    for (i = 0; i < sizeof(updates); i++) {
+        BMBTIBusSensorValueUpdate((void *) context, &updates[i]);
+    }
 }
 
 static void BMBTMenuMain(BMBTContext_t *context)
@@ -643,18 +644,26 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
         volText,
         0
     );
-    if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
+    unsigned char dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
+    if (dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT,
             LocaleGetText(LOCALE_STRING_DSP_DIGITAL),
             0
         );
-    } else {
+    } else if (dspInput == CONFIG_SETTING_DSP_INPUT_ANALOG) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT,
             LocaleGetText(LOCALE_STRING_DSP_ANALOG),
+            0
+        );
+    } else {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT,
+            LocaleGetText(LOCALE_STRING_DSP_DEFAULT),
             0
         );
     }
@@ -970,14 +979,18 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
         BMBTGTWriteIndex(context, selectedIdx, volText, 0);
         PCM51XXSetVolume(currentVolume);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT) {
-        if (ConfigGetSetting(CONFIG_SETTING_USE_SPDIF_INPUT) == CONFIG_SETTING_ON) {
-            ConfigSetSetting(CONFIG_SETTING_USE_SPDIF_INPUT, CONFIG_SETTING_OFF);
+        unsigned char dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
+        if (dspInput == CONFIG_SETTING_OFF) {
+            ConfigSetSetting(CONFIG_SETTING_DSP_INPUT_SRC, CONFIG_SETTING_DSP_INPUT_SPDIF);
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_DIGITAL), 0);
+        } else if (dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF) {
+            ConfigSetSetting(CONFIG_SETTING_DSP_INPUT_SRC, CONFIG_SETTING_DSP_INPUT_ANALOG);
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_ANALOG), 0);
         } else {
-            ConfigSetSetting(CONFIG_SETTING_USE_SPDIF_INPUT, CONFIG_SETTING_ON);
-            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_DIGITAL), 0);
+            ConfigSetSetting(CONFIG_SETTING_DSP_INPUT_SRC, CONFIG_SETTING_OFF);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_DEFAULT), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_AUTOPLAY) {
         if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_OFF) {
@@ -1621,29 +1634,28 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     unsigned char updateType = *type;
-    int temp = 0;
+    uint8_t temp = 0;
     char tempUnit = 'C';
-    char redraw = 0;
+    uint8_t redraw = 0;
 
     if (context->status.displayMode == BMBT_DISPLAY_ON) {
-
-        if (ConfigGetSetting(CONFIG_SETTING_TEMPERATURE) == CONFIG_SETTING_TEMP_FAHRENHEIT ) {
+        unsigned char tempSetting = ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS);
+        if (ConfigGetSetting(CONFIG_SETTING_TEMPERATURE) == CONFIG_SETTING_TEMP_FAHRENHEIT) {
             tempUnit = 'F';
         }
-
-        if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_TEMP_COOLANT &&
+        if (tempSetting == CONFIG_SETTING_TEMP_COOLANT &&
             updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP
         ) {
             temp = context->ibus->coolantTemperature;
             if (temp != 0) {
                 redraw = 1;
             }
-        } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_TEMP_AMBIENT &&
+        } else if (tempSetting == CONFIG_SETTING_TEMP_AMBIENT &&
             updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP
         ) {
             temp = context->ibus->ambientTemperature;
             redraw = 1;
-        } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_TEMP_HEADERS) == CONFIG_SETTING_TEMP_OIL &&
+        } else if (tempSetting == CONFIG_SETTING_TEMP_OIL &&
             updateType == IBUS_SENSOR_VALUE_OIL_TEMP
         ) {
             temp = context->ibus->oilTemperature;
@@ -1654,7 +1666,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
 
         if (redraw == 1) {
             char temperature[6] = {0};
-            if ( tempUnit == 'F' ) {
+            if (tempUnit == 'F') {
                 temp = (temp * 1.8 + 32);
             }
             snprintf(temperature, 6, "%d\xB0%c", temp, tempUnit);

@@ -344,6 +344,25 @@ unsigned char ConfigGetSetting(unsigned char setting)
 }
 
 /**
+ * ConfigGetTelephonyFeaturesActive()
+ *     Description:
+ *         Check if any telephone features are active and return a boolean
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetTelephonyFeaturesActive()
+{
+    if (ConfigGetSetting(CONFIG_SETTING_HFP_ADDRESS) == CONFIG_SETTING_ON ||
+        ConfigGetSetting(CONFIG_SETTING_SELF_PLAY_ADDRESS) == CONFIG_SETTING_ON
+    ) {
+        return CONFIG_SETTING_ON;
+    }
+    return CONFIG_SETTING_OFF;
+}
+
+/**
  * ConfigGetTrapCount()
  *     Description:
  *         Get the number of times a trap has been triggered

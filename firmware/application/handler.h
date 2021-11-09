@@ -77,6 +77,8 @@
 #define HANDLER_TEL_STATUS_FORCE 1
 #define HANDLER_TEL_STATUS_VOL_CHANGE 0xFF
 #define HANDLER_TEL_VOL_OFFSET_MAX 0x0F
+#define HANDLER_WAIT_REV_VOL 1000
+
 #define HANDLER_VOLUME_DIRECTION_DOWN 0
 #define HANDLER_VOLUME_DIRECTION_UP 1
 #define HANDLER_VOLUME_MODE_LOWERED 0
@@ -129,6 +131,7 @@ typedef struct HandlerContext_t {
     uint8_t lightingStateTimerId;
     uint32_t cdChangerLastPoll;
     uint32_t cdChangerLastStatus;
+    uint32_t gearLastStatus;
     uint32_t lmLastIOStatus;
     uint32_t lmLastStatusSet;
     uint32_t pdcLastStatus;

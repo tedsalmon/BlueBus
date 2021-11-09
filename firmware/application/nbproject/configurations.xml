@@ -92,13 +92,13 @@
         <targetDevice>PIC24FJ1024GA606</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>pk4hybrid</platformTool>
+        <platformTool>noID</platformTool>
         <languageToolchain>XC16</languageToolchain>
         <languageToolchainVersion>1.60</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <packs>
-        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.4.141"/>
+        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.5.181"/>
       </packs>
       <ScriptingSettings>
       </ScriptingSettings>

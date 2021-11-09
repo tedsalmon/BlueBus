@@ -244,20 +244,18 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_IGN_STATUS_RESP) {
         uint8_t ignitionStatus = pkt[4];
-        if (ignitionStatus == IBUS_IGNITION_OFF) {
-            // Implied that the CDC should not be playing with the ignition off
-            ibus->cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
+        if (ibus->ignitionStatus != IBUS_IGNITION_KL99) {
+            // The order of the items below should not be changed,
+            // otherwise listeners will not know if the ignition status
+            // has changed
+            EventTriggerCallback(
+                IBUS_EVENT_IKEIgnitionStatus,
+                &ignitionStatus
+            );
+            ibus->ignitionStatus = ignitionStatus;
         }
-        // The order of the items below should not be changed,
-        // otherwise listeners will not know if the ignition status
-        // has changed
-        EventTriggerCallback(
-            IBUS_EVENT_IKEIgnitionStatus,
-            &ignitionStatus
-        );
-        ibus->ignitionStatus = ignitionStatus;
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SENSOR_RESP) {
-        ibus->gear = pkt[IBUS_PKT_DB2] >> 4;
+        ibus->gearPosition = pkt[IBUS_PKT_DB2] >> 4;
         unsigned char valueType = IBUS_SENSOR_VALUE_GEAR_POS;
         EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_RESP_VEHICLE_TYPE) {
@@ -692,9 +690,9 @@ void IBusProcess(IBus_t *ibus)
  *         Take a Destination, source and message and add it to the transmit
  *         char queue so we can send it later.
  *     Params:
- *         IBus_t *ibus,
- *         const unsigned char src,
- *         const unsigned char dst,
+ *         IBus_t *ibus
+ *         const unsigned char src
+ *         const unsigned char dst
  *         const unsigned char *data
  *     Returns:
  *         void
@@ -734,6 +732,25 @@ void IBusSendCommand(
     } else {
         ibus->txBufferWriteIdx++;
     }
+}
+
+/***
+ * IBusSetInternalIgnitionStatus()
+ *     Description:
+ *        Allow outside callers to set the current ignition state from the Bus
+ *     Params:
+ *         IBus_t *ibus
+ *         unsigned char ignitionStatus - The ignition status
+ *     Returns:
+ *         void
+ */
+void IBusSetInternalIgnitionStatus(IBus_t *ibus, unsigned char ignitionStatus)
+{
+    EventTriggerCallback(
+        IBUS_EVENT_IKEIgnitionStatus,
+        (unsigned char *)&ignitionStatus
+    );
+    ibus->ignitionStatus = ignitionStatus;
 }
 
 /***
