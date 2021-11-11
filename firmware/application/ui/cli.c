@@ -118,6 +118,10 @@ void CLIProcess()
             }
             if (UtilsStricmp(msgBuf[0], "BOOTLOADER") == 0) {
                 LogRaw("Rebooting into bootloader\r\n");
+                uint32_t now = TimerGetMillis();
+                // Wait 15ms before going into the bootloader
+                // so our message debug goes through to the CLI
+                while (TimerGetMillis() - now <= 15);
                 ConfigSetBootloaderMode(0x01);
                 UtilsReset();
             } else if (UtilsStricmp(msgBuf[0], "BT") == 0) {

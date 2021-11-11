@@ -202,24 +202,8 @@ static void MIDShowNextDevice(MIDContext_t *context, uint8_t direction)
     }
 }
 
-static void MIDShowNextSetting(MIDContext_t *context, uint8_t direction)
+static void MIDShowNextSetting(MIDContext_t *context, uint8_t nextMenu)
 {
-    uint8_t nextMenu = 0;
-    if (context->settingIdx == MID_SETTING_IDX_HFP &&
-        direction != MID_BUTTON_NEXT_VAL
-    ) {
-        nextMenu = MID_SETTINGS_MENU[MID_SETTING_IDX_PAIRINGS];
-    } else if (context->settingIdx == MID_SETTING_IDX_PAIRINGS &&
-               direction == MID_BUTTON_NEXT_VAL
-    ) {
-        nextMenu = MID_SETTINGS_MENU[MID_SETTING_IDX_HFP];
-    } else {
-        if (direction == MID_BUTTON_NEXT_VAL) {
-            nextMenu = MID_SETTINGS_MENU[context->settingIdx + 1];
-        } else {
-            nextMenu = MID_SETTINGS_MENU[context->settingIdx - 1];
-        }
-    }
     if (nextMenu == MID_SETTING_IDX_HFP) {
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == 0x00) {
             MIDSetMainDisplayText(context, "Handsfree: Off", 0);
@@ -681,12 +665,29 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
                         BC127CommandReset(context->bt);
                     }
                 }
+                MIDShowNextSetting(context, context->settingIdx);
             }
         }  else if (btnPressed == MID_BUTTON_PREV_VAL ||
                    btnPressed == MID_BUTTON_NEXT_VAL
         ) {
             if (context->settingMode == MID_SETTING_MODE_SCROLL_SETTINGS) {
-                MIDShowNextSetting(context, btnPressed);
+                uint8_t nextMenu = 0;
+                if (context->settingIdx == MID_SETTING_IDX_HFP &&
+                    btnPressed != MID_BUTTON_NEXT_VAL
+                ) {
+                    nextMenu = MID_SETTINGS_MENU[MID_SETTING_IDX_PAIRINGS];
+                } else if (context->settingIdx == MID_SETTING_IDX_PAIRINGS &&
+                           btnPressed == MID_BUTTON_NEXT_VAL
+                ) {
+                    nextMenu = MID_SETTINGS_MENU[MID_SETTING_IDX_HFP];
+                } else {
+                    if (btnPressed == MID_BUTTON_NEXT_VAL) {
+                        nextMenu = MID_SETTINGS_MENU[context->settingIdx + 1];
+                    } else {
+                        nextMenu = MID_SETTINGS_MENU[context->settingIdx - 1];
+                    }
+                }
+                MIDShowNextSetting(context, nextMenu);
             } else if (context->settingMode == MID_SETTING_MODE_SCROLL_VALUES) {
                 MIDShowNextSettingValue(context, btnPressed);
             }

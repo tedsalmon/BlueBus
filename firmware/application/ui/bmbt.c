@@ -491,6 +491,14 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         } else {
             IBusCommandGTWriteIndex(context->ibus, 4, temperature);
         }
+    } else {
+        // Clear the OBC index if we're not configured for it
+        char emptyIndex[2] = {0x06, 0x00};
+        if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
+            IBusCommandGTWriteIndexStatic(context->ibus, 0x45, emptyIndex);
+        } else {
+            IBusCommandGTWriteIndex(context->ibus, 4, emptyIndex);
+        }
     }
 }
 
@@ -1298,15 +1306,14 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             BMBTIBusSensorValueUpdate((void *)context, &valueType);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OIL), 0);
         } else {
-            ConfigSetTempDisplay(CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OFF), 0);
             // Clear the header area
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, "      ");
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+            ConfigSetTempDisplay(CONFIG_SETTING_OFF);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC) {
-        unsigned char dashboardOBC = ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS);
-        if (dashboardOBC == CONFIG_SETTING_ON) {
+        if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS) == CONFIG_SETTING_ON) {
             BMBTGTWriteIndex(
                 context,
                 BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
@@ -1317,7 +1324,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS,
                 CONFIG_SETTING_OFF
             );
-        } else if (dashboardOBC == CONFIG_SETTING_OFF) {
+        } else {
             BMBTGTWriteIndex(
                 context,
                 BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
