@@ -479,7 +479,11 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
             snprintf(ambtempstr, 7, "A:%s", context->ibus->ambientTemperatureCalculated);
         } else {
-            snprintf(ambtempstr, 7, "A:%+d", ambtemp);
+            if ((ambtemp>=0)&&(((tempUnit == 'F')&&(ambtemp<=37))||(ambtemp<=3))) {
+                snprintf(ambtempstr, 7, "A:*%d", ambtemp);
+            } else {
+                snprintf(ambtempstr, 7, "A:%+d", ambtemp);
+            }
         }
         if (cooltemp > 0) { 
             snprintf(cooltempstr, 8, "C:%d, ", cooltemp);
@@ -1808,7 +1812,13 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
                 }
                 if (config == CONFIG_SETTING_TEMP_AMBIENT) {
                     if (tempUnit == 'F') {
-                        snprintf(temperature, 8, "%+d\xB0%c", temp, tempUnit);
+                        if ((temp>=0)&&(temp<=37)) {
+                            snprintf(temperature, 7, "*%d\xB0%c", temp, tempUnit);
+                        } else {
+                            snprintf(temperature, 7, "%+d\xB0%c", temp, tempUnit);                  
+                        }
+                    } else if ((temp>=0)&&(temp<=3)) {
+                        snprintf(temperature, 8, "*%d.0\xB0%c", temp, tempUnit);
                     } else {
                         snprintf(temperature, 8, "%+d.0\xB0%c", temp, tempUnit);
                     }

@@ -301,6 +301,16 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
                     }
                 }
             }
+            if (ibus->ambientTemperatureCalculated[0]=='+' && 
+                (ibus->ambientTemperatureCalculated[1] < '3' || 
+                    (ibus->ambientTemperatureCalculated[1] == '3' && 
+                      (ibus->ambientTemperatureCalculated[2] <= '7' || ibus->ambientTemperatureCalculated[2] == '.')
+                    )
+                )
+            ) {
+                ibus->ambientTemperatureCalculated[0]='*';
+            }
+
             unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
