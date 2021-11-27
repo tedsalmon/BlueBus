@@ -1759,6 +1759,10 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
     char temperature[8] = {0};
     char config = ConfigGetTempDisplay();
 
+    if (context->ibus->ambientTemperatureCalculated[0] == 0) {
+       IBusCommandOBCControlTempRequest(context->ibus);
+    }
+
     if (context->status.displayMode == BMBT_DISPLAY_ON) {
 
         if (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) {
