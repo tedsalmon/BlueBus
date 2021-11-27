@@ -476,7 +476,11 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
             }
         }
 
-        snprintf(ambtempstr, 7, "A:%+d", ambtemp);
+        if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
+            snprintf(ambtempstr, 7, "A:%s", context->ibus->ambientTemperatureCalculated);
+        } else {
+            snprintf(ambtempstr, 7, "A:%+d", ambtemp);
+        }
         if (cooltemp > 0) { 
             snprintf(cooltempstr, 8, "C:%d, ", cooltemp);
         }
@@ -485,7 +489,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         }
         char temperature[29] = {0};
 
-        snprintf(temperature, 29, "Temp: %s%s%s\xB0%c", oiltempstr, cooltempstr, ambtempstr, tempUnit);
+        snprintf(temperature, 29, "Temp(\xB0%c): %s%s%s", tempUnit, oiltempstr, cooltempstr, ambtempstr);
         if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
             IBusCommandGTWriteIndexStatic(context->ibus, 0x45, temperature);
         } else {
@@ -1799,7 +1803,11 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
                     temp = temp * 1.8 + 32 + 0.5;
                 }
                 if (config == CONFIG_SETTING_TEMP_AMBIENT) {
-                    snprintf(temperature, 8, "%+d\xB0%c", temp, tempUnit);
+                    if (tempUnit == 'F') {
+                        snprintf(temperature, 8, "%+d\xB0%c", temp, tempUnit);
+                    } else {
+                        snprintf(temperature, 8, "%+d.0\xB0%c", temp, tempUnit);
+                    }
                 } else {
                     snprintf(temperature, 8, "%d\xB0%c", temp, tempUnit);                 
                 }
@@ -1814,7 +1822,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
         if (context->menu == BMBT_MENU_DASHBOARD ||
             context->menu == BMBT_MENU_DASHBOARD_FRESH
         ) {
-            BMBTMenuDashboardUpdateOBCValues(context);
+            BMBTMenuDashboard(context);
         }
     }    
 }
