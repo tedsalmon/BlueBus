@@ -2528,6 +2528,21 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
 }
 
+/**
+ * IBusCommandOBCControlTempRequest()
+ *     Description:
+ *        Asks IKE for formated Ambient Temp string
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandOBCControlTempRequest(IBus_t *ibus)
+{
+    unsigned char statusMessage[] = {0x41, 0x03, 0x01};
+    IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_IKE, statusMessage, 3);    
+}
+
 /* Temporary Commands for debugging */
 void IBusCommandIgnitionStatus(IBus_t *ibus, unsigned char status)
 {

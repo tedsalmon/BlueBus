@@ -516,6 +516,7 @@ void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetLED(IBus_t *, unsigned char);
 void IBusCommandTELStatus(IBus_t *, unsigned char);
 void IBusCommandTELStatusText(IBus_t *, char *, unsigned char);
+void IBusCommandOBCControlTempRequest(IBus_t *);
 /* Temporary */
 void IBusCommandIgnitionStatus(IBus_t *, unsigned char);
 void IBusCommandLCMTurnLeft(IBus_t *);
