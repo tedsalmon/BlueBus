@@ -489,7 +489,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         }
         char temperature[29] = {0};
 
-        snprintf(temperature, 29, "Temp(\xB0%c): %s%s%s", tempUnit, oiltempstr, cooltempstr, ambtempstr);
+        snprintf(temperature, 29, "Temps (\xB0%c): %s%s%s", tempUnit, oiltempstr, cooltempstr, ambtempstr);
         if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
             IBusCommandGTWriteIndexStatic(context->ibus, 0x45, temperature);
         } else {
@@ -1822,7 +1822,12 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
         if (context->menu == BMBT_MENU_DASHBOARD ||
             context->menu == BMBT_MENU_DASHBOARD_FRESH
         ) {
-            BMBTMenuDashboard(context);
+            BMBTMenuDashboardUpdateOBCValues(context);
+            if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
+                IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_STATIC);
+            } else {
+                IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+            }
         }
     }    
 }
