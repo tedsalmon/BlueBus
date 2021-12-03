@@ -284,30 +284,31 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
             pkt[IBUS_PKT_LEN] >= 7 &&
             pkt[IBUS_PKT_LEN] <= 11
         ) {
+
+            unsigned char *temp = pkt+6;
+            unsigned char size = pkt[IBUS_PKT_LEN] - 5;
+
+            while ((size > 0) && (temp[0] == ' ')) {
+                temp++;
+                size--;
+            }
+
+            if (size>6) {
+                size=6;
+            }
+
+            while ((size > 0) && ((temp[size-1] == 0x00) || (temp[size-1] == ' ') || (temp[size-1] == '.'))) {
+                size--;
+            }
+
             memset(ibus->ambientTemperatureCalculated, 0, 7);
             memcpy(
                 ibus->ambientTemperatureCalculated,
-                pkt + 6,
-                pkt[IBUS_PKT_LEN] - 5
+                temp,
+                size
             );
-            if (ibus->ambientTemperatureCalculated[4] == ' ' ||
-                ibus->ambientTemperatureCalculated[4] == '.'
-            ) {
-                ibus->ambientTemperatureCalculated[4] = 0;
-                if (ibus->ambientTemperatureCalculated[3] == ' ') {
-                    ibus->ambientTemperatureCalculated[3] = 0;
-                    if (ibus->ambientTemperatureCalculated[2] == ' ') {
-                        ibus->ambientTemperatureCalculated[2] = 0;
-                    }
-                }
-            }
-            if (ibus->ambientTemperatureCalculated[0]=='+' && 
-                (ibus->ambientTemperatureCalculated[1] < '3' || 
-                    (ibus->ambientTemperatureCalculated[1] == '3' && 
-                      (ibus->ambientTemperatureCalculated[2] <= '7' || ibus->ambientTemperatureCalculated[2] == '.')
-                    )
-                )
-            ) {
+
+            if ((ibus->ambientTemperature >= 0)&&(ibus->ambientTemperature <= 3)) {
                 ibus->ambientTemperatureCalculated[0]='*';
             }
 

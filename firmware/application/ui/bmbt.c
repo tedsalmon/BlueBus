@@ -454,9 +454,9 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
 {
     if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS) != CONFIG_SETTING_OFF) {
         char tempUnit = 'C';
-        char ambtempstr[7] = {0};
-        char oiltempstr[8] = {0};
-        char cooltempstr[8] = {0};
+        char ambtempstr[8] = {0};
+        char oiltempstr[7] = {0};
+        char cooltempstr[7] = {0};
         
         if (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) {
             tempUnit = 'F';
@@ -477,23 +477,23 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         }
 
         if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
-            snprintf(ambtempstr, 7, "A:%s", context->ibus->ambientTemperatureCalculated);
+            snprintf(ambtempstr, 8, "A:%s", context->ibus->ambientTemperatureCalculated);
         } else {
-            if ((ambtemp>=0)&&(((tempUnit == 'F')&&(ambtemp<=37))||(ambtemp<=3))) {
-                snprintf(ambtempstr, 7, "A:*%d", ambtemp);
+            if ((context->ibus->ambientTemperature>=0) && (context->ibus->ambientTemperature<=3)) {
+                snprintf(ambtempstr, 8, "A:*%d", ambtemp);
             } else {
-                snprintf(ambtempstr, 7, "A:%+d", ambtemp);
+                snprintf(ambtempstr, 8, "A:%+d", ambtemp);
             }
         }
         if (cooltemp > 0) { 
-            snprintf(cooltempstr, 8, "C:%d, ", cooltemp);
+            snprintf(cooltempstr, 7, "C:%d,", cooltemp);
         }
         if (oiltemp > 0) {
-            snprintf(oiltempstr, 8, "O:%d, ", oiltemp);
+            snprintf(oiltempstr, 7, "O:%d,", oiltemp);
         }
         char temperature[29] = {0};
 
-        snprintf(temperature, 29, "Temps (\xB0%c): %s%s%s", tempUnit, oiltempstr, cooltempstr, ambtempstr);
+        snprintf(temperature, 29, "Temp\xB0%c: %s%s%s", tempUnit, oiltempstr, cooltempstr, ambtempstr);
         if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
             IBusCommandGTWriteIndexStatic(context->ibus, 0x45, temperature);
         } else {
@@ -1823,7 +1823,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
                         snprintf(temperature, 8, "%+d.0\xB0%c", temp, tempUnit);
                     }
                 } else {
-                    snprintf(temperature, 8, "%d\xB0%c", temp, tempUnit);                 
+                    snprintf(temperature, 6, "%d\xB0%c", temp, tempUnit);                 
                 }
             }
         }
