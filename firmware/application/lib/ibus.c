@@ -308,7 +308,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
                 size
             );
 
-            if ((ibus->coolantTemperature>0)&&(ibus->ambientTemperature >= 0)&&(ibus->ambientTemperature <= 3)) {
+            if ((ibus->coolantTemperature > 0)&&(ibus->ambientTemperature >= 0)&&(ibus->ambientTemperature <= 3)) {
                 ibus->ambientTemperatureCalculated[0]='*';
             }
 
