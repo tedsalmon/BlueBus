@@ -284,23 +284,34 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
             pkt[IBUS_PKT_LEN] >= 7 &&
             pkt[IBUS_PKT_LEN] <= 11
         ) {
+
+            unsigned char *temp = pkt+6;
+            unsigned char size = pkt[IBUS_PKT_LEN] - 5;
+
+            while ((size > 0) && (temp[0] == ' ')) {
+                temp++;
+                size--;
+            }
+
+            if (size>6) {
+                size=6;
+            }
+
+            while ((size > 0) && ((temp[size-1] == 0x00) || (temp[size-1] == ' ') || (temp[size-1] == '.'))) {
+                size--;
+            }
+
             memset(ibus->ambientTemperatureCalculated, 0, 7);
             memcpy(
                 ibus->ambientTemperatureCalculated,
-                pkt + 6,
-                pkt[IBUS_PKT_LEN] - 5
+                temp,
+                size
             );
-            if (ibus->ambientTemperatureCalculated[4] == ' ' ||
-                ibus->ambientTemperatureCalculated[4] == '.'
-            ) {
-                ibus->ambientTemperatureCalculated[4] = 0;
-                if (ibus->ambientTemperatureCalculated[3] == ' ') {
-                    ibus->ambientTemperatureCalculated[3] = 0;
-                    if (ibus->ambientTemperatureCalculated[2] == ' ') {
-                        ibus->ambientTemperatureCalculated[2] = 0;
-                    }
-                }
+
+            if ((ibus->coolantTemperature > 0)&&(ibus->ambientTemperature >= 0)&&(ibus->ambientTemperature <= 3)) {
+                ibus->ambientTemperatureCalculated[0]='*';
             }
+
             unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
@@ -356,8 +367,13 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
             pkt[23] != 0x00
         ) {
             // Oil Temp calculation
-            float rawTemperature = (pkt[23] * 0.01275) + (pkt[24] * 0.000050);
-            unsigned char oilTemperature = 1.0 * 67.2529 * log(rawTemperature) + 310.0;
+            uint16_t offset = 310;
+            if (ibus->lmVariant == IBUS_LM_LCM_IV) {
+                offset = 510;
+            }
+ 
+            float rawTemperature = (pkt[23] * 0.00005) + (pkt[24] * 0.01275);
+            unsigned char oilTemperature = 67.2529 * log(rawTemperature) + offset;
             if (oilTemperature != ibus->oilTemperature) {
                 ibus->oilTemperature = oilTemperature;
                 unsigned char valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
@@ -2521,6 +2537,21 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
         statusText[textIdx + 3] = text[textIdx];
     }
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
+}
+
+/**
+ * IBusCommandOBCControlTempRequest()
+ *     Description:
+ *        Asks IKE for formated Ambient Temp string
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandOBCControlTempRequest(IBus_t *ibus)
+{
+    unsigned char statusMessage[] = {0x41, 0x03, 0x01};
+    IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_IKE, statusMessage, 3);    
 }
 
 /* Temporary Commands for debugging */
