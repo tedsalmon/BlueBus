@@ -850,13 +850,17 @@ void MIDTimerDisplay(void *ctx)
                 context->mainDisplay.timeout--;
             } else {
                 if (context->mainDisplay.length > MID_DISPLAY_TEXT_SIZE) {
-                    char text[MID_DISPLAY_TEXT_SIZE + 1];
+                    char text[MID_DISPLAY_TEXT_SIZE + 1] = {0};
+                    uint8_t textLength = MID_DISPLAY_TEXT_SIZE;
+                    // Prevent strncpy() from going out of bounds
+                    if ((context->mainDisplay.index + textLength) > context->mainDisplay.length) {
+                        textLength = context->mainDisplay.length - context->mainDisplay.index;
+                    }
                     strncpy(
                         text,
                         &context->mainDisplay.text[context->mainDisplay.index],
-                        MID_DISPLAY_TEXT_SIZE
+                        textLength
                     );
-                    text[MID_DISPLAY_TEXT_SIZE] = '\0';
                     IBusCommandMIDDisplayText(context->ibus, text);
                     // Pause at the beginning of the text
                     if (context->mainDisplay.index == 0) {

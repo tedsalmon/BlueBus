@@ -908,12 +908,16 @@ void CD53TimerDisplay(void *ctx)
             } else {
                 if (context->mainDisplay.length > CD53_DISPLAY_TEXT_LEN) {
                     char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};
+                    uint8_t textLength = CD53_DISPLAY_TEXT_LEN;
+                    // Prevent strncpy() from going out of bounds
+                    if ((context->mainDisplay.index + textLength) > context->mainDisplay.length) {
+                        textLength = context->mainDisplay.length - context->mainDisplay.index;
+                    }
                     strncpy(
                         text,
                         &context->mainDisplay.text[context->mainDisplay.index],
-                        CD53_DISPLAY_TEXT_LEN
+                        textLength
                     );
-                    text[CD53_DISPLAY_TEXT_LEN] = '\0';
                     if (context->radioType == CONFIG_UI_CD53) {
                         IBusCommandIKEText(context->ibus, text);
                     } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {

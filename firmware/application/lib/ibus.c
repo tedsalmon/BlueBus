@@ -496,6 +496,12 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_DISPLAY_RADIO_MENU) {
             EventTriggerCallback(IBUS_EVENT_RADDisplayMenu, pkt);
         }
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_INDEX &&
+            pkt[IBUS_PKT_DB2] == 0x01 &&
+            pkt[IBUS_PKT_DB3] == 0x00
+        ) {
+            EventTriggerCallback(IBUS_EVENT_SCREEN_BUFFER_FLUSH, pkt);
+        }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_LOC) {
         if (pkt[IBUS_PKT_CMD] == 0x3B) {
             EventTriggerCallback(IBUS_EVENT_CDClearDisplay, pkt);

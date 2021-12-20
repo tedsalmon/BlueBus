@@ -83,6 +83,11 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_SCREEN_BUFFER_FLUSH,
+        &BMBTIBusScreenBufferFlush,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_SENSOR_VALUE_UPDATE,
         &BMBTIBusSensorValueUpdate,
         &Context
@@ -172,6 +177,10 @@ void BMBTDestroy()
     EventUnregisterCallback(
         IBUS_EVENT_CDStatusRequest,
         &BMBTIBusCDChangerStatus
+    );
+    EventUnregisterCallback(
+        IBUS_EVENT_SCREEN_BUFFER_FLUSH,
+        &BMBTIBusScreenBufferFlush
     );
     EventUnregisterCallback(
         IBUS_EVENT_SENSOR_VALUE_UPDATE,
@@ -1738,6 +1747,27 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
             BMBTSettingsUpdateCalling(context, selectedIdx);
         } else if (context->menu == BMBT_MENU_SETTINGS_UI) {
             BMBTSettingsUpdateUI(context, selectedIdx);
+        }
+    }
+}
+
+/**
+ * BMBTIBusScreenBufferFlush()
+ *     Description:
+ *         Respond to screen flushes that may not have been made by us
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         unsigned char *pkt - The I/K-Bus packet
+ *     Returns:
+ *         void
+ */
+void BMBTIBusScreenBufferFlush(void *ctx, unsigned char *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    // Ignore Zone (Header) updates
+    if (pkt[IBUS_PKT_DB1] != IBUS_CMD_GT_WRITE_ZONE) {
+        if (pkt[IBUS_PKT_DB1] != context->status.navIndexType) {
+            IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
         }
     }
 }

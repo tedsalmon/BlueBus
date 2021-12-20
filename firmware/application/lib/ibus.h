@@ -56,6 +56,7 @@
 #define IBUS_PKT_CMD 3
 #define IBUS_PKT_DB1 4
 #define IBUS_PKT_DB2 5
+#define IBUS_PKT_DB3 6
 
 // IBus Commands
 #define IBUS_COMMAND_CDC_REQUEST 0x38
@@ -405,6 +406,7 @@
 #define IBUS_EVENT_TV_STATUS 68
 #define IBUS_EVENT_PDC_STATUS 69
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
+#define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR

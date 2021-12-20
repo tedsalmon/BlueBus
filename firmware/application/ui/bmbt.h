@@ -127,6 +127,7 @@ void BMBTIBusBMBTButtonPress(void *, unsigned char *);
 void BMBTIBusCDChangerStatus(void *, unsigned char *);
 void BMBTIBusGTChangeUIRequest(void *, unsigned char *);
 void BMBTIBusMenuSelect(void *, unsigned char *);
+void BMBTIBusScreenBufferFlush(void *, unsigned char *);
 void BMBTIBusSensorValueUpdate(void *, unsigned char *);
 void BMBTRADDisplayMenu(void *, unsigned char *);
 void BMBTRADUpdateMainArea(void *, unsigned char *);
