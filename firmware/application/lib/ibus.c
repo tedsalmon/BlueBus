@@ -371,7 +371,7 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
             if (ibus->lmVariant == IBUS_LM_LCM_IV) {
                 offset = 510;
             }
- 
+
             float rawTemperature = (pkt[23] * 0.00005) + (pkt[24] * 0.01275);
             unsigned char oilTemperature = 67.2529 * log(rawTemperature) + offset;
             if (oilTemperature != ibus->oilTemperature) {
@@ -1281,211 +1281,6 @@ void IBusCommandSetModuleStatus(
 ) {
     unsigned char msg[] = {IBUS_CMD_MOD_STATUS_RESP, status};
     IBusSendCommand(ibus, source, system, msg, 2);
-}
-
-/**
- * IBusCommandGMDoorCenterLockButton()
- *     Description:
- *        Issue a diagnostic message to the GM to act as if the center
- *        lock button was pressed
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
-{
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            0x00, // Sub-Module
-            IBUS_CMD_ZKE3_GM4_JOB_CENTRAL_LOCK, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    }
-}
-
-/**
- * IBusCommandGMDoorUnlockHigh()
- *     Description:
- *        Issue a diagnostic message to the GM to unlock the high side doors
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
-{
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            0x00, // Sub-Module
-            IBUS_CMD_ZKE3_GM4_JOB_UNLOCK_HIGH, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    }
-}
-
-/**
- * IBusCommandGMDoorUnlockLow()
- *     Description:
- *        Issue a diagnostic message to the GM to unlock the low side doors
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
-{
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_UNLOCK_LOW, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            0x00, // Sub-Module
-            IBUS_CMD_ZKE3_GM4_JOB_UNLOCK_LOW, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    }
-}
-
-/**
- * IBusCommandGMDoorLockHigh()
- *     Description:
- *        Issue a diagnostic message to the GM to lock the high side doors
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandGMDoorLockHigh(IBus_t *ibus)
-{
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            0x00, // Sub-Module
-            IBUS_CMD_ZKE3_GM4_JOB_LOCK_HIGH, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    }
-}
-
-/**
- * IBusCommandGMDoorLockLow()
- *     Description:
- *        Issue a diagnostic message to the GM to lock the low side doors
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandGMDoorLockLow(IBus_t *ibus)
-{
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            0x00, // Sub-Module
-            IBUS_CMD_ZKE3_GM4_JOB_LOCK_LOW, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    }
-}
-
-/**
- * IBusCommandGMDoorUnlockAll()
- *     Description:
- *        Issue a diagnostic message to the GM to unlock all doors
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
-{
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        // Central unlock unlocks all doors on the ZKE3
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            0x00, // Sub-Module
-            IBUS_CMD_ZKE3_GM4_JOB_CENTRAL_LOCK, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    }
-}
-
-/**
- * IBusCommandGMDoorLockAll()
- *     Description:
- *        Issue a diagnostic message to the GM to lock all doors
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandGMDoorLockAll(IBus_t *ibus)
-{
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
-            IBUS_CMD_DIA_JOB_REQUEST,
-            0x00, // Sub-Module
-            IBUS_CMD_ZKE3_GM4_JOB_LOCK_ALL, // Job
-            0x01 // On / Off
-        };
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    }
 }
 
 void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
@@ -2557,7 +2352,7 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
 void IBusCommandOBCControlTempRequest(IBus_t *ibus)
 {
     unsigned char statusMessage[] = {0x41, 0x03, 0x01};
-    IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_IKE, statusMessage, 3);    
+    IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_IKE, statusMessage, 3);
 }
 
 /* Temporary Commands for debugging */

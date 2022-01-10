@@ -237,7 +237,7 @@
 // LCM, LCM_A
 // Different bytes! Update the blinker msg if alternating.
 // Byte 0 (S2_BLK_L switch No.2 left turn / S2_BLK_R switch No.2 right turn)
-// #define IBUS_LCM_BLINKER_LEFT 0x80 
+// #define IBUS_LCM_BLINKER_LEFT 0x80
 // #define IBUS_LCM_BLINKER_RIGHT 0x40
 // Byte 1 (S2_BLK_L switch No.1 left turn / S2_BLK_R switch No.1 right turn)
 #define IBUS_LCM_BLINKER_OFF 0x00
@@ -476,13 +476,6 @@ void IBusCommandDIATerminateDiag(IBus_t *, unsigned char);
 void IBusCommandDSPSetMode(IBus_t *, unsigned char);
 void IBusCommandGetModuleStatus(IBus_t *, unsigned char, unsigned char);
 void IBusCommandSetModuleStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
-void IBusCommandGMDoorCenterLockButton(IBus_t *);
-void IBusCommandGMDoorUnlockHigh(IBus_t *);
-void IBusCommandGMDoorUnlockLow(IBus_t *);
-void IBusCommandGMDoorLockHigh(IBus_t *);
-void IBusCommandGMDoorLockLow(IBus_t *);
-void IBusCommandGMDoorUnlockAll(IBus_t *);
-void IBusCommandGMDoorLockAll(IBus_t *);
 void IBusCommandGTUpdate(IBus_t *, unsigned char);
 void IBusCommandGTWriteBusinessNavTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *);
