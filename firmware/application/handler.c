@@ -1075,12 +1075,12 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
                 context->gmState.doorsLocked == 1
             ) {
                 if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-                    IBusCommandGMDoorCenterLockButton(context->ibus);
+                    // IBusCommandGMDoorCenterLockButton(context->ibus);
                 } else if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
                     if (context->gmState.lowSideDoors == 1) {
-                        IBusCommandGMDoorUnlockAll(context->ibus);
+                        // IBusCommandGMDoorUnlockAll(context->ibus);
                     } else {
-                        IBusCommandGMDoorUnlockHigh(context->ibus);
+                        // IBusCommandGMDoorUnlockHigh(context->ibus);
                     }
                 }
             }
@@ -1094,12 +1094,12 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
                 context->gmState.doorsLocked == 1
             ) {
                 if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-                    IBusCommandGMDoorCenterLockButton(context->ibus);
+                    // IBusCommandGMDoorCenterLockButton(context->ibus);
                 } else if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
                     if (context->gmState.lowSideDoors == 1) {
-                        IBusCommandGMDoorUnlockAll(context->ibus);
+                        // IBusCommandGMDoorUnlockAll(context->ibus);
                     } else {
-                        IBusCommandGMDoorUnlockHigh(context->ibus);
+                        // IBusCommandGMDoorUnlockHigh(context->ibus);
                     }
                 }
             }
@@ -1200,9 +1200,9 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, unsigned char *pkt)
             (comfortLock == CONFIG_SETTING_COMFORT_LOCK_20KM && speed >= 20)
         ) {
             if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-                IBusCommandGMDoorCenterLockButton(context->ibus);
+                // IBusCommandGMDoorCenterLockButton(context->ibus);
             } else {
-                IBusCommandGMDoorLockAll(context->ibus);
+                // IBusCommandGMDoorLockAll(context->ibus);
             }
         }
     }
