@@ -49,6 +49,11 @@
 #define IBUS_DEVICE_BMBT 0xF0 /* On-board monitor */
 #define IBUS_DEVICE_LOC 0xFF /* Local */
 
+// ZKE3 P-Bus devices
+#define IBUS_DEVICE_ZKE3_GM 0x00
+#define IBUS_DEVICE_ZKE3_FT 0x01
+#define IBUS_DEVICE_ZKE3_BT 0x02
+
 // IBus Packet Indices
 #define IBUS_PKT_SRC 0
 #define IBUS_PKT_LEN 1
