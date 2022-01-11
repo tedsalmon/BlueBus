@@ -129,6 +129,24 @@
 
 #define IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP 0x7A
 
+// TZV: Central Locking Button
+#define IBUS_CMD_ZKE3_GM1_TZV 0x0B
+#define IBUS_CMD_ZKE3_GM4_TZV 0x0B // E53 only
+#define IBUS_CMD_ZKE3_GM5_TZV 0x14
+#define IBUS_CMD_ZKE3_GM6_TZV 0x14 // E53 only
+#define IBUS_CMD_ZKE5_TZV 0x03
+#define IBUS_CMD_ZKE5_S12_TZV 0x03
+
+// MER: Unlock (Driver door module)
+#define IBUS_CMD_ZKE3_FT1_MER 0x3A
+#define IBUS_CMD_ZKE3_FT3_MER 0x3A
+#define IBUS_CMD_ZKE3_FT4_MER 0x40 // E53 only
+
+// MER: Unlock (Passenger door module)
+#define IBUS_CMD_ZKE3_BT1_MER 0x3A
+#define IBUS_CMD_ZKE3_BT3_MER 0x3A
+#define IBUS_CMD_ZKE3_BT4_MER 0x40 // E53 only
+
 #define IBUS_CMD_VOLUME_SET 0x32
 
 #define IBUS_CMD_GT_RAD_TV_STATUS 0x4E
