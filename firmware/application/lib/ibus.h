@@ -460,6 +460,8 @@ IBus_t IBusInit();
 void IBusProcess(IBus_t *);
 void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, const size_t);
 void IBusSetInternalIgnitionStatus(IBus_t *, unsigned char);
+uint8_t IBusGetGMDiagnosticIndex(unsigned char *);
+uint8_t IBusGetGMVariant(unsigned char *);
 uint8_t IBusGetLMCodingIndex(unsigned char *);
 uint8_t IBusGetLMDiagnosticIndex(unsigned char *);
 uint8_t IBusGetLMDimmerChecksum(unsigned char *);

@@ -999,6 +999,94 @@ uint8_t IBusGetConfigTemp(unsigned char *packet)
     return tempUnit;
 }
 
+/***
+ * IBusGetGMDiagnosticIndex()
+ *     Description:
+ *        Get the general module diagnostic index
+ *     Params:
+ *         unsigned char *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - the general module diagnostic index
+ */
+uint8_t IBusGetGMDiagnosticIndex(unsigned char *packet)
+{
+    uint8_t diagnosticIndex = {
+        packet[IBUS_GM_DI_ID_OFFSET]
+    };
+    return diagnosticIndex;
+}
+
+/**
+ * IBusGetGMVariant()
+ *     Description:
+ *        Get the general module variant, as per EDIABAS:
+ *        Group file: D_0000.GRP
+*         Version:    1.25
+ *     Params:
+ *         unsigned char *packet - Diagnostics ident packet
+ *     Returns:
+ *         uint8_t - The general module variant
+ */
+uint8_t IBusGetGMVariant(unsigned char *packet)
+{
+    uint8_t diagnosticIndex = IBusGetGMDiagnosticIndex(packet);
+    uint8_t gmVariant = 0;
+
+    LogRaw("\r\nIBus: GM Diagnostic Index: %02X\r\n", diagnosticIndex);
+
+    if (diagnosticIndex < 0x20) {
+        gmVariant = IBUS_GM_ZKE4;
+        LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE4");
+    }
+    switch (diagnosticIndex)
+    {
+        case 0x20:
+        case 0x21:
+        case 0x22:
+            gmVariant = IBUS_GM_ZKE3_GM1;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE3_GM1");
+            break;
+        case 0x25:
+            gmVariant = IBUS_GM_ZKE3_GM5;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE3_GM5");
+            break;
+        case 0x40:
+        case 0x50:
+        case 0x41:
+        case 0x51:
+        case 0x42:
+        case 0x52:
+            gmVariant = IBUS_GM_ZKE5;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE5");
+            break;
+        case 0x45:
+        case 0x55:
+        case 0x46:
+        case 0x56:
+            gmVariant = IBUS_GM_ZKE5_S12;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE5_S12");
+            break;
+        case 0x80:
+        case 0x81:
+            gmVariant = IBUS_GM_ZKE3_GM4;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE3_GM4");
+            break;
+        case 0x85:
+            gmVariant = IBUS_GM_ZKE3_GM6;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE3_GM6");
+            break;
+        case 0xA0:
+            gmVariant = IBUS_GM_BC1;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: BC1");
+            break;
+        case 0xA3:
+            gmVariant = IBUS_GM_BC1RD;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: BC1RD");
+            break;
+    }
+    return gmVariant;
+}
+
 /**
  * IBusCommandCDCAnnounce()
  *     Description:
