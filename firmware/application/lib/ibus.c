@@ -115,6 +115,13 @@ static void IBusHandleGMMessage(unsigned char *pkt)
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
     }
+    // NOTE using length to distinguish ident response could be a risk
+    else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+             pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+             pkt[IBUS_PKT_LEN] == 0x0F)
+    {
+      uint8_t gmVariant = IBusGetGMVariant(pkt);
+    }
 }
 
 /**
