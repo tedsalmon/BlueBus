@@ -123,6 +123,7 @@ static void IBusHandleGMMessage(unsigned char *pkt)
     {
       uint8_t gmVariant = IBusGetGMVariant(pkt);
       ibus->gmVariant = gmVariant;
+      EventTriggerCallback(IBUS_EVENT_GMIdentResponse, &gmVariant);
     }
 }
 

@@ -176,6 +176,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_GMIdentResponse,
+        &HandlerIBusGMIdentResponse,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_MFLButton,
         &HandlerIBusMFLButton,
         &Context
@@ -1281,6 +1286,24 @@ void HandlerIBusLMIdentResponse(void *ctx, unsigned char *variant)
     unsigned char lmVariant = *variant;
     if (ConfigGetLMVariant() != lmVariant) {
         ConfigSetLMVariant(lmVariant);
+    }
+}
+
+/***
+ * HandlerIBusGMIdentResponse()
+ *     Description:
+ *         Identify the ZKE General Module variant
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *type - The light module variant
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGMIdentResponse(void *ctx, unsigned char *variant)
+{
+    unsigned char gmVariant = *variant;
+    if (ConfigGetGMVariant() != gmVariant) {
+        ConfigSetGMVariant(gmVariant);
     }
 }
 

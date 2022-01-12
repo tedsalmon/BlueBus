@@ -411,6 +411,7 @@
 #define IBUS_EVENT_PDC_STATUS 69
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
+#define IBUS_EVENT_GMIdentResponse 72
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR

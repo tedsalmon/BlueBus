@@ -161,6 +161,7 @@ void HandlerIBusIKEVehicleConfig(void *, unsigned char *);
 void HandlerIBusLMLightStatus(void *, unsigned char *);
 void HandlerIBusLMDimmerStatus(void *, unsigned char *);
 void HandlerIBusLMIdentResponse(void *, unsigned char *);
+void HandlerIBusGMIdentResponse(void *, unsigned char *);
 void HandlerIBusLMRedundantData(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerIBusModuleStatusResponse(void *, unsigned char *);
