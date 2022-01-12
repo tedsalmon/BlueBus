@@ -135,6 +135,20 @@
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_LOW 0x37
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_ALL 0x45
 
+// GM ident (0x00) parameter offsets
+#define IBUS_GM_DI_ID_OFFSET 10 // diagnostic index
+
+// General Module variants
+#define IBUS_GM_ZKE3_GM1 1
+#define IBUS_GM_ZKE3_GM4 2 // E53 only
+#define IBUS_GM_ZKE3_GM5 3
+#define IBUS_GM_ZKE3_GM6 4 // E53 only
+#define IBUS_GM_ZKE4 5
+#define IBUS_GM_ZKE5 6
+#define IBUS_GM_ZKE5_S12 7
+#define IBUS_GM_BC1 8
+#define IBUS_GM_BC1RD 9
+
 #define IBUS_CMD_VOLUME_SET 0x32
 
 #define IBUS_CMD_GT_RAD_TV_STATUS 0x4E
