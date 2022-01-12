@@ -111,7 +111,7 @@ static void IBusHandleEWSMessage(unsigned char *pkt)
  *     Returns:
  *         None
  */
-static void IBusHandleGMMessage(unsigned char *pkt)
+static void IBusHandleGMMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
@@ -600,7 +600,7 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleDSPMessage(pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_GM) {
-                        IBusHandleGMMessage(pkt);
+                        IBusHandleGMMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_EWS) {
                         IBusHandleEWSMessage(pkt);
