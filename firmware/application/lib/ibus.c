@@ -32,6 +32,7 @@ IBus_t IBusInit()
     ibus.gtVersion = ConfigGetNavType();
     ibus.vehicleType = ConfigGetVehicleType();
     ibus.lmVariant = ConfigGetLMVariant();
+    ibus.gmVariant = ConfigGetGMVariant();
     ibus.lmLoadFrontVoltage = 0x00; // Front load sensor voltage (LWR)
     ibus.lmDimmerVoltage = 0xFF;
     ibus.lmLoadRearVoltage = 0x00; // Rear load sensor voltage (LWR)
