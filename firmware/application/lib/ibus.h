@@ -453,6 +453,7 @@ typedef struct IBus_t {
     unsigned char lmLoadRearVoltage;
     unsigned char lmPhotoVoltage;
     unsigned char lmVariant;
+    unsigned char gmVariant;
     unsigned char oilTemperature;
     unsigned char vehicleType;
 } IBus_t;
