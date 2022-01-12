@@ -122,6 +122,7 @@ static void IBusHandleGMMessage(unsigned char *pkt)
              pkt[IBUS_PKT_LEN] == 0x0F)
     {
       uint8_t gmVariant = IBusGetGMVariant(pkt);
+      ibus->gmVariant = gmVariant;
     }
 }
 
