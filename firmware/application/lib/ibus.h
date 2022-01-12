@@ -237,7 +237,7 @@
 // LCM, LCM_A
 // Different bytes! Update the blinker msg if alternating.
 // Byte 0 (S2_BLK_L switch No.2 left turn / S2_BLK_R switch No.2 right turn)
-// #define IBUS_LCM_BLINKER_LEFT 0x80 
+// #define IBUS_LCM_BLINKER_LEFT 0x80
 // #define IBUS_LCM_BLINKER_RIGHT 0x40
 // Byte 1 (S2_BLK_L switch No.1 left turn / S2_BLK_R switch No.1 right turn)
 #define IBUS_LCM_BLINKER_OFF 0x00
@@ -356,16 +356,6 @@
 #define IBUS_IKE_GEAR_SIXTH 0x0F
 
 #define IBUS_IKE_TEXT_TEMPERATURE 0x03
-
-#define IBUS_GM_ZKE3_GM1 1
-#define IBUS_GM_ZKE3_GM4 2
-#define IBUS_GM_ZKE3_GM5 3
-#define IBUS_GM_ZKE3_GM6 4
-#define IBUS_GM_ZKE4 5
-#define IBUS_GM_ZKE5 6
-#define IBUS_GM_ZKE5_S12 7
-#define IBUS_GM_ZKEBC1 8
-#define IBUS_GM_ZKEBC1RD 9
 
 // Events
 #define IBUS_EVENT_GTDIAIdentityResponse 32

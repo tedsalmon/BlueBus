@@ -114,51 +114,6 @@ static void IBusHandleGMMessage(unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
-    //} else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_IDENT_RESP) {
-    //    unsigned char diagnosticIdx = pkt[9];
-    //    unsigned char moduleVariant = 0x00;
-    //
-    //    if (diagnosticIdx < 0x20) {
-    //        moduleVariant = IBUS_GM_ZKE4;
-    //    }
-    //    switch (diagnosticIdx) {
-    //        case 0x20:
-    //        case 0x21:
-    //        case 0x22:
-    //            moduleVariant = IBUS_GM_ZKE3_GM1;
-    //            break;
-    //        case 0x25:
-    //            moduleVariant = IBUS_GM_ZKE3_GM5;
-    //            break;
-    //        case 0x40:
-    //        case 0x50:
-    //        case 0x41:
-    //        case 0x51:
-    //        case 0x42:
-    //        case 0x52:
-    //            moduleVariant = IBUS_GM_ZKE5;
-    //            break;
-    //        case 0x45:
-    //        case 0x55:
-    //        case 0x46:
-    //        case 0x56:
-    //            moduleVariant = IBUS_GM_ZKE5_S12;
-    //            break;
-    //        case 0x80:
-    //        case 0x81:
-    //            moduleVariant = IBUS_GM_ZKE3_GM4;
-    //            break;
-    //        case 0x85:
-    //            moduleVariant = IBUS_GM_ZKE3_GM6;
-    //            break;
-    //        case 0xA0:
-    //            moduleVariant = IBUS_GM_ZKEBC1;
-    //            break;
-    //        case 0xA3:
-    //            moduleVariant = IBUS_GM_ZKEBC1RD;
-    //            break;
-    //    }
-    //    // Emit event
     }
 }
 
@@ -371,7 +326,7 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
             if (ibus->lmVariant == IBUS_LM_LCM_IV) {
                 offset = 510;
             }
- 
+
             float rawTemperature = (pkt[23] * 0.00005) + (pkt[24] * 0.01275);
             unsigned char oilTemperature = 67.2529 * log(rawTemperature) + offset;
             if (oilTemperature != ibus->oilTemperature) {
@@ -2557,7 +2512,7 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
 void IBusCommandOBCControlTempRequest(IBus_t *ibus)
 {
     unsigned char statusMessage[] = {0x41, 0x03, 0x01};
-    IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_IKE, statusMessage, 3);    
+    IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_IKE, statusMessage, 3);
 }
 
 /* Temporary Commands for debugging */
