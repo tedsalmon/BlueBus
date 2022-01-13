@@ -1586,7 +1586,7 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
             HandlerSwitchUI(context, CONFIG_UI_CD53);
         }
-    } else if (ConfigGetLMVariant() == CONFIG_SETTING_OFF || ConfigGetGMVariant() == 0x00) {
+    } else if (ConfigGetLMVariant() == CONFIG_SETTING_OFF || ConfigGetGMVariant() == CONFIG_SETTING_OFF) {
         // Identify the LM if we do not have an ID for it
         IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
         // Identify GM variant if not already set in config
