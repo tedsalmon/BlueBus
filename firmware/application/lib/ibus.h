@@ -135,6 +135,20 @@
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_LOW 0x37
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_ALL 0x45
 
+// GM ident (0x00) parameter offsets
+#define IBUS_GM_DI_ID_OFFSET 10 // diagnostic index
+
+// General Module variants
+#define IBUS_GM_ZKE3_GM1 1
+#define IBUS_GM_ZKE3_GM4 2 // E53 only
+#define IBUS_GM_ZKE3_GM5 3
+#define IBUS_GM_ZKE3_GM6 4 // E53 only
+#define IBUS_GM_ZKE4 5
+#define IBUS_GM_ZKE5 6
+#define IBUS_GM_ZKE5_S12 7
+#define IBUS_GM_BC1 8
+#define IBUS_GM_BC1RD 9
+
 #define IBUS_CMD_VOLUME_SET 0x32
 
 #define IBUS_CMD_GT_RAD_TV_STATUS 0x4E
@@ -237,7 +251,7 @@
 // LCM, LCM_A
 // Different bytes! Update the blinker msg if alternating.
 // Byte 0 (S2_BLK_L switch No.2 left turn / S2_BLK_R switch No.2 right turn)
-// #define IBUS_LCM_BLINKER_LEFT 0x80 
+// #define IBUS_LCM_BLINKER_LEFT 0x80
 // #define IBUS_LCM_BLINKER_RIGHT 0x40
 // Byte 1 (S2_BLK_L switch No.1 left turn / S2_BLK_R switch No.1 right turn)
 #define IBUS_LCM_BLINKER_OFF 0x00
@@ -357,16 +371,6 @@
 
 #define IBUS_IKE_TEXT_TEMPERATURE 0x03
 
-#define IBUS_GM_ZKE3_GM1 1
-#define IBUS_GM_ZKE3_GM4 2
-#define IBUS_GM_ZKE3_GM5 3
-#define IBUS_GM_ZKE3_GM6 4
-#define IBUS_GM_ZKE4 5
-#define IBUS_GM_ZKE5 6
-#define IBUS_GM_ZKE5_S12 7
-#define IBUS_GM_ZKEBC1 8
-#define IBUS_GM_ZKEBC1RD 9
-
 // Events
 #define IBUS_EVENT_GTDIAIdentityResponse 32
 #define IBUS_EVENT_CDPoll 33
@@ -407,6 +411,7 @@
 #define IBUS_EVENT_PDC_STATUS 69
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
+#define IBUS_EVENT_GMIdentResponse 72
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -448,6 +453,7 @@ typedef struct IBus_t {
     unsigned char lmLoadRearVoltage;
     unsigned char lmPhotoVoltage;
     unsigned char lmVariant;
+    unsigned char gmVariant;
     unsigned char oilTemperature;
     unsigned char vehicleType;
 } IBus_t;
@@ -456,6 +462,8 @@ IBus_t IBusInit();
 void IBusProcess(IBus_t *);
 void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, const size_t);
 void IBusSetInternalIgnitionStatus(IBus_t *, unsigned char);
+uint8_t IBusGetGMDiagnosticIndex(unsigned char *);
+uint8_t IBusGetGMVariant(unsigned char *);
 uint8_t IBusGetLMCodingIndex(unsigned char *);
 uint8_t IBusGetLMDiagnosticIndex(unsigned char *);
 uint8_t IBusGetLMDimmerChecksum(unsigned char *);
