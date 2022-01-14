@@ -1,7 +1,7 @@
 /*
  * File:   config.h
  * Author: Ted Salmon <tass2001@gmail.com>
- * Description: 
+ * Description:
  *     Get & Set Configuration items on the EEPROM
  */
 #ifndef CONFIG_H
@@ -33,6 +33,7 @@
 #define CONFIG_VEHICLE_TYPE_ADDRESS 0x11
 #define CONFIG_VEHICLE_VIN_ADDRESS {0x12, 0x13, 0x14, 0x15, 0x16}
 #define CONFIG_LM_VARIANT_ADDRESS 0x17
+#define CONFIG_GM_VARIANT_ADDRESS 0x18
 /* EEPROM 0x1A - 0x50: User Configurable Settings */
 /* Config 0x1A - 0x24: UI Settings */
 #define CONFIG_SETTING_METADATA_MODE_ADDRESS 0x1D
@@ -165,6 +166,7 @@ void ConfigGetFirmwareVersionString(char *);
 unsigned char ConfigGetIKEType();
 unsigned char ConfigGetLightingFeaturesActive();
 unsigned char ConfigGetLMVariant();
+unsigned char ConfigGetGMVariant();
 unsigned char ConfigGetLog(unsigned char);
 unsigned char ConfigGetNavType();
 uint16_t ConfigGetSerialNumber();
@@ -188,6 +190,7 @@ void ConfigSetComfortUnlock(unsigned char);
 void ConfigSetFirmwareVersion(unsigned char, unsigned char, unsigned char);
 void ConfigSetIKEType(unsigned char);
 void ConfigSetLMVariant(unsigned char);
+void ConfigSetGMVariant(unsigned char);
 void ConfigSetLog(unsigned char, unsigned char);
 void ConfigSetSetting(unsigned char, unsigned char);
 void ConfigSetNavType(unsigned char);

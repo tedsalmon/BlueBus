@@ -32,6 +32,7 @@ IBus_t IBusInit()
     ibus.gtVersion = ConfigGetNavType();
     ibus.vehicleType = ConfigGetVehicleType();
     ibus.lmVariant = ConfigGetLMVariant();
+    ibus.gmVariant = ConfigGetGMVariant();
     ibus.lmLoadFrontVoltage = 0x00; // Front load sensor voltage (LWR)
     ibus.lmDimmerVoltage = 0xFF;
     ibus.lmLoadRearVoltage = 0x00; // Rear load sensor voltage (LWR)
@@ -110,55 +111,19 @@ static void IBusHandleEWSMessage(unsigned char *pkt)
  *     Returns:
  *         None
  */
-static void IBusHandleGMMessage(unsigned char *pkt)
+static void IBusHandleGMMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
-    //} else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_IDENT_RESP) {
-    //    unsigned char diagnosticIdx = pkt[9];
-    //    unsigned char moduleVariant = 0x00;
-    //
-    //    if (diagnosticIdx < 0x20) {
-    //        moduleVariant = IBUS_GM_ZKE4;
-    //    }
-    //    switch (diagnosticIdx) {
-    //        case 0x20:
-    //        case 0x21:
-    //        case 0x22:
-    //            moduleVariant = IBUS_GM_ZKE3_GM1;
-    //            break;
-    //        case 0x25:
-    //            moduleVariant = IBUS_GM_ZKE3_GM5;
-    //            break;
-    //        case 0x40:
-    //        case 0x50:
-    //        case 0x41:
-    //        case 0x51:
-    //        case 0x42:
-    //        case 0x52:
-    //            moduleVariant = IBUS_GM_ZKE5;
-    //            break;
-    //        case 0x45:
-    //        case 0x55:
-    //        case 0x46:
-    //        case 0x56:
-    //            moduleVariant = IBUS_GM_ZKE5_S12;
-    //            break;
-    //        case 0x80:
-    //        case 0x81:
-    //            moduleVariant = IBUS_GM_ZKE3_GM4;
-    //            break;
-    //        case 0x85:
-    //            moduleVariant = IBUS_GM_ZKE3_GM6;
-    //            break;
-    //        case 0xA0:
-    //            moduleVariant = IBUS_GM_ZKEBC1;
-    //            break;
-    //        case 0xA3:
-    //            moduleVariant = IBUS_GM_ZKEBC1RD;
-    //            break;
-    //    }
-    //    // Emit event
+    }
+    // NOTE using length to distinguish ident response could be a risk
+    else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+             pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+             pkt[IBUS_PKT_LEN] == 0x0F)
+    {
+      uint8_t gmVariant = IBusGetGMVariant(pkt);
+      ibus->gmVariant = gmVariant;
+      EventTriggerCallback(IBUS_EVENT_GMIdentResponse, &gmVariant);
     }
 }
 
@@ -635,7 +600,7 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleDSPMessage(pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_GM) {
-                        IBusHandleGMMessage(pkt);
+                        IBusHandleGMMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_EWS) {
                         IBusHandleEWSMessage(pkt);
@@ -1042,6 +1007,94 @@ uint8_t IBusGetConfigTemp(unsigned char *packet)
 {
     unsigned char tempUnit = (packet[5] >> 1) & 0x1;
     return tempUnit;
+}
+
+/***
+ * IBusGetGMDiagnosticIndex()
+ *     Description:
+ *        Get the general module diagnostic index
+ *     Params:
+ *         unsigned char *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - the general module diagnostic index
+ */
+uint8_t IBusGetGMDiagnosticIndex(unsigned char *packet)
+{
+    uint8_t diagnosticIndex = {
+        packet[IBUS_GM_DI_ID_OFFSET]
+    };
+    return diagnosticIndex;
+}
+
+/**
+ * IBusGetGMVariant()
+ *     Description:
+ *        Get the general module variant, as per EDIABAS:
+ *        Group file: D_0000.GRP
+*         Version:    1.25
+ *     Params:
+ *         unsigned char *packet - Diagnostics ident packet
+ *     Returns:
+ *         uint8_t - The general module variant
+ */
+uint8_t IBusGetGMVariant(unsigned char *packet)
+{
+    uint8_t diagnosticIndex = IBusGetGMDiagnosticIndex(packet);
+    uint8_t gmVariant = 0;
+
+    LogRaw("\r\nIBus: GM Diagnostic Index: %02X\r\n", diagnosticIndex);
+
+    if (diagnosticIndex < 0x20) {
+        gmVariant = IBUS_GM_ZKE4;
+        LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE4");
+    }
+    switch (diagnosticIndex)
+    {
+        case 0x20:
+        case 0x21:
+        case 0x22:
+            gmVariant = IBUS_GM_ZKE3_GM1;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE3_GM1");
+            break;
+        case 0x25:
+            gmVariant = IBUS_GM_ZKE3_GM5;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE3_GM5");
+            break;
+        case 0x40:
+        case 0x50:
+        case 0x41:
+        case 0x51:
+        case 0x42:
+        case 0x52:
+            gmVariant = IBUS_GM_ZKE5;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE5");
+            break;
+        case 0x45:
+        case 0x55:
+        case 0x46:
+        case 0x56:
+            gmVariant = IBUS_GM_ZKE5_S12;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE5_S12");
+            break;
+        case 0x80:
+        case 0x81:
+            gmVariant = IBUS_GM_ZKE3_GM4;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE3_GM4");
+            break;
+        case 0x85:
+            gmVariant = IBUS_GM_ZKE3_GM6;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: ZKE3_GM6");
+            break;
+        case 0xA0:
+            gmVariant = IBUS_GM_BC1;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: BC1");
+            break;
+        case 0xA3:
+            gmVariant = IBUS_GM_BC1RD;
+            LogInfo(LOG_SOURCE_IBUS, "General Module: BC1RD");
+            break;
+    }
+    return gmVariant;
 }
 
 /**

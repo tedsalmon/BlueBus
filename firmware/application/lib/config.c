@@ -1,7 +1,7 @@
 /*
  * File:   config.h
  * Author: Ted Salmon <tass2001@gmail.com>
- * Description: 
+ * Description:
  *     Get & Set Configuration items on the EEPROM
  */
 #include "config.h"
@@ -79,7 +79,7 @@ unsigned char ConfigGetByteUpperNibble(unsigned char byte)
 {
     unsigned char value = CONFIG_SETTING_CACHE[byte];
     if (value == 0x00) {
-        value = ConfigGetByte(byte);        
+        value = ConfigGetByte(byte);
         CONFIG_SETTING_CACHE[byte] = value;
     }
     return (value & 0xF0) >> 4;
@@ -98,7 +98,7 @@ unsigned char ConfigGetBuildWeek()
 {
     unsigned char value = CONFIG_SETTING_CACHE[CONFIG_BUILD_DATE_ADDRESS_WEEK];
     if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_WEEK);        
+        value = ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_WEEK);
         CONFIG_SETTING_CACHE[CONFIG_BUILD_DATE_ADDRESS_WEEK] = value;
     }
     return value;
@@ -117,7 +117,7 @@ unsigned char ConfigGetBuildYear()
 {
     unsigned char value = CONFIG_SETTING_CACHE[CONFIG_BUILD_DATE_ADDRESS_YEAR];
     if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_YEAR);        
+        value = ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_YEAR);
         CONFIG_SETTING_CACHE[CONFIG_BUILD_DATE_ADDRESS_YEAR] = value;
     }
     return value;
@@ -164,7 +164,7 @@ unsigned char ConfigGetFirmwareVersionMajor()
 {
     unsigned char value = CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS];
     if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS);        
+        value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS);
         CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS] = value;
     }
     return value;
@@ -183,7 +183,7 @@ unsigned char ConfigGetFirmwareVersionMinor()
 {
     unsigned char value = CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS];
     if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS);        
+        value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS);
         CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS] = value;
     }
     return value;
@@ -202,7 +202,7 @@ unsigned char ConfigGetFirmwareVersionPatch()
 {
     unsigned char value = CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS];
     if (value == 0x00) {
-        value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS);        
+        value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS);
         CONFIG_SETTING_CACHE[CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS] = value;
     }
     return value;
@@ -277,6 +277,25 @@ unsigned char ConfigGetLMVariant()
     if (value == 0x00) {
         value = ConfigGetByte(CONFIG_LM_VARIANT_ADDRESS);
         CONFIG_SETTING_CACHE[CONFIG_LM_VARIANT_ADDRESS] = value;
+    }
+    return value;
+}
+
+/***
+ * ConfigGetGMVariant()
+ *     Description:
+ *         Get the ZKE General Module variant
+ *     Params:
+ *         None
+ *     Returns:
+ *         unsigned char
+ */
+unsigned char ConfigGetGMVariant()
+{
+    unsigned char value = CONFIG_SETTING_CACHE[CONFIG_GM_VARIANT_ADDRESS];
+    if (value == 0x00) {
+        value = ConfigGetByte(CONFIG_GM_VARIANT_ADDRESS);
+        CONFIG_SETTING_CACHE[CONFIG_GM_VARIANT_ADDRESS] = value;
     }
     return value;
 }
@@ -667,6 +686,21 @@ void ConfigSetLMVariant(unsigned char variant)
     EEPROMWriteByte(CONFIG_LM_VARIANT_ADDRESS, variant);
 }
 
+/***
+ * ConfigSetGMVariant()
+ *     Description:
+ *         Set the ZKE General Module variant
+ *     Params:
+ *         unsigned char version
+ *     Returns:
+ *         void
+ */
+void ConfigSetGMVariant(unsigned char variant)
+{
+    CONFIG_SETTING_CACHE[CONFIG_GM_VARIANT_ADDRESS] = variant;
+    EEPROMWriteByte(CONFIG_GM_VARIANT_ADDRESS, variant);
+}
+
 /**
  * ConfigSetLog()
  *     Description:
@@ -759,7 +793,7 @@ void ConfigSetTempUnit(unsigned char tempUnit)
  *         Set the trap count for the given trap
  *     Params:
  *         unsigned char trap - The trap triggered
- *         uint8_t count - The number 
+ *         uint8_t count - The number
  *     Returns:
  *         void
  */

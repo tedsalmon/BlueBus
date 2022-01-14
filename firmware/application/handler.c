@@ -176,6 +176,11 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_GMIdentResponse,
+        &HandlerIBusGMIdentResponse,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_MFLButton,
         &HandlerIBusMFLButton,
         &Context
@@ -1284,6 +1289,24 @@ void HandlerIBusLMIdentResponse(void *ctx, unsigned char *variant)
     }
 }
 
+/***
+ * HandlerIBusGMIdentResponse()
+ *     Description:
+ *         Identify the ZKE General Module variant
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         unsigned char *type - The light module variant
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGMIdentResponse(void *ctx, unsigned char *variant)
+{
+    unsigned char gmVariant = *variant;
+    if (ConfigGetGMVariant() != gmVariant) {
+        ConfigSetGMVariant(gmVariant);
+    }
+}
+
 /**
  * HandlerIBusLMLightStatus()
  *     Description:
@@ -1547,6 +1570,9 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
         );
         // Request light module ident
         IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+        // Request GM module ident
+        // Note: this will not yield a reply on vehicles with K and I buses.
+        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GM);
         // Save the new VIN
         ConfigSetVehicleIdentity(vehicleId);
         // Request the vehicle configuration
@@ -1560,9 +1586,12 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
             HandlerSwitchUI(context, CONFIG_UI_CD53);
         }
-    } else if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
+    } else if (ConfigGetLMVariant() == CONFIG_SETTING_OFF || ConfigGetGMVariant() == CONFIG_SETTING_OFF) {
         // Identify the LM if we do not have an ID for it
         IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+        // Identify GM variant if not already set in config
+        // Note: this will not yield a reply on vehicles with K and I buses.
+        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GM);
     }
 }
 
