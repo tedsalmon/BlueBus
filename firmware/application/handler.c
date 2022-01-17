@@ -180,6 +180,12 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &HandlerIBusGMIdentResponse,
         &Context
     );
+
+    EventRegisterCallback(
+        IBUS_EVENT_GMCentralLocking,
+        &HandlerIBusGMCentralLockingStatus,
+        &Context
+    );
     EventRegisterCallback(
         IBUS_EVENT_MFLButton,
         &HandlerIBusMFLButton,
