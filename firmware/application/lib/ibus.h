@@ -122,6 +122,20 @@
 
 #define IBUS_CMD_EWS_IMMOBILISER_STATUS 0x74
 
+// 0x7A: doors status
+#define IBUS_CMD_GM_DOORS 0x0F
+#define IBUS_CMD_GM_DOORS_DRIVER 0x01
+#define IBUS_CMD_GM_DOORS_PASSENGER 0x02
+#define IBUS_CMD_GM_DOORS_REAR_RIGHT 0x04
+#define IBUS_CMD_GM_DOORS_REAR_LEFT 0x08
+
+// I appreciate this looks redundant, but I want to distinguish
+// between IBus data and our data structures
+#define IBUS_DOORS_DRIVER 0x1
+#define IBUS_DOORS_PASSENGER 0x2
+#define IBUS_DOORS_REAR_RIGHT 0x4
+#define IBUS_DOORS_REAR_LEFT 0x8
+
 // 0x7A: central locking status
 #define IBUS_CMD_GM_CENTRAL_LOCKING 0x30
 #define IBUS_CMD_GM_CENTRAL_LOCKING_UNLOCKED 0x10
