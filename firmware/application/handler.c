@@ -937,6 +937,27 @@ void HandlerIBusFirstMessageReceived(void *ctx, unsigned char *pkt)
     }
 }
 
+// TODO annotate
+void HandlerIBusGMCentralLockingStatus(void *ctx, unsigned char *centralLockingStatus)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+
+    switch (centralLockingStatus) {
+      case IBUS_CENTRAL_LOCKING_UNLOCKED:
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locking: UNLOCKED");
+        context->gmState.centralLockingStatus = IBUS_CENTRAL_LOCKING_UNLOCKED;
+        break;
+      case IBUS_CENTRAL_LOCKING_LOCKED:
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locking: LOCKED");
+        context->gmState.centralLockingStatus = IBUS_CENTRAL_LOCKING_LOCKED;
+        break;
+      case IBUS_CENTRAL_LOCKING_ARRESTED:
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locking: ARRESTED");
+        context->gmState.centralLockingStatus = IBUS_CENTRAL_LOCKING_ARRESTED;
+        break;
+    }
+}
+
 /**
  * HandlerIBusGMDoorsFlapStatusResponse()
  *     Description:
