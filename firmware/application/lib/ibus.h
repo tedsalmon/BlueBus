@@ -436,6 +436,7 @@
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
 #define IBUS_EVENT_GMIdentResponse 72
+#define IBUS_EVENT_GMDoors 73
 #define IBUS_EVENT_GMCentralLocking 74
 
 // Configuration and protocol definitions
