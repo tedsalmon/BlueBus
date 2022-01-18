@@ -1016,7 +1016,7 @@ void HandlerIBusGMDoorsStatus(void *ctx, unsigned char *doorStatus)
       }
     }
 
-    context->gmState.doorStatus = doorStatus
+    context->gmState.doorStatus = doorStatus;
 }
 
 /**

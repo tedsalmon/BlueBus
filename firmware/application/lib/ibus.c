@@ -122,7 +122,7 @@ static void IBusHandleGMMessage(IBus_t *ibus, unsigned char *pkt)
         uint8_t doorsValue = pkt[4] & IBUS_CMD_GM_DOORS;
 
         if(ibus->gmDoors != doorsValue) {
-          ibus->gmDoors = doorsValue
+          ibus->gmDoors = doorsValue;
           EventTriggerCallback(IBUS_EVENT_GMDoors, doorsValue);
         }
 
