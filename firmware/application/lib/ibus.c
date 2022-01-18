@@ -121,8 +121,8 @@ static void IBusHandleGMMessage(IBus_t *ibus, unsigned char *pkt)
         // Door status
         uint8_t doorsValue = pkt[4] & IBUS_CMD_GM_DOORS;
 
-        if(context->gmDoors != doorsValue) {
-          context->gmDoors = doorsValue
+        if(ibus->gmDoors != doorsValue) {
+          ibus->gmDoors = doorsValue
           EventTriggerCallback(IBUS_EVENT_GMDoors, doorsValue);
         }
 
@@ -131,20 +131,20 @@ static void IBusHandleGMMessage(IBus_t *ibus, unsigned char *pkt)
 
         switch (centralLockingValue) {
           case IBUS_CMD_GM_CENTRAL_LOCKING_UNLOCKED:
-            if(context->gmCentralLocking != IBUS_CENTRAL_LOCKING_UNLOCKED) {
-              context->gmCentralLocking = IBUS_CENTRAL_LOCKING_UNLOCKED;
+            if(ibus->gmCentralLocking != IBUS_CENTRAL_LOCKING_UNLOCKED) {
+              ibus->gmCentralLocking = IBUS_CENTRAL_LOCKING_UNLOCKED;
               EventTriggerCallback(IBUS_EVENT_GMCentralLocking, IBUS_CENTRAL_LOCKING_UNLOCKED);
             }
             break;
           case IBUS_CMD_GM_CENTRAL_LOCKING_LOCKED:
-            if(context->gmCentralLocking != IBUS_CENTRAL_LOCKING_LOCKED) {
-              context->gmCentralLocking = IBUS_CENTRAL_LOCKING_LOCKED;
+            if(ibus->gmCentralLocking != IBUS_CENTRAL_LOCKING_LOCKED) {
+              ibus->gmCentralLocking = IBUS_CENTRAL_LOCKING_LOCKED;
               EventTriggerCallback(IBUS_EVENT_GMCentralLocking, IBUS_CENTRAL_LOCKING_LOCKED);
             }
             break;
           case IBUS_CMD_GM_CENTRAL_LOCKING_ARRESTED:
-            if(context->gmCentralLocking != IBUS_CENTRAL_LOCKING_ARRESTED) {
-              context->gmCentralLocking = IBUS_CENTRAL_LOCKING_ARRESTED;
+            if(ibus->gmCentralLocking != IBUS_CENTRAL_LOCKING_ARRESTED) {
+              ibus->gmCentralLocking = IBUS_CENTRAL_LOCKING_ARRESTED;
               EventTriggerCallback(IBUS_EVENT_GMCentralLocking, IBUS_CENTRAL_LOCKING_ARRESTED);
             }
             break;
