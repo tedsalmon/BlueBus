@@ -117,6 +117,38 @@ static void IBusHandleGMMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
+
+        // Door status
+        uint8_t doorsValue = pkt[4] & IBUS_CMD_GM_DOORS;
+
+        if(context->gmDoors != doorsValue) {
+          context->gmDoors = doorsValue
+          EventTriggerCallback(IBUS_EVENT_GMDoors, doorsValue);
+        }
+
+        // Central locking status
+        uint8_t centralLockingValue = pkt[4] & IBUS_CMD_GM_CENTRAL_LOCKING;
+
+        switch (centralLockingValue) {
+          case IBUS_CMD_GM_CENTRAL_LOCKING_UNLOCKED:
+            if(context->gmCentralLocking != IBUS_CENTRAL_LOCKING_UNLOCKED) {
+              context->gmCentralLocking = IBUS_CENTRAL_LOCKING_UNLOCKED;
+              EventTriggerCallback(IBUS_EVENT_GMCentralLocking, IBUS_CENTRAL_LOCKING_UNLOCKED);
+            }
+            break;
+          case IBUS_CMD_GM_CENTRAL_LOCKING_LOCKED:
+            if(context->gmCentralLocking != IBUS_CENTRAL_LOCKING_LOCKED) {
+              context->gmCentralLocking = IBUS_CENTRAL_LOCKING_LOCKED;
+              EventTriggerCallback(IBUS_EVENT_GMCentralLocking, IBUS_CENTRAL_LOCKING_LOCKED);
+            }
+            break;
+          case IBUS_CMD_GM_CENTRAL_LOCKING_ARRESTED:
+            if(context->gmCentralLocking != IBUS_CENTRAL_LOCKING_ARRESTED) {
+              context->gmCentralLocking = IBUS_CENTRAL_LOCKING_ARRESTED;
+              EventTriggerCallback(IBUS_EVENT_GMCentralLocking, IBUS_CENTRAL_LOCKING_ARRESTED);
+            }
+            break;
+        }
     }
     // NOTE using length to distinguish ident response could be a risk
     else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
