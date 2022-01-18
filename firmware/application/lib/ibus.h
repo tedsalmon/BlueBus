@@ -482,6 +482,8 @@ typedef struct IBus_t {
     unsigned char gmVariant;
     unsigned char oilTemperature;
     unsigned char vehicleType;
+    unsigned char gmCentralLocking: 2;
+    unsigned char gmDoors: 4;
 } IBus_t;
 
 IBus_t IBusInit();

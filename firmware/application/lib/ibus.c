@@ -47,6 +47,8 @@ IBus_t IBusInit()
     ibus.txBufferReadbackIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
+    ibus.gmCentralLocking = 0x00
+    ibus.gmDoors = 0x00
     return ibus;
 }
 
