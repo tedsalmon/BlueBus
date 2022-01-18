@@ -949,7 +949,16 @@ void HandlerIBusFirstMessageReceived(void *ctx, unsigned char *pkt)
     }
 }
 
-// TODO annotate
+/**
+ * HandlerIBusGMCentralLockingStatus()
+ *     Description:
+ *         Track the General Module's central locking state.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *centralLockingStatus - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerIBusGMCentralLockingStatus(void *ctx, uint8_t *centralLockingStatus)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
@@ -970,7 +979,16 @@ void HandlerIBusGMCentralLockingStatus(void *ctx, uint8_t *centralLockingStatus)
     }
 }
 
-// TODO annotate
+/**
+ * HandlerIBusGMDoorsStatus()
+ *     Description:
+ *         Track the General Module's door state.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *doorStatus - Any event data
+ *     Returns:
+ *         void
+ */
 void HandlerIBusGMDoorsStatus(void *ctx, uint8_t *doorStatus)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
