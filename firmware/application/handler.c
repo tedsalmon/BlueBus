@@ -964,6 +964,55 @@ void HandlerIBusGMCentralLockingStatus(void *ctx, unsigned char *centralLockingS
     }
 }
 
+// TODO annotate
+void HandlerIBusGMDoorsStatus(void *ctx, unsigned char *doorStatus)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+
+    uint8_t doorsDelta = context->gmState.doorStatus ^ doorStatus;
+
+    // Evaluate state change
+    if(doorsDelta & IBUS_DOORS_DRIVER == 1) {
+      // Evaluate state
+      if(doorStatus & IBUS_DOORS_DRIVER == 1) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: DRIVER OPEN");
+      }
+      // Explicit/verbose for clarity (rather than trailing 'else')
+      else if (doorStatus & IBUS_DOORS_DRIVER == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: DRIVER CLOSED");
+      }
+    }
+
+    if(doorsDelta & IBUS_DOORS_PASSENGER == 1) {
+      if(doorStatus & IBUS_DOORS_PASSENGER == 1) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: PASSENGER OPEN");
+      }
+      else if (doorStatus & IBUS_DOORS_PASSENGER == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: PASSENGER CLOSED");
+      }
+    }
+
+    if(doorsDelta & IBUS_DOORS_REAR_RIGHT == 1) {
+      if(doorStatus & IBUS_DOORS_REAR_RIGHT == 1) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: REAR RIGHT OPEN");
+      }
+      else if (doorStatus & IBUS_DOORS_REAR_RIGHT == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: REAR RIGHT CLOSED");
+      }
+    }
+
+    if(doorsDelta & IBUS_DOORS_REAR_LEFT == 1) {
+      if(doorStatus & IBUS_DOORS_REAR_LEFT == 1) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: REAR LEFT OPEN");
+      }
+      else if (doorStatus & IBUS_DOORS_REAR_LEFT == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: REAR LEFT CLOSED");
+      }
+    }
+
+    context->gmState.doorStatus = doorStatus
+}
+
 /**
  * HandlerIBusGMDoorsFlapStatusResponse()
  *     Description:
