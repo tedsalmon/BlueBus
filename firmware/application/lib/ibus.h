@@ -376,7 +376,7 @@
 #define IBUS_EVENT_BMBTButton 37
 #define IBUS_EVENT_GTMenuSelect 38
 #define IBUS_EVENT_ScreenModeUpdate 39
-#define IBUS_EVENT_RADUpdateMainArea 40
+#define IBUS_EVENT_RAD_WRITE_DISPLAY 40
 #define IBUS_EVENT_ScreenModeSet 41
 #define IBUS_EVENT_RADDiagResponse 42
 #define IBUS_EVENT_MFLButton 43
@@ -496,8 +496,8 @@ void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnitionStatus(IBus_t *);
 void IBusCommandIKEGetVehicleConfig(IBus_t *);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
-void IBusCommandIKEText(IBus_t *, char *);
-void IBusCommandIKETextClear(IBus_t *);
+void IBusCommandTELIKEDisplayWrite(IBus_t *, char *);
+void IBusCommandTELIKEDisplayClear(IBus_t *);
 void IBusCommandLMActivateBulbs(IBus_t *, unsigned char, unsigned char);
 void IBusCommandLMGetClusterIndicators(IBus_t *);
 void IBusCommandLMGetRedundantData(IBus_t *);

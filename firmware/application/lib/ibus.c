@@ -491,7 +491,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
             EventTriggerCallback(IBUS_EVENT_ScreenModeUpdate, pkt);
         }
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_UPDATE_MAIN_AREA) {
-            EventTriggerCallback(IBUS_EVENT_RADUpdateMainArea, pkt);
+            EventTriggerCallback(IBUS_EVENT_RAD_WRITE_DISPLAY, pkt);
         }
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_DISPLAY_RADIO_MENU) {
             EventTriggerCallback(IBUS_EVENT_RADDisplayMenu, pkt);
@@ -502,12 +502,19 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
         ) {
             EventTriggerCallback(IBUS_EVENT_SCREEN_BUFFER_FLUSH, pkt);
         }
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_IKE) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_TITLE &&
+            pkt[IBUS_PKT_DB1] == 0x41 &&
+            pkt[IBUS_PKT_DB2] == 0x30
+        ) {
+            EventTriggerCallback(IBUS_EVENT_RAD_WRITE_DISPLAY, pkt);
+        }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_LOC) {
         if (pkt[IBUS_PKT_CMD] == 0x3B) {
             EventTriggerCallback(IBUS_EVENT_CDClearDisplay, pkt);
         }
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_UPDATE_MAIN_AREA) {
-            EventTriggerCallback(IBUS_EVENT_RADUpdateMainArea, pkt);
+            EventTriggerCallback(IBUS_EVENT_RAD_WRITE_DISPLAY, pkt);
         }
         if (pkt[IBUS_PKT_CMD] == IBUS_DSP_CMD_CONFIG_SET) {
             EventTriggerCallback(IBUS_EVENT_DSPConfigSet, pkt);
@@ -1831,49 +1838,6 @@ void IBusCommandIKESetTime(IBus_t *ibus, uint8_t hour, uint8_t minute)
 }
 
 /**
- * IBusCommandIKEText()
- *     Description:
- *        Send text to the Business Radio
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *         char *message - The to display on the MID
- *     Returns:
- *         void
- */
-void IBusCommandIKEText(IBus_t *ibus, char *message)
-{
-    unsigned char displayText[strlen(message) + 3];
-    displayText[0] = 0x23;
-    displayText[1] = 0x42;
-    displayText[2] = 0x32;
-    uint8_t idx;
-    for (idx = 0; idx < strlen(message); idx++) {
-        displayText[idx + 3] = message[idx];
-    }
-    IBusSendCommand(
-        ibus,
-        IBUS_DEVICE_TEL,
-        IBUS_DEVICE_IKE,
-        displayText,
-        sizeof(displayText)
-    );
-}
-
-/**
- * IBusCommandIKETextClear()
- *     Description:
- *        Send an empty string to the Business Radio to clear the display
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandIKETextClear(IBus_t *ibus)
-{
-    IBusCommandIKEText(ibus, 0);
-}
-
-/**
  * IBusCommandLMActivateBulbs()
  *     Description:
  *        Light module diagnostics: Activate bulbs
@@ -2471,6 +2435,49 @@ void IBusCommandSetVolume(
         msg,
         sizeof(msg)
     );
+}
+
+/**
+ * IBusCommandTELIKEDisplayWrite()
+ *     Description:
+ *        Send text to the Business Radio
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *message - The to display
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
+{
+    unsigned char displayText[strlen(message) + 3];
+    displayText[0] = 0x23;
+    displayText[1] = 0x42;
+    displayText[2] = 0x32;
+    uint8_t idx;
+    for (idx = 0; idx < strlen(message); idx++) {
+        displayText[idx + 3] = message[idx];
+    }
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_TEL,
+        IBUS_DEVICE_IKE,
+        displayText,
+        sizeof(displayText)
+    );
+}
+
+/**
+ * IBusCommandTELIKEDisplayClear()
+ *     Description:
+ *        Send an empty string to the Business Radio to clear the display
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELIKEDisplayClear(IBus_t *ibus)
+{
+    IBusCommandTELIKEDisplayWrite(ibus, 0);
 }
 
 /**

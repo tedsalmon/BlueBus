@@ -852,9 +852,11 @@ void MIDTimerDisplay(void *ctx)
                 if (context->mainDisplay.length > MID_DISPLAY_TEXT_SIZE) {
                     char text[MID_DISPLAY_TEXT_SIZE + 1] = {0};
                     uint8_t textLength = MID_DISPLAY_TEXT_SIZE;
+                    uint8_t idxEnd = context->mainDisplay.index + textLength;
                     // Prevent strncpy() from going out of bounds
-                    if ((context->mainDisplay.index + textLength) > context->mainDisplay.length) {
+                    if (idxEnd >= context->mainDisplay.length) {
                         textLength = context->mainDisplay.length - context->mainDisplay.index;
+                        idxEnd = context->mainDisplay.index + textLength;
                     }
                     strncpy(
                         text,
@@ -866,7 +868,6 @@ void MIDTimerDisplay(void *ctx)
                     if (context->mainDisplay.index == 0) {
                         context->mainDisplay.timeout = 5;
                     }
-                    uint8_t idxEnd = context->mainDisplay.index + MID_DISPLAY_TEXT_SIZE;
                     if (idxEnd >= context->mainDisplay.length) {
                         // Pause at the end of the text
                         context->mainDisplay.timeout = 2;

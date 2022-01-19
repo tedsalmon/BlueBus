@@ -69,7 +69,7 @@ int main(void)
     SYSTEM_UART_RX_PIN_MODE = 1;
     EEPROM_SDI_PIN_MODE = 1;
     SYS_DTR_MODE = 1;
-    
+
     // Set the UART mode to MCU for the remainder of this application code
     UART_SEL = UART_SEL_MCU;
     // Enable the IBus Regulator
@@ -109,7 +109,6 @@ int main(void)
     struct IBus_t ibus = IBusInit();
     UARTAddModuleHandler(&ibus.uart);
 
-    
     // WM8804 and PCM5122 must be initialized after the I2C Bus
     WM88XXInit();
     PCM51XXInit();
@@ -146,7 +145,6 @@ void TrapWait()
         TimerDelayMicroseconds(1000);
         sleepCount++;
     }
-    
     UtilsReset();
 }
 

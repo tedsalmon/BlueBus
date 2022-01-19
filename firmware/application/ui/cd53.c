@@ -92,8 +92,8 @@ void CD53Init(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_RADUpdateMainArea,
-        &CD53IBusRADUpdateMainArea,
+        IBUS_EVENT_RAD_WRITE_DISPLAY,
+        &CD53IBusRADWriteDisplay,
         &Context
     );
     Context.displayUpdateTaskId = TimerRegisterScheduledTask(
@@ -151,8 +151,8 @@ void CD53Destroy()
         &CD53IBusMFLButton
     );
     EventUnregisterCallback(
-        IBUS_EVENT_RADUpdateMainArea,
-        &CD53IBusRADUpdateMainArea
+        IBUS_EVENT_RAD_WRITE_DISPLAY,
+        &CD53IBusRADWriteDisplay
     );
     TimerUnregisterScheduledTask(&CD53TimerDisplay);
     memset(&Context, 0, sizeof(CD53Context_t));
@@ -813,7 +813,7 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
     uint8_t btPlaybackStatus = context->bt->playbackStatus;
     if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
         // Stop Playing
-        IBusCommandIKETextClear(context->ibus);
+        IBusCommandTELIKEDisplayClear(context->ibus);
         context->mode = CD53_MODE_OFF;
     } else if (requestedCommand == IBUS_CDC_CMD_START_PLAYING) {
         // Start Playing
@@ -865,11 +865,13 @@ void CD53IBusMFLButton(void *ctx, unsigned char *pkt)
     }
 }
 
-void CD53IBusRADUpdateMainArea(void *ctx, unsigned char *pkt)
+void CD53IBusRADWriteDisplay(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == 0xC4) {
         context->radioType = CONFIG_UI_BUSINESS_NAV;
+    }
+    if (context->mode != CD53_MODE_OFF) {
         CD53RedisplayText(context);
     }
 }
@@ -889,7 +891,7 @@ void CD53TimerDisplay(void *ctx)
             }
             if (context->tempDisplay.status == CD53_DISPLAY_STATUS_NEW) {
                 if (context->radioType == CONFIG_UI_CD53) {
-                    IBusCommandIKEText(
+                    IBusCommandTELIKEDisplayWrite(
                         context->ibus,
                         context->tempDisplay.text
                     );
@@ -909,9 +911,11 @@ void CD53TimerDisplay(void *ctx)
                 if (context->mainDisplay.length > CD53_DISPLAY_TEXT_LEN) {
                     char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};
                     uint8_t textLength = CD53_DISPLAY_TEXT_LEN;
+                    uint8_t idxEnd = context->mainDisplay.index + textLength;
                     // Prevent strncpy() from going out of bounds
-                    if ((context->mainDisplay.index + textLength) > context->mainDisplay.length) {
+                    if (idxEnd >= context->mainDisplay.length) {
                         textLength = context->mainDisplay.length - context->mainDisplay.index;
+                        idxEnd = context->mainDisplay.index + textLength;
                     }
                     strncpy(
                         text,
@@ -919,7 +923,7 @@ void CD53TimerDisplay(void *ctx)
                         textLength
                     );
                     if (context->radioType == CONFIG_UI_CD53) {
-                        IBusCommandIKEText(context->ibus, text);
+                        IBusCommandTELIKEDisplayWrite(context->ibus, text);
                     } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
                         IBusCommandGTWriteBusinessNavTitle(context->ibus, text);
                     }
@@ -927,7 +931,6 @@ void CD53TimerDisplay(void *ctx)
                     if (context->mainDisplay.index == 0) {
                         context->mainDisplay.timeout = 5;
                     }
-                    uint8_t idxEnd = context->mainDisplay.index + CD53_DISPLAY_TEXT_LEN;
                     if (idxEnd >= context->mainDisplay.length) {
                         // Pause at the end of the text
                         context->mainDisplay.timeout = 2;
@@ -945,7 +948,7 @@ void CD53TimerDisplay(void *ctx)
                 } else {
                     if (context->mainDisplay.index == 0) {
                         if (context->radioType == CONFIG_UI_CD53) {
-                            IBusCommandIKEText(context->ibus, context->mainDisplay.text);
+                            IBusCommandTELIKEDisplayWrite(context->ibus, context->mainDisplay.text);
                         } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
                             IBusCommandGTWriteBusinessNavTitle(context->ibus, context->mainDisplay.text);
                         }

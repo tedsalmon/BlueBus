@@ -98,7 +98,7 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_RADUpdateMainArea,
+        IBUS_EVENT_RAD_WRITE_DISPLAY,
         &BMBTRADUpdateMainArea,
         &Context
     );
@@ -199,7 +199,7 @@ void BMBTDestroy()
         &BMBTRADDisplayMenu
     );
     EventUnregisterCallback(
-        IBUS_EVENT_RADUpdateMainArea,
+        IBUS_EVENT_RAD_WRITE_DISPLAY,
         &BMBTRADUpdateMainArea
     );
     EventUnregisterCallback(
@@ -2192,19 +2192,24 @@ void BMBTTimerScrollDisplay(void *ctx)
             context->mainDisplay.timeout--;
         } else {
             if (context->mainDisplay.length > 9) {
-                char text[10] = {0};
+                char text[BMBT_DISPLAY_TEXT_LEN + 1] = {0};
+                uint8_t textLength = BMBT_DISPLAY_TEXT_LEN;
+                uint8_t idxEnd = context->mainDisplay.index + textLength;
+                // Prevent strncpy() from going out of bounds
+                if (idxEnd >= context->mainDisplay.length) {
+                    textLength = context->mainDisplay.length - context->mainDisplay.index;
+                    idxEnd = context->mainDisplay.index + textLength;
+                }
                 strncpy(
                     text,
                     &context->mainDisplay.text[context->mainDisplay.index],
-                    9
+                    textLength
                 );
-                text[9] = '\0';
                 BMBTGTWriteTitle(context, text);
                 // Pause at the beginning of the text
                 if (context->mainDisplay.index == 0) {
                     context->mainDisplay.timeout = 5;
                 }
-                uint8_t idxEnd = context->mainDisplay.index + 9;
                 if (idxEnd >= context->mainDisplay.length) {
                     // Pause at the end of the text
                     context->mainDisplay.timeout = 2;

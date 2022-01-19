@@ -280,31 +280,33 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
 
 static void HandlerSwitchUI(HandlerContext_t *context, unsigned char newUi)
 {
-    // Unregister the previous UI
-    if (context->uiMode == CONFIG_UI_CD53 ||
-        context->uiMode == CONFIG_UI_BUSINESS_NAV
-    ) {
-        CD53Destroy();
-    } else if (context->uiMode == CONFIG_UI_BMBT) {
-        BMBTDestroy();
-    } else if (context->uiMode == CONFIG_UI_MID) {
-        MIDDestroy();
-    } else if (context->uiMode == CONFIG_UI_MID_BMBT) {
-        MIDDestroy();
-        BMBTDestroy();
+    if (context->uiMode != newUi) {
+        // Unregister the previous UI
+        if (context->uiMode == CONFIG_UI_CD53 ||
+            context->uiMode == CONFIG_UI_BUSINESS_NAV
+        ) {
+            CD53Destroy();
+        } else if (context->uiMode == CONFIG_UI_BMBT) {
+            BMBTDestroy();
+        } else if (context->uiMode == CONFIG_UI_MID) {
+            MIDDestroy();
+        } else if (context->uiMode == CONFIG_UI_MID_BMBT) {
+            MIDDestroy();
+            BMBTDestroy();
+        }
+        if (newUi == CONFIG_UI_CD53 || newUi == CONFIG_UI_BUSINESS_NAV) {
+            CD53Init(context->bt, context->ibus);
+        } else if (newUi == CONFIG_UI_BMBT) {
+            BMBTInit(context->bt, context->ibus);
+        } else if (newUi == CONFIG_UI_MID) {
+            MIDInit(context->bt, context->ibus);
+        } else if (newUi == CONFIG_UI_MID_BMBT) {
+            MIDInit(context->bt, context->ibus);
+            BMBTInit(context->bt, context->ibus);
+        }
+        ConfigSetUIMode(newUi);
+        context->uiMode = newUi;
     }
-    if (newUi == CONFIG_UI_CD53 || newUi == CONFIG_UI_BUSINESS_NAV) {
-        CD53Init(context->bt, context->ibus);
-    } else if (newUi == CONFIG_UI_BMBT) {
-        BMBTInit(context->bt, context->ibus);
-    } else if (newUi == CONFIG_UI_MID) {
-        MIDInit(context->bt, context->ibus);
-    } else if (newUi == CONFIG_UI_MID_BMBT) {
-        MIDInit(context->bt, context->ibus);
-        BMBTInit(context->bt, context->ibus);
-    }
-    ConfigSetUIMode(newUi);
-    context->uiMode = newUi;
 }
 
 /**
@@ -752,16 +754,15 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             if (context->ibusModuleStatus.MID == 0 &&
                 context->ibusModuleStatus.GT == 0 &&
                 context->ibusModuleStatus.BMBT == 0 &&
-                context->ibusModuleStatus.VM == 0
+                context->ibusModuleStatus.VM == 0 &&
+                context->uiMode != CONFIG_UI_CD53
             ) {
                 // Fallback for vehicle UI Identification
                 // If no UI has been detected and we have been
                 // running at least 30s, default to CD53 UI
                 LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
                 HandlerSwitchUI(context, CONFIG_UI_CD53);
-            } else if (context->ibusModuleStatus.GT == 1 &&
-                       ConfigGetUIMode() == 0
-            ) {
+            } else if (context->ibusModuleStatus.GT == 1) {
                 // Request the Navigation Identity
                 IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
             }
@@ -1555,7 +1556,8 @@ void HandlerIBusLMRedundantData(void *ctx, unsigned char *pkt)
         if (context->ibusModuleStatus.MID == 0 &&
             context->ibusModuleStatus.GT == 0 &&
             context->ibusModuleStatus.BMBT == 0 &&
-            context->ibusModuleStatus.VM == 0
+            context->ibusModuleStatus.VM == 0 &&
+            context->uiMode != CONFIG_UI_CD53
         ) {
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
             HandlerSwitchUI(context, CONFIG_UI_CD53);
