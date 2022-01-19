@@ -87,6 +87,8 @@
 typedef struct HandlerBodyModuleStatus_t {
     uint8_t lowSideDoors: 1;
     uint8_t doorsLocked: 1;
+    uint8_t centralLockingStatus: 2;
+    uint8_t doorStatus: 4;
 } HandlerBodyModuleStatus_t;
 
 typedef struct HandlerLightControlStatus_t {
@@ -162,6 +164,8 @@ void HandlerIBusLMLightStatus(void *, unsigned char *);
 void HandlerIBusLMDimmerStatus(void *, unsigned char *);
 void HandlerIBusLMIdentResponse(void *, unsigned char *);
 void HandlerIBusGMIdentResponse(void *, unsigned char *);
+void HandlerIBusGMDoorsStatus(void *, unsigned char *);
+void HandlerIBusGMCentralLockingStatus(void *, unsigned char *);
 void HandlerIBusLMRedundantData(void *, unsigned char *);
 void HandlerIBusMFLButton(void *, unsigned char *);
 void HandlerIBusModuleStatusResponse(void *, unsigned char *);
