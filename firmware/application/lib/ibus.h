@@ -122,6 +122,30 @@
 
 #define IBUS_CMD_EWS_IMMOBILISER_STATUS 0x74
 
+// 0x7A: doors status
+#define IBUS_CMD_GM_DOORS 0x0F
+#define IBUS_CMD_GM_DOORS_DRIVER 0x01
+#define IBUS_CMD_GM_DOORS_PASSENGER 0x02
+#define IBUS_CMD_GM_DOORS_REAR_RIGHT 0x04
+#define IBUS_CMD_GM_DOORS_REAR_LEFT 0x08
+
+// I appreciate this looks redundant, but I want to distinguish
+// between IBus data and our data structures
+#define IBUS_DOORS_DRIVER 0x1
+#define IBUS_DOORS_PASSENGER 0x2
+#define IBUS_DOORS_REAR_RIGHT 0x4
+#define IBUS_DOORS_REAR_LEFT 0x8
+
+// 0x7A: central locking status
+#define IBUS_CMD_GM_CENTRAL_LOCKING 0x30
+#define IBUS_CMD_GM_CENTRAL_LOCKING_UNLOCKED 0x10
+#define IBUS_CMD_GM_CENTRAL_LOCKING_LOCKED 0x20
+#define IBUS_CMD_GM_CENTRAL_LOCKING_ARRESTED 0x30
+
+#define IBUS_CENTRAL_LOCKING_UNLOCKED 1
+#define IBUS_CENTRAL_LOCKING_LOCKED 2
+#define IBUS_CENTRAL_LOCKING_ARRESTED 3
+
 #define IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP 0x7A
 #define IBUS_CMD_ZKE3_GM4_JOB_CENTRAL_LOCK 0x0B
 #define IBUS_CMD_ZKE3_GM4_JOB_LOCK_HIGH 0x40
@@ -412,6 +436,8 @@
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
 #define IBUS_EVENT_GMIdentResponse 72
+#define IBUS_EVENT_GMDoors 73
+#define IBUS_EVENT_GMCentralLocking 74
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -456,6 +482,8 @@ typedef struct IBus_t {
     unsigned char gmVariant;
     unsigned char oilTemperature;
     unsigned char vehicleType;
+    unsigned char gmCentralLocking: 2;
+    unsigned char gmDoors: 4;
 } IBus_t;
 
 IBus_t IBusInit();

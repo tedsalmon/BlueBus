@@ -180,6 +180,18 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &HandlerIBusGMIdentResponse,
         &Context
     );
+
+    EventRegisterCallback(
+        IBUS_EVENT_GMCentralLocking,
+        &HandlerIBusGMCentralLockingStatus,
+        &Context
+    );
+
+    EventRegisterCallback(
+        IBUS_EVENT_GMDoors,
+        &HandlerIBusGMDoorsStatus,
+        &Context
+    );
     EventRegisterCallback(
         IBUS_EVENT_MFLButton,
         &HandlerIBusMFLButton,
@@ -935,6 +947,94 @@ void HandlerIBusFirstMessageReceived(void *ctx, unsigned char *pkt)
     if (context->ibusModulePingState == HANDLER_IBUS_MODULE_PING_STATE_OFF) {
         context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_READY;
     }
+}
+
+/**
+ * HandlerIBusGMCentralLockingStatus()
+ *     Description:
+ *         Track the General Module's central locking state.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *centralLockingStatus - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGMCentralLockingStatus(void *ctx, uint8_t *centralLockingStatus)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+
+    switch (*centralLockingStatus) {
+      case IBUS_CENTRAL_LOCKING_UNLOCKED:
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locking: UNLOCKED");
+        context->gmState.centralLockingStatus = IBUS_CENTRAL_LOCKING_UNLOCKED;
+        break;
+      case IBUS_CENTRAL_LOCKING_LOCKED:
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locking: LOCKED");
+        context->gmState.centralLockingStatus = IBUS_CENTRAL_LOCKING_LOCKED;
+        break;
+      case IBUS_CENTRAL_LOCKING_ARRESTED:
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locking: ARRESTED");
+        context->gmState.centralLockingStatus = IBUS_CENTRAL_LOCKING_ARRESTED;
+        break;
+    }
+}
+
+/**
+ * HandlerIBusGMDoorsStatus()
+ *     Description:
+ *         Track the General Module's door state.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *doorStatus - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGMDoorsStatus(void *ctx, uint8_t *doorStatus)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+
+    uint8_t doorsDelta = context->gmState.doorStatus ^ *doorStatus;
+
+    // Evaluate state change
+    if((doorsDelta & IBUS_DOORS_DRIVER) == 1) {
+      // Evaluate state
+      if((*doorStatus & IBUS_DOORS_DRIVER) == 1) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: DRIVER OPEN");
+      }
+      // Explicit/verbose for clarity (rather than trailing 'else')
+      else if ((*doorStatus & IBUS_DOORS_DRIVER) == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: DRIVER CLOSED");
+      }
+    }
+
+    if((doorsDelta & IBUS_DOORS_PASSENGER) == 1) {
+      if((*doorStatus & IBUS_DOORS_PASSENGER) == 1) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: PASSENGER OPEN");
+      }
+      else if ((*doorStatus & IBUS_DOORS_PASSENGER) == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: PASSENGER CLOSED");
+      }
+    }
+
+    if((doorsDelta & IBUS_DOORS_REAR_RIGHT) == 1) {
+      if((*doorStatus & IBUS_DOORS_REAR_RIGHT) == 1) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: REAR RIGHT OPEN");
+      }
+      else if ((*doorStatus & IBUS_DOORS_REAR_RIGHT) == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: REAR RIGHT CLOSED");
+      }
+    }
+
+    if((doorsDelta & IBUS_DOORS_REAR_LEFT) == 1) {
+      if((*doorStatus & IBUS_DOORS_REAR_LEFT) == 1) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: REAR LEFT OPEN");
+      }
+      else if ((*doorStatus & IBUS_DOORS_REAR_LEFT) == 0) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Doors: REAR LEFT CLOSED");
+      }
+    }
+
+    context->gmState.doorStatus = *doorStatus;
 }
 
 /**
