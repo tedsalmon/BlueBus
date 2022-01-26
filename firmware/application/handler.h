@@ -67,6 +67,8 @@
 #define HANDLER_LM_EVENT_PARKING_ON 0x06
 #define HANDLER_LCM_TRIGGER_OFF 0
 #define HANDLER_LCM_TRIGGER_ON 1
+#define HANDLER_GT_STATUS_UNCHECKED 0
+#define HANDLER_GT_STATUS_CHECKED 1
 #define HANDLER_MFL_STATUS_OFF 0
 #define HANDLER_MFL_STATUS_SPEAK_HOLD 1
 #define HANDLER_POWER_OFF 0
@@ -120,6 +122,7 @@ typedef struct HandlerContext_t {
     uint8_t mflButtonStatus: 1;
     uint8_t seekMode: 2;
     uint8_t volumeMode: 1;
+    uint8_t gtStatus: 1;
     uint8_t uiMode;
     uint8_t lmDimmerChecksum;
     uint8_t telStatus;

@@ -43,6 +43,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     Context.seekMode = HANDLER_CDC_SEEK_MODE_NONE;
     Context.lmDimmerChecksum = 0x00;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
+    Context.gtStatus = HANDLER_GT_STATUS_UNCHECKED;
     Context.telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
     Context.btBootFailure = HANDLER_BT_BOOT_OK;
     memset(&Context.gmState, 0, sizeof(HandlerBodyModuleStatus_t));
@@ -762,9 +763,12 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
                 // running at least 30s, default to CD53 UI
                 LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
                 HandlerSwitchUI(context, CONFIG_UI_CD53);
-            } else if (context->ibusModuleStatus.GT == 1) {
+            } else if (context->ibusModuleStatus.GT == 1 &&
+                context->gtStatus == HANDLER_GT_STATUS_UNCHECKED
+            ) {
                 // Request the Navigation Identity
                 IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+                context->gtStatus == HANDLER_GT_STATUS_CHECKED;
             }
         }
     } else if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
@@ -1117,7 +1121,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
         ) {
             LogDebug(LOG_SOURCE_SYSTEM, "Handler: Ignition On");
             // Play a tone to wake up the WM8804 / PCM5122
-            BC127CommandTone(Context.bt, "V 0 N C6 L 4");
+            BC127CommandTone(context->bt, "V 0 N C6 L 4");
             // Enable Telephone On
             TEL_ON = 1;
             // Reset the metadata so we don't display the wrong data
