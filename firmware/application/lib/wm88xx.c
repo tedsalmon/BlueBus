@@ -94,7 +94,7 @@ void WM88XXInit()
          *
          * PLL_K to 36FD21
          * Register 5 -> 0x36
-         * Register 4-> 0xFD
+         * Register 4 -> 0xFD
          * Register 3 -> 0x21
          */
         status = I2CWrite(WM88XX_I2C_ADDR, WM88XX_REGISTER_PLL_N, 7);

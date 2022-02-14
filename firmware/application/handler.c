@@ -51,7 +51,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
     memset(&Context.ibusModuleStatus, 0, sizeof(HandlerModuleStatus_t));
     Context.powerStatus = HANDLER_POWER_ON;
     Context.scanIntervals = 0;
-    Context.lmLastIOStatus = now;
+    Context.lmLastIOStatus = 0;
     Context.cdChangerLastPoll = now;
     Context.cdChangerLastStatus = now;
     Context.pdcLastStatus = 0;
@@ -768,7 +768,7 @@ void HandlerIBusCDCStatus(void *ctx, unsigned char *pkt)
             ) {
                 // Request the Navigation Identity
                 IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
-                context->gtStatus == HANDLER_GT_STATUS_CHECKED;
+                context->gtStatus = HANDLER_GT_STATUS_CHECKED;
             }
         }
     } else if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
