@@ -94,11 +94,11 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>noID</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.60</languageToolchainVersion>
-        <platform>2</platform>
+        <languageToolchainVersion>1.70</languageToolchainVersion>
+        <platform>4</platform>
       </toolsSet>
       <packs>
-        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.5.181"/>
+        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.6.205"/>
       </packs>
       <ScriptingSettings>
       </ScriptingSettings>
@@ -128,6 +128,7 @@
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
       <C30>
+        <property key="cast-align" value="false"/>
         <property key="code-model" value="large-code"/>
         <property key="const-model" value="default"/>
         <property key="data-model" value="default"/>
@@ -241,6 +242,7 @@
         <property key="warn-section-align" value="true"/>
       </C30-LD>
       <C30Global>
+        <property key="combine-sourcefiles" value="false"/>
         <property key="common-include-directories" value=""/>
         <property key="dual-boot-partition" value="0"/>
         <property key="fast-math" value="false"/>
