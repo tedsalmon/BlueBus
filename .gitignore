@@ -14,6 +14,6 @@
 /firmware/application/nbproject/Makefile-genesis.properties
 /firmware/application/nbproject/Package*
 /firmware/bootloader/nbproject/Package*
-/hardware/BlueBus.*#*
-/hardware/BlueBus.bom
+/hardware/v*/BlueBus.*#*
+/hardware/v*/BlueBus.bom
 /hardware/eagle.epf
