@@ -1210,7 +1210,7 @@ OSHW_LOGO</description>
 </element>
 <element name="C1" library="Passives" package="RHS1V101MCN1GS" value="RHS1V101MCN1GS" x="36" y="9" smashed="yes" rot="R90">
 <attribute name="MFG" value="Nichicon" x="90.61" y="26.78" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="NAME" x="36" y="15" size="1.25" layer="25" font="vector" ratio="15" rot="SR0" align="center"/>
+<attribute name="NAME" x="36" y="14.4" size="1.25" layer="25" font="vector" ratio="15" rot="SR0" align="bottom-center"/>
 <attribute name="PN" value="RHS1V101MCN1GS" x="90.61" y="26.78" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="C10" library="Passives" package="1206" value="10uF" x="59.7" y="10.075" smashed="yes" rot="R90">
@@ -1845,7 +1845,7 @@ OSHW_LOGO</description>
 </element>
 <element name="U6" library="ICs" package="TSSOP-8" value="CAT25M01" x="32.5" y="27.5" smashed="yes" rot="R180">
 <attribute name="MFG" value="ONSEMI" x="32.5" y="27.5" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="32.5" y="25.9" size="0.75" layer="21" font="vector" ratio="15" rot="R180" align="bottom-center"/>
+<attribute name="NAME" x="32.5" y="25.85" size="0.75" layer="21" font="vector" ratio="15" rot="R180" align="bottom-center"/>
 <attribute name="PN" value="CAT25M01YI-GT3" x="32.5" y="27.5" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="C38" library="Passives" package="0603" value="0.1uF" x="53.3" y="55.5" smashed="yes" rot="R90">
@@ -3988,12 +3988,31 @@ OSHW_LOGO</description>
 <wire x1="7.54" y1="62.54" x2="2.46" y2="62.54" width="1" layer="16"/>
 <wire x1="2.46" y1="62.54" x2="2.46" y2="57.46" width="1" layer="16"/>
 <wire x1="2.46" y1="57.46" x2="7.54" y2="57.46" width="1" layer="16"/>
-<wire x1="2.46" y1="57.46" x2="2.46" y2="51.74" width="1" layer="16"/>
-<wire x1="2.46" y1="51.74" x2="7.3" y2="46.9" width="1" layer="16"/>
 <via x="7.3" y="19.5" extent="1-16" drill="0.51"/>
-<wire x1="7.3" y1="46.9" x2="7.3" y2="19.5" width="1" layer="16"/>
 <via x="7.3" y="16.7" extent="1-16" drill="0.51"/>
 <wire x1="7.3" y1="19.5" x2="7.3" y2="16.7" width="1" layer="1"/>
+<wire x1="7.3" y1="49.2" x2="7.7" y2="49.6" width="1" layer="16"/>
+<wire x1="7.7" y1="49.6" x2="7.7" y2="57.3" width="1" layer="16"/>
+<wire x1="7.7" y1="57.3" x2="7.54" y2="57.46" width="1" layer="16"/>
+<wire x1="7.3" y1="19.5" x2="7.3" y2="49.2" width="1" layer="16"/>
+<wire x1="22.5" y1="15.5" x2="24.5" y2="15.5" width="0" layer="19" extent="1-1"/>
+<wire x1="24.5" y1="13.5" x2="24.5" y2="15.5" width="0" layer="19" extent="1-1"/>
+<wire x1="22.5" y1="13.5" x2="22.5" y2="15.5" width="0" layer="19" extent="1-1"/>
+<wire x1="23.1425" y1="7.5" x2="22.5" y2="13.5" width="0" layer="19" extent="1-1"/>
+<wire x1="22.5" y1="5" x2="23.1425" y2="7.5" width="0" layer="19" extent="1-1"/>
+<wire x1="22.5" y1="3.2" x2="22.5" y2="5" width="0" layer="19" extent="1-1"/>
+<wire x1="24.5" y1="5" x2="22.5" y2="5" width="0" layer="19" extent="1-1"/>
+<wire x1="24.5" y1="3.2" x2="24.5" y2="5" width="0" layer="19" extent="1-1"/>
+<wire x1="24.5" y1="1" x2="24.5" y2="3.2" width="0" layer="19" extent="1-1"/>
+<wire x1="22.5" y1="1" x2="24.5" y2="1" width="0" layer="19" extent="1-1"/>
+<wire x1="12.25" y1="3.25" x2="22.5" y2="3.2" width="0" layer="19" extent="1-1"/>
+<wire x1="2" y1="6" x2="12.25" y2="3.25" width="0" layer="19" extent="1-1"/>
+<wire x1="2" y1="8" x2="2" y2="6" width="0" layer="19" extent="1-1"/>
+<wire x1="2" y1="10" x2="2" y2="8" width="0" layer="19" extent="1-1"/>
+<wire x1="2" y1="12" x2="2" y2="10" width="0" layer="19" extent="1-1"/>
+<wire x1="2" y1="14" x2="2" y2="12" width="0" layer="19" extent="1-1"/>
+<wire x1="4.7" y1="12" x2="2" y2="12" width="0" layer="19" extent="1-1"/>
+<wire x1="7.3" y1="16.7" x2="4.7" y2="12" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="MCU_VER">
 <contactref element="U7" pad="64"/>
