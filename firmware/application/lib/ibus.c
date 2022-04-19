@@ -308,10 +308,6 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
                 size
             );
 
-            if ((ibus->coolantTemperature > 0)&&(ibus->ambientTemperature >= 0)&&(ibus->ambientTemperature <= 3)) {
-                ibus->ambientTemperatureCalculated[0]='*';
-            }
-
             unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
