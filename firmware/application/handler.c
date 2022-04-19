@@ -256,6 +256,12 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context,
         HANDLER_INT_VOL_MGMT
     );
+    TimerRegisterScheduledTask(
+        &HandlerRefreshMetadata,
+        &Context,
+        HANDLER_INT_MEDIA_REFRESH
+    );
+            
     Context.lightingStateTimerId = TimerRegisterScheduledTask(
         &HandlerTimerLightingState,
         &Context,
@@ -2456,4 +2462,30 @@ void HandlerVolumeChange(HandlerContext_t *context, uint8_t direction)
         hexVolString
     );
     context->bt->activeDevice.a2dpVolume = newVolume;
+}
+
+/**
+ * HandlerRefreshMetadata()
+ *     Description:
+ *         Request current playing song periodically
+ *     Params:
+ *         HandlerContext_t *context - The handler context
+ *     Returns:
+ *         void
+ */
+void HandlerRefreshMetadata(HandlerContext_t *context) {
+    /* Sometimes there is not more than a Title or Album, which does not give
+     * us sufficient information to push a metadata update. We request the full
+     * metadata if we have partial metadata for more than the specified timeout value.
+     **/
+       
+    if (
+        context->bt->activeDevice.avrcpLinkId != 0 &&
+        context->bt->callStatus == BC127_CALL_INACTIVE &&
+        context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING &&
+        context->bt->metadataStatus == BC127_METADATA_STATUS_CUR &&
+        context->bt->metadataTimestamp < (TimerGetMillis()-HANDLER_INT_MEDIA_REFRESH)
+    ) {
+        BC127CommandGetMetadata(context->bt);
+    }
 }

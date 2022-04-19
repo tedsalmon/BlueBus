@@ -163,6 +163,7 @@ typedef struct BC127_t {
     char artist[BC127_METADATA_FIELD_SIZE];
     char album[BC127_METADATA_FIELD_SIZE];
     char callerId[BC127_CALLER_ID_FIELD_SIZE];
+    uint8_t metaChanged: 1; 
     UART_t uart;
 } BC127_t;
 

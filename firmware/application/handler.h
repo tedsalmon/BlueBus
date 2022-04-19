@@ -48,6 +48,7 @@
 #define HANDLER_INT_PROFILE_ERROR 2500
 #define HANDLER_INT_POWEROFF 1000
 #define HANDLER_INT_VOL_MGMT 500
+#define HANDLER_INT_MEDIA_REFRESH 5000
 #define HANDLER_LCM_STATUS_BLINKER_OFF 0
 #define HANDLER_LCM_STATUS_BLINKER_ON 1
 #define HANDLER_LM_BLINK_OFF 0x00
@@ -187,4 +188,5 @@ void HandlerTimerScanDevices(void *);
 void HandlerTimerVolumeManagement(void *);
 void HandlerLMActivateBulbs(HandlerContext_t *, unsigned char);
 void HandlerVolumeChange(HandlerContext_t *, uint8_t);
+void HandlerRefreshMetadata(HandlerContext_t *);
 #endif /* HANDLER_H */
