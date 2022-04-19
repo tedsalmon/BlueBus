@@ -183,9 +183,14 @@ void BC127ClearPairingErrors(BC127_t *bt)
  */
 void BC127CommandBackward(BC127_t *bt)
 {
-    char command[18];
-    snprintf(command, 18, "MUSIC %d BACKWARD", bt->activeDevice.avrcpLinkId);
-    BC127SendCommand(bt, command);
+    if (bt->activeDevice.avrcpLinkId != 0) {
+        bt->metadataTimestamp = 0;
+        char command[18];
+        snprintf(command, 18, "MUSIC %d BACKWARD", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to BACKWARD - AVRCP link unopened");
+    }
 }
 
 /**
@@ -199,9 +204,13 @@ void BC127CommandBackward(BC127_t *bt)
  */
 void BC127CommandBackwardSeekPress(BC127_t *bt)
 {
-    char command[19];
-    snprintf(command, 19, "MUSIC %d REW_PRESS", bt->activeDevice.avrcpLinkId);
-    BC127SendCommand(bt, command);
+    if (bt->activeDevice.avrcpLinkId != 0) {
+        char command[19];
+        snprintf(command, 19, "MUSIC %d REW_PRESS", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to REW_PRESS - AVRCP link unopened");
+    }
 }
 
 /**
@@ -215,9 +224,13 @@ void BC127CommandBackwardSeekPress(BC127_t *bt)
  */
 void BC127CommandBackwardSeekRelease(BC127_t *bt)
 {
-    char command[21];
-    snprintf(command, 21, "MUSIC %d REW_RELEASE", bt->activeDevice.avrcpLinkId);
-    BC127SendCommand(bt, command);
+    if (bt->activeDevice.avrcpLinkId != 0) {
+        char command[21];
+        snprintf(command, 21, "MUSIC %d REW_RELEASE", bt->activeDevice.avrcpLinkId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to REW_RELEASE - AVRCP link unopened");
+    }
 }
 
 /**
@@ -408,6 +421,7 @@ void BC127CommandBtState(BC127_t *bt, uint8_t connectable, uint8_t discoverable)
 void BC127CommandForward(BC127_t *bt)
 {
     if (bt->activeDevice.avrcpLinkId != 0) {
+        bt->metadataTimestamp = 0;
         char command[17];
         snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice.avrcpLinkId);
         BC127SendCommand(bt, command);
