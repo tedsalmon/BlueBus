@@ -1468,7 +1468,7 @@ void BC127Process(BC127_t *bt)
                 bt->pairingErrors[BC127_LINK_BLE] = 0;
             }
             if (strcmp(msgBuf[2], "MAP") == 0) {
-                bt->pairingErrors[BC127_LINK_BLE] = 0;
+                bt->pairingErrors[BC127_LINK_MAP] = 0;
             }
             LogDebug(LOG_SOURCE_BT, "BT: Open %s for ID %s", msgBuf[2], msgBuf[1]);
             EventTriggerCallback(

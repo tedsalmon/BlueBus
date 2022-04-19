@@ -9,12 +9,12 @@ static HandlerContext_t Context;
 static char *PROFILES[] = {
     "A2DP",
     "AVRCP",
-    "",
+    0,
     "HFP",
     "BLE",
-    "",
+    0,
     "PBAP",
-    "",
+    0,
     "MAP"
 };
 
@@ -2228,7 +2228,7 @@ void HandlerTimerOpenProfileErrors(void *ctx)
     if (strlen(context->bt->activeDevice.macId) > 0) {
         uint8_t idx;
         for (idx = 0; idx < BC127_PROFILE_COUNT; idx++) {
-            if (context->bt->pairingErrors[idx] == 1) {
+            if ((context->bt->pairingErrors[idx] == 1)&&(PROFILES[idx] != 0)) {
                 LogDebug(LOG_SOURCE_SYSTEM, "Handler: Attempting to resolve pairing error");
                 BC127CommandProfileOpen(
                     context->bt,
