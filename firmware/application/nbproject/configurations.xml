@@ -82,7 +82,7 @@
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>lib</Elem>
+    <Elem>.</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
