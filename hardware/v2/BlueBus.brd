@@ -33,7 +33,7 @@
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
+<layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
@@ -1067,6 +1067,32 @@ OSHW_LOGO</description>
 </package3d>
 </packages3d>
 </library>
+<library name="MF_Aesthetics">
+<packages>
+<package name="FIDUCIAL_1MM">
+<description>&lt;b&gt;Description:&lt;/b&gt; Footprint for a 1mm fiducial marking&lt;br/&gt;</description>
+<smd name="P$1" x="0" y="0" dx="1" dy="1" layer="1" roundness="100" thermals="no" cream="no"/>
+<polygon width="0.1" layer="29">
+<vertex x="0" y="-1" curve="-90"/>
+<vertex x="-1" y="0" curve="-90"/>
+<vertex x="0" y="1" curve="-90"/>
+<vertex x="1" y="0" curve="-90"/>
+</polygon>
+<polygon width="0.1" layer="30">
+<vertex x="0" y="-1" curve="-90"/>
+<vertex x="-1" y="0" curve="-90"/>
+<vertex x="0" y="1" curve="-90"/>
+<vertex x="1" y="0" curve="-90"/>
+</polygon>
+<polygon width="0.1" layer="41">
+<vertex x="0" y="-1" curve="-90"/>
+<vertex x="-1" y="0" curve="-90"/>
+<vertex x="0" y="1" curve="-90"/>
+<vertex x="1" y="0" curve="-90"/>
+</polygon>
+</package>
+</packages>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -1596,7 +1622,7 @@ OSHW_LOGO</description>
 <attribute name="NAME" x="8.55" y="13.6" size="1" layer="25" font="vector" ratio="15" align="bottom-center"/>
 <attribute name="PN" value="SMD2150PL-TP" x="8.55" y="11.2" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="D2" library="Passives" package="SOD123FL-2" value="2A_150V" x="87.85" y="3.75" smashed="yes">
+<element name="D3" library="Passives" package="SOD123FL-2" value="2A_150V" x="87.85" y="3.75" smashed="yes">
 <attribute name="MFG" value="MCC" x="141.19" y="-85.15" size="1.778" layer="27" display="off"/>
 <attribute name="NAME" x="87.85" y="4.75" size="1" layer="25" font="vector" ratio="15" align="bottom-center"/>
 <attribute name="PN" value="SMD2150PL-TP" x="87.85" y="3.75" size="1.778" layer="27" display="off"/>
@@ -1637,7 +1663,7 @@ OSHW_LOGO</description>
 <element name="FRAME5" library="Frame" package="DUMMY" package3d_urn="urn:adsk.eagle:package:37104/1" value="FRAME-LETTER" x="40" y="66" smashed="yes"/>
 <element name="U3" library="ICs" package="SSOP20_L" value="FT231XS" x="83" y="11" smashed="yes">
 <attribute name="MFG" value="FTDI" x="83" y="11" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="78.4" y="11" size="0.75" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center"/>
+<attribute name="NAME" x="78.4" y="11" size="1" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center"/>
 <attribute name="PN" value="FT231XS-R" x="83" y="11" size="1.778" layer="27" display="off"/>
 </element>
 <element name="H1" library="Connectors" package="2.5-PAD" value="2,5-PAD" x="12.25" y="3.25" smashed="yes"/>
@@ -1646,7 +1672,7 @@ OSHW_LOGO</description>
 <element name="H4" library="Connectors" package="2.5-PAD" value="2,5-PAD" x="82.25" y="3.25" smashed="yes"/>
 <element name="L2" library="Passives" package="MPL-SE5040" value="10uH" x="51.6" y="15.7" smashed="yes" rot="R270">
 <attribute name="MFG" value="Monolithic Power Systems" x="-10.63" y="-30.02" size="1.778" layer="27" rot="R270" display="off"/>
-<attribute name="NAME" x="54.2" y="15.7" size="1" layer="25" font="vector" ratio="15" rot="R90" align="top-center"/>
+<attribute name="NAME" x="54.25" y="15.7" size="1" layer="25" font="vector" ratio="15" rot="R90" align="top-center"/>
 <attribute name="PN" value="MPL-SE5040-100" x="-10.63" y="-30.02" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="U1" library="ICs" package="TSOT23-8" value="MPQ4420" x="51.5" y="9" smashed="yes" rot="R90">
@@ -1657,7 +1683,7 @@ OSHW_LOGO</description>
 </element>
 <element name="U10" library="ICs" package="TSSOP28" value="PCM5122" x="31" y="55" smashed="yes">
 <attribute name="MFG" value="Texas Instruments" x="31" y="55" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="31" y="60" size="1" layer="25" font="vector" ratio="15" align="bottom-center"/>
+<attribute name="NAME" x="31" y="49.95" size="1" layer="25" font="vector" ratio="15" align="top-center"/>
 <attribute name="PN" value="PCM5122PW" x="31" y="55" size="1.778" layer="27" display="off"/>
 <attribute name="VALUE" value="PCM5122" x="31" y="55" size="1.778" layer="27" display="off"/>
 </element>
@@ -1905,7 +1931,7 @@ OSHW_LOGO</description>
 </element>
 <element name="U6" library="ICs" package="TSSOP-8" value="CAT25M01" x="32.5" y="27.5" smashed="yes" rot="R180">
 <attribute name="MFG" value="ONSEMI" x="32.5" y="27.5" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="32.5" y="25.85" size="0.75" layer="21" font="vector" ratio="15" rot="R180" align="bottom-center"/>
+<attribute name="NAME" x="32.5" y="25.85" size="1" layer="21" font="vector" ratio="15" rot="R180" align="bottom-center"/>
 <attribute name="PN" value="CAT25M01YI-GT3" x="32.5" y="27.5" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="C38" library="Passives" package="0603" value="0.1uF" x="53.3" y="55.5" smashed="yes" rot="R90">
@@ -2131,11 +2157,13 @@ OSHW_LOGO</description>
 <attribute name="NAME" x="23.8" y="23.85" size="1" layer="25" font="vector" ratio="15" rot="R180" align="bottom-center"/>
 <attribute name="PN" value="ERJ-PA3F1001V" x="23.8" y="25.35" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
-<element name="D3" library="Passives" package="DO-214AA" value="SMBJ18A" x="14.5" y="14.7" smashed="yes" rot="R180">
+<element name="D2" library="Passives" package="DO-214AA" value="SMBJ18A" x="14.5" y="14.7" smashed="yes" rot="R180">
 <attribute name="MFG" value="Diodes" x="14.5" y="14.7" size="1.778" layer="27" rot="R180" display="off"/>
 <attribute name="NAME" x="14.5" y="16.6" size="1" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
 <attribute name="PN" value="SMBJ18A-13-F" x="14.5" y="14.7" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
+<element name="FID1" library="MF_Aesthetics" package="FIDUCIAL_1MM" value="FIDUCIAL_1MM" x="16" y="2" smashed="yes"/>
+<element name="FID2" library="MF_Aesthetics" package="FIDUCIAL_1MM" value="FIDUCIAL_1MM" x="92" y="2" smashed="yes"/>
 </elements>
 <signals>
 <signal name="GND">
@@ -2571,7 +2599,7 @@ OSHW_LOGO</description>
 <contactref element="C6" pad="1"/>
 <contactref element="U5" pad="3"/>
 <contactref element="U5" pad="1"/>
-<contactref element="D2" pad="C"/>
+<contactref element="D3" pad="C"/>
 <contactref element="C12" pad="1"/>
 <contactref element="C13" pad="1"/>
 <contactref element="R10" pad="2"/>
@@ -2974,7 +3002,7 @@ OSHW_LOGO</description>
 </signal>
 <signal name="USB_5V">
 <contactref element="J6" pad="1"/>
-<contactref element="D2" pad="A"/>
+<contactref element="D3" pad="A"/>
 <wire x1="90.85" y1="8.7" x2="89.9" y2="8.7" width="0.4" layer="1"/>
 <wire x1="89.9" y1="8.7" x2="89.6" y2="8.4" width="0.4" layer="1"/>
 <wire x1="89.6" y1="8.4" x2="89.6" y2="3.75" width="0.4" layer="1"/>
@@ -3180,7 +3208,7 @@ OSHW_LOGO</description>
 <signal name="VBAT_DIODE">
 <contactref element="F1" pad="IN"/>
 <contactref element="D1" pad="C"/>
-<contactref element="D3" pad="C"/>
+<contactref element="D2" pad="C"/>
 <wire x1="8.55" y1="12.95" x2="8.55" y2="13.75" width="1" layer="1"/>
 <wire x1="8.55" y1="13.75" x2="8.9" y2="14.1" width="1" layer="1"/>
 <wire x1="12.3485" y1="9.7" x2="12.3485" y2="14.0985" width="1.5" layer="1"/>
@@ -4066,7 +4094,7 @@ OSHW_LOGO</description>
 <wire x1="7.7" y1="49.6" x2="7.7" y2="57.3" width="1" layer="16"/>
 <wire x1="7.7" y1="57.3" x2="7.54" y2="57.46" width="1" layer="16"/>
 <wire x1="7.3" y1="19.5" x2="7.3" y2="49.2" width="1" layer="16"/>
-<contactref element="D3" pad="A"/>
+<contactref element="D2" pad="A"/>
 </signal>
 <signal name="MCU_VER">
 <contactref element="U7" pad="64"/>

@@ -3583,6 +3583,108 @@ Switches electrical signals</description>
 </deviceset>
 </devicesets>
 </library>
+<library name="MF_Aesthetics">
+<packages>
+<package name="FIDUCIAL_0.5MM">
+<smd name="FID" x="0" y="0" dx="0.5" dy="0.5" layer="1" roundness="100" cream="no"/>
+</package>
+<package name="FIDUCIAL_100MIL">
+<description>&lt;b&gt;Description:&lt;/b&gt; Footprint for fiducial marking for PCB alignment inside PNP and other machines.&lt;br/&gt;</description>
+<smd name="P$1" x="0" y="0" dx="1.27" dy="1.27" layer="1" roundness="100" thermals="no" cream="no"/>
+<smd name="P$2" x="0" y="0" dx="1.27" dy="1.27" layer="16" roundness="100" thermals="no" cream="no"/>
+<polygon width="0.127" layer="29">
+<vertex x="0" y="-1.27" curve="-90"/>
+<vertex x="-1.27" y="0" curve="-90"/>
+<vertex x="0" y="1.27" curve="-90"/>
+<vertex x="1.27" y="0" curve="-90"/>
+</polygon>
+<polygon width="0.127" layer="30">
+<vertex x="0" y="-1.27" curve="-90"/>
+<vertex x="-1.27" y="0" curve="-90"/>
+<vertex x="0" y="1.27" curve="-90"/>
+<vertex x="1.27" y="0" curve="-90"/>
+</polygon>
+<text x="-1.27" y="2.54" size="0.8128" layer="25" font="vector" ratio="16" align="top-left">&gt;NAME</text>
+<polygon width="0.127" layer="41">
+<vertex x="0" y="-1.27" curve="-90"/>
+<vertex x="-1.27" y="0" curve="-90"/>
+<vertex x="0" y="1.27" curve="-90"/>
+<vertex x="1.27" y="0" curve="-90"/>
+</polygon>
+<polygon width="0.127" layer="42">
+<vertex x="0" y="-1.27" curve="-90"/>
+<vertex x="-1.27" y="0" curve="-90"/>
+<vertex x="0" y="1.27" curve="-90"/>
+<vertex x="1.27" y="0" curve="-90"/>
+</polygon>
+</package>
+<package name="FIDUCIAL_1MM">
+<description>&lt;b&gt;Description:&lt;/b&gt; Footprint for a 1mm fiducial marking&lt;br/&gt;</description>
+<smd name="P$1" x="0" y="0" dx="1" dy="1" layer="1" roundness="100" thermals="no" cream="no"/>
+<polygon width="0.1" layer="29">
+<vertex x="0" y="-1" curve="-90"/>
+<vertex x="-1" y="0" curve="-90"/>
+<vertex x="0" y="1" curve="-90"/>
+<vertex x="1" y="0" curve="-90"/>
+</polygon>
+<polygon width="0.1" layer="30">
+<vertex x="0" y="-1" curve="-90"/>
+<vertex x="-1" y="0" curve="-90"/>
+<vertex x="0" y="1" curve="-90"/>
+<vertex x="1" y="0" curve="-90"/>
+</polygon>
+<polygon width="0.1" layer="41">
+<vertex x="0" y="-1" curve="-90"/>
+<vertex x="-1" y="0" curve="-90"/>
+<vertex x="0" y="1" curve="-90"/>
+<vertex x="1" y="0" curve="-90"/>
+</polygon>
+</package>
+</packages>
+<symbols>
+<symbol name="FIDUCIAL">
+<description>&lt;b&gt;Description:&lt;/b&gt; Symbol for fiducial marking for PCB alignment inside PNP and other machines.&lt;br/&gt;</description>
+<text x="0" y="-1.524" size="1.016" layer="96" font="vector" rot="MR180">&gt;VALUE</text>
+<text x="0" y="0" size="1.016" layer="95" font="vector" rot="MR180">&gt;NAME</text>
+</symbol>
+</symbols>
+<devicesets>
+<deviceset name="FIDUCIAL" prefix="FID">
+<description>&lt;b&gt;Library:&lt;/b&gt;  MF_Aesthetics&lt;br/&gt;
+&lt;b&gt;Description:&lt;/b&gt; Fiducial marking for PCB alignment inside PNP and other machines.&lt;br/&gt;</description>
+<gates>
+<gate name="G$1" symbol="FIDUCIAL" x="0" y="0"/>
+</gates>
+<devices>
+<device name="_0.5MM" package="FIDUCIAL_0.5MM">
+<technologies>
+<technology name="">
+<attribute name="HOUSEPART" value="NO" constant="no"/>
+<attribute name="MPN" value="" constant="no"/>
+<attribute name="POPULATE" value="0" constant="no"/>
+<attribute name="URL" value="" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="_100MIL" package="FIDUCIAL_100MIL">
+<technologies>
+<technology name="">
+<attribute name="HOUSEPART" value="NO" constant="no"/>
+<attribute name="MPN" value="" constant="no"/>
+<attribute name="POPULATE" value="0" constant="no"/>
+<attribute name="URL" value="" constant="no"/>
+</technology>
+</technologies>
+</device>
+<device name="_1MM" package="FIDUCIAL_1MM">
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+</devicesets>
+</library>
 </libraries>
 <attributes>
 </attributes>
@@ -3640,7 +3742,7 @@ Switches electrical signals</description>
 <part name="R23" library="Passives" deviceset="2KOHM" device="0603" value="2k"/>
 <part name="GND8" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="PWR" library="Passives" deviceset="LED_GREEN" device=""/>
-<part name="D2" library="Passives" deviceset="SMD2150PL_2A_150V" device="" value="2A_150V"/>
+<part name="D3" library="Passives" deviceset="SMD2150PL_2A_150V" device="" value="2A_150V"/>
 <part name="C61" library="Passives" deviceset="0.1UF" device="0603" value="0.1uF"/>
 <part name="C59" library="Passives" deviceset="0.1UF" device="0603" value="0.1uF"/>
 <part name="C55" library="Passives" deviceset="0.1UF" device="0603" value="0.1uF"/>
@@ -3812,7 +3914,9 @@ Switches electrical signals</description>
 <part name="R6" library="Passives" deviceset="1KOHM" device="0603" value="1k"/>
 <part name="R3" library="Passives" deviceset="1KOHM" device="0603" value="1k"/>
 <part name="GND41" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="D3" library="Passives" deviceset="SMBJ18A" device=""/>
+<part name="D2" library="Passives" deviceset="SMBJ18A" device=""/>
+<part name="FID1" library="MF_Aesthetics" deviceset="FIDUCIAL" device="_1MM"/>
+<part name="FID2" library="MF_Aesthetics" deviceset="FIDUCIAL" device="_1MM"/>
 </parts>
 <sheets>
 <sheet>
@@ -3865,7 +3969,7 @@ Switches electrical signals</description>
 <attribute name="VALUE" x="63.754" y="101.6" size="1.778" layer="96" font="vector" rot="R270"/>
 <attribute name="NAME" x="71.628" y="101.6" size="1.778" layer="95" font="vector" rot="R270"/>
 </instance>
-<instance part="D2" gate="G$1" x="198.12" y="139.7" smashed="yes" rot="R180">
+<instance part="D3" gate="G$1" x="198.12" y="139.7" smashed="yes" rot="R180">
 <attribute name="NAME" x="200.66" y="137.668" size="1.778" layer="95" font="vector" rot="R180"/>
 <attribute name="VALUE" x="200.66" y="141.732" size="1.778" layer="96" font="vector" rot="R180" align="top-left"/>
 </instance>
@@ -4011,9 +4115,17 @@ Switches electrical signals</description>
 <instance part="J8" gate="G$1" x="109.22" y="93.98" smashed="yes">
 <attribute name="NAME" x="105.664" y="99.568" size="1.778" layer="95" font="vector"/>
 </instance>
-<instance part="D3" gate="G$1" x="172.72" y="149.86" smashed="yes" rot="R90">
+<instance part="D2" gate="G$1" x="172.72" y="149.86" smashed="yes" rot="R90">
 <attribute name="NAME" x="170.688" y="147.32" size="1.778" layer="95" font="vector" rot="R90"/>
 <attribute name="VALUE" x="174.752" y="147.32" size="1.778" layer="96" font="vector" rot="R90" align="top-left"/>
+</instance>
+<instance part="FID1" gate="G$1" x="45.72" y="33.02" smashed="yes">
+<attribute name="VALUE" x="45.72" y="31.496" size="1.016" layer="96" font="vector" rot="MR180"/>
+<attribute name="NAME" x="45.72" y="33.02" size="1.016" layer="95" font="vector" rot="MR180"/>
+</instance>
+<instance part="FID2" gate="G$1" x="45.72" y="27.94" smashed="yes">
+<attribute name="VALUE" x="45.72" y="26.416" size="1.016" layer="96" font="vector" rot="MR180"/>
+<attribute name="NAME" x="45.72" y="27.94" size="1.016" layer="95" font="vector" rot="MR180"/>
 </instance>
 </instances>
 <busses>
@@ -4180,7 +4292,7 @@ Switches electrical signals</description>
 <wire x1="114.3" y1="162.56" x2="114.3" y2="157.48" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="D2" gate="G$1" pin="C"/>
+<pinref part="D3" gate="G$1" pin="C"/>
 <wire x1="195.58" y1="139.7" x2="193.04" y2="139.7" width="0.1524" layer="91"/>
 <label x="193.04" y="139.7" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
@@ -4254,7 +4366,7 @@ Switches electrical signals</description>
 <pinref part="J6" gate="G$1" pin="VBUS"/>
 </segment>
 <segment>
-<pinref part="D2" gate="G$1" pin="A"/>
+<pinref part="D3" gate="G$1" pin="A"/>
 <wire x1="200.66" y1="139.7" x2="203.2" y2="139.7" width="0.1524" layer="91"/>
 <label x="203.2" y="139.7" size="1.27" layer="95" xref="yes"/>
 </segment>
@@ -4329,7 +4441,7 @@ Switches electrical signals</description>
 <wire x1="172.72" y1="162.56" x2="172.72" y2="157.48" width="0.1524" layer="91"/>
 <wire x1="172.72" y1="157.48" x2="172.72" y2="152.4" width="0.1524" layer="91"/>
 <junction x="172.72" y="157.48"/>
-<pinref part="D3" gate="G$1" pin="C"/>
+<pinref part="D2" gate="G$1" pin="C"/>
 </segment>
 </net>
 <net name="VBAT" class="0">
@@ -4489,7 +4601,7 @@ Switches electrical signals</description>
 </segment>
 <segment>
 <wire x1="172.72" y1="147.32" x2="172.72" y2="144.78" width="0.1524" layer="91"/>
-<pinref part="D3" gate="G$1" pin="A"/>
+<pinref part="D2" gate="G$1" pin="A"/>
 <label x="172.72" y="144.78" size="1.27" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
