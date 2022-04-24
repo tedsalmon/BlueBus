@@ -271,7 +271,7 @@ static void BMBTSetMainDisplayText(
     uint8_t autoUpdate
 ) {
     memset(context->mainDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
-    strncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
+    strncpyz(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
     context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
     context->mainDisplay.length = strlen(context->mainDisplay.text);
     context->mainDisplay.index = 0;
@@ -560,24 +560,24 @@ static void BMBTMenuDashboard(BMBTContext_t *context)
     char title[BC127_METADATA_FIELD_SIZE] = {0};
     char artist[BC127_METADATA_FIELD_SIZE] = {0};
     char album[BC127_METADATA_FIELD_SIZE] = {0};
-    strncpy(title, context->bt->title, BC127_METADATA_FIELD_SIZE - 1);
-    strncpy(artist, context->bt->artist, BC127_METADATA_FIELD_SIZE - 1);
-    strncpy(album, context->bt->album, BC127_METADATA_FIELD_SIZE - 1);
+    strncpyz(title, context->bt->title, BC127_METADATA_FIELD_SIZE);
+    strncpyz(artist, context->bt->artist, BC127_METADATA_FIELD_SIZE);
+    strncpyz(album, context->bt->album, BC127_METADATA_FIELD_SIZE);
     if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
         if (strlen(title) == 0) {
-            strncpy(title, LocaleGetText(LOCALE_STRING_NOT_PLAYING), BC127_METADATA_FIELD_SIZE - 1);
-            strncpy(artist, " ", 2);
-            strncpy(album, " ", 2);
+            strncpyz(title, LocaleGetText(LOCALE_STRING_NOT_PLAYING), BC127_METADATA_FIELD_SIZE);
+            strncpyz(artist, " ", 2);
+            strncpyz(album, " ", 2);
         }
     } else {
         if (strlen(title) == 0) {
-            strncpy(title, LocaleGetText(LOCALE_STRING_UNKNOWN_TITLE), BC127_METADATA_FIELD_SIZE - 1);
+            strncpyz(title, LocaleGetText(LOCALE_STRING_UNKNOWN_TITLE), BC127_METADATA_FIELD_SIZE);
         }
         if (strlen(artist) == 0) {
-            strncpy(artist, LocaleGetText(LOCALE_STRING_UNKNOWN_ARTIST), BC127_METADATA_FIELD_SIZE - 1);
+            strncpyz(artist, LocaleGetText(LOCALE_STRING_UNKNOWN_ARTIST), BC127_METADATA_FIELD_SIZE);
         }
         if (strlen(album) == 0) {
-            strncpy(album, LocaleGetText(LOCALE_STRING_UNKNOWN_ALBUM), BC127_METADATA_FIELD_SIZE - 1);
+            strncpyz(album, LocaleGetText(LOCALE_STRING_UNKNOWN_ALBUM), BC127_METADATA_FIELD_SIZE);
         }
     }
     BMBTMenuDashboardUpdate(context, title, artist, album);

@@ -189,4 +189,5 @@ int8_t UtilsStricmp(const char *, const char *);
 char * UtilsTransliterateUnicodeToASCII(uint32_t);
 char * UtilsTransliterateExtendedASCIIToASCII(uint32_t);
 unsigned char UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t);
+char * strncpyz(char *, const char *, size_t);
 #endif /* UTILS_H */

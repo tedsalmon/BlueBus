@@ -65,7 +65,7 @@ static const char UTILS_CHARS_LATIN[] =
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
 {
     UtilsAbstractDisplayValue_t value;
-    strncpy(value.text, text, UTILS_DISPLAY_TEXT_SIZE);
+    strncpyz(value.text, text, UTILS_DISPLAY_TEXT_SIZE);
     value.index = 0;
     value.timeout = 0;
     value.status = status;
@@ -889,4 +889,10 @@ unsigned char UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t input)
             return 0;
             break;
     }
+}
+
+char * strncpyz(char *dest, const char *src, size_t n) {
+    char *dst = strncpy(dest,src,n);
+    dest[n-1]='\0';
+    return dst;
 }
