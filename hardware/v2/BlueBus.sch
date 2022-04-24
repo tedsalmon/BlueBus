@@ -4823,22 +4823,6 @@ Switches electrical signals</description>
 <wire x1="233.68" y1="104.14" x2="228.6" y2="104.14" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="SYS_URX" class="5">
-<segment>
-<wire x1="73.66" y1="83.82" x2="40.64" y2="83.82" width="0.1524" layer="91"/>
-<label x="40.64" y="78.74" size="1.27" layer="95" rot="R270" xref="yes"/>
-<pinref part="U7" gate="G$1" pin="RP23/PMACK1/RD2"/>
-<wire x1="40.64" y1="83.82" x2="40.64" y2="78.74" width="0.1524" layer="91"/>
-</segment>
-</net>
-<net name="SYS_UTX" class="5">
-<segment>
-<wire x1="73.66" y1="86.36" x2="40.64" y2="86.36" width="0.1524" layer="91"/>
-<label x="40.64" y="96.52" size="1.27" layer="95" rot="R90" xref="yes"/>
-<pinref part="U7" gate="G$1" pin="RP24/U5TX/ICM4/RD1"/>
-<wire x1="40.64" y1="86.36" x2="40.64" y2="96.52" width="0.1524" layer="91"/>
-</segment>
-</net>
 <net name="IBUS_UTX" class="5">
 <segment>
 <wire x1="73.66" y1="63.5" x2="71.12" y2="63.5" width="0.1524" layer="91"/>
@@ -5051,6 +5035,22 @@ Switches electrical signals</description>
 <pinref part="R19" gate="G$1" pin="1"/>
 <wire x1="218.44" y1="104.14" x2="215.9" y2="104.14" width="0.1524" layer="91"/>
 <label x="215.9" y="104.14" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="SYS_URX" class="5">
+<segment>
+<wire x1="73.66" y1="86.36" x2="40.64" y2="86.36" width="0.1524" layer="91"/>
+<label x="40.64" y="96.52" size="1.27" layer="95" rot="R90" xref="yes"/>
+<pinref part="U7" gate="G$1" pin="RP24/U5TX/ICM4/RD1"/>
+<wire x1="40.64" y1="86.36" x2="40.64" y2="96.52" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="SYS_UTX" class="5">
+<segment>
+<wire x1="73.66" y1="83.82" x2="40.64" y2="83.82" width="0.1524" layer="91"/>
+<label x="40.64" y="78.74" size="1.27" layer="95" rot="R270" xref="yes"/>
+<pinref part="U7" gate="G$1" pin="RP23/PMACK1/RD2"/>
+<wire x1="40.64" y1="83.82" x2="40.64" y2="78.74" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>

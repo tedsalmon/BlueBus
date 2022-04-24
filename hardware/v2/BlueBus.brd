@@ -3333,30 +3333,26 @@ OSHW_LOGO</description>
 <wire x1="56.9364" y1="40.1" x2="60.1728" y2="40.1" width="0.25" layer="1"/>
 </signal>
 <signal name="SYS_URX" class="5">
-<contactref element="U7" pad="50"/>
 <contactref element="U3" pad="4"/>
-<wire x1="53.1" y1="29.75" x2="52.05" y2="29.75" width="0.25" layer="1"/>
-<wire x1="52.05" y1="29.75" x2="51.8" y2="29.5" width="0.25" layer="1"/>
-<wire x1="51.8" y1="29.5" x2="51.8" y2="28.8" width="0.25" layer="1"/>
-<wire x1="52.2" y1="28.4" x2="54.8636" y2="28.4" width="0.25" layer="1"/>
-<wire x1="51.8" y1="28.8" x2="52.2" y2="28.4" width="0.25" layer="1"/>
-<wire x1="56.4636" y1="26.8" x2="54.8636" y2="28.4" width="0.25" layer="1"/>
 <wire x1="80.4" y1="10.8" x2="81.5" y2="10.8" width="0.25" layer="1"/>
 <wire x1="81.5" y1="10.8" x2="82.0475" y2="10.2525" width="0.25" layer="1"/>
 <wire x1="82.0475" y1="10.2525" x2="82.0475" y2="8.275" width="0.25" layer="1"/>
 <wire x1="80.4" y1="10.8" x2="79.4228" y2="11.7772" width="0.25" layer="1"/>
 <wire x1="79.4228" y1="16.5136" x2="69.1364" y2="26.8" width="0.25" layer="1"/>
 <wire x1="79.4228" y1="11.7772" x2="79.4228" y2="16.5136" width="0.25" layer="1"/>
-<wire x1="69.1364" y1="26.8" x2="56.4636" y2="26.8" width="0.25" layer="1"/>
+<wire x1="69.1364" y1="26.8" x2="56.9" y2="26.8" width="0.25" layer="1"/>
+<contactref element="U7" pad="49"/>
+<wire x1="53.1" y1="29.25" x2="54.45" y2="29.25" width="0.25" layer="1"/>
+<wire x1="54.45" y1="29.25" x2="56.9" y2="26.8" width="0.25" layer="1"/>
 </signal>
 <signal name="SYS_UTX" class="5">
-<contactref element="U7" pad="49"/>
 <contactref element="U3" pad="20"/>
-<wire x1="53.1" y1="29.25" x2="54.65" y2="29.25" width="0.25" layer="1"/>
-<wire x1="54.65" y1="29.25" x2="56.65" y2="27.25" width="0.25" layer="1"/>
 <wire x1="80.1425" y1="16.4303" x2="80.1425" y2="13.75" width="0.25" layer="1"/>
-<wire x1="56.65" y1="27.25" x2="69.3228" y2="27.25" width="0.25" layer="1"/>
+<wire x1="57.1136" y1="27.25" x2="69.3228" y2="27.25" width="0.25" layer="1"/>
 <wire x1="69.3228" y1="27.25" x2="80.1425" y2="16.4303" width="0.25" layer="1"/>
+<contactref element="U7" pad="50"/>
+<wire x1="53.1" y1="29.75" x2="54.6136" y2="29.75" width="0.25" layer="1"/>
+<wire x1="57.1136" y1="27.25" x2="54.6136" y2="29.75" width="0.25" layer="1"/>
 </signal>
 <signal name="IBUS_UTX" class="5">
 <contactref element="U7" pad="44"/>
@@ -3595,19 +3591,16 @@ OSHW_LOGO</description>
 <contactref element="U7" pad="52"/>
 <contactref element="U3" pad="1"/>
 <wire x1="80.1425" y1="9.1575" x2="80.1425" y2="8.25" width="0.25" layer="1"/>
-<wire x1="53.1" y1="30.75" x2="54.25" y2="30.75" width="0.25" layer="1"/>
-<wire x1="56.7" y1="28.3" x2="57.7" y2="28.3" width="0.25" layer="1"/>
-<via x="57.7" y="28.3" extent="1-16" drill="0.51"/>
-<wire x1="54.25" y1="30.75" x2="56.7" y2="28.3" width="0.25" layer="1"/>
-<wire x1="57.7" y1="28.3" x2="58.4" y2="28.3" width="0.25" layer="16"/>
-<wire x1="59.3" y1="27.4" x2="59.3" y2="25.87" width="0.25" layer="16"/>
-<via x="59.3" y="25.87" extent="1-16" drill="0.51"/>
-<wire x1="59.3" y1="25.87" x2="59.57" y2="25.6" width="0.25" layer="1"/>
-<wire x1="58.4" y1="28.3" x2="59.3" y2="27.4" width="0.25" layer="16"/>
 <wire x1="78.9728" y1="16.3272" x2="78.9728" y2="10.3272" width="0.25" layer="1"/>
-<wire x1="59.57" y1="25.6" x2="69.7" y2="25.6" width="0.25" layer="1"/>
-<wire x1="69.7" y1="25.6" x2="78.9728" y2="16.3272" width="0.25" layer="1"/>
+<wire x1="68.95" y1="26.35" x2="78.9728" y2="16.3272" width="0.25" layer="1"/>
 <wire x1="78.9728" y1="10.3272" x2="80.1425" y2="9.1575" width="0.25" layer="1"/>
+<wire x1="53.1" y1="30.75" x2="52.05" y2="30.75" width="0.25" layer="1"/>
+<wire x1="52.05" y1="30.75" x2="51.8" y2="30.5" width="0.25" layer="1"/>
+<wire x1="51.8" y1="30.5" x2="51.8" y2="28.8" width="0.25" layer="1"/>
+<wire x1="52.2" y1="28.4" x2="54.6636" y2="28.4" width="0.25" layer="1"/>
+<wire x1="56.7136" y1="26.35" x2="68.95" y2="26.35" width="0.25" layer="1"/>
+<wire x1="51.8" y1="28.8" x2="52.2" y2="28.4" width="0.25" layer="1"/>
+<wire x1="54.6636" y1="28.4" x2="56.7136" y2="26.35" width="0.25" layer="1"/>
 </signal>
 <signal name="IBUS_FILT">
 <contactref element="U2" pad="6"/>
@@ -4037,9 +4030,9 @@ OSHW_LOGO</description>
 <signal name="MCU_RECOVERY" class="5">
 <contactref element="J7" pad="2"/>
 <contactref element="U7" pad="53"/>
-<wire x1="53.1" y1="31.25" x2="54.45" y2="31.25" width="0.25" layer="1"/>
-<wire x1="54.45" y1="31.25" x2="56.4" y2="29.3" width="0.25" layer="1"/>
-<wire x1="64.5" y1="29.3" x2="56.4" y2="29.3" width="0.25" layer="1"/>
+<wire x1="53.1" y1="31.25" x2="54.15" y2="31.25" width="0.25" layer="1"/>
+<wire x1="54.15" y1="31.25" x2="56.1" y2="29.3" width="0.25" layer="1"/>
+<wire x1="64.5" y1="29.3" x2="56.1" y2="29.3" width="0.25" layer="1"/>
 <wire x1="65.75" y1="33.75" x2="65.75" y2="32.75" width="0.25" layer="1"/>
 <wire x1="65" y1="29.8" x2="64.5" y2="29.3" width="0.25" layer="1"/>
 <wire x1="65.75" y1="32.75" x2="65" y2="32" width="0.25" layer="1"/>
