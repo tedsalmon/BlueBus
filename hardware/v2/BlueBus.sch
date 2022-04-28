@@ -3917,6 +3917,7 @@ Switches electrical signals</description>
 <part name="D2" library="Passives" deviceset="SMBJ18A" device=""/>
 <part name="FID1" library="MF_Aesthetics" deviceset="FIDUCIAL" device="_1MM"/>
 <part name="FID2" library="MF_Aesthetics" deviceset="FIDUCIAL" device="_1MM"/>
+<part name="FID3" library="MF_Aesthetics" deviceset="FIDUCIAL" device="_1MM"/>
 </parts>
 <sheets>
 <sheet>
@@ -4126,6 +4127,10 @@ Switches electrical signals</description>
 <instance part="FID2" gate="G$1" x="45.72" y="27.94" smashed="yes">
 <attribute name="VALUE" x="45.72" y="26.416" size="1.016" layer="96" font="vector" rot="MR180"/>
 <attribute name="NAME" x="45.72" y="27.94" size="1.016" layer="95" font="vector" rot="MR180"/>
+</instance>
+<instance part="FID3" gate="G$1" x="45.72" y="22.86" smashed="yes">
+<attribute name="VALUE" x="45.72" y="21.336" size="1.016" layer="96" font="vector" rot="MR180"/>
+<attribute name="NAME" x="45.72" y="22.86" size="1.016" layer="95" font="vector" rot="MR180"/>
 </instance>
 </instances>
 <busses>
@@ -4757,20 +4762,6 @@ Switches electrical signals</description>
 <wire x1="134.62" y1="172.72" x2="134.62" y2="170.18" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="BT_UTX" class="5">
-<segment>
-<wire x1="170.18" y1="86.36" x2="172.72" y2="86.36" width="0.1524" layer="91"/>
-<label x="172.72" y="86.36" size="1.27" layer="95" xref="yes"/>
-<pinref part="U7" gate="G$1" pin="C1IND/RP21/ICM1/OCM1A/PMA5/RG6"/>
-</segment>
-</net>
-<net name="BT_URX" class="5">
-<segment>
-<wire x1="170.18" y1="83.82" x2="172.72" y2="83.82" width="0.1524" layer="91"/>
-<label x="172.72" y="83.82" size="1.27" layer="95" xref="yes"/>
-<pinref part="U7" gate="G$1" pin="C1INC/RP26/OCM1B/PMA4/RG7"/>
-</segment>
-</net>
 <net name="3.3V" class="2">
 <segment>
 <wire x1="76.2" y1="104.14" x2="76.2" y2="83.82" width="0.1524" layer="91"/>
@@ -4995,6 +4986,7 @@ Switches electrical signals</description>
 <segment>
 <pinref part="U7" gate="G$1" pin="U5CTS/OC6/RF0"/>
 <wire x1="170.18" y1="111.76" x2="172.72" y2="111.76" width="0.1524" layer="91"/>
+<label x="172.72" y="111.76" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="BT_MODE" class="5">
@@ -5027,14 +5019,14 @@ Switches electrical signals</description>
 </net>
 <net name="MCU_VER" class="0">
 <segment>
-<pinref part="U7" gate="G$1" pin="HLVDIN/CTED8/PMD4/RE4"/>
-<wire x1="170.18" y1="124.46" x2="172.72" y2="124.46" width="0.1524" layer="91"/>
-<label x="172.72" y="124.46" size="1.27" layer="95" xref="yes"/>
-</segment>
-<segment>
 <pinref part="R19" gate="G$1" pin="1"/>
 <wire x1="218.44" y1="104.14" x2="215.9" y2="104.14" width="0.1524" layer="91"/>
 <label x="215.9" y="104.14" size="1.27" layer="95" rot="R180" xref="yes"/>
+</segment>
+<segment>
+<pinref part="U7" gate="G$1" pin="C2IND/RP19/ICM2/OCM2A/PMA3/RG8"/>
+<wire x1="170.18" y1="81.28" x2="172.72" y2="81.28" width="0.1524" layer="91"/>
+<label x="172.72" y="81.28" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="SYS_URX" class="5">
@@ -5051,6 +5043,20 @@ Switches electrical signals</description>
 <label x="40.64" y="78.74" size="1.27" layer="95" rot="R270" xref="yes"/>
 <pinref part="U7" gate="G$1" pin="RP23/PMACK1/RD2"/>
 <wire x1="40.64" y1="83.82" x2="40.64" y2="78.74" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="BT_URX" class="5">
+<segment>
+<pinref part="U7" gate="G$1" pin="C1IND/RP21/ICM1/OCM1A/PMA5/RG6"/>
+<wire x1="170.18" y1="86.36" x2="172.72" y2="86.36" width="0.1524" layer="91"/>
+<label x="172.72" y="86.36" size="1.27" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="BT_UTX" class="5">
+<segment>
+<pinref part="U7" gate="G$1" pin="C1INC/RP26/OCM1B/PMA4/RG7"/>
+<wire x1="170.18" y1="83.82" x2="172.72" y2="83.82" width="0.1524" layer="91"/>
+<label x="172.72" y="83.82" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>
@@ -5165,7 +5171,7 @@ Switches electrical signals</description>
 <label x="129.54" y="58.42" size="1.27" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="I2S_SCK" class="0">
+<net name="I2S_MCLK" class="0">
 <segment>
 <pinref part="U8" gate="G$1" pin="MCLK1"/>
 <wire x1="86.36" y1="134.62" x2="83.82" y2="134.62" width="0.1524" layer="91"/>
@@ -5179,7 +5185,7 @@ Switches electrical signals</description>
 <label x="83.82" y="137.16" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="I2S_CLK" class="0">
+<net name="I2S_BCK" class="0">
 <segment>
 <pinref part="U8" gate="G$1" pin="SCLK1"/>
 <wire x1="86.36" y1="139.7" x2="83.82" y2="139.7" width="0.1524" layer="91"/>
@@ -6596,16 +6602,16 @@ Switches electrical signals</description>
 <label x="170.18" y="147.32" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="I2S_CLK" class="0">
+<net name="I2S_BCK" class="0">
 <segment>
 <wire x1="27.94" y1="142.24" x2="25.4" y2="142.24" width="0.1524" layer="91"/>
 <label x="25.4" y="142.24" size="1.27" layer="95" rot="R180" xref="yes"/>
 <pinref part="U10" gate="G$1" pin="BCK"/>
 </segment>
 <segment>
-<pinref part="U9" gate="G$1" pin="MCLK"/>
-<wire x1="172.72" y1="109.22" x2="170.18" y2="109.22" width="0.1524" layer="91"/>
-<label x="170.18" y="109.22" size="1.27" layer="95" rot="R180" xref="yes"/>
+<pinref part="U9" gate="G$1" pin="SCLK"/>
+<wire x1="172.72" y1="149.86" x2="170.18" y2="149.86" width="0.1524" layer="91"/>
+<label x="170.18" y="149.86" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="DAC_CAPM" class="0">
@@ -6795,16 +6801,16 @@ Switches electrical signals</description>
 <pinref part="FB1" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="I2S_SCK" class="0">
+<net name="I2S_MCLK" class="0">
 <segment>
 <wire x1="27.94" y1="144.78" x2="25.4" y2="144.78" width="0.1524" layer="91"/>
 <label x="25.4" y="144.78" size="1.27" layer="95" rot="R180" xref="yes"/>
 <pinref part="U10" gate="G$1" pin="SCK"/>
 </segment>
 <segment>
-<pinref part="U9" gate="G$1" pin="SCLK"/>
-<wire x1="172.72" y1="149.86" x2="170.18" y2="149.86" width="0.1524" layer="91"/>
-<label x="170.18" y="149.86" size="1.27" layer="95" rot="R180" xref="yes"/>
+<pinref part="U9" gate="G$1" pin="MCLK"/>
+<wire x1="172.72" y1="109.22" x2="170.18" y2="109.22" width="0.1524" layer="91"/>
+<label x="170.18" y="109.22" size="1.27" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="MCU_SCK3" class="5">
