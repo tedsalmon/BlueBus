@@ -1,6 +1,7 @@
 /firmware/application/.generated_files/*
 /firmware/application/build/
 /firmware/application/dist/
+/firmware/application/debug/
 /firmware/application/disassembly/
 /firmware/bootloader/.generated_files
 /firmware/bootloader/build/
