@@ -891,8 +891,19 @@ unsigned char UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t input)
     }
 }
 
+/**
+ * strncpyz()
+ *     Description:
+ *         Safe string copy, that makes sure the truncated string is zero-terminated.
+ *     Params:
+ *         char * dest - Desticantion char buffer
+ *         const char * src - Source char buffer
+ *         size_t n - size of destination buffer
+ *     Returns:
+ *         char * - Pointer to destination string array
+ */
 char * strncpyz(char *dest, const char *src, size_t n) {
-    char *dst = strncpy(dest,src,n);
-    dest[n-1]='\0';
-    return dst;
+    strncpy(dest, src, n-1);
+    dest[n-1] = '\0';
+    return dest;
 }
