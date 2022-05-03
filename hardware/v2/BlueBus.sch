@@ -1421,12 +1421,21 @@ FRAME-LETTER</description>
 <packages>
 <package name="SOD123FL-2">
 <description>&lt;b&gt;Diode&lt;/b&gt;</description>
-<smd name="C" x="-1.75" y="0" dx="1.1" dy="1.3" layer="1"/>
-<smd name="A" x="1.75" y="0" dx="1.1" dy="1.3" layer="1"/>
+<smd name="C" x="-1.75" y="0" dx="1.1" dy="1.4" layer="1"/>
+<smd name="A" x="1.75" y="0" dx="1.1" dy="1.4" layer="1"/>
 <text x="0" y="1" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
 <wire x1="0.2" y1="0.4" x2="0.2" y2="-0.4" width="0.1" layer="21"/>
 <wire x1="0.2" y1="0.4" x2="-0.3" y2="0" width="0.1" layer="21"/>
 <wire x1="-0.3" y1="0" x2="0.2" y2="-0.4" width="0.1" layer="21"/>
+<wire x1="-2.75" y1="0.5" x2="-2.75" y2="-0.5" width="0.1" layer="21"/>
+<wire x1="-2.475" y1="0.875" x2="2.475" y2="0.875" width="0.05" layer="39"/>
+<wire x1="2.475" y1="0.875" x2="2.475" y2="-0.875" width="0.05" layer="39"/>
+<wire x1="2.475" y1="-0.875" x2="-2.475" y2="-0.875" width="0.05" layer="39"/>
+<wire x1="-2.475" y1="-0.875" x2="-2.475" y2="0.875" width="0.05" layer="39"/>
+<wire x1="-2.45" y1="-0.85" x2="-2.45" y2="0.85" width="0.1" layer="21"/>
+<wire x1="-2.45" y1="0.85" x2="2.45" y2="0.85" width="0.1" layer="21"/>
+<wire x1="2.45" y1="0.85" x2="2.45" y2="-0.85" width="0.1" layer="21"/>
+<wire x1="2.45" y1="-0.85" x2="-2.45" y2="-0.85" width="0.1" layer="21"/>
 </package>
 <package name="LED-0805">
 <wire x1="-0.1905" y1="0.508" x2="-0.1905" y2="0.254" width="0.127" layer="21"/>
@@ -1442,11 +1451,18 @@ FRAME-LETTER</description>
 <wire x1="0.0635" y1="-0.127" x2="-0.1905" y2="0" width="0.127" layer="21"/>
 <wire x1="-0.1905" y1="0" x2="0" y2="-0.254" width="0.127" layer="21"/>
 <wire x1="0" y1="-0.254" x2="-0.1905" y2="-0.254" width="0.127" layer="21"/>
-<smd name="+" x="-0.889" y="0" dx="0.889" dy="1.27" layer="1" roundness="25"/>
-<smd name="-" x="0.889" y="0" dx="0.889" dy="1.27" layer="1" roundness="25"/>
-<text x="0" y="1" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
-<text x="0" y="-1" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
-<rectangle x1="-1.5875" y1="-0.889" x2="1.5875" y2="0.889" layer="39"/>
+<smd name="+" x="-0.9" y="0" dx="1" dy="1.4" layer="1"/>
+<smd name="-" x="0.9" y="0" dx="1" dy="1.4" layer="1"/>
+<text x="0" y="1" size="1" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
+<wire x1="-1.575" y1="0.875" x2="1.575" y2="0.875" width="0.05" layer="39"/>
+<wire x1="1.575" y1="0.875" x2="1.575" y2="-0.875" width="0.05" layer="39"/>
+<wire x1="1.575" y1="-0.875" x2="-1.575" y2="-0.875" width="0.05" layer="39"/>
+<wire x1="-1.575" y1="-0.875" x2="-1.575" y2="0.875" width="0.05" layer="39"/>
+<wire x1="-1.55" y1="0.85" x2="1.55" y2="0.85" width="0.1" layer="21"/>
+<wire x1="1.55" y1="0.85" x2="1.55" y2="-0.85" width="0.1" layer="21"/>
+<wire x1="1.55" y1="-0.85" x2="-1.55" y2="-0.85" width="0.1" layer="21"/>
+<wire x1="-1.55" y1="-0.85" x2="-1.55" y2="0.85" width="0.1" layer="21"/>
+<wire x1="1.85" y1="0.5" x2="1.85" y2="-0.5" width="0.1" layer="21"/>
 </package>
 <package name="SOT-23">
 <description>&lt;b&gt;SOT23&lt;/b&gt;</description>
@@ -1557,9 +1573,8 @@ FRAME-LETTER</description>
 <wire x1="-3.7338" y1="-2.667" x2="-3.7338" y2="-3.2258" width="0.1524" layer="21"/>
 <wire x1="3.7338" y1="-0.3302" x2="3.7338" y2="0.3302" width="0.1524" layer="21"/>
 <wire x1="3.7338" y1="2.667" x2="3.7338" y2="3.2258" width="0.1524" layer="21"/>
-<wire x1="-4.234" y1="1.4986" x2="-4.3864" y2="1.4986" width="0.1524" layer="21" curve="-180"/>
-<wire x1="-4.3864" y1="1.4986" x2="-4.234" y2="1.4986" width="0.1524" layer="21" curve="-180"/>
-<text x="0" y="3.5" size="0.75" layer="25" ratio="6" rot="SR0" align="bottom-center">&gt;Name</text>
+<text x="0" y="3.5" size="1" layer="25" font="vector" ratio="15" rot="SR0" align="bottom-center">&gt;Name</text>
+<circle x="-4.5" y="1.5" radius="0.15" width="0.3" layer="21"/>
 </package>
 <package name="1210">
 <smd name="1" x="-1.35" y="0" dx="2.7" dy="1.2" layer="1" rot="R90"/>
@@ -1591,13 +1606,14 @@ FRAME-LETTER</description>
 <wire x1="3.75" y1="-1.75" x2="3.75" y2="1.75" width="0.1" layer="39"/>
 <wire x1="3.75" y1="1.75" x2="-3.75" y2="1.75" width="0.1" layer="39"/>
 <text x="0" y="-1.9" size="1" layer="25" font="vector" ratio="15" align="top-center">&gt;NAME</text>
-<wire x1="-0.3" y1="0" x2="0.2" y2="0.4" width="0.1" layer="21"/>
-<wire x1="0.2" y1="0.4" x2="0.2" y2="-0.4" width="0.1" layer="21"/>
-<wire x1="0.2" y1="-0.4" x2="-0.3" y2="0" width="0.1" layer="21"/>
+<wire x1="0.3" y1="0" x2="-0.2" y2="-0.4" width="0.1" layer="21"/>
+<wire x1="-0.2" y1="-0.4" x2="-0.2" y2="0.4" width="0.1" layer="21"/>
+<wire x1="-0.2" y1="0.4" x2="0.3" y2="0" width="0.1" layer="21"/>
 <wire x1="-3.75" y1="-1.75" x2="-3.75" y2="1.75" width="0.1" layer="21"/>
 <wire x1="-3.75" y1="1.75" x2="3.75" y2="1.75" width="0.1" layer="21"/>
 <wire x1="3.75" y1="1.75" x2="3.75" y2="-1.75" width="0.1" layer="21"/>
 <wire x1="3.75" y1="-1.75" x2="-3.75" y2="-1.75" width="0.1" layer="21"/>
+<wire x1="4.05" y1="1" x2="4.05" y2="-1" width="0.1" layer="21"/>
 </package>
 </packages>
 <symbols>
@@ -1936,10 +1952,10 @@ Switches electrical signals</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="DEVICE" value="10UF-1206-50V-10%" constant="no"/>
+<attribute name="DEVICE" value="10UF-1206-35V-10%" constant="no"/>
 <attribute name="MFG" value="TDK"/>
 <attribute name="PACKAGE" value="1206" constant="no"/>
-<attribute name="PN" value="CGA5L3X5R1H106K160AB"/>
+<attribute name="PN" value="CGA5L1X7R1V106K160AC"/>
 <attribute name="VALUE" value="10uF" constant="no"/>
 </technology>
 </technologies>
@@ -2161,8 +2177,8 @@ Switches electrical signals</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="MFG" value="Broadcom" constant="no"/>
-<attribute name="PN" value="HSMQ-C170-T0000" constant="no"/>
+<attribute name="MFG" value="Wurth Elektronik" constant="no"/>
+<attribute name="PN" value="150080VS75000" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -2219,8 +2235,8 @@ Switches electrical signals</description>
 </connects>
 <technologies>
 <technology name="">
-<attribute name="MFG" value="Broadcom" constant="no"/>
-<attribute name="PN" value="HSMC-C170-T0000" constant="no"/>
+<attribute name="MFG" value="Wurth Elektronik" constant="no"/>
+<attribute name="PN" value="150080RS75000" constant="no"/>
 </technology>
 </technologies>
 </device>

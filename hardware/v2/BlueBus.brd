@@ -682,12 +682,21 @@ Australia &amp; U.S.A.</text>
 </package>
 <package name="SOD123FL-2">
 <description>&lt;b&gt;Diode&lt;/b&gt;</description>
-<smd name="C" x="-1.75" y="0" dx="1.1" dy="1.3" layer="1"/>
-<smd name="A" x="1.75" y="0" dx="1.1" dy="1.3" layer="1"/>
+<smd name="C" x="-1.75" y="0" dx="1.1" dy="1.4" layer="1"/>
+<smd name="A" x="1.75" y="0" dx="1.1" dy="1.4" layer="1"/>
 <text x="0" y="1" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
 <wire x1="0.2" y1="0.4" x2="0.2" y2="-0.4" width="0.1" layer="21"/>
 <wire x1="0.2" y1="0.4" x2="-0.3" y2="0" width="0.1" layer="21"/>
 <wire x1="-0.3" y1="0" x2="0.2" y2="-0.4" width="0.1" layer="21"/>
+<wire x1="-2.75" y1="0.5" x2="-2.75" y2="-0.5" width="0.1" layer="21"/>
+<wire x1="-2.475" y1="0.875" x2="2.475" y2="0.875" width="0.05" layer="39"/>
+<wire x1="2.475" y1="0.875" x2="2.475" y2="-0.875" width="0.05" layer="39"/>
+<wire x1="2.475" y1="-0.875" x2="-2.475" y2="-0.875" width="0.05" layer="39"/>
+<wire x1="-2.475" y1="-0.875" x2="-2.475" y2="0.875" width="0.05" layer="39"/>
+<wire x1="-2.45" y1="-0.85" x2="-2.45" y2="0.85" width="0.1" layer="21"/>
+<wire x1="-2.45" y1="0.85" x2="2.45" y2="0.85" width="0.1" layer="21"/>
+<wire x1="2.45" y1="0.85" x2="2.45" y2="-0.85" width="0.1" layer="21"/>
+<wire x1="2.45" y1="-0.85" x2="-2.45" y2="-0.85" width="0.1" layer="21"/>
 </package>
 <package name="LITTLEFUSE">
 <wire x1="-2.515" y1="4.865" x2="-2.515" y2="-4.865" width="0.1" layer="21"/>
@@ -723,11 +732,18 @@ Australia &amp; U.S.A.</text>
 <wire x1="0.0635" y1="-0.127" x2="-0.1905" y2="0" width="0.127" layer="21"/>
 <wire x1="-0.1905" y1="0" x2="0" y2="-0.254" width="0.127" layer="21"/>
 <wire x1="0" y1="-0.254" x2="-0.1905" y2="-0.254" width="0.127" layer="21"/>
-<smd name="+" x="-0.889" y="0" dx="0.889" dy="1.27" layer="1" roundness="25"/>
-<smd name="-" x="0.889" y="0" dx="0.889" dy="1.27" layer="1" roundness="25"/>
-<text x="0" y="1" size="0.75" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
-<text x="0" y="-1" size="0.5" layer="27" font="vector" ratio="15" align="top-center">&gt;VALUE</text>
-<rectangle x1="-1.5875" y1="-0.889" x2="1.5875" y2="0.889" layer="39"/>
+<smd name="+" x="-0.9" y="0" dx="1" dy="1.4" layer="1"/>
+<smd name="-" x="0.9" y="0" dx="1" dy="1.4" layer="1"/>
+<text x="0" y="1" size="1" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
+<wire x1="-1.575" y1="0.875" x2="1.575" y2="0.875" width="0.05" layer="39"/>
+<wire x1="1.575" y1="0.875" x2="1.575" y2="-0.875" width="0.05" layer="39"/>
+<wire x1="1.575" y1="-0.875" x2="-1.575" y2="-0.875" width="0.05" layer="39"/>
+<wire x1="-1.575" y1="-0.875" x2="-1.575" y2="0.875" width="0.05" layer="39"/>
+<wire x1="-1.55" y1="0.85" x2="1.55" y2="0.85" width="0.1" layer="21"/>
+<wire x1="1.55" y1="0.85" x2="1.55" y2="-0.85" width="0.1" layer="21"/>
+<wire x1="1.55" y1="-0.85" x2="-1.55" y2="-0.85" width="0.1" layer="21"/>
+<wire x1="-1.55" y1="-0.85" x2="-1.55" y2="0.85" width="0.1" layer="21"/>
+<wire x1="1.85" y1="0.5" x2="1.85" y2="-0.5" width="0.1" layer="21"/>
 </package>
 <package name="SOT-23">
 <description>&lt;b&gt;SOT23&lt;/b&gt;</description>
@@ -764,9 +780,8 @@ Australia &amp; U.S.A.</text>
 <wire x1="-3.7338" y1="-2.667" x2="-3.7338" y2="-3.2258" width="0.1524" layer="21"/>
 <wire x1="3.7338" y1="-0.3302" x2="3.7338" y2="0.3302" width="0.1524" layer="21"/>
 <wire x1="3.7338" y1="2.667" x2="3.7338" y2="3.2258" width="0.1524" layer="21"/>
-<wire x1="-4.234" y1="1.4986" x2="-4.3864" y2="1.4986" width="0.1524" layer="21" curve="-180"/>
-<wire x1="-4.3864" y1="1.4986" x2="-4.234" y2="1.4986" width="0.1524" layer="21" curve="-180"/>
-<text x="0" y="3.5" size="0.75" layer="25" ratio="6" rot="SR0" align="bottom-center">&gt;Name</text>
+<text x="0" y="3.5" size="1" layer="25" font="vector" ratio="15" rot="SR0" align="bottom-center">&gt;Name</text>
+<circle x="-4.5" y="1.5" radius="0.15" width="0.3" layer="21"/>
 </package>
 <package name="DO-214AA">
 <smd name="A" x="-2.15" y="0" dx="2.4" dy="2.5" layer="1" rot="R90"/>
@@ -776,13 +791,14 @@ Australia &amp; U.S.A.</text>
 <wire x1="3.75" y1="-1.75" x2="3.75" y2="1.75" width="0.1" layer="39"/>
 <wire x1="3.75" y1="1.75" x2="-3.75" y2="1.75" width="0.1" layer="39"/>
 <text x="0" y="-1.9" size="1" layer="25" font="vector" ratio="15" align="top-center">&gt;NAME</text>
-<wire x1="-0.3" y1="0" x2="0.2" y2="0.4" width="0.1" layer="21"/>
-<wire x1="0.2" y1="0.4" x2="0.2" y2="-0.4" width="0.1" layer="21"/>
-<wire x1="0.2" y1="-0.4" x2="-0.3" y2="0" width="0.1" layer="21"/>
+<wire x1="0.3" y1="0" x2="-0.2" y2="-0.4" width="0.1" layer="21"/>
+<wire x1="-0.2" y1="-0.4" x2="-0.2" y2="0.4" width="0.1" layer="21"/>
+<wire x1="-0.2" y1="0.4" x2="0.3" y2="0" width="0.1" layer="21"/>
 <wire x1="-3.75" y1="-1.75" x2="-3.75" y2="1.75" width="0.1" layer="21"/>
 <wire x1="-3.75" y1="1.75" x2="3.75" y2="1.75" width="0.1" layer="21"/>
 <wire x1="3.75" y1="1.75" x2="3.75" y2="-1.75" width="0.1" layer="21"/>
 <wire x1="3.75" y1="-1.75" x2="-3.75" y2="-1.75" width="0.1" layer="21"/>
+<wire x1="4.05" y1="1" x2="4.05" y2="-1" width="0.1" layer="21"/>
 </package>
 </packages>
 </library>
@@ -1307,15 +1323,15 @@ OSHW_LOGO</description>
 </element>
 <element name="C1" library="Passives" package="RHS1V101MCN1GS" value="RHS1V101MCN1GS" x="36" y="9" smashed="yes" rot="R90">
 <attribute name="MFG" value="Nichicon" x="90.61" y="26.78" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="NAME" x="36" y="14.4" size="1.25" layer="25" font="vector" ratio="15" rot="SR0" align="bottom-center"/>
+<attribute name="NAME" x="36" y="14.5" size="1.25" layer="25" font="vector" ratio="15" rot="SR0" align="bottom-center"/>
 <attribute name="PN" value="RHS1V101MCN1GS" x="90.61" y="26.78" size="1.778" layer="27" rot="R90" display="off"/>
 </element>
 <element name="C10" library="Passives" package="1206" value="10uF" x="59.7" y="10.075" smashed="yes" rot="R90">
-<attribute name="DEVICE" value="10UF-1206-50V-10%" x="128.28" y="25.315" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="DEVICE" value="10UF-1206-35V-10%" x="128.28" y="25.315" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MFG" value="TDK" x="128.28" y="25.315" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="59.7" y="7.575" size="1" layer="25" font="vector" ratio="15" rot="R180" align="bottom-center"/>
 <attribute name="PACKAGE" value="1206" x="128.28" y="25.315" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="PN" value="CGA5L3X5R1H106K160AB" x="128.28" y="25.315" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="PN" value="CGA5L1X7R1V106K160AC" x="128.28" y="25.315" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" x="60.95" y="10.075" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
 <element name="C6" library="Passives" package="0603" value="1uF" x="46" y="19.35" smashed="yes" rot="R90">
@@ -1621,16 +1637,16 @@ OSHW_LOGO</description>
 <attribute name="VALUE" x="56.1" y="9.475" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
 <element name="C9" library="Passives" package="1206" value="10uF" x="57.2" y="10.075" smashed="yes" rot="R90">
-<attribute name="DEVICE" value="10UF-1206-50V-10%" x="118.16" y="91.355" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="DEVICE" value="10UF-1206-35V-10%" x="118.16" y="91.355" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="MFG" value="TDK" x="118.16" y="91.355" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="NAME" x="57.2" y="7.575" size="1" layer="25" font="vector" ratio="15" rot="R180" align="bottom-center"/>
 <attribute name="PACKAGE" value="1206" x="118.16" y="91.355" size="1.778" layer="27" rot="R90" display="off"/>
-<attribute name="PN" value="CGA5L3X5R1H106K160AB" x="118.16" y="91.355" size="1.778" layer="27" rot="R90" display="off"/>
+<attribute name="PN" value="CGA5L1X7R1V106K160AC" x="118.16" y="91.355" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" x="58.45" y="10.075" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
 <element name="D1" library="Passives" package="SOD123FL-2" value="2A_150V" x="8.55" y="11.2" smashed="yes" rot="R270">
 <attribute name="MFG" value="MCC" x="-80.35" y="-37.06" size="1.778" layer="27" rot="R270" display="off"/>
-<attribute name="NAME" x="8.55" y="13.6" size="1" layer="25" font="vector" ratio="15" align="bottom-center"/>
+<attribute name="NAME" x="8.55" y="8.6" size="1" layer="25" font="vector" ratio="15" align="top-center"/>
 <attribute name="PN" value="SMD2150PL-TP" x="8.55" y="11.2" size="1.778" layer="27" rot="R270" display="off"/>
 </element>
 <element name="D3" library="Passives" package="SOD123FL-2" value="2A_150V" x="87.85" y="3.75" smashed="yes">
@@ -1705,9 +1721,9 @@ OSHW_LOGO</description>
 <attribute name="VALUE" value="PIC24FJ1024GA606" x="47" y="33" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="PWR" library="Passives" package="LED-0805" value="LED_GREEN" x="92.25" y="24" smashed="yes">
-<attribute name="MFG" value="Broadcom" x="92.25" y="24" size="1.778" layer="27" display="off"/>
-<attribute name="NAME" x="92.25" y="24.9" size="1" layer="25" font="vector" ratio="15" align="bottom-center"/>
-<attribute name="PN" value="HSMQ-C170-T0000" x="92.25" y="24" size="1.778" layer="27" display="off"/>
+<attribute name="MFG" value="Wurth Elektronik" x="92.25" y="24" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="92.25" y="25" size="1" layer="25" font="vector" ratio="15" align="bottom-center"/>
+<attribute name="PN" value="150080VS75000" x="92.25" y="24" size="1.778" layer="27" display="off"/>
 <attribute name="VALUE" x="92.25" y="23" size="0.5" layer="27" font="vector" ratio="15" align="top-center"/>
 </element>
 <element name="J1" library="Connectors" package="TE_MQS_3PIN" value="3PIN_953442_1" x="4.7" y="12" smashed="yes" rot="R270">
@@ -1774,13 +1790,13 @@ OSHW_LOGO</description>
 <attribute name="PN" value="ERJ-PA3F1002V" x="148.84" y="59.36" size="1.778" layer="27" rot="R90" display="off"/>
 <attribute name="VALUE" x="64.75" y="36.5" size="0.5" layer="27" font="vector" ratio="15" rot="R90" align="top-center"/>
 </element>
-<element name="R23" library="Passives" package="0603" value="2k" x="89" y="24" smashed="yes" rot="R180">
-<attribute name="DEVICE" value="2KOHM-0603-1/4-5%" x="54.71" y="109.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="MFG" value="Panasonic" x="54.71" y="109.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="89" y="24.8" size="1" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
-<attribute name="PACKAGE" value="0603" x="54.71" y="109.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="PN" value="ERJ-PA3J202V" x="54.71" y="109.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="VALUE" x="89" y="25" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
+<element name="R23" library="Passives" package="0603" value="2k" x="88.7" y="24" smashed="yes" rot="R180">
+<attribute name="DEVICE" value="2KOHM-0603-1/4-5%" x="54.41" y="109.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="MFG" value="Panasonic" x="54.41" y="109.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="NAME" x="88.7" y="24.8" size="1" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
+<attribute name="PACKAGE" value="0603" x="54.41" y="109.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="PN" value="ERJ-PA3J202V" x="54.41" y="109.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="VALUE" x="88.7" y="25" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
 </element>
 <element name="R5" library="Passives" package="0603" value="10k" x="20.5" y="23" smashed="yes">
 <attribute name="DEVICE" value="10KOHM-0603-1/4-1%" x="70.03" y="-58.28" size="1.778" layer="27" display="off"/>
@@ -1790,21 +1806,21 @@ OSHW_LOGO</description>
 <attribute name="PN" value="ERJ-PA3F1002V" x="70.03" y="-58.28" size="1.778" layer="27" display="off"/>
 <attribute name="VALUE" x="20.5" y="22" size="0.5" layer="27" font="vector" ratio="15" align="top-center"/>
 </element>
-<element name="R24" library="Passives" package="0603" value="2k" x="89" y="21" smashed="yes" rot="R180">
-<attribute name="DEVICE" value="2KOHM-0603-1/4-5%" x="50.9" y="106.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="MFG" value="Panasonic" x="50.9" y="106.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="89" y="21.8" size="1" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
-<attribute name="PACKAGE" value="0603" x="50.9" y="106.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="PN" value="ERJ-PA3J202V" x="50.9" y="106.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="VALUE" x="89" y="22" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
+<element name="R24" library="Passives" package="0603" value="2k" x="88.7" y="21" smashed="yes" rot="R180">
+<attribute name="DEVICE" value="2KOHM-0603-1/4-5%" x="50.6" y="106.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="MFG" value="Panasonic" x="50.6" y="106.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="NAME" x="88.7" y="21.8" size="1" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
+<attribute name="PACKAGE" value="0603" x="50.6" y="106.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="PN" value="ERJ-PA3J202V" x="50.6" y="106.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="VALUE" x="88.7" y="22" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
 </element>
-<element name="R25" library="Passives" package="0603" value="2k" x="89" y="18" smashed="yes" rot="R180">
-<attribute name="DEVICE" value="2KOHM-0603-1/4-5%" x="47.09" y="103.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="MFG" value="Panasonic" x="47.09" y="103.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="89" y="18.8" size="1" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
-<attribute name="PACKAGE" value="0603" x="47.09" y="103.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="PN" value="ERJ-PA3J202V" x="47.09" y="103.09" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="VALUE" x="89" y="19" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
+<element name="R25" library="Passives" package="0603" value="2k" x="88.7" y="18" smashed="yes" rot="R180">
+<attribute name="DEVICE" value="2KOHM-0603-1/4-5%" x="46.79" y="103.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="MFG" value="Panasonic" x="46.79" y="103.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="NAME" x="88.7" y="18.8" size="1" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
+<attribute name="PACKAGE" value="0603" x="46.79" y="103.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="PN" value="ERJ-PA3J202V" x="46.79" y="103.09" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="VALUE" x="88.7" y="19" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
 </element>
 <element name="R4" library="Passives" package="0603" value="10k" x="25.4" y="25.35" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="10KOHM-0603-1/4-1%" x="106.68" y="78.69" size="1.778" layer="27" rot="R90" display="off"/>
@@ -1894,11 +1910,11 @@ OSHW_LOGO</description>
 <attribute name="PN" value="ERJ-PB3B7681V" x="46.4" y="7" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="VALUE" value="7.68k" x="45.4" y="7" size="0.5" layer="27" font="vector" ratio="15" rot="R270" align="top-center"/>
 </element>
-<element name="RX" library="Passives" package="LED-0805" value="LED_GREEN" x="92.25" y="21" smashed="yes" rot="R180">
-<attribute name="MFG" value="Broadcom" x="92.25" y="21" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="92.25" y="21.9" size="1" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
-<attribute name="PN" value="HSMQ-C170-T0000" x="92.25" y="21" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="VALUE" x="92.25" y="22" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
+<element name="RX" library="Passives" package="LED-0805" value="LED_GREEN" x="92.25" y="21" smashed="yes">
+<attribute name="MFG" value="Wurth Elektronik" x="92.25" y="21" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="92.25" y="22" size="1" layer="25" font="vector" ratio="15" align="bottom-center"/>
+<attribute name="PN" value="150080VS75000" x="92.25" y="21" size="1.778" layer="27" display="off"/>
+<attribute name="VALUE" x="92.25" y="20" size="0.5" layer="27" font="vector" ratio="15" align="top-center"/>
 </element>
 <element name="SH1" library="shorts" package="SHORT_TOP-50" value="SHORTT5" x="31" y="55" smashed="yes">
 <attribute name="BOM" value="no" x="55.13" y="-35.17" size="1.778" layer="27" display="off"/>
@@ -1919,11 +1935,11 @@ OSHW_LOGO</description>
 <attribute name="PN" value="TH3122.4" x="71" y="11" size="1.778" layer="27" display="off"/>
 <attribute name="VALUE" value="TH3122.4" x="71" y="11" size="1.778" layer="27" display="off"/>
 </element>
-<element name="TX" library="Passives" package="LED-0805" value="LED_RED" x="92.25" y="18" smashed="yes" rot="R180">
-<attribute name="MFG" value="Broadcom" x="92.25" y="18" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="92.25" y="18.9" size="1" layer="25" font="vector" ratio="15" rot="R180" align="top-center"/>
-<attribute name="PN" value="HSMC-C170-T0000" x="92.25" y="18" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="VALUE" x="92.25" y="19" size="0.5" layer="27" font="vector" ratio="15" rot="R180" align="top-center"/>
+<element name="TX" library="Passives" package="LED-0805" value="LED_RED" x="92.25" y="18" smashed="yes">
+<attribute name="MFG" value="Wurth Elektronik" x="92.25" y="18" size="1.778" layer="27" display="off"/>
+<attribute name="NAME" x="92.25" y="19" size="1" layer="25" font="vector" ratio="15" align="bottom-center"/>
+<attribute name="PN" value="150080RS75000" x="92.25" y="18" size="1.778" layer="27" display="off"/>
+<attribute name="VALUE" x="92.25" y="17" size="0.5" layer="27" font="vector" ratio="15" align="top-center"/>
 </element>
 <element name="J6" library="Connectors" package="USB3080-30-01-A" value="USB3080-30-01-A" x="90.85" y="10" smashed="yes" rot="R90">
 <attribute name="MFG" value="Global Connector Technology" x="155.62" y="36.67" size="1.778" layer="27" rot="R90" display="off"/>
@@ -3461,8 +3477,8 @@ OSHW_LOGO</description>
 <wire x1="80.4" y1="38.1" x2="84" y2="34.5" width="0.25" layer="1"/>
 <wire x1="84" y1="34.5" x2="84" y2="25.4" width="0.25" layer="1"/>
 <wire x1="84" y1="25.4" x2="85.4" y2="24" width="0.25" layer="1"/>
-<wire x1="85.4" y1="24" x2="88.2" y2="24" width="0.25" layer="1"/>
 <wire x1="76.6" y1="39" x2="77.5" y2="38.1" width="0.25" layer="16"/>
+<wire x1="85.4" y1="24" x2="87.9" y2="24" width="0.25" layer="1"/>
 </signal>
 <signal name="IBUS_EN" class="5">
 <contactref element="U7" pad="59"/>
@@ -3483,7 +3499,7 @@ OSHW_LOGO</description>
 <signal name="MCU_ON_LED_RES">
 <contactref element="PWR" pad="+"/>
 <contactref element="R23" pad="1"/>
-<wire x1="89.8" y1="24" x2="91.361" y2="24" width="0.3" layer="1"/>
+<wire x1="89.5" y1="24" x2="91.35" y2="24" width="0.3" layer="1"/>
 </signal>
 <signal name="MCU_TEL_ON" class="5">
 <contactref element="R4" pad="2"/>
@@ -3682,7 +3698,8 @@ OSHW_LOGO</description>
 <wire x1="88.6" y1="6.9" x2="88.6" y2="16.1" width="0.25" layer="16"/>
 <wire x1="88.6" y1="16.1" x2="88.2" y2="16.5" width="0.25" layer="16"/>
 <via x="88.2" y="16.5" extent="1-16" drill="0.51"/>
-<wire x1="88.2" y1="16.5" x2="88.2" y2="18" width="0.25" layer="1"/>
+<wire x1="87.9" y1="18" x2="87.9" y2="16.8" width="0.25" layer="1"/>
+<wire x1="87.9" y1="16.8" x2="88.2" y2="16.5" width="0.25" layer="1"/>
 </signal>
 <signal name="SYS_RX_LED">
 <contactref element="U3" pad="17"/>
@@ -3692,11 +3709,12 @@ OSHW_LOGO</description>
 <wire x1="83.5" y1="10.3" x2="85" y2="10.3" width="0.25" layer="16"/>
 <wire x1="83.5" y1="10.3" x2="83.2" y2="10.3" width="0.25" layer="1"/>
 <wire x1="83.2" y1="10.3" x2="82.0475" y2="11.4525" width="0.25" layer="1"/>
-<via x="86.8" y="20.7" extent="1-16" drill="0.51"/>
-<wire x1="85" y1="10.3" x2="86.8" y2="12.1" width="0.25" layer="16"/>
-<wire x1="86.8" y1="20.7" x2="86.8" y2="12.1" width="0.25" layer="16"/>
-<wire x1="88.2" y1="21" x2="87.1" y2="21" width="0.25" layer="1"/>
-<wire x1="87.1" y1="21" x2="86.8" y2="20.7" width="0.25" layer="1"/>
+<via x="86.6" y="20.4" extent="1-16" drill="0.51"/>
+<wire x1="85" y1="10.3" x2="86.6" y2="11.9" width="0.25" layer="16"/>
+<wire x1="86.6" y1="20.4" x2="86.6" y2="11.9" width="0.25" layer="16"/>
+<wire x1="86.6" y1="20.4" x2="86.6" y2="20.5" width="0.25" layer="1"/>
+<wire x1="87.1" y1="21" x2="87.9" y2="21" width="0.25" layer="1"/>
+<wire x1="86.6" y1="20.5" x2="87.1" y2="21" width="0.25" layer="1"/>
 </signal>
 <signal name="USB_3V3">
 <contactref element="U3" pad="3"/>
@@ -3720,22 +3738,36 @@ OSHW_LOGO</description>
 <wire x1="84.0603" y1="11.9" x2="81.5" y2="11.9" width="0.3" layer="16"/>
 <contactref element="RX" pad="+"/>
 <contactref element="TX" pad="+"/>
-<wire x1="93.139" y1="21" x2="93.139" y2="18" width="0.4" layer="1"/>
-<wire x1="93.139" y1="18" x2="93.139" y2="15.439" width="0.4" layer="1"/>
-<wire x1="93.139" y1="15.439" x2="92.5" y2="14.8" width="0.4" layer="1"/>
-<wire x1="92.5" y1="14.8" x2="86.6" y2="14.8" width="0.4" layer="1"/>
-<wire x1="86" y1="15.4" x2="84.8" y2="15.4" width="0.4" layer="1"/>
-<wire x1="86.6" y1="14.8" x2="86" y2="15.4" width="0.4" layer="1"/>
+<wire x1="86.2" y1="18.3" x2="87.4" y2="19.5" width="0.4" layer="1"/>
+<wire x1="86.2" y1="18.3" x2="86.2" y2="15.9" width="0.4" layer="1"/>
+<wire x1="86.2" y1="15.9" x2="85.7" y2="15.4" width="0.4" layer="1"/>
+<wire x1="85.7" y1="15.4" x2="84.8" y2="15.4" width="0.4" layer="1"/>
+<wire x1="91.35" y1="20.05" x2="91.35" y2="21" width="0.4" layer="1"/>
+<wire x1="87.4" y1="19.5" x2="90.8" y2="19.5" width="0.4" layer="1"/>
+<wire x1="90.8" y1="19.5" x2="90.9" y2="19.5" width="0.4" layer="1"/>
+<wire x1="91.35" y1="20.05" x2="90.8" y2="19.5" width="0.4" layer="1"/>
+<wire x1="90.9" y1="19.5" x2="90.9" y2="19.4" width="0.4" layer="1"/>
+<wire x1="91.35" y1="18.95" x2="91.35" y2="18" width="0.4" layer="1"/>
+<wire x1="90.9" y1="19.4" x2="91.35" y2="18.95" width="0.4" layer="1"/>
 </signal>
 <signal name="SYS_RX_LED_RES">
 <contactref element="RX" pad="-"/>
 <contactref element="R24" pad="1"/>
-<wire x1="89.8" y1="21" x2="91.361" y2="21" width="0.3" layer="1"/>
+<wire x1="93.2" y1="21.05" x2="93.15" y2="21" width="0.25" layer="1"/>
+<wire x1="89.5" y1="21" x2="89.5" y2="21.8" width="0.3" layer="1"/>
+<wire x1="93.15" y1="21.85" x2="93.15" y2="21" width="0.3" layer="1"/>
+<wire x1="89.5" y1="21.8" x2="89.95" y2="22.25" width="0.3" layer="1"/>
+<wire x1="89.95" y1="22.25" x2="92.75" y2="22.25" width="0.3" layer="1"/>
+<wire x1="92.75" y1="22.25" x2="93.15" y2="21.85" width="0.3" layer="1"/>
 </signal>
 <signal name="SYS_TX_LED_RES">
 <contactref element="TX" pad="-"/>
 <contactref element="R25" pad="1"/>
-<wire x1="89.8" y1="18" x2="91.361" y2="18" width="0.3" layer="1"/>
+<wire x1="89.5" y1="18" x2="89.5" y2="17.2" width="0.3" layer="1"/>
+<wire x1="89.5" y1="17.2" x2="89.96" y2="16.74" width="0.3" layer="1"/>
+<wire x1="93.15" y1="17.15" x2="93.15" y2="18" width="0.3" layer="1"/>
+<wire x1="89.96" y1="16.74" x2="92.74" y2="16.74" width="0.3" layer="1"/>
+<wire x1="92.74" y1="16.74" x2="93.15" y2="17.15" width="0.3" layer="1"/>
 </signal>
 <signal name="I2S_LRCK">
 <contactref element="U10" pad="23"/>
@@ -4102,6 +4134,20 @@ OSHW_LOGO</description>
 <contactref element="D2" pad="A"/>
 <via x="3.5" y="10.7" extent="1-16" drill="0.51"/>
 <via x="3.5" y="13.5" extent="1-16" drill="0.51"/>
+<polygon width="0.3" layer="16">
+<vertex x="25.5" y="0"/>
+<vertex x="2" y="0" curve="-90"/>
+<vertex x="0" y="2"/>
+<vertex x="0" y="5.2"/>
+<vertex x="1.5" y="5.2" curve="90"/>
+<vertex x="2.5" y="6.2"/>
+<vertex x="2.5" y="13.8" curve="90"/>
+<vertex x="1.5" y="14.8"/>
+<vertex x="0" y="14.8"/>
+<vertex x="0" y="17.5"/>
+<vertex x="24.5" y="17.5"/>
+<vertex x="25.5" y="16.5"/>
+</polygon>
 <polygon width="0.3" layer="1">
 <vertex x="25.5" y="0"/>
 <vertex x="2" y="0" curve="-90"/>
