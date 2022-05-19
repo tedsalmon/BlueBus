@@ -382,7 +382,7 @@ void HandlerBC127CallStatus(void *ctx, unsigned char *data)
         // Handle volume control
         if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
             (
-                ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC) == CONFIG_SETTING_DSP_INPUT_ANALOG ||
+                ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC) != CONFIG_SETTING_DSP_INPUT_SPDIF ||
                 context->ibusModuleStatus.DSP == 0
             )
         ) {
