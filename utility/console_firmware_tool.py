@@ -19,8 +19,8 @@ PROTOCOL_CMD_ERASE_FLASH_RESPONSE = 0x03
 PROTOCOL_CMD_WRITE_DATA_REQUEST = 0x04
 PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK = 0x05
 PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR = 0x06
-PROTOCOL_CMD_BC127_MODE_REQUEST = 0x07
-PROTOCOL_CMD_BC127_MODE_RESPONSE = 0x08
+PROTOCOL_CMD_BT_MODE_REQUEST = 0x07
+PROTOCOL_CMD_BT_MODE_RESPONSE = 0x08
 PROTOCOL_CMD_START_APP_REQUEST = 0x09
 PROTOCOL_CMD_START_APP_RESPONSE = 0x0A
 PROTOCOL_CMD_FIRMWARE_VERSION_REQUEST = 0x0B
@@ -35,6 +35,8 @@ PROTOCOL_CMD_READ_BUILD_DATE_RESPONSE = 0x13
 PROTOCOL_CMD_WRITE_BUILD_DATE_REQUEST = 0x14
 PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK = 0x15
 PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_ERR = 0x16
+PROTOCOL_CMD_BT_DFU_MODE_REQUEST = 0x17
+PROTOCOL_CMD_BT_DFU_MODE_RESPONSE = 0x18
 PROTOCOL_ERR_PACKET_TIMEOUT = 0xFE
 PROTOCOL_BAD_PACKET_RESPONSE = 0xFF
 
@@ -72,8 +74,12 @@ def generate_packet(command, data):
     packet.append(chk)
     return packet
 
-def request_bc127_mode():
-    for i in generate_packet(PROTOCOL_CMD_BC127_MODE_REQUEST, [0x00]):
+def request_bt_mode():
+    for i in generate_packet(PROTOCOL_CMD_BT_MODE_REQUEST, [0x00]):
+        tx_buffer.append(i)
+
+def request_bt_dfu_mode():
+    for i in generate_packet(PROTOCOL_CMD_BT_DFU_MODE_REQUEST, [0x00]):
         tx_buffer.append(i)
 
 def request_platform():
@@ -154,7 +160,12 @@ if __name__ == '__main__':
         )
         parser.add_argument(
             '--btmode',
-            help='Switch UART to the BC127',
+            help='Switch UART to the BT',
+            action='store_true',
+        )
+        parser.add_argument(
+            '--btdfumode',
+            help='Switch UART to the BT and place the module in DFU mode',
             action='store_true',
         )
         parser.add_argument(
@@ -242,8 +253,11 @@ if __name__ == '__main__':
                                 print('Erasing Flash...')
                                 request_erase_flash()
                             elif args.btmode:
-                                print('==== Requesting BC127 Mode ====')
-                                request_bc127_mode()
+                                print('==== Requesting BT Mode ====')
+                                request_bt_mode()
+                            elif args.btdfumode:
+                                print('==== Requesting BT DFU Mode ====')
+                                request_bt_dfu_mode()
                             elif args.getsn:
                                 read_sn()
                             elif args.getbuild:
@@ -261,21 +275,35 @@ if __name__ == '__main__':
                                 write_sn(msb, lsb)
                             else:
                                 sys.exit(0)
-                        if command == PROTOCOL_CMD_BC127_MODE_RESPONSE:
-                            print('BC127 Mode Started')
+                        if command == PROTOCOL_CMD_BT_MODE_RESPONSE:
+                            print('BT Mode Started')
+                            sys.exit(0)
+                        if command == PROTOCOL_CMD_BT_DFU_MODE_RESPONSE:
+                            print('BT DFU Mode Started')
                             sys.exit(0)
                         if command == PROTOCOL_CMD_ERASE_FLASH_RESPONSE:
                             send_file(data[data_idx])
                         if command == PROTOCOL_CMD_WRITE_DATA_RESPONSE_OK:
                             percent = 0
                             if data_idx > 0:
-                                percent = data_len / data_idx
-                            print('\rWriting Flash Block %d of %d' % (data_idx, data_len - 1))
+                                percent = float(data_idx / data_len)
+                            bar_size = 10
+                            status = ''
+                            if (data_idx + 1) == data_len:
+                                percent = 1
+                            block = int(round(bar_size * percent))
+                            sys.stdout.write(
+                                '\rPercent: [{0}] {1}%'.format(
+                                    '#' * block + '-' * (bar_size - block),
+                                    int(percent * 100),
+                                )
+                            )
+                            sys.stdout.flush()
                             data_idx += 1
                             if (data_idx < data_len):
                                 send_file(data[data_idx])
                             else:
-                                print ('\nDone')
+                                print() # Add New line
                                 today = date.today().isocalendar()
                                 write_build(today[1], today[0] - 2000)
                         if command == PROTOCOL_CMD_READ_SN_RESPONSE:
