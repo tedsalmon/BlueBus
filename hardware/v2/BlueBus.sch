@@ -3108,6 +3108,8 @@ Switches electrical signals</description>
 <wire x1="-3.7" y1="-4.13" x2="3.7" y2="-4.13" width="0.1" layer="21"/>
 <smd name="MNT3" x="-1.1" y="-2.68" dx="1.8" dy="1.8" layer="1" rot="R90"/>
 <smd name="MNT4" x="1.1" y="-2.68" dx="1.8" dy="1.8" layer="1" rot="R90"/>
+<rectangle x1="-3.4" y1="-3.75" x2="-2.25" y2="-1.6" layer="31"/>
+<rectangle x1="2.25" y1="-3.75" x2="3.4" y2="-1.6" layer="31"/>
 </package>
 <package name="TE_AMPMODU_6_PIN">
 <description>&lt;h3&gt;Plated Through Hole - 2x3&lt;/h3&gt;
@@ -3127,13 +3129,13 @@ Switches electrical signals</description>
 <wire x1="5.25" y1="2.5" x2="5.25" y2="-13.73" width="0.1" layer="21"/>
 <wire x1="-5.25" y1="-13.73" x2="5.25" y2="-13.73" width="0.1" layer="21"/>
 </package>
-<package name="2.5-PAD">
+<package name="2.5-HOLE">
 <description>&lt;b&gt;MOUNTING PAD&lt;/b&gt; 2.5 mm, round</description>
-<wire x1="1.55" y1="0" x2="2" y2="0" width="0.05" layer="21"/>
-<wire x1="-1.55" y1="0" x2="-2" y2="0" width="0.05" layer="21"/>
-<circle x="0" y="0" radius="1.55" width="0.1" layer="21"/>
-<pad name="B2,5" x="0" y="0" drill="2.5" diameter="3"/>
+<wire x1="1.4" y1="0" x2="2" y2="0" width="0.1" layer="21"/>
+<wire x1="-1.4" y1="0" x2="-2" y2="0" width="0.1" layer="21"/>
+<circle x="0" y="0" radius="1.4" width="0.1" layer="21"/>
 <circle x="0" y="0" radius="2.7" width="0.1" layer="21"/>
+<hole x="0" y="0" drill="2.5"/>
 </package>
 <package name="CUI_SJ2_35853A_SMT_TR">
 <wire x1="-6" y1="2.9" x2="-2.5" y2="2.9" width="0.127" layer="51"/>
@@ -3281,14 +3283,13 @@ Switches electrical signals</description>
 <pin name="ID" x="-5.08" y="-2.54" visible="pad" length="short"/>
 <pin name="SHIELD" x="7.62" y="0" visible="pad" length="short" rot="R180"/>
 </symbol>
-<symbol name="MOUNT-PAD">
+<symbol name="MOUNT-HOLE">
 <wire x1="0.254" y1="2.032" x2="2.032" y2="0.254" width="1.016" layer="94" curve="-75.749967" cap="flat"/>
 <wire x1="-2.032" y1="0.254" x2="-0.254" y2="2.032" width="1.016" layer="94" curve="-75.749967" cap="flat"/>
 <wire x1="-2.032" y1="-0.254" x2="-0.254" y2="-2.032" width="1.016" layer="94" curve="75.749967" cap="flat"/>
 <wire x1="0.254" y1="-2.032" x2="2.032" y2="-0.254" width="1.016" layer="94" curve="75.749967" cap="flat"/>
 <circle x="0" y="0" radius="1.524" width="0.0508" layer="94"/>
 <text x="2.794" y="0.5842" size="1.778" layer="95">&gt;NAME</text>
-<pin name="MOUNT" x="-2.54" y="0" visible="off" length="short" direction="pas"/>
 </symbol>
 <symbol name="SJ2-35853A-SMT-TR">
 <wire x1="-10.16" y1="10.16" x2="10.16" y2="10.16" width="0.254" layer="94"/>
@@ -3449,15 +3450,12 @@ Switches electrical signals</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="2,5-PAD" prefix="H">
+<deviceset name="2,5-HOLE" prefix="H">
 <gates>
-<gate name="G$1" symbol="MOUNT-PAD" x="0" y="0"/>
+<gate name="G$1" symbol="MOUNT-HOLE" x="0" y="0"/>
 </gates>
 <devices>
-<device name="" package="2.5-PAD">
-<connects>
-<connect gate="G$1" pin="MOUNT" pad="B2,5"/>
-</connects>
+<device name="" package="2.5-HOLE">
 <technologies>
 <technology name=""/>
 </technologies>
@@ -3826,11 +3824,10 @@ Switches electrical signals</description>
 <part name="FRAME5" library="Frame" deviceset="FRAME-LETTER" device="" package3d_urn="urn:adsk.eagle:package:37104/1"/>
 <part name="FRAME4" library="Frame" deviceset="FRAME-LETTER" device="" package3d_urn="urn:adsk.eagle:package:37104/1"/>
 <part name="U10" library="ICs" deviceset="PCM5122" device="" value="PCM5122"/>
-<part name="H1" library="Connectors" deviceset="2,5-PAD" device=""/>
-<part name="H2" library="Connectors" deviceset="2,5-PAD" device=""/>
-<part name="H3" library="Connectors" deviceset="2,5-PAD" device=""/>
-<part name="H4" library="Connectors" deviceset="2,5-PAD" device=""/>
-<part name="GND28" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
+<part name="H1" library="Connectors" deviceset="2,5-HOLE" device=""/>
+<part name="H2" library="Connectors" deviceset="2,5-HOLE" device=""/>
+<part name="H3" library="Connectors" deviceset="2,5-HOLE" device=""/>
+<part name="H4" library="Connectors" deviceset="2,5-HOLE" device=""/>
 <part name="FB3" library="Passives" deviceset="FERRITE_2A/120OHM" device="0603" value="120OHM/2A"/>
 <part name="F1" library="Passives" deviceset="LITTLEBLOCK_FUSE_.75A" device="" value="750mA"/>
 <part name="SUPPLY18" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="3.3V" device=""/>
@@ -4028,9 +4025,6 @@ Switches electrical signals</description>
 <instance part="H4" gate="G$1" x="30.48" y="22.86" smashed="yes">
 <attribute name="NAME" x="33.274" y="23.4442" size="1.778" layer="95"/>
 </instance>
-<instance part="GND28" gate="1" x="22.86" y="15.24" smashed="yes">
-<attribute name="VALUE" x="22.86" y="14.986" size="1.778" layer="96" align="top-center"/>
-</instance>
 <instance part="F1" gate="G$1" x="182.88" y="157.48" smashed="yes">
 <attribute name="NAME" x="182.88" y="162.56" size="1.778" layer="95" font="vector" align="center"/>
 <attribute name="VALUE" x="182.88" y="152.4" size="1.778" layer="96" font="vector" align="center"/>
@@ -4195,19 +4189,6 @@ Switches electrical signals</description>
 <wire x1="149.86" y1="53.34" x2="152.4" y2="53.34" width="0.1524" layer="91"/>
 <label x="152.4" y="53.34" size="1.27" layer="95" xref="yes"/>
 <pinref part="J3" gate="G$1" pin="4"/>
-</segment>
-<segment>
-<pinref part="H2" gate="G$1" pin="MOUNT"/>
-<pinref part="GND28" gate="1" pin="GND"/>
-<wire x1="15.24" y1="22.86" x2="15.24" y2="17.78" width="0.1524" layer="91"/>
-<wire x1="15.24" y1="17.78" x2="22.86" y2="17.78" width="0.1524" layer="91"/>
-<pinref part="H3" gate="G$1" pin="MOUNT"/>
-<pinref part="H4" gate="G$1" pin="MOUNT"/>
-<wire x1="27.94" y1="30.48" x2="27.94" y2="22.86" width="0.1524" layer="91"/>
-<wire x1="27.94" y1="22.86" x2="27.94" y2="17.78" width="0.1524" layer="91"/>
-<wire x1="27.94" y1="17.78" x2="22.86" y2="17.78" width="0.1524" layer="91"/>
-<junction x="27.94" y="22.86"/>
-<junction x="22.86" y="17.78"/>
 </segment>
 <segment>
 <pinref part="C8" gate="G$1" pin="2"/>
@@ -4602,12 +4583,6 @@ Switches electrical signals</description>
 <pinref part="L1" gate="A" pin="2"/>
 <wire x1="195.58" y1="154.94" x2="193.04" y2="154.94" width="0.1524" layer="91"/>
 <label x="193.04" y="154.94" size="1.27" layer="95" rot="R90" xref="yes"/>
-</segment>
-<segment>
-<pinref part="H1" gate="G$1" pin="MOUNT"/>
-<wire x1="15.24" y1="30.48" x2="10.16" y2="30.48" width="0.1524" layer="91"/>
-<wire x1="10.16" y1="30.48" x2="10.16" y2="35.56" width="0.1524" layer="91"/>
-<label x="10.16" y="35.56" size="1.27" layer="95" rot="R90" xref="yes"/>
 </segment>
 <segment>
 <pinref part="J5" gate="G$1" pin="GND"/>

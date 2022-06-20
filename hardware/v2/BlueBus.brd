@@ -241,11 +241,6 @@ Australia &amp; U.S.A.</text>
 <text x="38.3" y="41.2" size="1" layer="25" font="vector" ratio="15" rot="R90" align="center-right">3.3v</text>
 <text x="38.3" y="43.8" size="1" layer="25" font="vector" ratio="15" rot="R90" align="center-left">MCLR</text>
 <text x="37" y="43.8" size="1" layer="25" font="vector" ratio="15" rot="R90" align="center-left">GND</text>
-<wire x1="0" y1="14.8" x2="1.5" y2="14.8" width="0" layer="20"/>
-<wire x1="1.5" y1="14.8" x2="2.5" y2="13.8" width="0" layer="20" curve="-90"/>
-<wire x1="2.5" y1="13.8" x2="2.5" y2="6.3" width="0" layer="20"/>
-<wire x1="2.5" y1="6.3" x2="1.5" y2="5.3" width="0" layer="20" curve="-90"/>
-<wire x1="1.5" y1="5.3" x2="0" y2="5.3" width="0" layer="20"/>
 <wire x1="64.4" y1="30" x2="64.4" y2="28" width="1" layer="25"/>
 <wire x1="65.9" y1="30" x2="65.9" y2="28" width="1" layer="25"/>
 <text x="63.4" y="28.5" size="1" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center">APP</text>
@@ -283,6 +278,7 @@ Australia &amp; U.S.A.</text>
 <wire x1="12.5" y1="43.65" x2="12.5" y2="36.45" width="0.1" layer="26"/>
 <wire x1="19.85" y1="38.85" x2="5.65" y2="38.85" width="0.1" layer="26"/>
 <wire x1="5.65" y1="41.3" x2="19.85" y2="41.3" width="0.1" layer="26"/>
+<wire x1="0" y1="5.3" x2="0" y2="14.8" width="0" layer="20"/>
 </plain>
 <libraries>
 <library name="ICs">
@@ -826,13 +822,13 @@ Australia &amp; U.S.A.</text>
 <pad name="P$1" x="0" y="0" drill="1" diameter="2"/>
 <text x="-4" y="0" size="1" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center">&gt;NAME</text>
 </package>
-<package name="2.5-PAD">
+<package name="2.5-HOLE">
 <description>&lt;b&gt;MOUNTING PAD&lt;/b&gt; 2.5 mm, round</description>
-<wire x1="1.55" y1="0" x2="2" y2="0" width="0.05" layer="21"/>
-<wire x1="-1.55" y1="0" x2="-2" y2="0" width="0.05" layer="21"/>
-<circle x="0" y="0" radius="1.55" width="0.1" layer="21"/>
-<pad name="B2,5" x="0" y="0" drill="2.5" diameter="3"/>
+<wire x1="1.4" y1="0" x2="2" y2="0" width="0.1" layer="21"/>
+<wire x1="-1.4" y1="0" x2="-2" y2="0" width="0.1" layer="21"/>
+<circle x="0" y="0" radius="1.4" width="0.1" layer="21"/>
 <circle x="0" y="0" radius="2.7" width="0.1" layer="21"/>
+<hole x="0" y="0" drill="2.5"/>
 </package>
 <package name="TE_MQS_3PIN">
 <description>&lt;p&gt;TE 3-pin Keyed connector&lt;/p&gt;</description>
@@ -935,6 +931,8 @@ Australia &amp; U.S.A.</text>
 <wire x1="-3.7" y1="-4.13" x2="3.7" y2="-4.13" width="0.1" layer="21"/>
 <smd name="MNT3" x="-1.1" y="-2.68" dx="1.8" dy="1.8" layer="1" rot="R90"/>
 <smd name="MNT4" x="1.1" y="-2.68" dx="1.8" dy="1.8" layer="1" rot="R90"/>
+<rectangle x1="-3.4" y1="-3.75" x2="-2.25" y2="-1.6" layer="31"/>
+<rectangle x1="2.25" y1="-3.75" x2="3.4" y2="-1.6" layer="31"/>
 </package>
 <package name="CUI_SJ2_35853A_SMT_TR">
 <wire x1="-6" y1="2.9" x2="-2.5" y2="2.9" width="0.127" layer="51"/>
@@ -1697,10 +1695,10 @@ OSHW_LOGO</description>
 <attribute name="NAME" x="78.4" y="11" size="1" layer="25" font="vector" ratio="15" rot="R90" align="bottom-center"/>
 <attribute name="PN" value="FT231XS-R" x="83" y="11" size="1.778" layer="27" display="off"/>
 </element>
-<element name="H1" library="Connectors" package="2.5-PAD" value="2,5-PAD" x="12.25" y="3.25" smashed="yes"/>
-<element name="H2" library="Connectors" package="2.5-PAD" value="2,5-PAD" x="12.25" y="61.75" smashed="yes"/>
-<element name="H3" library="Connectors" package="2.5-PAD" value="2,5-PAD" x="82.25" y="61.5" smashed="yes"/>
-<element name="H4" library="Connectors" package="2.5-PAD" value="2,5-PAD" x="82.25" y="3.25" smashed="yes"/>
+<element name="H1" library="Connectors" package="2.5-HOLE" value="2,5-HOLE" x="12.25" y="3.25" smashed="yes"/>
+<element name="H2" library="Connectors" package="2.5-HOLE" value="2,5-HOLE" x="12.25" y="61.75" smashed="yes"/>
+<element name="H3" library="Connectors" package="2.5-HOLE" value="2,5-HOLE" x="82.25" y="61.5" smashed="yes"/>
+<element name="H4" library="Connectors" package="2.5-HOLE" value="2,5-HOLE" x="82.25" y="3.25" smashed="yes"/>
 <element name="L2" library="Passives" package="MPL-SE5040" value="10uH" x="51.6" y="15.7" smashed="yes" rot="R270">
 <attribute name="MFG" value="Monolithic Power Systems" x="-10.63" y="-30.02" size="1.778" layer="27" rot="R270" display="off"/>
 <attribute name="NAME" x="54.25" y="15.7" size="1" layer="25" font="vector" ratio="15" rot="R90" align="top-center"/>
@@ -2208,9 +2206,6 @@ OSHW_LOGO</description>
 <contactref element="C5" pad="2"/>
 <contactref element="C6" pad="2"/>
 <contactref element="J3" pad="4"/>
-<contactref element="H2" pad="B2,5"/>
-<contactref element="H3" pad="B2,5"/>
-<contactref element="H4" pad="B2,5"/>
 <contactref element="C8" pad="2"/>
 <contactref element="C10" pad="2"/>
 <contactref element="C9" pad="2"/>
@@ -4109,7 +4104,6 @@ OSHW_LOGO</description>
 <via x="6" y="13.5" extent="1-16" drill="0.51"/>
 <contactref element="J1" pad="1"/>
 <contactref element="L1" pad="2"/>
-<contactref element="H1" pad="B2,5"/>
 <via x="22.5" y="15.5" extent="1-16" drill="0.51"/>
 <via x="24.5" y="15.5" extent="1-16" drill="0.51"/>
 <via x="24.5" y="13.5" extent="1-16" drill="0.51"/>
@@ -4141,11 +4135,6 @@ OSHW_LOGO</description>
 <vertex x="25.5" y="0"/>
 <vertex x="2" y="0" curve="-90"/>
 <vertex x="0" y="2"/>
-<vertex x="0" y="5.2"/>
-<vertex x="1.5" y="5.2" curve="90"/>
-<vertex x="2.5" y="6.2"/>
-<vertex x="2.5" y="13.8" curve="90"/>
-<vertex x="1.5" y="14.8"/>
 <vertex x="0" y="14.8"/>
 <vertex x="0" y="17.5"/>
 <vertex x="24.5" y="17.5"/>
@@ -4155,11 +4144,6 @@ OSHW_LOGO</description>
 <vertex x="25.5" y="0"/>
 <vertex x="2" y="0" curve="-90"/>
 <vertex x="0" y="2"/>
-<vertex x="0" y="5.2"/>
-<vertex x="1.5" y="5.2" curve="90"/>
-<vertex x="2.5" y="6.2"/>
-<vertex x="2.5" y="13.8" curve="90"/>
-<vertex x="1.5" y="14.8"/>
 <vertex x="0" y="14.8"/>
 <vertex x="0" y="17.5"/>
 <vertex x="24.5" y="17.5"/>
