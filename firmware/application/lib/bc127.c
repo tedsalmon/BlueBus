@@ -54,7 +54,7 @@ BC127_t BC127Init()
     bt.discoverable = BC127_STATE_ON;
     bt.callStatus = BC127_CALL_INACTIVE;
     bt.scoStatus = BC127_CALL_SCO_CLOSE;
-    bt.metadataStatus = BC127_METADATA_STATUS_NEW;
+    bt.metadataStatus = BC127_METADATA_STATUS_CUR;
     bt.pairedDevicesCount = 0;
     bt.playbackStatus = BC127_AVRCP_STATUS_PAUSED;
     bt.rxQueueAge = 0;
@@ -395,14 +395,14 @@ void BC127CommandBtState(BC127_t *bt, uint8_t connectable, uint8_t discoverable)
     char connectMode[4];
     char discoverMode[4];
     if (connectable == 1) {
-        strncpyz(connectMode, "ON", 4);
+        UtilsStrncpy(connectMode, "ON", 4);
     } else if (connectable == 0) {
-        strncpyz(connectMode, "OFF", 4);
+        UtilsStrncpy(connectMode, "OFF", 4);
     }
     if (discoverable == 1) {
-        strncpyz(discoverMode, "ON", 4);
+        UtilsStrncpy(discoverMode, "ON", 4);
     } else if (discoverable == 0) {
-        strncpyz(discoverMode, "OFF", 4);
+        UtilsStrncpy(discoverMode, "OFF", 4);
     }
     char command[17];
     snprintf(command, 17, "BT_STATE %s %s", connectMode, discoverMode);
@@ -502,6 +502,7 @@ void BC127CommandGetMetadata(BC127_t *bt)
         char command[19];
         snprintf(command, 19, "AVRCP_META_DATA %d", bt->activeDevice.avrcpLinkId);
         BC127SendCommand(bt, command);
+        bt->metadataTimestamp = TimerGetMillis();
     } else {
         LogWarning("BT: Unable to get Metadata - AVRCP link unopened");
     }
@@ -939,7 +940,7 @@ void BC127CommandSetModuleName(BC127_t *bt, char *name)
     // Set the "short" name
     char nameShortSetCommand[24] = {0};
     char shortName[9] = {0};
-    strncpyz(shortName, name, BC127_SHORT_NAME_MAX_LEN);
+    UtilsStrncpy(shortName, name, BC127_SHORT_NAME_MAX_LEN);
     snprintf(nameShortSetCommand, 24, "SET NAME_SHORT=%s", shortName);
     BC127SendCommand(bt, nameShortSetCommand);
     BC127CommandWrite(bt);
@@ -1267,58 +1268,48 @@ void BC127Process(BC127_t *bt)
                 if (strlen(callerId) > 0) {
                     // Clear the existing buffer
                     memset(bt->callerId, 0, BC127_CALLER_ID_FIELD_SIZE);
-                    strncpyz(bt->callerId, callerId, BC127_CALLER_ID_FIELD_SIZE);
+                    UtilsStrncpy(bt->callerId, callerId, BC127_CALLER_ID_FIELD_SIZE);
                     EventTriggerCallback(BC127Event_CallerID, 0);
                 }
             }
         } else if (strcmp(msgBuf[0], "AVRCP_MEDIA") == 0) {
-            // Always copy size of buffer minus one to make sure we're always
-            // null terminated
             if (strcmp(msgBuf[2], "TITLE:") == 0) {
-                // Clear Metadata since we're receiving new data
-                BC127ClearMetadata(bt);
-                bt->metadataStatus = BC127_METADATA_STATUS_NEW;
                 char title[BC127_METADATA_MAX_SIZE] = {0};
                 UtilsNormalizeText(title, &msg[BC127_METADATA_TITLE_OFFSET], BC127_METADATA_MAX_SIZE);
                 if(strncmp(bt->title, title, BC127_METADATA_FIELD_SIZE - 1) != 0) {
-                    bt->metaChanged = 1;
-                    // Clear Metadata since we're receiving new data
-                    BC127ClearMetadata(bt);
-                    strncpyz(bt->title, title, BC127_METADATA_FIELD_SIZE);
-                };
+                    bt->metadataStatus = BC127_METADATA_STATUS_UPD;
+                    memset(bt->title, 0, BC127_METADATA_FIELD_SIZE);
+                    UtilsStrncpy(bt->title, title, BC127_METADATA_FIELD_SIZE);
+                }
             } else if (strcmp(msgBuf[2], "ARTIST:") == 0) {
                 char artist[BC127_METADATA_MAX_SIZE] = {0};
                 UtilsNormalizeText(artist, &msg[BC127_METADATA_ARTIST_OFFSET], BC127_METADATA_MAX_SIZE);
                 if(strncmp(bt->artist, artist, BC127_METADATA_FIELD_SIZE - 1) != 0) {
-                    bt->metaChanged = 1;
-                    strncpyz(bt->artist, artist, BC127_METADATA_FIELD_SIZE);
+                    bt->metadataStatus = BC127_METADATA_STATUS_UPD;
+                    memset(bt->artist, 0, BC127_METADATA_FIELD_SIZE);
+                    UtilsStrncpy(bt->artist, artist, BC127_METADATA_FIELD_SIZE);
                 }
             } else {
                 if (strcmp(msgBuf[2], "ALBUM:") == 0) {
                     char album[BC127_METADATA_MAX_SIZE] = {0};
                     UtilsNormalizeText(album, &msg[BC127_METADATA_ALBUM_OFFSET], BC127_METADATA_MAX_SIZE);
                     if(strncmp(bt->album, album, BC127_METADATA_FIELD_SIZE - 1) != 0) {
-                        bt->metaChanged = 1;
-                        strncpyz(bt->album, album, BC127_METADATA_FIELD_SIZE);
+                        bt->metadataStatus = BC127_METADATA_STATUS_UPD;
+                        memset(bt->album, 0, BC127_METADATA_FIELD_SIZE);
+                        UtilsStrncpy(bt->album, album, BC127_METADATA_FIELD_SIZE);
                     }
                 }
-                if (bt->metadataStatus == BC127_METADATA_STATUS_NEW) {
+                if (bt->metadataStatus == BC127_METADATA_STATUS_UPD) {
                     LogDebug(
                         LOG_SOURCE_BT, 
-                        "BT: changed:%i,title=%s,artist=%s,album=%s",
-                        bt->metaChanged,
+                        "BT: title=%s,artist=%s,album=%s",
                         bt->title,
                         bt->artist,
                         bt->album
                     );
-                    // Setting this flag in either event prevents us from
-                    // potentially spamming the BC127 with metadata requests
-                    bt->metadataStatus = BC127_METADATA_STATUS_CUR;
-                    if (bt->metaChanged == 1) {
-                        bt->metaChanged = 0;
-                        EventTriggerCallback(BC127Event_MetadataChange, 0);
-                    }
+                    EventTriggerCallback(BC127Event_MetadataChange, 0);
                 }
+                bt->metadataStatus = BC127_METADATA_STATUS_CUR;
             }
             bt->metadataTimestamp = TimerGetMillis();
         } else if (strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
@@ -1408,7 +1399,7 @@ void BC127Process(BC127_t *bt)
                 strncpy(bt->activeDevice.macId, msgBuf[4], 12);
                 char *deviceName = BC127PairedDeviceGetName(bt, msgBuf[4]);
                 if (deviceName != 0) {
-                    strncpyz(bt->activeDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN);
+                    UtilsStrncpy(bt->activeDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN);
                 } else {
                     BC127CommandGetDeviceName(bt, msgBuf[4]);
                 }
@@ -1468,7 +1459,7 @@ void BC127Process(BC127_t *bt)
                 strncpy(bt->activeDevice.macId, msgBuf[3], 12);
                 char *deviceName = BC127PairedDeviceGetName(bt, msgBuf[3]);
                 if (deviceName != 0) {
-                    strncpyz(bt->activeDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN);
+                    UtilsStrncpy(bt->activeDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN);
                 } else {
                     BC127CommandGetDeviceName(bt, msgBuf[3]);
                 }
@@ -1541,7 +1532,7 @@ void BC127Process(BC127_t *bt)
                 if (strcmp(msgBuf[1], bt->activeDevice.macId) == 0) {
                     // Clean the device name up
                     memset(bt->activeDevice.deviceName, 0, BC127_DEVICE_NAME_LEN);
-                    strncpyz(bt->activeDevice.deviceName, name, BC127_DEVICE_NAME_LEN);
+                    UtilsStrncpy(bt->activeDevice.deviceName, name, BC127_DEVICE_NAME_LEN);
                     EventTriggerCallback(BC127Event_DeviceConnected, 0);
                 }
                 BC127PairedDeviceInit(bt, msgBuf[1], name);
@@ -1558,7 +1549,7 @@ void BC127Process(BC127_t *bt)
             memset(&bt->activeDevice, 0, sizeof(BC127Connection_t));
             bt->activeDevice = BC127ConnectionInit();
             bt->callStatus = BC127_CALL_INACTIVE;
-            bt->metadataStatus = BC127_METADATA_STATUS_NEW;
+            bt->metadataStatus = BC127_METADATA_STATUS_CUR;
             LogDebug(LOG_SOURCE_BT, "BT: Boot Complete");
             EventTriggerCallback(BC127Event_Boot, 0);
             EventTriggerCallback(BC127Event_PlaybackStatusChange, 0);
@@ -1606,20 +1597,6 @@ void BC127Process(BC127_t *bt)
                 LogInfo(LOG_SOURCE_BT, "BT: RX Queue Timeout");
             }
         }
-    }
-    /* Sometimes there is not more than a Title or Album, which does not give
-     * us sufficient information to push a metadata update. We request the full
-     * metadata if we have partial metadata for more than the specified timeout value.
-     **/
-    uint32_t now = TimerGetMillis();
-    if ((now - bt->metadataTimestamp) > BC127_METADATA_TIMEOUT &&
-        bt->metadataStatus == BC127_METADATA_STATUS_NEW &&
-        bt->activeDevice.avrcpLinkId != 0 &&
-        bt->callStatus == BC127_CALL_INACTIVE &&
-        bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING
-    ) {
-        BC127CommandGetMetadata(bt);
-        bt->metadataTimestamp = now;
     }
     UARTReportErrors(&bt->uart);
 }
@@ -1690,7 +1667,7 @@ void BC127PairedDeviceInit(BC127_t *bt, char *macId, char *deviceName)
         BC127PairedDevice_t pairedDevice;
         strncpy(pairedDevice.macId, macId, 12);
         memset(pairedDevice.deviceName, 0, BC127_DEVICE_NAME_LEN);
-        strncpyz(pairedDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN);
+        UtilsStrncpy(pairedDevice.deviceName, deviceName, BC127_DEVICE_NAME_LEN);
         bt->pairedDevices[bt->pairedDevicesCount++] = pairedDevice;
     }
 }

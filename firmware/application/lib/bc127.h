@@ -14,6 +14,7 @@
 #include "../mappings.h"
 #include "log.h"
 #include "event.h"
+#include "timer.h"
 #include "uart.h"
 #include "utils.h"
 #define BC127_AUDIO_I2S "0"
@@ -44,9 +45,8 @@
 #define BC127_METADATA_TITLE_OFFSET 22
 #define BC127_METADATA_ARTIST_OFFSET 23
 #define BC127_METADATA_ALBUM_OFFSET 22
-#define BC127_METADATA_STATUS_NEW 0
-#define BC127_METADATA_STATUS_CUR 1
-#define BC127_METADATA_TIMEOUT 1000
+#define BC127_METADATA_STATUS_CUR 0
+#define BC127_METADATA_STATUS_UPD 1
 #define BC127_MSG_END_CHAR 0x0D
 #define BC127_MSG_LF_CHAR 0x0A
 #define BC127_MSG_DELIMETER 0x20
@@ -135,8 +135,6 @@ typedef struct BC127Connection_t {
  *             in error. This is used to track what profiles we need to re-attempt
  *             a connection with.
  *         playbackStatus - If we're paused or playing
- *         metadataStatus - Tracks the state of the metadata through the process
- *             of gathering it from the device
  *         callStatus - The call status
  *         scoStatus - If the SCO channel is open or closed
  *         powerState - 1/0 1 If we have seen ANY message from the BC127
@@ -163,7 +161,6 @@ typedef struct BC127_t {
     char artist[BC127_METADATA_FIELD_SIZE];
     char album[BC127_METADATA_FIELD_SIZE];
     char callerId[BC127_CALLER_ID_FIELD_SIZE];
-    uint8_t metaChanged: 1; 
     UART_t uart;
 } BC127_t;
 

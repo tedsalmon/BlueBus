@@ -256,12 +256,7 @@ void HandlerInit(BC127_t *bt, IBus_t *ibus)
         &Context,
         HANDLER_INT_VOL_MGMT
     );
-    TimerRegisterScheduledTask(
-        &HandlerRefreshMetadata,
-        &Context,
-        HANDLER_INT_MEDIA_REFRESH
-    );
-            
+      
     Context.lightingStateTimerId = TimerRegisterScheduledTask(
         &HandlerTimerLightingState,
         &Context,
@@ -684,6 +679,27 @@ void HandlerBC127PlaybackStatus(void *ctx, unsigned char *data)
     ) {
         // We're playing but not in Bluetooth mode - stop playback
         BC127CommandPause(context->bt);
+    }
+}
+
+/**
+ * HandlerRefreshMetadata()
+ *     Description:
+ *         Request current playing song periodically
+ *     Params:
+ *         HandlerContext_t *context - The handler context
+ *     Returns:
+ *         void
+ */
+void HandlerBC127RefreshMetadata(HandlerContext_t *context)
+{
+    uint32_t now = TimerGetMillis();
+    if (now - HANDLER_BT_METADATA_TIMEOUT >= context->bt->metadataTimestamp &&
+        context->bt->activeDevice.avrcpLinkId != 0 &&
+        context->bt->callStatus == BC127_CALL_INACTIVE &&
+        context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING
+    ) {
+        BC127CommandGetMetadata(context->bt);
     }
 }
 
@@ -2234,7 +2250,7 @@ void HandlerTimerOpenProfileErrors(void *ctx)
     if (strlen(context->bt->activeDevice.macId) > 0) {
         uint8_t idx;
         for (idx = 0; idx < BC127_PROFILE_COUNT; idx++) {
-            if ((context->bt->pairingErrors[idx] == 1)&&(PROFILES[idx] != 0)) {
+            if (context->bt->pairingErrors[idx] == 1 && PROFILES[idx] != 0) {
                 LogDebug(LOG_SOURCE_SYSTEM, "Handler: Attempting to resolve pairing error");
                 BC127CommandProfileOpen(
                     context->bt,
@@ -2462,30 +2478,4 @@ void HandlerVolumeChange(HandlerContext_t *context, uint8_t direction)
         hexVolString
     );
     context->bt->activeDevice.a2dpVolume = newVolume;
-}
-
-/**
- * HandlerRefreshMetadata()
- *     Description:
- *         Request current playing song periodically
- *     Params:
- *         HandlerContext_t *context - The handler context
- *     Returns:
- *         void
- */
-void HandlerRefreshMetadata(HandlerContext_t *context) {
-    /* Sometimes there is not more than a Title or Album, which does not give
-     * us sufficient information to push a metadata update. We request the full
-     * metadata if we have partial metadata for more than the specified timeout value.
-     **/
-       
-    if (
-        context->bt->activeDevice.avrcpLinkId != 0 &&
-        context->bt->callStatus == BC127_CALL_INACTIVE &&
-        context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING &&
-        context->bt->metadataStatus == BC127_METADATA_STATUS_CUR &&
-        context->bt->metadataTimestamp < (TimerGetMillis()-HANDLER_INT_MEDIA_REFRESH)
-    ) {
-        BC127CommandGetMetadata(context->bt);
-    }
 }

@@ -184,10 +184,10 @@ void UtilsRemoveSubstring(char *, const char *);
 void UtilsReset();
 void UtilsSetRPORMode(uint8_t, uint16_t);
 unsigned char UtilsStrToHex(char *);
-uint8_t UtilsStrToInt(char *);
 int8_t UtilsStricmp(const char *, const char *);
+char * UtilsStrncpy(char *, const char *, size_t);
+uint8_t UtilsStrToInt(char *);
 char * UtilsTransliterateUnicodeToASCII(uint32_t);
 char * UtilsTransliterateExtendedASCIIToASCII(uint32_t);
 unsigned char UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t);
-char * strncpyz(char *, const char *, size_t);
 #endif /* UTILS_H */

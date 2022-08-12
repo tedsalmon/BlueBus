@@ -65,7 +65,7 @@ static const char UTILS_CHARS_LATIN[] =
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
 {
     UtilsAbstractDisplayValue_t value;
-    strncpyz(value.text, text, UTILS_DISPLAY_TEXT_SIZE);
+    UtilsStrncpy(value.text, text, UTILS_DISPLAY_TEXT_SIZE);
     value.index = 0;
     value.timeout = 0;
     value.status = status;
@@ -262,22 +262,6 @@ unsigned char UtilsStrToHex(char *string)
     return (unsigned char) strtol(string, &ptr, 16);
 }
 
-
-/**
- * UtilsStrToInt()
- *     Description:
- *         Convert a string to an integer
- *     Params:
- *         char *string - The subject
- *     Returns:
- *         uint8_t The Unsigned 8-bit integer representation
- */
-uint8_t UtilsStrToInt(char *string)
-{
-    char *ptr;
-    return (uint8_t) strtol(string, &ptr, 10);
-}
-
 /**
  * UtilsStricmp()
  *     Description:
@@ -299,6 +283,39 @@ int8_t UtilsStricmp(const char *string, const char *compare)
         compare++;
     }
     return result;
+}
+
+/**
+ * UtilsStrncpy()
+ *     Description:
+ *         Safe string copy, that ensures the truncated string is zero-terminated
+ *     Params:
+ *         char *dest - Destination char buffer
+ *         const char *src - Source char buffer
+ *         size_t size - Size of destination buffer
+ *     Returns:
+ *         char * - Pointer to destination string array
+ */
+char * UtilsStrncpy(char *dest, const char *src, size_t size)
+{
+    strncpy(dest, src, size - 1);
+    dest[size - 1] = '\0';
+    return dest;
+}
+
+/**
+ * UtilsStrToInt()
+ *     Description:
+ *         Convert a string to an integer
+ *     Params:
+ *         char *string - The subject
+ *     Returns:
+ *         uint8_t The Unsigned 8-bit integer representation
+ */
+uint8_t UtilsStrToInt(char *string)
+{
+    char *ptr;
+    return (uint8_t) strtol(string, &ptr, 10);
 }
 
 /**
@@ -889,21 +906,4 @@ unsigned char UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t input)
             return 0;
             break;
     }
-}
-
-/**
- * strncpyz()
- *     Description:
- *         Safe string copy, that makes sure the truncated string is zero-terminated.
- *     Params:
- *         char * dest - Desticantion char buffer
- *         const char * src - Source char buffer
- *         size_t n - size of destination buffer
- *     Returns:
- *         char * - Pointer to destination string array
- */
-char * strncpyz(char *dest, const char *src, size_t n) {
-    strncpy(dest, src, n-1);
-    dest[n-1] = '\0';
-    return dest;
 }
