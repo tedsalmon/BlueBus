@@ -5,6 +5,7 @@
                    displayName="Header Files"
                    projectFiles="true">
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
+        <itemPath>lib/char_queue.h</itemPath>
         <itemPath>lib/eeprom.h</itemPath>
         <itemPath>lib/flash.h</itemPath>
         <itemPath>lib/protocol.h</itemPath>
@@ -25,6 +26,7 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
+        <itemPath>lib/char_queue.c</itemPath>
         <itemPath>lib/eeprom.c</itemPath>
         <itemPath>lib/flash.c</itemPath>
         <itemPath>lib/protocol.c</itemPath>
@@ -52,13 +54,13 @@
         <targetDevice>PIC24FJ1024GA606</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>pk4hybrid</platformTool>
+        <platformTool>noID</platformTool>
         <languageToolchain>XC16</languageToolchain>
         <languageToolchainVersion>1.60</languageToolchainVersion>
         <platform>2</platform>
       </toolsSet>
       <packs>
-        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.4.141"/>
+        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.6.205"/>
       </packs>
       <ScriptingSettings>
       </ScriptingSettings>

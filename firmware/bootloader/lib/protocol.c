@@ -6,26 +6,84 @@
  */
 #include "protocol.h"
 
+
+void ProtocolBTDFUMode()
+{
+    if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+        // Do nothing for now
+    } else {
+        BT_MFB = 1;
+        uint32_t now = TimerGetMillis();
+        // Pull the pin low for "Test" mode
+        BT_BOOT_TYPE_MODE = 0;
+        BT_BOOT_TYPE = 0;
+        while ((TimerGetMillis() - now) <= 150);
+        BT_RST = 1;
+        BT_RST_MODE = 1;
+    }
+}
+
 /**
- * ProtocolBC127Mode()
+ * ProtocolBTMode()
  *     Description:
- *         In order to allow the BC127 to be managed directly (including firmware
- *         upgrades), we set the switch to push UART data from the BC127 to the
- *         FT232RL, rather than the MCU. It is not possible to exit
- *         this mode gracefully, so a hard reset of the device will be required
- *         in order to return to the regular system.
+ *         In order to allow the BT module to be managed directly (including
+ *         firmware upgrades), we do one of two things:
+ *             1. For the BC127, we switch the TMUX154E to "BT" UART mode
+ *             2. For the BM83, we bridge the USB to the BT module directly
  *     Params:
  *         None
  *     Returns:
  *         void
  */
-void ProtocolBC127Mode()
+void ProtocolBTMode()
 {
-    // Stop driving the TX and RX pins of the BC127
-    BC127_UART_RX_PIN_MODE = 1;
-    BC127_UART_TX_PIN_MODE = 1;
-    // Set the UART mode to BC127 after disabling the MCU UART
-    UART_SEL = UART_SEL_BT;
+    UARTDestroy(SYSTEM_UART_MODULE);
+    if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+        // Stop driving the TX and RX pins of the BT module
+        BT_UART_RX_PIN_MODE = 1;
+        BT_UART_TX_PIN_MODE = 1;
+        // Set the TMUX154E switch to BT UART mode
+        UART_SEL = UART_SEL_BT;
+        while (1);
+    } else {
+            UART_t systemUart = UARTInit(
+            SYSTEM_UART_MODULE,
+            SYSTEM_UART_RX_RPIN,
+            SYSTEM_UART_TX_RPIN,
+            SYSTEM_UART_RX_PRIORITY,
+            UART_BAUD_115200,
+            UART_PARITY_NONE
+        );
+        UART_t btUart = UARTInit(
+            BT_UART_MODULE,
+            BT_UART_RX_RPIN,
+            BT_UART_TX_RPIN,
+            BT_UART_RX_PRIORITY,
+            UART_BAUD_115200,
+            UART_PARITY_NONE
+        );
+        UARTAddModuleHandler(&systemUart);
+        UARTAddModuleHandler(&btUart);
+        uint16_t queueSize = 0;
+        while (1) {
+            // Read the BT UART queue and flush it to the System UART
+            queueSize = CharQueueGetSize(&btUart.rxQueue);
+            while (queueSize > 0) {
+                systemUart.registers->uxtxreg = CharQueueNext(&btUart.rxQueue);
+                // Wait for the data to leave the tx buffer
+                while ((systemUart.registers->uxsta & (1 << 9)) != 0);
+                queueSize = CharQueueGetSize(&btUart.rxQueue);
+            }
+            // Read the System UART queue and flush it to the BT UART
+            queueSize = CharQueueGetSize(&systemUart.rxQueue);
+            while (queueSize > 0) {
+                btUart.registers->uxtxreg = CharQueueNext(&systemUart.rxQueue);
+                // Wait for the data to leave the tx buffer
+                while ((btUart.registers->uxsta & (1 << 9)) != 0);
+                queueSize = CharQueueGetSize(&systemUart.rxQueue);
+            }
+        }
+    }
 }
 
 /**
@@ -106,33 +164,23 @@ uint8_t ProtocolFlashWrite(ProtocolPacket_t *packet)
  *         UART_t *uart - The UART struct to use for communication
  *         uint8_t *BOOT_MODE - The bootload mode flag
  *     Returns:
- *         ProtocolPacket_t
+ *         uint8_t Packet status
  */
-void ProtocolProcessMessage(
+uint8_t ProtocolProcessMessage(
     UART_t *uart,
     uint8_t *BOOT_MODE
 ) {
-    if ((TimerGetMillis() - uart->rxLastTimestamp) > UART_RX_QUEUE_TIMEOUT) {
-        UARTResetRxQueue(uart);
-        ProtocolSendPacket(
-            uart,
-            (unsigned char) PROTOCOL_ERR_PACKET_TIMEOUT,
-            0,
-            0
-        );
-    }
     // Process Message
     struct ProtocolPacket_t packet = ProtocolProcessPacket(uart);
     if (packet.status == PROTOCOL_PACKET_STATUS_OK) {
         // Lock the device in the bootloader since we have a good packet
         if (*BOOT_MODE == 0) {
-            ON_LED = 1;
             *BOOT_MODE = BOOT_MODE_BOOTLOADER;
         }
         if (packet.command == PROTOCOL_CMD_PLATFORM_REQUEST) {
             ProtocolSendStringPacket(
                 uart,
-                (unsigned char) PROTOCOL_CMD_PLATFORM_RESPONSE,
+                (uint8_t) PROTOCOL_CMD_PLATFORM_RESPONSE,
                 (char *) BOOTLOADER_PLATFORM
             );
         } else if (packet.command == PROTOCOL_CMD_ERASE_FLASH_REQUEST) {
@@ -160,16 +208,27 @@ void ProtocolProcessMessage(
                     0
                 );
             }
-        } else if (packet.command == PROTOCOL_CMD_BC127_MODE_REQUEST) {
+        } else if (packet.command == PROTOCOL_CMD_BT_MODE_REQUEST) {
             ProtocolSendPacket(
                 uart,
-                PROTOCOL_CMD_BC127_MODE_RESPONSE,
+                PROTOCOL_CMD_BT_MODE_RESPONSE,
                 0,
                 0
             );
             uint32_t now = TimerGetMillis();
             while (TimerGetMillis() - now < PROTOCOL_PACKET_WAIT_MS);
-            ProtocolBC127Mode();
+            ProtocolBTMode();
+        } else if (packet.command == PROTOCOL_CMD_BT_DFU_MODE_REQUEST) {
+            ProtocolSendPacket(
+                uart,
+                PROTOCOL_CMD_BT_DFU_MODE_RESPONSE,
+                0,
+                0
+            );
+            uint32_t now = TimerGetMillis();
+            while (TimerGetMillis() - now < PROTOCOL_PACKET_WAIT_MS);
+            ProtocolBTDFUMode();
+            ProtocolBTMode();
         } else if (packet.command == PROTOCOL_CMD_START_APP_REQUEST) {
             ProtocolSendPacket(
                 uart,
@@ -181,7 +240,7 @@ void ProtocolProcessMessage(
             while (TimerGetMillis() - now < PROTOCOL_PACKET_WAIT_MS);
             *BOOT_MODE = BOOT_MODE_NOW;
         } else if (packet.command == PROTOCOL_CMD_FIRMWARE_VERSION_REQUEST) {
-            unsigned char response[] = {
+            uint8_t response[] = {
                 EEPROMReadByte(CONFIG_FIRMWARE_VERSION_ADDRESS_MAJOR),
                 EEPROMReadByte(CONFIG_FIRMWARE_VERSION_ADDRESS_MINOR),
                 EEPROMReadByte(CONFIG_FIRMWARE_VERSION_ADDRESS_PATCH)
@@ -193,7 +252,7 @@ void ProtocolProcessMessage(
                 3
             );
         } else if (packet.command == PROTOCOL_CMD_READ_SN_REQUEST) {
-            unsigned char response[] = {
+            uint8_t response[] = {
                 EEPROMReadByte(CONFIG_SN_ADDRESS_MSB),
                 EEPROMReadByte(CONFIG_SN_ADDRESS_LSB)
             };
@@ -206,7 +265,7 @@ void ProtocolProcessMessage(
         } else if (packet.command == PROTOCOL_CMD_WRITE_SN_REQUEST) {
             ProtocolWriteSerialNumber(uart, &packet);
         } else if (packet.command == PROTOCOL_CMD_READ_BUILD_DATE_REQUEST) {
-            unsigned char response[] = {
+            uint8_t response[] = {
                 EEPROMReadByte(CONFIG_BUILD_DATE_ADDRESS_WEEK),
                 EEPROMReadByte(CONFIG_BUILD_DATE_ADDRESS_YEAR)
             };
@@ -220,14 +279,29 @@ void ProtocolProcessMessage(
             ProtocolWriteBuildDate(uart, &packet);
         }
     } else if (packet.status == PROTOCOL_PACKET_STATUS_BAD) {
-        UARTResetRxQueue(uart);
+        UARTRXQueueReset(uart);
         ProtocolSendPacket(
             uart,
-            (unsigned char) PROTOCOL_BAD_PACKET_RESPONSE,
+            (uint8_t) PROTOCOL_BAD_PACKET_RESPONSE,
             0,
             0
         );
+    } else {
+        uint16_t queueSize = CharQueueGetSize(&uart->rxQueue);
+        /* @TODO: Figure out why directly subtracting these variables causes issues */
+        uint32_t lastRx = uart->rxTimestamp;
+        uint32_t now = TimerGetMillis();
+        if ((now - lastRx) >= PROTOCOL_PACKET_TIMEOUT && queueSize > 0) {
+            UARTRXQueueReset(uart);
+            ProtocolSendPacket(
+                uart,
+                (uint8_t) PROTOCOL_ERR_PACKET_TIMEOUT,
+                0,
+                0
+            );
+        }
     }
+    return packet.status;
 }
 
 /**
@@ -244,20 +318,18 @@ void ProtocolProcessMessage(
 ProtocolPacket_t ProtocolProcessPacket(UART_t *uart)
 {
     struct ProtocolPacket_t packet;
+    memset(&packet, 0, sizeof(ProtocolPacket_t));
     packet.status = PROTOCOL_PACKET_STATUS_INCOMPLETE;
-    if (uart->rxQueueSize >= 2) {
-        if (uart->rxQueueSize == (uint8_t) UARTGetOffsetByte(uart, 1)) {
-            packet.command = UARTGetNextByte(uart);
-            packet.dataSize = (uint8_t) UARTGetNextByte(uart) - PROTOCOL_CONTROL_PACKET_SIZE;
+    uint16_t queueSize = CharQueueGetSize(&uart->rxQueue);
+    if (queueSize >= PROTOCOL_PACKET_MIN_SIZE) {
+        if (queueSize >= CharQueueGetOffset(&uart->rxQueue, 1)) {
+            packet.command = CharQueueNext(&uart->rxQueue);
+            packet.dataSize = CharQueueNext(&uart->rxQueue) - PROTOCOL_CONTROL_PACKET_SIZE;
             uint8_t i;
             for (i = 0; i < packet.dataSize; i++) {
-                if (uart->rxQueueSize > 0) {
-                    packet.data[i] = UARTGetNextByte(uart);
-                } else {
-                    packet.data[i] = 0x00;
-                }
+                packet.data[i] = CharQueueNext(&uart->rxQueue);
             }
-            unsigned char validation = UARTGetNextByte(uart);
+            uint8_t validation = CharQueueNext(&uart->rxQueue);
             packet.status = ProtocolValidatePacket(&packet, validation);
         }
     }
@@ -270,8 +342,8 @@ ProtocolPacket_t ProtocolProcessPacket(UART_t *uart)
  *         Generated a packet and send if over UART
  *     Params:
  *         UART_t *uart - The UART struct to use for communication
- *         unsigned char command - The protocol command
- *         unsigned char *data - The data to send in the packet. Must be at least
+ *         uint8_t command - The protocol command
+ *         uint8_t *data - The data to send in the packet. Must be at least
  *             one byte per protocol
  *         uint8_t dataSize - The number of bytes in the data pointer
  *     Returns:
@@ -279,15 +351,16 @@ ProtocolPacket_t ProtocolProcessPacket(UART_t *uart)
  */
 void ProtocolSendPacket(
     UART_t *uart, 
-    unsigned char command, 
-    unsigned char *data,
+    uint8_t command,
+    uint8_t *data,
     uint8_t dataSize
 ) {
     if (dataSize == 0) {
         dataSize = 1;
     }
     uint8_t length = dataSize + PROTOCOL_CONTROL_PACKET_SIZE;
-    unsigned char packet[length];
+    uint8_t packet[length];
+    memset(packet, 0, length);
     packet[0] = command;
     packet[1] = length;
     if (data == 0x00) {
@@ -299,9 +372,9 @@ void ProtocolSendPacket(
         }
     }
     uint8_t i;
-    unsigned char crc = 0x00;
+    uint8_t crc = 0x00;
     for (i = 0; i < length - 1; i++) {
-        crc ^= (unsigned char) packet[i];
+        crc ^= (uint8_t) packet[i];
     }
     packet[length - 1] = crc;
     UARTSendData(uart, packet, length);
@@ -313,18 +386,18 @@ void ProtocolSendPacket(
  *         Send a given string in a packet with the given command.
  *     Params:
  *         UART_t *uart - The UART struct to use for communication
- *         unsigned char command - The protocol command
+ *         uint8_t command - The protocol command
  *         char *string - The string to send
  *     Returns:
  *         void
  */
-void ProtocolSendStringPacket(UART_t *uart, unsigned char command, char *string)
+void ProtocolSendStringPacket(UART_t *uart, uint8_t command, char *string)
 {
     uint8_t len = 0;
     while (string[len] != 0) {
         len++;
     }
-    ProtocolSendPacket(uart, command, (unsigned char *) string, len);
+    ProtocolSendPacket(uart, command, (uint8_t *) string, len);
 }
 
 /**
@@ -333,11 +406,11 @@ void ProtocolSendStringPacket(UART_t *uart, unsigned char command, char *string)
  *         Use the given checksum to validate the data in a given packet
  *     Params:
  *         ProtocolPacket_t *packet - The data packet structure
- *         unsigned char validation - the XOR checksum of the data in packet
+ *         uint8_t validation - the XOR checksum of the data in packet
  *     Returns:
  *         uint8_t - If the packet is valid or not
  */
-uint8_t ProtocolValidatePacket(ProtocolPacket_t *packet, unsigned char validation)
+uint8_t ProtocolValidatePacket(ProtocolPacket_t *packet, uint8_t validation)
 {
     uint8_t chk = packet->command;
     chk = chk ^ (packet->dataSize + PROTOCOL_CONTROL_PACKET_SIZE);

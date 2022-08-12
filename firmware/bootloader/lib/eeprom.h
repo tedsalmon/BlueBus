@@ -7,6 +7,7 @@
 #ifndef EEPROM_H
 #define EEPROM_H
 #include <xc.h>
+#include "utils.h"
 #include "../mappings.h"
 
 /* 16000000 / (2 * (0 + 1)) = 8,000,000 or 8Mhz */

@@ -138,8 +138,11 @@ unsigned char EEPROMReadByte(uint32_t address)
     EEPROMIsReady();
     EEPROM_CS_PIN = 0;
     EEPROMSend(EEPROM_COMMAND_READ);
-    // Address must be 24-bits but we're transferring it in three 8-bit sessions
-    EEPROMSend(address >> 16 && 0xFF);
+    // The HW1 boards use a 1024kB EEPROM while the HW2 boards use a
+    // 128kB EEPROM. This means that we need not send as any address bytes
+    if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+        EEPROMSend(address >> 16 && 0xFF);
+    }
     EEPROMSend(address >> 8 && 0xFF);
     EEPROMSend(address & 0xFF);
     // Cast return of EEPROM send to an 8-bit byte, since the returned register
@@ -165,8 +168,11 @@ void EEPROMWriteByte(uint32_t address, unsigned char data)
     EEPROMEnableWrite();
     EEPROM_CS_PIN = 0;
     EEPROMSend(EEPROM_COMMAND_WRITE);
-    // Address must be 24-bits but we're transferring it in three 8-bit sessions
-    EEPROMSend(address >> 16 && 0xFF);
+    // The HW1 boards use a 1024kB EEPROM while the HW2 boards use a
+    // 128kB EEPROM. This means that we need not send as any address bytes
+    if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+        EEPROMSend(address >> 16 && 0xFF);
+    }
     EEPROMSend(address >> 8 && 0xFF);
     EEPROMSend(address & 0xFF);
     EEPROMSend(data);

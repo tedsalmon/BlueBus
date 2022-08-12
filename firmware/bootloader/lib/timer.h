@@ -34,6 +34,7 @@
 
 void TimerInit();
 void TimerDestroy();
+void TimerDisableLED();
 void TimerEnableLED();
 uint32_t TimerGetMillis();
 #endif /* TIMER_H */

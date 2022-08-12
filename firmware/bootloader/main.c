@@ -44,44 +44,55 @@ int main(void)
     // Set the I/O ports to outputs
     ON_LED_MODE = 0;
     BT_DATA_SEL_MODE = 0;
-    UART_SEL_MODE = 0;
+    BT_MFB_MODE = 0;
+    BT_RST_MODE = 0;
     IBUS_EN_MODE = 0;
     PAM_SHDN_MODE = 0;
+    SPDIF_RST_MODE = 0;
     TEL_ON_MODE = 0;
     TEL_MUTE_MODE = 0;
+    UART_SEL_MODE = 0;
 
     // Set the RX / input pins to inputs
+    BOARD_VERSION_MODE = 1;
+    BT_UART_RX_PIN_MODE = 1;
+    EEPROM_SDI_PIN_MODE = 1;
     IBUS_UART_RX_PIN_MODE = 1;
     // The I-Bus UART TX pin should be an input so we don't accidentally
     // keep the bus low and block frames from transmitting
     IBUS_UART_TX_PIN_MODE = 1;
     IBUS_UART_STATUS_MODE = 1;
-    BC127_UART_RX_PIN_MODE = 1;
-    SYSTEM_UART_RX_PIN_MODE = 1;
-    EEPROM_SDI_PIN_MODE = 1;
     RECOVERY_MODE = 1;
+    SYSTEM_UART_RX_PIN_MODE = 1;
     SYS_DTR_MODE = 1;
-    
-    // Set the UART mode to MCU for the remainder of this application code
-    UART_SEL = UART_SEL_MCU;
+
+    // Enable the pull-down on the board version pin
+    BOARD_VERSION_PD = 1;
     // Enable the IBus Regulator
     IBUS_EN = 1;
-    // Turn the PAM8406 off until it's required
-    PAM_SHDN = 0;
-    // Keep the vehicle unmuted and telephone on disengaged
-    TEL_MUTE = 0;
-    TEL_ON = 0;
-    // Keep the BC127 out of data mode
-    BT_DATA_SEL = 0;
-
-    // Ensure the Power LED is off
-    ON_LED = 0;
+    // Set the TMUX154E switch to MCU UART mode
+    UART_SEL = UART_SEL_MCU;
+    if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+        // Pull the DIT4096 RESET pin high
+        SPDIF_RST = 1;
+    }
 
     // Init the timer interrupt and the SPI module for the EEPROM
     TimerInit();
     EEPROMInit();
 
-    UART_t systemUart;
+    uint8_t STATUS_FLAG = 0;
+
+    UART_t systemUart = UARTInit(
+        SYSTEM_UART_MODULE,
+        SYSTEM_UART_RX_RPIN,
+        SYSTEM_UART_TX_RPIN,
+        SYSTEM_UART_RX_PRIORITY,
+        UART_BAUD_115200,
+        UART_PARITY_ODD
+    );
+    // Register the module handlers at a global scope
+    UARTAddModuleHandler(&systemUart);
     uint8_t BOOT_MODE = BOOT_MODE_APPLICATION;
     unsigned char configuredBootmode = EEPROMReadByte(CONFIG_BOOTLOADER_MODE);
     // If the bootloader flag is set in the EEPROM or the recovery pin
@@ -90,53 +101,35 @@ int main(void)
         BOOT_MODE = BOOT_MODE_BOOTLOADER;
         EEPROMWriteByte(CONFIG_BOOTLOADER_MODE, 0x00);
         TimerEnableLED();
-        // We listen for firmware from a single UART based on the value stored
-        // in the EEPROM. This makes recovery from the BT module impossible
-        // but that is okay. If we listen on both UARTs, things get messy.
-        if (configuredBootmode == BOOT_SOURCE_BC127) {
-            BT_DATA_SEL = 1;
-            systemUart = UARTInit(
-                SYSTEM_UART_MODULE,
-                BC127_UART_RX_RPIN,
-                BC127_UART_TX_RPIN,
-                UART_BAUD_115200,
-                UART_PARITY_NONE
-            );
-        } else {
-            systemUart = UARTInit(
-                SYSTEM_UART_MODULE,
-                SYSTEM_UART_RX_RPIN,
-                SYSTEM_UART_TX_RPIN,
-                UART_BAUD_115200,
-                UART_PARITY_ODD
-            );
-        }
-        // Register the module handlers at a global scope
-        UARTAddModuleHandler(&systemUart);
+        STATUS_FLAG = BOOTLOADER_STATUS_LED_ON;
     }
 
-    while (BOOT_MODE == BOOT_MODE_BOOTLOADER && BOOT_MODE != BOOT_MODE_NOW) {
-        UARTReadData(&systemUart);
-        if (systemUart.rxQueueSize > 0) {
-            ProtocolProcessMessage(&systemUart, &BOOT_MODE);
+    while ((BOOT_MODE == BOOT_MODE_BOOTLOADER && BOOT_MODE != BOOT_MODE_NOW) ||
+           TimerGetMillis() <= BOOTLOADER_TIMEOUT
+    ) {
+        uint16_t queueSize = CharQueueGetSize(&systemUart.rxQueue);
+        if (queueSize >= PROTOCOL_PACKET_MIN_SIZE) {
+            uint8_t pktStatus = ProtocolProcessMessage(&systemUart, &BOOT_MODE);
+            if (pktStatus == PROTOCOL_PACKET_STATUS_OK && STATUS_FLAG == 0) {
+                TimerEnableLED();
+                STATUS_FLAG = BOOTLOADER_STATUS_LED_ON;
+            }
         }
     }
-    
+
+    // Set the bootloader mode to "Application" mode so if there is an issue
+    // with the application we can lock the user in the bootloader to
+    // accept a different firmware
+    EEPROMWriteByte(CONFIG_BOOTLOADER_MODE, CONFIG_BOOTLODADER_MODE_APP);
+
     // Close the UART module so the application can utilize it
-    if (BOOT_MODE == BOOT_MODE_NOW) {
-        UARTDestroy(SYSTEM_UART_MODULE);
-    }
+    UARTDestroy(SYSTEM_UART_MODULE);
 
     // Close the EEPROM (SPI module) so that the application can utilize it
     EEPROMDestroy();
 
-    // Turn off the LED & Set the BC127 back to normal mode
+    // Turn off the LED
     ON_LED = 0;
-    BT_DATA_SEL = 0;
-
-    // Wait until the specified timeout so that the rest of the board
-    // has a chance to power up before we start configuring it in the application
-    while (TimerGetMillis() <= BOOTLOADER_TIMEOUT);
 
     // Disable the timers we set up
     TimerDestroy();
@@ -144,9 +137,10 @@ int main(void)
     // Set the IVT mode to regular
     IVT_MODE = IVT_MODE_APP;
 
-    // Call the application code
+    // Load the a pointer to the application initialization vector
     void (*appptr)(void);
     appptr = (void (*)(void))BOOTLOADER_APPLICATION_VECTOR;
+    // Call the application code
     appptr();
 
     return 0;

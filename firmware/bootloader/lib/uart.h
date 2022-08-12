@@ -10,14 +10,13 @@
 #include <string.h>
 #include <xc.h>
 #include "../mappings.h"
+#include "char_queue.h"
 #include "sfr_setters.h"
 #include "timer.h"
 #include "utils.h"
-#define UART_BAUD_9600 103 
 #define UART_BAUD_115200 34
+#define UART_BAUD_9600 103
 #define UART_MODULES_COUNT 2
-#define UART_RX_QUEUE_SIZE 512
-#define UART_RX_QUEUE_TIMEOUT 100
 #define UART_PARITY_NONE 0
 #define UART_PARITY_EVEN 1
 #define UART_PARITY_ODD 2
@@ -29,23 +28,18 @@
  *         write data from the UART module
  */
 typedef struct UART_t {
-    char rxQueue[UART_RX_QUEUE_SIZE];
-    uint16_t rxQueueReadCursor;
-    uint16_t rxQueueSize;
-    uint16_t rxQueueWriteCursor;
-    uint32_t rxLastTimestamp;
+    volatile CharQueue_t rxQueue;
     uint8_t moduleIndex;
     uint8_t txPin;
+    volatile uint32_t rxTimestamp;
     volatile UART *registers;
 } UART_t;
 
-UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
+UART_t UARTInit(uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 void UARTAddModuleHandler(UART_t *uart);
-UART_t * UARTGetModuleHandler(uint8_t);
 void UARTDestroy(uint8_t);
-unsigned char UARTGetNextByte(UART_t *);
-unsigned char UARTGetOffsetByte(UART_t *, uint16_t);
-void UARTReadData(UART_t *);
-void UARTResetRxQueue(UART_t *);
-void UARTSendData(UART_t *, unsigned char *, uint8_t);
+UART_t * UARTGetModuleHandler(uint8_t);
+void UARTRXQueueReset(UART_t *);
+void UARTSendChar(UART_t *, uint8_t);
+void UARTSendData(UART_t *, uint8_t *, uint16_t);
 #endif /* UART_H */

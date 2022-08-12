@@ -58,6 +58,21 @@ void TimerDestroy()
 }
 
 /**
+ * TimerDisableLED()
+ *     Description:
+ *         Disable the LED Flashing Timer
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+void TimerDisableLED()
+{
+    TimerEnableLEDValue = TIMER_LED_DISABLED;
+    ON_LED = 0;
+}
+
+/**
  * TimerEnableLED()
  *     Description:
  *         Enable the LED Flashing Timer

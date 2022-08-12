@@ -10,19 +10,21 @@
 static UART_t *UARTModules[UART_MODULES_COUNT];
 
 // These values constitute the TX mode for each UART module
-static const uint8_t UART_TX_MODES[] = {3, 5};
+static const uint8_t UART_TX_MODES[] = {3, 5, 19, 21};
 
 UART_t UARTInit(
     uint8_t uartModule,
     uint8_t rxPin,
     uint8_t txPin,
+    uint8_t rxPriority,
     uint8_t baudRate,
     uint8_t parity
 ) {
     UART_t uart;
+    uart.rxQueue = CharQueueInit();
     uart.moduleIndex = uartModule - 1;
     uart.txPin = txPin;
-    UARTResetRxQueue(&uart);
+    uart.rxTimestamp = TimerGetMillis();
     // Unlock the reprogrammable pin register
     __builtin_write_OSCCONL(OSCCON & 0xBF);
     // Set the RX Pin and register. The register comes from the PIC24FJ header
@@ -42,8 +44,13 @@ UART_t UARTInit(
     __builtin_write_OSCCONL(OSCCON & 0x40);
     //Set the BAUD Rate
     uart.registers->uxbrg = baudRate;
-    // Set the initial UART state
-    uart.registers->uxmode = 0;
+    // Disable the TX ISR, since we handle it manually and Enable the RX ISR
+    SetUARTTXIE(uart.moduleIndex, 0);
+    SetUARTRXIE(uart.moduleIndex, 1);
+    // Set the ISR Flag to disabled for RX (as it should be when the hardware
+    // buffers are empty) and disable the TX ISR Flag
+    SetUARTRXIF(uart.moduleIndex, 0);
+    SetUARTTXIF(uart.moduleIndex, 0);
     // Enable UART, keep the module in 3-wire mode
     uart.registers->uxmode ^= 0b1000000000000000;
     if (parity == UART_PARITY_EVEN) {
@@ -57,6 +64,8 @@ UART_t UARTInit(
     }
     // Enable transmit and receive on the module
     uart.registers->uxsta ^= 0b0001010000000000;
+    // Set the Interrupt Priority
+    SetUARTRXIP(uart.moduleIndex, rxPriority);
     return uart;
 }
 
@@ -88,6 +97,11 @@ void UARTDestroy(uint8_t uartModule) {
     }
     UtilsSetRPORMode(uart->txPin, 0);
     __builtin_write_OSCCONL(OSCCON & 0x40);
+    // Disable ISRs for the module
+    SetUARTTXIE(uart->moduleIndex, 0);
+    SetUARTRXIE(uart->moduleIndex, 0);
+    SetUARTRXIF(uart->moduleIndex, 0);
+    SetUARTTXIF(uart->moduleIndex, 0);
     //Set the BAUD Rate back to 0
     uart->registers->uxbrg = 0;
     // Disable UART
@@ -96,9 +110,9 @@ void UARTDestroy(uint8_t uartModule) {
     uart->registers->uxsta = 0;
     // Pull down the RX and TX pins for the module
     switch (uartModule) {
-        case BC127_UART_MODULE:
-            BC127_UART_RX_PIN_MODE = 1;
-            BC127_UART_TX_PIN_MODE = 1;
+        case BT_UART_MODULE:
+            BT_UART_RX_PIN_MODE = 1;
+            BT_UART_TX_PIN_MODE = 1;
             break;
         case SYSTEM_UART_MODULE:
             SYSTEM_UART_RX_PIN_MODE = 1;
@@ -112,103 +126,44 @@ UART_t * UARTGetModuleHandler(uint8_t moduleIndex)
     return UARTModules[moduleIndex - 1];
 }
 
-
-/**
- * UARTGetNextByte()
- *     Description:
- *         Shifts the next byte in the queue out, as seen by the read cursor.
- *         Once the byte is returned, it should be considered destroyed from the
- *         queue.
- *     Params:
- *         UART_t *uart - The UART object
- *     Returns:
- *         unsigned char
- */
-unsigned char UARTGetNextByte(UART_t *uart)
+static uint8_t UARTRXInterruptHandler(uint8_t moduleIndex)
 {
-    unsigned char data = uart->rxQueue[uart->rxQueueReadCursor];
-    // Remove the byte from memory
-    uart->rxQueue[uart->rxQueueReadCursor] = 0x00;
-    uart->rxQueueReadCursor++;
-    if (uart->rxQueueReadCursor >= UART_RX_QUEUE_SIZE) {
-        uart->rxQueueReadCursor = 0;
+    UART_t *uart = UARTModules[moduleIndex];
+    if (uart == 0) {
+        // Nothing to do -- Clear the interrupt flag
+        SetUARTRXIF(moduleIndex, 0);
+        return 0;
     }
-    if (uart->rxQueueSize > 0) {
-        uart->rxQueueSize--;
-    }
-    return data;
-}
-
-/**
- * UARTGetOffsetByte()
- *     Description:
- *         Return the byte at the current index plus the given offset
- *     Params:
- *         UART_t *uart - The UART object
- *         uint8_t offset - The number to offset from the current index
- *     Returns:
- *         unsigned char
- */
-unsigned char UARTGetOffsetByte(UART_t *uart, uint16_t offset)
-{
-    uint16_t cursor = uart->rxQueueReadCursor;
-    while (offset) {
-        cursor++;
-        if (cursor >= UART_RX_QUEUE_SIZE) {
-            cursor = 0;
-        }
-        offset--;
-    }
-    return uart->rxQueue[cursor];
-}
-
-/**
- * UARTReadData()
- *     Description:
- *         Read any pending bytes from the UART module buffer and place them
- *         into our circular buffer
- *     Params:
- *         UART_t *uart - The UART object
- *     Returns:
- *         void
- */
-void UARTReadData(UART_t *uart)
-{
     // While there is data in the RX buffer
     while ((uart->registers->uxsta & 0x1) == 1) {
-        uint8_t hasErr = (uart->registers->uxsta & 0xE) != 0;
-        // Clear the buffer overflow error, if it exists
-        if ((uart->registers->uxsta & 0x2) != 0) {
-            uart->registers->uxsta ^= 0x2;
-        }
-        unsigned char byte = uart->registers->uxrxreg;
-        if (uart->rxQueueSize < UART_RX_QUEUE_SIZE && !hasErr) {
-            if (uart->rxQueueWriteCursor >= UART_RX_QUEUE_SIZE) {
-                uart->rxQueueWriteCursor = 0;
+        // No frame or parity errors
+        uint16_t usta = uart->registers->uxsta;
+        if ((usta & 0xC) == 0) {
+            // Clear the buffer overflow error, if it exists
+            if (CHECK_BIT(usta, 1) != 0) {
+                uart->registers->uxsta ^= 0x2;
             }
-            uart->rxQueue[uart->rxQueueWriteCursor] = byte;
-            uart->rxQueueWriteCursor++;
-            uart->rxQueueSize++;
-            uart->rxLastTimestamp = TimerGetMillis();
+            CharQueueAdd(&uart->rxQueue, uart->registers->uxrxreg);
+        } else {
+            // Clear the byte in the RX buffer
+            uart->registers->uxrxreg;
+        }
+        if ((uart->registers->uxsta & 0x1) == 0) {
+            uart->rxTimestamp = TimerGetMillis();
+            // Buffer is clear -- immediately clear the interrupt flag
+            SetUARTRXIF(moduleIndex, 0);
+            return 0;
         }
     }
+    uart->rxTimestamp = TimerGetMillis();
+    SetUARTRXIF(moduleIndex, 0);
+    return 0;
 }
 
-/**
- * UARTResetRxQueue()
- *     Description:
- *         Clear all bytes from the Rx Queue
- *     Params:
- *         UART_t *uart - The UART object
- *     Returns:
- *         void
- */
-void UARTResetRxQueue(UART_t *uart)
+void UARTRXQueueReset(UART_t *uart)
 {
-    memset(uart->rxQueue, 0, UART_RX_QUEUE_SIZE);
-    uart->rxQueueSize = 0;
-    uart->rxQueueWriteCursor = 0;
-    uart->rxQueueReadCursor = 0;
+    uart->rxTimestamp = TimerGetMillis();
+    CharQueueReset(&uart->rxQueue);
 }
 
 /**
@@ -217,17 +172,29 @@ void UARTResetRxQueue(UART_t *uart)
  *         Send the given char array via UART
  *     Params:
  *         UART_t *uart - The UART object
- *         unsigned char *data - The stream to send
+ *         uint8_t *data - The stream to send
  *         uint16_t length - The count of bytes in the packet
  *     Returns:
  *         void
  */
-void UARTSendData(UART_t *uart, unsigned char *data, uint8_t length)
+void UARTSendData(UART_t *uart, uint8_t *data, uint16_t length)
 {
-    uint8_t i;
+    uint16_t i;
     for (i = 0; i < length; i++){
         uart->registers->uxtxreg = data[i];
         // Wait for the data to leave the tx buffer
         while ((uart->registers->uxsta & (1 << 9)) != 0);
     }
+}
+
+/*
+ * Define the RX interrupt handlers that will pass off to our handler above
+ */
+void __attribute__((__interrupt__, auto_psv)) _U1RXInterrupt()
+{
+    UARTRXInterruptHandler(0);
+}
+void __attribute__((__interrupt__, auto_psv)) _U2RXInterrupt()
+{
+    UARTRXInterruptHandler(1);
 }

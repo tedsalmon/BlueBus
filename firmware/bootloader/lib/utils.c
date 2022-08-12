@@ -49,7 +49,25 @@ static uint16_t *ROPR_PINS[] = {
 };
 
 /**
- * setRPORMode()
+ * UtilsGetBoardVersion()
+ *     Description:
+ *         Get the board byte based on the I/O pin configuration
+ *     Params:
+ *         None
+ *     Returns:
+ *         uint8_t The identified board type
+ */
+uint8_t UtilsGetBoardVersion()
+{
+    if (BOARD_VERSION_STATUS == BOARD_VERSION_ONE) {
+        return BOARD_VERSION_ONE;
+    } else {
+        return BOARD_VERSION_TWO;
+    }
+}
+
+/**
+ * UtilsSetRPORMode()
  *     Description:
  *         Set the mode of a programmable output pin
  *     Params:
