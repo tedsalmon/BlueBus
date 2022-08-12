@@ -367,7 +367,6 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
             if (ibus->lmVariant == IBUS_LM_LCM_IV) {
                 offset = 510;
             }
- 
             float rawTemperature = (pkt[23] * 0.00005) + (pkt[24] * 0.01275);
             unsigned char oilTemperature = 67.2529 * log(rawTemperature) + offset;
             if (oilTemperature != ibus->oilTemperature) {
