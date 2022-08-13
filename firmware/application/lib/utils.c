@@ -62,6 +62,15 @@ static const char UTILS_CHARS_LATIN[] =
     "SsTtTtTtUuUuUuUu" /* 0160-016F */
     "UuUuWwYyYZzZzZzF"; /* 0170-017F */
 
+/**
+ * UtilsDisplayValueInit()
+ *     Description:
+ *         Get a blank display value struct
+ *     Params:
+ *         None
+ *     Returns:
+ *         UtilsAbstractDisplayValue_t
+ */
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
 {
     UtilsAbstractDisplayValue_t value;
@@ -71,6 +80,46 @@ UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
     value.status = status;
     value.length = strlen(text);
     return value;
+}
+
+/**
+ * UtilsGetBoardVersion()
+ *     Description:
+ *         Get the board byte based on the I/O pin configuration
+ *     Params:
+ *         None
+ *     Returns:
+ *         uint8_t The identified board type
+ */
+uint8_t UtilsGetBoardVersion()
+{
+    if (BOARD_VERSION_STATUS == BOARD_VERSION_ONE) {
+        return BOARD_VERSION_ONE;
+    } else {
+        return BOARD_VERSION_TWO;
+    }
+}
+
+/**
+ * UtilsGetUnicodeByteLength()
+ *     Description:
+ *         Get the number of bytes in the unicode character
+ *     Params:
+ *         uint8_t byte - The byte to inspect
+ *     Returns:
+ *         uint8_t The number of bytes in the unicode character
+ */
+uint8_t UtilsGetUnicodeByteLength(uint8_t byte)
+{
+    uint8_t bytesInChar = 1;
+    if (byte >> 3 == 30) { // 0xF0 - 0xF4
+        bytesInChar = 4;
+    } else if (byte >> 4 == 14) { // 0xE0 - 0xEF
+        bytesInChar = 3;
+    } else if (byte >> 5 == 6) { // 0xC2 - 0xDF
+        bytesInChar = 2;
+    }
+    return bytesInChar;
 }
 
 /**
@@ -87,7 +136,7 @@ UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
  */
 void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
 {
-    uint16_t idx;
+    uint16_t idx = 0;
     uint16_t strIdx = 0;
     uint32_t unicodeChar;
 
@@ -97,43 +146,52 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
 
     uint16_t strLength = strlen(input);
     uint8_t bytesInChar = 0;
-    unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    uint8_t language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
     
     
-    unsigned char uiMode = ConfigGetUIMode();
+    uint8_t uiMode = ConfigGetUIMode();
 
-    for (idx = 0; (idx < strLength) && (strIdx < (max_len - 1)); idx++) {
+    while (idx < strLength && strIdx < (max_len - 1)) {
         uint8_t currentChar = (uint8_t) input[idx];
         unicodeChar = 0 | currentChar;
 
         if (currentChar == '\\') {
             unicodeChar = 0;
             char currentByteBuf[] = {input[idx + 1], input[idx + 2], '\0'};
-            unsigned char currentByte = UtilsStrToHex(currentByteBuf);
+            uint8_t currentByte = UtilsStrToHex(currentByteBuf);
             // Identify number of bytes to read from the first byte
-            bytesInChar = 1;
-            if (currentByte >> 3 == 30) { // 0xF0 - 0xF4
-                bytesInChar = 4;
-            } else if (currentByte >> 4 == 14) { // 0xE0 - 0xEF
-                bytesInChar = 3;
-            } else if (currentByte >> 5 == 6) { // 0xC2 - 0xDF
-                bytesInChar = 2;
-            }
+            bytesInChar = UtilsGetUnicodeByteLength(currentByte);
             uint8_t charsToRead = bytesInChar * 3;
             // Identify if we can read all the bytes
             if ((idx + charsToRead) <= strLength) {
                 uint8_t byteIdx = idx;
                 while (bytesInChar != 0) {
                     char buf[] = {input[byteIdx + 1], input[byteIdx + 2], '\0'};
-                    unsigned char byte = UtilsStrToHex(buf);
+                    uint8_t byte = UtilsStrToHex(buf);
                     unicodeChar = unicodeChar << 8 | byte;
                     bytesInChar--;
                     byteIdx = byteIdx + 3;
                 }
-                idx = idx + (charsToRead - 1);
+                idx = idx + charsToRead;
             } else {
                 idx = strLength;
             }
+        } else if (currentChar > 0x7F) {
+            unicodeChar = 0;
+            bytesInChar = UtilsGetUnicodeByteLength(currentChar);
+            // Identify if we can read all the bytes
+            if ((idx + bytesInChar) <= strLength) {
+                while (bytesInChar != 0) {
+                    uint8_t byte = input[idx];
+                    unicodeChar = unicodeChar << 8 | byte;
+                    bytesInChar--;
+                    idx++;
+                }
+            } else {
+                idx = strLength;
+            }
+        } else {
+            idx++;
         }
 
         if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
@@ -165,7 +223,7 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
                 }
             }
         } else if (unicodeChar > 0xC3BF) {
-            unsigned char transChar = 0;
+            uint8_t transChar = 0;
             if (language == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
                 transChar = UtilsConvertCyrillicUnicodeToExtendedASCII(unicodeChar);
             }
@@ -248,18 +306,35 @@ void UtilsSetRPORMode(uint8_t pin, uint16_t mode)
 }
 
 /**
- * UtilsStrToHex()
+ * UtilsSetPinMode()
  *     Description:
- *         Convert a string to a octal
+ *         Set the pin mode for the given pins
  *     Params:
- *         char *string - The subject
+ *         uint8_t pin - The pin to set
+ *         uint8_t mode - The mode to set the given pin to
  *     Returns:
- *         uint8_t The unsigned char
+ *         void
  */
-unsigned char UtilsStrToHex(char *string)
+void UtilsSetPinMode(uint8_t pin, uint8_t mode)
 {
-    char *ptr;
-    return (unsigned char) strtol(string, &ptr, 16);
+    switch (pin) {
+        case UTILS_PIN_TEL_ON: {
+            if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+                TEL_ON_V1 = mode;
+            } else {
+                TEL_ON_V2 = mode;
+            }
+            break;
+        }
+        case UTILS_PIN_TEL_MUTE: {
+            if (UtilsGetBoardVersion() == BOARD_VERSION_TWO) {
+                TEL_MUTE_V1 = mode;
+            } else {
+                TEL_MUTE_V2 = mode;
+            }
+            break;
+        }
+    }
 }
 
 /**
@@ -301,6 +376,21 @@ char * UtilsStrncpy(char *dest, const char *src, size_t size)
     strncpy(dest, src, size - 1);
     dest[size - 1] = '\0';
     return dest;
+}
+
+/**
+ * UtilsStrToHex()
+ *     Description:
+ *         Convert a string to a octal
+ *     Params:
+ *         char *string - The subject
+ *     Returns:
+ *         uint8_t The uint8_t
+ */
+uint8_t UtilsStrToHex(char *string)
+{
+    char *ptr;
+    return (uint8_t) strtol(string, &ptr, 16);
 }
 
 /**
@@ -699,9 +789,9 @@ char * UtilsTransliterateExtendedASCIIToASCII(uint32_t input)
  *     Params:
  *         uint32_t - Representation of the Cyrillic Unicode character
  *     Returns:
- *         unsigned char - Corresponding Extended ASCII characters
+ *         uint8_t - Corresponding Extended ASCII characters
  */
-unsigned char UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t input)
+uint8_t UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t input)
 {
     switch (input) {
         case UTILS_CHAR_CYRILLIC_CAPITAL_A:

@@ -157,9 +157,15 @@
 #define UTILS_CHAR_RIGHT_SINGLE_QUOTATION_MARK 0xE28099
 #define UTILS_CHAR_HORIZONTAL_ELLIPSIS 0xE280A6
 #define UTILS_DISPLAY_TEXT_SIZE 255
+#define UTILS_PIN_TEL_MUTE 0
+#define UTILS_PIN_TEL_ON 1
 
 /* Check if a bit is set in a byte */
 #define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
+/* Clear a set bit in a byte */
+#define CLEAR_BIT(var, pos) ((var) & ~(1 << pos))
+/* Set a bit in a byte */
+#define SET_BIT(var, pos) ((var) | (1 << pos))
 /* Return a programmable output port register */
 #define GET_RPOR(num) (((uint16_t *) &RPOR0) + num)
 /*
@@ -179,13 +185,16 @@ typedef struct UtilsAbstractDisplayValue_t {
     int8_t timeout;
 } UtilsAbstractDisplayValue_t;
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *, uint8_t);
+uint8_t UtilsGetBoardVersion();
+uint8_t UtilsGetUnicodeByteLength(uint8_t);
 void UtilsNormalizeText(char *, const char *, uint16_t);
 void UtilsRemoveSubstring(char *, const char *);
 void UtilsReset();
 void UtilsSetRPORMode(uint8_t, uint16_t);
-unsigned char UtilsStrToHex(char *);
+void UtilsSetPinMode(uint8_t, uint8_t);
 int8_t UtilsStricmp(const char *, const char *);
 char * UtilsStrncpy(char *, const char *, size_t);
+unsigned char UtilsStrToHex(char *);
 uint8_t UtilsStrToInt(char *);
 char * UtilsTransliterateUnicodeToASCII(uint32_t);
 char * UtilsTransliterateExtendedASCIIToASCII(uint32_t);
