@@ -4,8 +4,18 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="f3" displayName="handler" projectFiles="true">
+        <itemPath>handler/handler_bt.h</itemPath>
+        <itemPath>handler/handler_ibus.h</itemPath>
+        <itemPath>handler/handler_common.h</itemPath>
+      </logicalFolder>
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
-        <itemPath>lib/bc127.h</itemPath>
+        <logicalFolder name="f1" displayName="bt" projectFiles="true">
+          <itemPath>lib/bt/bt_bc127.h</itemPath>
+          <itemPath>lib/bt/bt_bm83.h</itemPath>
+          <itemPath>lib/bt/bt_common.h</itemPath>
+        </logicalFolder>
+        <itemPath>lib/bt.h</itemPath>
         <itemPath>lib/char_queue.h</itemPath>
         <itemPath>lib/config.h</itemPath>
         <itemPath>lib/eeprom.h</itemPath>
@@ -45,8 +55,18 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <logicalFolder name="f3" displayName="handler" projectFiles="true">
+        <itemPath>handler/handler_bt.c</itemPath>
+        <itemPath>handler/handler_ibus.c</itemPath>
+        <itemPath>handler/handler_common.c</itemPath>
+      </logicalFolder>
       <logicalFolder name="f1" displayName="lib" projectFiles="true">
-        <itemPath>lib/bc127.c</itemPath>
+        <logicalFolder name="f1" displayName="bt" projectFiles="true">
+          <itemPath>lib/bt/bt_bm83.c</itemPath>
+          <itemPath>lib/bt/bt_bc127.c</itemPath>
+          <itemPath>lib/bt/bt_common.c</itemPath>
+        </logicalFolder>
+        <itemPath>lib/bt.c</itemPath>
         <itemPath>lib/char_queue.c</itemPath>
         <itemPath>lib/config.c</itemPath>
         <itemPath>lib/eeprom.c</itemPath>
