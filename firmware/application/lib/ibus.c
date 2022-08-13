@@ -114,51 +114,62 @@ static void IBusHandleGMMessage(unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
-    //} else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_IDENT_RESP) {
-    //    unsigned char diagnosticIdx = pkt[9];
-    //    unsigned char moduleVariant = 0x00;
-    //
-    //    if (diagnosticIdx < 0x20) {
-    //        moduleVariant = IBUS_GM_ZKE4;
-    //    }
-    //    switch (diagnosticIdx) {
-    //        case 0x20:
-    //        case 0x21:
-    //        case 0x22:
-    //            moduleVariant = IBUS_GM_ZKE3_GM1;
-    //            break;
-    //        case 0x25:
-    //            moduleVariant = IBUS_GM_ZKE3_GM5;
-    //            break;
-    //        case 0x40:
-    //        case 0x50:
-    //        case 0x41:
-    //        case 0x51:
-    //        case 0x42:
-    //        case 0x52:
-    //            moduleVariant = IBUS_GM_ZKE5;
-    //            break;
-    //        case 0x45:
-    //        case 0x55:
-    //        case 0x46:
-    //        case 0x56:
-    //            moduleVariant = IBUS_GM_ZKE5_S12;
-    //            break;
-    //        case 0x80:
-    //        case 0x81:
-    //            moduleVariant = IBUS_GM_ZKE3_GM4;
-    //            break;
-    //        case 0x85:
-    //            moduleVariant = IBUS_GM_ZKE3_GM6;
-    //            break;
-    //        case 0xA0:
-    //            moduleVariant = IBUS_GM_ZKEBC1;
-    //            break;
-    //        case 0xA3:
-    //            moduleVariant = IBUS_GM_ZKEBC1RD;
-    //            break;
-    //    }
-    //    // Emit event
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+               pkt[IBUS_PKT_LEN] == 0x0F
+    ) {
+        uint8_t diagnosticIdx = pkt[9];
+        uint8_t moduleVariant = 0x00;
+        LogRaw("\r\nIBus: GM DI: %02X\r\n", diagnosticIdx);
+        if (diagnosticIdx < 0x20) {
+            LogInfo(LOG_SOURCE_IBUS, "GM: ZKE4");
+            moduleVariant = IBUS_GM_ZKE4;
+        }
+        switch (diagnosticIdx) {
+            case 0x20:
+            case 0x21:
+            case 0x22:
+                LogInfo(LOG_SOURCE_IBUS, "GM: ZKE3_GM1");
+                moduleVariant = IBUS_GM_ZKE3_GM1;
+                break;
+            case 0x25:
+                LogInfo(LOG_SOURCE_IBUS, "GM: ZKE3_GM5");
+                moduleVariant = IBUS_GM_ZKE3_GM5;
+                break;
+            case 0x40:
+            case 0x41:
+            case 0x42:
+            case 0x50:
+            case 0x51:
+            case 0x52:
+                LogInfo(LOG_SOURCE_IBUS, "GM: ZKE5");
+                moduleVariant = IBUS_GM_ZKE5;
+                break;
+            case 0x45:
+            case 0x46:
+            case 0x55:
+            case 0x56:
+                LogInfo(LOG_SOURCE_IBUS, "GM: ZKE5_S12");
+                moduleVariant = IBUS_GM_ZKE5_S12;
+                break;
+            case 0x80:
+            case 0x81:
+                LogInfo(LOG_SOURCE_IBUS, "GM: ZKE3_GM4");
+                moduleVariant = IBUS_GM_ZKE3_GM4;
+                break;
+            case 0x85:
+                LogInfo(LOG_SOURCE_IBUS, "GM: ZKE3_GM6");
+                moduleVariant = IBUS_GM_ZKE3_GM6;
+                break;
+            case 0xA0:
+                LogInfo(LOG_SOURCE_IBUS, "GM: ZKEBC1");
+                moduleVariant = IBUS_GM_ZKEBC1;
+                break;
+            case 0xA3:
+                LogInfo(LOG_SOURCE_IBUS, "GM: ZKEBC1RD");
+                moduleVariant = IBUS_GM_ZKEBC1RD;
+                break;
+        }
+        //EventTriggerCallback(IBUS_EVENT_GM_IDENT, &moduleVariant);
     }
 }
 
@@ -569,7 +580,7 @@ void IBusProcess(IBus_t *ibus)
 {
     // Read messages from the IBus and if none are available, attempt to
     // transmit whatever is sitting in the transmit buffer
-    if (ibus->uart.rxQueue.size > 0) {
+    if (CharQueueGetSize(&ibus->uart.rxQueue) > 0) {
         ibus->rxBuffer[ibus->rxBufferIdx++] = CharQueueNext(&ibus->uart.rxQueue);
         if (ibus->rxBufferIdx > 1) {
             uint8_t msgLength = (uint8_t) ibus->rxBuffer[1] + 2;
@@ -1833,6 +1844,49 @@ void IBusCommandIKESetTime(IBus_t *ibus, uint8_t hour, uint8_t minute)
 }
 
 /**
+ * IBusCommandTELIKEDisplayWrite()
+ *     Description:
+ *        Send text to the Business Radio
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *message - The to display
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
+{
+    unsigned char displayText[strlen(message) + 3];
+    displayText[0] = 0x23;
+    displayText[1] = 0x42;
+    displayText[2] = 0x32;
+    uint8_t idx;
+    for (idx = 0; idx < strlen(message); idx++) {
+        displayText[idx + 3] = message[idx];
+    }
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_TEL,
+        IBUS_DEVICE_IKE,
+        displayText,
+        sizeof(displayText)
+    );
+}
+
+/**
+ * IBusCommandTELIKEDisplayClear()
+ *     Description:
+ *        Send an empty string to the Business Radio to clear the display
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELIKEDisplayClear(IBus_t *ibus)
+{
+    IBusCommandTELIKEDisplayWrite(ibus, 0);
+}
+
+/**
  * IBusCommandLMActivateBulbs()
  *     Description:
  *        Light module diagnostics: Activate bulbs
@@ -2430,49 +2484,6 @@ void IBusCommandSetVolume(
         msg,
         sizeof(msg)
     );
-}
-
-/**
- * IBusCommandTELIKEDisplayWrite()
- *     Description:
- *        Send text to the Business Radio
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *         char *message - The to display
- *     Returns:
- *         void
- */
-void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
-{
-    unsigned char displayText[strlen(message) + 3];
-    displayText[0] = 0x23;
-    displayText[1] = 0x42;
-    displayText[2] = 0x32;
-    uint8_t idx;
-    for (idx = 0; idx < strlen(message); idx++) {
-        displayText[idx + 3] = message[idx];
-    }
-    IBusSendCommand(
-        ibus,
-        IBUS_DEVICE_TEL,
-        IBUS_DEVICE_IKE,
-        displayText,
-        sizeof(displayText)
-    );
-}
-
-/**
- * IBusCommandTELIKEDisplayClear()
- *     Description:
- *        Send an empty string to the Business Radio to clear the display
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandTELIKEDisplayClear(IBus_t *ibus)
-{
-    IBusCommandTELIKEDisplayWrite(ibus, 0);
 }
 
 /**
