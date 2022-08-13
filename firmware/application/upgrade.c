@@ -11,12 +11,12 @@
  *     Description:
  *         Run through the applicable upgrades
  *     Params:
- *         BC127_t *bt - The bt object
+ *         BT_t *bt - The bt object
  *         IBus_t *ibus - The ibus object
  *     Returns:
  *         uint8_t - Only returns to stop processing when versions match
  */
-uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
+uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
 {
     unsigned char curMajor = ConfigGetFirmwareVersionMajor();
     unsigned char curMinor = ConfigGetFirmwareVersionMinor();
@@ -29,18 +29,6 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
     }
     // Initial settings burn
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 0, 0, 1) == 1) {
-        BC127CommandSetAudio(bt, 0, 1);
-        BC127CommandSetAudioDigital(
-            bt,
-            BC127_AUDIO_SPDIF,
-            "44100",
-            "0",
-            "0"
-        );
-        BC127CommandSetBtState(bt, 2, 2);
-        BC127CommandSetCodec(bt, 1, "OFF");
-        BC127CommandSetMetadata(bt, 1);
-        BC127CommandSetModuleName(bt, "BlueBus");
         // Reset the UI
         ConfigSetUIMode(0x00);
         ConfigSetNavType(0x00);
@@ -65,22 +53,12 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
     }
     // Changes in version 1.1.1
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 1) == 1) {
-        BC127CommandSetAudioAnalog(bt, 3, 15, 1, "OFF");
-        BC127CommandSetProfiles(bt, 1, 1, 1, 1);
-        // Set the Mic Gain to -17.5dB by default
-        ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x03);
+        // Set the Mic Gain to -23dB by default
+        ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x01);
         LogRaw("Ran Upgrade 1.1.1\r\n");
     }
     // Changes in version 1.1.8
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 1, 8) == 1) {
-        // Enable cVc by default
-        BC127SendCommand(bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
-        BC127CommandWrite(bt);
-        unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-        unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
-        unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
-        // Set the cVc parameters
-        BC127CommandSetMicGain(bt, micGain, micBias, micPreamp);
         // -10dB Gain for the DAC in Telephone Mode
         ConfigSetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL, 0x44);
         LogRaw("Ran Upgrade 1.1.8\r\n");
@@ -129,6 +107,21 @@ uint8_t UpgradeProcess(BC127_t *bt, IBus_t *ibus)
         ConfigSetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV, CONFIG_SETTING_ON);
         BC127CommandSetCOD(bt, 300420);
         LogRaw("Ran Upgrade 1.1.18\r\n");
+    }
+    // Changes in version 1.2.0
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 2, 0) == 1) {
+        if (bt->type == BT_BTM_TYPE_BM83) {
+            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x09);
+        }
+        LogRaw("Ran Upgrade 1.2.0\r\n");
+    }
+    // Changes in version 1.2.1
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 2, 1) == 1) {
+        if (bt->type == BT_BTM_TYPE_BM83) {
+            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
+            ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
+        }
+        LogRaw("Ran Upgrade 1.2.1\r\n");
     }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,

@@ -11,7 +11,7 @@
 #include "handler.h"
 #include "mappings.h"
 #include "upgrade.h"
-#include "lib/bc127.h"
+#include "lib/bt.h"
 #include "lib/config.h"
 #include "lib/eeprom.h"
 #include "lib/log.h"
@@ -54,33 +54,47 @@ int main(void)
     LATG = 0;
 
     // Set the I/O ports to outputs
+    BT_MFB_MODE = 0;
+    BT_RST_MODE = 0;
     BT_DATA_SEL_MODE = 0;
-    ON_LED_MODE = 0;
-    UART_SEL_MODE = 0;
     IBUS_EN_MODE = 0;
+    ON_LED_MODE = 0;
     PAM_SHDN_MODE = 0;
-    TEL_ON_MODE = 0;
-    TEL_MUTE_MODE = 0;
+    SPDIF_RST_MODE = 0;
+    TEL_ON_MODE_V1 = 0;
+    TEL_MUTE_MODE_V1 = 0;
+    TEL_ON_MODE_V2 = 0;
+    TEL_MUTE_MODE_V2 = 0;
+    UART_SEL_MODE = 0;
 
     // Set the RX / input pins to inputs
+    BOARD_VERSION_MODE = 1;
+    BT_BOOT_TYPE_MODE = 1;
+    BT_UART_RX_PIN_MODE = 1;
+    EEPROM_SDI_PIN_MODE = 1;
     IBUS_UART_RX_PIN_MODE = 1;
     IBUS_UART_STATUS_MODE = 1;
-    BC127_UART_RX_PIN_MODE = 1;
     SYSTEM_UART_RX_PIN_MODE = 1;
-    EEPROM_SDI_PIN_MODE = 1;
     SYS_DTR_MODE = 1;
 
+    // Enable the pull-down on the board version pin
+    BOARD_VERSION_PD = 1;
     // Set the UART mode to MCU for the remainder of this application code
     UART_SEL = UART_SEL_MCU;
     // Enable the IBus Regulator
     IBUS_EN = 1;
     // Turn the PAM8406 off until it's required
     PAM_SHDN = 0;
+    // Pull the DIT4096 low
+    SPDIF_RST = 0;
     // Keep the vehicle unmuted and telephone on disengaged
-    TEL_MUTE = 0;
-    TEL_ON = 0;
+    UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 0);
+    UtilsSetPinMode(UTILS_PIN_TEL_ON, 0);
     // Keep the BC127 out of data mode
     BT_DATA_SEL = 0;
+    // Set the BM83 up for boot
+    BT_MFB = 0;
+    BT_RST = 0;
 
     // Initialize the system UART first, since we needed it for debug
     struct UART_t systemUart = UARTInit(
@@ -103,15 +117,20 @@ int main(void)
     TimerInit();
     I2CInit();
 
-    struct BC127_t bt = BC127Init();
+    struct BT_t bt = BTInit();
     UARTAddModuleHandler(&bt.uart);
 
     struct IBus_t ibus = IBusInit();
     UARTAddModuleHandler(&ibus.uart);
 
     // WM8804 and PCM5122 must be initialized after the I2C Bus
-    WM88XXInit();
+    if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+        WM88XXInit();
+    }
     PCM51XXInit();
+
+    // Enable the SPDIF Transmitter (after being low for >= 500ns)
+    SPDIF_RST = 1;
 
     ON_LED = 1;
 
@@ -124,9 +143,11 @@ int main(void)
     // Run the PCM51XX Start-up process
     PCM51XXStartup();
 
+    // Reset the Boot flag in the EEPROM to indicate a valid boot
+    ConfigSetBootloaderMode(0x00);
     // Process events
     while (1) {
-        BC127Process(&bt);
+        BTProcess(&bt);
         IBusProcess(&ibus);
         TimerProcessScheduledTasks();
         CLIProcess();
@@ -140,7 +161,7 @@ void TrapWait()
 {
     ON_LED = 0;
     // Wait five seconds before resetting
-    uint16_t sleepCount = 0;
+    uint32_t sleepCount = 0;
     while (sleepCount <= 50000) {
         TimerDelayMicroseconds(1000);
         sleepCount++;
@@ -148,7 +169,7 @@ void TrapWait()
     UtilsReset();
 }
 
-void __attribute__ ((__interrupt__, auto_psv)) _AltOscillatorFail(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltOscillatorFail()
 {
     // Clear the trap flag
     INTCON1bits.OSCFAIL = 0;
@@ -156,7 +177,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltOscillatorFail(void)
     TrapWait();
 }
 
-void __attribute__ ((__interrupt__, auto_psv)) _AltAddressError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltAddressError()
 {
     // Clear the trap flag
     INTCON1bits.ADDRERR = 0;
@@ -164,8 +185,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltAddressError(void)
     TrapWait();
 }
 
-
-void __attribute__ ((__interrupt__, auto_psv)) _AltStackError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltStackError()
 {
     // Clear the trap flag
     INTCON1bits.STKERR = 0;
@@ -173,7 +193,7 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltStackError(void)
     TrapWait();
 }
 
-void __attribute__ ((__interrupt__, auto_psv)) _AltMathError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltMathError()
 {
     // Clear the trap flag
     INTCON1bits.MATHERR = 0;
@@ -181,13 +201,13 @@ void __attribute__ ((__interrupt__, auto_psv)) _AltMathError(void)
     TrapWait();
 }
 
-void __attribute__ ((__interrupt__, auto_psv)) _AltNVMError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltNVMError()
 {
     ConfigSetTrapIncrement(CONFIG_TRAP_NVM);
     TrapWait();
 }
 
-void __attribute__ ((__interrupt__, auto_psv)) _AltGeneralError(void)
+void __attribute__ ((__interrupt__, auto_psv)) _AltGeneralError()
 {
     ConfigSetTrapIncrement(CONFIG_TRAP_GEN);
     TrapWait();
