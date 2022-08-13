@@ -11,6 +11,7 @@
 #include "char_queue.h"
 #include "log.h"
 #include "sfr_setters.h"
+#include "timer.h"
 #include "utils.h"
 #define UART_BAUD_115200 34
 #define UART_BAUD_9600 103
@@ -31,8 +32,7 @@
  *         write data from the UART module
  */
 typedef struct UART_t {
-    CharQueue_t rxQueue;
-    CharQueue_t txQueue;
+    volatile CharQueue_t rxQueue;
     uint8_t moduleIndex;
     uint8_t txPin;
     volatile uint16_t rxError;
@@ -45,7 +45,7 @@ void UARTDestroy(uint8_t);
 UART_t * UARTGetModuleHandler(uint8_t);
 void UARTRXQueueReset(UART_t *);
 void UARTReportErrors(UART_t *);
-void UARTSendChar(UART_t *, unsigned char);
-void UARTSendData(UART_t *, unsigned char *);
+void UARTSendChar(UART_t *, uint8_t);
+void UARTSendData(UART_t *, uint8_t *, uint16_t);
 void UARTSendString(UART_t *, char *);
 #endif /* UART_H */

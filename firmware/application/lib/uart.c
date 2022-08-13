@@ -22,7 +22,6 @@ UART_t UARTInit(
     uint8_t parity
 ) {
     UART_t uart;
-    uart.txQueue = CharQueueInit();
     uart.rxQueue = CharQueueInit();
     uart.moduleIndex = uartModule - 1;
     uart.rxError = 0;
@@ -58,9 +57,9 @@ UART_t UARTInit(
     SetUARTTXIE(uart.moduleIndex, 0);
     SetUARTRXIE(uart.moduleIndex, 1);
     // Set the ISR Flag to disabled for RX (as it should be when the hardware
-    // buffers are empty) and enable the TX ISR Flag
+    // buffers are empty) and disable the TX ISR Flag
     SetUARTRXIF(uart.moduleIndex, 0);
-    SetUARTTXIF(uart.moduleIndex, 1);
+    SetUARTTXIF(uart.moduleIndex, 0);
     // Enable UART, keep the module in 3-wire mode
     uart.registers->uxmode ^= 0b1000000000000000;
     if (parity == UART_PARITY_EVEN) {
@@ -131,9 +130,9 @@ void UARTDestroy(uint8_t uartModule) {
             IBUS_UART_RX_PIN_MODE = 1;
             IBUS_UART_TX_PIN_MODE = 1;
             break;
-        case BC127_UART_MODULE:
-            BC127_UART_RX_PIN_MODE = 1;
-            BC127_UART_TX_PIN_MODE = 1;
+        case BT_UART_MODULE:
+            BT_UART_RX_PIN_MODE = 1;
+            BT_UART_TX_PIN_MODE = 1;
             break;
         case SYSTEM_UART_MODULE:
             SYSTEM_UART_RX_PIN_MODE = 1;
@@ -191,23 +190,6 @@ static uint8_t UARTRXInterruptHandler(uint8_t moduleIndex)
     }
     SetUARTRXIF(moduleIndex, 0);
     return 0;
-
-}
-
-static void UARTTXInterruptHandler(uint8_t moduleIndex)
-{
-    UART_t *uart = UARTModules[moduleIndex];
-    if (uart != 0) {
-        while (uart->txQueue.size > 0) {
-            // TXIF is 1 if the queue is empty, set it before pushing data
-            SetUARTTXIF(moduleIndex, 0);
-            uart->registers->uxtxreg = CharQueueNext(&uart->txQueue);
-            // Wait for the data to leave the tx buffer
-            while ((uart->registers->uxsta & (1 << 9)) != 0);
-        }
-    }
-    // Disable the interrupt after flushing the queue
-    SetUARTTXIE(moduleIndex, 0);
 }
 
 void UARTReportErrors(UART_t *uart)
@@ -244,19 +226,19 @@ void UARTRXQueueReset(UART_t *uart)
 
 void UARTSendChar(UART_t *uart, unsigned char data)
 {
-    CharQueueAdd(&uart->txQueue, data);
-    // Set the interrupt flag
-    SetUARTTXIE(uart->moduleIndex, 1);
+    uart->registers->uxtxreg = data;
+    // Wait for the data to leave the tx buffer
+    while ((uart->registers->uxsta & (1 << 9)) != 0);
 }
 
-void UARTSendData(UART_t *uart, unsigned char *data)
+void UARTSendData(UART_t *uart, unsigned char *data, uint16_t length)
 {
-    unsigned char c;
-    while ((c = *data++)) {
-        CharQueueAdd(&uart->txQueue, c);
+    uint16_t i;
+    for (i = 0; i < length; i++) {
+        uart->registers->uxtxreg = data[i];
+        // Wait for the data to leave the tx buffer
+        while ((uart->registers->uxsta & (1 << 9)) != 0);
     }
-    // Set the interrupt flag
-    SetUARTTXIE(uart->moduleIndex, 1);
 }
 
 void UARTSendString(UART_t *uart, char *data)
@@ -265,46 +247,29 @@ void UARTSendString(UART_t *uart, char *data)
     while ((c = *data++)) {
         // Print only readable and newline characters
         if ((c >= 0x20 && c <= 0x7E) || c == 0x0D || c == 0x0A) {
-            CharQueueAdd(&uart->txQueue, c);
+            uart->registers->uxtxreg = c;
+            // Wait for the data to leave the tx buffer
+            while ((uart->registers->uxsta & (1 << 9)) != 0);
         }
     }
-    // Set the interrupt flag
-    SetUARTTXIE(uart->moduleIndex, 1);
 }
 
 /*
- * Define the interrupt handlers that will pass off to our
- * handlers above.
+ * Define the RX interrupt handlers that will pass off to our handler above
  */
 void __attribute__((__interrupt__, auto_psv)) _AltU1RXInterrupt()
 {
     UARTRXInterruptHandler(0);
 }
-void __attribute__((__interrupt__, auto_psv)) _AltU1TXInterrupt()
-{
-    UARTTXInterruptHandler(0);
-}
 void __attribute__((__interrupt__, auto_psv)) _AltU2RXInterrupt()
 {
     UARTRXInterruptHandler(1);
-}
-void __attribute__((__interrupt__, auto_psv)) _AltU2TXInterrupt()
-{
-    UARTTXInterruptHandler(1);
 }
 void __attribute__((__interrupt__, auto_psv)) _AltU3RXInterrupt()
 {
     UARTRXInterruptHandler(2);
 }
-void __attribute__((__interrupt__, auto_psv)) _AltU3TXInterrupt()
-{
-    UARTTXInterruptHandler(2);
-}
 void __attribute__((__interrupt__, auto_psv)) _AltU4RXInterrupt()
 {
     UARTRXInterruptHandler(3);
-}
-void __attribute__((__interrupt__, auto_psv)) _AltU4TXInterrupt()
-{
-    UARTTXInterruptHandler(3);
 }
