@@ -132,6 +132,21 @@ uint8_t TimerUnregisterScheduledTask(void *task)
 }
 
 /**
+ * TimerUnregisterScheduledTaskById()
+ *     Description:
+ *         Unregister a previously scheduled task using the given ID
+ *     Params:
+ *         uint8_t - The index of the scheduled task in the tasks array
+ *     Returns:
+ *         void
+ */
+void TimerUnregisterScheduledTaskById(uint8_t taskId)
+{
+    volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
+    memset((void *)t, 0, sizeof(TimerScheduledTask_t));
+}
+
+/**
  * TimerResetScheduledTask()
  *     Description:
  *         Reset the ticks on a given task
@@ -145,6 +160,25 @@ void TimerResetScheduledTask(uint8_t taskId)
     volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
     if (t->task != 0) {
         t->ticks = 0;
+    }
+}
+
+
+/**
+ * TimerSetTaskInterval()
+ *     Description:
+ *         Change the timer interval
+ *     Params:
+ *         uint8_t taskId - The index of the scheduled task in the tasks array
+ *         uint16_t interval - The number of milliseconds to elapse before calling
+ *     Returns:
+ *         void
+ */
+void TimerSetTaskInterval(uint8_t taskId, uint16_t interval)
+{
+    volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
+    if (t->task != 0) {
+        t->interval = interval;
     }
 }
 
