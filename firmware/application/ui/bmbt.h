@@ -8,7 +8,9 @@
 #define BMBT_H
 #define _ADDED_C_LIB 1
 #include <stdio.h>
-#include "../lib/bc127.h"
+#include "../lib/bt/bt_bc127.h"
+#include "../lib/bt/bt_bm83.h"
+#include "../lib/bt.h"
 #include "../lib/config.h"
 #include "../lib/event.h"
 #include "../lib/i2c.h"
@@ -59,8 +61,7 @@
 #define BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL 4
 /* Call Settings */
 #define BMBT_MENU_IDX_SETTINGS_CALLING_HFP 0
-#define BMBT_MENU_IDX_SETTINGS_CALLING_MIC_BIAS 1
-#define BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN 2
+#define BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN 1
 /* Comfort Settings */
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_LOCK 0
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_UNLOCK 1
@@ -73,6 +74,7 @@
 #define BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC 3
 #define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 4
 
+#define BMBT_MAIN_AREA_LEN 9
 #define BMBT_MENU_IDX_PAIRING_MODE 0
 #define BMBT_MENU_IDX_CLEAR_PAIRING 1
 #define BMBT_MENU_IDX_FIRST_DEVICE 2
@@ -106,7 +108,7 @@ typedef struct BMBTStatus_t {
     uint8_t navIndexType;
 } BMBTStatus_t;
 typedef struct BMBTContext_t {
-    BC127_t *bt;
+    BT_t *bt;
     IBus_t *ibus;
     uint8_t menu;
     BMBTStatus_t status;
@@ -117,13 +119,13 @@ typedef struct BMBTContext_t {
     uint8_t menuWriteTaskId;
     UtilsAbstractDisplayValue_t mainDisplay;
 } BMBTContext_t;
-void BMBTInit(BC127_t *, IBus_t *);
+void BMBTInit(BT_t *, IBus_t *);
 void BMBTDestroy();
-void BMBTBC127DeviceConnected(void *, unsigned char *);
-void BMBTBC127DeviceDisconnected(void *, unsigned char *);
-void BMBTBC127Metadata(void *, unsigned char *);
-void BMBTBC127PlaybackStatus(void *, unsigned char *);
-void BMBTBC127Ready(void *, unsigned char *);
+void BMBTBTDeviceConnected(void *, unsigned char *);
+void BMBTBTDeviceDisconnected(void *, unsigned char *);
+void BMBTBTMetadata(void *, unsigned char *);
+void BMBTBTPlaybackStatus(void *, unsigned char *);
+void BMBTBTReady(void *, unsigned char *);
 void BMBTIBusBMBTButtonPress(void *, unsigned char *);
 void BMBTIBusCDChangerStatus(void *, unsigned char *);
 void BMBTIBusGTChangeUIRequest(void *, unsigned char *);

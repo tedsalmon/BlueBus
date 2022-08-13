@@ -23,7 +23,7 @@ uint16_t menuSettingsLabelIndices[] = {
     LOCALE_STRING_UI
 };
 
-void BMBTInit(BC127_t *bt, IBus_t *ibus)
+void BMBTInit(BT_t *bt, IBus_t *ibus)
 {
     Context.bt = bt;
     Context.ibus = ibus;
@@ -38,28 +38,28 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
     Context.timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     Context.mainDisplay = UtilsDisplayValueInit(LocaleGetText(LOCALE_STRING_BLUETOOTH), BMBT_DISPLAY_OFF);
     EventRegisterCallback(
-        BC127Event_DeviceConnected,
-        &BMBTBC127DeviceConnected,
+        BT_EVENT_DEVICE_CONNECTED,
+        &BMBTBTDeviceConnected,
         &Context
     );
     EventRegisterCallback(
-        BC127Event_DeviceDisconnected,
-        &BMBTBC127DeviceDisconnected,
+        BT_EVENT_DEVICE_LINK_DISCONNECTED,
+        &BMBTBTDeviceDisconnected,
         &Context
     );
     EventRegisterCallback(
-        BC127Event_MetadataChange,
-        &BMBTBC127Metadata,
+        BT_EVENT_METADATA_UPDATE,
+        &BMBTBTMetadata,
         &Context
     );
     EventRegisterCallback(
-        BC127Event_Boot,
-        &BMBTBC127Ready,
+        BT_EVENT_BOOT,
+        &BMBTBTReady,
         &Context
     );
     EventRegisterCallback(
-        BC127Event_PlaybackStatusChange,
-        &BMBTBC127PlaybackStatus,
+        BT_EVENT_PLAYBACK_STATUS_CHANGE,
+        &BMBTBTPlaybackStatus,
         &Context
     );
     EventRegisterCallback(
@@ -151,24 +151,24 @@ void BMBTInit(BC127_t *bt, IBus_t *ibus)
 void BMBTDestroy()
 {
     EventUnregisterCallback(
-        BC127Event_DeviceConnected,
-        &BMBTBC127DeviceConnected
+        BT_EVENT_DEVICE_CONNECTED,
+        &BMBTBTDeviceConnected
     );
     EventUnregisterCallback(
-        BC127Event_DeviceDisconnected,
-        &BMBTBC127DeviceDisconnected
+        BT_EVENT_DEVICE_LINK_DISCONNECTED,
+        &BMBTBTDeviceDisconnected
     );
     EventUnregisterCallback(
-        BC127Event_MetadataChange,
-        &BMBTBC127Metadata
+        BT_EVENT_METADATA_UPDATE,
+        &BMBTBTMetadata
     );
     EventUnregisterCallback(
-        BC127Event_Boot,
-        &BMBTBC127Ready
+        BT_EVENT_BOOT,
+        &BMBTBTReady
     );
     EventUnregisterCallback(
-        BC127Event_PlaybackStatusChange,
-        &BMBTBC127PlaybackStatus
+        BT_EVENT_PLAYBACK_STATUS_CHANGE,
+        &BMBTBTPlaybackStatus
     );
     EventUnregisterCallback(
         IBUS_EVENT_BMBTButton,
@@ -412,18 +412,18 @@ static void BMBTGTWriteTitle(BMBTContext_t *context, char *text)
 static void BMBTHeaderWrite(BMBTContext_t *context)
 {
     if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
-        context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED
+        context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
     ) {
         BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
     } else {
         BMBTMainAreaRefresh(context);
     }
-    if (context->bt->activeDevice.deviceId != 0) {
+    if (strlen(context->bt->activeDevice.deviceName) > 0) {
         BMBTHeaderWriteDeviceName(context, context->bt->activeDevice.deviceName);
     } else {
         BMBTHeaderWriteDeviceName(context, LocaleGetText(LOCALE_STRING_NO_DEVICE));
     }
-    if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
+    if (context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED) {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
     } else {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
@@ -557,27 +557,27 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
 
 static void BMBTMenuDashboard(BMBTContext_t *context)
 {
-    char title[BC127_METADATA_FIELD_SIZE] = {0};
-    char artist[BC127_METADATA_FIELD_SIZE] = {0};
-    char album[BC127_METADATA_FIELD_SIZE] = {0};
-    UtilsStrncpy(title, context->bt->title, BC127_METADATA_FIELD_SIZE);
-    UtilsStrncpy(artist, context->bt->artist, BC127_METADATA_FIELD_SIZE);
-    UtilsStrncpy(album, context->bt->album, BC127_METADATA_FIELD_SIZE);
-    if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
+    char title[BT_METADATA_FIELD_SIZE] = {0};
+    char artist[BT_METADATA_FIELD_SIZE] = {0};
+    char album[BT_METADATA_FIELD_SIZE] = {0};
+    UtilsStrncpy(title, context->bt->title, BT_METADATA_FIELD_SIZE);
+    UtilsStrncpy(artist, context->bt->artist, BT_METADATA_FIELD_SIZE);
+    UtilsStrncpy(album, context->bt->album, BT_METADATA_FIELD_SIZE);
+    if (context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED) {
         if (strlen(title) == 0) {
-            UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_NOT_PLAYING), BC127_METADATA_FIELD_SIZE);
-            UtilsStrncpy(artist, " ", 2);
-            UtilsStrncpy(album, " ", 2);
+            UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_NOT_PLAYING), BT_METADATA_FIELD_SIZE);
+            strncpy(artist, " ", 2);
+            strncpy(album, " ", 2);
         }
     } else {
         if (strlen(title) == 0) {
-            UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_UNKNOWN_TITLE), BC127_METADATA_FIELD_SIZE);
+            UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_UNKNOWN_TITLE), BT_METADATA_FIELD_SIZE);
         }
         if (strlen(artist) == 0) {
-            UtilsStrncpy(artist, LocaleGetText(LOCALE_STRING_UNKNOWN_ARTIST), BC127_METADATA_FIELD_SIZE);
+            UtilsStrncpy(artist, LocaleGetText(LOCALE_STRING_UNKNOWN_ARTIST), BT_METADATA_FIELD_SIZE);
         }
         if (strlen(album) == 0) {
-            UtilsStrncpy(album, LocaleGetText(LOCALE_STRING_UNKNOWN_ALBUM), BC127_METADATA_FIELD_SIZE);
+            UtilsStrncpy(album, LocaleGetText(LOCALE_STRING_UNKNOWN_ALBUM), BT_METADATA_FIELD_SIZE);
         }
     }
     BMBTMenuDashboardUpdate(context, title, artist, album);
@@ -588,12 +588,12 @@ static void BMBTMenuDeviceSelection(BMBTContext_t *context)
 {
     uint8_t idx;
     uint8_t screenIdx = 2;
-    if (context->bt->discoverable == BC127_STATE_ON) {
+    if (context->bt->discoverable == BT_STATE_ON) {
         BMBTGTWriteIndex(context, BMBT_MENU_IDX_PAIRING_MODE, LocaleGetText(LOCALE_STRING_PAIRING_ON), 0);
     } else {
         BMBTGTWriteIndex(context, BMBT_MENU_IDX_PAIRING_MODE, LocaleGetText(LOCALE_STRING_PAIRING_OFF), 0);
     }
-    BC127PairedDevice_t *dev = 0;
+    BTPairedDevice_t *dev = 0;
     uint8_t devicesCount = 0;
     for (idx = 0; idx < context->bt->pairedDevicesCount; idx++) {
         dev = &context->bt->pairedDevices[idx];
@@ -617,7 +617,7 @@ static void BMBTMenuDeviceSelection(BMBTContext_t *context)
             deviceName[22] = '\0';
             // Add a space and asterisks to the end of the device name
             // if it's the currently selected device
-            if (strcmp(dev->macId, context->bt->activeDevice.macId) == 0) {
+            if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) == 0) {
                 uint8_t startIdx = strlen(deviceName);
                 if (startIdx > 20) {
                     startIdx = 20;
@@ -889,27 +889,19 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
             0
         );
     }
-    if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS) == CONFIG_SETTING_OFF) {
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_CALLING_MIC_BIAS,
-            LocaleGetText(LOCALE_STRING_MIC_BIAS_OFF),
-            0
-        );
-    } else {
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_CALLING_MIC_BIAS,
-            LocaleGetText(LOCALE_STRING_MIC_BIAS_ON),
-            0
-        );
-    }
     unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-    if (micGain > 21) {
-        micGain = 0;
-    }
     char micGainText[BMBT_MENU_STRING_MAX_SIZE] = {0};
-    snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t)BC127CVCGainTable[micGain]);
+    if (context->bt->type == BT_BTM_TYPE_BC127) {
+        if (micGain > 21) {
+            micGain = 0;
+        }
+        snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t) BTBC127MicGainTable[micGain]);
+    } else {
+        if (micGain > 0x0F) {
+            micGain = 0;
+        }
+        snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t) BTBM83MicGainTable[micGain]);
+    }
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN,
@@ -1211,48 +1203,44 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN) {
         unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
         micGain = micGain + 1;
-        if (micGain > 21) {
-            micGain = 0;
-        }
-        ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
-        unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
-        unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
-        BC127CommandSetMicGain(
-            context->bt,
-            micGain,
-            micBias,
-            micPreamp
-        );
         char micGainText[BMBT_MENU_STRING_MAX_SIZE] = {0};
-        snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t)BC127CVCGainTable[micGain]);
+        if (context->bt->type == BT_BTM_TYPE_BC127) {
+            if (micGain > 21) {
+                micGain = 0;
+            }
+            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
+            unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+            unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+            BC127CommandSetMicGain(
+                context->bt,
+                micGain,
+                micBias,
+                micPreamp
+            );
+            snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t) BTBC127MicGainTable[micGain]);
+        } else {
+            if (micGain > 0x0F) {
+                micGain = 0;
+            }
+            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
+            if (micGain == 0x00) {
+                // Reset the gain
+                uint8_t start = 0x0F;
+                while (start > 0) {
+                    BM83CommandMicGainDown(context->bt);
+                    start--;
+                }
+            } else {
+                BM83CommandMicGainUp(context->bt);
+            }
+            snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t) BTBM83MicGainTable[micGain]);
+        }
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN,
             micGainText,
             0
         );
-    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MIC_BIAS) {
-        unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-        unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
-        if (ConfigGetSetting(CONFIG_SETTING_MIC_BIAS) == CONFIG_SETTING_OFF) {
-            BC127CommandSetMicGain(
-                context->bt,
-                micGain,
-                1,
-                micPreamp
-            );
-            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MIC_BIAS_ON), 0);
-        } else {
-            BC127CommandSetMicGain(
-                context->bt,
-                micGain,
-                0,
-                micPreamp
-            );
-            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MIC_BIAS_OFF), 0);
-        }
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
@@ -1278,7 +1266,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         ConfigSetSetting(CONFIG_SETTING_METADATA_MODE, value);
         if (value != BMBT_METADATA_MODE_OFF &&
             strlen(context->bt->title) > 0 &&
-            context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING
+            context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING
         ) {
             char text[UTILS_DISPLAY_TEXT_SIZE] = {0};
             snprintf(
@@ -1383,7 +1371,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
 }
 
 /**
- * BMBTBC127DeviceConnected()
+ * BMBTBTDeviceConnected()
  *     Description:
  *         Handle screen updates when a device connects
  *     Params:
@@ -1392,7 +1380,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
  *     Returns:
  *         void
  */
-void BMBTBC127DeviceConnected(void *ctx, unsigned char *data)
+void BMBTBTDeviceConnected(void *ctx, unsigned char *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE &&
@@ -1407,7 +1395,7 @@ void BMBTBC127DeviceConnected(void *ctx, unsigned char *data)
 }
 
 /**
- * BMBTBC127DeviceDisconnected()
+ * BMBTBTDeviceDisconnected()
  *     Description:
  *         Handle screen updates when a device disconnects
  *     Params:
@@ -1416,7 +1404,7 @@ void BMBTBC127DeviceConnected(void *ctx, unsigned char *data)
  *     Returns:
  *         void
  */
-void BMBTBC127DeviceDisconnected(void *ctx, unsigned char *data)
+void BMBTBTDeviceDisconnected(void *ctx, unsigned char *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE &&
@@ -1432,16 +1420,16 @@ void BMBTBC127DeviceDisconnected(void *ctx, unsigned char *data)
 }
 
 /**
- * BMBTBC127Metadata()
+ * BMBTBTMetadata()
  *     Description:
- *         Handle metadata updates from the BC127
+ *         Handle metadata updates from the BT module
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
  *         unsigned char *tmp - The data from the event
  *     Returns:
  *         void
  */
-void BMBTBC127Metadata(void *ctx, unsigned char *data)
+void BMBTBTMetadata(void *ctx, unsigned char *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE &&
@@ -1468,20 +1456,20 @@ void BMBTBC127Metadata(void *ctx, unsigned char *data)
 }
 
 /**
- * BMBTBC127PlaybackStatus()
+ * BMBTBTPlaybackStatus()
  *     Description:
- *         Handle the BC127 playback state changes
+ *         Handle the BT Module playback state changes
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
  *         unsigned char *tmp - The data from the event
  *     Returns:
  *         void
  */
-void BMBTBC127PlaybackStatus(void *ctx, unsigned char *tmp)
+void BMBTBTPlaybackStatus(void *ctx, unsigned char *tmp)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.displayMode == BMBT_DISPLAY_ON) {
-        if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED) {
+        if (context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED) {
             BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 1);
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
         } else {
@@ -1493,16 +1481,16 @@ void BMBTBC127PlaybackStatus(void *ctx, unsigned char *tmp)
 }
 
 /**
- * BMBTBC127Ready()
+ * BMBTBTReady()
  *     Description:
- *         Handle the BC127 rebooting gracefully
+ *         Handle the BT module rebooting gracefully
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
  *         unsigned char *tmp - The data from the event
  *     Returns:
  *         void
  */
-void BMBTBC127Ready(void *ctx, unsigned char *tmp)
+void BMBTBTReady(void *ctx, unsigned char *tmp)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     BMBTHeaderWriteDeviceName(context, LocaleGetText(LOCALE_STRING_NO_DEVICE));
@@ -1528,10 +1516,10 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_PlayPause ||
             pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Num1
         ) {
-            if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-                BC127CommandPause(context->bt);
+            if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
+                BTCommandPause(context->bt);
             } else {
-                BC127CommandPlay(context->bt);
+                BTCommandPlay(context->bt);
             }
         }
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Knob) {
@@ -1570,17 +1558,17 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
     // Handle calls at any time
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
-            if (context->bt->callStatus == BC127_CALL_ACTIVE) {
-                BC127CommandCallEnd(context->bt);
-            } else if (context->bt->callStatus == BC127_CALL_INCOMING) {
-                BC127CommandCallAnswer(context->bt);
-            } else if (context->bt->callStatus == BC127_CALL_OUTGOING) {
-                BC127CommandCallEnd(context->bt);
+            if (context->bt->callStatus == BT_CALL_ACTIVE) {
+                BTCommandCallEnd(context->bt);
+            } else if (context->bt->callStatus == BT_CALL_INCOMING) {
+                BTCommandCallAccept(context->bt);
+            } else if (context->bt->callStatus == BT_CALL_OUTGOING) {
+                BTCommandCallEnd(context->bt);
             }
-        } else if (context->bt->callStatus == BC127_CALL_INACTIVE &&
+        } else if (context->bt->callStatus == BT_CALL_INACTIVE &&
                    pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Hold
         ) {
-            BC127CommandToggleVR(context->bt);
+            BTCommandToggleVoiceRecognition(context->bt);
         }
     }
 }
@@ -1602,8 +1590,8 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     unsigned char requestedCommand = pkt[IBUS_PKT_DB1];
     if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
         // Stop Playing
-        if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-            BC127CommandPause(context->bt);
+        if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
+            BTCommandPause(context->bt);
         }
         if (context->status.tvStatus == BMBT_TV_STATUS_OFF) {
             IBusCommandRADEnableMenu(context->ibus);
@@ -1618,11 +1606,11 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     ) {
         BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 0);
         if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON) {
-            BC127CommandPlay(context->bt);
-        } else if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING &&
+            BTCommandPlay(context->bt);
+        } else if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING &&
                    context->status.playerMode == BMBT_MODE_INACTIVE
         ) {
-            BC127CommandPause(context->bt);
+            BTCommandPause(context->bt);
         }
         IBusCommandRADDisableMenu(context->ibus);
         context->status.playerMode = BMBT_MODE_ACTIVE;
@@ -1634,7 +1622,7 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
         // This adds support for GTs that run without a radio overlay
         context->status.displayMode = BMBT_DISPLAY_ON;
         if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
-            context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED
+            context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
         ) {
             BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
         } else {
@@ -1690,30 +1678,36 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
         } else if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             if (selectedIdx == BMBT_MENU_IDX_PAIRING_MODE) {
                 uint8_t state;
-                if (context->bt->discoverable == BC127_STATE_ON) {
+                if (context->bt->discoverable == BT_STATE_ON) {
                     BMBTGTWriteIndex(context, BMBT_MENU_IDX_PAIRING_MODE, LocaleGetText(LOCALE_STRING_PAIRING_OFF), 0);
-                    state = BC127_STATE_OFF;
+                    state = BT_STATE_OFF;
                 } else {
                     BMBTGTWriteIndex(context, BMBT_MENU_IDX_PAIRING_MODE, LocaleGetText(LOCALE_STRING_PAIRING_ON), 0);
-                    state = BC127_STATE_ON;
+                    state = BT_STATE_ON;
                     if (context->bt->activeDevice.deviceId != 0) {
                         // To pair a new device, we must disconnect the active one
                         EventTriggerCallback(UIEvent_CloseConnection, 0x00);
                     }
                 }
                 IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
-                BC127CommandBtState(context->bt, context->bt->connectable, state);
+                BTCommandSetDiscoverable(context->bt, state);
             } else if (selectedIdx == BMBT_MENU_IDX_CLEAR_PAIRING) {
-                BC127CommandUnpair(context->bt);
-                BC127ClearPairedDevices(context->bt);
+                if (context->bt->type == BT_BTM_TYPE_BC127) {
+                    BC127CommandUnpair(context->bt);
+                } else {
+                    BM83CommandRestore(context->bt);
+                    ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
+                    ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
+                }
+                BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
                 BMBTMenuDeviceSelection(context);
             } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
                 // Back Button
                 BMBTMenuMain(context);
             } else {
                 uint8_t deviceId = selectedIdx - BMBT_MENU_IDX_FIRST_DEVICE;
-                BC127PairedDevice_t *dev = &context->bt->pairedDevices[deviceId];
-                if (strcmp(dev->macId, context->bt->activeDevice.macId) != 0 &&
+                BTPairedDevice_t *dev = &context->bt->pairedDevices[deviceId];
+                if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 &&
                     dev != 0
                 ) {
                     // Trigger device selection event
@@ -1929,6 +1923,7 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
         uint8_t pktLen = (uint8_t) pkt[1] + 2;
         uint8_t textLen = pktLen - 7;
         char text[textLen];
+        memset(&text, 0, textLen);
         uint8_t idx = 0;
         uint8_t strIdx = 0;
         // Copy the text from the packet but avoid any preceding spaces
@@ -1963,7 +1958,7 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
                 BMBTTriggerWriteMenu(context);
             }
             if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
-                context->bt->playbackStatus == BC127_AVRCP_STATUS_PAUSED
+                context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
             ) {
                 BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
             } else {
@@ -2191,7 +2186,7 @@ void BMBTTimerScrollDisplay(void *ctx)
         if (context->mainDisplay.timeout > 0) {
             context->mainDisplay.timeout--;
         } else {
-            if (context->mainDisplay.length > 9) {
+            if (context->mainDisplay.length > BMBT_MAIN_AREA_LEN) {
                 char text[BMBT_DISPLAY_TEXT_LEN + 1] = {0};
                 uint8_t textLength = BMBT_DISPLAY_TEXT_LEN;
                 uint8_t idxEnd = context->mainDisplay.index + textLength;
@@ -2200,7 +2195,7 @@ void BMBTTimerScrollDisplay(void *ctx)
                     textLength = context->mainDisplay.length - context->mainDisplay.index;
                     idxEnd = context->mainDisplay.index + textLength;
                 }
-                strncpy(
+                UtilsStrncpy(
                     text,
                     &context->mainDisplay.text[context->mainDisplay.index],
                     textLength
@@ -2219,7 +2214,7 @@ void BMBTTimerScrollDisplay(void *ctx)
                         BMBT_METADATA_MODE_CHUNK
                     ) {
                         context->mainDisplay.timeout = 2;
-                        context->mainDisplay.index += 9;
+                        context->mainDisplay.index += BMBT_MAIN_AREA_LEN;
                     } else {
                         context->mainDisplay.index++;
                     }

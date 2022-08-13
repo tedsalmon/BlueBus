@@ -11,7 +11,9 @@
 #include <string.h>
 #include <stdio.h>
 #include "../mappings.h"
-#include "../lib/bc127.h"
+#include "../lib/bt/bt_bc127.h"
+#include "../lib/bt/bt_bm83.h"
+#include "../lib/bt.h"
 #include "../lib/char_queue.h"
 #include "../lib/config.h"
 #include "../lib/i2c.h"
@@ -31,20 +33,21 @@
  *         This object defines our CLI object
  *     Fields:
  *         UART_t *uart - A pointer to the UART module object
- *         BC127_t *bt - A pointer to the BC127 object
+ *         BT_t *bt - A pointer to the Blueooth module object
  *         IBus_t *bt - A pointer to the IBus object
  *         uint16_t lastChar - The last character
  */
 typedef struct CLI_t {
     UART_t *uart;
-    BC127_t *bt;
+    BT_t *bt;
     IBus_t *ibus;
     uint8_t terminalReadyTaskId;
     uint16_t lastChar;
     uint32_t lastRxTimestamp;
     uint8_t terminalReady;
 } CLI_t;
-void CLIInit(UART_t *, BC127_t *, IBus_t *);
+void CLIInit(UART_t *, BT_t *, IBus_t *);
+void CLIEventBTBTMAddress(void *, uint8_t *);
 void CLIProcess();
 void CLITimerTerminalReady(void *);
 #endif /* CLI_H */

@@ -6,7 +6,8 @@
  */
 #ifndef MID_H
 #define MID_H
-#include "../lib/bc127.h"
+#include "../lib/bt/bt_bc127.h"
+#include "../lib/bt.h"
 #include "../lib/config.h"
 #include "../lib/event.h"
 #include "../lib/ibus.h"
@@ -80,7 +81,7 @@
  */
 typedef struct MIDContext_t {
     IBus_t *ibus;
-    BC127_t *bt;
+    BT_t *bt;
     int8_t btDeviceIndex;
     uint8_t mode;
     uint8_t displayUpdate;
@@ -93,10 +94,10 @@ typedef struct MIDContext_t {
     char mainText[16];
     uint8_t displayUpdateTaskId;
 } MIDContext_t;
-void MIDInit(BC127_t *, IBus_t *);
+void MIDInit(BT_t *, IBus_t *);
 void MIDDestroy();
-void MIDBC127MetadataUpdate(void *, unsigned char *);
-void MIDBC127PlaybackStatus(void *, unsigned char *);
+void MIDBTMetadataUpdate(void *, unsigned char *);
+void MIDBTPlaybackStatus(void *, unsigned char *);
 void MIDIBusCDChangerStatus(void *, unsigned char *);
 void MIDIBusMIDButtonPress(void *, unsigned char *);
 void MIDIIBusRADMIDDisplayUpdate(void *, unsigned char *);

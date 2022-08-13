@@ -29,7 +29,7 @@ uint8_t MID_SETTINGS_TO_MENU[] = {
     CONFIG_SETTING_COMFORT_BLINKERS
 };
 
-void MIDInit(BC127_t *bt, IBus_t *ibus)
+void MIDInit(BT_t *bt, IBus_t *ibus)
 {
     Context.bt = bt;
     Context.ibus = ibus;
@@ -41,13 +41,13 @@ void MIDInit(BC127_t *bt, IBus_t *ibus)
     Context.modeChangeStatus = MID_MODE_CHANGE_OFF;
     strncpy(Context.mainText, "Bluetooth", 10);
     EventRegisterCallback(
-        BC127Event_MetadataChange,
-        &MIDBC127MetadataUpdate,
+        BT_EVENT_METADATA_UPDATE,
+        &MIDBTMetadataUpdate,
         &Context
     );
     EventRegisterCallback(
-        BC127Event_PlaybackStatusChange,
-        &MIDBC127PlaybackStatus,
+        BT_EVENT_PLAYBACK_STATUS_CHANGE,
+        &MIDBTPlaybackStatus,
         &Context
     );
     EventRegisterCallback(
@@ -94,12 +94,12 @@ void MIDInit(BC127_t *bt, IBus_t *ibus)
 void MIDDestroy()
 {
     EventUnregisterCallback(
-        BC127Event_MetadataChange,
-        &MIDBC127MetadataUpdate
+        BT_EVENT_METADATA_UPDATE,
+        &MIDBTMetadataUpdate
     );
     EventUnregisterCallback(
-        BC127Event_PlaybackStatusChange,
-        &MIDBC127PlaybackStatus
+        BT_EVENT_PLAYBACK_STATUS_CHANGE,
+        &MIDBTPlaybackStatus
     );
     EventUnregisterCallback(
         IBUS_EVENT_CDStatusRequest,
@@ -184,13 +184,13 @@ static void MIDShowNextDevice(MIDContext_t *context, uint8_t direction)
                 context->btDeviceIndex--;
             }
         }
-        BC127PairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
+        BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
         char text[16];
         strncpy(text, dev->deviceName, 15);
         text[15] = '\0';
         // Add a space and asterisks to the end of the device name
         // if it's the currently selected device
-        if (strcmp(dev->macId, context->bt->activeDevice.macId) == 0) {
+        if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) == 0) {
             uint8_t startIdx = strlen(text);
             if (startIdx > 15) {
                 startIdx = 16;
@@ -440,7 +440,7 @@ static void MIDMenuMain(MIDContext_t *context)
     context->mode = MID_MODE_ACTIVE;
     strncpy(context->mainText, "Bluetooth", 10);
     MIDSetMainDisplayText(context, "", 0);
-    MIDBC127MetadataUpdate((void *) context, 0x00);
+    MIDBTMetadataUpdate((void *) context, 0x00);
     // This sucks
     unsigned char mainMenuText[] = {
         0x06,
@@ -453,7 +453,7 @@ static void MIDMenuMain(MIDContext_t *context)
         'c', 'e', 's', ' ',
     };
     IBusCommandMIDMenuWriteMany(context->ibus, 0x61, mainMenuText, sizeof(mainMenuText));
-    if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+    if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
         IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PLAYBACK, ">  ");
     } else {
         IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PLAYBACK, "|| ");
@@ -483,7 +483,7 @@ static void MIDMenuSettings(MIDContext_t *context)
     context->settingMode = MID_SETTING_MODE_SCROLL_SETTINGS;
 }
 
-void MIDBC127MetadataUpdate(void *ctx, unsigned char *tmp)
+void MIDBTMetadataUpdate(void *ctx, unsigned char *tmp)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
     if (context->mode == MID_MODE_ACTIVE &&
@@ -524,13 +524,13 @@ void MIDBC127MetadataUpdate(void *ctx, unsigned char *tmp)
     }
 }
 
-void MIDBC127PlaybackStatus(void *ctx, unsigned char *tmp)
+void MIDBTPlaybackStatus(void *ctx, unsigned char *tmp)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
     if (context->mode == MID_MODE_ACTIVE) {
-        if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
+        if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
             IBusCommandMIDMenuWriteSingle(context->ibus, 0, " >");
-            BC127CommandGetMetadata(context->bt);
+            BTCommandGetMetadata(context->bt);
         } else {
             if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MID_SETTING_METADATA_MODE_OFF) {
                 MIDSetMainDisplayText(context, "Paused", 0);
@@ -581,11 +581,11 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
     unsigned char btnPressed = pkt[6];
     if (context->mode == MID_MODE_ACTIVE) {
         if (btnPressed == MID_BUTTON_PLAYBACK) {
-            if (context->bt->playbackStatus == BC127_AVRCP_STATUS_PLAYING) {
-                BC127CommandPause(context->bt);
+            if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
+                BTCommandPause(context->bt);
                 IBusCommandMIDMenuWriteSingle(context->ibus, 0, "|| ");
             } else {
-                BC127CommandPlay(context->bt);
+                BTCommandPlay(context->bt);
                 IBusCommandMIDMenuWriteSingle(context->ibus, 0, ">  ");
             }
         } else if (btnPressed == MID_BUTTON_META) {
@@ -602,19 +602,18 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
             // Toggle the discoverable state
             uint8_t state;
             int8_t timeout = 1500 / MID_DISPLAY_SCROLL_SPEED;
-            if (context->bt->discoverable == BC127_STATE_ON) {
+            if (context->bt->discoverable == BT_STATE_ON) {
                 MIDSetTempDisplayText(context, "Pairing Off", timeout);
-                state = BC127_STATE_OFF;
+                state = BT_STATE_OFF;
             } else {
                 MIDSetTempDisplayText(context, "Pairing On", timeout);
-                state = BC127_STATE_ON;
+                state = BT_STATE_ON;
                 if (context->bt->activeDevice.deviceId != 0) {
                     // To pair a new device, we must disconnect the active one
                     EventTriggerCallback(UIEvent_CloseConnection, 0x00);
                 }
             }
-            BC127CommandBtState(context->bt, context->bt->connectable, state);
-        } else if (btnPressed == MID_BUTTON_MODE) {
+            BTCommandSetDiscoverable(context->bt, state);
             context->mode = MID_MODE_DISPLAY_OFF;
         }
     } else if (context->mode == MID_MODE_SETTINGS) {
@@ -630,7 +629,13 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
                 // Save Setting
                 if (context->settingIdx == MID_SETTING_IDX_PAIRINGS) {
                     if (context->settingValue == CONFIG_SETTING_ON) {
-                        BC127CommandUnpair(context->bt);
+                        if (context->bt->type == BT_BTM_TYPE_BC127) {
+                            BC127CommandUnpair(context->bt);
+                        } else {
+                            BM83CommandRestore(context->bt);
+                            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
+                            ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
+                        }
                         MIDSetTempDisplayText(context, "Unpaired", 1);
                     }
                 } else if (context->settingIdx == MID_SETTING_IDX_VEH_TYPE) {
@@ -698,8 +703,8 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
         } else if (btnPressed == MID_BUTTON_EDIT_SAVE) {
             if (context->bt->pairedDevicesCount > 0) {
                 // Connect to device
-                BC127PairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
-                if (strcmp(dev->macId, context->bt->activeDevice.macId) != 0 &&
+                BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
+                if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 &&
                     dev != 0
                 ) {
                     // Trigger device selection event
@@ -729,9 +734,9 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
     // Handle Next and Previous
     if (context->ibus->cdChangerFunction != IBUS_CDC_FUNC_NOT_PLAYING) {
         if (btnPressed == IBus_MID_BTN_TEL_RIGHT_RELEASE) {
-            BC127CommandForward(context->bt);
+            BTCommandPlaybackTrackNext(context->bt);
         } else if (btnPressed == IBus_MID_BTN_TEL_LEFT_RELEASE) {
-            BC127CommandBackward(context->bt);
+            BTCommandPlaybackTrackPrevious(context->bt);
         }
     }
 }
@@ -855,10 +860,10 @@ void MIDTimerDisplay(void *ctx)
                     uint8_t idxEnd = context->mainDisplay.index + textLength;
                     // Prevent strncpy() from going out of bounds
                     if (idxEnd >= context->mainDisplay.length) {
-                        textLength = context->mainDisplay.length - context->mainDisplay.index;
+                        textLength = (context->mainDisplay.length - 1) - context->mainDisplay.index;
                         idxEnd = context->mainDisplay.index + textLength;
                     }
-                    strncpy(
+                    UtilsStrncpy(
                         text,
                         &context->mainDisplay.text[context->mainDisplay.index],
                         textLength

@@ -8,7 +8,8 @@
 #define CD53_H
 #define _ADDED_C_LIB 1
 #include <stdio.h>
-#include "../lib/bc127.h"
+#include "../lib/bt/bt_bc127.h"
+#include "../lib/bt.h"
 #include "../lib/log.h"
 #include "../lib/event.h"
 #include "../lib/ibus.h"
@@ -64,7 +65,7 @@
  *      length is 11 characters.
  */
 typedef struct CD53Context_t {
-    BC127_t *bt;
+    BT_t *bt;
     IBus_t *ibus;
     uint8_t mode;
     uint8_t displayUpdateTaskId;
@@ -80,14 +81,14 @@ typedef struct CD53Context_t {
     UtilsAbstractDisplayValue_t mainDisplay;
     UtilsAbstractDisplayValue_t tempDisplay;
 } CD53Context_t;
-void CD53Init(BC127_t *, IBus_t *);
+void CD53Init(BT_t *, IBus_t *);
 void CD53Destroy();
-void CD53BC127CallerID(void *, unsigned char *);
-void CD53BC127CallStatus(void *, unsigned char *);
-void CD53BC127DeviceDisconnected(void *, unsigned char *);
-void CD53BC127DeviceReady(void *, unsigned char *);
-void CD53BC127Metadata(CD53Context_t *, unsigned char *);
-void CD53BC127PlaybackStatus(void *, unsigned char *);
+void CD53BTCallerID(void *, unsigned char *);
+void CD53BTCallStatus(void *, unsigned char *);
+void CD53BTDeviceDisconnected(void *, unsigned char *);
+void CD53BTDeviceReady(void *, unsigned char *);
+void CD53BTMetadata(CD53Context_t *, unsigned char *);
+void CD53BTPlaybackStatus(void *, unsigned char *);
 void CD53IBusBMBTButtonPress(void *, unsigned char *);
 void CD53IBusCDChangerStatus(void *, unsigned char *);
 void CD53IBusMFLButton(void *, unsigned char *);
