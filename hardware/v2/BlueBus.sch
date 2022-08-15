@@ -3913,9 +3913,9 @@ Switches electrical signals</description>
 <part name="C40" library="Passives" deviceset="47UF" device="1206"/>
 <part name="R22" library="Passives" deviceset="20OHM" device="0603" value="20"/>
 <part name="R21" library="Passives" deviceset="20OHM" device="0603" value="20"/>
-<part name="U4" library="ICs" deviceset="S-1212BC0" device="U5T1" value="S-1212BC0-U5T1U"/>
+<part name="U4" library="ICs" deviceset="S-1212BC0" device="M5T1" value="S-1212BC0-M5T1U"/>
 <part name="GND30" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
-<part name="R19" library="Passives" deviceset="10KOHM" device="0603" value="10k"/>
+<part name="R19" library="Passives" deviceset="100OHM" device="0603" value="100"/>
 <part name="R1" library="Passives" deviceset="1KOHM" device="0603" value="1k"/>
 <part name="GND40" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="GND" device=""/>
 <part name="R6" library="Passives" deviceset="1KOHM" device="0603" value="1k"/>
