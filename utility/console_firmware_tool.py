@@ -169,8 +169,8 @@ if __name__ == '__main__':
             action='store_true',
         )
         parser.add_argument(
-            '--sn',
-            help='Serial Number',
+            '--writesn',
+            help='Write Serial Number',
         )
         parser.add_argument(
             '--getsn',
@@ -189,7 +189,7 @@ if __name__ == '__main__':
         )
         parser.add_argument(
             '--writebuild',
-            help='Get Build Date',
+            help='Write Build Date',
             action='store_true',
         )
         parser.add_argument(
@@ -268,8 +268,8 @@ if __name__ == '__main__':
                                 write_build(today[1], today[0] - 2000)
                             elif args.start:
                                 start_app()
-                            elif args.sn:
-                                serial_number = int(args.sn)
+                            elif args.writesn:
+                                serial_number = int(args.writesn)
                                 msb = (serial_number >> 8) & 0xFF
                                 lsb = serial_number & 0xFF
                                 write_sn(msb, lsb)
@@ -324,8 +324,8 @@ if __name__ == '__main__':
                             sys.exit(0)
                         if command == PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK:
                             print('Wrote Build Date')
-                            if args.sn:
-                                serial_number = int(args.sn)
+                            if args.writesn:
+                                serial_number = int(args.writesn)
                                 msb = (serial_number >> 8) & 0xFF
                                 lsb = serial_number & 0xFF
                                 write_sn(msb, lsb)
@@ -333,8 +333,8 @@ if __name__ == '__main__':
                                 start_app()
                         if command == PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_ERR:
                             print('Could not write build date')
-                            if args.sn:
-                                serial_number = int(args.sn)
+                            if args.writesn:
+                                serial_number = int(args.writesn)
                                 msb = (serial_number >> 8) & 0xFF
                                 lsb = serial_number & 0xFF
                                 write_sn(msb, lsb)
