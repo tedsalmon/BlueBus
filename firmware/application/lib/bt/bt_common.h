@@ -79,6 +79,7 @@
 #define BT_LINK_TYPE_AVRCP 3
 #define BT_LINK_TYPE_HFP 4
 #define BT_LINK_TYPE_BLE 5
+#define BT_LINK_TYPE_MAP 6
 
 #define BT_MAC_ID_LEN 6
 
