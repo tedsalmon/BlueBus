@@ -111,7 +111,7 @@
 #define IBUS_DEVICE_BMBT_Button_Num4 0x02
 #define IBUS_DEVICE_BMBT_Button_Num5 0x13
 #define IBUS_DEVICE_BMBT_Button_Num6 0x03
-#define IBUS_DEVICE_BMBT_Button_TEL_Press
+#define IBUS_DEVICE_BMBT_Button_TEL_Press 0x08
 #define IBUS_DEVICE_BMBT_Button_TEL_Hold 0x48
 #define IBUS_DEVICE_BMBT_Button_TEL_Release 0x88
 #define IBUS_CMD_BMBT_BUTTON0 0x47
@@ -337,8 +337,8 @@
 #define IBUS_MFL_BTN_EVENT_VOICE_REL 0xA0
 
 #define IBUS_MFL_CMD_VOL_PRESS 0x32
-#define IBusMFLVolUp 0x11
-#define IBusMFLVolDown 0x10
+#define IBUS_MFL_BTN_VOL_UP 0x11
+#define IBUS_MFL_BTN_VOL_DOWN 0x10
 
 #define IBUS_VEHICLE_TYPE_E38_E39_E53 0x01
 #define IBUS_VEHICLE_TYPE_E46_Z4 0x02
