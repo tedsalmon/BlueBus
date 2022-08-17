@@ -125,11 +125,11 @@ void HandlerBTInit(HandlerContext_t *context)
     );
 }
 
-
 /**
  * HandlerBTCallStatus()
  *     Description:
- *         Handle call status updates
+ *         Handle call status updates. This includes setting the car up
+ *         for telephony mode and updating the vehicle volume.
  *     Params:
  *         void *ctx - The context provided at registration
  *         uint8_t *tmp - Any event data
@@ -343,6 +343,7 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF) {
+        uint8_t linkType = *data;
         // Once A2DP and AVRCP are connected, we can disable connectability
         // If HFP is enabled, do not disable connectability until the
         // profile opens
@@ -363,10 +364,12 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                 ) {
                     BTCommandPlay(context->bt);
                 }
-                // @TODO - Disconnect HFP on the BC127 similarly
-                uint8_t linkType = *data;
-                if (linkType == BT_LINK_TYPE_HFP && context->bt->type == BT_BTM_TYPE_BM83) {
-                    BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
+                if (linkType == BT_LINK_TYPE_HFP) {
+                    if (context->bt->type == BT_BTM_TYPE_BM83) {
+                        BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
+                    } else {
+                        BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
+                    }
                 }
             } else if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
                        context->bt->activeDevice.hfpId == 0 &&
@@ -380,6 +383,12 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
             if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
                 IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
             }
+        }
+        if (linkType == BT_LINK_TYPE_HFP && context->bt->type == BT_BTM_TYPE_BC127) {
+            // Set the device character set to UTF-8
+            BC127CommandAT(context->bt, "CSCS", "\"UTF-8\"");
+            // Explicitly enable Calling Line Identification (Caller ID)
+            BC127CommandAT(context->bt, "CLIP", "1");
         }
         if (context->bt->type == BT_BTM_TYPE_BM83) {
             // Request Device Name if it is empty
