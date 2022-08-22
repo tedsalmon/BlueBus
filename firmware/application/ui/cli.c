@@ -40,6 +40,236 @@ void CLIInit(UART_t *uart, BT_t *bt, IBus_t *ibus)
 }
 
 /**
+ * CLICommandBTBC127()
+ *     Description:
+ *         Parse the "BT" CLI Commands for the BC127
+ *     Params:
+ *         char **msgBuf - The message buffer
+ *         uint8_t *cmdSuccess - A pointer to the command success flag
+ *         uint8_t delimCount - The number of parameters in the command
+ *     Returns:
+ *         uint8_t - If the command was a success or not
+ */
+void CLICommandBTBC127(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
+{
+    if (UtilsStricmp(msgBuf[1], "CONFIG") == 0) {
+        BC127SendCommand(cli.bt, "CONFIG");
+    } else if (UtilsStricmp(msgBuf[1], "CVC") == 0) {
+        if (delimCount == 2) {
+            *cmdSuccess = 0;
+        } else {
+            if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
+                uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+                uint8_t micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+                uint8_t micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+                BC127CommandSetMicGain(cli.bt, micGain, micBias, micPreamp);
+            } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF ON OFF");
+                BC127CommandWrite(cli.bt);
+            } else {
+                *cmdSuccess = 0;
+            }
+        }
+    } else if (UtilsStricmp(msgBuf[1], "HFP") == 0) {
+        if (delimCount == 2) {
+            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+                LogRaw("HFP: On\r\n");
+            } else {
+                LogRaw("HFP: Off\r\n");
+            }
+        } else {
+            if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
+                BC127CommandSetProfiles(cli.bt, 1, 1, 0, 1);
+            } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
+                BC127CommandSetProfiles(cli.bt, 1, 1, 0, 0);
+            } else {
+                *cmdSuccess = 0;
+            }
+        }
+    } else if (UtilsStricmp(msgBuf[1], "LICENSE") == 0) {
+        *cmdSuccess = 0;
+        if (delimCount == 2) {
+            BC127CommandLicense(cli.bt, 0, 0);
+            *cmdSuccess = 1;
+        }
+        if (delimCount == 3 && (
+            UtilsStricmp(msgBuf[2], "CVC") == 0 ||
+            UtilsStricmp(msgBuf[2], "APTX") == 0)
+        ) {
+            BC127CommandLicense(cli.bt, msgBuf[2], 0);
+            *cmdSuccess = 1;
+        }
+        if (delimCount == 8 && (
+            UtilsStricmp(msgBuf[2], "CVC") == 0 ||
+            UtilsStricmp(msgBuf[2], "APTX") == 0)
+        ) {
+            char license[25];
+            memset(license, 0, 25);
+            snprintf(
+                license,
+                25,
+                "%s %s %s %s %s",
+                msgBuf[3],
+                msgBuf[4],
+                msgBuf[5],
+                msgBuf[6],
+                msgBuf[7]
+            );
+            BC127CommandLicense(cli.bt, msgBuf[2], license);
+            *cmdSuccess = 1;
+        }
+    } else if (UtilsStricmp(msgBuf[1], "MGAIN") == 0) {
+        if (delimCount == 2) {
+            uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+            LogRaw("BT Mic Gain Set to: %02X\r\n", micGain);
+        } else {
+            uint8_t micGain = UtilsStrToHex(msgBuf[2]);
+            if (micGain < 0xC0 || micGain > 0xD6) {
+                LogRaw("Mic Gain '%02X' out of range: C0 - D6\r\n", micGain);
+            } else {
+                // Store it as a smaller value
+                micGain = micGain - 0xC0;
+                ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
+                uint8_t micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+                uint8_t micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+                BC127CommandSetMicGain(
+                    cli.bt,
+                    micGain,
+                    micBias,
+                    micPreamp
+                );
+            }
+        }
+    } else if (UtilsStricmp(msgBuf[1], "MBIAS") == 0) {
+        if (delimCount == 2) {
+            LogRaw("Set the Mic Bias Generator");
+        } else {
+            uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+            uint8_t micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+            if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                BC127CommandSetMicGain(cli.bt, micGain, 1, micPreamp);
+                ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
+            } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                BC127CommandSetMicGain(cli.bt, micGain, 0, micPreamp);
+                ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_OFF);
+            } else {
+                *cmdSuccess = 0;
+            }
+        }
+    } else if (UtilsStricmp(msgBuf[1], "MPREAMP") == 0) {
+        if (delimCount == 2) {
+            LogRaw("Set the Mic Pre-Amp");
+        } else {
+            uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+            uint8_t micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+            if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                BC127CommandSetMicGain(cli.bt, micGain, micBias, 1);
+                ConfigSetSetting(CONFIG_SETTING_MIC_PREAMP, CONFIG_SETTING_ON);
+            } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                BC127CommandSetMicGain(cli.bt, micGain, micBias, 0);
+                ConfigSetSetting(CONFIG_SETTING_MIC_PREAMP, CONFIG_SETTING_OFF);
+            } else {
+                *cmdSuccess = 0;
+            }
+        }
+    } else if (UtilsStricmp(msgBuf[1], "REBOOT") == 0) {
+        BC127CommandReset(cli.bt);
+    } else if (UtilsStricmp(msgBuf[1], "PAIR") == 0) {
+        BC127CommandBtState(cli.bt, BT_STATE_ON, BT_STATE_ON);
+    } else if (UtilsStricmp(msgBuf[1], "UNPAIR") == 0) {
+        BC127CommandUnpair(cli.bt);
+    } else if (UtilsStricmp(msgBuf[1], "NAME") == 0) {
+        char nameBuf[33];
+        memset(nameBuf, 0, 33);
+        uint8_t wordLength = delimCount - 2;
+        uint8_t wordCounter = 2;
+        while (wordLength != 0) {
+            uint8_t wordStrLen = strlen(msgBuf[wordCounter]);
+            uint8_t nameStrLen = strlen(nameBuf);
+            if (nameStrLen + wordStrLen <= 32) {
+                uint8_t i = 0;
+                for (i = 0; i < wordStrLen; i++) {
+                    nameBuf[nameStrLen + i] = msgBuf[wordCounter][i];
+                }
+            } else {
+                wordLength = 0;
+                *cmdSuccess = 0;
+            }
+            wordLength--;
+            wordCounter++;
+            if (*cmdSuccess != 0 && wordLength != 0) {
+                nameStrLen = strlen(nameBuf);
+                // Ensure we do not overflow the buffer
+                if (nameStrLen <= 32) {
+                    // Add the space we will have taken away
+                    nameBuf[nameStrLen] = ' ';
+                }
+            }
+        }
+        if (*cmdSuccess != 0) {
+            BC127CommandSetModuleName(cli.bt, nameBuf);
+        }
+    } else if (UtilsStricmp(msgBuf[1], "PIN") == 0) {
+        if (strlen(msgBuf[2]) == 4) {
+            BC127CommandSetPin(cli.bt, msgBuf[2]);
+        } else {
+            *cmdSuccess = 0;
+        }
+    } else if (UtilsStricmp(msgBuf[1], "PBAP") == 0) {
+        BC127SendCommand(cli.bt, "PB_PULL 16 3 1 5 0 87");
+    } else if (UtilsStricmp(msgBuf[1], "VERSION") == 0) {
+        BC127CommandVersion(cli.bt);
+    } else {
+        *cmdSuccess = 0;
+    }
+}
+
+/**
+ * CLICommandBTBM83()
+ *     Description:
+ *         Parse the "BT" CLI Commands for the BM83
+ *     Params:
+ *         char **msgBuf - The message buffer
+ *         uint8_t *cmdSuccess - A pointer to success flag
+ *     Returns:
+ *         uint8_t - If the command was a success or not
+ */
+void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess)
+{
+    if (UtilsStricmp(msgBuf[1], "CONN") == 0) {
+        uint8_t command[] = {
+            BM83_CMD_PROFILES_LINK_BACK,
+            0x01
+        };
+        BM83SendCommand(cli.bt, command, sizeof(command));
+    } else if (UtilsStricmp(msgBuf[1], "LIST") == 0) {
+        BM83CommandReadPairedDevices(cli.bt);
+    } else if (UtilsStricmp(msgBuf[1], "PAIR") == 0) {
+        BM83CommandPairingEnable(cli.bt);
+    } else if (UtilsStricmp(msgBuf[1], "MACID") == 0) {
+        BM83CommandReadLocalBDAddress(cli.bt);
+    } else if (UtilsStricmp(msgBuf[1], "BLE") == 0) {
+        uint8_t command[] = {
+            BM83_CMD_LE_SIGNALING_CMD,
+            0x01,
+            0x01
+        };
+        BM83SendCommand(cli.bt, command, sizeof(command));
+    } else if (UtilsStricmp(msgBuf[1], "PLAY") == 0) {
+        BM83CommandMusicControl(cli.bt, BM83_CMD_ACTION_PLAY);
+    } else if (UtilsStricmp(msgBuf[1], "PAUSE") == 0) {
+        BM83CommandMusicControl(cli.bt, BM83_CMD_ACTION_PAUSE);
+    } else if (UtilsStricmp(msgBuf[1], "RESTORE") == 0) {
+        BM83CommandRestore(cli.bt);
+    } else {
+        *cmdSuccess = 0;
+    }
+}
+
+/**
  * CLIEventBTBTMAddress()
  *     Description:
  *         Handle the BTM Address Reply
@@ -154,207 +384,11 @@ void CLIProcess()
                 ConfigSetBootloaderMode(0x01);
                 UtilsReset();
             } else if (UtilsStricmp(msgBuf[0], "BT") == 0) {
-                if (UtilsStricmp(msgBuf[1], "CONN") == 0) {
-                    uint8_t command[] = {
-                        BM83_CMD_PROFILES_LINK_BACK,
-                        0x01
-                    };
-                    BM83SendCommand(cli.bt, command, sizeof(command));
-                } else if (UtilsStricmp(msgBuf[1], "LIST") == 0) {
-                    BM83CommandReadPairedDevices(cli.bt);
-                } else if (UtilsStricmp(msgBuf[1], "PAIR") == 0) {
-                    BM83CommandPairingEnable(cli.bt);
-                } else if (UtilsStricmp(msgBuf[1], "MACID") == 0) {
-                    BM83CommandReadLocalBDAddress(cli.bt);
-                } else if (UtilsStricmp(msgBuf[1], "BLE") == 0) {
-                    uint8_t command[] = {
-                        BM83_CMD_LE_SIGNALING_CMD,
-                        0x01,
-                        0x01
-                    };
-                    BM83SendCommand(cli.bt, command, sizeof(command));
-                } else if (UtilsStricmp(msgBuf[1], "PLAY") == 0) {
-                    BM83CommandMusicControl(cli.bt, BM83_CMD_ACTION_PLAY);
-                } else if (UtilsStricmp(msgBuf[1], "PAUSE") == 0) {
-                    BM83CommandMusicControl(cli.bt, BM83_CMD_ACTION_PAUSE);
-                } else if (UtilsStricmp(msgBuf[1], "RESTORE") == 0) {
-                    BM83CommandRestore(cli.bt);
+                if (cli.bt->type == BT_BTM_TYPE_BC127) {
+                    CLICommandBTBC127(msgBuf, &cmdSuccess, delimCount);
                 } else {
-                    cmdSuccess = 0;
+                    CLICommandBTBM83(msgBuf, &cmdSuccess);
                 }
-                //if (UtilsStricmp(msgBuf[1], "CONFIG") == 0) {
-                //    BC127SendCommand(cli.bt, "CONFIG");
-                //} else if (UtilsStricmp(msgBuf[1], "CVC") == 0) {
-                //    if (delimCount == 2) {
-                //        cmdSuccess = 0;
-                //    } else {
-                //        if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                //            BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
-                //            uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-                //            uint8_t micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
-                //            uint8_t micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
-                //            BC127CommandSetMicGain(cli.bt, micGain, micBias, micPreamp);
-                //        } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                //            BC127SendCommand(cli.bt, "SET HFP_CONFIG=OFF ON ON OFF ON OFF");
-                //            BC127CommandWrite(cli.bt);
-                //        } else {
-                //            cmdSuccess = 0;
-                //        }
-                //    }
-                //} else if (UtilsStricmp(msgBuf[1], "HFP") == 0) {
-                //    if (delimCount == 2) {
-                //        if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-                //            LogRaw("HFP: On\r\n");
-                //        } else {
-                //            LogRaw("HFP: Off\r\n");
-                //        }
-                //    } else {
-                //        if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                //            ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
-                //            BC127CommandSetProfiles(cli.bt, 1, 1, 0, 1);
-                //        } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                //            ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
-                //            BC127CommandSetProfiles(cli.bt, 1, 1, 0, 0);
-                //        } else {
-                //            cmdSuccess = 0;
-                //        }
-                //    }
-                //} else if (UtilsStricmp(msgBuf[1], "LICENSE") == 0) {
-                //    cmdSuccess = 0;
-                //    if (delimCount == 2) {
-                //        BC127CommandLicense(cli.bt, 0, 0);
-                //        cmdSuccess = 1;
-                //    }
-                //    if (delimCount == 3 && (
-                //        UtilsStricmp(msgBuf[2], "CVC") == 0 ||
-                //        UtilsStricmp(msgBuf[2], "APTX") == 0)
-                //    ) {
-                //        BC127CommandLicense(cli.bt, msgBuf[2], 0);
-                //        cmdSuccess = 1;
-                //    }
-                //    if (delimCount == 8 && (
-                //        UtilsStricmp(msgBuf[2], "CVC") == 0 ||
-                //        UtilsStricmp(msgBuf[2], "APTX") == 0)
-                //    ) {
-                //        char license[25];
-                //        memset(license, 0, 25);
-                //        snprintf(
-                //            license,
-                //            25,
-                //            "%s %s %s %s %s",
-                //            msgBuf[3],
-                //            msgBuf[4],
-                //            msgBuf[5],
-                //            msgBuf[6],
-                //            msgBuf[7]
-                //        );
-                //        BC127CommandLicense(cli.bt, msgBuf[2], license);
-                //        cmdSuccess = 1;
-                //    }
-                //} else if (UtilsStricmp(msgBuf[1], "MGAIN") == 0) {
-                //    if (delimCount == 2) {
-                //        uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-                //        LogRaw("BT Mic Gain Set to: %02X\r\n", micGain);
-                //    } else {
-                //        uint8_t micGain = UtilsStrToHex(msgBuf[2]);
-                //        if (micGain < 0xC0 || micGain > 0xD6) {
-                //            LogRaw("Mic Gain '%02X' out of range: C0 - D6\r\n", micGain);
-                //        } else {
-                //            // Store it as a smaller value
-                //            micGain = micGain - 0xC0;
-                //            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
-                //            uint8_t micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
-                //            uint8_t micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
-                //            BC127CommandSetMicGain(
-                //                cli.bt,
-                //                micGain,
-                //                micBias,
-                //                micPreamp
-                //            );
-                //        }
-                //    }
-                //} else if (UtilsStricmp(msgBuf[1], "MBIAS") == 0) {
-                //    if (delimCount == 2) {
-                //        LogRaw("Set the Mic Bias Generator");
-                //    } else {
-                //        uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-                //        uint8_t micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
-                //        if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                //            BC127CommandSetMicGain(cli.bt, micGain, 1, micPreamp);
-                //            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
-                //        } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                //            BC127CommandSetMicGain(cli.bt, micGain, 0, micPreamp);
-                //            ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_OFF);
-                //        } else {
-                //            cmdSuccess = 0;
-                //        }
-                //    }
-                //} else if (UtilsStricmp(msgBuf[1], "MPREAMP") == 0) {
-                //    if (delimCount == 2) {
-                //        LogRaw("Set the Mic Pre-Amp");
-                //    } else {
-                //        uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
-                //        uint8_t micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
-                //        if (UtilsStricmp(msgBuf[2], "ON") == 0) {
-                //            BC127CommandSetMicGain(cli.bt, micGain, micBias, 1);
-                //            ConfigSetSetting(CONFIG_SETTING_MIC_PREAMP, CONFIG_SETTING_ON);
-                //        } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
-                //            BC127CommandSetMicGain(cli.bt, micGain, micBias, 0);
-                //            ConfigSetSetting(CONFIG_SETTING_MIC_PREAMP, CONFIG_SETTING_OFF);
-                //        } else {
-                //            cmdSuccess = 0;
-                //        }
-                //    }
-                //} else if (UtilsStricmp(msgBuf[1], "REBOOT") == 0) {
-                //    BC127CommandReset(cli.bt);
-                //} else if (UtilsStricmp(msgBuf[1], "PAIR") == 0) {
-                //    BC127CommandBtState(cli.bt, BC127_STATE_ON, BC127_STATE_ON);
-                //} else if (UtilsStricmp(msgBuf[1], "UNPAIR") == 0) {
-                //    BC127CommandUnpair(cli.bt);
-                //} else if (UtilsStricmp(msgBuf[1], "NAME") == 0) {
-                //    char nameBuf[33];
-                //    memset(nameBuf, 0, 33);
-                //    uint8_t wordLength = delimCount - 2;
-                //    uint8_t wordCounter = 2;
-                //    while (wordLength != 0) {
-                //        uint8_t wordStrLen = strlen(msgBuf[wordCounter]);
-                //        uint8_t nameStrLen = strlen(nameBuf);
-                //        if (nameStrLen + wordStrLen <= 32) {
-                //            uint8_t i = 0;
-                //            for (i = 0; i < wordStrLen; i++) {
-                //                nameBuf[nameStrLen + i] = msgBuf[wordCounter][i];
-                //            }
-                //        } else {
-                //            wordLength = 0;
-                //            cmdSuccess = 0;
-                //        }
-                //        wordLength--;
-                //        wordCounter++;
-                //        if (cmdSuccess != 0 && wordLength != 0) {
-                //            nameStrLen = strlen(nameBuf);
-                //            // Ensure we do not overflow the buffer
-                //            if (nameStrLen <= 32) {
-                //                // Add the space we will have taken away
-                //                nameBuf[nameStrLen] = ' ';
-                //            }
-                //        }
-                //    }
-                //    if (cmdSuccess != 0) {
-                //        BC127CommandSetModuleName(cli.bt, nameBuf);
-                //    }
-                //} else if (UtilsStricmp(msgBuf[1], "PIN") == 0) {
-                //    if (strlen(msgBuf[2]) == 4) {
-                //        BC127CommandSetPin(cli.bt, msgBuf[2]);
-                //    } else {
-                //        cmdSuccess = 0;
-                //    }
-                //} else if (UtilsStricmp(msgBuf[1], "PBAP") == 0) {
-                //    BC127SendCommand(cli.bt, "PB_PULL 16 3 1 5 0 87");
-                //} else if (UtilsStricmp(msgBuf[1], "VERSION") == 0) {
-                //    BC127CommandVersion(cli.bt);
-                //} else {
-                //    cmdSuccess = 0;
-                //}
             } else if (UtilsStricmp(msgBuf[0], "GET") == 0) {
                 if (UtilsStricmp(msgBuf[1], "BYTE") == 0 && delimCount == 3) {
                     uint8_t byte = UtilsStrToHex(msgBuf[2]);
@@ -743,17 +777,28 @@ void CLIProcess()
             } else if (UtilsStricmp(msgBuf[0], "HELP") == 0 || UtilsStricmp(msgBuf[0], "?") == 0) {
                 LogRaw("Available Commands:\r\n");
                 LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
-                LogRaw("    BT CONFIG - Get the BC127 Configuration\r\n");
-                LogRaw("    BT CVC ON/OFF - Enable or Disable Clear Voice Capture\r\n");
-                LogRaw("    BT HFP ON/OFF - Enable or Disable HFP. Get the HFP Status without a param.\r\n");
-                LogRaw("    BT MGAIN x - Set the Mic gain to x where x is octal C0-D6\r\n");
-                LogRaw("    BT MPREAMP ON/OFF - Enable the microphone pre-amp so non-OE microphones work well\r\n");
-                LogRaw("    BT PAIR - Enable pairing mode\r\n");
-                LogRaw("    BT NAME <name> - Set the module name, up to 32 chars\r\n");
-                LogRaw("    BT PIN <pin> - Set the module pin, up to 4 digits\r\n");
-                LogRaw("    BT REBOOT - Reboot the BC127\r\n");
-                LogRaw("    BT UNPAIR - Unpair all devices from the BC127\r\n");
-                LogRaw("    BT VERSION - Get the BC127 Version Info\r\n");
+                if (cli.bt->type == BT_BTM_TYPE_BC127) {
+                    LogRaw("    BT CONFIG - Get the BC127 Configuration\r\n");
+                    LogRaw("    BT CVC ON/OFF - Enable or Disable Clear Voice Capture\r\n");
+                    LogRaw("    BT HFP ON/OFF - Enable or Disable HFP. Get the HFP Status without a param.\r\n");
+                    LogRaw("    BT MGAIN x - Set the Mic gain to x where x is octal C0-D6\r\n");
+                    LogRaw("    BT MPREAMP ON/OFF - Enable the microphone pre-amp so non-OE microphones work well\r\n");
+                    LogRaw("    BT PAIR - Enable pairing mode\r\n");
+                    LogRaw("    BT NAME <name> - Set the module name, up to 32 chars\r\n");
+                    LogRaw("    BT PIN <pin> - Set the module pin, up to 4 digits\r\n");
+                    LogRaw("    BT REBOOT - Reboot the BC127\r\n");
+                    LogRaw("    BT UNPAIR - Unpair all devices from the BC127\r\n");
+                    LogRaw("    BT VERSION - Get the BC127 Version Info\r\n");
+                } else {
+                    LogRaw("    BT CONN - Initiate a connection to the last device\r\n");
+                    LogRaw("    BT LIST - Query the BM83 for the paired device list\r\n");
+                    LogRaw("    BT PAIR - Enter Pairing Mode\r\n");
+                    LogRaw("    BT MACID - Query the BM83 for the MAC Address\r\n");
+                    LogRaw("    BT BLE - Enter BLE Mode\r\n");
+                    LogRaw("    BT PLAY - Send the AVRCP Play Command\r\n");
+                    LogRaw("    BT PAUSE - Send the AVRCP Pause Command\r\n");
+                    LogRaw("    BT RESTORE - Reset the BM83\r\n");
+                }
                 LogRaw("    GET DAC - Get info from the PCM5122 DAC\r\n");
                 LogRaw("    GET ERR - Get the Error counter\r\n");
                 LogRaw("    GET IBUS - Get debug info from the IBus\r\n");

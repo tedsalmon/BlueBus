@@ -47,6 +47,8 @@ typedef struct CLI_t {
     uint8_t terminalReady;
 } CLI_t;
 void CLIInit(UART_t *, BT_t *, IBus_t *);
+void CLICommandBTBC127(char **, uint8_t *, uint8_t);
+void CLICommandBTBM83(char **, uint8_t *);
 void CLIEventBTBTMAddress(void *, uint8_t *);
 void CLIProcess();
 void CLITimerTerminalReady(void *);

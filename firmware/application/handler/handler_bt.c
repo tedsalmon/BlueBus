@@ -102,6 +102,11 @@ void HandlerBTInit(HandlerContext_t *context)
             &HandlerBTBM83LinkBackStatus,
             context
         );
+        TimerRegisterScheduledTask(
+            &HandlerTimerBTBM83ScanDevices,
+            context,
+            HANDLER_INT_DEVICE_SCAN
+        );
         context->avrcpRegisterStatusNotifierTimerId = TimerRegisterScheduledTask(
             &HandlerTimerBTBM83AVRCPManager,
             context,
@@ -117,11 +122,6 @@ void HandlerBTInit(HandlerContext_t *context)
         &HandlerTimerBTVolumeManagement,
         context,
         HANDLER_INT_VOL_MGMT
-    );
-    TimerRegisterScheduledTask(
-        &HandlerTimerBTBM83ScanDevices,
-        context,
-        HANDLER_INT_DEVICE_SCAN
     );
 }
 
@@ -356,7 +356,8 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                     "UP"
                 );
             }
-            if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF ||
+            uint8_t hfpConfigStatus = ConfigGetSetting(CONFIG_SETTING_HFP);
+            if (hfpConfigStatus == CONFIG_SETTING_OFF ||
                 context->bt->activeDevice.hfpId != 0
             ) {
                 if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
@@ -364,14 +365,14 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                 ) {
                     BTCommandPlay(context->bt);
                 }
-                if (linkType == BT_LINK_TYPE_HFP) {
+                if (linkType == BT_LINK_TYPE_HFP && hfpConfigStatus == CONFIG_SETTING_OFF) {
                     if (context->bt->type == BT_BTM_TYPE_BM83) {
                         BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
                     } else {
                         BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
                     }
                 }
-            } else if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
+            } else if (hfpConfigStatus == CONFIG_SETTING_ON &&
                        context->bt->activeDevice.hfpId == 0 &&
                        context->bt->type == BT_BTM_TYPE_BC127
             ) {
