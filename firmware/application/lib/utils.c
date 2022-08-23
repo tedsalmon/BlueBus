@@ -327,7 +327,7 @@ void UtilsSetPinMode(uint8_t pin, uint8_t mode)
             break;
         }
         case UTILS_PIN_TEL_MUTE: {
-            if (UtilsGetBoardVersion() == BOARD_VERSION_TWO) {
+            if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
                 TEL_MUTE_V1 = mode;
             } else {
                 TEL_MUTE_V2 = mode;

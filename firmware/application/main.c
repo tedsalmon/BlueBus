@@ -62,8 +62,8 @@ int main(void)
     PAM_SHDN_MODE = 0;
     SPDIF_RST_MODE = 0;
     TEL_ON_MODE_V1 = 0;
-    TEL_MUTE_MODE_V1 = 0;
     TEL_ON_MODE_V2 = 0;
+    TEL_MUTE_MODE_V1 = 0;
     TEL_MUTE_MODE_V2 = 0;
     UART_SEL_MODE = 0;
 

@@ -143,7 +143,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
     if (context->bt->callStatus == BT_CALL_INACTIVE &&
         context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING
     ) {
-        BC127CommandPlay(context->bt);
+        BTCommandPlay(context->bt);
     }
     // Tell the vehicle what the call status is
     uint8_t statusChange = HandlerSetIBusTELStatus(
@@ -356,15 +356,16 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                     "UP"
                 );
             }
+            if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
+                context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
+                context->bt->activeDevice.avrcpId != 0
+            ) {
+                BTCommandPlay(context->bt);
+            }
             uint8_t hfpConfigStatus = ConfigGetSetting(CONFIG_SETTING_HFP);
             if (hfpConfigStatus == CONFIG_SETTING_OFF ||
                 context->bt->activeDevice.hfpId != 0
             ) {
-                if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
-                    context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
-                ) {
-                    BTCommandPlay(context->bt);
-                }
                 if (linkType == BT_LINK_TYPE_HFP && hfpConfigStatus == CONFIG_SETTING_OFF) {
                     if (context->bt->type == BT_BTM_TYPE_BM83) {
                         BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
