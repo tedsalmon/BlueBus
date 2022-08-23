@@ -591,7 +591,7 @@ void HandlerIBusGTDIAOSIdentityResponse(void *ctx, unsigned char *pkt)
 /**
  * HandlerIBusIKEIgnitionStatus()
  *     Description:
- *         Track the Ignition state and update the BC127 accordingly. We set
+ *         Track the Ignition state and update the BT Module accordingly. We set
  *         the BT device "off" when the key is set to position 0 and on
  *         as soon as it goes to a position >= 1.
  *         Request the LCM status when the car is turned to or past position 1
@@ -614,7 +614,10 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, unsigned char *pkt)
             // Disable Telephone On
             UtilsSetPinMode(UTILS_PIN_TEL_ON, 0);
             // Set the BT module not connectable/discoverable. Disconnect all devices
-            //BC127CommandBtState(context->bt, BT_STATE_OFF, BT_STATE_OFF);
+            BTCommandSetConnectable(context->bt, BT_STATE_OFF);
+            if (context->bt->discoverable == BT_STATE_ON) {
+                BTCommandSetDiscoverable(context->bt, BT_STATE_OFF);
+            }
             BTCommandDisconnect(context->bt);
             BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
             // Unlock the vehicle
@@ -1126,11 +1129,11 @@ void HandlerIBusMFLButton(void *ctx, unsigned char *pkt)
             context->mflButtonStatus == HANDLER_MFL_STATUS_OFF
         ) {
             if (context->bt->callStatus == BT_CALL_ACTIVE) {
-                BC127CommandCallEnd(context->bt);
+                BTCommandCallEnd(context->bt);
             } else if (context->bt->callStatus == BT_CALL_INCOMING) {
-                BC127CommandCallAnswer(context->bt);
+                BTCommandCallAccept(context->bt);
             } else if (context->bt->callStatus == BT_CALL_OUTGOING) {
-                BC127CommandCallEnd(context->bt);
+                BTCommandCallEnd(context->bt);
             } else if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
                 if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
                     BTCommandPause(context->bt);

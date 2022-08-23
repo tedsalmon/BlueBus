@@ -85,7 +85,7 @@ int main(void)
     IBUS_EN = 1;
     // Turn the PAM8406 off until it's required
     PAM_SHDN = 0;
-    // Pull the DIT4096 low
+    // Pull the DIT4096 low (Shared pin with HW1.x)
     SPDIF_RST = 0;
     // Keep the vehicle unmuted and telephone on disengaged
     UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 0);
@@ -107,6 +107,9 @@ int main(void)
         UART_PARITY_NONE
     );
 
+    // Grab the board version
+    uint8_t boardVersion = UtilsGetBoardVersion();
+
     // All UART handler registrations need to be done at
     // this level to maintain a global scope
     UARTAddModuleHandler(&systemUart);
@@ -124,13 +127,17 @@ int main(void)
     UARTAddModuleHandler(&ibus.uart);
 
     // WM8804 and PCM5122 must be initialized after the I2C Bus
-    if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+    if (boardVersion == BOARD_VERSION_ONE) {
         WM88XXInit();
     }
     PCM51XXInit();
 
-    // Enable the SPDIF Transmitter (after being low for >= 500ns)
-    SPDIF_RST = 1;
+    // SPDIF_RST is reused from version one where it was TEL_MUTE
+    // Do not alter its state on v1.x boards
+    if (boardVersion == BOARD_VERSION_TWO) {
+        // Enable the SPDIF Transmitter (after being low for >= 500ns)
+        SPDIF_RST = 1;
+    }
 
     ON_LED = 1;
 

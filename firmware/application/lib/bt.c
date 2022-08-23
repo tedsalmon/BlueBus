@@ -327,7 +327,7 @@ void BTCommandProfileOpen(BT_t *bt)//, char *)
  *     Returns:
  *         void
  */
-void BTCommandSetConnectable(BT_t *bt, unsigned char state)
+void BTCommandSetConnectable(BT_t *bt, uint8_t state)
 {
     if (bt->type == BT_BTM_TYPE_BC127) {
         BC127CommandBtState(bt, state, bt->discoverable);
@@ -357,7 +357,7 @@ void BTCommandSetConnectable(BT_t *bt, unsigned char state)
  *     Returns:
  *         void
  */
-void BTCommandSetDiscoverable(BT_t *bt, unsigned char state)
+void BTCommandSetDiscoverable(BT_t *bt, uint8_t state)
 {
     if (bt->type == BT_BTM_TYPE_BC127) {
         BC127CommandBtState(bt, bt->connectable, state);
@@ -403,7 +403,7 @@ void BTCommandToggleVoiceRecognition(BT_t *bt)
  */
 uint8_t BTHasActiveMacId(BT_t *bt)
 {
-    unsigned char testMac[BT_LEN_MAC_ID] = {0};
+    uint8_t testMac[BT_LEN_MAC_ID] = {0};
     return memcmp(bt->activeDevice.macId, testMac, BT_LEN_MAC_ID);
 }
 

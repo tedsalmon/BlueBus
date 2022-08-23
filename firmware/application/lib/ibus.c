@@ -850,13 +850,14 @@ uint8_t IBusGetLMDiagnosticIndex(unsigned char *packet)
  *     Description:
  *        Get the dimmer checksum
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         unsigned char *packet - The Light Module Dimmer Status Packet
  *     Returns:
  *         uint8_t - the light module coding index
  */
 uint8_t IBusGetLMDimmerChecksum(unsigned char *packet)
 {
-    uint8_t frameLength = packet[1] - 1;
+    // Do not use the XOR
+    uint8_t frameLength = packet[1] - 3;
     uint8_t index = 4;
     uint8_t checksum = 0x00;
     while (frameLength > 0) {
@@ -866,9 +867,6 @@ uint8_t IBusGetLMDimmerChecksum(unsigned char *packet)
     }
     return checksum;
 }
-
-
-uint8_t IBusGetLMDimmerChecksum(unsigned char *);
 
 /**
  * IBusGetLMVariant()
