@@ -17,6 +17,7 @@ BLUEBUS_PLATFORMS = [
     'BLUEBUS_BOOTLOADER_1_4',
     'BLUEBUS_BOOTLOADER_1_5',
     'BLUEBUS_BOOTLOADER_2_0',
+    'BLUEBUS_BOOTLOADER_2_1',
 ]
 
 BLUEBUS_MAX_MEMORY_ADDR = 0xAA800
@@ -112,6 +113,8 @@ class Application(Tk):
     firmware_version = ''
     serial_num = ''
     build = ''
+    has_platform = False
+    requested_bootloader = False
 
     def __init__(self):
         super().__init__()
@@ -253,27 +256,19 @@ class Application(Tk):
         self.port_name = port_name.split('-')[0].strip()
         if self.port_name == 'Select Device...':
             return
+        self.set_status('Connecting...')
         # Reset Info
         self.firmware_version = ''
         self.serial_num = ''
         self.build = ''
-        # Reload the device and verify
-        self.serial_port = Serial(port_name, self.BAUDRATE)
-        self.serial_port.write(b'bootloader\r\n')
-        sleep(0.1) # Wait for data to reach unit before closing the ports
-        self.serial_port.close()
-        self.set_status('Connecting...')
-        # Allow the bootloader to spool
-        sleep(1)
-        # Re-open the serial port
+        self.has_platform = False
+        self.requested_bootloader = False
+        # Open the serial port
         self.serial_port = Serial(port_name, self.BAUDRATE, parity=PARITY_ODD)
-        self.serial_port.write(b'\r\n') # Clear the port
-        sleep(0.25)
-        while self.serial_port.in_waiting:
-            if self.serial_port.read():
-                pass
+        # Attempt to speak with the bootloader
+        sleep(0.5)
         self.request_platform()
-        self.handle_serial()
+        self.handle_serial(port_name)
 
     def flash_firmware(self):
         self.flash_button['state'] = 'disable'
@@ -282,8 +277,8 @@ class Application(Tk):
         self.request_erase_flash()
         self.handle_serial()
 
-    def handle_serial(self):
-        start = int(time())
+    def handle_serial(self, port_name=''):
+        start = time()
         has_response = False
         rx_buffer = []
 
@@ -300,6 +295,8 @@ class Application(Tk):
                             string = [b.decode('ascii') for b in rx_buffer]
                             if ''.join(string) in BLUEBUS_PLATFORMS:
                                 self.select_hex_button['state'] = 'normal'
+                                self.has_platform = True
+                                self.requested_bootloader = True
                                 # Request FW Version
                                 self.request_firmware_version()
                                 self.handle_serial()
@@ -343,7 +340,15 @@ class Application(Tk):
                             self.progress['value'] = 0
                             has_response = True
                         if command == PROTOCOL_BAD_PACKET_RESPONSE:
+                            has_response = True
                             self.set_status('ERROR: Protocol Error -- Try again')
+                        if command == PROTOCOL_ERR_PACKET_TIMEOUT:
+                            if not self.has_platform:
+                                self.request_platform()
+                                self.has_platform = True
+                            else:
+                                has_response = True
+                                self.set_status('ERROR: Timeout while writing data')
                         if command == PROTOCOL_CMD_WRITE_DATA_RESPONSE_ERR:
                             self.set_status('ERROR: Write Failed - try again')
                             has_response = True
@@ -352,9 +357,29 @@ class Application(Tk):
             if len(self.tx_buffer) > 0:
                 self.serial_port.write(self.tx_buffer)
                 self.tx_buffer = []
+            if not self.requested_bootloader and (time() - start) > 1:
+                self.requested_bootloader = True
+                self.serial_port.close()
+                # Reload the device and verify
+                self.serial_port = Serial(port_name, self.BAUDRATE)
+                self.serial_port.write(b'\r')
+                sleep(0.25)
+                self.serial_port.write(b'bootloader\r')
+                sleep(0.5) # Wait for data to reach unit before closing the ports
+                self.serial_port.close()
+                # Allow the bootloader to spool
+                sleep(0.5)
+                # Re-open the serial port
+                # Open the serial port
+                self.serial_port = Serial(port_name, self.BAUDRATE, parity=PARITY_ODD)
+                while self.serial_port.in_waiting:
+                    self.serial_port.read()
+                # Attempt to speak with the bootloader
+                rx_buffer = []
+                self.request_platform()
             if not has_response and int(time()) - start > self.TIMEOUT:
                 self.set_status(
-                    'ERROR: Failed to get a response within 5 seconds'
+                    'ERROR: Failed to get a response within %d seconds' % self.TIMEOUT
                 )
                 has_response = True
             self.update()
