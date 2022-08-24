@@ -265,6 +265,7 @@ if __name__ == '__main__':
                             elif args.getfw:
                                 read_firmware()
                             elif args.writebuild:
+                                today = date.today().isocalendar()
                                 write_build(today[1], today[0] - 2000)
                             elif args.start:
                                 start_app()
