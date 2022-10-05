@@ -1611,7 +1611,7 @@ void BC127ProcessEventOpenOk(BT_t *bt, char **msgBuf)
 void BC127ProcessEventSCO(BT_t *bt, uint8_t scoStatus)
 {
     if (bt->scoStatus != scoStatus) {
-        bt->callStatus = scoStatus;
+        bt->scoStatus = scoStatus;
         EventTriggerCallback(BT_EVENT_CALL_STATUS_UPDATE, &scoStatus);
     }
     if (scoStatus == BT_CALL_SCO_CLOSE) {

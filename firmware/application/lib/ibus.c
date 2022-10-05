@@ -50,6 +50,57 @@ IBus_t IBusInit()
 }
 
 /**
+ * IBusHandleModuleStatus()
+ *     Description:
+ *         Track module status as we get them and broadcast the event
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t module - The module
+ *     Returns:
+ *         void
+ */
+static void IBusHandleModuleStatus(IBus_t *ibus, uint8_t module)
+{
+    uint8_t detectedModule = IBUS_DEVICE_LOC;
+    if (module == IBUS_DEVICE_DSP && ibus->moduleStatus.DSP == 0) {
+        ibus->moduleStatus.DSP = 1;
+        LogInfo(LOG_SOURCE_IBUS, "DSP Detected");
+        detectedModule = IBUS_DEVICE_DSP;
+    } else if (module == IBUS_DEVICE_BMBT && ibus->moduleStatus.BMBT == 0) {
+        ibus->moduleStatus.BMBT = 1;
+        LogInfo(LOG_SOURCE_IBUS, "BMBT Detected");
+        detectedModule = IBUS_DEVICE_BMBT;
+    } else if (module == IBUS_DEVICE_GT && ibus->moduleStatus.GT == 0) {
+        ibus->moduleStatus.GT = 1;
+        LogInfo(LOG_SOURCE_IBUS, "GT Detected");
+        detectedModule = IBUS_DEVICE_GT;
+    } else if (module == IBUS_DEVICE_VM && ibus->moduleStatus.VM == 0) {
+        ibus->moduleStatus.VM = 1;
+        LogInfo(LOG_SOURCE_IBUS, "VM Detected");
+        detectedModule = IBUS_DEVICE_VM;
+    } else if (module == IBUS_DEVICE_LCM && ibus->moduleStatus.LCM == 0) {
+        LogInfo(LOG_SOURCE_IBUS, "LCM Detected");
+        ibus->moduleStatus.LCM = 1;
+        detectedModule = IBUS_DEVICE_LCM;
+    } else if (module == IBUS_DEVICE_MID && ibus->moduleStatus.MID == 0) {
+        ibus->moduleStatus.MID = 1;
+        LogInfo(LOG_SOURCE_IBUS, "MID Detected");
+        detectedModule = IBUS_DEVICE_MID;
+    } else if (module == IBUS_DEVICE_PDC && ibus->moduleStatus.PDC == 0) {
+        ibus->moduleStatus.PDC = 1;
+        LogInfo(LOG_SOURCE_IBUS, "PDC Detected");
+        detectedModule = IBUS_DEVICE_PDC;
+    } else if (module == IBUS_DEVICE_RAD && ibus->moduleStatus.RAD == 0) {
+        ibus->moduleStatus.RAD = 1;
+        LogInfo(LOG_SOURCE_IBUS, "RAD Detected");
+        detectedModule = IBUS_DEVICE_RAD;
+    }
+    if (detectedModule != IBUS_DEVICE_LOC) {
+        EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
+    }
+}
+
+/**
  * IBusHandleBMBTMessage()
  *     Description:
  *         Handle any messages received from the BMBT (Board Monitor)
@@ -58,10 +109,10 @@ IBus_t IBusInit()
  *     Returns:
  *         None
  */
-static void IBusHandleBMBTMessage(unsigned char *pkt)
+static void IBusHandleBMBTMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
-        EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON0 ||
         pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON1
     ) {
@@ -80,10 +131,10 @@ static void IBusHandleBMBTMessage(unsigned char *pkt)
  *     Returns:
  *         None
  */
-static void IBusHandleDSPMessage(unsigned char *pkt)
+static void IBusHandleDSPMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
-        EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     }
 }
 
@@ -96,7 +147,7 @@ static void IBusHandleDSPMessage(unsigned char *pkt)
  *     Returns:
  *         None
  */
-static void IBusHandleEWSMessage(unsigned char *pkt)
+static void IBusHandleEWSMessage(IBus_t *ibus, unsigned char *pkt)
 {
     // Do nothing for now -- for future use
 }
@@ -110,7 +161,7 @@ static void IBusHandleEWSMessage(unsigned char *pkt)
  *     Returns:
  *         None
  */
-static void IBusHandleGMMessage(unsigned char *pkt)
+static void IBusHandleGMMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
@@ -185,7 +236,7 @@ static void IBusHandleGMMessage(unsigned char *pkt)
 static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
-        EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
+         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_LEN] == 0x22 &&
         pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
         pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE
@@ -254,7 +305,7 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
 static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
-        EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_IGN_STATUS_RESP) {
         uint8_t ignitionStatus = pkt[4];
         if (ibus->ignitionStatus != IBUS_IGNITION_KL99) {
@@ -338,7 +389,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
 static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
-        EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO &&
         pkt[IBUS_PKT_CMD] == IBUS_LCM_LIGHT_STATUS_RESP
     ) {
@@ -395,7 +446,7 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_LCM_RESP_REDUNDANT_DATA) {
         EventTriggerCallback(IBUS_EVENT_LCMRedundantData, pkt);
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
-               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE && // 0xa0
+               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
                pkt[IBUS_PKT_LEN] == 0x0F
     ) {
       // I was a bit nervous about relying upon message length, but only an
@@ -423,7 +474,7 @@ static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
 static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
-        EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD ||
                pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL
     ) {
@@ -439,13 +490,13 @@ static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandlerPDCMessage(unsigned char *pkt)
+static void IBusHandlerPDCMessage(IBus_t *ibus, unsigned char *pkt)
 {
     // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
     // any time we see 0x5A from the PDC. Keep this above all other code to
     // ensure event listeners know the PDC is alive before performing work
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_LCM_BULB_IND_REQ) {
-        EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS) {
         EventTriggerCallback(IBUS_EVENT_PDC_STATUS, pkt);
     }
@@ -454,7 +505,7 @@ static void IBusHandlerPDCMessage(unsigned char *pkt)
 static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
-        EventTriggerCallback(IBUS_EVENT_ModuleStatusResponse, pkt);
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_CDC) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
             EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
@@ -537,7 +588,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandleTELMessage(unsigned char *pkt)
+static void IBusHandleTELMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
         EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
@@ -546,9 +597,11 @@ static void IBusHandleTELMessage(unsigned char *pkt)
     }
 }
 
-static void IBusHandleVMMessage(unsigned char *pkt)
+static void IBusHandleVMMessage(IBus_t *ibus, unsigned char *pkt)
 {
-    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
         EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
     }
 }
@@ -628,7 +681,7 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleRADMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_BMBT) {
-                        IBusHandleBMBTMessage(pkt);
+                        IBusHandleBMBTMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_IKE) {
                         IBusHandleIKEMessage(ibus, pkt);
@@ -646,22 +699,22 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleMFLMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_DSP) {
-                        IBusHandleDSPMessage(pkt);
+                        IBusHandleDSPMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_GM) {
-                        IBusHandleGMMessage(pkt);
+                        IBusHandleGMMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_EWS) {
-                        IBusHandleEWSMessage(pkt);
+                        IBusHandleEWSMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_VM) {
-                        IBusHandleVMMessage(pkt);
+                        IBusHandleVMMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_PDC) {
-                        IBusHandlerPDCMessage(pkt);
+                        IBusHandlerPDCMessage(ibus, pkt);
                     }
                     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
-                        IBusHandleTELMessage(pkt);
+                        IBusHandleTELMessage(ibus, pkt);
                     }
                 } else {
                     LogError(
@@ -804,6 +857,9 @@ void IBusSendCommand(
  */
 void IBusSetInternalIgnitionStatus(IBus_t *ibus, unsigned char ignitionStatus)
 {
+    if (ignitionStatus != IBUS_IGNITION_KL15) {
+        ibus->ignitionStatus = ignitionStatus;
+    }
     EventTriggerCallback(
         IBUS_EVENT_IKEIgnitionStatus,
         (unsigned char *)&ignitionStatus
@@ -1500,6 +1556,25 @@ void IBusCommandGMDoorLockAll(IBus_t *ibus)
     }
 }
 
+/**
+ * IBusCommandGTBMBTControl()
+ *     Description:
+ *        Issue a diagnostic message to the GM to lock all doors
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t status - The status to set the monitor to
+ *     Returns:
+ *         void
+ */
+void IBusCommandGTBMBTControl(IBus_t *ibus, uint8_t status)
+{
+    unsigned char msg[2] = {
+        IBUS_CMD_GT_MONITOR_CONTROL,
+        status,
+    };
+    IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_BMBT, msg, 2);
+}
+
 void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
 {
     unsigned char msg[4] = {
@@ -1571,11 +1646,14 @@ static void IBusCommandGTWriteIndexStaticInternal(
  */
 void IBusCommandGTWriteBusinessNavTitle(IBus_t *ibus, char *message) {
     uint8_t length = strlen(message);
-    if (length > 11) {
-        length = 11;
+    if (length > IBUS_TCU_SINGLE_LINE_UI_MAX_LEN) {
+        length = IBUS_TCU_SINGLE_LINE_UI_MAX_LEN;
     }
-    const size_t pktLenght = length + 3;
-    unsigned char text[pktLenght];
+    const size_t packetLength = length + 4;
+    // Add an extra 0x10 at the end of the message so we can
+    // identify it as ours on echo
+    unsigned char text[packetLength];
+    memset(text, IBUS_RAD_MAIN_AREA_WATERMARK, packetLength);
     text[0] = IBUS_CMD_GT_WRITE_TITLE;
     text[1] = 0x40;
     text[2] = 0x30;
@@ -1583,7 +1661,7 @@ void IBusCommandGTWriteBusinessNavTitle(IBus_t *ibus, char *message) {
     for (idx = 0; idx < length; idx++) {
         text[idx + 3] = message[idx];
     }
-    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, packetLength);
 }
 
 void IBusCommandGTWriteIndex(
@@ -2170,7 +2248,7 @@ void IBusCommandMIDDisplayRADTitleText(IBus_t *ibus, char *message)
     uint8_t idx;
     uint8_t textLength = strlen(message);
     if (textLength > IBus_MID_TITLE_MAX_CHARS) {
-        textLength = IBus_MID_MAX_CHARS;
+        textLength = IBus_MID_TITLE_MAX_CHARS;
     }
     for (idx = 0; idx < textLength; idx++) {
         displayText[idx + 3] = message[idx];
@@ -2202,6 +2280,7 @@ void IBusCommandMIDDisplayText(IBus_t *ibus, char *message)
         textLength = IBus_MID_MAX_CHARS;
     }
     unsigned char displayText[textLength + 3];
+    memset(displayText, 0, textLength + 3);
     displayText[0] = IBUS_CMD_RAD_WRITE_MID_DISPLAY;
     displayText[1] = 0x40;
     displayText[2] = 0x20;

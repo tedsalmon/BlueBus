@@ -62,6 +62,8 @@
 /* Call Settings */
 #define BMBT_MENU_IDX_SETTINGS_CALLING_HFP 0
 #define BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN 1
+#define BMBT_MENU_IDX_SETTINGS_CALLING_VOL_OFFSET 2
+#define BMBT_MENU_IDX_SETTINGS_CALLING_MODE 3
 /* Comfort Settings */
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_LOCK 0
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_UNLOCK 1
@@ -72,7 +74,8 @@
 #define BMBT_MENU_IDX_SETTINGS_UI_METADATA_MODE 1
 #define BMBT_MENU_IDX_SETTINGS_UI_TEMPS 2
 #define BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC 3
-#define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 4
+#define BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF 4
+#define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 5
 
 #define BMBT_MAIN_AREA_LEN 9
 #define BMBT_MENU_IDX_PAIRING_MODE 0
@@ -117,6 +120,7 @@ typedef struct BMBTContext_t {
     uint8_t displayUpdateTaskId;
     uint8_t headerWriteTaskId;
     uint8_t menuWriteTaskId;
+    uint8_t dspMode;
     UtilsAbstractDisplayValue_t mainDisplay;
 } BMBTContext_t;
 void BMBTInit(BT_t *, IBus_t *);

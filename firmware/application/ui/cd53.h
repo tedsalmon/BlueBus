@@ -15,6 +15,8 @@
 #include "../lib/ibus.h"
 #include "../lib/timer.h"
 #include "../lib/utils.h"
+#include "menu/menu_singleline.h"
+
 #define CD53_DISPLAY_METADATA_ON 1
 #define CD53_DISPLAY_METADATA_OFF 0
 #define CD53_DISPLAY_SCROLL_SPEED 750
@@ -35,20 +37,7 @@
 #define CD53_SEEK_MODE_NONE 0
 #define CD53_SEEK_MODE_FWD 1
 #define CD53_SEEK_MODE_REV 2
-#define CD53_SETTING_IDX_HFP 0
-#define CD53_SETTING_IDX_METADATA_MODE 1
-#define CD53_SETTING_IDX_AUTOPLAY 2
-#define CD53_SETTING_IDX_LOWER_VOL_REV 3
-#define CD53_SETTING_IDX_VEH_TYPE 4
-#define CD53_SETTING_IDX_BLINKERS 5
-#define CD53_SETTING_IDX_COMFORT_LOCKS 6
-#define CD53_SETTING_IDX_COMFORT_UNLOCK 7
-#define CD53_SETTING_IDX_TEL_VOL_OFFSET 8
-#define CD53_SETTING_IDX_PAIRINGS 9
-#define CD53_SETTING_MODE_SCROLL_SETTINGS 1
-#define CD53_SETTING_MODE_SCROLL_VALUES 2
-#define CD53_METADATA_MODE_PARTY 0x01
-#define CD53_METADATA_MODE_CHUNK 0x02
+
 #define CD53_VR_TOGGLE_TIME 500
 
 /*
@@ -80,9 +69,11 @@ typedef struct CD53Context_t {
     uint32_t lastTelephoneButtonPress;
     UtilsAbstractDisplayValue_t mainDisplay;
     UtilsAbstractDisplayValue_t tempDisplay;
+    MenuSingleLineContext_t menuContext;
 } CD53Context_t;
 void CD53Init(BT_t *, IBus_t *);
 void CD53Destroy();
+void CD53DisplayUpdateText(void *, char *, int8_t, uint8_t);
 void CD53BTCallerID(void *, unsigned char *);
 void CD53BTCallStatus(void *, unsigned char *);
 void CD53BTDeviceDisconnected(void *, unsigned char *);

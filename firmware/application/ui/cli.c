@@ -251,6 +251,13 @@ void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess)
         BM83CommandPairingEnable(cli.bt);
     } else if (UtilsStricmp(msgBuf[1], "MACID") == 0) {
         BM83CommandReadLocalBDAddress(cli.bt);
+    } else if (UtilsStricmp(msgBuf[1], "CL") == 0) {
+        uint8_t command[] = {
+            BM83_CMD_MMI_ACTION,
+            cli.bt->activeDevice.deviceId & 0xF, // Linked Database, the lower nibble
+            0x0F
+        };
+        BM83SendCommand(cli.bt, command, sizeof(command));
     } else if (UtilsStricmp(msgBuf[1], "BLE") == 0) {
         uint8_t command[] = {
             BM83_CMD_LE_SIGNALING_CMD,
@@ -728,6 +735,8 @@ void CLIProcess()
                     BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
                     BC127CommandSetCOD(cli.bt, 300420);
                     BC127CommandWrite(cli.bt);
+                    // Set the Mic Gain to -17.5dB by default
+                    ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x03);
                 } else {
                     BM83CommandRestore(cli.bt);
                     ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
@@ -755,8 +764,6 @@ void CLIProcess()
                 ConfigSetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL, 0x44);
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
-                // Set the Mic Gain to -17.5dB by default
-                ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x03);
             } else if (UtilsStricmp(msgBuf[0], "TEST") == 0) {
                 int8_t status = 0x00;
                 uint8_t buffer = 0x00;

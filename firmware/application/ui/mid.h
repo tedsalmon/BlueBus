@@ -14,6 +14,7 @@
 #include "../lib/log.h"
 #include "../lib/timer.h"
 #include "../lib/utils.h"
+#include "menu/menu_singleline.h"
 
 #define MID_BUTTON_PLAYBACK 0
 #define MID_BUTTON_BACK 0
@@ -35,7 +36,7 @@
 #define MID_DISPLAY_STATUS_OFF 0
 #define MID_DISPLAY_STATUS_ON 1
 #define MID_DISPLAY_STATUS_NEW 2
-#define MID_DISPLAY_TEXT_SIZE 25
+#define MID_DISPLAY_TEXT_SIZE 24
 #define MID_TIMER_DISPLAY_INT 500
 #define MID_TIMER_MENU_WRITE_INT 250
 
@@ -54,16 +55,20 @@
 
 #define MID_PAIRING_DEVICE_NONE -1
 
-#define MID_SETTING_IDX_HFP 0
-#define MID_SETTING_IDX_METADATA_MODE 1
-#define MID_SETTING_IDX_AUTOPLAY 2
+#define MID_SETTING_IDX_METADATA_MODE 0
+#define MID_SETTING_IDX_AUTOPLAY 1
+#define MID_SETTING_IDX_AUDIO_DSP 2
 #define MID_SETTING_IDX_LOWER_VOL_REV 3
-#define MID_SETTING_IDX_VEH_TYPE 4
-#define MID_SETTING_IDX_BLINKERS 5
-#define MID_SETTING_IDX_COMFORT_LOCKS 6
-#define MID_SETTING_IDX_COMFORT_UNLOCK 7
-#define MID_SETTING_IDX_AUDIO_DSP 8
-#define MID_SETTING_IDX_PAIRINGS 9
+#define MID_SETTING_IDX_TEL_HFP 4
+#define MID_SETTING_IDX_TEL_MIC_GAIN 5
+#define MID_SETTING_IDX_TEL_VOL_OFFSET 6
+#define MID_SETTING_IDX_TEL_TCU_MODE 7
+#define MID_SETTING_IDX_BLINKERS 8
+#define MID_SETTING_IDX_COMFORT_LOCKS 9
+#define MID_SETTING_IDX_COMFORT_UNLOCK 10
+#define MID_SETTING_IDX_ABOUT 11
+#define MID_SETTING_IDX_PAIRINGS 12
+
 #define MID_SETTING_MODE_SCROLL_SETTINGS 1
 #define MID_SETTING_MODE_SCROLL_VALUES 2
 #define MID_SETTING_METADATA_MODE_OFF 0x00
@@ -85,17 +90,16 @@ typedef struct MIDContext_t {
     int8_t btDeviceIndex;
     uint8_t mode;
     uint8_t displayUpdate;
-    uint8_t settingIdx;
-    uint8_t settingValue;
-    uint8_t settingMode;
     uint8_t modeChangeStatus;
+    char mainText[16];
+    MenuSingleLineContext_t menuContext;
     UtilsAbstractDisplayValue_t mainDisplay;
     UtilsAbstractDisplayValue_t tempDisplay;
-    char mainText[16];
     uint8_t displayUpdateTaskId;
 } MIDContext_t;
 void MIDInit(BT_t *, IBus_t *);
 void MIDDestroy();
+void MIDDisplayUpdateText(void *, char *, int8_t, uint8_t);
 void MIDBTMetadataUpdate(void *, unsigned char *);
 void MIDBTPlaybackStatus(void *, unsigned char *);
 void MIDIBusCDChangerStatus(void *, unsigned char *);

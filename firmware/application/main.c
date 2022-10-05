@@ -149,9 +149,9 @@ int main(void)
     UpgradeProcess(&bt, &ibus);
     // Run the PCM51XX Start-up process
     PCM51XXStartup();
-
     // Reset the Boot flag in the EEPROM to indicate a valid boot
     ConfigSetBootloaderMode(0x00);
+
     // Process events
     while (1) {
         BTProcess(&bt);

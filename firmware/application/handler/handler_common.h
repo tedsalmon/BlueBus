@@ -8,6 +8,7 @@
 #define HANDLER_CONTEXT_H
 #include "../lib/bt.h"
 #include "../lib/ibus.h"
+#include "../lib/pcm51xx.h"
 
 
 #define HANDLER_BT_BOOT_OK 0
@@ -41,6 +42,7 @@
 #define HANDLER_INT_DEVICE_CONN 30000
 #define HANDLER_INT_DEVICE_SCAN 5000
 #define HANDLER_INT_IBUS_PINGS 250
+#define HANDLER_INT_TCU_STATE_CHANGE 25
 #define HANDLER_INT_LCM_IO_STATUS 15000
 #define HANDLER_INT_LIGHTING_STATE 1000
 #define HANDLER_INT_BT_AVRCP_UPDATER 1000
@@ -76,11 +78,14 @@
 #define HANDLER_POWER_ON 1
 #define HANDLER_POWER_TIMEOUT_MILLIS 61000
 #define HANDLER_TEL_DAC_VOL 0x44
+#define HANDLER_TEL_MODE_AUDIO 0
+#define HANDLER_TEL_MODE_TCU 1
 #define HANDLER_TEL_STATUS_SET 0
 #define HANDLER_TEL_STATUS_FORCE 1
 #define HANDLER_TEL_STATUS_VOL_CHANGE 0xFF
-#define HANDLER_TEL_VOL_OFFSET_MAX 0x0F
 #define HANDLER_WAIT_REV_VOL 1000
+#define HANDLER_MONITOR_STATUS_UNSET 0
+#define HANDLER_MONITOR_STATUS_SET 1
 
 #define HANDLER_VOLUME_DIRECTION_DOWN 0
 #define HANDLER_VOLUME_DIRECTION_UP 1
@@ -99,18 +104,6 @@ typedef struct HandlerLightControlStatus_t {
     uint8_t comfortParkingLampsStatus: 1;
 } HandlerLightControlStatus_t;
 
-typedef struct HandlerModuleStatus_t {
-    uint8_t BMBT: 1;
-    uint8_t DSP: 1;
-    uint8_t GT: 1;
-    uint8_t IKE: 1;
-    uint8_t LCM: 1;
-    uint8_t MID: 1;
-    uint8_t RAD: 1;
-    uint8_t VM: 1;
-    uint8_t PDC: 1;
-} HandlerModuleStatus_t;
-
 typedef struct HandlerContext_t {
     BT_t *bt;
     IBus_t *ibus;
@@ -123,14 +116,15 @@ typedef struct HandlerContext_t {
     uint8_t seekMode: 2;
     uint8_t volumeMode: 1;
     uint8_t gtStatus: 1;
+    uint8_t monitorStatus: 1;
     uint8_t uiMode;
     uint8_t lmDimmerChecksum;
     uint8_t telStatus;
     HandlerBodyModuleStatus_t gmState;
     HandlerLightControlStatus_t lmState;
-    HandlerModuleStatus_t ibusModuleStatus;
     uint8_t powerStatus;
     uint8_t scanIntervals;
+    uint8_t tcuStateChangeTimerId;
     uint8_t lightingStateTimerId;
     uint8_t avrcpRegisterStatusNotifierTimerId;
     uint8_t bm83PowerStateTimerId;
@@ -142,6 +136,7 @@ typedef struct HandlerContext_t {
     uint32_t pdcLastStatus;
 } HandlerContext_t;
 
+uint8_t HandlerGetTelMode(HandlerContext_t *);
 uint8_t HandlerSetIBusTELStatus(HandlerContext_t *, unsigned char);
 void HandlerSetVolume(HandlerContext_t *, uint8_t);
 #endif /* HANDLER_CONTEXT_H */

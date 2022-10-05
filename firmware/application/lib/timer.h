@@ -20,6 +20,7 @@
 #define PR1_SETTING (SYS_CLOCK / 1000 / 1)
 #define TIMER_TASKS_MAX 16
 #define TIMER_INDEX 0
+#define TIMER_TASK_DISABLED 0
 #include <stdint.h>
 #include <string.h>
 #include <xc.h>

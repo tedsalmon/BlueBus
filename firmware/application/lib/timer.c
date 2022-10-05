@@ -79,7 +79,7 @@ void TimerProcessScheduledTasks()
     uint8_t idx;
     for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
         volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
-        if (t->ticks >= t->interval && t->task != 0) {
+        if (t->ticks >= t->interval && t->task != 0 && t->interval > 0) {
             t->task(t->context);
             t->ticks = 0;
         }
@@ -219,7 +219,7 @@ void __attribute__((__interrupt__, auto_psv)) _AltT1Interrupt(void)
     uint8_t idx;
     for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
         volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
-        if (t->task != 0) {
+        if (t->task != 0 && t->interval > 0) {
             TimerRegisteredTasks[idx].ticks++;
         }
     }

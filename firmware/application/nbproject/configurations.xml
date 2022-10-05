@@ -33,7 +33,7 @@
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
         <logicalFolder name="f1" displayName="menu" projectFiles="true">
-          <itemPath>ui/menu/singleline.h</itemPath>
+          <itemPath>ui/menu/menu_singleline.h</itemPath>
         </logicalFolder>
         <itemPath>ui/bmbt.h</itemPath>
         <itemPath>ui/cd53.h</itemPath>
@@ -84,7 +84,7 @@
       </logicalFolder>
       <logicalFolder name="f2" displayName="ui" projectFiles="true">
         <logicalFolder name="f1" displayName="menu" projectFiles="true">
-          <itemPath>ui/menu/singleline.c</itemPath>
+          <itemPath>ui/menu/menu_singleline.c</itemPath>
         </logicalFolder>
         <itemPath>ui/bmbt.c</itemPath>
         <itemPath>ui/cd53.c</itemPath>
@@ -112,7 +112,7 @@
         <targetDevice>PIC24FJ1024GA606</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>noID</platformTool>
+        <platformTool>pk4hybrid</platformTool>
         <languageToolchain>XC16</languageToolchain>
         <languageToolchainVersion>1.60</languageToolchainVersion>
         <platform>4</platform>

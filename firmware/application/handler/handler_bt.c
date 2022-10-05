@@ -49,6 +49,11 @@ void HandlerBTInit(HandlerContext_t *context)
         &HandlerBTPlaybackStatus,
         context
     );
+    context->tcuStateChangeTimerId = TimerRegisterScheduledTask(
+        &HandlerTimerBTTCUStateChange,
+        context,
+        TIMER_TASK_DISABLED
+    );
     if (context->bt->type == BT_BTM_TYPE_BC127) {
         EventRegisterCallback(
             BT_EVENT_BOOT,
@@ -150,109 +155,113 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
         context,
         HANDLER_TEL_STATUS_SET
     );
-    if (statusChange == 1) {
-        LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU");
-        // Handle volume control
-        if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
-            (
-                ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC) == CONFIG_SETTING_DSP_INPUT_SPDIF ||
-                context->ibusModuleStatus.DSP == 0
-            )
-        ) {
-            if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
-                LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU > Begin");
-                // Enable the amp and mute the radio
-                PAM_SHDN = 1;
-                UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 1);
-                // Set the DAC Volume to the "telephone" volume
-                PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL));
+    if (statusChange == 0) {
+        return;
+    }
+    LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU");
+    // Handle volume control
+    if (HandlerGetTelMode(context) == HANDLER_TEL_MODE_TCU) {
+        uint8_t boardVersion = UtilsGetBoardVersion();
+        if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU > Begin");
+            if (boardVersion == BOARD_VERSION_TWO) {
+                SPDIF_RST = 0;
+                TimerSetTaskInterval(
+                    context->tcuStateChangeTimerId,
+                    HANDLER_INT_TCU_STATE_CHANGE
+                );
             } else {
-                LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU > End");
-                // Reset the DAC volume
-                PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL));
-                // Disable the amp and unmute the radio
-                PAM_SHDN = 0;
-                TimerDelayMicroseconds(250);
-                UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 0);
+                // Call timer immediately
+                HandlerTimerBTTCUStateChange(ctx);
             }
         } else {
-            uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
-            uint8_t dspMode = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
-            if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
-                if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
-                    dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
-                    context->ibusModuleStatus.DSP == 1
-                ) {
-                    IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU > End");
+            // Reset the DAC volume
+            PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL));
+            // Disable the amp and unmute the radio
+            PAM_SHDN = 0;
+            UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 0);
+            if (boardVersion == BOARD_VERSION_TWO) {
+                SPDIF_RST = 1;
+            }
+        }
+    } else {
+        uint8_t dspMode = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
+        uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+            if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
+                dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
+                context->ibus->moduleStatus.DSP == 1
+            ) {
+                IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+            }
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > Begin");
+            if (strlen(context->bt->callerId) > 0 &&
+                context->uiMode != CONFIG_UI_CD53
+            ) {
+                IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
+            }
+            if (volume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
+                volume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
+                ConfigSetSetting(CONFIG_SETTING_TEL_VOL, CONFIG_SETTING_TEL_VOL_OFFSET_MAX);
+            }
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %d", volume);
+            uint8_t sourceSystem = IBUS_DEVICE_BMBT;
+            uint8_t volStepMax = 0x03;
+            if (context->ibus->moduleStatus.MID == 1) {
+                sourceSystem = IBUS_DEVICE_MID;
+            }
+            if (context->uiMode == CONFIG_UI_CD53) {
+                sourceSystem = IBUS_DEVICE_MFL;
+                volStepMax = 0x01;
+            }
+            while (volume > 0) {
+                uint8_t volStep = volume;
+                if (volStep > volStepMax) {
+                    volStep = volStepMax;
                 }
-                LogDebug(LOG_SOURCE_SYSTEM, "Call > Begin");
-                if (strlen(context->bt->callerId) > 0 &&
-                    context->uiMode != CONFIG_UI_CD53
-                ) {
-                    IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
+                IBusCommandSetVolume(
+                    context->ibus,
+                    sourceSystem,
+                    IBUS_DEVICE_RAD,
+                    (volStep << 4) | 0x01
+                );
+                volume = volume - volStep;
+            }
+        } else {
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > End");
+            // Reset the volume
+            // Temporarily set the call status flag to on so we do not alter
+            // the volume we are lowering ourselves
+            context->telStatus = HANDLER_TEL_STATUS_VOL_CHANGE;
+            uint8_t sourceSystem = IBUS_DEVICE_BMBT;
+            uint8_t volStepMax = 0x03;
+            if (context->ibus->moduleStatus.MID == 1) {
+                sourceSystem = IBUS_DEVICE_MID;
+            }
+            if (context->uiMode == CONFIG_UI_CD53) {
+                sourceSystem = IBUS_DEVICE_MFL;
+                volStepMax = 0x01;
+            }
+            while (volume > 0) {
+                uint8_t volStep = volume;
+                if (volStep > volStepMax) {
+                    volStep = volStepMax;
                 }
-                if (volume > HANDLER_TEL_VOL_OFFSET_MAX) {
-                    volume = HANDLER_TEL_VOL_OFFSET_MAX;
-                    ConfigSetSetting(CONFIG_SETTING_TEL_VOL, HANDLER_TEL_VOL_OFFSET_MAX);
-                }
-                LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %d", volume);
-                uint8_t sourceSystem = IBUS_DEVICE_BMBT;
-                uint8_t volStepMax = 0x03;
-                if (context->ibusModuleStatus.MID == 1) {
-                    sourceSystem = IBUS_DEVICE_MID;
-                }
-                if (context->uiMode == CONFIG_UI_CD53) {
-                    sourceSystem = IBUS_DEVICE_MFL;
-                    volStepMax = 0x01;
-                }
-                while (volume > 0) {
-                    uint8_t volStep = volume;
-                    if (volStep > volStepMax) {
-                        volStep = volStepMax;
-                    }
-                    IBusCommandSetVolume(
-                        context->ibus,
-                        sourceSystem,
-                        IBUS_DEVICE_RAD,
-                        (volStep << 4) | 0x01
-                    );
-                    volume = volume - volStep;
-                }
-            } else {
-                LogDebug(LOG_SOURCE_SYSTEM, "Call > End");
-                // Reset the volume
-                // Temporarily set the call status flag to on so we do not alter
-                // the volume we are lowering ourselves
-                context->telStatus = HANDLER_TEL_STATUS_VOL_CHANGE;
-                uint8_t sourceSystem = IBUS_DEVICE_BMBT;
-                uint8_t volStepMax = 0x03;
-                if (context->ibusModuleStatus.MID == 1) {
-                    sourceSystem = IBUS_DEVICE_MID;
-                }
-                if (context->uiMode == CONFIG_UI_CD53) {
-                    sourceSystem = IBUS_DEVICE_MFL;
-                    volStepMax = 0x01;
-                }
-                while (volume > 0) {
-                    uint8_t volStep = volume;
-                    if (volStep > volStepMax) {
-                        volStep = volStepMax;
-                    }
-                    IBusCommandSetVolume(
-                        context->ibus,
-                        sourceSystem,
-                        IBUS_DEVICE_RAD,
-                        volStep << 4
-                    );
-                    volume = volume - volStep;
-                }
-                context->telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
-                if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
-                    dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
-                    context->ibusModuleStatus.DSP == 1
-                ) {
-                    IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
-                }
+                IBusCommandSetVolume(
+                    context->ibus,
+                    sourceSystem,
+                    IBUS_DEVICE_RAD,
+                    volStep << 4
+                );
+                volume = volume - volStep;
+            }
+            context->telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
+            if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
+                dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
+                context->ibus->moduleStatus.DSP == 1
+            ) {
+                IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
             }
         }
     }
@@ -391,6 +400,14 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
             BC127CommandAT(context->bt, "CSCS", "\"UTF-8\"");
             // Explicitly enable Calling Line Identification (Caller ID)
             BC127CommandAT(context->bt, "CLIP", "1");
+            if (context->bt->activeDevice.hfpId != 0 &&
+                context->bt->activeDevice.pbapId == 0
+            ) {
+                BC127CommandProfileOpen(
+                    context->bt,
+                    "PBAP"
+                );
+            }
         }
         if (context->bt->type == BT_BTM_TYPE_BM83) {
             // Request Device Name if it is empty
@@ -406,15 +423,6 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                 );
             }
         }
-        // @TODO Handle cases where PBAP access is not given
-        //if (context->bt->activeDevice.hfpId != 0 &&
-        //    context->bt->activeDevice.pbapId == 0
-        //) {
-        //    BC127CommandProfileOpen(
-        //        context->bt,
-        //        "PBAP"
-        //    );
-        //}
     } else {
         BTCommandDisconnect(context->bt);
     }
@@ -575,7 +583,7 @@ void HandlerBTBM83AVRCPUpdates(void *ctx, uint8_t *data)
         TimerResetScheduledTask(context->avrcpRegisterStatusNotifierTimerId);
     } else if (type == BM83_AVRCP_EVT_PLAYBACK_TRACK_CHANGED) {
         // On AVRCP "Change"
-        if (status == 0x00) {
+        if (status != BM83_DATA_AVC_RSP_INTERIM) {
             context->bt->avrcpUpdates = SET_BIT(
                 context->bt->avrcpUpdates,
                 BT_AVRCP_ACTION_SET_TRACK_CHANGE_NOTIF
@@ -646,6 +654,34 @@ void HandlerBTBM83BootStatus(void *ctx, uint8_t *data)
 }
 
 /* Timers */
+
+/**
+ * HandlerTimerBTTCUStateChange()
+ *     Description:
+ *         Enable TCU interface after a given timeout so we don't error out
+ *         the S/PDIF interface in the DSP Amplifier
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerBTTCUStateChange(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+        LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU > Enable");
+        // Enable the amp and mute the radio
+        PAM_SHDN = 1;
+        UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 1);
+        // Set the DAC Volume to the "telephone" volume
+        PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL));
+    }
+    TimerSetTaskInterval(
+        context->tcuStateChangeTimerId,
+        TIMER_TASK_DISABLED
+    );
+}
+
 /**
  * HandlerTimerVolumeManagement()
  *     Description:
@@ -673,7 +709,7 @@ void HandlerTimerBTVolumeManagement(void *ctx)
     uint32_t now = TimerGetMillis();
     // Lower volume when PDC is active
     if (lowerVolumeOnReverse == CONFIG_SETTING_ON &&
-        context->ibusModuleStatus.PDC == 1 &&
+        context->ibus->moduleStatus.PDC == 1 &&
         context->bt->activeDevice.a2dpId != 0
     ) {
         uint32_t timeSinceUpdate = now - context->pdcLastStatus;

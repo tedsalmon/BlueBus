@@ -428,11 +428,11 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     } else {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
     }
-    unsigned char tempMode = ConfigGetTempDisplay();
+    uint8_t tempMode = ConfigGetTempDisplay();
     // Clear the "CD1" Header
     IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "    ");
     IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
-    unsigned char valueType = 0;
+    uint8_t valueType = 0;
     switch (tempMode) {
         case CONFIG_SETTING_TEMP_COOLANT:
             valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
@@ -570,14 +570,13 @@ static void BMBTMenuDashboard(BMBTContext_t *context)
             strncpy(album, " ", 2);
         }
     } else {
+        // Set "Unknown" text for title and artist when missing but ignore
+        // missing album information as many streaming apps do not provide it
         if (strlen(title) == 0) {
             UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_UNKNOWN_TITLE), BT_METADATA_FIELD_SIZE);
         }
         if (strlen(artist) == 0) {
             UtilsStrncpy(artist, LocaleGetText(LOCALE_STRING_UNKNOWN_ARTIST), BT_METADATA_FIELD_SIZE);
-        }
-        if (strlen(album) == 0) {
-            UtilsStrncpy(album, LocaleGetText(LOCALE_STRING_UNKNOWN_ALBUM), BT_METADATA_FIELD_SIZE);
         }
     }
     BMBTMenuDashboardUpdate(context, title, artist, album);
@@ -713,17 +712,17 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
             0
         );
     }
-    unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
+    uint8_t currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
     char volText[BMBT_MENU_STRING_MAX_SIZE] = {0};
     if (currentVolume > 0x30) {
-        unsigned char gain = (currentVolume - 0x30) / 2;
+        uint8_t gain = (currentVolume - 0x30) / 2;
         snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
     } else if (currentVolume == 0) {
         snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
     } else if (currentVolume == 0x30) {
         snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
     } else {
-        unsigned char gain = (0x30 - currentVolume) / 2;
+        uint8_t gain = (0x30 - currentVolume) / 2;
         snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
     }
     BMBTGTWriteIndex(
@@ -732,7 +731,7 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
         volText,
         0
     );
-    unsigned char dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
+    uint8_t dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
     if (dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF) {
         BMBTGTWriteIndex(
             context,
@@ -782,7 +781,7 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
             context,
             BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL,
             LocaleGetText(LOCALE_STRING_REV_VOL_LOW_OFF),
-            1
+            2
         );
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
@@ -793,7 +792,7 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
 
 static void BMBTMenuSettingsComfort(BMBTContext_t *context)
 {
-    unsigned char comfortLock = ConfigGetComfortLock();
+    uint8_t comfortLock = ConfigGetComfortLock();
     if (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM) {
         BMBTGTWriteIndex(
             context,
@@ -816,7 +815,7 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
             0
         );
     }
-    unsigned char comfortUnlock = ConfigGetComfortUnlock();
+    uint8_t comfortUnlock = ConfigGetComfortUnlock();
     if (comfortUnlock == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
         BMBTGTWriteIndex(
             context,
@@ -839,7 +838,7 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
             0
         );
     }
-    unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
+    uint8_t blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
     if (blinkCount == 0) {
         blinkCount = 1;
     }
@@ -889,7 +888,7 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
             0
         );
     }
-    unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+    uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
     char micGainText[BMBT_MENU_STRING_MAX_SIZE] = {0};
     if (context->bt->type == BT_BTM_TYPE_BC127) {
         if (micGain > 21) {
@@ -906,8 +905,45 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
         context,
         BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN,
         micGainText,
-        3
+        0
     );
+    uint8_t volOffsetSkip = 0;
+    if (context->bt->type == BT_BTM_TYPE_BC127) {
+        volOffsetSkip = 3;
+    }
+    uint8_t volumeOffset = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+    char volOffsetText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(
+        volOffsetText,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_VOL_OFFSET),
+        volumeOffset
+    );
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_CALLING_VOL_OFFSET,
+        volOffsetText,
+        volOffsetSkip
+    );
+    // Hide TCU Mode option on HW Version 1. It is not necessary there.
+    if (context->bt->type != BT_BTM_TYPE_BC127) {
+        uint8_t telMode = ConfigGetSetting(CONFIG_SETTING_TEL_MODE);
+        if (telMode == CONFIG_SETTING_TEL_MODE_DEFAULT) {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_DEFAULT),
+                2
+            );
+        } else {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_TCU),
+                2
+            );
+        }
+    }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
     IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_CALLING));
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
@@ -931,7 +967,7 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             0
         );
     }
-    unsigned char metadataMode = ConfigGetSetting(CONFIG_SETTING_METADATA_MODE);
+    uint8_t metadataMode = ConfigGetSetting(CONFIG_SETTING_METADATA_MODE);
     if (metadataMode == BMBT_METADATA_MODE_PARTY) {
         BMBTGTWriteIndex(
             context,
@@ -954,7 +990,7 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             0
         );
     }
-    unsigned char tempMode = ConfigGetTempDisplay();
+    uint8_t tempMode = ConfigGetTempDisplay();
     if (tempMode == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
             context,
@@ -984,7 +1020,7 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             0
         );       
     }
-    unsigned char dashboardOBC = ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS);
+    uint8_t dashboardOBC = ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC);
     if (dashboardOBC == CONFIG_SETTING_ON) {
         BMBTGTWriteIndex(
             context,
@@ -1000,7 +1036,22 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             0
         );
     }
-    unsigned char selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    if (ConfigGetSetting(CONFIG_SETTING_MONITOR_OFF) == CONFIG_SETTING_ON) {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF,
+            LocaleGetText(LOCALE_STRING_BMBT_OFF_ON),
+            0
+        );
+    } else {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF,
+            LocaleGetText(LOCALE_STRING_BMBT_OFF_OFF),
+            0
+        );
+    }
+    uint8_t selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
     char localeName[3] = {0};
     switch (selectedLanguage) {
         case CONFIG_SETTING_LANGUAGE_DUTCH:
@@ -1039,7 +1090,7 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         context,
         BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
         langStr,
-        2
+        1
     );
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
     IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_UI));
@@ -1057,7 +1108,7 @@ static void BMBTSettingsUpdateAbout(BMBTContext_t *context, uint8_t selectedIdx)
 static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
 {
     if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_DAC_GAIN) {
-        unsigned char currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
+        uint8_t currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
         currentVolume = currentVolume + 2;
         if (currentVolume > 96) {
             currentVolume = 0;
@@ -1065,20 +1116,20 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
         ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, currentVolume);
         char volText[BMBT_MENU_STRING_MAX_SIZE] = {0};
         if (currentVolume > 0x30) {
-            unsigned char gain = (currentVolume - 0x30) / 2;
+            uint8_t gain = (currentVolume - 0x30) / 2;
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
         } else if (currentVolume == 0) {
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
         } else if (currentVolume == 0x30) {
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
         } else {
-            unsigned char gain = (0x30 - currentVolume) / 2;
+            uint8_t gain = (0x30 - currentVolume) / 2;
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
         }
         BMBTGTWriteIndex(context, selectedIdx, volText, 0);
         PCM51XXSetVolume(currentVolume);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT) {
-        unsigned char dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
+        uint8_t dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
         if (dspInput == CONFIG_SETTING_OFF) {
             ConfigSetSetting(CONFIG_SETTING_DSP_INPUT_SRC, CONFIG_SETTING_DSP_INPUT_SPDIF);
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
@@ -1126,7 +1177,7 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
 static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedIdx)
 {
     if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS) {
-        unsigned char value = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
+        uint8_t value = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
         if (value == 0) {
             value = 1;
         } else if (value == 8) {
@@ -1138,7 +1189,7 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         snprintf(blinkerText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_BLINKERS), value);
         BMBTGTWriteIndex(context, selectedIdx, blinkerText, 0);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS) {
-        unsigned char value = ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS);
+        uint8_t value = ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS);
         if (value == CONFIG_SETTING_OFF) {
             value = CONFIG_SETTING_ON;
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_ON), 0);
@@ -1151,7 +1202,7 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         IBusCommandLMGetClusterIndicators(context->ibus);
         ConfigSetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS, value);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_LOCK) {
-        unsigned char comfortLock = ConfigGetComfortLock();
+        uint8_t comfortLock = ConfigGetComfortLock();
         if (comfortLock == CONFIG_SETTING_OFF ||
             comfortLock > CONFIG_SETTING_COMFORT_LOCK_20KM
         ) {
@@ -1165,7 +1216,7 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_LOCK_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_UNLOCK) {
-        unsigned char comfortUnlock = ConfigGetComfortUnlock();
+        uint8_t comfortUnlock = ConfigGetComfortUnlock();
         if (comfortUnlock == CONFIG_SETTING_OFF ||
             comfortUnlock > CONFIG_SETTING_COMFORT_UNLOCK_POS_0
         ) {
@@ -1189,28 +1240,50 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
 static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedIdx)
 {
     if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_HFP) {
-        unsigned char value = ConfigGetSetting(CONFIG_SETTING_HFP);
-        if (value == 0x00) {
-            ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
-            BC127CommandSetProfiles(context->bt, 1, 1, 0, 1);
+        uint8_t value = ConfigGetSetting(CONFIG_SETTING_HFP);
+        if (context->bt->type == BT_BTM_TYPE_BC127) {
+            if (value == 0x00) {
+                ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
+                BC127CommandProfileOpen(context->bt, "HFP");
+            } else {
+                ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
+                BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
+            }
         } else {
-            BC127CommandSetProfiles(context->bt, 1, 1, 0, 0);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
-            ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
+            if (value == 0x01) {
+                BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
+                ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
+            } else {
+                BTPairedDevice_t *device = 0;
+                uint8_t i = 0;
+                for (i = 0; i < BT_MAC_ID_LEN; i++) {
+                    BTPairedDevice_t *tmpDev = &context->bt->pairedDevices[i];
+                    if (memcmp(context->bt->activeDevice.macId, tmpDev->macId, BT_MAC_ID_LEN) == 0) {
+                        device = tmpDev;
+                    }
+                }
+                if (device != 0) {
+                    BM83CommandConnect(
+                        context->bt, 
+                        device, 
+                        BM83_DATA_LINK_BACK_PROFILES_HF
+                    );
+                }
+                ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
+            }
         }
-        BC127CommandReset(context->bt);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN) {
-        unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+        uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
         micGain = micGain + 1;
         char micGainText[BMBT_MENU_STRING_MAX_SIZE] = {0};
         if (context->bt->type == BT_BTM_TYPE_BC127) {
             if (micGain > 21) {
                 micGain = 0;
             }
-            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
-            unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
-            unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+
+            uint8_t micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+            uint8_t micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
             BC127CommandSetMicGain(
                 context->bt,
                 micGain,
@@ -1222,7 +1295,6 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             if (micGain > 0x0F) {
                 micGain = 0;
             }
-            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
             if (micGain == 0x00) {
                 // Reset the gain
                 uint8_t start = 0x0F;
@@ -1235,12 +1307,52 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             }
             snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t) BTBM83MicGainTable[micGain]);
         }
+        ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN,
             micGainText,
             0
         );
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_VOL_OFFSET) {
+        uint8_t volumeOffset = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        volumeOffset = volumeOffset + 1;
+        char volOffsetText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+        if (volumeOffset > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
+            volumeOffset = 0;
+        }
+        ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volumeOffset);
+        snprintf(
+            volOffsetText,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_VOL_OFFSET),
+            volumeOffset
+        );
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_CALLING_VOL_OFFSET,
+            volOffsetText,
+            0
+        );
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MODE) {
+        uint8_t telMode = ConfigGetSetting(CONFIG_SETTING_TEL_MODE);
+        if (telMode == CONFIG_SETTING_TEL_MODE_DEFAULT) {
+            ConfigSetSetting(CONFIG_SETTING_TEL_MODE, CONFIG_SETTING_TEL_MODE_TCU);
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_TCU),
+                0
+            );
+        } else {
+            ConfigSetSetting(CONFIG_SETTING_TEL_MODE, CONFIG_SETTING_TEL_MODE_DEFAULT);
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_DEFAULT),
+                0
+            );
+        }
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
@@ -1252,7 +1364,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
 static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
 {
     if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_METADATA_MODE) {
-        unsigned char value = ConfigGetSetting(CONFIG_SETTING_METADATA_MODE);
+        uint8_t value = ConfigGetSetting(CONFIG_SETTING_METADATA_MODE);
         if (value == 0x00) {
             value = BMBT_METADATA_MODE_PARTY;
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_METADATA_PARTY), 0);
@@ -1291,15 +1403,15 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_MAIN), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_TEMPS) {
-        unsigned char tempMode = ConfigGetTempDisplay();
+        uint8_t tempMode = ConfigGetTempDisplay();
         if (tempMode == CONFIG_SETTING_OFF) {
             ConfigSetTempDisplay(CONFIG_SETTING_TEMP_COOLANT);
-            unsigned char valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
+            uint8_t valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
             BMBTIBusSensorValueUpdate((void *)context, &valueType);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_COOLANT), 0);
         } else if (tempMode == CONFIG_SETTING_TEMP_COOLANT) {
             ConfigSetTempDisplay(CONFIG_SETTING_TEMP_AMBIENT);
-            unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
+            uint8_t valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
             BMBTIBusSensorValueUpdate((void *)context, &valueType);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT), 0);
         } else if (
@@ -1307,7 +1419,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E46_Z4
         ) {
             ConfigSetTempDisplay(CONFIG_SETTING_TEMP_OIL);
-            unsigned char valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
+            uint8_t valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
             BMBTIBusSensorValueUpdate((void *)context, &valueType);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OIL), 0);
         } else {
@@ -1341,8 +1453,26 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 CONFIG_SETTING_ON
             );
         }
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF) {
+        if (ConfigGetSetting(CONFIG_SETTING_MONITOR_OFF) == CONFIG_SETTING_ON) {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF,
+                LocaleGetText(LOCALE_STRING_BMBT_OFF_OFF),
+                0
+            );
+            ConfigSetSetting(CONFIG_SETTING_MONITOR_OFF, CONFIG_SETTING_OFF);
+        } else {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF,
+                LocaleGetText(LOCALE_STRING_BMBT_OFF_ON),
+                0
+            );
+            ConfigSetSetting(CONFIG_SETTING_MONITOR_OFF, CONFIG_SETTING_ON);
+        }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE) {
-        unsigned char selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+        uint8_t selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
         if (selectedLanguage == CONFIG_SETTING_LANGUAGE_DUTCH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
@@ -1376,11 +1506,11 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
  *         Handle screen updates when a device connects
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *tmp - The data from the event
+ *         uint8_t *tmp - The data from the event
  *     Returns:
  *         void
  */
-void BMBTBTDeviceConnected(void *ctx, unsigned char *data)
+void BMBTBTDeviceConnected(void *ctx, uint8_t *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE &&
@@ -1400,11 +1530,11 @@ void BMBTBTDeviceConnected(void *ctx, unsigned char *data)
  *         Handle screen updates when a device disconnects
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *tmp - The data from the event
+ *         uint8_t *tmp - The data from the event
  *     Returns:
  *         void
  */
-void BMBTBTDeviceDisconnected(void *ctx, unsigned char *data)
+void BMBTBTDeviceDisconnected(void *ctx, uint8_t *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE &&
@@ -1425,11 +1555,11 @@ void BMBTBTDeviceDisconnected(void *ctx, unsigned char *data)
  *         Handle metadata updates from the BT module
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *tmp - The data from the event
+ *         uint8_t *tmp - The data from the event
  *     Returns:
  *         void
  */
-void BMBTBTMetadata(void *ctx, unsigned char *data)
+void BMBTBTMetadata(void *ctx, uint8_t *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE &&
@@ -1461,11 +1591,11 @@ void BMBTBTMetadata(void *ctx, unsigned char *data)
  *         Handle the BT Module playback state changes
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *tmp - The data from the event
+ *         uint8_t *tmp - The data from the event
  *     Returns:
  *         void
  */
-void BMBTBTPlaybackStatus(void *ctx, unsigned char *tmp)
+void BMBTBTPlaybackStatus(void *ctx, uint8_t *tmp)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.displayMode == BMBT_DISPLAY_ON) {
@@ -1486,11 +1616,11 @@ void BMBTBTPlaybackStatus(void *ctx, unsigned char *tmp)
  *         Handle the BT module rebooting gracefully
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *tmp - The data from the event
+ *         uint8_t *tmp - The data from the event
  *     Returns:
  *         void
  */
-void BMBTBTReady(void *ctx, unsigned char *tmp)
+void BMBTBTReady(void *ctx, uint8_t *tmp)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     BMBTHeaderWriteDeviceName(context, LocaleGetText(LOCALE_STRING_NO_DEVICE));
@@ -1505,11 +1635,11 @@ void BMBTBTReady(void *ctx, unsigned char *tmp)
  *         Handle button presses on the BoardMonitor
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *pkt - A pointer to the data packet
+ *         uint8_t *pkt - A pointer to the data packet
  *     Returns:
  *         void
  */
-void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
+void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE) {
@@ -1580,14 +1710,14 @@ void BMBTIBusBMBTButtonPress(void *ctx, unsigned char *pkt)
  *         screen or not, as well as handle playback state
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *pkt - A pointer to the data packet
+ *         uint8_t *pkt - A pointer to the data packet
  *     Returns:
  *         void
  */
-void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
+void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    unsigned char requestedCommand = pkt[IBUS_PKT_DB1];
+    uint8_t requestedCommand = pkt[IBUS_PKT_DB1];
     if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
         // Stop Playing
         if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
@@ -1639,11 +1769,11 @@ void BMBTIBusCDChangerStatus(void *ctx, unsigned char *pkt)
  *         Display the Telephone UI when the GT requests it
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *pkt - A pointer to the data packet
+ *         uint8_t *pkt - A pointer to the data packet
  *     Returns:
  *         void
  */
-void BMBTIBusGTChangeUIRequest(void *ctx, unsigned char *pkt)
+void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[5] == 0x0C) {
@@ -1653,7 +1783,7 @@ void BMBTIBusGTChangeUIRequest(void *ctx, unsigned char *pkt)
     }
 }
 
-void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
+void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     uint8_t selectedIdx = (uint8_t) pkt[6];
@@ -1713,7 +1843,7 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
                     // Trigger device selection event
                     EventTriggerCallback(
                         UIEvent_InitiateConnection,
-                        (unsigned char *)&deviceId
+                        (uint8_t *)&deviceId
                     );
                 }
             }
@@ -1751,11 +1881,11 @@ void BMBTIBusMenuSelect(void *ctx, unsigned char *pkt)
  *         Respond to screen flushes that may not have been made by us
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *pkt - The I/K-Bus packet
+ *         uint8_t *pkt - The I/K-Bus packet
  *     Returns:
  *         void
  */
-void BMBTIBusScreenBufferFlush(void *ctx, unsigned char *pkt)
+void BMBTIBusScreenBufferFlush(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     // Ignore Zone (Header) updates
@@ -1773,14 +1903,14 @@ void BMBTIBusScreenBufferFlush(void *ctx, unsigned char *pkt)
  *         Respond to sensor value updates emitted on the I/K-Bus
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
- *         unsigned char *type - The update type
+ *         uint8_t *type - The update type
  *     Returns:
  *         void
  */
-void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
+void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    unsigned char updateType = *type;
+    uint8_t updateType = *type;
     int temp = 0;
     char tempUnit = 'C';
     char redraw = 0;
@@ -1878,11 +2008,11 @@ void BMBTIBusSensorValueUpdate(void *ctx, unsigned char *type)
  *         screen is restored to our menu.
  *     Params:
  *         void *ctx - The context
- *         unsigned char *pkt - The IBus Message received
+ *         uint8_t *pkt - The IBus Message received
  *     Returns:
  *         void
  */
-void BMBTRADDisplayMenu(void *ctx, unsigned char *pkt)
+void BMBTRADDisplayMenu(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     context->status.displayMode = BMBT_DISPLAY_TONE_SEL;
@@ -1897,11 +2027,11 @@ void BMBTRADDisplayMenu(void *ctx, unsigned char *pkt)
  *         to the screen so the UI is always usable.
  *     Params:
  *         void *ctx - The context
- *         unsigned char *pkt - The IBus Message received
+ *         uint8_t *pkt - The IBus Message received
  *     Returns:
  *         void
  */
-void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
+void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == IBUS_C43_TITLE_MODE) {
@@ -1977,11 +2107,11 @@ void BMBTRADUpdateMainArea(void *ctx, unsigned char *pkt)
  *         We use this to know if we can write to the screen or not.
  *     Params:
  *         void *ctx - The context
- *         unsigned char *pkt - The IBus Message received
+ *         uint8_t *pkt - The IBus Message received
  *     Returns:
  *         void
  */
-void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
+void BMBTScreenModeUpdate(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE) {
@@ -2022,11 +2152,11 @@ void BMBTScreenModeUpdate(void *ctx, unsigned char *pkt)
  *         screen clear
  *     Params:
  *         void *ctx - The context
- *         unsigned char *pkt - The IBus Message received
+ *         uint8_t *pkt - The IBus Message received
  *     Returns:
  *         void
  */
-void BMBTScreenModeSet(void *ctx, unsigned char *pkt)
+void BMBTScreenModeSet(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == BMBT_NAV_BOOT) {
@@ -2044,11 +2174,11 @@ void BMBTScreenModeSet(void *ctx, unsigned char *pkt)
  *         Listen for the GT -> RAD Television status message
  *     Params:
  *         void *ctx - The context
- *         unsigned char *pkt - The IBus Message received
+ *         uint8_t *pkt - The IBus Message received
  *     Returns:
  *         void
  */
-void BMBTTVStatusUpdate(void *ctx, unsigned char *pkt)
+void BMBTTVStatusUpdate(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     context->status.tvStatus = pkt[IBUS_PKT_DB1];
@@ -2060,17 +2190,17 @@ void BMBTTVStatusUpdate(void *ctx, unsigned char *pkt)
  *        Update the temperature unit configuration if it changes
  *     Params:
  *         void *ctx - The context
- *         unsigned char *pkt - The IBus Message received
+ *         uint8_t *pkt - The IBus Message received
  *     Returns:
  *         void
  */
-void BMBTIBusVehicleConfig(void *ctx, unsigned char *pkt)
+void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
 {
     // Update the temperature unit
-    unsigned char tempUnit = IBusGetConfigTemp(pkt);
+    uint8_t tempUnit = IBusGetConfigTemp(pkt);
     if (tempUnit != ConfigGetTempUnit()) {
         ConfigSetTempUnit(tempUnit);
-        unsigned char valueType = IBUS_SENSOR_VALUE_TEMP_UNIT;
+        uint8_t valueType = IBUS_SENSOR_VALUE_TEMP_UNIT;
         BMBTIBusSensorValueUpdate(ctx, &valueType);
     }
 }
@@ -2198,7 +2328,7 @@ void BMBTTimerScrollDisplay(void *ctx)
                 UtilsStrncpy(
                     text,
                     &context->mainDisplay.text[context->mainDisplay.index],
-                    textLength
+                    textLength + 1
                 );
                 BMBTGTWriteTitle(context, text);
                 // Pause at the beginning of the text

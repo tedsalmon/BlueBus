@@ -114,6 +114,8 @@
 #define IBUS_DEVICE_BMBT_Button_TEL_Press 0x08
 #define IBUS_DEVICE_BMBT_Button_TEL_Hold 0x48
 #define IBUS_DEVICE_BMBT_Button_TEL_Release 0x88
+#define IBUS_DEVICE_BMBT_BUTTON_PWR_PRESS 0x06
+#define IBUS_DEVICE_BMBT_BUTTON_PWR_RELEASE 0x86
 #define IBUS_CMD_BMBT_BUTTON0 0x47
 #define IBUS_CMD_BMBT_BUTTON1 0x48
 
@@ -137,19 +139,24 @@
 
 #define IBUS_CMD_VOLUME_SET 0x32
 
-#define IBUS_CMD_GT_RAD_TV_STATUS 0x4E
-#define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
-#define IBUS_CMD_GT_MENU_SELECT 0x31
+
 #define IBUS_CMD_GT_WRITE_NO_CURSOR 0x21
-#define IBUS_CMD_GT_WRITE_WITH_CURSOR 0xA5
+
+#define IBUS_CMD_GT_CHANGE_UI_REQ 0x20
+#define IBUS_CMD_GT_CHANGE_UI_RESP 0x21
 #define IBUS_CMD_GT_WRITE_RESPONSE 0x22
 #define IBUS_CMD_GT_WRITE_TITLE 0x23
+#define IBUS_CMD_GT_MENU_SELECT 0x31
+#define IBUS_CMD_GT_DISPLAY_RADIO_MENU 0x37
+#define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
+#define IBUS_CMD_GT_RAD_TV_STATUS 0x4E
+#define IBUS_CMD_GT_MONITOR_CONTROL 0x4F
 #define IBUS_CMD_GT_WRITE_INDEX 0x60
 #define IBUS_CMD_GT_WRITE_INDEX_TMC 0x61
 #define IBUS_CMD_GT_WRITE_ZONE 0x62
 #define IBUS_CMD_GT_WRITE_STATIC 0x63
+#define IBUS_CMD_GT_WRITE_WITH_CURSOR 0xA5
 
-#define IBUS_CMD_GT_DISPLAY_RADIO_MENU 0x37
 
 #define IBUS_CMD_IKE_IGN_STATUS_REQ 0x10
 #define IBUS_CMD_IKE_IGN_STATUS_RESP 0x11
@@ -171,6 +178,8 @@
 #define IBUS_CMD_MOD_STATUS_RESP 0x02
 
 #define IBUS_CMD_PDC_STATUS 0x07
+
+#define IBUS_CMD_RAD_LED_TAPE_CTRL 0x4A
 
 #define IBUS_CMD_RAD_SCREEN_MODE_UPDATE 0x46
 #define IBUS_CMD_RAD_UPDATE_MAIN_AREA 0x23
@@ -197,8 +206,8 @@
 #define IBUS_GT_SEL_MENU_OFF 0x04
 #define IBUS_GT_MENU_CLEAR 0x0C
 #define IBUS_GT_RADIO_SCREEN_OFF 0x02
-#define IBUS_CMD_GT_CHANGE_UI_REQ 0x20
-#define IBUS_CMD_GT_CHANGE_UI_RESP 0x21
+#define IBUS_GT_MONITOR_OFF 0x00
+
 
 #define IBUS_IGNITION_OFF 0x00
 #define IBUS_IGNITION_KLR 0x01
@@ -286,7 +295,7 @@
 #define IBusMIDSymbolNext 0xC9
 #define IBusMIDSymbolBack 0xCA
 
-#define IBus_MID_MAX_CHARS 23
+#define IBus_MID_MAX_CHARS 24
 #define IBus_MID_TITLE_MAX_CHARS 11
 #define IBus_MID_MENU_MAX_CHARS 4
 #define IBus_MID_CMD_MODE 0x20
@@ -367,6 +376,8 @@
 #define IBUS_GM_ZKEBC1 8
 #define IBUS_GM_ZKEBC1RD 9
 
+#define IBUS_TCU_SINGLE_LINE_UI_MAX_LEN 11
+
 // Events
 #define IBUS_EVENT_GTDIAIdentityResponse 32
 #define IBUS_EVENT_CDPoll 33
@@ -389,7 +400,7 @@
 #define IBUS_EVENT_MFLVolume 50
 #define IBUS_EVENT_MIDButtonPress 51
 #define IBUS_EVENT_MIDModeChange 52
-#define IBUS_EVENT_ModuleStatusResponse 54
+#define IBUS_EVENT_MODULE_STATUS_RESP 54
 #define IBUS_EVENT_IKE_VEHICLE_CONFIG 55
 #define IBUS_EVENT_LCMRedundantData 56
 #define IBUS_EVENT_FirstMessageReceived 57
@@ -407,6 +418,7 @@
 #define IBUS_EVENT_PDC_STATUS 69
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
+#define IBUS_EVENT_GT_TELEMATICS_DATA 72
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -420,6 +432,18 @@
 #define IBUS_TX_TIMEOUT_DATA_SENT 2
 #define IBUS_TX_TIMEOUT_WAIT 250
 
+typedef struct IBusModuleStatus_t {
+    uint8_t BMBT: 1;
+    uint8_t DSP: 1;
+    uint8_t GT: 1;
+    uint8_t IKE: 1;
+    uint8_t LCM: 1;
+    uint8_t MID: 1;
+    uint8_t RAD: 1;
+    uint8_t VM: 1;
+    uint8_t PDC: 1;
+} IBusModuleStatus_t;
+
 /**
  * IBus_t
  *     Description:
@@ -428,9 +452,9 @@
  */
 typedef struct IBus_t {
     UART_t uart;
-    unsigned char rxBuffer[IBUS_RX_BUFFER_SIZE];
+    uint8_t rxBuffer[IBUS_RX_BUFFER_SIZE];
     uint8_t rxBufferIdx;
-    unsigned char txBuffer[IBUS_TX_BUFFER_SIZE][IBUS_MAX_MSG_LENGTH];
+    uint8_t txBuffer[IBUS_TX_BUFFER_SIZE][IBUS_MAX_MSG_LENGTH];
     uint8_t txBufferReadbackIdx;
     uint8_t txBufferReadIdx;
     uint8_t txBufferWriteIdx;
@@ -438,44 +462,45 @@ typedef struct IBus_t {
     uint32_t txLastStamp;
     signed char ambientTemperature;
     char ambientTemperatureCalculated[7];
-    unsigned char coolantTemperature;
-    unsigned char cdChangerFunction;
-    unsigned char gearPosition: 4;
-    unsigned char gtVersion;
-    unsigned char ignitionStatus: 4;
-    unsigned char lmDimmerVoltage;
-    unsigned char lmLoadFrontVoltage;
-    unsigned char lmLoadRearVoltage;
-    unsigned char lmPhotoVoltage;
-    unsigned char lmVariant;
-    unsigned char oilTemperature;
-    unsigned char vehicleType;
+    uint8_t coolantTemperature;
+    uint8_t cdChangerFunction;
+    uint8_t gearPosition: 4;
+    uint8_t gtVersion;
+    uint8_t ignitionStatus: 4;
+    uint8_t lmDimmerVoltage;
+    uint8_t lmLoadFrontVoltage;
+    uint8_t lmLoadRearVoltage;
+    uint8_t lmPhotoVoltage;
+    uint8_t lmVariant;
+    uint8_t oilTemperature;
+    uint8_t vehicleType;
+    IBusModuleStatus_t moduleStatus;
 } IBus_t;
 
 IBus_t IBusInit();
 void IBusProcess(IBus_t *);
-void IBusSendCommand(IBus_t *, const unsigned char, const unsigned char, const unsigned char *, const size_t);
-void IBusSetInternalIgnitionStatus(IBus_t *, unsigned char);
-uint8_t IBusGetLMCodingIndex(unsigned char *);
-uint8_t IBusGetLMDiagnosticIndex(unsigned char *);
-uint8_t IBusGetLMDimmerChecksum(unsigned char *);
-uint8_t IBusGetLMVariant(unsigned char *);
-uint8_t IBusGetNavDiagnosticIndex(unsigned char *);
-uint8_t IBusGetNavHWVersion(unsigned char *);
-uint8_t IBusGetNavSWVersion(unsigned char *);
-uint8_t IBusGetNavType(unsigned char *);
-uint8_t IBusGetVehicleType(unsigned char *);
-uint8_t IBusGetConfigTemp(unsigned char *);
+void IBusSendCommand(IBus_t *, const uint8_t, const uint8_t, const uint8_t *, const size_t);
+void IBusSetInternalIgnitionStatus(IBus_t *, uint8_t);
+uint8_t IBusGetLMCodingIndex(uint8_t *);
+uint8_t IBusGetLMDiagnosticIndex(uint8_t *);
+uint8_t IBusGetLMDimmerChecksum(uint8_t *);
+uint8_t IBusGetLMVariant(uint8_t *);
+uint8_t IBusGetNavDiagnosticIndex(uint8_t *);
+uint8_t IBusGetNavHWVersion(uint8_t *);
+uint8_t IBusGetNavSWVersion(uint8_t *);
+uint8_t IBusGetNavType(uint8_t *);
+uint8_t IBusGetVehicleType(uint8_t *);
+uint8_t IBusGetConfigTemp(uint8_t *);
 void IBusCommandCDCAnnounce(IBus_t *);
-void IBusCommandCDCStatus(IBus_t *, unsigned char, unsigned char, unsigned char, unsigned char);
-void IBusCommandDIAGetCodingData(IBus_t *, unsigned char, unsigned char, unsigned char);
-void IBusCommandDIAGetIdentity(IBus_t *, unsigned char);
-void IBusCommandDIAGetIOStatus(IBus_t *, unsigned char);
-void IBusCommandDIAGetOSIdentity(IBus_t *, unsigned char);
-void IBusCommandDIATerminateDiag(IBus_t *, unsigned char);
-void IBusCommandDSPSetMode(IBus_t *, unsigned char);
-void IBusCommandGetModuleStatus(IBus_t *, unsigned char, unsigned char);
-void IBusCommandSetModuleStatus(IBus_t *, unsigned char, unsigned char, unsigned char);
+void IBusCommandCDCStatus(IBus_t *, uint8_t, uint8_t, uint8_t, uint8_t);
+void IBusCommandDIAGetCodingData(IBus_t *, uint8_t, uint8_t, uint8_t);
+void IBusCommandDIAGetIdentity(IBus_t *, uint8_t);
+void IBusCommandDIAGetIOStatus(IBus_t *, uint8_t);
+void IBusCommandDIAGetOSIdentity(IBus_t *, uint8_t);
+void IBusCommandDIATerminateDiag(IBus_t *, uint8_t);
+void IBusCommandDSPSetMode(IBus_t *, uint8_t);
+void IBusCommandGetModuleStatus(IBus_t *, uint8_t, uint8_t);
+void IBusCommandSetModuleStatus(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandGMDoorCenterLockButton(IBus_t *);
 void IBusCommandGMDoorUnlockHigh(IBus_t *);
 void IBusCommandGMDoorUnlockLow(IBus_t *);
@@ -483,7 +508,8 @@ void IBusCommandGMDoorLockHigh(IBus_t *);
 void IBusCommandGMDoorLockLow(IBus_t *);
 void IBusCommandGMDoorUnlockAll(IBus_t *);
 void IBusCommandGMDoorLockAll(IBus_t *);
-void IBusCommandGTUpdate(IBus_t *, unsigned char);
+void IBusCommandGTBMBTControl(IBus_t *, uint8_t);
+void IBusCommandGTUpdate(IBus_t *, uint8_t);
 void IBusCommandGTWriteBusinessNavTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteIndexTMC(IBus_t *, uint8_t, char *);
@@ -498,29 +524,29 @@ void IBusCommandIKEGetVehicleConfig(IBus_t *);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandTELIKEDisplayWrite(IBus_t *, char *);
 void IBusCommandTELIKEDisplayClear(IBus_t *);
-void IBusCommandLMActivateBulbs(IBus_t *, unsigned char, unsigned char);
+void IBusCommandLMActivateBulbs(IBus_t *, uint8_t, uint8_t);
 void IBusCommandLMGetClusterIndicators(IBus_t *);
 void IBusCommandLMGetRedundantData(IBus_t *);
-void IBusCommandMIDButtonPress(IBus_t *, unsigned char, unsigned char);
+void IBusCommandMIDButtonPress(IBus_t *, uint8_t, uint8_t);
 void IBusCommandMIDDisplayRADTitleText(IBus_t *, char *);
 void IBusCommandMIDDisplayText(IBus_t *, char *);
-void IBusCommandMIDMenuWriteMany(IBus_t *, uint8_t, unsigned char *, uint8_t);
+void IBusCommandMIDMenuWriteMany(IBus_t *, uint8_t, uint8_t *, uint8_t);
 void IBusCommandMIDMenuWriteSingle(IBus_t *, uint8_t, char *);
-void IBusCommandMIDSetMode(IBus_t *, unsigned char, unsigned char);
-void IBusCommandRADC43ScreenModeSet(IBus_t *, unsigned char);
-void IBusCommandRADCDCRequest(IBus_t *, unsigned char);
+void IBusCommandMIDSetMode(IBus_t *, uint8_t, uint8_t);
+void IBusCommandRADC43ScreenModeSet(IBus_t *, uint8_t);
+void IBusCommandRADCDCRequest(IBus_t *, uint8_t);
 void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
-void IBusCommandSetVolume(IBus_t *, unsigned char, unsigned char, unsigned char);
+void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
-void IBusCommandTELSetLED(IBus_t *, unsigned char);
-void IBusCommandTELStatus(IBus_t *, unsigned char);
-void IBusCommandTELStatusText(IBus_t *, char *, unsigned char);
+void IBusCommandTELSetLED(IBus_t *, uint8_t);
+void IBusCommandTELStatus(IBus_t *, uint8_t);
+void IBusCommandTELStatusText(IBus_t *, char *, uint8_t);
 void IBusCommandOBCControlTempRequest(IBus_t *);
 /* Temporary */
-void IBusCommandIgnitionStatus(IBus_t *, unsigned char);
+void IBusCommandIgnitionStatus(IBus_t *, uint8_t);
 void IBusCommandLCMTurnLeft(IBus_t *);
 void IBusCommandLCMTurnRight(IBus_t *);
 #endif /* IBUS_H */

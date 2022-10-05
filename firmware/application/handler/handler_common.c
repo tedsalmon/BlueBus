@@ -7,6 +7,30 @@
 #include "handler_common.h"
 
 /**
+ * HandlerGetTelMode()
+ *     Description:
+ *         Determine the appropriate TEL mode based on the current vehicle
+ *         configuration
+ *     Params:
+ *         HandlerContext_t *context - The module context
+ *     Returns:
+ *         uint8_t - The TEL mode to use
+ */
+uint8_t HandlerGetTelMode(HandlerContext_t *context)
+{
+    uint8_t dspMode = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
+    uint8_t telMode = ConfigGetSetting(CONFIG_SETTING_TEL_MODE);
+    if ((context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING ||
+        (dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF && context->ibus->moduleStatus.DSP == 1)) &&
+        telMode == CONFIG_SETTING_TEL_MODE_DEFAULT
+    ) {
+        return HANDLER_TEL_MODE_AUDIO;
+    } else {
+        return HANDLER_TEL_MODE_TCU;
+    }
+}
+
+/**
  * HandlerSetIBusTELStatus()
  *     Description:
  *         Send the TEL status to the vehicle

@@ -7,7 +7,7 @@
 #include "bt_bm83.h"
 
 int8_t BTBM83MicGainTable[] = {
-     0, // Default
+    0, // Default
     3,
     7,
     8,
@@ -582,7 +582,7 @@ void BM83ProcessEventAVCSpecificRsp(BT_t *bt, uint8_t *data, uint16_t length)
                 updateType == BM83_AVRCP_EVT_NOW_PLAYING_CONTENT_CHANGED ||
                 updateType == BM83_AVRCP_EVT_ADDRESSED_PLAYER_CHANGED
             ) {
-                uint8_t updateData[2] = {updateType, 0x01};
+                uint8_t updateData[2] = {updateType, BM83_DATA_AVC_RSP_INTERIM};
                 EventTriggerCallback(BT_EVENT_AVRCP_PDU_CHANGE, updateData);
             }
             break;
@@ -741,6 +741,8 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         case BM83_DATA_BTM_STATUS_SCO_DISCO: {
             LogDebug(LOG_SOURCE_BT, "BT: SCO Closed");
             bt->scoStatus = BT_CALL_SCO_CLOSE;
+            // By extension, Voice Recognition is closed when SCO is
+            bt->vrStatus = BT_VOICE_RECOG_OFF;
             EventTriggerCallback(
                 BT_EVENT_CALL_STATUS_UPDATE,
                 (unsigned char *) BT_CALL_SCO_CLOSE
@@ -952,11 +954,13 @@ void BM83ProcessEventReadLinkedDeviceInformation(BT_t *bt, uint8_t *data, uint16
     uint8_t dataType = data[BM83_FRAME_DB1];
     switch (dataType) {
         case BM83_LINKED_DEVICE_QUERY_NAME: {
+            char nameData[BT_DEVICE_NAME_LEN + 1] = {0};
             char deviceName[BT_DEVICE_NAME_LEN + 1] = {0};
             uint8_t i = 0;
             for (i = 0; i < length && i < BT_DEVICE_NAME_LEN; i++) {
-                deviceName[i] = data[i + BM83_FRAME_DB2];
+                nameData[i] = data[i + BM83_FRAME_DB2];
             }
+            UtilsNormalizeText(deviceName, nameData, BT_DEVICE_NAME_LEN + 1);
             LogDebug(LOG_SOURCE_BT, "Connected Device: %s", deviceName);
             strncpy(bt->activeDevice.deviceName, deviceName, BT_DEVICE_NAME_LEN);
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);

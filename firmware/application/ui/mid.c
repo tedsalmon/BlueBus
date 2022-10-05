@@ -7,28 +7,6 @@
 #include "mid.h"
 static MIDContext_t Context;
 
-uint8_t MID_SETTINGS_MENU[] = {
-    MID_SETTING_IDX_HFP,
-    MID_SETTING_IDX_METADATA_MODE,
-    MID_SETTING_IDX_AUTOPLAY,
-    MID_SETTING_IDX_LOWER_VOL_REV,
-    MID_SETTING_IDX_VEH_TYPE,
-    MID_SETTING_IDX_BLINKERS,
-    MID_SETTING_IDX_COMFORT_LOCKS,
-    MID_SETTING_IDX_COMFORT_UNLOCK,
-    MID_SETTING_IDX_AUDIO_DSP,
-    MID_SETTING_IDX_PAIRINGS
-};
-
-uint8_t MID_SETTINGS_TO_MENU[] = {
-    CONFIG_SETTING_HFP,
-    CONFIG_SETTING_METADATA_MODE,
-    CONFIG_SETTING_AUTOPLAY,
-    CONFIG_SETTING_VOLUME_LOWER_ON_REV,
-    CONFIG_VEHICLE_TYPE_ADDRESS,
-    CONFIG_SETTING_COMFORT_BLINKERS
-};
-
 void MIDInit(BT_t *bt, IBus_t *ibus)
 {
     Context.bt = bt;
@@ -39,6 +17,7 @@ void MIDInit(BT_t *bt, IBus_t *ibus)
     Context.mainDisplay = UtilsDisplayValueInit("", MID_DISPLAY_STATUS_OFF);
     Context.tempDisplay = UtilsDisplayValueInit("", MID_DISPLAY_STATUS_OFF);
     Context.modeChangeStatus = MID_MODE_CHANGE_OFF;
+    Context.menuContext = MenuSingleLineInit(ibus, bt, &MIDDisplayUpdateText, &Context);
     strncpy(Context.mainText, "Bluetooth", 10);
     EventRegisterCallback(
         BT_EVENT_METADATA_UPDATE,
@@ -202,224 +181,6 @@ static void MIDShowNextDevice(MIDContext_t *context, uint8_t direction)
     }
 }
 
-static void MIDShowNextSetting(MIDContext_t *context, uint8_t nextMenu)
-{
-    if (nextMenu == MID_SETTING_IDX_HFP) {
-        if (ConfigGetSetting(CONFIG_SETTING_HFP) == 0x00) {
-            MIDSetMainDisplayText(context, "Handsfree: Off", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        } else {
-            MIDSetMainDisplayText(context, "Handsfree: On", 0);
-            context->settingValue = CONFIG_SETTING_ON;
-        }
-        context->settingIdx = MID_SETTING_IDX_HFP;
-    }
-    if (nextMenu == MID_SETTING_IDX_METADATA_MODE) {
-        unsigned char value = ConfigGetSetting(
-            CONFIG_SETTING_METADATA_MODE
-        );
-        if (value == MID_SETTING_METADATA_MODE_OFF) {
-            MIDSetMainDisplayText(context, "Metadata: Off", 0);
-        } else if (value == MID_SETTING_METADATA_MODE_PARTY) {
-            MIDSetMainDisplayText(context, "Metadata: Party", 0);
-        } else if (value == MID_SETTING_METADATA_MODE_CHUNK) {
-            MIDSetMainDisplayText(context, "Metadata: Chunk", 0);
-        }
-        context->settingIdx = MID_SETTING_IDX_METADATA_MODE;
-        context->settingValue = value;
-    }
-    if (nextMenu == MID_SETTING_IDX_AUTOPLAY) {
-        if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == 0x00) {
-            MIDSetMainDisplayText(context, "Autoplay: Off", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        } else {
-            MIDSetMainDisplayText(context, "Autoplay: On", 0);
-            context->settingValue = CONFIG_SETTING_ON;
-        }
-        context->settingIdx = MID_SETTING_IDX_AUTOPLAY;
-    }
-    if (nextMenu == MID_SETTING_IDX_AUTOPLAY) {
-        if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "Lower Volume On Reverse: Off", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        } else {
-            MIDSetMainDisplayText(context, "Lower Vol. On Reverse: On", 0);
-            context->settingValue = CONFIG_SETTING_ON;
-        }
-        context->settingIdx = MID_SETTING_IDX_LOWER_VOL_REV;
-    }
-    if (nextMenu == MID_SETTING_IDX_VEH_TYPE) {
-        unsigned char vehicleType = ConfigGetVehicleType();
-        context->settingValue = vehicleType;
-        if (vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-            MIDSetMainDisplayText(context, "Car: E38/E39/E53", 0);
-        } else if (vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-            MIDSetMainDisplayText(context, "Car: E46/Z4", 0);
-        } else {
-            MIDSetMainDisplayText(context, "Car: Unset", 0);
-        }
-        context->settingIdx = MID_SETTING_IDX_VEH_TYPE;
-    }
-    if (nextMenu == MID_SETTING_IDX_BLINKERS) {
-        unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
-        if (blinkCount > 8 || blinkCount == 0) {
-            blinkCount = 1;
-        }
-        char blinkerText[19] = {0};
-        snprintf(blinkerText, 19, "Comfort Blinks: %d", context->settingValue);
-        MIDSetMainDisplayText(context, blinkerText, 0);
-        context->settingIdx = MID_SETTING_IDX_BLINKERS;
-    }
-    if (nextMenu == MID_SETTING_IDX_COMFORT_LOCKS) {
-        context->settingValue = ConfigGetComfortLock();
-        if (context->settingValue == CONFIG_SETTING_COMFORT_LOCK_10KM) {
-            MIDSetMainDisplayText(context, "Comfort Lock: 10km/h", 0);
-        } else if (context->settingValue == CONFIG_SETTING_COMFORT_LOCK_20KM) {
-            MIDSetMainDisplayText(context, "Comfort Lock: 20km/h", 0);
-        } else {
-            MIDSetMainDisplayText(context, "Comfort Lock: Off", 0);
-        }
-        context->settingIdx = MID_SETTING_IDX_COMFORT_LOCKS;
-    }
-    if (nextMenu == MID_SETTING_IDX_COMFORT_UNLOCK) {
-        context->settingValue = ConfigGetComfortUnlock();
-        if (context->settingValue == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
-            MIDSetMainDisplayText(context, "Comfort Unlock: Pos 1", 0);
-        } else if (context->settingValue == CONFIG_SETTING_COMFORT_UNLOCK_POS_0) {
-            MIDSetMainDisplayText(context, "Comfort Unlock: Pos 0", 0);
-        } else {
-            MIDSetMainDisplayText(context, "Comfort Unlock: Off", 0);
-        }
-        context->settingIdx = MID_SETTING_IDX_COMFORT_UNLOCK;
-    }
-    if (nextMenu == MID_SETTING_IDX_AUDIO_DSP) {
-        context->settingValue = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
-        if (context->settingValue == CONFIG_SETTING_DSP_INPUT_SPDIF) {
-            MIDSetMainDisplayText(context, "DSP: Digital", 0);
-        } else if (context->settingValue == CONFIG_SETTING_DSP_INPUT_ANALOG) {
-            MIDSetMainDisplayText(context, "DSP: Analog", 0);
-        } else {
-            MIDSetMainDisplayText(context, "DSP: Default", 0);
-        }
-        context->settingIdx = MID_SETTING_IDX_AUDIO_DSP;
-    }
-    if (nextMenu== MID_SETTING_IDX_PAIRINGS) {
-        MIDSetMainDisplayText(context, "Clear Pairings", 0);
-        context->settingIdx = MID_SETTING_IDX_PAIRINGS;
-        context->settingValue = CONFIG_SETTING_OFF;
-    }
-}
-
-static void MIDShowNextSettingValue(MIDContext_t *context, uint8_t direction)
-{
-    // Select different configuration options
-    if (context->settingIdx == MID_SETTING_IDX_HFP) {
-        if (context->settingValue == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "On", 0);
-            context->settingValue = CONFIG_SETTING_ON;
-        } else {
-            MIDSetMainDisplayText(context, "Off", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        }
-    }
-    if (context->settingIdx == MID_SETTING_IDX_METADATA_MODE) {
-        if (context->settingValue == MID_SETTING_METADATA_MODE_OFF) {
-            MIDSetMainDisplayText(context, "Party", 0);
-            context->settingValue = MID_SETTING_METADATA_MODE_PARTY;
-        } else if (context->settingValue == MID_SETTING_METADATA_MODE_PARTY) {
-            MIDSetMainDisplayText(context, "Chunk", 0);
-            context->settingValue = MID_SETTING_METADATA_MODE_CHUNK;
-        } else if (context->settingValue == MID_SETTING_METADATA_MODE_CHUNK) {
-            MIDSetMainDisplayText(context, "Off", 0);
-            context->settingValue = MID_SETTING_METADATA_MODE_OFF;
-        }
-    }
-    if (context->settingIdx == MID_SETTING_IDX_AUTOPLAY) {
-        if (context->settingValue == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "On", 0);
-            context->settingValue = CONFIG_SETTING_ON;
-        } else {
-            MIDSetMainDisplayText(context, "Off", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        }
-    }
-    if (context->settingIdx == MID_SETTING_IDX_LOWER_VOL_REV) {
-        if (context->settingValue == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "On", 0);
-            context->settingValue = CONFIG_SETTING_ON;
-        } else {
-            MIDSetMainDisplayText(context, "Off", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        }
-    }
-    if (context->settingIdx == MID_SETTING_IDX_VEH_TYPE) {
-        if (context->settingValue == 0x00 ||
-            context->settingValue == 0xFF ||
-            context->settingValue == IBUS_VEHICLE_TYPE_E46_Z4
-        ) {
-            MIDSetMainDisplayText(context, "E38/E39/E53", 0);
-            context->settingValue = IBUS_VEHICLE_TYPE_E38_E39_E53;
-        } else {
-            MIDSetMainDisplayText(context, "E46/Z4", 0);
-            context->settingValue = IBUS_VEHICLE_TYPE_E46_Z4;
-        }
-    }
-    if (context->settingIdx == MID_SETTING_IDX_BLINKERS) {
-        context->settingValue++;
-        if (context->settingValue > 8) {
-            context->settingValue = 1;
-        }
-        char blinkerText[2] = {0};
-        snprintf(blinkerText, 2, "%d", context->settingValue);
-        MIDSetMainDisplayText(context, blinkerText, 0);
-    }
-    if (context->settingIdx == MID_SETTING_IDX_COMFORT_LOCKS) {
-        if (context->settingValue == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "10km/h", 0);
-            context->settingValue = CONFIG_SETTING_COMFORT_LOCK_10KM;
-        } else if (context->settingValue == CONFIG_SETTING_COMFORT_LOCK_10KM) {
-            MIDSetMainDisplayText(context, "20km/h", 0);
-            context->settingValue = CONFIG_SETTING_COMFORT_LOCK_20KM;
-        } else {
-            MIDSetMainDisplayText(context, "Off", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        }
-    }
-    if (context->settingIdx == MID_SETTING_IDX_COMFORT_UNLOCK) {
-        if (context->settingValue == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "Pos 1", 0);
-            context->settingValue = CONFIG_SETTING_COMFORT_UNLOCK_POS_1;
-        } else if (context->settingValue == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
-            MIDSetMainDisplayText(context, "Pos 0", 0);
-            context->settingValue = CONFIG_SETTING_COMFORT_UNLOCK_POS_0;
-        } else {
-            MIDSetMainDisplayText(context, "Off", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        }
-    }
-    if (context->settingIdx == MID_SETTING_IDX_AUDIO_DSP) {
-        if (context->settingValue == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "Digital", 0);
-            context->settingValue = CONFIG_SETTING_DSP_INPUT_SPDIF;
-        } else if (context->settingValue == CONFIG_SETTING_DSP_INPUT_SPDIF) {
-            MIDSetMainDisplayText(context, "Analog", 0);
-            context->settingValue = CONFIG_SETTING_DSP_INPUT_ANALOG;
-        } else {
-            MIDSetMainDisplayText(context, "Default", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        }
-    }
-    if (context->settingIdx == MID_SETTING_IDX_PAIRINGS) {
-        if (context->settingValue == CONFIG_SETTING_OFF) {
-            MIDSetMainDisplayText(context, "Press Save", 0);
-            context->settingValue = CONFIG_SETTING_ON;
-        } else {
-            MIDSetMainDisplayText(context, "Clear Pairings", 0);
-            context->settingValue = CONFIG_SETTING_OFF;
-        }
-    }
-}
-
 
 static void MIDMenuDevices(MIDContext_t *context)
 {
@@ -466,22 +227,37 @@ static void MIDMenuSettings(MIDContext_t *context)
 {
     context->mode = MID_MODE_SETTINGS;
     strncpy(context->mainText, "Settings", 9);
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
-        MIDSetMainDisplayText(context, "Handsfree: Off", 0);
-        context->settingValue = CONFIG_SETTING_OFF;
-    } else {
-        MIDSetMainDisplayText(context, "Handsfree: On", 0);
-        context->settingValue = CONFIG_SETTING_ON;
-    }
+    MenuSingleLineSettings(&context->menuContext);
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_BACK, "Back");
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_EDIT_SAVE, "Edit");
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PREV_VAL, "<   ");
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_NEXT_VAL, "   >");
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_DEVICES_R, "   ");
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_DEVICES_L, "   ");
-    context->settingIdx = MID_SETTING_IDX_HFP;
-    context->settingMode = MID_SETTING_MODE_SCROLL_SETTINGS;
 }
+
+/**
+ * MIDDisplayUpdateText()
+ *     Description:
+ *         Handle updates from the menu driver
+ *     Params:
+ *         void *ctx - A void pointer to the MIDContext_t struct
+ *         char *text - The text to update
+ *         int8_t timeout - The timeout for the text
+ *         uint8_t updateType - If we are updating the temp or main text
+ *     Returns:
+ *         void
+ */
+void MIDDisplayUpdateText(void *ctx, char *text, int8_t timeout, uint8_t updateType)
+{
+    MIDContext_t *context = (MIDContext_t *) ctx;
+    if (updateType == MENU_SINGLELINE_DISPLAY_UPDATE_MAIN) {
+        MIDSetMainDisplayText(context, text, timeout);
+    } else if (updateType == MENU_SINGLELINE_DISPLAY_UPDATE_TEMP) {
+        MIDSetTempDisplayText(context, text, timeout);
+    }
+}
+
 
 void MIDBTMetadataUpdate(void *ctx, unsigned char *tmp)
 {
@@ -620,82 +396,20 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
         if (btnPressed == MID_BUTTON_BACK) {
             context->mode = MID_MODE_ACTIVE_NEW;
         } else if (btnPressed == MID_BUTTON_EDIT_SAVE) {
-            if (context->settingMode == MID_SETTING_MODE_SCROLL_SETTINGS) {
+            if (context->menuContext.settingMode == MENU_SINGLELINE_SETTING_MODE_SCROLL_SETTINGS) {
                 IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_EDIT_SAVE, "Save");
-                context->settingMode = MID_SETTING_MODE_SCROLL_VALUES;
-            } else if (context->settingMode == MID_SETTING_MODE_SCROLL_VALUES) {
+            } else {
                 IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_EDIT_SAVE, "Edit");
-                context->settingMode = MID_SETTING_MODE_SCROLL_SETTINGS;
-                // Save Setting
-                if (context->settingIdx == MID_SETTING_IDX_PAIRINGS) {
-                    if (context->settingValue == CONFIG_SETTING_ON) {
-                        if (context->bt->type == BT_BTM_TYPE_BC127) {
-                            BC127CommandUnpair(context->bt);
-                        } else {
-                            BM83CommandRestore(context->bt);
-                            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
-                            ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
-                        }
-                        MIDSetTempDisplayText(context, "Unpaired", 1);
-                    }
-                } else if (context->settingIdx == MID_SETTING_IDX_VEH_TYPE) {
-                    ConfigSetVehicleType(context->settingValue);
-                    MIDSetTempDisplayText(context, "Saved", 1);
-                } else if (context->settingIdx == MID_SETTING_IDX_COMFORT_LOCKS) {
-                    ConfigSetComfortLock(context->settingValue);
-                    MIDSetTempDisplayText(context, "Saved", 1);
-                } else if (context->settingIdx == MID_SETTING_IDX_COMFORT_UNLOCK) {
-                    ConfigSetComfortUnlock(context->settingValue);
-                    MIDSetTempDisplayText(context, "Saved", 1);
-                } else if (context->settingIdx == MID_SETTING_IDX_AUDIO_DSP) {
-                    ConfigSetSetting(CONFIG_SETTING_DSP_INPUT_SRC, context->settingValue);
-                    MIDSetTempDisplayText(context, "Saved", 1);
-                    if (context->settingValue == CONFIG_SETTING_DSP_INPUT_SPDIF) {
-                        IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
-                    } else if (context->settingValue == CONFIG_SETTING_DSP_INPUT_ANALOG) {
-                        IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
-                    }
-                } else {
-                    ConfigSetSetting(
-                        MID_SETTINGS_TO_MENU[context->settingIdx],
-                        context->settingValue
-                    );
-                    MIDSetTempDisplayText(context, "Saved", 1);
-                    if (context->settingIdx == MID_SETTING_IDX_HFP) {
-                        if (context->settingValue == CONFIG_SETTING_OFF) {
-                            BC127CommandSetProfiles(context->bt, 1, 1, 0, 0);
-                        } else {
-                            BC127CommandSetProfiles(context->bt, 1, 1, 0, 1);
-                        }
-                        BC127CommandReset(context->bt);
-                    }
-                }
-                MIDShowNextSetting(context, context->settingIdx);
             }
+            MenuSingleLineSettingsEditSave(&context->menuContext);
         }  else if (btnPressed == MID_BUTTON_PREV_VAL ||
                    btnPressed == MID_BUTTON_NEXT_VAL
         ) {
-            if (context->settingMode == MID_SETTING_MODE_SCROLL_SETTINGS) {
-                uint8_t nextMenu = 0;
-                if (context->settingIdx == MID_SETTING_IDX_HFP &&
-                    btnPressed != MID_BUTTON_NEXT_VAL
-                ) {
-                    nextMenu = MID_SETTINGS_MENU[MID_SETTING_IDX_PAIRINGS];
-                } else if (context->settingIdx == MID_SETTING_IDX_PAIRINGS &&
-                           btnPressed == MID_BUTTON_NEXT_VAL
-                ) {
-                    nextMenu = MID_SETTINGS_MENU[MID_SETTING_IDX_HFP];
-                } else {
-                    if (btnPressed == MID_BUTTON_NEXT_VAL) {
-                        nextMenu = MID_SETTINGS_MENU[context->settingIdx + 1];
-                    } else {
-                        nextMenu = MID_SETTINGS_MENU[context->settingIdx - 1];
-                    }
-                }
-                MIDShowNextSetting(context, nextMenu);
-            } else if (context->settingMode == MID_SETTING_MODE_SCROLL_VALUES) {
-                MIDShowNextSettingValue(context, btnPressed);
+            uint8_t direction = 0x00;
+            if (btnPressed == MID_BUTTON_PREV_VAL) {
+                direction = 0x01;
             }
+            MenuSingleLineSettingsScroll(&context->menuContext, direction);
         }
     } else if (context->mode == MID_MODE_DEVICES) {
         if (btnPressed == MID_BUTTON_BACK) {
@@ -860,13 +574,13 @@ void MIDTimerDisplay(void *ctx)
                     uint8_t idxEnd = context->mainDisplay.index + textLength;
                     // Prevent strncpy() from going out of bounds
                     if (idxEnd >= context->mainDisplay.length) {
-                        textLength = (context->mainDisplay.length - 1) - context->mainDisplay.index;
+                        textLength = context->mainDisplay.length - context->mainDisplay.index;
                         idxEnd = context->mainDisplay.index + textLength;
                     }
                     UtilsStrncpy(
                         text,
                         &context->mainDisplay.text[context->mainDisplay.index],
-                        textLength
+                        textLength + 1
                     );
                     IBusCommandMIDDisplayText(context->ibus, text);
                     // Pause at the beginning of the text

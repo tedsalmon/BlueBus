@@ -28,6 +28,7 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     Context.btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
     Context.volumeMode = HANDLER_VOLUME_MODE_NORMAL;
     Context.gtStatus = HANDLER_GT_STATUS_UNCHECKED;
+    Context.monitorStatus = HANDLER_MONITOR_STATUS_UNSET;
     Context.uiMode = ConfigGetUIMode();
     Context.seekMode = HANDLER_CDC_SEEK_MODE_NONE;
     Context.lmDimmerChecksum = 0x00;
@@ -36,7 +37,6 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     Context.btBootState = HANDLER_BT_BOOT_OK;
     memset(&Context.gmState, 0, sizeof(HandlerBodyModuleStatus_t));
     memset(&Context.lmState, 0, sizeof(HandlerLightControlStatus_t));
-    memset(&Context.ibusModuleStatus, 0, sizeof(HandlerModuleStatus_t));
     Context.powerStatus = HANDLER_POWER_ON;
     Context.scanIntervals = 0;
     Context.lmLastIOStatus = 0;
