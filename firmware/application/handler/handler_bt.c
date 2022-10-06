@@ -85,6 +85,11 @@ void HandlerBTInit(HandlerContext_t *context)
             context,
             HANDLER_INT_PROFILE_ERROR
         );
+        TimerRegisterScheduledTask(
+            &HandlerTimerBTBC127Metadata,
+            context,
+            HANDLER_INT_BT_AVRCP_UPDATER
+        );
         BC127CommandStatus(context->bt);
     } else {
         EventRegisterCallback(
