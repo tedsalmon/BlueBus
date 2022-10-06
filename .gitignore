@@ -6,6 +6,7 @@
 /firmware/bootloader/.generated_files
 /firmware/bootloader/build/
 /firmware/bootloader/dist/
+/firmware/bootloader/debug/
 /firmware/bootloader/disassembly/
 /firmware/application/nbproject/private/
 /firmware/bootloader/nbproject/private/
