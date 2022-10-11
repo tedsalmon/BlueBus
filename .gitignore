@@ -1,4 +1,4 @@
-/firmware/application/.generated_files/*
+/firmware/application/.generated_files/
 /firmware/application/build/
 /firmware/application/dist/
 /firmware/application/debug/
