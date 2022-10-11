@@ -821,12 +821,8 @@ void IBusSendCommand(
     msg[0] = src;
     msg[1] = dataSize + 2;
     msg[2] = dst;
-    idx = 3;
-    uint8_t i;
     // Add the Data to the packet
-    for (i = 0; i < dataSize; i++) {
-        msg[idx++] = data[i];
-    }
+    memcpy(msg+3,data,dataSize);
     // Calculate the CRC
     uint8_t crc = 0;
     uint8_t maxIdx = msgSize - 1;
@@ -834,10 +830,8 @@ void IBusSendCommand(
         crc ^= msg[idx];
     }
     msg[msgSize - 1] = (unsigned char) crc;
-    for (idx = 0; idx < msgSize; idx++) {
-        ibus->txBuffer[ibus->txBufferWriteIdx][idx] = msg[idx];
-    }
     // Store the data into a buffer, so we can spread out their transmission
+    memcpy(ibus->txBuffer[ibus->txBufferWriteIdx],msg,msgSize);
     if (ibus->txBufferWriteIdx + 1 == IBUS_TX_BUFFER_SIZE) {
         ibus->txBufferWriteIdx = 0;
     } else {
@@ -2629,10 +2623,7 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
     statusText[0] = IBUS_CMD_GT_WRITE_TITLE;
     statusText[1] = 0x80 + index;
     statusText[2] = 0x20;
-    uint8_t textIdx;
-    for (textIdx = 0; textIdx < textLength; textIdx++) {
-        statusText[textIdx + 3] = text[textIdx];
-    }
+    memcpy(statusText+3,text,textLength);
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
 }
 
