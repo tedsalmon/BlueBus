@@ -264,7 +264,7 @@ void UtilsRemoveSubstring(char *string, const char *trash)
 {
     uint16_t removeLength = strlen(trash);
     while ((string = strstr(string, trash))) {
-        memmove(string, string + removeLength, 1 + strlen(string - removeLength));
+        memmove(string, string + removeLength, 1 + strlen(string + removeLength));
     }
 }
 
