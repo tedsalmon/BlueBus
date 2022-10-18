@@ -822,7 +822,7 @@ void IBusSendCommand(
     msg[1] = dataSize + 2;
     msg[2] = dst;
     // Add the Data to the packet
-    memcpy(msg+3,data,dataSize);
+    memcpy(msg + 3, data, dataSize);
     // Calculate the CRC
     uint8_t crc = 0;
     uint8_t maxIdx = msgSize - 1;
@@ -831,7 +831,7 @@ void IBusSendCommand(
     }
     msg[msgSize - 1] = (unsigned char) crc;
     // Store the data into a buffer, so we can spread out their transmission
-    memcpy(ibus->txBuffer[ibus->txBufferWriteIdx],msg,msgSize);
+    memcpy(ibus->txBuffer[ibus->txBufferWriteIdx], msg, msgSize);
     if (ibus->txBufferWriteIdx + 1 == IBUS_TX_BUFFER_SIZE) {
         ibus->txBufferWriteIdx = 0;
     } else {
@@ -1599,10 +1599,7 @@ static void IBusInternalCommandGTWriteIndex(
     text[1] = indexMode;
     text[2] = 0x00;
     text[3] = 0x40 + (unsigned char) index;
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 4] = message[idx];
-    }
+    memcpy(text + 4, message, length);
     text[pktLenght - 1] = 0x06;
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
@@ -1620,10 +1617,7 @@ static void IBusCommandGTWriteIndexStaticInternal(
     text[1] = IBUS_CMD_GT_WRITE_STATIC;
     text[2] = cursorPos;
     text[3] = index;
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 4] = message[idx];
-    }
+    memcpy(text + 4, message, length);
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
@@ -1651,10 +1645,7 @@ void IBusCommandGTWriteBusinessNavTitle(IBus_t *ibus, char *message) {
     text[0] = IBUS_CMD_GT_WRITE_TITLE;
     text[1] = 0x40;
     text[2] = 0x30;
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 3] = message[idx];
-    }
+    memcpy(text + 3, message, length);
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, packetLength);
 }
 
@@ -1705,10 +1696,7 @@ void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     text[1] = IBUS_CMD_GT_WRITE_INDEX_TMC;
     text[2] = 0x00; // Cursor at 0
     text[3] = 0x09; // Write menu title index
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 4] = message[idx];
-    }
+    memcpy(text + 4, message, length);
     text[pktLenght - 2] = 0x06;
     text[pktLenght - 1] = 0x06;
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
@@ -1729,11 +1717,8 @@ void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
         }
         char msg[textLength + 1];
         memset(msg, '\0', sizeof(msg));
-        uint8_t i;
-        for (i = 0; i < textLength; i++) {
-            msg[i] = message[currentIdx];
-            currentIdx++;
-        }
+        memcpy(msg, message + currentIdx, textLength);
+        currentIdx+=textLength;        
         if (cursorPos == 0) {
             IBusCommandGTWriteIndexStaticInternal(ibus, index, msg, 1);
         } else {
@@ -1767,10 +1752,7 @@ void IBusCommandGTWriteTitleArea(IBus_t *ibus, char *message)
     text[0] = IBUS_CMD_GT_WRITE_TITLE;
     text[1] = IBUS_CMD_GT_WRITE_ZONE;
     text[2] = 0x30;
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 3] = message[idx];
-    }
+    memcpy(text + 3, message, length);
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
@@ -1797,10 +1779,7 @@ void IBusCommandGTWriteTitleIndex(IBus_t *ibus, char *message)
     text[1] = IBUS_CMD_GT_WRITE_ZONE;
     text[2] = 0x01; // Unused in this layout
     text[3] = 0x40; // Write Area 0 Index
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 4] = message[idx];
-    }
+    memcpy(text + 4, message, length);
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
@@ -1816,20 +1795,13 @@ void IBusCommandGTWriteTitleC43(IBus_t *ibus, char *message)
     text[0] = IBUS_CMD_GT_WRITE_TITLE;
     text[1] = 0x40;
     text[2] = 0x20;
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 3] = message[idx];
-    }
-    text[idx + 3] = 0x04;
-    idx++;
-    text[idx + 3] = 0x20;
-    idx++;
-    text[idx + 3] = 0x20;
-    idx++;
-    text[idx + 3] = 0x20;
-    idx++;
+    memcpy(text + 3, message, length);
+    text[length + 3] = 0x04;
+    text[length + 4] = 0x20;
+    text[length + 5] = 0x20;
+    text[length + 6] = 0x20;
     // "Watermark" Any update we send, so we know that it was us
-    text[idx + 3] = IBUS_RAD_MAIN_AREA_WATERMARK;
+    text[length + 7] = IBUS_RAD_MAIN_AREA_WATERMARK;
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
@@ -1842,10 +1814,7 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
     text[1] = IBUS_CMD_GT_WRITE_ZONE;
     text[2] = 0x01;
     text[3] = (unsigned char) index;
-    uint8_t idx;
-    for (idx = 0; idx < length; idx++) {
-        text[idx + 4] = message[idx];
-    }
+    memcpy(text + 4, message, length);
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
@@ -1926,14 +1895,12 @@ void IBusCommandIKESetTime(IBus_t *ibus, uint8_t hour, uint8_t minute)
  */
 void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
 {
-    unsigned char displayText[strlen(message) + 3];
+    unsigned char len = strlen(message);
+    unsigned char displayText[len + 3];
     displayText[0] = 0x23;
     displayText[1] = 0x42;
     displayText[2] = 0x32;
-    uint8_t idx;
-    for (idx = 0; idx < strlen(message); idx++) {
-        displayText[idx + 3] = message[idx];
-    }
+    memcpy(displayText + 3, message, len);
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_TEL,
@@ -2235,19 +2202,16 @@ void IBusCommandMIDButtonPress(
  */
 void IBusCommandMIDDisplayRADTitleText(IBus_t *ibus, char *message)
 {
-    unsigned char displayText[strlen(message) + 4];
-    displayText[0] = IBUS_CMD_RAD_WRITE_MID_DISPLAY;
-    displayText[1] = 0xC0;
-    displayText[2] = 0x20;
-    uint8_t idx;
     uint8_t textLength = strlen(message);
     if (textLength > IBus_MID_TITLE_MAX_CHARS) {
         textLength = IBus_MID_TITLE_MAX_CHARS;
     }
-    for (idx = 0; idx < textLength; idx++) {
-        displayText[idx + 3] = message[idx];
-    }
-    displayText[idx + 3] = IBUS_RAD_MAIN_AREA_WATERMARK;
+    unsigned char displayText[textLength + 4];
+    displayText[0] = IBUS_CMD_RAD_WRITE_MID_DISPLAY;
+    displayText[1] = 0xC0;
+    displayText[2] = 0x20;
+    memcpy(displayText + 3, message, textLength);
+    displayText[textLength + 3] = IBUS_RAD_MAIN_AREA_WATERMARK;
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_RAD,
@@ -2278,10 +2242,7 @@ void IBusCommandMIDDisplayText(IBus_t *ibus, char *message)
     displayText[0] = IBUS_CMD_RAD_WRITE_MID_DISPLAY;
     displayText[1] = 0x40;
     displayText[2] = 0x20;
-    uint8_t idx;
-    for (idx = 0; idx < textLength; idx++) {
-        displayText[idx + 3] = message[idx];
-    }
+    memcpy(displayText + 3, message, textLength);
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_TEL,
@@ -2313,10 +2274,7 @@ void IBusCommandMIDMenuWriteMany(
     menuText[1] = 0x40;
     menuText[2] = 0x00;
     menuText[3] = startIdx;
-    uint8_t textIdx;
-    for (textIdx = 0; textIdx < menuLength; textIdx++) {
-        menuText[textIdx + 4] = menu[textIdx];
-    }
+    memcpy(menuText + 4, menu, menuLength);
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_TEL,
@@ -2350,10 +2308,7 @@ void IBusCommandMIDMenuWriteSingle(
     menuText[1] = 0xC3;
     menuText[2] = 0x00;
     menuText[3] = 0x40 + idx;
-    uint8_t textIdx;
-    for (textIdx = 0; textIdx < textLength; textIdx++) {
-        menuText[textIdx + 4] = text[textIdx];
-    }
+    memcpy(menuText + 4, text, textLength);
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_TEL,
@@ -2623,7 +2578,7 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
     statusText[0] = IBUS_CMD_GT_WRITE_TITLE;
     statusText[1] = 0x80 + index;
     statusText[2] = 0x20;
-    memcpy(statusText+3,text,textLength);
+    memcpy(statusText + 3, text, textLength);
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
 }
 
