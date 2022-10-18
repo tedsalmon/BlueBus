@@ -485,24 +485,23 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
             }
         }
 
+        char temperature[29] = {0};
+
         if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
             snprintf(ambtempstr, 8, "A:%s", context->ibus->ambientTemperatureCalculated);
         } else {
-            if ((context->ibus->ambientTemperature>=0) && (context->ibus->ambientTemperature<=3)) {
-                snprintf(ambtempstr, 8, "A:*%d", ambtemp);
-            } else {
-                snprintf(ambtempstr, 8, "A:%+d", ambtemp);
-            }
+            snprintf(ambtempstr, 8, "A:%+d", ambtemp);
         }
         if (cooltemp > 0) { 
             snprintf(cooltempstr, 7, "C:%d,", cooltemp);
         }
         if (oiltemp > 0) {
             snprintf(oiltempstr, 7, "O:%d,", oiltemp);
+            snprintf(temperature, 29, "%s%s%s\xB0%c", oiltempstr, cooltempstr, ambtempstr, tempUnit);
+        } else {
+            snprintf(temperature, 29, "Temp\xB0%c: %s%s", tempUnit, cooltempstr, ambtempstr);
         }
-        char temperature[29] = {0};
 
-        snprintf(temperature, 29, "Temp\xB0%c: %s%s%s", tempUnit, oiltempstr, cooltempstr, ambtempstr);
         if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
             IBusCommandGTWriteIndexStatic(context->ibus, 0x45, temperature);
         } else {
