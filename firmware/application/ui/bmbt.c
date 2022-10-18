@@ -1965,13 +1965,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
                 }
                 if (config == CONFIG_SETTING_TEMP_AMBIENT) {
                     if (tempUnit == 'F') {
-                        if ((temp>=0)&&(temp<=37)) {
-                            snprintf(temperature, 7, "*%d\xB0%c", temp, tempUnit);
-                        } else {
-                            snprintf(temperature, 7, "%+d\xB0%c", temp, tempUnit);                  
-                        }
-                    } else if ((temp>=0)&&(temp<=3)) {
-                        snprintf(temperature, 8, "*%d.0\xB0%c", temp, tempUnit);
+                        snprintf(temperature, 7, "%+d\xB0%c", temp, tempUnit);                  
                     } else {
                         snprintf(temperature, 8, "%+d.0\xB0%c", temp, tempUnit);
                     }
