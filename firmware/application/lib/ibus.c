@@ -40,6 +40,10 @@ IBus_t IBusInit()
     ibus.coolantTemperature = 0x00;
     ibus.ambientTemperature = 0x00;
     memset(ibus.ambientTemperatureCalculated, 0, 7);
+    memset(ibus.location1,0,sizeof(ibus.location1));
+    memset(ibus.location2,0,sizeof(ibus.location2));
+    memset(ibus.latitude,0,sizeof(ibus.latitude));
+    memset(ibus.longtitude,0,sizeof(ibus.longtitude));
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -594,6 +598,8 @@ static void IBusHandleTELMessage(IBus_t *ibus, unsigned char *pkt)
         EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_VOL_CTRL) {
         EventTriggerCallback(IBUS_EVENT_TELVolumeChange, pkt);
+    } else if ((pkt[IBUS_PKT_CMD] == 0xA2)||(pkt[IBUS_PKT_CMD] == 0xA4)) {
+        EventTriggerCallback(IBUS_EVENT_GT_TELEMATICS_DATA, pkt);
     }
 }
 
