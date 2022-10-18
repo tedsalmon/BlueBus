@@ -72,7 +72,7 @@
 #define BT_STATE_OFF 0
 #define BT_STATE_ON 1
 #define BT_STATE_STANDBY 2
-#define BT_PROFILE_COUNT 4
+#define BT_PROFILE_COUNT 9
 
 #define BT_LINK_TYPE_ACL 1
 #define BT_LINK_TYPE_A2DP 2
