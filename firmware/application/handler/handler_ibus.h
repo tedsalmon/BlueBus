@@ -39,6 +39,7 @@ void HandlerIBusPDCStatus(void *, uint8_t *);
 void HandlerIBusRADVolumeChange(void *, uint8_t *);
 void HandlerIBusSensorValueUpdate(void *, uint8_t *);
 void HandlerIBusTELVolumeChange(void *, uint8_t *);
+void HandlerIBusTelematics(void *, unsigned char *);
 void HandlerTimerIBusCDCAnnounce(void *);
 void HandlerTimerIBusCDCSendStatus(void *);
 void HandlerTimerIBusLCMIOStatus(void *);
