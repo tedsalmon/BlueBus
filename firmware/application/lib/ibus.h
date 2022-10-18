@@ -475,6 +475,12 @@ typedef struct IBus_t {
     uint8_t oilTemperature;
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
+        
+    char location1[32];
+    char location2[32];
+    char latitude[18];
+    char longtitude[18];
+
 } IBus_t;
 
 IBus_t IBusInit();
