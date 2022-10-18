@@ -1234,6 +1234,8 @@ void BC127ProcessEventAVRCPMedia(BT_t *bt, char **msgBuf, char *msg)
         if(strncmp(bt->title, title, BT_METADATA_FIELD_SIZE - 1) != 0) {
             bt->metadataStatus = BT_METADATA_STATUS_UPD;
             memset(bt->title, 0, BT_METADATA_FIELD_SIZE);
+            memset(bt->artist, 0, BT_METADATA_FIELD_SIZE);
+            memset(bt->album, 0, BT_METADATA_FIELD_SIZE);
             UtilsStrncpy(bt->title, title, BT_METADATA_FIELD_SIZE);
         }
     } else if (strcmp(msgBuf[2], "ARTIST:") == 0) {

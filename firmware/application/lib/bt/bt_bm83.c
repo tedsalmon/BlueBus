@@ -1058,6 +1058,8 @@ void BM83ProcessDataGetAllAttributes(
                 if (memcmp(text, bt->title, BT_METADATA_FIELD_SIZE) != 0) {
                     dataDiffers = 1;
                     memset(bt->title, 0, BT_METADATA_FIELD_SIZE);
+                    memset(bt->artist, 0, BT_METADATA_FIELD_SIZE);
+                    memset(bt->album, 0, BT_METADATA_FIELD_SIZE);
                     strncpy(bt->title, text, BT_METADATA_FIELD_SIZE);
                 }
                 break;
