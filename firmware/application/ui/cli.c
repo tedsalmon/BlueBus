@@ -391,7 +391,29 @@ void CLIProcess()
                 ConfigSetBootloaderMode(0x01);
                 UtilsReset();
             } else if (UtilsStricmp(msgBuf[0], "BT") == 0) {
-                if (cli.bt->type == BT_BTM_TYPE_BC127) {
+                if (UtilsStricmp(msgBuf[1], "AT") == 0) {
+                    if (delimCount == 3) {
+                        if (cli.bt->type == BT_BTM_TYPE_BC127) {
+                            BC127CommandAT(cli.bt,msgBuf[2]);
+                        } else {
+                            BM83CommandVendorATCommand(cli.bt,msgBuf[2]);
+                        }
+                    } else {
+                        LogRaw("Wrong number of arguments for BT AT\r\n");
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "DIAL") == 0) {
+                    if (delimCount >= 4) {
+                        BTCommandDial(cli.bt,msgBuf[2],msgBuf[3]);
+                    } else if (delimCount == 3) {
+                        BTCommandDial(cli.bt,msgBuf[2],0);
+                    } else {
+                        LogRaw("Wrong number of arguments for BT CALL\r\n");
+                    }
+                } else if (UtilsStricmp(msgBuf[1], "REDIAL") == 0) {
+                    BTCommandDial(cli.bt,cli.bt->dialBuffer,0);
+                } else if (UtilsStricmp(msgBuf[1], "REDIAL_PHONE") == 0) {
+                    BTCommandRedial(cli.bt);
+                } else if (cli.bt->type == BT_BTM_TYPE_BC127) {
                     CLICommandBTBC127(msgBuf, &cmdSuccess, delimCount);
                 } else {
                     CLICommandBTBM83(msgBuf, &cmdSuccess);
@@ -806,6 +828,9 @@ void CLIProcess()
                     LogRaw("    BT PAUSE - Send the AVRCP Pause Command\r\n");
                     LogRaw("    BT RESTORE - Reset the BM83\r\n");
                 }
+                LogRaw("    BT AT command> - Send raw AT command\r\n");
+                LogRaw("    BT DIAL <number> <name> - Dial a number and display name\r\n");
+                LogRaw("    BT REDIAL - Dial last number\r\n");
                 LogRaw("    GET DAC - Get info from the PCM5122 DAC\r\n");
                 LogRaw("    GET ERR - Get the Error counter\r\n");
                 LogRaw("    GET IBUS - Get debug info from the IBus\r\n");
