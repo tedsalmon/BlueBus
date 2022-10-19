@@ -2553,13 +2553,29 @@ void IBusCommandSetVolume(
  *        Enable the Telephone Menu on the GT
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
+ *         BT_t *bt - The pointer to the BT context
  *     Returns:
  *         void
  */
-void IBusCommandTELSetGTDisplayMenu(IBus_t *ibus)
+void IBusCommandTELSetGTDisplayMenu(IBus_t *ibus, BT_t *bt)
 {
     const unsigned char msg[] = {IBUS_TEL_CMD_MAIN_MENU, 0x42, 0x02, 0x20};
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, sizeof(msg));
+
+    // show last dialed number
+    uint8_t size = strlen(bt->dialBuffer);
+    if (size>0) {
+        char msg3[BT_DIAL_BUFFER_FIELD_SIZE+4] = {IBUS_TEL_CMD_NUMBER, 0x63, 0x00};
+        snprintf(msg3+3,BT_DIAL_BUFFER_FIELD_SIZE-1,"%s",bt->dialBuffer);
+        size+=5;
+        if (size>BT_DIAL_BUFFER_FIELD_SIZE+4) {
+            size = BT_DIAL_BUFFER_FIELD_SIZE+4;
+        }
+        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, (unsigned char *)msg3, size);
+    } else {
+        const unsigned char msg2[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};
+        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg2, sizeof(msg2));
+    }
 }
 
 /**
