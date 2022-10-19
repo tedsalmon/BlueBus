@@ -17,6 +17,7 @@
 #include "timer.h"
 #include "uart.h"
 #include "utils.h"
+#include "bt.h"
 
 // Devices
 #define IBUS_DEVICE_GM 0x00 /* Body module */
@@ -310,6 +311,7 @@
 #define IBUS_TEL_CMD_LED_STATUS 0x2B
 #define IBUS_TEL_CMD_STATUS 0x2C
 #define IBUS_TEL_CMD_MAIN_MENU 0x21
+#define IBUS_TEL_CMD_NUMBER 0x23
 #define IBUS_TEL_STATUS_NONE 0x00
 #define IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE 0x10
 #define IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE 0x35
@@ -548,7 +550,7 @@ void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
 void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
-void IBusCommandTELSetGTDisplayMenu(IBus_t *);
+void IBusCommandTELSetGTDisplayMenu(IBus_t *, BT_t *);
 void IBusCommandTELSetLED(IBus_t *, uint8_t);
 void IBusCommandTELStatus(IBus_t *, uint8_t);
 void IBusCommandTELStatusText(IBus_t *, char *, uint8_t);
