@@ -1890,6 +1890,34 @@ void IBusCommandIKESetTime(IBus_t *ibus, uint8_t hour, uint8_t minute)
 }
 
 /**
+ * IBusCommandIKESetDate()
+ *     Description:
+ *        Set the current time
+ *        Raw: 3B 06 80 40 02 DD MM YY CS
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKESetDate(IBus_t *ibus, uint8_t year, uint8_t mon, uint8_t day)
+{
+    unsigned char msg[] = {
+        IBUS_CMD_IKE_SET_REQUEST,
+        IBUS_CMD_IKE_SET_REQUEST_DATE,
+        day,
+        mon,
+        year
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_GT,
+        IBUS_DEVICE_IKE,
+        msg,
+        sizeof(msg)
+    );
+}
+
+/**
  * IBusCommandTELIKEDisplayWrite()
  *     Description:
  *        Send text to the Business Radio

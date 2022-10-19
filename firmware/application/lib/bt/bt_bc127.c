@@ -52,7 +52,7 @@ void BC127ClearPairingErrors(BT_t *bt)
 }
 
 /**
- * BC127CommandAT()
+ * BC127CommandATset()
  *     Description:
  *         Send an AT Command
  *     Params:
@@ -60,9 +60,9 @@ void BC127ClearPairingErrors(BT_t *bt)
  *     Returns:
  *         void
  */
-void BC127CommandAT(BT_t *bt, char *param, char *value)
+void BC127CommandATset(BT_t *bt, char *param, char *value)
 {
-    uint8_t commandLength = 10 + strlen(param) + strlen(value);
+    uint8_t commandLength = 11 + strlen(param) + strlen(value);
     char command[commandLength];
     memset(command, 0, commandLength);
     snprintf(
@@ -73,6 +73,31 @@ void BC127CommandAT(BT_t *bt, char *param, char *value)
         param,
         value
     );
+    BC127SendCommand(bt, command);
+}
+
+/**
+ * BC127CommandAT()
+ *     Description:
+ *         Send an AT Command
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandAT(BT_t *bt, char *cmd)
+{
+    uint8_t commandLength = 10 + strlen(cmd);
+    char command[commandLength];
+    memset(command, 0, commandLength);
+    snprintf(
+        command,
+        commandLength,
+        "AT %d AT%s",
+        bt->activeDevice.hfpId,
+        cmd
+    );
+    BC127SendCommand(bt, command);
 }
 
 /**
@@ -1213,6 +1238,22 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             UtilsStrncpy(bt->callerId, callerId, BT_CALLER_ID_FIELD_SIZE);
             EventTriggerCallback(BT_EVENT_CALLER_ID_UPDATE, 0);
         }
+    } else if (strcmp(msgBuf[3], "+CCLK:") == 0) {
+        // parse returned date and time to update the IKE
+        //        \2222/10/19, 00:08:18\22
+        UtilsRemoveSubstring(msgBuf[4],"\\22");
+        UtilsRemoveSubstring(msgBuf[5],"\\22");        
+
+        unsigned char datetime[6];
+        datetime[0] = UtilsStrToInt(msgBuf[4]);   // year
+        datetime[1] = UtilsStrToInt(msgBuf[4]+3); // month
+        datetime[2] = UtilsStrToInt(msgBuf[4]+6); // day
+
+        datetime[3] = UtilsStrToInt(msgBuf[5]);   // hour
+        datetime[4] = UtilsStrToInt(msgBuf[5]+3); // min
+        datetime[5] = UtilsStrToInt(msgBuf[5]+6); // sec
+
+        EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
     }
 }
 

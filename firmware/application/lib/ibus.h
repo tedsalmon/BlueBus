@@ -169,6 +169,7 @@
 #define IBUS_CMD_IKE_OBC_TEXT 0x24
 #define IBUS_CMD_IKE_SET_REQUEST 0x40
 #define IBUS_CMD_IKE_SET_REQUEST_TIME 0x01
+#define IBUS_CMD_IKE_SET_REQUEST_DATE 0x02
 
 #define IBUS_CMD_LCM_REQ_REDUNDANT_DATA 0x53
 #define IBUS_CMD_LCM_RESP_REDUNDANT_DATA 0x54
@@ -528,6 +529,7 @@ void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnitionStatus(IBus_t *);
 void IBusCommandIKEGetVehicleConfig(IBus_t *);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
+void IBusCommandIKESetDate(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELIKEDisplayWrite(IBus_t *, char *);
 void IBusCommandTELIKEDisplayClear(IBus_t *);
 void IBusCommandLMActivateBulbs(IBus_t *, uint8_t, uint8_t);
