@@ -162,6 +162,46 @@ void BM83CommandCallEnd(BT_t *bt)
 }
 
 /**
+ * BM83CommandDial()
+ *     Description:
+ *         Initiate outgoing call
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         char *number - A number to all
+ *     Returns:
+ *         void
+ */
+void BM83CommandDial(BT_t *bt, char *number)
+{
+    uint8_t command[21] = {
+        BM83_CMD_MAKE_CALL,
+        bt->activeDevice.deviceId & 0xF,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+    };
+    UtilsStrncpy((char *)command+2, number, 19);
+    BM83SendCommand(bt, command, sizeof(command));
+}
+
+/**
+ * BM83CommandRedial()
+ *     Description:
+ *         Redial last number
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BM83CommandRedial(BT_t *bt)
+{
+    uint8_t command[] = {
+        BM83_CMD_MMI_ACTION,
+        bt->activeDevice.deviceId & 0xF, // Linked Database, the lower nibble
+        0x0C // Redial
+    };
+    BM83SendCommand(bt, command, sizeof(command));
+}
+
+/**
  * BM83CommandConnect()
  *     Description:
  *         Link back to a paired device (Profiles_Link_Back -> 0x17)
@@ -443,6 +483,7 @@ void BM83CommandStatus(BT_t *bt)
  */
 void BM83CommandVendorATCommand(BT_t *bt, char *cmd)
 {
+    LogError("BT: AT Commands are not supported! Do not expect anything.");
     uint8_t command[17] = {0};
     command[0] = BM83_CMD_VENDOR_AT_COMMAND;
     command[1] = bt->activeDevice.deviceId & 0xF; // Linked Database, the lower nibble

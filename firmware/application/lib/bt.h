@@ -16,6 +16,8 @@
 BT_t BTInit();
 void BTCommandCallAccept(BT_t *);
 void BTCommandCallEnd(BT_t *);
+void BTCommandDial(BT_t *, const char *, const char *);
+void BTCommandRedial(BT_t *);
 void BTCommandDisconnect(BT_t *);
 void BTCommandConnect(BT_t *, BTPairedDevice_t *);
 void BTCommandGetMetadata(BT_t *);
