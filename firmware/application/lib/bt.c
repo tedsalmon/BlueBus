@@ -33,6 +33,7 @@ BT_t BTInit()
     bt.powerState = BT_STATE_OFF;
     memset(bt.pairedDevices, 0, sizeof(bt.pairedDevices));
     memset(bt.callerId, 0, sizeof(bt.callerId));
+    memset(bt.dialBuffer, 0, sizeof(bt.dialBuffer));
     memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
     // Make sure that we initialize the char arrays to all zeros
     BTClearMetadata(&bt);
@@ -87,6 +88,67 @@ void BTCommandCallEnd(BT_t *bt)
         BM83CommandCallEnd(bt);
     }
 }
+
+/**
+ * BTCommandDial()
+ *     Description:
+ *         Dial a number
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         char *number - number to call
+ *         char *name - name to display
+ *     Returns:
+ *         void
+ */
+void BTCommandDial(BT_t *bt, const char *number, const char *name)
+{
+    if (bt->activeDevice.hfpId>0) {
+        if (name != NULL && (strlen(name)>0)) {
+            UtilsStrncpy(bt->callerId,name,BT_CALLER_ID_FIELD_SIZE);
+        } else {
+            UtilsStrncpy(bt->callerId,number,BT_CALLER_ID_FIELD_SIZE);
+        }
+
+        char *cleannum=bt->dialBuffer;
+        uint8_t pos = 0;
+        while ((*number!=0)&&(pos<(BT_DIAL_BUFFER_FIELD_SIZE-2))) {
+            char c = *number;
+            // ITU-T Recommendation V.250 dial command
+            if ((c=='+')||(c==',')||(c=='#')||(c=='*')||(c>='0'&&c<='9')||(c>='A'&&c<='C')||(c>='a'&&c<='c')) {
+                cleannum[pos++]=c;
+            }
+            number++;
+        }
+        cleannum[pos]=0;
+        if (bt->type == BT_BTM_TYPE_BC127) {
+            char command[32];
+            snprintf(command, 32, "CALL %d OUTGOING %s", bt->activeDevice.hfpId, cleannum);
+            BC127SendCommand(bt, command);
+        } else {
+            BM83CommandDial(bt, cleannum);
+        }
+    }
+}
+
+/**
+ * BTCommandRedial()
+ *     Description:
+ *         Redial last number as known by phone
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BTCommandRedial(BT_t *bt)
+{
+    if (bt->activeDevice.hfpId>0) {
+        if (bt->type == BT_BTM_TYPE_BC127) {
+            BC127CommandAT(bt,"+BLDN");
+        } else {
+            BM83CommandRedial(bt);
+        }
+    }
+} 
 
 /**
  * BTCommandConnect()

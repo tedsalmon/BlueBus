@@ -28,6 +28,7 @@
 #define BT_CALL_SCO_CLOSE 5
 #define BT_CALL_SCO_OPEN 6
 #define BT_CALLER_ID_FIELD_SIZE 32
+#define BT_DIAL_BUFFER_FIELD_SIZE 32
 #define BT_CLOSE_ALL 255
 
 #define BT_STATUS_OFF 0
@@ -201,6 +202,8 @@ typedef struct BT_t {
     char artist[BT_METADATA_FIELD_SIZE];
     char album[BT_METADATA_FIELD_SIZE];
     char callerId[BT_CALLER_ID_FIELD_SIZE];
+    char dialBuffer[BT_DIAL_BUFFER_FIELD_SIZE];
+
     UART_t uart;
 } BT_t;
 

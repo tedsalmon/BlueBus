@@ -297,6 +297,8 @@ void BM83CommandAVRCPRegisterNotification(BT_t *, uint8_t);
 void BM83CommandBTMUtilityFunction(BT_t *, uint8_t, uint8_t);
 void BM83CommandCallAccept(BT_t *);
 void BM83CommandCallEnd(BT_t *);
+void BM83CommandDial(BT_t *, char *);
+void BM83CommandRedial(BT_t *);
 void BM83CommandDeviceDiscovery(BT_t *);
 void BM83CommandConnect(BT_t *, BTPairedDevice_t *, uint8_t);
 void BM83CommandDisconnect(BT_t *, uint8_t);
