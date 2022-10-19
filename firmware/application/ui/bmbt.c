@@ -570,12 +570,15 @@ static void BMBTMenuDashboard(BMBTContext_t *context)
         }
     } else {
         // Set "Unknown" text for title and artist when missing but ignore
-        // missing album information as many streaming apps do not provide it
+        // missing album or artist information as many streaming apps do not provide it
         if (strlen(title) == 0) {
             UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_UNKNOWN_TITLE), BT_METADATA_FIELD_SIZE);
         }
         if (strlen(artist) == 0) {
-            UtilsStrncpy(artist, LocaleGetText(LOCALE_STRING_UNKNOWN_ARTIST), BT_METADATA_FIELD_SIZE);
+            strncpy(artist, " ", 2);
+        }
+        if (strlen(album) == 0) {
+            strncpy(album, " ", 2);
         }
     }
     BMBTMenuDashboardUpdate(context, title, artist, album);
