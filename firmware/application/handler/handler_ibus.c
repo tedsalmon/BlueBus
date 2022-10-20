@@ -1135,10 +1135,11 @@ void HandlerIBusMFLButton(void *ctx, uint8_t *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t mflButton = pkt[IBUS_PKT_DB1];
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-        if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_PRESS) {
+        if (mflButton == IBUS_MFL_BTN_EVENT_RT_PRESS) {
+           EventTriggerCallback(IBUS_EVENT_GTChangeUIRequest, pkt);
+        } else if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_PRESS) {
             context->mflButtonStatus = HANDLER_MFL_STATUS_OFF;
-        }
-        if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_REL &&
+        } else if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_REL &&
             context->mflButtonStatus == HANDLER_MFL_STATUS_OFF
         ) {
             if (context->bt->callStatus == BT_CALL_ACTIVE) {
