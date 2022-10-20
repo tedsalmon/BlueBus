@@ -123,6 +123,39 @@ uint8_t UtilsGetUnicodeByteLength(uint8_t byte)
 }
 
 /**
+ * UtilsUnescapeText()
+ *     Description:
+ *         Unescape characters 
+ *     Params:
+ *         char *string - The subject
+ *         const char *input - The string to copy from
+ *         uint16_t max_len - Max output buffer size 
+ *     Returns:
+ *         void
+ */
+void UtilsUnescapeText(char *string, const char *input, uint16_t max_len)
+{
+    uint16_t idx = 0;
+    uint16_t strIdx = 0;
+
+    char currentByteBuf[3] = {0,0,0};
+
+    while ((input[idx]!=0)&&(idx<max_len)&&(strIdx<max_len-1)) {
+        if (input[idx]=='\\') {
+            currentByteBuf[0] = input[idx + 1];
+            currentByteBuf[1] = input[idx + 2];
+            currentByteBuf[2] = 0;
+            string[strIdx++] = UtilsStrToHex(currentByteBuf);
+            idx+=3;
+        } else {
+            string[strIdx++]=input[idx];
+            idx++;
+        }
+    }
+    string[strIdx]=0;
+}
+
+/**
  * UtilsNormalizeText()
  *     Description:
  *         Unescape characters and convert them from UTF-8 to their Unicode
@@ -193,8 +226,9 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
         } else {
             idx++;
         }
-
-        if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
+        if (unicodeChar == 0x0A || unicodeChar == 0x0D) {
+            string[strIdx++] = (char) unicodeChar;
+        } else if (unicodeChar >= 0x20 && unicodeChar <= 0x7E) {
             string[strIdx++] = (char) unicodeChar;
         } else if ((uiMode == CONFIG_UI_BMBT)&&(unicodeChar > 0x80)&& (unicodeChar <= 0xFF)) {
             string[strIdx++] = (char) unicodeChar;
