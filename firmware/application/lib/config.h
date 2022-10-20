@@ -173,7 +173,8 @@
 
 
 uint16_t ConfigGetBC127BootFailures();
-unsigned char ConfigGetByte(unsigned char);
+inline unsigned char ConfigGetByte(unsigned char);
+inline void ConfigSetByte(unsigned char, unsigned char);
 unsigned char ConfigGetByteLowerNibble(unsigned char);
 unsigned char ConfigGetByteUpperNibble(unsigned char);
 unsigned char ConfigGetBuildWeek();
