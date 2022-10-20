@@ -2389,6 +2389,88 @@ void BMBTTimerScrollDisplay(void *ctx)
 }
 
 /**
+ * BMBTEmergencyScreen()
+ *     Description:
+ *         Render Emergency Screen
+ *     Params:
+ *         void *ctx - The context
+ *     Returns:
+ *         void
+ */
+void BMBTEmergencyScreen(BMBTContext_t *context)
+{
+    uint8_t msg[50]={IBUS_CMD_GT_WRITE_NO_CURSOR,0xF1,0x00};
+    char *msg_body = (char *)(msg+4);
+
+    msg[3]=0x60;
+    UtilsStrncpy(msg_body, "Your current position is:", 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+    msg[3]=0x41;
+    UtilsStrncpy(msg_body, context->ibus->location1, 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+    msg[3]=0x42;
+    UtilsStrncpy(msg_body, context->ibus->location2, 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+    msg[3]=0x43;
+    UtilsStrncpy(msg_body, context->ibus->latitude, 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+    msg[3]=0x44;
+    UtilsStrncpy(msg_body, context->ibus->longtitude, 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+/*
+    msg[3]=0x45;
+    ConfigGetString(CONFIG_SETTING_EMERGENCY_INFO_ADDRESS, msg_body, 31);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+*/
+    msg[2]=0x01; //back button
+    msg[3]=0x50;
+    msg[4]=0x01;
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, 5);
+
+/*
+    char phonebuffer[48];
+
+    ConfigGetString(CONFIG_SETTING_PHONE_ASSIST_ADDRESS, phonebuffer, 15);
+    if (phonebuffer[0]!=0) {
+        msg[2]=0x02; // assistance
+        msg[3]=0x53;
+        snprintf(msg_body,50-4,"Assist");
+        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+    };
+
+    ConfigGetString(CONFIG_SETTING_PHONE_FRIEND_ADDRESS, phonebuffer, 15);      
+    if (phonebuffer[0]!=0) {
+        msg[2]=0x03; // friend
+        msg[3]=0x52;
+        snprintf(msg_body,50-4,"Friend");
+        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+    };
+
+    ConfigGetString(CONFIG_SETTING_PHONE_SOS_ADDRESS, phonebuffer, 15);
+    if (phonebuffer[0]!=0) {
+        msg[2]=112; // special easy to identify 112 code :)
+        msg[3]=0x51 | 0x80; // select by default
+        snprintf(msg_body,50-4,"SOS");
+        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+    };
+*/
+
+    msg[0]=IBUS_CMD_GT_WRITE_WITH_CURSOR;
+    msg[2]=0x00;
+    msg[3]=0x00;
+    snprintf(msg_body,50-4,"Emergency, call %s!","112"); // use phonebuffer SOS from above instead of 112
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+    context->menu = BMBT_MENU_DIAL_EMERGENCY;
+
+    
+}
+
+/**
  * BMBTDialScreenUI()
  *     Description:
  *         Process UI interaction on Dial screen
@@ -2423,7 +2505,7 @@ void BMBTDialScreenUI(void *ctx, unsigned char cmd, unsigned char *pkt)
                 changed = 1;
             }
         } else if ((cmd == 0x3A)||(cmd == 0x20)) {
-    // * hold = +
+    // 0/* hold = +
             if (size<BT_DIAL_BUFFER_FIELD_SIZE-2) {
                 context->bt->dialBuffer[size++]='+';
                 context->bt->dialBuffer[size]=0;
@@ -2455,74 +2537,7 @@ void BMBTDialScreenUI(void *ctx, unsigned char cmd, unsigned char *pkt)
         // eventually render full screen with coordinates and button to confirm
         // and send also SMS with details
         LogRaw("\r\nDIAL menu command logged: SOS\r\n");
-        
-        unsigned char msg[50]={IBUS_CMD_GT_WRITE_NO_CURSOR,0xF1,0x00};
-        char *msg_body = (char *)(msg+4);
-
-        msg[3]=0x60;
-        snprintf(msg_body,50-4,"Your current position is:");
-        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-
-        msg[3]=0x41;
-        snprintf(msg_body,50-4,"%s",context->ibus->location1);
-        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-
-        msg[3]=0x42;
-        snprintf(msg_body,50-4,"%s",context->ibus->location2);
-        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-        
-        msg[3]=0x43;
-        snprintf(msg_body,50-4,"%s",context->ibus->latitude);
-        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-
-        msg[3]=0x44;
-        snprintf(msg_body,50-4,"%s",context->ibus->longtitude);
-        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-
-/*
-        msg[3]=0x45;
-        ConfigGetString(CONFIG_SETTING_EMERGENCY_INFO_ADDRESS, msg_body, 31);
-        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
- */
-        msg[2]=0x01; //back button
-        msg[3]=0x50;
-        msg[4]=0x01;
-        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, 5);
-
-/*
-        char phonebuffer[48];
-
-        ConfigGetString(CONFIG_SETTING_PHONE_ASSIST_ADDRESS, phonebuffer, 15);
-        if (phonebuffer[0]!=0) {
-            msg[2]=0x02; // assistance
-            msg[3]=0x53;
-            snprintf(msg_body,50-4,"Assist");
-            IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-        };
-
-        ConfigGetString(CONFIG_SETTING_PHONE_FRIEND_ADDRESS, phonebuffer, 15);      
-        if (phonebuffer[0]!=0) {
-            msg[2]=0x03; // friend
-            msg[3]=0x52;
-            snprintf(msg_body,50-4,"Friend");
-            IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-        };
-
-        ConfigGetString(CONFIG_SETTING_PHONE_SOS_ADDRESS, phonebuffer, 15);
-        if (phonebuffer[0]!=0) {
-            msg[2]=112; // special easy to identify 112 code :)
-            msg[3]=0x51 | 0x80; // select by default
-            snprintf(msg_body,50-4,"SOS");
-            IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-        };
-*/
-        
-        msg[0]=IBUS_CMD_GT_WRITE_WITH_CURSOR;
-        msg[2]=0x00;
-        msg[3]=0x00;
-        snprintf(msg_body,50-4,"Emergency, call %s!","112");
-        IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-        context->menu = BMBT_MENU_DIAL_EMERGENCY;
+        BMBTEmergencyScreen(context);
         
     } else if ((cmd == 0x1d) && (pkt[5] == 0x07)) {
 // messaaging selected         
