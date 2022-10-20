@@ -113,7 +113,7 @@
 #define UIEvent_CloseConnection 97
 
 #define FIRMWARE_VERSION_MAJOR 1
-#define FIRMWARE_VERSION_MINOR 3
+#define FIRMWARE_VERSION_MINOR 4
 #define FIRMWARE_VERSION_PATCH 0
 
 void TrapWait();

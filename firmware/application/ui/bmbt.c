@@ -2415,17 +2415,16 @@ void BMBTEmergencyScreen(BMBTContext_t *context)
     UtilsStrncpy(msg_body, context->ibus->longtitude, 50-4);
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
 
-/*
+
     msg[3]=0x45;
     ConfigGetString(CONFIG_SETTING_EMERGENCY_INFO_ADDRESS, msg_body, 31);
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-*/
+
     msg[2]=0x01; //back button
     msg[3]=0x50;
     msg[4]=0x01;
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, 5);
 
-/*
     char phonebuffer[48];
 
     ConfigGetString(CONFIG_SETTING_PHONE_ASSIST_ADDRESS, phonebuffer, 15);
@@ -2451,16 +2450,13 @@ void BMBTEmergencyScreen(BMBTContext_t *context)
         snprintf(msg_body,50-4,"SOS");
         IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
     };
-*/
 
     msg[0]=IBUS_CMD_GT_WRITE_WITH_CURSOR;
     msg[2]=0x00;
     msg[3]=0x00;
-    snprintf(msg_body,50-4,"Emergency, call %s!","112"); // use phonebuffer SOS from above instead of 112
+    snprintf(msg_body,50-4,"Emergency, call %s!", phonebuffer);
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
     context->menu = BMBT_MENU_DIAL_EMERGENCY;
-
-    
 }
 
 /**

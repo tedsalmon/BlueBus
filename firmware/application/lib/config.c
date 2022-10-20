@@ -40,7 +40,12 @@ uint16_t ConfigGetBC127BootFailures()
  */
 unsigned char ConfigGetByte(unsigned char address)
 {
-    unsigned char value = EEPROMReadByte(address);
+
+    unsigned char value = CONFIG_SETTING_CACHE[address];
+    if (value == 0x00) {
+        value = EEPROMReadByte(address);
+        CONFIG_SETTING_CACHE[address] = value;
+    }
     if (value == 0xFF) {
         value = 0x00;
     }
@@ -847,4 +852,28 @@ void ConfigSetVehicleIdentity(unsigned char *vin)
     for (i = 0; i < 5; i++) {
         EEPROMWriteByte(vinAddress[i], vin[i]);
     }
+}
+
+void ConfigSetString(unsigned char address, char *str, uint8_t size) {
+    while ((size>0)&&(str[0])!=0) {
+        EEPROMWriteByte(address,str[0]);
+        CONFIG_SETTING_CACHE[address]=str[0];
+        size--;
+        str++;
+        address++;
+    };
+    EEPROMWriteByte(address,0);
+    CONFIG_SETTING_CACHE[address]=0;
+}
+
+void ConfigGetString(unsigned char address, char *str, uint8_t size) {
+    char b = ConfigGetByte(address);
+    while ((size>0)&&(b!=0)) {
+        str[0]=b;
+        size--;
+        str++;
+        address++;
+        b = ConfigGetByte(address);
+    };
+    str[0]=0;
 }
