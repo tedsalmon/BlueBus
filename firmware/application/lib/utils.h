@@ -187,6 +187,7 @@ typedef struct UtilsAbstractDisplayValue_t {
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *, uint8_t);
 uint8_t UtilsGetBoardVersion();
 uint8_t UtilsGetUnicodeByteLength(uint8_t);
+void UtilsUnescapeText(char *, const char *, uint16_t);
 void UtilsNormalizeText(char *, const char *, uint16_t);
 void UtilsRemoveSubstring(char *, const char *);
 void UtilsReset();
