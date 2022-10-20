@@ -40,6 +40,12 @@
 #define BMBT_MENU_SETTINGS_COMFORT 7
 #define BMBT_MENU_SETTINGS_CALLING 8
 #define BMBT_MENU_SETTINGS_UI 9
+#define BMBT_MENU_DIAL 3
+#define BMBT_MENU_DIAL_EMERGENCY 8
+#define BMBT_MENU_DIAL_TOP8 4
+#define BMBT_MENU_DIAL_LAST 5
+#define BMBT_MENU_DIAL_DIRECTORY_ABC 6
+#define BMBT_MENU_DIAL_DIRECTORY 7
 #define BMBT_MENU_IDX_BACK 7
 #define BMBT_MENU_IDX_DASHBOARD 0
 #define BMBT_MENU_IDX_DEVICE_SELECTION 1
@@ -145,4 +151,5 @@ void BMBTIBusVehicleConfig(void *, unsigned char *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);
 void BMBTTimerScrollDisplay(void *);
+void BMBTDialScreenUI(void *, unsigned char, unsigned char *);
 #endif /* BMBT_H */
