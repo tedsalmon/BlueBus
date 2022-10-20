@@ -1734,7 +1734,7 @@ void BC127Process(BT_t *bt)
         // We received a valid message, so set the power & state to on
         bt->powerState = BT_STATE_ON;
         bt->status = BT_STATUS_DISCONNECTED;
-        char msg[messageLength];
+        char msg[messageLength + 1];
         uint16_t i;
         uint16_t delimCount = 1;
         for (i = 0; i < messageLength; i++) {
@@ -1749,11 +1749,14 @@ void BC127Process(BT_t *bt)
                 // so we change it to a null terminator instead
                 msg[i] = '\0';
             }
-        }
+        };
+        msg[messageLength] = 0;
+        
         // Copy the message, since strtok adds a null terminator after the first
         // occurence of the delimiter, causes issues with any functions used going forward
-        char tmpMsg[messageLength];
-        strcpy(tmpMsg, msg);
+        char tmpMsg[messageLength + 1];
+        strncpy(tmpMsg, msg, messageLength);
+        tmpMsg[messageLength] = 0;
         char *msgBuf[delimCount];
         char delimeter[] = " ";
         char *p = strtok(tmpMsg, delimeter);
