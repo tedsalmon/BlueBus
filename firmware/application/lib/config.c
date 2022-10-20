@@ -6,8 +6,8 @@
  */
 #include "config.h"
 
-unsigned char CONFIG_SETTING_CACHE[CONFIG_SETTING_CACHE_SIZE] = {};
-unsigned char CONFIG_VALUE_CACHE[CONFIG_VALUE_CACHE_SIZE] = {};
+unsigned char CONFIG_SETTING_CACHE[CONFIG_SETTING_CACHE_SIZE] = {0};
+unsigned char CONFIG_VALUE_CACHE[CONFIG_VALUE_CACHE_SIZE] = {0};
 
 /**
  * ConfigGetBC127BootFailures()
@@ -40,14 +40,17 @@ uint16_t ConfigGetBC127BootFailures()
  */
 unsigned char ConfigGetByte(unsigned char address)
 {
-
-    unsigned char value = CONFIG_SETTING_CACHE[address];
+    unsigned char value = 0;
+    if (address < CONFIG_SETTING_CACHE_SIZE)
+        value = CONFIG_SETTING_CACHE[address];
     if (value == 0x00) {
         value = EEPROMReadByte(address);
-        CONFIG_SETTING_CACHE[address] = value;
-    }
-    if (value == 0xFF) {
-        value = 0x00;
+        if (value == 0xFF) {
+            value = 0x00;
+        }
+        if (address < CONFIG_SETTING_CACHE_SIZE) {
+            CONFIG_SETTING_CACHE[address] = value;
+        }
     }
     return value;
 }
@@ -567,7 +570,8 @@ void ConfigSetByteLowerNibble(unsigned char setting, unsigned char value)
     // Store the value in the lower nibble of the comfort locks setting
     currentValue &= 0xF0;
     currentValue |= value & 0x0F;
-    CONFIG_SETTING_CACHE[setting] = currentValue;
+    if (setting < CONFIG_SETTING_CACHE_SIZE)
+        CONFIG_SETTING_CACHE[setting] = currentValue;
     EEPROMWriteByte(setting, currentValue);
 }
 
@@ -587,7 +591,8 @@ void ConfigSetByteUpperNibble(unsigned char setting, unsigned char value)
     // Store the value in the upper nibble of the vehicle type byte
     currentValue &= 0x0F;
     currentValue |= (value << 4) & 0xF0;
-    CONFIG_SETTING_CACHE[setting] = currentValue;
+    if (setting < CONFIG_SETTING_CACHE_SIZE)
+        CONFIG_SETTING_CACHE[setting] = currentValue;
     EEPROMWriteByte(setting, currentValue);
 }
 
@@ -857,13 +862,15 @@ void ConfigSetVehicleIdentity(unsigned char *vin)
 void ConfigSetString(unsigned char address, char *str, uint8_t size) {
     while ((size>0)&&(str[0])!=0) {
         EEPROMWriteByte(address,str[0]);
-        CONFIG_SETTING_CACHE[address]=str[0];
+        if (address < CONFIG_SETTING_CACHE_SIZE)
+            CONFIG_SETTING_CACHE[address]=str[0];
         size--;
         str++;
         address++;
     };
     EEPROMWriteByte(address,0);
-    CONFIG_SETTING_CACHE[address]=0;
+    if (address < CONFIG_SETTING_CACHE_SIZE)
+        CONFIG_SETTING_CACHE[address]=0;
 }
 
 void ConfigGetString(unsigned char address, char *str, uint8_t size) {

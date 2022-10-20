@@ -8,7 +8,7 @@
 #define CONFIG_H
 #include "eeprom.h"
 
-#define CONFIG_SETTING_CACHE_SIZE 0xC0
+#define CONFIG_SETTING_CACHE_SIZE 0x70
 #define CONFIG_VALUE_CACHE_SIZE 16
 /* EEPROM 0x00 - 0x07: Reserved for the BlueBus */
 #define CONFIG_SN_ADDRESS_MSB 0x00
