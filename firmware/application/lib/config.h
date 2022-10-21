@@ -8,7 +8,7 @@
 #define CONFIG_H
 #include "eeprom.h"
 
-#define CONFIG_SETTING_CACHE_SIZE 128
+#define CONFIG_SETTING_CACHE_SIZE 0x70
 #define CONFIG_VALUE_CACHE_SIZE 16
 /* EEPROM 0x00 - 0x07: Reserved for the BlueBus */
 #define CONFIG_SN_ADDRESS_MSB 0x00
@@ -160,9 +160,10 @@
 
 
 uint16_t ConfigGetBC127BootFailures();
-unsigned char ConfigGetByte(unsigned char);
-unsigned char ConfigGetByteLowerNibble(unsigned char);
-unsigned char ConfigGetByteUpperNibble(unsigned char);
+//unsigned char ConfigGetByte(unsigned char);
+//void ConfigSetByte(unsigned char, unsigned char);
+//unsigned char ConfigGetByteLowerNibble(unsigned char);
+//unsigned char ConfigGetByteUpperNibble(unsigned char);
 unsigned char ConfigGetBuildWeek();
 unsigned char ConfigGetBuildYear();
 unsigned char ConfigGetComfortLock();
@@ -188,9 +189,10 @@ unsigned char ConfigGetValue(unsigned char);
 unsigned char ConfigGetVehicleType();
 unsigned char ConfigGetLanguage();
 void ConfigGetVehicleIdentity(unsigned char *);
+void ConfigGetString(unsigned char, char *, uint8_t);
 void ConfigSetBC127BootFailures(uint16_t);
-void ConfigSetByteLowerNibble(unsigned char, unsigned char);
-void ConfigSetByteUpperNibble(unsigned char, unsigned char);
+//void ConfigSetByteLowerNibble(unsigned char, unsigned char);
+//void ConfigSetByteUpperNibble(unsigned char, unsigned char);
 void ConfigSetBootloaderMode(unsigned char);
 void ConfigSetComfortLock(unsigned char);
 void ConfigSetComfortUnlock(unsigned char);
@@ -209,4 +211,5 @@ void ConfigSetUIMode(unsigned char);
 void ConfigSetVehicleType(unsigned char);
 void ConfigSetVehicleIdentity(unsigned char *);
 void ConfigSetLanguage(unsigned char);
+void ConfigSetString(unsigned char, char *, uint8_t);
 #endif /* CONFIG_H */
