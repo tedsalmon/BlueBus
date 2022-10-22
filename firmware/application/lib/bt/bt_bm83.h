@@ -143,8 +143,11 @@ extern int8_t BTBM83MicGainTable[];
 #define BM83_CMD_DISCONNECT_PARAM_ALL 0x1F
 #define BM83_CMD_DISCONNECT_PARAM_HF 0x02
 
+#define BM83_CMD_MMI_ACTION_ACCEPT_CALL 0x04
+#define BM83_CMD_MMI_ACTION_END_CALL 0x06
 #define BM83_CMD_MMI_ACTION_VR_OPEN 0x0A
 #define BM83_CMD_MMI_ACTION_VR_CLOSE 0x0B
+#define BM83_CMD_MMI_ACTION_REDIAL 0x0C
 #define BM83_CMD_MMI_ACTION_MIC_GAIN_UP 0x24
 #define BM83_CMD_MMI_ACTION_MIC_GAIN_DOWN 0x25
 #define BM83_CMD_MMI_ACTION_RESTORE 0x56
@@ -297,10 +300,9 @@ void BM83CommandAVRCPRegisterNotification(BT_t *, uint8_t);
 void BM83CommandBTMUtilityFunction(BT_t *, uint8_t, uint8_t);
 void BM83CommandCallAccept(BT_t *);
 void BM83CommandCallEnd(BT_t *);
-void BM83CommandDial(BT_t *, char *);
-void BM83CommandRedial(BT_t *);
-void BM83CommandDeviceDiscovery(BT_t *);
 void BM83CommandConnect(BT_t *, BTPairedDevice_t *, uint8_t);
+void BM83CommandDeviceDiscovery(BT_t *);
+void BM83CommandDial(BT_t *, char *);
 void BM83CommandDisconnect(BT_t *, uint8_t);
 void BM83CommandLinkBackLastDevice(BT_t *);
 void BM83CommandMicGainDown(BT_t *);
@@ -313,6 +315,7 @@ void BM83CommandReadLinkStatus(BT_t *);
 void BM83CommandReadLinkedDeviceInformation(BT_t *, uint8_t);
 void BM83CommandReadLocalBDAddress(BT_t *);
 void BM83CommandReadPairedDevices(BT_t *);
+void BM83CommandRedial(BT_t *);
 void BM83CommandRestore(BT_t *);
 void BM83CommandVendorATCommand(BT_t *, char *);
 void BM83CommandVoiceRecognitionClose(BT_t *);

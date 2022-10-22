@@ -52,31 +52,6 @@ void BC127ClearPairingErrors(BT_t *bt)
 }
 
 /**
- * BC127CommandATset()
- *     Description:
- *         Send an AT Command
- *     Params:
- *         BT_t *bt - A pointer to the module object
- *     Returns:
- *         void
- */
-void BC127CommandATset(BT_t *bt, char *param, char *value)
-{
-    uint8_t commandLength = 11 + strlen(param) + strlen(value);
-    char command[commandLength];
-    memset(command, 0, commandLength);
-    snprintf(
-        command,
-        commandLength,
-        "AT %d AT+%s=%s",
-        bt->activeDevice.hfpId,
-        param,
-        value
-    );
-    BC127SendCommand(bt, command);
-}
-
-/**
  * BC127CommandAT()
  *     Description:
  *         Send an AT Command
@@ -96,6 +71,31 @@ void BC127CommandAT(BT_t *bt, char *cmd)
         "AT %d AT%s",
         bt->activeDevice.hfpId,
         cmd
+    );
+    BC127SendCommand(bt, command);
+}
+
+/**
+ * BC127CommandATSet()
+ *     Description:
+ *         Send an AT Command
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandATSet(BT_t *bt, char *param, char *value)
+{
+    uint8_t commandLength = 11 + strlen(param) + strlen(value);
+    char command[commandLength];
+    memset(command, 0, commandLength);
+    snprintf(
+        command,
+        commandLength,
+        "AT %d AT+%s=%s",
+        bt->activeDevice.hfpId,
+        param,
+        value
     );
     BC127SendCommand(bt, command);
 }
@@ -1239,20 +1239,18 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             EventTriggerCallback(BT_EVENT_CALLER_ID_UPDATE, 0);
         }
     } else if (strcmp(msgBuf[3], "+CCLK:") == 0) {
-        // parse returned date and time to update the IKE
-        //        \2222/10/19, 00:08:18\22
+        // Parse the returned date and time so we can update the vehicle
+        // Example: \2222/10/19, 00:08:18\22
         UtilsRemoveSubstring(msgBuf[4],"\\22");
         UtilsRemoveSubstring(msgBuf[5],"\\22");        
 
-        unsigned char datetime[6];
-        datetime[0] = UtilsStrToInt(msgBuf[4]);   // year
-        datetime[1] = UtilsStrToInt(msgBuf[4]+3); // month
-        datetime[2] = UtilsStrToInt(msgBuf[4]+6); // day
-
-        datetime[3] = UtilsStrToInt(msgBuf[5]);   // hour
-        datetime[4] = UtilsStrToInt(msgBuf[5]+3); // min
-        datetime[5] = UtilsStrToInt(msgBuf[5]+6); // sec
-
+        uint8_t datetime[6];
+        datetime[0] = UtilsStrToInt(msgBuf[4]); // year
+        datetime[1] = UtilsStrToInt(msgBuf[4] + 3); // month
+        datetime[2] = UtilsStrToInt(msgBuf[4] + 6); // day
+        datetime[3] = UtilsStrToInt(msgBuf[5]); // hour
+        datetime[4] = UtilsStrToInt(msgBuf[5] + 3); // min
+        datetime[5] = UtilsStrToInt(msgBuf[5] + 6); // sec
         EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
     }
 }

@@ -25,10 +25,10 @@ void HandlerBTInit(HandlerContext_t *);
 void HandlerBTCallStatus(void *, uint8_t *);
 void HandlerBTDeviceFound(void *, uint8_t *);
 void HandlerBTCallerID(void *, uint8_t *);
-void HandlerBTTime(void *, uint8_t *);
 void HandlerBTDeviceLinkConnected(void *, uint8_t *);
 void HandlerBTDeviceDisconnected(void *, uint8_t *);
 void HandlerBTPlaybackStatus(void *, uint8_t *);
+void HandlerBTTimeUpdate(void *, uint8_t *);
 void HandlerUICloseConnection(void *, uint8_t *);
 void HandlerUIInitiateConnection(void *, uint8_t *);
 

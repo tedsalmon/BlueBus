@@ -108,11 +108,6 @@ void HandlerIBusInit(HandlerContext_t *context)
         &HandlerIBusTELVolumeChange,
         context
     );
-    EventRegisterCallback(
-        IBUS_EVENT_GT_TELEMATICS_DATA,
-        &HandlerIBusTelematics,
-        context
-    );
     TimerRegisterScheduledTask(
         &HandlerTimerIBusCDCAnnounce,
         context,
@@ -1389,39 +1384,6 @@ void HandlerIBusModuleStatusResponse(void *ctx, uint8_t *pkt)
     } else if (module == IBUS_DEVICE_RAD) {
         // If the radio responds, announce that the CD Changer is present
         IBusCommandCDCAnnounce(context->ibus);
-    }
-}
-
-/**
- * HandlerIBusTelematics()
- *     Description:
- *         Store provided location info for emergency display
- *     Params:
- *         void *ctx - The context provided at registration
- *         unsigned char *pkt - The IBus packet
- *     Returns:
- *         void
- */
-void HandlerIBusTelematics(void *ctx, unsigned char *pkt)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    
-    if (pkt[3] == 0xA4) {
-        // location in text
-        pkt[pkt[1]+1]=0;
-        if (pkt[5] == 0x01) {
-            UtilsStrncpy(context->ibus->location1, (char *) pkt+6,32);
-        } else if (pkt[5] == 0x02) {
-            UtilsStrncpy(context->ibus->location2, (char *) pkt+6,32);
-            uint8_t len = strlen(context->ibus->location2);
-            if ((len>0)&&(context->ibus->location2[len-1]==';')) {
-                context->ibus->location2[len-1]=0;
-            }
-        }
-    } else if (pkt[3] == 0xA2) {
-        // location data
-        snprintf(context->ibus->latitude,18,"%i\xB0%02X'%02X.%01X\" %c",(pkt[5] & 0x0f)*100+(pkt[6] >> 4)*10+(pkt[6] & 0x0f),pkt[7],pkt[8],(pkt[9]>>4),((pkt[9]&0x01)==0)?'N':'S');
-        snprintf(context->ibus->longtitude,18,"%i\xB0%02X'%02X.%01X\" %c",(pkt[10] & 0x0f)*100+(pkt[11] >> 4)*10+(pkt[11] & 0x0f),pkt[12],pkt[13],(pkt[14]>>4),((pkt[14]&0x01)==0)?'E':'W');
     }
 }
 

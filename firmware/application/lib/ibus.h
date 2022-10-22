@@ -17,7 +17,6 @@
 #include "timer.h"
 #include "uart.h"
 #include "utils.h"
-#include "bt.h"
 
 // Devices
 #define IBUS_DEVICE_GM 0x00 /* Body module */
@@ -156,6 +155,8 @@
 #define IBUS_CMD_GT_WRITE_INDEX_TMC 0x61
 #define IBUS_CMD_GT_WRITE_ZONE 0x62
 #define IBUS_CMD_GT_WRITE_STATIC 0x63
+#define IBUS_CMD_GT_TELEMATICS_COORDINATES 0xA2
+#define IBUS_CMD_GT_TELEMATICS_LOCATION 0xA4
 #define IBUS_CMD_GT_WRITE_WITH_CURSOR 0xA5
 
 
@@ -210,7 +211,8 @@
 #define IBUS_RAD_PRIORITY_GT 0x02
 #define IBUS_RAD_PRIORITY_RAD 0x01
 #define IBUS_GT_MONITOR_OFF 0x00
-
+#define IBUS_DATA_GT_TELEMATICS_LOCALE 0x01
+#define IBUS_DATA_GT_TELEMATICS_STREET 0x02
 
 #define IBUS_IGNITION_OFF 0x00
 #define IBUS_IGNITION_KLR 0x01
@@ -383,6 +385,8 @@
 #define IBUS_GM_ZKEBC1RD 9
 
 #define IBUS_TCU_SINGLE_LINE_UI_MAX_LEN 11
+#define IBUS_TELEMATICS_COORDS_LEN 18
+#define IBUS_TELEMATICS_LOCATION_LEN 31
 
 // Events
 #define IBUS_EVENT_GTDIAIdentityResponse 32
@@ -481,12 +485,10 @@ typedef struct IBus_t {
     uint8_t oilTemperature;
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
-        
-    char location1[32];
-    char location2[32];
-    char latitude[18];
-    char longtitude[18];
-
+    char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
+    char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
+    char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];
+    char telematicsLongtitude[IBUS_TELEMATICS_COORDS_LEN];
 } IBus_t;
 
 IBus_t IBusInit();
@@ -553,7 +555,8 @@ void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
 void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
-void IBusCommandTELSetGTDisplayMenu(IBus_t *, BT_t *);
+void IBusCommandTELSetGTDisplayMenu(IBus_t *);
+void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);
 void IBusCommandTELSetLED(IBus_t *, uint8_t);
 void IBusCommandTELStatus(IBus_t *, uint8_t);
 void IBusCommandTELStatusText(IBus_t *, char *, uint8_t);

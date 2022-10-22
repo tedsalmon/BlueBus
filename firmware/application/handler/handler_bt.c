@@ -31,7 +31,7 @@ void HandlerBTInit(HandlerContext_t *context)
     );
     EventRegisterCallback(
         BT_EVENT_TIME_UPDATE,
-        &HandlerBTTime,
+        &HandlerBTTimeUpdate,
         context
     );
     EventRegisterCallback(
@@ -348,29 +348,6 @@ void HandlerBTCallerID(void *ctx, uint8_t *data)
 }
 
 /**
- * HandlerBTTime()
- *     Description:
- *         Handle caller ID updates
- *     Params:
- *         void *ctx - The context provided at registration
- *         uint8_t *tmp - Date-time
- *     Returns:
- *         void
- */
-void HandlerBTTime(void *ctx, uint8_t *datetime)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    
-    LogDebug(
-        LOG_SOURCE_BT, 
-        "Setting time from BT: %d-%d-%d, %d:%d", datetime[2], datetime[1], datetime[0], datetime[3], datetime[4] 
-    );
-    
-    IBusCommandIKESetDate(context->ibus,datetime[0], datetime[1], datetime[2]);
-    IBusCommandIKESetTime(context->ibus,datetime[3], datetime[4]);
-}
-
-/**
  * HandlerBTDeviceLinkConnected()
  *     Description:
  *         If a device link is opened, disable connectability once all profiles
@@ -430,10 +407,11 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
         }
         if (linkType == BT_LINK_TYPE_HFP && context->bt->type == BT_BTM_TYPE_BC127) {
             // Set the device character set to UTF-8
-            BC127CommandATset(context->bt, "CSCS", "\"UTF-8\"");
+            BC127CommandATSet(context->bt, "CSCS", "\"UTF-8\"");
             // Explicitly enable Calling Line Identification (Caller ID)
-            BC127CommandATset(context->bt, "CLIP", "1");
-            // Get Time
+            BC127CommandATSet(context->bt, "CLIP", "1");
+            // Request the date and time
+            // NOTE: This is only compatible with iOS at this time
             BC127CommandAT(context->bt, "+CCLK?");
             if (context->bt->activeDevice.hfpId != 0 &&
                 context->bt->activeDevice.pbapId == 0
@@ -538,6 +516,32 @@ void HandlerBTPlaybackStatus(void *ctx, uint8_t *data)
         // We're playing but not in Bluetooth mode - stop playback
         BTCommandPause(context->bt);
     }
+}
+
+/**
+ * HandlerBTTimeUpdate()
+ *     Description:
+ *         Handle updates from the BT module from the +CLLK? query
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *datetime - Date + Time
+ *     Returns:
+ *         void
+ */
+void HandlerBTTimeUpdate(void *ctx, uint8_t *datetime)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    LogDebug(
+        LOG_SOURCE_BT,
+        "Setting time from BT: %d-%d-%d, %d:%d",
+        datetime[2],
+        datetime[1],
+        datetime[0],
+        datetime[3],
+        datetime[4]
+    );
+    IBusCommandIKESetDate(context->ibus, datetime[0], datetime[1], datetime[2]);
+    IBusCommandIKESetTime(context->ibus, datetime[3], datetime[4]);
 }
 
 /* BC127 Specific Handlers */

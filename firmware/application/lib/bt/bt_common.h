@@ -203,7 +203,6 @@ typedef struct BT_t {
     char album[BT_METADATA_FIELD_SIZE];
     char callerId[BT_CALLER_ID_FIELD_SIZE];
     char dialBuffer[BT_DIAL_BUFFER_FIELD_SIZE];
-
     UART_t uart;
 } BT_t;
 

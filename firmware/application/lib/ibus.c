@@ -40,10 +40,10 @@ IBus_t IBusInit()
     ibus.coolantTemperature = 0x00;
     ibus.ambientTemperature = 0x00;
     memset(ibus.ambientTemperatureCalculated, 0, 7);
-    memset(ibus.location1,0,sizeof(ibus.location1));
-    memset(ibus.location2,0,sizeof(ibus.location2));
-    memset(ibus.latitude,0,sizeof(ibus.latitude));
-    memset(ibus.longtitude,0,sizeof(ibus.longtitude));
+    memset(ibus.telematicsLocale, 0, sizeof(ibus.telematicsLocale));
+    memset(ibus.telematicsStreet, 0, sizeof(ibus.telematicsStreet));
+    memset(ibus.telematicsLatitude, 0, sizeof(ibus.telematicsLatitude));
+    memset(ibus.telematicsLongtitude, 0, sizeof(ibus.telematicsLongtitude));
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -598,7 +598,49 @@ static void IBusHandleTELMessage(IBus_t *ibus, unsigned char *pkt)
         EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_VOL_CTRL) {
         EventTriggerCallback(IBUS_EVENT_TELVolumeChange, pkt);
-    } else if ((pkt[IBUS_PKT_CMD] == 0xA2)||(pkt[IBUS_PKT_CMD] == 0xA4)) {
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_TELEMATICS_COORDINATES) {
+        // Store latitude and longitude for emergency display
+        snprintf(
+            ibus->telematicsLatitude,
+            IBUS_TELEMATICS_COORDS_LEN,
+            "%i\xB0%02X'%02X.%01X\" %c",
+            (pkt[5] & 0x0F) * 100 + (pkt[6] >> 4) * 10 + (pkt[6] & 0x0F),
+            pkt[7],
+            pkt[8],
+            pkt[9] >> 4,
+            ((pkt[9] & 0x01) == 0) ? 'N' : 'S'
+        );
+        snprintf(
+            ibus->telematicsLongtitude,
+            IBUS_TELEMATICS_COORDS_LEN,
+            "%i\xB0%02X'%02X.%01X\" %c",
+            (pkt[10] & 0x0F) * 100 + (pkt[11] >> 4) * 10+ (pkt[11] & 0x0F),
+            pkt[12],
+            pkt[13],
+            pkt[14] >> 4,
+            ((pkt[14] & 0x01) == 0) ? 'E': 'W'
+        );
+        EventTriggerCallback(IBUS_EVENT_GT_TELEMATICS_DATA, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_TELEMATICS_LOCATION) {
+        // Store provided location info for emergency display
+        pkt[pkt[1] + 1] = 0;
+        if (pkt[IBUS_PKT_DB2] == IBUS_DATA_GT_TELEMATICS_LOCALE) {
+            UtilsStrncpy(
+                ibus->telematicsLocale,
+                (char *) pkt + IBUS_PKT_DB3,
+                IBUS_TELEMATICS_COORDS_LEN
+            );
+        } else if (pkt[IBUS_PKT_DB2] == IBUS_DATA_GT_TELEMATICS_STREET) {
+            UtilsStrncpy(
+                ibus->telematicsStreet,
+                (char *) pkt + IBUS_PKT_DB3,
+                IBUS_TELEMATICS_COORDS_LEN
+            );
+            uint8_t len = strlen(ibus->telematicsStreet);
+            if (len > 0 && ibus->telematicsStreet[len - 1] == ';') {
+                ibus->telematicsStreet[len - 1] = 0;
+            }
+        }
         EventTriggerCallback(IBUS_EVENT_GT_TELEMATICS_DATA, pkt);
     }
 }
@@ -1722,7 +1764,7 @@ void IBusCommandGTWriteIndexStatic(IBus_t *ibus, uint8_t index, char *message)
         char msg[textLength + 1];
         memset(msg, '\0', sizeof(msg));
         memcpy(msg, message + currentIdx, textLength);
-        currentIdx+=textLength;        
+        currentIdx += textLength;
         if (cursorPos == 0) {
             IBusCommandGTWriteIndexStaticInternal(ibus, index, msg, 1);
         } else {
@@ -1894,6 +1936,9 @@ void IBusCommandIKESetTime(IBus_t *ibus, uint8_t hour, uint8_t minute)
  *        Raw: 3B 06 80 40 02 DD MM YY CS
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t year - The year
+ *         uint8_t mon - The month
+ *         uint8_t day - The day
  *     Returns:
  *         void
  */
@@ -1927,8 +1972,9 @@ void IBusCommandIKESetDate(IBus_t *ibus, uint8_t year, uint8_t mon, uint8_t day)
  */
 void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
 {
-    unsigned char len = strlen(message);
-    unsigned char displayText[len + 3];
+    uint8_t len = strlen(message);
+    uint8_t displayText[len + 3];
+    memset(&displayText, 0, sizeof(displayText));
     displayText[0] = 0x23;
     displayText[1] = 0x42;
     displayText[2] = 0x32;
@@ -2238,7 +2284,8 @@ void IBusCommandMIDDisplayRADTitleText(IBus_t *ibus, char *message)
     if (textLength > IBus_MID_TITLE_MAX_CHARS) {
         textLength = IBus_MID_TITLE_MAX_CHARS;
     }
-    unsigned char displayText[textLength + 4];
+    uint8_t displayText[textLength + 4];
+    memset(&displayText, 0, textLength + 4);
     displayText[0] = IBUS_CMD_RAD_WRITE_MID_DISPLAY;
     displayText[1] = 0xC0;
     displayText[2] = 0x20;
@@ -2551,28 +2598,39 @@ void IBusCommandSetVolume(
  *        Enable the Telephone Menu on the GT
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         BT_t *bt - The pointer to the BT context
  *     Returns:
  *         void
  */
-void IBusCommandTELSetGTDisplayMenu(IBus_t *ibus, BT_t *bt)
+void IBusCommandTELSetGTDisplayMenu(IBus_t *ibus)
 {
     const unsigned char msg[] = {IBUS_TEL_CMD_MAIN_MENU, 0x42, 0x02, 0x20};
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, sizeof(msg));
-
-    // show last dialed number
-    uint8_t size = strlen(bt->dialBuffer);
-    if (size>0) {
-        char msg3[BT_DIAL_BUFFER_FIELD_SIZE+4] = {IBUS_TEL_CMD_NUMBER, 0x63, 0x00};
-        snprintf(msg3+3,BT_DIAL_BUFFER_FIELD_SIZE-1,"%s",bt->dialBuffer);
-        size+=5;
-        if (size>BT_DIAL_BUFFER_FIELD_SIZE+4) {
-            size = BT_DIAL_BUFFER_FIELD_SIZE+4;
-        }
-        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, (unsigned char *)msg3, size);
+}
+/**
+ * IBusCommandTELSetGTDisplayNumber()
+ *     Description:
+ *        Display or clear a phone number on the TEL Menu
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELSetGTDisplayNumber(IBus_t *ibus, char *dialBuffer)
+{
+    // Display the last dialed number if one is set
+    uint8_t bufferLength = strlen(dialBuffer);
+    if (bufferLength > 0) {
+        uint8_t frameLength = bufferLength + 4;
+        uint8_t msg[frameLength];
+        memset(&msg, 0, frameLength);
+        msg[0] = IBUS_TEL_CMD_NUMBER;
+        msg[1] = 0x63;
+        msg[2] = 0x00;
+        snprintf((char *) msg + 3, bufferLength - 1, "%s", dialBuffer);
+        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, frameLength);
     } else {
-        const unsigned char msg2[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};
-        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg2, sizeof(msg2));
+        const unsigned char msg[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};
+        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, sizeof(msg));
     }
 }
 
