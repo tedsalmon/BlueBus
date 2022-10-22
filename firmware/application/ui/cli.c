@@ -506,6 +506,22 @@ void CLIProcess()
                         currentVehicleId[3] & 0xF,
                         currentVehicleId[4]
                     );
+                } else if (UtilsStricmp(msgBuf[1], "SOS") == 0) {
+                    char msg[16];
+                    ConfigGetString(CONFIG_SETTING_PHONE_SOS_ADDRESS,msg,15);
+                    LogRaw("SOS: %s\r\n",msg);
+                } else if (UtilsStricmp(msgBuf[1], "ASSIST") == 0) {
+                    char msg[16];
+                    ConfigGetString(CONFIG_SETTING_PHONE_ASSIST_ADDRESS,msg,15);
+                    LogRaw("Assist: %s\r\n",msg);
+                } else if (UtilsStricmp(msgBuf[1], "FRIEND") == 0) {
+                    char msg[16];
+                    ConfigGetString(CONFIG_SETTING_PHONE_FRIEND_ADDRESS,msg,15);
+                    LogRaw("Friend: %s\r\n",msg);
+                } else if (UtilsStricmp(msgBuf[1], "EMERGENCY") == 0) {
+                    char msg[32];
+                    ConfigGetString(CONFIG_SETTING_EMERGENCY_INFO_ADDRESS,msg,31);
+                    LogRaw("Emerg Info: %s\r\n",msg);
                 } else {
                     cmdSuccess = 0;
                 }
@@ -731,6 +747,14 @@ void CLIProcess()
                     } else {
                         cmdSuccess = 0;
                     }
+                } else if (UtilsStricmp(msgBuf[1], "SOS") == 0) {
+                    ConfigSetString(CONFIG_SETTING_PHONE_SOS_ADDRESS,msgBuf[2],15);
+                } else if (UtilsStricmp(msgBuf[1], "ASSIST") == 0) {
+                    ConfigSetString(CONFIG_SETTING_PHONE_ASSIST_ADDRESS,msgBuf[2],15);
+                } else if (UtilsStricmp(msgBuf[1], "FRIEND") == 0) {
+                    ConfigSetString(CONFIG_SETTING_PHONE_FRIEND_ADDRESS,msgBuf[2],15);
+                } else if ((UtilsStricmp(msgBuf[1], "EMERGENCY") == 0)&&(msgBuf[2] > msgBuf[1])) {
+                    ConfigSetString(CONFIG_SETTING_EMERGENCY_INFO_ADDRESS, msg+(msgBuf[2]-tmpMsg),31);
                 } else {
                     cmdSuccess = 0;
                 }
