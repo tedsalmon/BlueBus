@@ -212,12 +212,6 @@ void CLICommandBTBC127(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
         if (*cmdSuccess != 0) {
             BC127CommandSetModuleName(cli.bt, nameBuf);
         }
-    } else if (UtilsStricmp(msgBuf[1], "PIN") == 0) {
-        if (strlen(msgBuf[2]) == 4) {
-            BC127CommandSetPin(cli.bt, msgBuf[2]);
-        } else {
-            *cmdSuccess = 0;
-        }
     } else if (UtilsStricmp(msgBuf[1], "PBAP") == 0) {
         BC127SendCommand(cli.bt, "PB_PULL 16 3 1 5 0 87");
     } else if (UtilsStricmp(msgBuf[1], "VERSION") == 0) {
@@ -265,6 +259,10 @@ void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess)
             0x01
         };
         BM83SendCommand(cli.bt, command, sizeof(command));
+    } else if (UtilsStricmp(msgBuf[1], "TIME") == 0) {
+        BM83CommandVendorATCommand(cli.bt, "+CLLK?");
+    } else if (UtilsStricmp(msgBuf[1], "BLDN") == 0) {
+        BM83CommandVendorATCommand(cli.bt, "+BLDN");
     } else if (UtilsStricmp(msgBuf[1], "PLAY") == 0) {
         BM83CommandMusicControl(cli.bt, BM83_CMD_ACTION_PLAY);
     } else if (UtilsStricmp(msgBuf[1], "PAUSE") == 0) {
@@ -737,10 +735,11 @@ void CLIProcess()
                     cmdSuccess = 0;
                 }
             } else if (UtilsStricmp(msgBuf[0], "RESTORE") == 0) {
+                uint8_t micGain = 0x00;
                 if (cli.bt->type == BT_BTM_TYPE_BC127) {
                     BC127CommandUnpair(cli.bt);
                     BC127CommandSetAudio(cli.bt, 0, 1);
-                    BC127CommandSetAudioAnalog(cli.bt, 3, 15, 1, "OFF");
+                    BC127CommandSetAudioAnalog(cli.bt, 1, 15, 1, "OFF");
                     BC127CommandSetAudioDigital(
                         cli.bt,
                         BC127_AUDIO_SPDIF,
@@ -757,12 +756,12 @@ void CLIProcess()
                     BC127SendCommand(cli.bt, "SET HFP_CONFIG=ON ON ON ON ON OFF");
                     BC127CommandSetCOD(cli.bt, 300420);
                     BC127CommandWrite(cli.bt);
-                    // Set the Mic Gain to -17.5dB by default
-                    ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x03);
+                    // Set the Mic Gain to -23dB by default
+                    micGain = 0x01;
                 } else {
                     BM83CommandRestore(cli.bt);
-                    ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
                     ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
+                    micGain = 0x00;
                 }
                 // Reset the UI
                 ConfigSetUIMode(0x00);
@@ -786,6 +785,7 @@ void CLIProcess()
                 ConfigSetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL, 0x44);
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
+                ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
             } else if (UtilsStricmp(msgBuf[0], "TEST") == 0) {
                 int8_t status = 0x00;
                 uint8_t buffer = 0x00;
@@ -814,7 +814,6 @@ void CLIProcess()
                     LogRaw("    BT MPREAMP ON/OFF - Enable the microphone pre-amp so non-OE microphones work well\r\n");
                     LogRaw("    BT PAIR - Enable pairing mode\r\n");
                     LogRaw("    BT NAME <name> - Set the module name, up to 32 chars\r\n");
-                    LogRaw("    BT PIN <pin> - Set the module pin, up to 4 digits\r\n");
                     LogRaw("    BT REBOOT - Reboot the BC127\r\n");
                     LogRaw("    BT UNPAIR - Unpair all devices from the BC127\r\n");
                     LogRaw("    BT VERSION - Get the BC127 Version Info\r\n");

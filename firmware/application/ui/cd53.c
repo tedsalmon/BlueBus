@@ -16,6 +16,9 @@ void CD53Init(BT_t *bt, IBus_t *ibus)
     Context.tempDisplay = UtilsDisplayValueInit("", CD53_DISPLAY_STATUS_OFF);
     Context.btDeviceIndex = CD53_PAIRING_DEVICE_NONE;
     Context.displayMetadata = CD53_DISPLAY_METADATA_ON;
+    if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF) {
+        Context.displayMetadata = CD53_DISPLAY_METADATA_OFF;
+    }
     Context.radioType = ConfigGetUIMode();
     Context.mediaChangeState = CD53_MEDIA_STATE_OK;
     Context.menuContext = MenuSingleLineInit(ibus, bt, &CD53DisplayUpdateText, &Context);
@@ -67,6 +70,11 @@ void CD53Init(BT_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBUS_EVENT_RAD_WRITE_DISPLAY,
         &CD53IBusRADWriteDisplay,
+        &Context
+    );
+    EventRegisterCallback(
+        IBUS_EVENT_ScreenModeSet,
+        &CD53GTScreenModeSet,
         &Context
     );
     Context.displayUpdateTaskId = TimerRegisterScheduledTask(
@@ -126,6 +134,10 @@ void CD53Destroy()
     EventUnregisterCallback(
         IBUS_EVENT_RAD_WRITE_DISPLAY,
         &CD53IBusRADWriteDisplay
+    );
+    EventUnregisterCallback(
+        IBUS_EVENT_ScreenModeSet,
+        &CD53GTScreenModeSet
     );
     TimerUnregisterScheduledTask(&CD53TimerDisplay);
     memset(&Context, 0, sizeof(CD53Context_t));
@@ -319,6 +331,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         context->lastTelephoneButtonPress = TimerGetMillis();
         CD53RedisplayText(context);
     } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE &&  pkt[IBUS_PKT_DB2] == 0x04) {
+        // Do nothing if the display is off
+        if (context->mode == CD53_MODE_ACTIVE_DISPLAY_OFF) {
+            return;
+        }
         // Settings Menu
         if (context->mode != CD53_MODE_SETTINGS) {
             MenuSingleLineSettings(&context->menuContext);
@@ -331,6 +347,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             }
         }
     } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE && pkt[IBUS_PKT_DB2] == 0x05) {
+        // Do nothing if the display is off
+        if (context->mode == CD53_MODE_ACTIVE_DISPLAY_OFF) {
+            return;
+        }
         // Device selection mode
         if (context->mode != CD53_MODE_DEVICE_SEL) {
             if (context->bt->pairedDevicesCount == 0) {
@@ -349,6 +369,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             }
         }
     } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE && pkt[IBUS_PKT_DB2] == 0x06) {
+        // Do nothing if the display is off
+        if (context->mode == CD53_MODE_ACTIVE_DISPLAY_OFF) {
+            return;
+        }
         // Toggle the discoverable state
         uint8_t state;
         int8_t timeout = 1500 / CD53_DISPLAY_SCROLL_SPEED;
@@ -366,7 +390,9 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         // A button was pressed - Push our display text back
         if (context->mode == CD53_MODE_ACTIVE) {
             TimerTriggerScheduledTask(context->displayUpdateTaskId);
-        } else if (context->mode != CD53_MODE_OFF) {
+        } else if (context->mode != CD53_MODE_OFF &&
+            context->mode != CD53_MODE_ACTIVE_DISPLAY_OFF
+        ) {
             CD53RedisplayText(context);
         }
     }
@@ -516,6 +542,27 @@ void CD53IBusBMBTButtonPress(void *ctx, unsigned char *pkt)
     }
 }
 
+/**
+ * CD53GTScreenModeSet()
+ *     Description:
+ *         Track the state that the Monochrome GT expects from the radio (MIR)
+ *     Params:
+ *         void *ctx - The context
+ *         uint8_t *pkt - The IBus Message received
+ *     Returns:
+ *         void
+ */
+void CD53GTScreenModeSet(void *ctx, uint8_t *pkt)
+{
+    CD53Context_t *context = (CD53Context_t *) ctx;
+    // Check the screen priority (bit 0 of 0x45). RAD = 0, GT = 1
+    if (CHECK_BIT(pkt[IBUS_PKT_DB1], 0) == 1) {
+        context->mode = CD53_MODE_ACTIVE_DISPLAY_OFF;
+    } else {
+        context->mode = CD53_MODE_ACTIVE;
+    }
+}
+
 void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
@@ -581,10 +628,9 @@ void CD53IBusRADWriteDisplay(void *ctx, unsigned char *pkt)
     if (pkt[IBUS_PKT_DB1] == 0xC4) {
         context->radioType = CONFIG_UI_BUSINESS_NAV;
     }
-    // Check for the water mark so we do not fight ourselves
-    if (context->mode != CD53_MODE_OFF &&
-        pkt[pkt[IBUS_PKT_LEN]] != IBUS_RAD_MAIN_AREA_WATERMARK
-    ) {
+    // Ensure that the display mode is 0xC4 so we know we did not write this
+    // to the display
+    if (context->mode != CD53_MODE_OFF && pkt[IBUS_PKT_DB1] == 0xC4) {
         CD53RedisplayText(context);
     }
 }
@@ -592,91 +638,119 @@ void CD53IBusRADWriteDisplay(void *ctx, unsigned char *pkt)
 void CD53TimerDisplay(void *ctx)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
-    if (context->mode != CD53_MODE_OFF) {
-        // Display the temp text, if there is any
-        if (context->tempDisplay.status > CD53_DISPLAY_STATUS_OFF) {
-            if (context->tempDisplay.timeout == 0) {
-                context->tempDisplay.status = CD53_DISPLAY_STATUS_OFF;
-            } else if (context->tempDisplay.timeout > 0) {
-                context->tempDisplay.timeout--;
-            } else if (context->tempDisplay.timeout < -1) {
-                context->tempDisplay.status = CD53_DISPLAY_STATUS_OFF;
+    // Do not display text when the mode is OFF or DISPLAY_OFF
+    if (context->mode == CD53_MODE_OFF ||
+        context->mode == CD53_MODE_ACTIVE_DISPLAY_OFF
+    ) {
+        return;
+    }
+    // Display the temp text, if there is any
+    if (context->tempDisplay.status > CD53_DISPLAY_STATUS_OFF) {
+        if (context->tempDisplay.timeout == 0) {
+            context->tempDisplay.status = CD53_DISPLAY_STATUS_OFF;
+        } else if (context->tempDisplay.timeout > 0) {
+            context->tempDisplay.timeout--;
+        } else if (context->tempDisplay.timeout < -1) {
+            context->tempDisplay.status = CD53_DISPLAY_STATUS_OFF;
+        }
+        if (context->tempDisplay.status == CD53_DISPLAY_STATUS_NEW) {
+            if (context->radioType == CONFIG_UI_CD53) {
+                IBusCommandTELIKEDisplayWrite(
+                    context->ibus,
+                    context->tempDisplay.text
+                );
+            } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
+                IBusCommandGTWriteBusinessNavTitle(
+                    context->ibus,
+                    context->tempDisplay.text
+                );
             }
-            if (context->tempDisplay.status == CD53_DISPLAY_STATUS_NEW) {
-                if (context->radioType == CONFIG_UI_CD53) {
-                    IBusCommandTELIKEDisplayWrite(
-                        context->ibus,
-                        context->tempDisplay.text
-                    );
-                } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
-                    IBusCommandGTWriteBusinessNavTitle(
-                        context->ibus,
-                        context->tempDisplay.text
-                    );
+            context->tempDisplay.status = CD53_DISPLAY_STATUS_ON;
+        }
+        if (context->mainDisplay.length <= CD53_DISPLAY_TEXT_LEN) {
+            context->mainDisplay.index = 0;
+        }
+    } else {
+        // Display the main text if there isn't a timeout set
+        if (context->mainDisplay.timeout > 0) {
+            context->mainDisplay.timeout--;
+        } else if (context->mainDisplay.timeout == 0 ||
+                   context->mainDisplay.timeout == CD53_TIMEOUT_SCROLL_STOP_NEXT_ITR
+        ) {
+            if (context->mainDisplay.length > CD53_DISPLAY_TEXT_LEN) {
+                char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};
+                uint8_t textLength = CD53_DISPLAY_TEXT_LEN;
+                uint8_t idxEnd = context->mainDisplay.index + textLength;
+                // Prevent strncpy() from going out of bounds
+                if (idxEnd >= context->mainDisplay.length) {
+                    textLength = context->mainDisplay.length - context->mainDisplay.index;
+                    idxEnd = context->mainDisplay.index + textLength;
                 }
-                context->tempDisplay.status = CD53_DISPLAY_STATUS_ON;
-            }
-            if (context->mainDisplay.length <= CD53_DISPLAY_TEXT_LEN) {
-                context->mainDisplay.index = 0;
-            }
-        } else {
-            // Display the main text if there isn't a timeout set
-            if (context->mainDisplay.timeout > 0) {
-                context->mainDisplay.timeout--;
-            } else {
-                if (context->mainDisplay.length > CD53_DISPLAY_TEXT_LEN) {
-                    char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};
-                    uint8_t textLength = CD53_DISPLAY_TEXT_LEN;
-                    uint8_t idxEnd = context->mainDisplay.index + textLength;
-                    // Prevent strncpy() from going out of bounds
-                    if (idxEnd >= context->mainDisplay.length) {
-                        textLength = context->mainDisplay.length - context->mainDisplay.index;
-                        idxEnd = context->mainDisplay.index + textLength;
-                    }
-                    UtilsStrncpy(
-                        text,
-                        &context->mainDisplay.text[context->mainDisplay.index],
-                        textLength + 1
-                    );
-                    if (context->radioType == CONFIG_UI_CD53) {
-                        IBusCommandTELIKEDisplayWrite(context->ibus, text);
-                    } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
-                        IBusCommandGTWriteBusinessNavTitle(context->ibus, text);
-                    }
-                    // Pause at the beginning of the text
-                    if (context->mainDisplay.index == 0) {
+                UtilsStrncpy(
+                    text,
+                    &context->mainDisplay.text[context->mainDisplay.index],
+                    textLength + 1
+                );
+                // If we start with a space, it will be ignored by the display
+                // Instead, use 0x9D which results in a true blank being displayed
+                if (text[0] == 0x20) {
+                    text[0] = IBUS_RAD_SPACE_CHAR_ALT;
+                }
+                if (context->radioType == CONFIG_UI_CD53) {
+                    IBusCommandTELIKEDisplayWrite(context->ibus, text);
+                } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
+                    IBusCommandGTWriteBusinessNavTitle(context->ibus, text);
+                }
+                uint8_t metaMode = ConfigGetSetting(CONFIG_SETTING_METADATA_MODE);
+                // Pause at the beginning of the text
+                if (context->mainDisplay.index == 0) {
+                    if (metaMode == MENU_SINGLELINE_SETTING_METADATA_MODE_STATIC ||
+                        context->mainDisplay.timeout == CD53_TIMEOUT_SCROLL_STOP_NEXT_ITR
+                    ) {
+                        context->mainDisplay.timeout = CD53_TIMEOUT_SCROLL_STOP;
+                    } else {
                         context->mainDisplay.timeout = 5;
                     }
-                    if (idxEnd >= context->mainDisplay.length) {
-                        // Pause at the end of the text
+                }
+                if (idxEnd >= context->mainDisplay.length) {
+                    // Pause at the end of the text or on the next iteration
+                    // if we have Party Single Scroll mode enabled
+                    context->mainDisplay.index = 0;
+                    if (metaMode == MENU_SINGLELINE_SETTING_METADATA_MODE_PARTY_SINGLE) {
+                        context->mainDisplay.timeout = CD53_TIMEOUT_SCROLL_STOP_NEXT_ITR;
+                    } else{
                         context->mainDisplay.timeout = 2;
-                        context->mainDisplay.index = 0;
-                    } else {
-                        if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) ==
-                            MENU_SINGLELINE_SETTING_METADATA_MODE_CHUNK
-                        ) {
-                            context->mainDisplay.timeout = 2;
-                            context->mainDisplay.index += CD53_DISPLAY_TEXT_LEN;
-                        } else {
-                            context->mainDisplay.index++;
-                        }
                     }
                 } else {
-                    if (context->mainDisplay.index == 0) {
-                        if (context->radioType == CONFIG_UI_CD53) {
-                            IBusCommandTELIKEDisplayWrite(
-                                context->ibus, 
-                                context->mainDisplay.text
-                            );
-                        } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
-                            IBusCommandGTWriteBusinessNavTitle(
-                                context->ibus,
-                                context->mainDisplay.text
-                            );
+                    if (context->mode == CD53_MODE_ACTIVE) {
+                        if (metaMode == MENU_SINGLELINE_SETTING_METADATA_MODE_CHUNK) {
+                            context->mainDisplay.timeout = 2;
+                            context->mainDisplay.index += CD53_DISPLAY_TEXT_LEN;
+                        } else if (metaMode == MENU_SINGLELINE_SETTING_METADATA_MODE_PARTY ||
+                            metaMode == MENU_SINGLELINE_SETTING_METADATA_MODE_PARTY_SINGLE
+                        ) {
+                            context->mainDisplay.index++;
                         }
+                    } else {
+                        // Use Party Scroll for all modes except metadata
+                        context->mainDisplay.index++;
                     }
-                    context->mainDisplay.index = 1;
                 }
+            } else {
+                if (context->mainDisplay.index == 0) {
+                    if (context->radioType == CONFIG_UI_CD53) {
+                        IBusCommandTELIKEDisplayWrite(
+                            context->ibus, 
+                            context->mainDisplay.text
+                        );
+                    } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
+                        IBusCommandGTWriteBusinessNavTitle(
+                            context->ibus,
+                            context->mainDisplay.text
+                        );
+                    }
+                }
+                context->mainDisplay.index = 1;
             }
         }
     }
