@@ -2626,7 +2626,7 @@ void IBusCommandTELSetGTDisplayNumber(IBus_t *ibus, char *dialBuffer)
         msg[0] = IBUS_TEL_CMD_NUMBER;
         msg[1] = 0x63;
         msg[2] = 0x00;
-        snprintf((char *) msg + 3, bufferLength - 1, "%s", dialBuffer);
+        UtilsStrncpy((char *) msg + 3, dialBuffer, bufferLength + 1);
         IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, frameLength);
     } else {
         const unsigned char msg[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};

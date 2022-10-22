@@ -1805,14 +1805,16 @@ void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[5] == 0x0C) {
-            IBusCommandTELSetGTDisplayMenu(context->ibus, context->bt);
+            IBusCommandTELSetGTDisplayMenu(context->ibus);
+            IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
             context->menu = BMBT_MENU_DIAL;
         } else if ((pkt[IBUS_PKT_SRC]==IBUS_DEVICE_MFL)&&(pkt[IBUS_PKT_CMD]==IBUS_MFL_CMD_BTN_PRESS)&&(pkt[IBUS_PKT_DB1]==IBUS_MFL_BTN_EVENT_RT_PRESS)) {
         // MFT r/t
             if (context->menu == BMBT_MENU_DIAL) {
             } else {
                 // invoke dial
-                IBusCommandTELSetGTDisplayMenu(context->ibus, context->bt);
+                IBusCommandTELSetGTDisplayMenu(context->ibus);
+                IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
                 context->menu = BMBT_MENU_DIAL;
             }
         }
@@ -2407,21 +2409,20 @@ void BMBTEmergencyScreen(BMBTContext_t *context)
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
 
     msg[3]=0x41;
-    UtilsStrncpy(msg_body, context->ibus->location1, 50-4);
+    UtilsStrncpy(msg_body, context->ibus->telematicsLocale, 50-4);
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
 
     msg[3]=0x42;
-    UtilsStrncpy(msg_body, context->ibus->location2, 50-4);
+    UtilsStrncpy(msg_body, context->ibus->telematicsStreet, 50-4);
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
 
     msg[3]=0x43;
-    UtilsStrncpy(msg_body, context->ibus->latitude, 50-4);
+    UtilsStrncpy(msg_body, context->ibus->telematicsLatitude, 50-4);
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
 
     msg[3]=0x44;
-    UtilsStrncpy(msg_body, context->ibus->longtitude, 50-4);
+    UtilsStrncpy(msg_body, context->ibus->telematicsLongtitude, 50-4);
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
-
 
     msg[3]=0x45;
     ConfigGetString(CONFIG_SETTING_EMERGENCY_INFO_ADDRESS, msg_body, 31);
@@ -2550,17 +2551,6 @@ void BMBTDialScreenUI(void *ctx, unsigned char cmd, unsigned char *pkt)
     }
     // show updated number
     if (changed == 1) {
-        if (size>0) {
-            char msg[BT_DIAL_BUFFER_FIELD_SIZE+4] = {IBUS_TEL_CMD_NUMBER, 0x63, 0x00};
-            snprintf(msg+3,BT_DIAL_BUFFER_FIELD_SIZE-1,"%s",context->bt->dialBuffer);
-            size+=5;
-            if (size>BT_DIAL_BUFFER_FIELD_SIZE+4) {
-                size = BT_DIAL_BUFFER_FIELD_SIZE+4;
-            }
-            IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, (unsigned char *)msg, size);
-        } else {
-            const unsigned char msg2[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};
-            IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg2, sizeof(msg2));
-        }
+        IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
     }
 }
