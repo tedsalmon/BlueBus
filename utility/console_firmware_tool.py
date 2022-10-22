@@ -270,7 +270,9 @@ if __name__ == '__main__':
                             elif args.start:
                                 start_app()
                             elif args.writesn:
-                                serial_number = int(args.writesn)
+                                serial_number = int(
+                                    args.writesn.replace('BB02', '').replace('-', '')
+                                )
                                 msb = (serial_number >> 8) & 0xFF
                                 lsb = serial_number & 0xFF
                                 write_sn(msb, lsb)
@@ -313,10 +315,16 @@ if __name__ == '__main__':
                             sys.exit(0)
                         if command == PROTOCOL_CMD_WRITE_SN_RESPONSE_OK:
                             print('Wrote SN')
-                            start_app()
+                            if args.start:
+                                start_app()
+                            else:
+                                sys.exit(0)
                         if command == PROTOCOL_CMD_WRITE_SN_RESPONSE_ERR:
                             print('Could not write SN')
-                            start_app()
+                            if args.start:
+                                start_app()
+                            else:
+                                sys.exit(0)
                         if command == PROTOCOL_CMD_READ_BUILD_DATE_RESPONSE:
                             print('Build: %d/%d' % (ord(rx_buffer[0]), ord(rx_buffer[1])))
                             sys.exit(0)
@@ -326,20 +334,24 @@ if __name__ == '__main__':
                         if command == PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_OK:
                             print('Wrote Build Date')
                             if args.writesn:
-                                serial_number = int(args.writesn)
+                                serial_number = int(
+                                    args.writesn.replace('BB02', '').replace('-', '')
+                                )
                                 msb = (serial_number >> 8) & 0xFF
                                 lsb = serial_number & 0xFF
                                 write_sn(msb, lsb)
-                            else:
+                            elif args.start:
                                 start_app()
                         if command == PROTOCOL_CMD_WRITE_BUILD_DATE_RESPONSE_ERR:
                             print('Could not write build date')
                             if args.writesn:
-                                serial_number = int(args.writesn)
+                                serial_number = int(
+                                    args.writesn.replace('BB02', '').replace('-', '')
+                                )
                                 msb = (serial_number >> 8) & 0xFF
                                 lsb = serial_number & 0xFF
                                 write_sn(msb, lsb)
-                            else:
+                            elif args.start:
                                 start_app()
                         if command == PROTOCOL_CMD_START_APP_RESPONSE:
                             print('App Started')
@@ -364,8 +376,8 @@ if __name__ == '__main__':
                     retries += 1
                 else:
                     print(
-                        'ERR: Failed to get a response from the device within 5 '
-                        'seconds. Is the device in bootloader mode?'
+                        'ERR: Failed to get a response from the device within %s '
+                        'seconds. Is the device in bootloader mode?' % TIMEOUT
                     )
                     should_continue = False
     except KeyboardInterrupt:
