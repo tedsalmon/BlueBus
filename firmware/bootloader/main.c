@@ -49,8 +49,10 @@ int main(void)
     IBUS_EN_MODE = 0;
     PAM_SHDN_MODE = 0;
     SPDIF_RST_MODE = 0;
-    TEL_ON_MODE = 0;
-    TEL_MUTE_MODE = 0;
+    TEL_ON_MODE_V1 = 0;
+    TEL_ON_MODE_V2 = 0;
+    TEL_MUTE_MODE_V1 = 0;
+    TEL_MUTE_MODE_V2 = 0;
     UART_SEL_MODE = 0;
 
     // Set the RX / input pins to inputs
@@ -70,11 +72,16 @@ int main(void)
     BOARD_VERSION_PD = 1;
     // Enable the IBus Regulator
     IBUS_EN = 1;
-    // Set the TMUX154E switch to MCU UART mode
-    UART_SEL = UART_SEL_MCU;
+    // Turn the PAM8406 off until it's required
+    PAM_SHDN = 0;
+    // Set the I/O state to low
+    TEL_ON_V1 = 0;
+    TEL_ON_V2 = 0;
+    TEL_MUTE_V1 = 0;
+    TEL_MUTE_V2 = 0;
     if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
-        // Pull the DIT4096 RESET pin high
-        SPDIF_RST = 1;
+        // Set the TMUX154E switch to MCU UART mode
+        UART_SEL = UART_SEL_MCU;
     }
 
     // Init the timer interrupt and the SPI module for the EEPROM
@@ -94,10 +101,10 @@ int main(void)
     // Register the module handlers at a global scope
     UARTAddModuleHandler(&systemUart);
     uint8_t BOOT_MODE = BOOT_MODE_APPLICATION;
-    unsigned char configuredBootmode = EEPROMReadByte(CONFIG_BOOTLOADER_MODE);
+    unsigned char bootMode = EEPROMReadByte(CONFIG_BOOTLOADER_MODE);
     // If the bootloader flag is set in the EEPROM or the recovery pin
     // is set, then lock into bootloader mode
-    if (configuredBootmode != 0x00 || RECOVERY_STATUS == 0) {
+    if (bootMode != 0x00 || RECOVERY_STATUS == 0) {
         BOOT_MODE = BOOT_MODE_BOOTLOADER;
         EEPROMWriteByte(CONFIG_BOOTLOADER_MODE, 0x00);
         TimerEnableLED();
