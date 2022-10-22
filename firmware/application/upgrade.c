@@ -123,6 +123,14 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
         }
         LogRaw("Ran Upgrade 1.2.1\r\n");
     }
+    // Changes in version 1.2.1
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 2, 1) == 1) {
+        if (bt->type == BT_BTM_TYPE_BM83) {
+            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
+            ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
+        }
+        LogRaw("Ran Upgrade 1.2.1\r\n");
+    }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
         FIRMWARE_VERSION_MINOR,

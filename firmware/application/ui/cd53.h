@@ -29,15 +29,17 @@
 #define CD53_MEDIA_STATE_CHANGE 1
 #define CD53_MEDIA_STATE_METADATA_OK 2
 #define CD53_MODE_OFF 0
-#define CD53_MODE_ACTIVE 1
-#define CD53_MODE_CALL 2
-#define CD53_MODE_DEVICE_SEL 3
-#define CD53_MODE_SETTINGS 4
+#define CD53_MODE_ACTIVE_DISPLAY_OFF 1
+#define CD53_MODE_ACTIVE 2
+#define CD53_MODE_CALL 3
+#define CD53_MODE_DEVICE_SEL 4
+#define CD53_MODE_SETTINGS 5
 #define CD53_PAIRING_DEVICE_NONE -1
 #define CD53_SEEK_MODE_NONE 0
 #define CD53_SEEK_MODE_FWD 1
 #define CD53_SEEK_MODE_REV 2
-
+#define CD53_TIMEOUT_SCROLL_STOP -1
+#define CD53_TIMEOUT_SCROLL_STOP_NEXT_ITR -2
 #define CD53_VR_TOGGLE_TIME 500
 
 /*
@@ -84,5 +86,6 @@ void CD53IBusBMBTButtonPress(void *, unsigned char *);
 void CD53IBusCDChangerStatus(void *, unsigned char *);
 void CD53IBusMFLButton(void *, unsigned char *);
 void CD53IBusRADWriteDisplay(void *, unsigned char *);
+void CD53GTScreenModeSet(void *, uint8_t *);
 void CD53TimerDisplay(void *);
 #endif /* CD53_H */

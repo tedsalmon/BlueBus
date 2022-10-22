@@ -1370,7 +1370,7 @@ void HandlerIBusModuleStatusResponse(void *ctx, uint8_t *pkt)
             uiMode != CONFIG_UI_MID_BMBT &&
             uiMode != CONFIG_UI_BUSINESS_NAV
         ) {
-            // Request the Navigation Identity
+            // Request the Graphics Terminal Identity
             IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
         }
     } else if (module == IBUS_DEVICE_MID) {

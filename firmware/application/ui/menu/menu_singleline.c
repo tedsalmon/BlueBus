@@ -125,7 +125,7 @@ void MenuSingleLineSetTempDisplayText(
  */
 void MenuSingleLineSettings(MenuSingleLineContext_t *context)
 {
-    unsigned char value = ConfigGetSetting(
+    uint8_t value = ConfigGetSetting(
         CONFIG_SETTING_METADATA_MODE
     );
     if (value == MENU_SINGLELINE_SETTING_METADATA_MODE_OFF) {
@@ -193,10 +193,11 @@ void MenuSingleLineSettingsEditSave(MenuSingleLineContext_t *context)
                 IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
             }
         } else if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_TEL_MIC_GAIN) {
-            unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+            MenuSingleLineSetTempDisplayText(context, "Saved", 1);
+            uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
             if (context->bt->type == BT_BTM_TYPE_BC127) {
-                unsigned char micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
-                unsigned char micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
+                uint8_t micBias = ConfigGetSetting(CONFIG_SETTING_MIC_BIAS);
+                uint8_t micPreamp = ConfigGetSetting(CONFIG_SETTING_MIC_PREAMP);
                 BC127CommandSetMicGain(
                     context->bt,
                     micGain,
@@ -324,7 +325,7 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
 {
     context->settingIdx = nextMenu;
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_METADATA_MODE) {
-        unsigned char value = ConfigGetSetting(
+        uint8_t value = ConfigGetSetting(
             CONFIG_SETTING_METADATA_MODE
         );
         if (value == MENU_SINGLELINE_SETTING_METADATA_MODE_OFF) {
@@ -381,19 +382,19 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
         }
     }
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_TEL_MIC_GAIN) {
-        unsigned char micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+        uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
         context->settingValue = micGain;
-        char micGainText[16] = {0};
+        char micGainText[17] = {0};
         if (context->bt->type == BT_BTM_TYPE_BC127) {
             if (micGain > 21) {
                 micGain = 0;
             }
-            snprintf(micGainText, 15, "Mic Gain: %idB", (int8_t) BTBC127MicGainTable[micGain]);
+            snprintf(micGainText, 16, "Mic Gain: %idB", (int8_t) BTBC127MicGainTable[micGain]);
         } else {
             if (micGain > 0x0F) {
                 micGain = 0;
             }
-            snprintf(micGainText, 15, "Mic Gain: %idB", (int8_t) BTBM83MicGainTable[micGain]);
+            snprintf(micGainText, 16, "Mic Gain: %idB", (int8_t) BTBM83MicGainTable[micGain]);
         }
         MenuSingleLineSetMainDisplayText(
             context,
@@ -420,7 +421,7 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
         }
     }
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_BLINKERS) {
-        unsigned char blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
+        uint8_t blinkCount = ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS);
         if (blinkCount > 8 || blinkCount == 0) {
             blinkCount = 1;
         }

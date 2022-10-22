@@ -1643,11 +1643,9 @@ void IBusCommandGTWriteBusinessNavTitle(IBus_t *ibus, char *message) {
     if (length > IBUS_TCU_SINGLE_LINE_UI_MAX_LEN) {
         length = IBUS_TCU_SINGLE_LINE_UI_MAX_LEN;
     }
-    const size_t packetLength = length + 4;
-    // Add an extra 0x10 at the end of the message so we can
-    // identify it as ours on echo
-    unsigned char text[packetLength];
-    memset(text, IBUS_RAD_MAIN_AREA_WATERMARK, packetLength);
+    const size_t packetLength = length + 3;
+    uint8_t text[packetLength];
+    memset(text, 0x00, packetLength);
     text[0] = IBUS_CMD_GT_WRITE_TITLE;
     text[1] = 0x40;
     text[2] = 0x30;

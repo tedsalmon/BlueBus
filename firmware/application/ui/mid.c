@@ -571,6 +571,13 @@ void MIDTimerDisplay(void *ctx)
                 if (context->mainDisplay.length > MID_DISPLAY_TEXT_SIZE) {
                     char text[MID_DISPLAY_TEXT_SIZE + 1] = {0};
                     uint8_t textLength = MID_DISPLAY_TEXT_SIZE;
+                    // If we start with a space, it will be ignored by the display
+                    // Skipping the space allows us to have "smooth" scrolling
+                    if (context->mainDisplay.text[context->mainDisplay.index] == 0x20 &&
+                        context->mainDisplay.index < context->mainDisplay.length
+                    ) {
+                        context->mainDisplay.index++;
+                    }
                     uint8_t idxEnd = context->mainDisplay.index + textLength;
                     // Prevent strncpy() from going out of bounds
                     if (idxEnd >= context->mainDisplay.length) {

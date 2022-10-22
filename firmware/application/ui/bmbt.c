@@ -104,12 +104,12 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     );
     EventRegisterCallback(
         IBUS_EVENT_ScreenModeSet,
-        &BMBTScreenModeSet,
+        &BMBTGTScreenModeSet,
         &Context
     );
     EventRegisterCallback(
         IBUS_EVENT_ScreenModeUpdate,
-        &BMBTScreenModeUpdate,
+        &BMBTRADScreenModeRequest,
         &Context
     );
     EventRegisterCallback(
@@ -204,11 +204,11 @@ void BMBTDestroy()
     );
     EventUnregisterCallback(
         IBUS_EVENT_ScreenModeSet,
-        &BMBTScreenModeSet
+        &BMBTGTScreenModeSet
     );
     EventUnregisterCallback(
         IBUS_EVENT_ScreenModeUpdate,
-        &BMBTScreenModeUpdate
+        &BMBTRADScreenModeRequest
     );
     EventUnregisterCallback(
         IBUS_EVENT_TV_STATUS,
@@ -2097,21 +2097,20 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
 }
 
 /**
- * BMBTScreenModeUpdate()
+ * BMBTRADScreenModeRequest()
  *     Description:
- *         This callback tracks the screen mode that is broadcast by the GT.
- *         We use this to know if we can write to the screen or not.
+ *         This callback tracks the screen mode that is stipulated by the RAD.
  *     Params:
  *         void *ctx - The context
  *         uint8_t *pkt - The IBus Message received
  *     Returns:
  *         void
  */
-void BMBTScreenModeUpdate(void *ctx, uint8_t *pkt)
+void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE) {
-        if (pkt[IBUS_PKT_DB1] == 0x01 || pkt[IBUS_PKT_DB1] == IBUS_GT_RADIO_SCREEN_OFF) {
+        if (pkt[IBUS_PKT_DB1] == 0x01 || pkt[IBUS_PKT_DB1] == IBUS_RAD_PRIORITY_GT) {
             if (context->menu == BMBT_MENU_DASHBOARD) {
                 context->menu = BMBT_MENU_DASHBOARD_FRESH;
             } else {
@@ -2119,13 +2118,13 @@ void BMBTScreenModeUpdate(void *ctx, uint8_t *pkt)
             }
             context->status.displayMode = BMBT_DISPLAY_OFF;
         }
-        if (pkt[IBUS_PKT_DB1] == IBUS_GT_MENU_CLEAR &&
+        if (pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
             context->status.navState == BMBT_NAV_STATE_BOOT
         ) {
             IBusCommandRADDisableMenu(context->ibus);
             context->status.navState = BMBT_NAV_STATE_ON;
         }
-        if (pkt[IBUS_PKT_DB1] == IBUS_GT_MENU_CLEAR &&
+        if (pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
             (context->status.displayMode == BMBT_DISPLAY_ON ||
              context->status.displayMode == BMBT_DISPLAY_INFO)
         ) {
@@ -2139,20 +2138,16 @@ void BMBTScreenModeUpdate(void *ctx, uint8_t *pkt)
 }
 
 /**
- * BMBTScreenModeSet()
+ * BMBTGTScreenModeSet()
  *     Description:
- *         The GT sends this screen mode post-boot to tell the radio it can
- *         display to the UI. We set the menu to none so that on the next
- *         screen clear, we know to write the UI. Set the navstate state to
- *         "boot" so we know that we need to disable the radio updates on next
- *         screen clear
+ *         Track the state that the GT expects from the radio
  *     Params:
  *         void *ctx - The context
  *         uint8_t *pkt - The IBus Message received
  *     Returns:
  *         void
  */
-void BMBTScreenModeSet(void *ctx, uint8_t *pkt)
+void BMBTGTScreenModeSet(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == BMBT_NAV_BOOT) {
