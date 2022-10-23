@@ -1914,6 +1914,31 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
         } else if (context->menu == BMBT_MENU_SETTINGS_UI) {
             BMBTSettingsUpdateUI(context, selectedIdx);
         }
+    } else if ((context->menu == BMBT_MENU_DIAL_EMERGENCY) && (selectedIdx>=0x10) && (selectedIdx <= 0x13)) {
+        LogRaw("\r\nEmergency / Button pressed\r\n");
+        if (selectedIdx == 0x10) {
+// Back
+            LogRaw("\r\nEmergency / Button BACK\r\n");
+            IBusCommandTELSetGTDisplayMenu(context->ibus);
+            IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
+            context->menu = BMBT_MENU_DIAL;
+        } else if (selectedIdx == 0x11) {
+// SOS
+            LogRaw("\r\nEmergency / Button SOS\r\n");
+            ConfigGetString(CONFIG_SETTING_PHONE_SOS_ADDRESS, context->bt->dialBuffer, 15);
+            BTCommandDial(context->bt, context->bt->dialBuffer, "SOS");
+        } else if (selectedIdx == 0x13) {
+// Assist
+            LogRaw("\r\nEmergency / Button ASSIST\r\n");
+            ConfigGetString(CONFIG_SETTING_PHONE_ASSIST_ADDRESS, context->bt->dialBuffer, 15);
+            BTCommandDial(context->bt, context->bt->dialBuffer, "Assist");
+        } else if (selectedIdx == 0x12) {
+// Friend
+            LogRaw("\r\nEmergency / Button FRIEND\r\n");
+            ConfigGetString(CONFIG_SETTING_PHONE_FRIEND_ADDRESS, context->bt->dialBuffer, 15);
+// Optional TODO: send SMS before calling
+            BTCommandDial(context->bt, context->bt->dialBuffer, "Friend");           
+        }
     }
 }
 
