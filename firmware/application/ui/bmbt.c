@@ -1717,9 +1717,12 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                         BTCommandDial(context->bt, context->bt->dialBuffer, NULL);
                     }
                 } else {
-                    // render phone screen
-                    LogRaw("BMBTIBusBMBTButtonPress: Render Dialer\r\n");
-                    EventTriggerCallback(IBUS_EVENT_GTChangeUIRequest, pkt);
+                    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {                   // render phone screen
+                        LogRaw("BMBTIBusBMBTButtonPress: Render Dialer\r\n");
+                        IBusCommandTELSetGTDisplayMenu(context->ibus);
+                        IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
+                        context->menu = BMBT_MENU_DIAL;
+                    }
                 }
             }
         } else if (context->bt->callStatus == BT_CALL_INACTIVE &&
