@@ -813,6 +813,7 @@ void CLIProcess()
                     ConfigSetSetting(idx, 0x00);
                     idx++;
                 }
+                ConfigSetSetting(CONFIG_SETTING_LANGUAGE,CONFIG_SETTING_LANGUAGE_ENGLISH);
                 // Settings
                 // Enable Auto Power Off
                 ConfigSetSetting(CONFIG_SETTING_AUTO_POWEROFF, CONFIG_SETTING_ON);

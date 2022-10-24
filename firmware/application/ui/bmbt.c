@@ -1934,13 +1934,13 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
 // Assist
             LogRaw("\r\nEmergency / Button ASSIST\r\n");
             ConfigGetString(CONFIG_SETTING_PHONE_ASSIST_ADDRESS, context->bt->dialBuffer, 15);
-            BTCommandDial(context->bt, context->bt->dialBuffer, "Assist");
+            BTCommandDial(context->bt, context->bt->dialBuffer, LocaleGetText(LOCALE_STRING_EMERGENCY_ASSIST));
         } else if (selectedIdx == 0x12) {
 // Friend
             LogRaw("\r\nEmergency / Button FRIEND\r\n");
             ConfigGetString(CONFIG_SETTING_PHONE_FRIEND_ADDRESS, context->bt->dialBuffer, 15);
 // Optional TODO: send SMS before calling
-            BTCommandDial(context->bt, context->bt->dialBuffer, "Friend");           
+            BTCommandDial(context->bt, context->bt->dialBuffer, LocaleGetText(LOCALE_STRING_EMERGENCY_ASSIST));           
         }
     }
 }
@@ -2433,7 +2433,7 @@ void BMBTEmergencyScreen(BMBTContext_t *context)
     char *msg_body = (char *)(msg+4);
 
     msg[3]=0x60;
-    UtilsStrncpy(msg_body, "Your current position is:", 50-4);
+    UtilsStrncpy(msg_body, LocaleGetText(LOCALE_STRING_EMERGENCY_POSITION), 50-4);
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
 
     msg[3]=0x41;
@@ -2467,7 +2467,7 @@ void BMBTEmergencyScreen(BMBTContext_t *context)
     if (phonebuffer[0]!=0) {
         msg[2]=0x02; // assistance
         msg[3]=0x53;
-        snprintf(msg_body,50-4,"Assist");
+        UtilsStrncpy(msg_body, LocaleGetText(LOCALE_STRING_EMERGENCY_ASSIST), 50-4);
         IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
     };
 
@@ -2475,7 +2475,7 @@ void BMBTEmergencyScreen(BMBTContext_t *context)
     if (phonebuffer[0]!=0) {
         msg[2]=0x03; // friend
         msg[3]=0x52;
-        snprintf(msg_body,50-4,"Friend");
+        UtilsStrncpy(msg_body, LocaleGetText(LOCALE_STRING_EMERGENCY_FRIEND), 50-4);
         IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
     };
 
@@ -2483,14 +2483,14 @@ void BMBTEmergencyScreen(BMBTContext_t *context)
     if (phonebuffer[0]!=0) {
         msg[2]=112; // special easy to identify 112 code :)
         msg[3]=0x51 | 0x80; // select by default
-        snprintf(msg_body,50-4,"SOS");
+        UtilsStrncpy(msg_body, "SOS", 50-4);
         IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
     };
 
     msg[0]=IBUS_CMD_GT_WRITE_WITH_CURSOR;
     msg[2]=0x00;
     msg[3]=0x00;
-    snprintf(msg_body,50-4,"Emergency, call %s!", phonebuffer);
+    UtilsStrncpy(msg_body, LocaleGetText(LOCALE_STRING_EMERGENCY_HEADER), 50-4);
     IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
     context->menu = BMBT_MENU_DIAL_EMERGENCY;
 }

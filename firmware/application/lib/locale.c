@@ -6,7 +6,88 @@
  */
 #include "locale.h"
 
-static char *LOCALE_LANG_ITALIAN[] = {
+static char *LOCALE_LANG_ENGLISH[LOCALE_STRINGS_SIZE] = {
+    "- Not Playing -",
+    "About",
+    "Audio",
+    "Autoplay: Off",
+    "Autoplay: On",
+    "Back",
+    "Blinkers: %d",
+    "Bluetooth",
+    "Built: %d/%d",
+    "Calling",
+    "Car: E3x/E53",
+    "Car: E46/Z4",
+    "Car: Unset",
+    "Clear Pairings",
+    "Comfort",
+    "Dashboard",
+    "Devices",
+    "DSP: Default",
+    "DSP: Analog",
+    "DSP: Digital",
+    "FW: %s",
+    "Handsfree: Off",
+    "Handsfree: On",
+    "Lock: 10km/h",
+    "Lock: 20km/h",
+    "Lock: Off",
+    "Main Menu",
+    "Menu: Dashboard",
+    "Menu: Main",
+    "Metadata: Chunk",
+    "Metadata: Off",
+    "Metadata: Party",
+    "Mic Bias: Off",
+    "Mic Bias: On",
+    "Mic Gain: %idB",
+    "No Device",
+    "Pairing: Off",
+    "Pairing: On",
+    "S/N: %u",
+    "Settings",
+    "Settings > About",
+    "Settings > Audio",
+    "Settings > Calling",
+    "Settings > Comfort",
+    "Settings > UI",
+    "Temps: Coolant",
+    "Temps: Off",
+    "Temps: Ambient",
+    "Temps: Oil",
+    "UI",
+    "Unknown Artist",
+    "Unknown Title",
+    "Unlock: Off",
+    "Unlock: Pos 0",
+    "Unlock: Pos 1",
+    "Volume: -%ddB",
+    "Volume: +%ddB",
+    "Volume: +24dB",
+    "Volume: 0dB",
+    "Lang: %s",
+    "Park Lts.: On",
+    "Park Lts.: Off",
+    "Vol. Mgmt: On",
+    "Vol. Mgmt: Off",
+    "Vol. Rev: On",
+    "Vol. Rev: Off",
+    "Dash. OBC: On",
+    "Dash. OBC: Off",
+    "BMBT Off: Off",
+    "BMBT Off: On",
+    "Vol. Offset: %d",
+    "Mode: Default",
+    "Mode: TCU",
+    "Voice Assistant",
+    "Assist",
+    "Friend",
+    "Your current location is:",
+    "Emergency call!",
+};
+
+static char *LOCALE_LANG_ITALIAN[LOCALE_STRINGS_SIZE] = {
     "- In Pausa -",
     "Info su...",
     "Audio",
@@ -83,7 +164,7 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Voice Assistant",
 };
 
-static char *LOCALE_LANG_DUTCH[] = {
+static char *LOCALE_LANG_DUTCH[LOCALE_STRINGS_SIZE] = {
     "- Geen weergave -",
     "Info",
     "Audio",
@@ -160,84 +241,7 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Voice Assistant",
 };
 
-static char *LOCALE_LANG_ENGLISH[] = {
-    "- Not Playing -",
-    "About",
-    "Audio",
-    "Autoplay: Off",
-    "Autoplay: On",
-    "Back",
-    "Blinkers: %d",
-    "Bluetooth",
-    "Built: %d/%d",
-    "Calling",
-    "Car: E3x/E53",
-    "Car: E46/Z4",
-    "Car: Unset",
-    "Clear Pairings",
-    "Comfort",
-    "Dashboard",
-    "Devices",
-    "DSP: Default",
-    "DSP: Analog",
-    "DSP: Digital",
-    "FW: %s",
-    "Handsfree: Off",
-    "Handsfree: On",
-    "Lock: 10km/h",
-    "Lock: 20km/h",
-    "Lock: Off",
-    "Main Menu",
-    "Menu: Dashboard",
-    "Menu: Main",
-    "Metadata: Chunk",
-    "Metadata: Off",
-    "Metadata: Party",
-    "Mic Bias: Off",
-    "Mic Bias: On",
-    "Mic Gain: %idB",
-    "No Device",
-    "Pairing: Off",
-    "Pairing: On",
-    "S/N: %u",
-    "Settings",
-    "Settings > About",
-    "Settings > Audio",
-    "Settings > Calling",
-    "Settings > Comfort",
-    "Settings > UI",
-    "Temps: Coolant",
-    "Temps: Off",
-    "Temps: Ambient",
-    "Temps: Oil",
-    "UI",
-    "Unknown Artist",
-    "Unknown Title",
-    "Unlock: Off",
-    "Unlock: Pos 0",
-    "Unlock: Pos 1",
-    "Volume: -%ddB",
-    "Volume: +%ddB",
-    "Volume: +24dB",
-    "Volume: 0dB",
-    "Lang: %s",
-    "Park Lts.: On",
-    "Park Lts.: Off",
-    "Vol. Mgmt: On",
-    "Vol. Mgmt: Off",
-    "Vol. Rev: On",
-    "Vol. Rev: Off",
-    "Dash. OBC: On",
-    "Dash. OBC: Off",
-    "BMBT Off: Off",
-    "BMBT Off: On",
-    "Vol. Offset: %d",
-    "Mode: Default",
-    "Mode: TCU",
-    "Voice Assistant",
-};
-
-static char *LOCALE_LANG_ESTONIAN[] = {
+static char *LOCALE_LANG_ESTONIAN[LOCALE_STRINGS_SIZE] = {
     "- Ei mängi -",
     "Teave",
     "Audio",
@@ -314,7 +318,7 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Voice Assistant",
 };
 
-static char LOCALE_LANG_RUSSIAN[][24] = {
+static char LOCALE_LANG_RUSSIAN[LOCALE_STRINGS_SIZE][24] = {
     {205,229,' ',226,238,241,239,240,238,232,231,226,238,228,232,242,241,255,0},
     {206,' ',239,240,238,227,240,224,236,236,229,0},
     {192,243,228,232,238,0},
@@ -391,7 +395,7 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Voice Assistant",
 };
 
-static char *LOCALE_LANG_GERMAN[] = {
+static char *LOCALE_LANG_GERMAN[LOCALE_STRINGS_SIZE] = {
     "- Keine Wiedergabe -",
     "\xdc""ber",
     "Audio",
@@ -468,7 +472,7 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Voice Assistant",
 };
 
-static char *LOCALE_LANG_SPANISH[] = {
+static char *LOCALE_LANG_SPANISH[LOCALE_STRINGS_SIZE] = {
     "- En Pausa -",
     "Informaci\xd3""n",
     "Audio",
@@ -556,24 +560,46 @@ static char *LOCALE_LANG_SPANISH[] = {
  */
 char *LocaleGetText(uint16_t stringIndex)
 {
-    unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-    switch (language) {
-        case CONFIG_SETTING_LANGUAGE_DUTCH:
-            return LOCALE_LANG_DUTCH[stringIndex];
-        case CONFIG_SETTING_LANGUAGE_ENGLISH:
-            return LOCALE_LANG_ENGLISH[stringIndex];
-        case CONFIG_SETTING_LANGUAGE_ESTONIAN:
-            return LOCALE_LANG_ESTONIAN[stringIndex];
-        case CONFIG_SETTING_LANGUAGE_GERMAN:
-            return LOCALE_LANG_GERMAN[stringIndex];
-        case CONFIG_SETTING_LANGUAGE_ITALIAN:
-            return LOCALE_LANG_ITALIAN[stringIndex];
-        case CONFIG_SETTING_LANGUAGE_RUSSIAN:
-            return LOCALE_LANG_RUSSIAN[stringIndex];
-        case CONFIG_SETTING_LANGUAGE_SPANISH:
-            return LOCALE_LANG_SPANISH[stringIndex];
-        default:
-            // Default to English
-            return LOCALE_LANG_ENGLISH[stringIndex];
+    if (stringIndex < LOCALE_STRINGS_SIZE) {
+        unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+        char *string = 0;
+        
+        switch (language) {
+            case CONFIG_SETTING_LANGUAGE_ENGLISH:
+                string = LOCALE_LANG_ENGLISH[stringIndex];
+                break;
+            case CONFIG_SETTING_LANGUAGE_DUTCH:
+                string = LOCALE_LANG_DUTCH[stringIndex];
+                break;
+            case CONFIG_SETTING_LANGUAGE_ESTONIAN:
+                string = LOCALE_LANG_ESTONIAN[stringIndex];
+                break;
+            case CONFIG_SETTING_LANGUAGE_GERMAN:
+                string = LOCALE_LANG_GERMAN[stringIndex];
+                break;
+            case CONFIG_SETTING_LANGUAGE_ITALIAN:
+                string = LOCALE_LANG_ITALIAN[stringIndex];
+                break;
+            case CONFIG_SETTING_LANGUAGE_RUSSIAN:
+                string = LOCALE_LANG_RUSSIAN[stringIndex];
+                break;
+            case CONFIG_SETTING_LANGUAGE_SPANISH:
+                string = LOCALE_LANG_SPANISH[stringIndex];
+                break;
+            default:
+                LogError("Missing Localization Lang: %d", language);
+                ConfigSetSetting(CONFIG_SETTING_LANGUAGE,CONFIG_SETTING_LANGUAGE_ENGLISH);
+                string = LOCALE_LANG_ENGLISH[stringIndex];
+        }
+
+        if (string == 0) {
+            string = LOCALE_LANG_ENGLISH[stringIndex];
+            LogError("Missing Localization Lang: %d, Code: %d, EN: %s", language, stringIndex, string);
+        }
+        
+        return string;
+    } else {
+        LogError("Wrong String Index used for Localization: %d", stringIndex);
+        return "";
     }
 }
