@@ -133,7 +133,6 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Temp: Lucht",
     "Temp: Olie",
     "Weergave",
-    "Onbekend Album",
     "Onbekend Artiest",
     "Onbekend Titel",
     "Slot Open: Uit",
