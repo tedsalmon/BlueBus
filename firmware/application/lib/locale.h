@@ -83,7 +83,7 @@
 #define LOCALE_STRING_VOL_OFFSET 70
 #define LOCALE_STRING_MODE_DEFAULT 71
 #define LOCALE_STRING_MODE_TCU 72
-
+#define LOCALE_STRING_VOICE_ASSISTANT 73
 
 char *LocaleGetText(uint16_t);
 #endif /* LOCALE_H */

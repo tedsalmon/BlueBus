@@ -80,6 +80,7 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Vol. Offset: %d",
     "Mode: Default",
     "Mode: TCU",
+    "Voice Assistant",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -156,6 +157,7 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Vol. Offset: %d",
     "Mode: Default",
     "Mode: TCU",
+    "Voice Assistant",
 };
 
 static char *LOCALE_LANG_ENGLISH[] = {
@@ -232,6 +234,7 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Vol. Offset: %d",
     "Mode: Default",
     "Mode: TCU",
+    "Voice Assistant",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -308,6 +311,7 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Vol. Offset: %d",
     "Mode: Default",
     "Mode: TCU",
+    "Voice Assistant",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -384,6 +388,7 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Vol. Offset: %d",
     "Mode: Default",
     "Mode: TCU",
+    "Voice Assistant",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -460,6 +465,7 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Vol. Offset: %d",
     "Mode: Default",
     "Mode: TCU",
+    "Voice Assistant",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -536,6 +542,7 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Vol. Offset: %d",
     "Mode: Default",
     "Mode: TCU",
+    "Voice Assistant",
 };
 
 /**
