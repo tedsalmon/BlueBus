@@ -5,6 +5,7 @@
  *     Implementation of the abstract Bluetooth Module API
  */
 #include "bt.h"
+#include "locale.h"
 
 /**
  * BTInit()
@@ -444,11 +445,14 @@ void BTCommandSetDiscoverable(BT_t *bt, uint8_t state)
 void BTCommandToggleVoiceRecognition(BT_t *bt)
 {
     if (bt->type == BT_BTM_TYPE_BC127) {
+        UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
         BC127CommandToggleVR(bt);
     } else {
         if (bt->vrStatus == BT_VOICE_RECOG_ON) {
             BM83CommandVoiceRecognitionClose(bt);
+            bt->callerId[0] = 0;
         } else {
+            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             BM83CommandVoiceRecognitionOpen(bt);
         }
     }
