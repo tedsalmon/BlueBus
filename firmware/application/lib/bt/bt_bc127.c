@@ -1763,9 +1763,7 @@ void BC127Process(BT_t *bt)
             p = strtok(NULL, delimeter);
         }
         LogDebug(LOG_SOURCE_BT, "BT: R: '%s'", msg);
-        if (strcmp(msgBuf[0], "A2DP_STREAM_START") == 0) {
-            BC127ProcessEventA2DPStreamStart(bt, msgBuf);
-        } else if (strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
+        if (strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
             BC127ProcessEventA2DPStreamSuspend(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "ABS_VOL") == 0) {
             BC127ProcessEventAbsVol(bt, msgBuf);
