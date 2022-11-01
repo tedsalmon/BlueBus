@@ -1777,6 +1777,8 @@ void BC127Process(BT_t *bt)
             BC127ProcessEventAVRCPPlay(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "AVRCP_PAUSE") == 0) {
             BC127ProcessEventAVRCPPause(bt, msgBuf);
+        } else if (strcmp(msgBuf[0], "AVRCP_STOP") == 0) {
+            BC127ProcessEventAVRCPPause(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "Build:") == 0) {
             BC127ProcessEventBuild(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "CALL_ACTIVE") == 0) {
