@@ -521,14 +521,32 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
 static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, char *f3)
 {
     if (strlen(f1) == 0) {
-        strncpy(f1, " ", 1);
+        strncpy(f1, " ", 2);
     }
-    if (strlen(f2) == 0) {
-        strncpy(f2, " ", 1);
+
+    if ((strlen(f2) == 0) && (strlen(f3) == 0)) {
+        strncpy(f2, " ", 2);
+        strncpy(f3, " ", 2);
+    } else if ((strlen(f2) == 0) && (strlen(f3) != 0)) {
+        char *tmp = f2;
+        f2 = f3;
+        f3 = tmp;
+        strncpy(f3, " ", 2);
+        if (strncmp(f1, f2, BT_METADATA_FIELD_SIZE) == 0) {
+            strncpy(f2, " ", 2);
+        }
+    } else if ((strlen(f3) == 0)) {
+        strncpy(f3, " ", 2);
+        if (strncmp(f1, f2, BT_METADATA_FIELD_SIZE) == 0) {
+            strncpy(f2, " ", 2);
+        }
+    } else if ((strlen(f2) != 0) && (strncmp(f2, f3, BT_METADATA_FIELD_SIZE) == 0)) {
+        strncpy(f3, " ", 2);
+        if (strncmp(f1, f2, BT_METADATA_FIELD_SIZE) == 0) {
+            strncpy(f2, " ", 2);
+        }
     }
-    if (strlen(f3) == 0) {
-        strncpy(f3, " ", 1);
-    }
+    
     if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
         IBusCommandGTWriteIndexStatic(context->ibus, 0x41, f1);
         IBusCommandGTWriteIndexStatic(context->ibus, 0x42, f2);
@@ -565,20 +583,14 @@ static void BMBTMenuDashboard(BMBTContext_t *context)
     if (context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED) {
         if (strlen(title) == 0) {
             UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_NOT_PLAYING), BT_METADATA_FIELD_SIZE);
-            strncpy(artist, " ", 2);
-            strncpy(album, " ", 2);
+            artist[0]=0;
+            album[0]=0;
         }
     } else {
         // Set "Unknown" text for title and artist when missing but ignore
         // missing album or artist information as many streaming apps do not provide it
         if (strlen(title) == 0) {
             UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_UNKNOWN_TITLE), BT_METADATA_FIELD_SIZE);
-        }
-        if (strlen(artist) == 0) {
-            strncpy(artist, " ", 2);
-        }
-        if (strlen(album) == 0) {
-            strncpy(album, " ", 2);
         }
     }
     BMBTMenuDashboardUpdate(context, title, artist, album);
