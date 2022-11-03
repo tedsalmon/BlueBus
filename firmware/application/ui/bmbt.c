@@ -520,30 +520,39 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
 
 static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, char *f3)
 {
-    if (strlen(f1) == 0) {
-        strncpy(f1, " ", 2);
+    if (f1[0] == 0) {
+        f1[0] = ' ';
+        f1[1] = 0;
     }
 
-    if ((strlen(f2) == 0) && (strlen(f3) == 0)) {
-        strncpy(f2, " ", 2);
-        strncpy(f3, " ", 2);
-    } else if ((strlen(f2) == 0) && (strlen(f3) != 0)) {
+    if ((f2[0] == 0) && (f3[0] == 0)) {
+        f2[0] = ' ';
+        f2[1] = 0;
+        f3[0] = ' ';
+        f3[1] = 0;
+    } else if ((f2[0] == 0) && (f3[0] != 0)) {
         char *tmp = f2;
         f2 = f3;
         f3 = tmp;
-        strncpy(f3, " ", 2);
+        f3[0] = ' ';
+        f3[1] = 0;
         if (strncmp(f1, f2, BT_METADATA_FIELD_SIZE) == 0) {
-            strncpy(f2, " ", 2);
+            f2[0] = ' ';
+            f2[1] = 0;
         }
-    } else if ((strlen(f3) == 0)) {
-        strncpy(f3, " ", 2);
+    } else if (f3[0] == 0) {
+        f3[0] = ' ';
+        f3[1] = 0;
         if (strncmp(f1, f2, BT_METADATA_FIELD_SIZE) == 0) {
-            strncpy(f2, " ", 2);
+            f2[0] = ' ';
+            f2[1] = 0;
         }
-    } else if ((strlen(f2) != 0) && (strncmp(f2, f3, BT_METADATA_FIELD_SIZE) == 0)) {
-        strncpy(f3, " ", 2);
+    } else if ((f2[0] != 0) && (strncmp(f2, f3, BT_METADATA_FIELD_SIZE) == 0)) {
+        f3[0] = ' ';
+        f3[1] = 0;
         if (strncmp(f1, f2, BT_METADATA_FIELD_SIZE) == 0) {
-            strncpy(f2, " ", 2);
+            f2[0] = ' ';
+            f2[1] = 0;
         }
     }
     
