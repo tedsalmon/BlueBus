@@ -205,28 +205,17 @@ void MenuSingleLineSettingsEditSave(MenuSingleLineContext_t *context)
                     micPreamp
                 );
             } else {
-                uint8_t steps = 0;
-                uint8_t direction = 0;
-                if (context->settingValue > micGain) {
-                    direction = 1;
-                    steps = context->settingValue - micGain;
-                } else {
-                    steps = micGain - context->settingValue;
+                int8_t offset = micGain - context->settingValue;
+                while (offset < 0) {
+                    BM83CommandMicGainUp(context->bt);
+                    offset++;
                 }
-                
-                if (direction == 0) {
-                    while (steps > 0) {
-                        BM83CommandMicGainDown(context->bt);
-                        steps--;
-                    }
-                } else {
-                    while (steps > 0) {
-                        BM83CommandMicGainUp(context->bt);
-                        steps--;
-                    }
+                while (offset > 0) {
+                    BM83CommandMicGainDown(context->bt);
+                    offset--;
                 }
             }
-            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
+            ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, context->settingValue);
         } else {
             ConfigSetSetting(
                 SETTINGS_TO_CONFIG_MAP[context->settingIdx],

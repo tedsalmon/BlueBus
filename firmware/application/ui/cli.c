@@ -231,7 +231,7 @@ void CLICommandBTBC127(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
  *     Returns:
  *         uint8_t - If the command was a success or not
  */
-void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess)
+void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
 {
     if (UtilsStricmp(msgBuf[1], "CONN") == 0) {
         uint8_t command[] = {
@@ -245,13 +245,27 @@ void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess)
         BM83CommandPairingEnable(cli.bt);
     } else if (UtilsStricmp(msgBuf[1], "MACID") == 0) {
         BM83CommandReadLocalBDAddress(cli.bt);
-    } else if (UtilsStricmp(msgBuf[1], "CL") == 0) {
-        uint8_t command[] = {
-            BM83_CMD_MMI_ACTION,
-            cli.bt->activeDevice.deviceId & 0xF, // Linked Database, the lower nibble
-            0x0F
-        };
-        BM83SendCommand(cli.bt, command, sizeof(command));
+    } else if (UtilsStricmp(msgBuf[1], "MGAIN") == 0) {
+        uint8_t currentMicGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+        if (delimCount == 2) {
+            LogRaw("BT Mic Gain Set to: %02X\r\n", currentMicGain);
+        } else {
+            uint8_t micGain = UtilsStrToHex(msgBuf[2]);
+            if (micGain <= 0 || micGain > 0x0F) {
+                LogRaw("Mic Gain '%02X' out of range: 0 - 16\r\n", micGain);
+            } else {
+                ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
+                int8_t offset = currentMicGain - micGain;
+                while (offset < 0) {
+                    BM83CommandMicGainUp(cli.bt);
+                    offset++;
+                }
+                while (offset > 0) {
+                    BM83CommandMicGainDown(cli.bt);
+                    offset--;
+                }
+            }
+        }
     } else if (UtilsStricmp(msgBuf[1], "BLE") == 0) {
         uint8_t command[] = {
             BM83_CMD_LE_SIGNALING_CMD,
@@ -414,7 +428,7 @@ void CLIProcess()
                 } else if (cli.bt->type == BT_BTM_TYPE_BC127) {
                     CLICommandBTBC127(msgBuf, &cmdSuccess, delimCount);
                 } else {
-                    CLICommandBTBM83(msgBuf, &cmdSuccess);
+                    CLICommandBTBM83(msgBuf, &cmdSuccess, delimCount);
                 }
             } else if (UtilsStricmp(msgBuf[0], "GET") == 0) {
                 if (UtilsStricmp(msgBuf[1], "BYTE") == 0 && delimCount == 3) {

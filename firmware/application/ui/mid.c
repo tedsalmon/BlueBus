@@ -114,7 +114,10 @@ static void MIDSetMainDisplayText(
         context->mainText,
         str
     );
-    strncpy(context->mainDisplay.text, text, UTILS_DISPLAY_TEXT_SIZE - 1);
+    memset(context->mainDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
+    strncpy(context->mainDisplay.text, text, UTILS_DISPLAY_TEXT_SIZE);
+    // If the source is longer than the destination, we would not null terminate
+    context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE] = '\0';
     context->mainDisplay.length = strlen(context->mainDisplay.text);
     context->mainDisplay.index = 0;
     TimerTriggerScheduledTask(context->displayUpdateTaskId);
@@ -370,9 +373,13 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
             } else {
                 context->mode = MID_MODE_ACTIVE_NEW;
             }
-        } else if (btnPressed == 2 || btnPressed == 3) {
+        } else if (btnPressed == MID_BUTTON_SETTINGS_L ||
+                   btnPressed == MID_BUTTON_SETTINGS_R
+        ) {
             context->mode = MID_MODE_SETTINGS_NEW;
-        }  else if (btnPressed == 4 || btnPressed == 5) {
+        }  else if (btnPressed == MID_BUTTON_DEVICES_L ||
+                    btnPressed == MID_BUTTON_DEVICES_R
+        ) {
             context->mode = MID_MODE_DEVICES_NEW;
         } else if (btnPressed == MID_BUTTON_PAIR) {
             // Toggle the discoverable state
@@ -560,7 +567,7 @@ void MIDTimerDisplay(void *ctx)
                 );
                 context->tempDisplay.status = MID_DISPLAY_STATUS_ON;
             }
-            if (context->mainDisplay.length <= MID_DISPLAY_TEXT_SIZE) {
+            if (context->mainDisplay.length <= IBus_MID_MAX_CHARS) {
                 context->mainDisplay.index = 0;
             }
         } else {
@@ -568,9 +575,9 @@ void MIDTimerDisplay(void *ctx)
             if (context->mainDisplay.timeout > 0) {
                 context->mainDisplay.timeout--;
             } else {
-                if (context->mainDisplay.length > MID_DISPLAY_TEXT_SIZE) {
-                    char text[MID_DISPLAY_TEXT_SIZE + 1] = {0};
-                    uint8_t textLength = MID_DISPLAY_TEXT_SIZE;
+                if (context->mainDisplay.length > IBus_MID_MAX_CHARS) {
+                    char text[IBus_MID_MAX_CHARS + 1] = {0};
+                    uint8_t textLength = IBus_MID_MAX_CHARS;
                     // If we start with a space, it will be ignored by the display
                     // Skipping the space allows us to have "smooth" scrolling
                     if (context->mainDisplay.text[context->mainDisplay.index] == 0x20 &&
@@ -603,15 +610,13 @@ void MIDTimerDisplay(void *ctx)
                             MID_SETTING_METADATA_MODE_CHUNK
                         ) {
                             context->mainDisplay.timeout = 2;
-                            context->mainDisplay.index += MID_DISPLAY_TEXT_SIZE;
+                            context->mainDisplay.index += IBus_MID_MAX_CHARS;
                         } else {
                             context->mainDisplay.index++;
                         }
                     }
                 } else {
-                    if (context->mainDisplay.index == 0 &&
-                        strlen(context->mainDisplay.text) > 0
-                    ) {
+                    if (context->mainDisplay.index == 0) {
                         IBusCommandMIDDisplayText(
                             context->ibus,
                             context->mainDisplay.text

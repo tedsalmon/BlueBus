@@ -60,7 +60,8 @@ uint8_t HandlerSetIBusTELStatus(
             // the radio volume controls to remain active
             if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE &&
                 (context->uiMode == CONFIG_UI_CD53 ||
-                 context->uiMode == CONFIG_UI_BUSINESS_NAV)
+                 context->uiMode == CONFIG_UI_BUSINESS_NAV) &&
+                context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
             ) {
                 return 1;
             }

@@ -2312,16 +2312,16 @@ void IBusCommandMIDDisplayRADTitleText(IBus_t *ibus, char *message)
  */
 void IBusCommandMIDDisplayText(IBus_t *ibus, char *message)
 {
-    uint8_t textLength = strlen(message);
-    if (textLength > IBus_MID_MAX_CHARS) {
-        textLength = IBus_MID_MAX_CHARS;
+    uint8_t len = strlen(message);
+    if (len > IBus_MID_MAX_CHARS) {
+        len = IBus_MID_MAX_CHARS;
     }
-    unsigned char displayText[textLength + 3];
-    memset(displayText, 0, textLength + 3);
+    uint8_t displayText[len + 3];
+    memset(&displayText, 0, sizeof(displayText));
     displayText[0] = IBUS_CMD_RAD_WRITE_MID_DISPLAY;
     displayText[1] = 0x40;
     displayText[2] = 0x20;
-    memcpy(displayText + 3, message, textLength);
+    memcpy(displayText + 3, message, len);
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_TEL,
