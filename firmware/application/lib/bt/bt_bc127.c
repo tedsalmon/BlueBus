@@ -1251,8 +1251,35 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         datetime[3] = UtilsStrToInt(msgBuf[5]); // hour
         datetime[4] = UtilsStrToInt(msgBuf[5] + 3); // min
         datetime[5] = UtilsStrToInt(msgBuf[5] + 6); // sec
-        EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
+        if (( datetime[0] > 20 ) &&
+            ( datetime[1] >= 1 ) && ( datetime[1] <= 12 ) &&
+            ( datetime[2] >= 1 ) && ( datetime[2] <= 31 ) &&
+            ( datetime[3] >= 0 ) && ( datetime[3] <= 23 ) &&
+            ( datetime[4] >= 0 ) && ( datetime[4] <= 59 ) &&
+            ( datetime[5] >= 0 ) && ( datetime[5] <= 59 )) {
+
+            if (datetime[5]<15) {
+                EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
+            } else {
+                TimerRegisterScheduledTask(&BC127RequestTimeOnTimer, bt, (60-datetime[5])*1000);
+            }
+        }
     }
+}
+
+/**
+ * BC127RequestTimeOnTimer()
+ *     Description:
+ *         Request time from BT device on turn of minute
+ *     Params:
+ *         BT_t *ctx - A pointer to the BT object
+ *     Returns:
+ *         void
+ */
+void BC127RequestTimeOnTimer(void *ctx) {
+    BT_t    *bt = (BT_t *)ctx;
+    TimerUnregisterScheduledTask(&BC127RequestTimeOnTimer);
+    BC127CommandAT(bt, "+CCLK?");
 }
 
 /**
@@ -1736,9 +1763,7 @@ void BC127Process(BT_t *bt)
             p = strtok(NULL, delimeter);
         }
         LogDebug(LOG_SOURCE_BT, "BT: R: '%s'", msg);
-        if (strcmp(msgBuf[0], "A2DP_STREAM_START") == 0) {
-            BC127ProcessEventA2DPStreamStart(bt, msgBuf);
-        } else if (strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
+        if (strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
             BC127ProcessEventA2DPStreamSuspend(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "ABS_VOL") == 0) {
             BC127ProcessEventAbsVol(bt, msgBuf);
@@ -1749,6 +1774,8 @@ void BC127Process(BT_t *bt)
         } else if (strcmp(msgBuf[0], "AVRCP_PLAY") == 0) {
             BC127ProcessEventAVRCPPlay(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "AVRCP_PAUSE") == 0) {
+            BC127ProcessEventAVRCPPause(bt, msgBuf);
+        } else if (strcmp(msgBuf[0], "AVRCP_STOP") == 0) {
             BC127ProcessEventAVRCPPause(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "Build:") == 0) {
             BC127ProcessEventBuild(bt, msgBuf);

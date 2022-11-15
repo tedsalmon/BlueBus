@@ -765,7 +765,7 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
         }
     }
     // Turn off the BMBT when the vehicle sets off
-    if (ConfigGetByte(CONFIG_SETTING_MONITOR_OFF) == CONFIG_SETTING_ON &&
+    if (ConfigGetSetting(CONFIG_SETTING_MONITOR_OFF) == CONFIG_SETTING_ON &&
         speed > 5 &&
         context->monitorStatus == HANDLER_MONITOR_STATUS_UNSET
     ) {
