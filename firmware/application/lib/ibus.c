@@ -2679,6 +2679,9 @@ void IBusCommandTELStatus(IBus_t *ibus, unsigned char status)
  */
 void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
 {
+    LogDebug(
+        LOG_SOURCE_BT, "Displaying callerId: %s", text
+    );
     uint8_t textLength = strlen(text);
     unsigned char statusText[textLength + 3];
     statusText[0] = IBUS_CMD_GT_WRITE_TITLE;

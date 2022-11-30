@@ -5,6 +5,7 @@
  *     Implementation of the Microchip BM83 Bluetooth UART API
  */
 #include "bt_bm83.h"
+#include "../locale.h"
 
 int8_t BTBM83MicGainTable[] = {
     0, // Default
@@ -893,14 +894,20 @@ void BM83ProcessEventCallStatus(BT_t *bt, uint8_t *data, uint16_t length)
     switch (data[BM83_FRAME_DB1]) {
         case BM83_DATA_CALL_STATUS_IDLE:
             bt->callStatus = BT_CALL_INACTIVE;
+            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             break;
         case BM83_DATA_CALL_STATUS_VR:
             bt->callStatus = BT_CALL_VR;
+            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             break;
         case BM83_DATA_CALL_STATUS_INCOMMING:
+            bt->callerId[0] = 0;
             bt->callStatus = BT_CALL_INCOMING;
             break;
         case BM83_DATA_CALL_STATUS_OUTGOING:
+            if (strncmp(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE) == 0) {
+                bt->callerId[0] = 0;
+            }
             bt->callStatus = BT_CALL_OUTGOING;
             break;
         case BM83_DATA_CALL_STATUS_ACTIVE:

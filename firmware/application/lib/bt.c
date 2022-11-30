@@ -33,7 +33,7 @@ BT_t BTInit()
     bt.rxQueueAge = 0;
     bt.powerState = BT_STATE_OFF;
     memset(bt.pairedDevices, 0, sizeof(bt.pairedDevices));
-    memset(bt.callerId, 0, sizeof(bt.callerId));
+    UtilsStrncpy(bt.callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
     memset(bt.dialBuffer, 0, sizeof(bt.dialBuffer));
     memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
     // Make sure that we initialize the char arrays to all zeros
@@ -450,7 +450,7 @@ void BTCommandToggleVoiceRecognition(BT_t *bt)
     } else {
         if (bt->vrStatus == BT_VOICE_RECOG_ON) {
             BM83CommandVoiceRecognitionClose(bt);
-            bt->callerId[0] = 0;
+            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
         } else {
             UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             BM83CommandVoiceRecognitionOpen(bt);
