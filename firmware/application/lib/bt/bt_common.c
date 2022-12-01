@@ -49,24 +49,27 @@ void BTClearMetadata(BT_t *bt)
 void BTClearPairedDevices(BT_t *bt, uint8_t clearType)
 {
     uint8_t idx;
+    uint8_t found = 0;
+    
     BTPairedDevice_t btActiveConn;
     for (idx = 0; idx < bt->pairedDevicesCount; idx++) {
         BTPairedDevice_t *btConn = &bt->pairedDevices[idx];
         if (btConn != 0) {
             // Found the active device
-            if (clearType == BT_TYPE_CLEAR_ALL &&
+            if (clearType != BT_TYPE_CLEAR_ALL &&
                 memcmp(btConn->macId, bt->activeDevice.macId, 6) == 0
             ) {
                 memcpy(&btActiveConn, btConn, sizeof(BTPairedDevice_t));
+                found = 1;
             }
             memset(btConn, 0, sizeof(bt->pairedDevices[idx]));
         }
     }
-    if (clearType != BT_TYPE_CLEAR_ALL) {
+    bt->pairedDevicesCount = 0;
+    memset(bt->pairingErrors, 0, sizeof(bt->pairingErrors));
+    if ((clearType != BT_TYPE_CLEAR_ALL) && (found == 1)) {
         BTPairedDeviceInit(bt, btActiveConn.macId, btActiveConn.deviceName, btActiveConn.number);
     }
-    memset(bt->pairingErrors, 0, sizeof(bt->pairingErrors));
-    bt->pairedDevicesCount = 0;
 }
 
 /**
