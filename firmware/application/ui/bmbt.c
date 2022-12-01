@@ -1850,10 +1850,26 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                 // Back Button
                 BMBTMenuMain(context);
             } else {
-                uint8_t deviceId = selectedIdx - BMBT_MENU_IDX_FIRST_DEVICE;
-                BTPairedDevice_t *dev = &context->bt->pairedDevices[deviceId];
-                if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 &&
-                    dev != 0
+                // TODO: Since on render of menu we skip some device positions, we should do the same logic here to actually pickup correct device
+                uint8_t selectedDeviceId = selectedIdx - BMBT_MENU_IDX_FIRST_DEVICE;
+                uint8_t deviceId = 0;
+                uint8_t devicesPos = 0;
+                uint8_t idx;
+                BTPairedDevice_t *dev = 0;
+
+                for (idx = 0; idx < context->bt->pairedDevicesCount; idx++) {
+                    dev = &context->bt->pairedDevices[idx];
+                    if (dev != 0) {
+                        if ( devicesPos == selectedDeviceId ) {
+                            deviceId = idx;
+                            break;
+                        }
+                        devicesPos++;
+                    }
+                }
+                
+                if ((dev != 0) && 
+                    (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 )
                 ) {
                     // Trigger device selection event
                     EventTriggerCallback(

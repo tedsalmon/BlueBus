@@ -907,7 +907,6 @@ void HandlerTimerBTBC127ScanDevices(void *ctx)
         context->ibus->ignitionStatus > IBUS_IGNITION_OFF
     ) {
         context->scanIntervals = 0;
-        BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_INACTIVE);
         BC127CommandList(context->bt);
     } else {
         context->scanIntervals += 1;
