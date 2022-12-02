@@ -114,6 +114,7 @@ void BTPairedDeviceInit(
         BTPairedDevice_t *btDevice = &bt->pairedDevices[idx];
         if (memcmp(macId, btDevice->macId, BT_MAC_ID_LEN) == 0) {
             deviceExists = 1;
+            EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
         }
     }
     // Create a connection for this device since one does not exist
@@ -127,8 +128,14 @@ void BTPairedDeviceInit(
             LogDebug(LOG_SOURCE_BT, "Add PD: %d", deviceNumber - 1);
             bt->pairedDevices[deviceNumber - 1] = pairedDevice;
             bt->pairedDevicesCount++;
-        } else {
+            EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
+            LogDebug(LOG_SOURCE_BT, "BT: Rewrite Pairing Profile %s", deviceName);
+        } else if (bt->pairedDevicesCount+1 < BT_MAX_DEVICE_PAIRED) {
             bt->pairedDevices[bt->pairedDevicesCount++] = pairedDevice;
+            EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
+            LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s", deviceName);
+        } else {
+            LogDebug(LOG_SOURCE_BT, "BT: Ignoring Pairing Profile %s", deviceName);
         }
     }
 }

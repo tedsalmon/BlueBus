@@ -1581,8 +1581,6 @@ void BC127ProcessEventName(BT_t *bt, char **msgBuf, char *msg)
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
         }
         BTPairedDeviceInit(bt, macId, name, 0);
-        EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
-        LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s -> %s", msgBuf[1], name);
     } else {
         LogError("BT: Bad NAME Packet");
     }
