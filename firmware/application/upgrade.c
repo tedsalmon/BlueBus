@@ -123,6 +123,11 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
         }
         LogRaw("Ran Upgrade 1.2.1\r\n");
     }
+    // Changes in version 1.3.2
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 3, 2) == 1) {
+        ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
+        LogRaw("Ran Upgrade 1.3.2\r\n");
+    }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
         FIRMWARE_VERSION_MINOR,
