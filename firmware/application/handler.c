@@ -135,7 +135,6 @@ void HandlerTimerPoweroff(void *ctx)
                 // Destroy the UART module for IBus
                 UARTDestroy(IBUS_UART_MODULE);
                 TimerDelayMicroseconds(500);
-                LogInfo(LOG_SOURCE_SYSTEM, "System Power Down!");
                 context->powerStatus = HANDLER_POWER_OFF;
                 // Disable the TH3122
                 IBUS_EN = 0;
