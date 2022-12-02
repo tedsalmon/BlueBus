@@ -834,3 +834,22 @@ void ConfigGetString(unsigned char address, char *str, uint8_t size) {
     };
     str[0]=0;
 }
+
+void ConfigSetBytes(unsigned char address, const uint8_t *str, uint8_t size) {
+    while (size>0) {
+        ConfigSetByte(address,str[0]);
+        size--;
+        str++;
+        address++;
+    };
+}
+
+void ConfigGetBytes(unsigned char address, uint8_t *str, uint8_t size) {
+    while (size>0) {
+        uint8_t b = ConfigGetByte(address);
+        str[0]=b;
+        size--;
+        str++;
+        address++;
+    };
+}
