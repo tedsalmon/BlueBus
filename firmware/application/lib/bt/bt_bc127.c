@@ -1737,7 +1737,6 @@ void BC127Process(BT_t *bt)
     if (messageLength > 0) {
         // We received a valid message, so set the power & state to on
         bt->powerState = BT_STATE_ON;
-        bt->status = BT_STATUS_DISCONNECTED;
         char msg[messageLength];
         uint16_t i;
         uint16_t delimCount = 1;
