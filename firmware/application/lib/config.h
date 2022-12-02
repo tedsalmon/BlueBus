@@ -190,6 +190,8 @@ unsigned char ConfigGetVehicleType();
 unsigned char ConfigGetLanguage();
 void ConfigGetVehicleIdentity(unsigned char *);
 void ConfigGetString(unsigned char, char *, uint8_t);
+void ConfigGetBytes(unsigned char, uint8_t *, uint8_t);
+
 void ConfigSetBC127BootFailures(uint16_t);
 //void ConfigSetByteLowerNibble(unsigned char, unsigned char);
 //void ConfigSetByteUpperNibble(unsigned char, unsigned char);
@@ -212,4 +214,5 @@ void ConfigSetVehicleType(unsigned char);
 void ConfigSetVehicleIdentity(unsigned char *);
 void ConfigSetLanguage(unsigned char);
 void ConfigSetString(unsigned char, char *, uint8_t);
+void ConfigSetBytes(unsigned char, const uint8_t *, uint8_t);
 #endif /* CONFIG_H */
