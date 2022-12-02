@@ -240,6 +240,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             }
         } else {
             LogDebug(LOG_SOURCE_SYSTEM, "Call > End");
+            UtilsStrncpy(context->bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             // Reset the volume
             // Temporarily set the call status flag to on so we do not alter
             // the volume we are lowering ourselves

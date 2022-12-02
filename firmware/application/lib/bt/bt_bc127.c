@@ -5,6 +5,7 @@
  *     Implementation of the Sierra Wireless BC127 Bluetooth UART API
  */
 #include "bt_bc127.h"
+#include "../locale.h"
 
 /** BC127CVCGainTable
  * C0 - D6 (22 Settings)
@@ -1424,11 +1425,19 @@ void BC127ProcessEventBuild(BT_t *bt, char **msgBuf)
 void BC127ProcessEventCall(BT_t *bt, uint8_t callStatus)
 {
     if (bt->callStatus != callStatus) {
+        if (callStatus == BT_CALL_INCOMING) {
+            bt->callerId[0]=0;
+        }
+        if (callStatus == BT_CALL_OUTGOING) {
+            if (strncmp(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE) == 0) {
+                bt->callerId[0]=0;
+            }
+        }
         bt->callStatus = callStatus;
         EventTriggerCallback(BT_EVENT_CALL_STATUS_UPDATE, &callStatus);
     }
     if (callStatus == BT_CALL_INACTIVE) {
-        memset(bt->callerId, 0, BT_CALLER_ID_FIELD_SIZE);
+        UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
     }
 }
 
@@ -1681,9 +1690,6 @@ void BC127ProcessEventSCO(BT_t *bt, uint8_t scoStatus)
     if (bt->scoStatus != scoStatus) {
         bt->scoStatus = scoStatus;
         EventTriggerCallback(BT_EVENT_CALL_STATUS_UPDATE, &scoStatus);
-    }
-    if (scoStatus == BT_CALL_SCO_CLOSE) {
-        memset(bt->callerId, 0, BT_CALLER_ID_FIELD_SIZE);
     }
 }
 

@@ -5,6 +5,7 @@
  *     Implementation of the abstract Bluetooth Module API
  */
 #include "bt.h"
+#include "locale.h"
 
 /**
  * BTInit()
@@ -32,7 +33,7 @@ BT_t BTInit()
     bt.rxQueueAge = 0;
     bt.powerState = BT_STATE_OFF;
     memset(bt.pairedDevices, 0, sizeof(bt.pairedDevices));
-    memset(bt.callerId, 0, sizeof(bt.callerId));
+    UtilsStrncpy(bt.callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
     memset(bt.dialBuffer, 0, sizeof(bt.dialBuffer));
     memset(bt.pairingErrors, 0, sizeof(bt.pairingErrors));
     // Make sure that we initialize the char arrays to all zeros
@@ -444,11 +445,14 @@ void BTCommandSetDiscoverable(BT_t *bt, uint8_t state)
 void BTCommandToggleVoiceRecognition(BT_t *bt)
 {
     if (bt->type == BT_BTM_TYPE_BC127) {
+        UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
         BC127CommandToggleVR(bt);
     } else {
         if (bt->vrStatus == BT_VOICE_RECOG_ON) {
             BM83CommandVoiceRecognitionClose(bt);
+            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
         } else {
+            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             BM83CommandVoiceRecognitionOpen(bt);
         }
     }
