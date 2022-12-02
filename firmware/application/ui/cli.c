@@ -181,6 +181,7 @@ void CLICommandBTBC127(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
         BC127CommandBtState(cli.bt, BT_STATE_ON, BT_STATE_ON);
     } else if (UtilsStricmp(msgBuf[1], "UNPAIR") == 0) {
         BC127CommandUnpair(cli.bt);
+        ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
     } else if (UtilsStricmp(msgBuf[1], "NAME") == 0) {
         char nameBuf[33];
         memset(nameBuf, 0, 33);
@@ -772,9 +773,11 @@ void CLIProcess()
                     BC127CommandWrite(cli.bt);
                     // Set the Mic Gain to -23dB by default
                     micGain = 0x01;
+                    ConfigSetByte(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
                 } else {
                     BM83CommandRestore(cli.bt);
                     ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
+                    ConfigSetByte(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
                     micGain = 0x00;
                 }
                 // Reset the UI

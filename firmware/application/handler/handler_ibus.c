@@ -615,6 +615,11 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
         // If the first bit is set, the key is in position 1 at least, otherwise
         // the ignition is off
         if (ignitionStatus == IBUS_IGNITION_OFF) {
+            // store last BT device if connected
+            if (context->bt->status == BT_STATUS_CONNECTED) {
+                ConfigSetBytes(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC, context->bt->activeDevice.macId, BT_MAC_ID_LEN);
+            }
+
             // Disable Telephone On
             UtilsSetPinMode(UTILS_PIN_TEL_ON, 0);
             // Set the BT module not connectable/discoverable. Disconnect all devices

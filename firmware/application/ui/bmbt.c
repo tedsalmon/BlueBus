@@ -1845,12 +1845,12 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                     ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
                 }
                 BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
+                ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
                 BMBTMenuDeviceSelection(context);
             } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
                 // Back Button
                 BMBTMenuMain(context);
             } else {
-                // TODO: Since on render of menu we skip some device positions, we should do the same logic here to actually pickup correct device
                 uint8_t selectedDeviceId = selectedIdx - BMBT_MENU_IDX_FIRST_DEVICE;
                 uint8_t deviceId = 0;
                 uint8_t devicesPos = 0;
