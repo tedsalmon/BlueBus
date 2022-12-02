@@ -1705,6 +1705,9 @@ void BC127ProcessEventState(BT_t *bt, char **msgBuf)
 {
     // Make sure the state is not "OFF", like when module first boots
     if (strcmp(msgBuf[1], "OFF") != 0) {
+        if (strcmp(msgBuf[1], "CONNECTED[0]") == 0) {
+            bt->status = BT_STATUS_DISCONNECTED;
+        }
         if (strcmp(msgBuf[2], "CONNECTABLE[ON]") == 0) {
             bt->connectable = BT_STATE_ON;
         } else if (strcmp(msgBuf[2], "CONNECTABLE[OFF]") == 0) {
