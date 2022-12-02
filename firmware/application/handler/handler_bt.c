@@ -296,8 +296,16 @@ void HandlerBTDeviceFound(void *ctx, uint8_t *data)
     ) {
         LogDebug(LOG_SOURCE_SYSTEM, "Handler: No Device -- Attempt connection");
         if (context->bt->type == BT_BTM_TYPE_BC127) {
-            memcpy(context->bt->activeDevice.macId, data, BT_MAC_ID_LEN);
-            BC127CommandProfileOpen(context->bt, "A2DP");
+            uint8_t last_prefered_macId[BT_MAC_ID_LEN] = {0};
+            ConfigGetBytes(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC, last_prefered_macId, BT_MAC_ID_LEN);
+            if (last_prefered_macId[0]==0 || memcmp(data, last_prefered_macId, BT_MAC_ID_LEN) == 0) {
+                LogDebug(LOG_SOURCE_SYSTEM, "Connecting to preferred device");
+                memcpy(context->bt->activeDevice.macId, data, BT_MAC_ID_LEN);
+                BC127CommandProfileOpen(context->bt, "A2DP");
+            } else {
+// try in few seconds if the preferred does not connect, user would need to use device selection menu
+                LogDebug(LOG_SOURCE_SYSTEM, "Delaying connection, waiting for preferred to connect");
+            }
         } else {
             if (context->bt->pairedDevicesCount > 0) {
                 if (context->btSelectedDevice == HANDLER_BT_SELECTED_DEVICE_NONE ||
