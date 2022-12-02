@@ -112,13 +112,13 @@
         <targetDevice>PIC24FJ1024GA606</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>pk4hybrid</platformTool>
+        <platformTool>noID</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.60</languageToolchainVersion>
+        <languageToolchainVersion>1.70</languageToolchainVersion>
         <platform>4</platform>
       </toolsSet>
       <packs>
-        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.6.205"/>
+        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.8.217"/>
       </packs>
       <ScriptingSettings>
       </ScriptingSettings>
@@ -161,7 +161,7 @@
         <property key="enable-omit-frame-pointer" value="false"/>
         <property key="enable-procedural-abstraction" value="false"/>
         <property key="enable-short-double" value="false"/>
-        <property key="enable-symbols" value="true"/>
+        <property key="enable-symbols" value="false"/>
         <property key="enable-unroll-loops" value="false"/>
         <property key="expand-pragma-config" value="false"/>
         <property key="extra-include-directories" value=""/>
@@ -763,6 +763,8 @@
                   value="${communication.interface.default}"/>
         <property key="communication.interface.jtag" value="2wire"/>
         <property key="communication.speed" value="${communication.speed.default}"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.simultaneous.debug" value="false"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
         <property key="freeze.timers" value="false"/>
@@ -799,6 +801,7 @@
         <property key="programoptions.preserveprogram.ranges" value=""/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveuserid" value="false"/>
+        <property key="programoptions.program.otpconfig" value="false"/>
         <property key="programoptions.programcalmem" value="false"/>
         <property key="programoptions.programuserotp" value="false"/>
         <property key="programoptions.testmodeentrymethod" value="VDDFirst"/>
@@ -876,6 +879,8 @@
                   value="${communication.interface.default}"/>
         <property key="communication.interface.jtag" value="2wire"/>
         <property key="communication.speed" value="${communication.speed.default}"/>
+        <property key="debugoptions.debug-startup" value="Use system settings"/>
+        <property key="debugoptions.reset-behaviour" value="Use system settings"/>
         <property key="debugoptions.simultaneous.debug" value="false"/>
         <property key="debugoptions.useswbreakpoints" value="false"/>
         <property key="freeze.timers" value="false"/>
@@ -892,7 +897,6 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-ffffffffffffffff"/>
-        <property key="memories.rww" value="true"/>
         <property key="poweroptions.powerenable" value="false"/>
         <property key="programmerToGoImageName" value="application_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
@@ -912,6 +916,7 @@
         <property key="programoptions.preserveprogram.ranges" value=""/>
         <property key="programoptions.preserveprogramrange" value="false"/>
         <property key="programoptions.preserveuserid" value="false"/>
+        <property key="programoptions.program.otpconfig" value="false"/>
         <property key="programoptions.programcalmem" value="false"/>
         <property key="programoptions.programuserotp" value="false"/>
         <property key="programoptions.testmodeentrymethod" value="VDDFirst"/>
