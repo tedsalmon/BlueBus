@@ -123,6 +123,80 @@ my %cmd = (
 	"C0" => "C43_SET_MENU_MODE"
 );
 
+sub hex_string_to_array {
+	my ($string) = @_;
+	my @data;
+	foreach(split(" ",$string)) {
+		push(@data, hex($_));
+	}
+	return @data;
+}
+
+sub data_parsers_module_status {
+	my ($src, $dst, $string, $data) = @_;
+	my $announce = $data->[0] & 0b00000001;
+	my $variant = ($data->[0] & 0b11111000) >> 3;
+
+	my %variants = (
+		"BMBT" => {
+			0b00000 => "BMBT_4_3",
+			0b00110 => "BMBT_16_9",
+			0b01110 => "BMBT_16_9"
+			},
+		"TEL" => {
+			0b00111 => "Everest+Bluetooth",
+			0b00110 => "Motorola V-Series",
+			0b00000 => "CMT3000"
+			},
+		"NAVE" => {
+			0b01000 => "NAV_MK4",
+			0b11000 => "NAV_MK4_ASSIST"
+			},
+		"GT" => {
+			0b00010 => "GT_VM",
+			0b01000 => "GT_NAV"
+			}
+	);
+
+	$variant = $variants{$src}{$variant} || $variant;
+	return "announce=$announce, variant=$variant";
+};
+
+sub data_parsers_mfl_buttons {
+	my ($src, $dst, $string, $data) = @_;
+	my $button = $data->[0] & 0b1100_1001;
+	my $state = $data->[0] & 0b0011_0000;
+
+	my %states = (
+		0b0000_0000 => "PRESS",
+		0b0001_0000 => "HOLD",
+		0b0010_0000 => "RELEASE",
+	);
+
+	my %buttons = (
+		0b0000_0001 => "FORWARD",
+		0b0000_1000 => "BACK",
+		0b0100_0000 => "RT",
+		0b1000_0000 => "TEL"
+	);
+
+	$button = $buttons{$button} || $button;
+	$state = $states{$state} || $state;
+
+	return "button=$button, state=$state";
+}
+
+my %data_parsers = (
+	"BMBT_STATUS_RESP" => \&data_parsers_module_status,
+	"TEL_STATUS_RESP" => \&data_parsers_module_status,
+	"NAVE_STATUS_RESP" => \&data_parsers_module_status,
+	"GT_STATUS_RESP" => \&data_parsers_module_status,
+
+	"TEL_BTN_PRESS" => \&data_parsers_mfl_buttons,
+	"RAD_BTN_PRESS" => \&data_parsers_mfl_buttons,
+);
+
+
 
 while (<>) {
 	my $line = $_;
@@ -177,6 +251,14 @@ while (<>) {
 		my $min = int($time/(60*1000)) % 60;
 		my $hour = int($time/(60*60*1000));
 
+		if ($data_parsers{$cmd}) {
+			my @data = hex_string_to_array($data);
+			if (length(@data) > 0) {
+				$data = $data_parsers{$cmd}->($src,$dst, $data, \@data);
+			} else {
+				$data = "";
+			}
+		}
 		printf ("%3d:%02d:%06.3f %1s %4s -> %-4s %2s %s (%s)\n", $hour, $min, $sec, $self, $src, $dst, $cmd_raw, $cmd, $data);
 
 	} else {
