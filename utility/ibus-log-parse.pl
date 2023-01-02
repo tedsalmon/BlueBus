@@ -746,7 +746,46 @@ while (<>) {
 		}
 		printf ("%3d:%02d:%06.3f %1s%1s %4s -> %-4s %2s %s\n%s". ' ' x 11 ."%s (%s)\n\n", $hour, $min, $sec, $self, $broadcast, $src, $dst, $cmd_raw, $data, $time_local, $cmd, $data_parsed);
 
+	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BT:\s+([RW]):\s+'(.+)'\s+$/os) {
+# BlueTooth BC127 Messages
+		my $time = $1;
+		my $command = $3;
+		my $src;
+		my $dst;
+		my $self;
+
+		if ($2 eq 'R') {
+			$src = "BLUE";
+			$dst = "BBUS";
+			$self = " ";
+		} else {
+			$src = "BBUS";
+			$dst = "BLUE";
+			$self = "*";
+		}
+
+		my $time_local;
+
+		if ($time_offset != 0) {
+
+			$time_local = $time + $time_offset;
+			my $sec = ($time_local % (60*1000))/1000;
+			my $min = int($time_local/(60*1000)) % 60;
+			my $hour = int($time_local/(60*60*1000));
+
+			$time_local = sprintf("%3d:%02d:%06.3f local", $hour, $min, $sec);
+		} else {
+			$time_local = ' ' x 19;
+		}
+
+		my $sec = ($time % (60*1000))/1000;
+		my $min = int($time/(60*1000)) % 60;
+		my $hour = int($time/(60*60*1000));
+
+		printf ("%3d:%02d:%06.3f %1s  %4s -> %-4s %s\n%s". ' ' x 11 ."%s\n\n", $hour, $min, $sec, $self, $src, $dst, $command, $time_local, $command);
+
 	} else {
 		print;
+
 	}
 };
