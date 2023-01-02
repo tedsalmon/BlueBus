@@ -465,15 +465,18 @@ while (<>) {
 		my $min = int($time/(60*1000)) % 60;
 		my $hour = int($time/(60*60*1000));
 
+		my $data_parsed;
 		if ($data_parsers{$cmd}) {
 			my @data = hex_string_to_array($data);
 			if (length(@data) > 0) {
-				$data = $data_parsers{$cmd}->($src,$dst, $data, \@data);
+				$data_parsed = $data_parsers{$cmd}->($src,$dst, $data, \@data);
 			} else {
-				$data = "";
+				$data_parsed = "";
 			}
+		} else {
+			$data_parsed = $data;
 		}
-		printf ("%3d:%02d:%06.3f %1s%1s %4s -> %-4s %2s %s (%s)\n", $hour, $min, $sec, $self, $broadcast, $src, $dst, $cmd_raw, $cmd, $data);
+		printf ("%3d:%02d:%06.3f %1s%1s %4s -> %-4s %2s %s\n". ' 'x 30 ."%s (%s)\n\n", $hour, $min, $sec, $self, $broadcast, $src, $dst, $cmd_raw, $data, $cmd, $data_parsed);
 
 	} else {
 #		print;
