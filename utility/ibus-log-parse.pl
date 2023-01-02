@@ -72,6 +72,7 @@ my %cmd = (
 	"MID_21" => "RAD_WRITE_MID_MENU",
 	"22" => "WRITE_RESPONSE",
 	"23" => "WRITE_TITLE",
+	"IKE_23" => "IKE_WRITE_TITLE",
 	"GT_23" => "GT_WRITE_TITLE",
 	"TEL_23" => "TEL_TITLETEXT",
 	"RAD_23" => "RAD_UPDATE_MAIN_AREA",
@@ -83,7 +84,7 @@ my %cmd = (
 	"31" => "MENU_SELECT",
 	"32" => "VOLUME",
 	"36" => "CONFIG_SET",
-	"37" => "DISPLAY_RADIO_MENU",
+	"37" => "DISPLAY_RADIO_TONE_SELECT",
 	"38" => "REQUEST",
 	"39" => "RESPONSE",
 	"3B" => "BTN_PRESS",
@@ -91,7 +92,7 @@ my %cmd = (
 	"41" => "OBC_CONTROL",
 	"42" => "OBC_REMOTE_CONTROL",
 	"45" => "SCREEN_MODE_SET",
-	"46" => "SCREEN_MODE_UPDATE",
+	"46" => "SCREEN_MODE_REQUEST",
 	"47" => "SOFT_BUTTON",
 	"48" => "BUTTON",
 	"49" => "DIAL_KNOB",
@@ -186,14 +187,224 @@ sub data_parsers_mfl_buttons {
 	return "button=$button, state=$state";
 }
 
+sub data_parsers_bmbt_buttons {
+	my ($src, $dst, $string, $data) = @_;
+	my $button = $data->[0] & 0b0011_1111;
+	my $state = $data->[0] & 0b1100_0000;
+
+	my %states = (
+		0b0000_0000 => "PRESS",
+		0b0100_0000 => "HOLD",
+		0b1000_0000 => "RELEASE",
+	);
+
+	my %buttons = (
+		0b00_0100 => "TONE",
+		0b10_0000 => "SEL",
+		0b01_0000 => "PREV",
+		0b00_0000 => "NEXT",
+		0b01_0001 => "PRESET_1",
+		0b00_0001 => "PRESET_2",
+		0b01_0010 => "PRESET_3",
+		0b00_0010 => "PRESET_4",
+		0b01_0011 => "PRESET_5",
+		0b00_0011 => "PRESET_6",
+		0b10_0001 => "AM",
+		0b11_0001 => "FM",
+		0b10_0011 => "MODE_PREV",
+		0b11_0011 => "MODE_NEXT",
+		0b11_0000 => "OVERLAY",
+		0b00_0110 => "POWER",
+		0b10_0100 => "EJECT",
+		0b01_0100 => "SWITCH_SIDE",
+		0b11_0010 => "TP",
+		0b10_0010 => "RDS",
+
+		0b00_1000 => "TELEPHONE",
+		0b00_0111 => "AUX_HEAT",
+
+		0b11_0100 => "MENU",
+		0b00_0101 => "CONFIRM",
+
+	);
+
+	$button = $buttons{$button} || $button;
+	$state = $states{$state} || $state;
+
+	return "button=$button, state=$state";
+}
+
+sub data_parsers_bmbt_soft_buttons {
+	my ($src, $dst, $string, $data) = @_;
+	my $button = $data->[1] & 0b0011_1111;
+	my $state = $data->[1] & 0b1100_0000;
+
+	my %states = (
+		0b0000_0000 => "PRESS",
+		0b0100_0000 => "HOLD",
+		0b1000_0000 => "RELEASE",
+	);
+
+	my %buttons = (
+		0b00_1111 => "SELECT",
+		0b11_1000 => "INFO",
+	);
+	$button = $buttons{$button} || $button;
+	$state = $states{$state} || $state;
+
+	return "button=$button, state=$state, extra=$data->[0]";
+}
+
+sub data_parsers_volume {
+	my ($src, $dst, $string, $data) = @_;
+	my $direction = $data->[0] & 0b0000_0001;
+	my $steps = ($data->[0] & 0b1111_0000) >> 4;
+
+	return "volume_change=".(($direction==0)?'-':'+').$steps;
+}
+
+sub data_parsers_navi_knob {
+	my ($src, $dst, $string, $data) = @_;
+	my $direction = $data->[0] & 0b1000_0000;
+	my $steps = $data->[0] & 0b0000_1111;
+
+	return "turn=".(($direction==0)?'-':'+').$steps;
+}
+
+sub data_parsers_monitor_control {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $source = $data->[0] & 0b0000_0011;
+	my $power = ($data->[0] & 0b0001_0000) >> 4;
+	my $encoding = $data->[1] & 0b0000_0011;
+	my $aspect = ($data->[1] & 0b0011_0000) >> 4;
+
+	my %sources = (
+		0b0000_0000 => "NAV_GT",
+		0b0000_0001 => "TV",
+		0b0000_0010 => "VID_GT",
+	);
+
+	my %encodings = (
+		0b0000_0010 => "PAL",
+		0b0000_0001 => "NTSC",
+	);
+
+	my %aspects = (
+		0b0000_0000 => "4:3",
+		0b0000_0001 => "16:9",
+		0b0000_0011 => "ZOOM",
+	);
+
+	$source = $sources{$source} || $source;
+	$encoding = $encodings{$encoding} || $encoding;
+	$aspect = $aspects{$aspect} || $aspect;
+
+	return "power=$power, source=$source, aspect=$aspect, enc=$encoding";
+}
+
+sub data_parsers_request_screen {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $priority = $data->[0] & 0b0000_0001;
+	my $hide_header = ($data->[0] & 0b0000_0010) >> 1;
+	my $hide_body = $data->[0] & 0b0000_1100;
+
+	my %bodies = (
+		0b0000_0100 => "HIDE_BODY_SEL",
+		0b0000_1000 => "HIDE_BODY_TONE",
+		0b0000_1100 => "HIDE_BODY_MENU",
+	);
+
+	$hide_body = $bodies{$hide_body} || $hide_body;
+
+	return "priority=".(($priority==0)?"RAD":"GT").", hide_header=".(($hide_header==1)?"HIDE":"SHOW").", hide=$hide_body";
+}
+
+sub data_parsers_set_radio_ui {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $priority = $data->[0] & 0b0000_0001;
+	my $audio_obc = ($data->[0] & 0b0000_0010) >> 1;
+	my $new_ui = ($data->[0] & 0b0001_0000) >> 4;
+	my $new_ui_hide = ($data->[0] & 0b1000_0000) >> 7;
+
+	return "priority=".(($priority==0)?"RAD":"GT").", audio+obc=$audio_obc, new_ui=$new_ui, new_ui_hide=$new_ui_hide";
+}
+
+sub data_parsers_gt_write {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $layout = $data->[0];
+	my $function = $data->[1];
+	my $index = $data->[2] & 0b0001_1111;
+	my $clear = ($data->[2] & 0b0010_0000 ) >> 5;
+	my $buffer = ($data->[2] & 0b0100_0000 ) >> 6;
+	my $highlight = ($data->[2] & 0b1000_0000 ) >> 7;
+
+	my $text = "";
+	for (my $i = 3; $i<length(\$data); $i++) {
+		$text .= chr($data->[$i]);
+	}
+
+	my %layouts = (
+		0x42 => "DIAL",
+		0x43 => "DIRECTORY",
+		0x60 => "WRITE_INDEX",
+		0x61 => "WRITE_INDEX_TMC",
+		0x62 => "WRITE_ZONE",
+		0x63 => "WRITE_STATIC",
+		0x80 => "TOP-8",
+		0xf0 => "LIST",
+		0xf1 => "DETAIL"
+	);
+
+	my %functions = (
+		0x00 => "NULL",
+		0x01 => "CONTACT",
+		0x05 => "SOS",
+		0x07 => "NAVIGATION",
+		0x08 => "INFO"
+	);
+
+	$layout = $layouts{$layout} || $layout;
+#	$function = $functions{$function} || $function;
+
+	$text =~ s/\x06/<nl>/go;
+	$text =~ s/\xB0/ /go;
+	return "layout=$layout, func/pos=$function, index=$index, clear=$clear, buffer=$buffer, highlight=$highlight, text=\"$text\"";
+
+}
+
 my %data_parsers = (
 	"BMBT_STATUS_RESP" => \&data_parsers_module_status,
 	"TEL_STATUS_RESP" => \&data_parsers_module_status,
 	"NAVE_STATUS_RESP" => \&data_parsers_module_status,
 	"GT_STATUS_RESP" => \&data_parsers_module_status,
 
+	"BMBT_MONITOR_CONTROL" => \&data_parsers_monitor_control,
+
 	"TEL_BTN_PRESS" => \&data_parsers_mfl_buttons,
 	"RAD_BTN_PRESS" => \&data_parsers_mfl_buttons,
+
+	"GT_BUTTON" => \&data_parsers_bmbt_buttons,
+	"BMBT_BROADCAST_BUTTON" => \&data_parsers_bmbt_buttons,
+	"RAD_BUTTON" => \&data_parsers_bmbt_buttons,
+
+	"BMBT_SOFT_BUTTON" => \&data_parsers_bmbt_soft_buttons,
+
+	"RAD_VOLUME" => \&data_parsers_volume,
+	"TEL_VOLUME" => \&data_parsers_volume,
+
+	"BMBT_DIAL_KNOB" => \&data_parsers_navi_knob,
+	"GT_DIAL_KNOB" => \&data_parsers_navi_knob,
+
+	"GT_SCREEN_MODE_REQUEST" => \&data_parsers_request_screen,
+	"RAD_SCREEN_MODE_SET" => \&data_parsers_set_radio_ui,
+
+	"GT_WRITE_WITH_CURSOR" => \&data_parsers_gt_write,
+	"GT_WRITE_MENU" => \&data_parsers_gt_write,
+
 );
 
 
@@ -211,8 +422,11 @@ while (<>) {
 
 		my $cmd_assumed;
 		my $cmd;
+		my $broadcast = " ";
 
 		if ($dst eq "LOC" || $dst eq "GLO" || $dst eq "MUL" || $dst eq "ANZ") {
+			$broadcast = "B";
+
 			$cmd_assumed = $src."_BROADCAST_".$cmd_raw;
 			if ($cmd{$cmd_assumed}) {
 				$cmd = $cmd{$cmd_assumed};
@@ -259,7 +473,7 @@ while (<>) {
 				$data = "";
 			}
 		}
-		printf ("%3d:%02d:%06.3f %1s %4s -> %-4s %2s %s (%s)\n", $hour, $min, $sec, $self, $src, $dst, $cmd_raw, $cmd, $data);
+		printf ("%3d:%02d:%06.3f %1s%1s %4s -> %-4s %2s %s (%s)\n", $hour, $min, $sec, $self, $broadcast, $src, $dst, $cmd_raw, $cmd, $data);
 
 	} else {
 #		print;
