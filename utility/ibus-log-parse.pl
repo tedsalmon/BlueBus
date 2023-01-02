@@ -551,6 +551,76 @@ sub data_parsers_obc_text {
 	return "property=$property, text=\"$text\"";
 }
 
+sub data_parsers_cdc_request {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $command = $data->[0];
+
+	my %commands = (
+		0x00 => "GET_STATUS",
+		0x01 => "STOP_PLAYING",
+		0x02 => "PAUSE_PLAYING",
+		0x03 => "START_PLAYING",
+		0x0A => "CHANGE_TRACK",
+		0x04 => "SEEK",
+		0x05 => "CHANGE_TRACK_BLAUPUNKT",
+		0x06 => "CD_CHANGE",
+		0x07 => "SCAN",
+		0x08 => "RANDOM_MODE",
+	);
+
+	$command = $commands{$command} || $command;
+	return "command=$command";
+};
+
+sub data_parsers_cdc_response {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $status = $data->[0];
+	my $audio = $data->[1];
+	my $error = $data->[2];
+	my $magazine = $data->[3];
+	my $disk = $data->[5];
+	my $track = $data->[6];
+
+	my %statuses = (
+		0X00 => "STOPPED",
+		0X01 => "PAUSED",
+		0X02 => "PLAYING",
+		0X03 => "FFW",
+		0X04 => "RWD",
+		0X05 => "NEXT_TRACK",
+		0X06 => "PREVIOUS_TRACK",
+		0X07 => "PENDING/ACKNOWLEDGE",
+		0X08 => "MAGAZINE_READY",
+		0X09 => "MAGAZINE_CHECKING",
+		0X0A => "MAGAZINE_EJECTED",
+	);
+
+	my %audios = (
+		0X02 => "STOPPED",
+		0X09 => "PLAYING",
+		0X0C => "READY?",
+
+		0X82 => "NEWCDC_STOPPED",
+		0X89 => "NEWCDC_PLAYING",
+		0X8C => "NEWCDC_READY?",
+	);
+
+	my %errors = (
+		0X00 => "NO_ERROR",
+		0X02 => "HIGH_TEMP",
+		0X08 => "NO_DISC",
+		0X10 => "NO_MAGAZINE",
+	);
+
+	$status = $statuses{$status} || $status;
+	$audio = $audios{$audio} || $audio;
+	$error = $errors{$error} || $error;
+
+	return sprintf("status=%s, audio=%s, error=%s, magazines=%06b, disk=%x, track=%x", $status, $audio, $error, $magazine, $disk, $track);
+};
+
 my %data_parsers = (
 	"BMBT_STATUS_RESP" => \&data_parsers_module_status,
 	"TEL_STATUS_RESP" => \&data_parsers_module_status,
@@ -585,14 +655,18 @@ my %data_parsers = (
 	"RAD_BROADCAST_WRITE_TITLE" =>  \&data_parsers_gt_write_menu,
 
 	"IKE_BROADCAST_OBC_TEXT" => \&data_parsers_obc_text,
+
+	"CDC_RESPONSE" => \&data_parsers_cdc_response,
+	"CDC_REQUEST" => \&data_parsers_cdc_request,
 );
 
 
 
 while (<>) {
 	my $line = $_;
+
 	if (/^\[(\d+)\]\s+DEBUG:\s+IBus:\s+RX\[(\d+)\]:\s+?(..)\s+..\s+(..)\s+(..)\s*(.*?)[\s\r\n]+$/osi) {	
-#		print $line;
+# IBUS message
 		my $time = $1;
 		my $len = $2;
 		my $src = $bus{$3} || "0x".$3;
