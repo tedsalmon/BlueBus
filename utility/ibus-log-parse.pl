@@ -1,6 +1,8 @@
 #!env perl
 use strict;
 
+my $time_offset = 0;
+
 my %bus = (
 	"00" => "GM",	# Body module
 	"08" => "SDH",	# Tilt/Slide Sunroof
@@ -40,7 +42,7 @@ my %bus = (
 	"CA" => "TCU",	# BMW Assist
 	"D0" => "LCM",	# Light control module
 	"E0" => "IRI",	# Integrated radio information system
-	"E7" => "ANZ",	# Displays Multicast
+	"E7" => "ANZV",	# Displays Multicast
 	"E8" => "RLS",	# Rain/Driving Light Sensor
 	"EA" => "DSPC",	# DSP Controler
 	"ED" => "VM",	# Video Module
@@ -125,10 +127,17 @@ my %cmd = (
 );
 
 sub hex_string_to_array {
-	my ($string) = @_;
+	my ($string, $len) = @_;
 	my @data;
+	my $cnt = 0;
+
 	foreach(split(" ",$string)) {
-		push(@data, hex($_));
+		if ($cnt<$len) {
+			push(@data, hex($_));
+			$cnt++;
+		} else {
+			last;
+		}
 	}
 	return @data;
 }
@@ -344,6 +353,9 @@ sub data_parsers_gt_write {
 
 	my $text = "";
 	for (my $i = 3; $i<length(\$data); $i++) {
+		if ($data->[$i] == 0) {
+			last;
+		}
 		$text .= chr($data->[$i]);
 	}
 
@@ -371,9 +383,172 @@ sub data_parsers_gt_write {
 #	$function = $functions{$function} || $function;
 
 	$text =~ s/\x06/<nl>/go;
-	$text =~ s/\xB0/ /go;
-	return "layout=$layout, func/pos=$function, index=$index, clear=$clear, buffer=$buffer, highlight=$highlight, text=\"$text\"";
+	$text =~ s/[^[:ascii:]]/~/go;
+	return "layout=$layout, func/cursor=$function, index=$index, clear=$clear, buffer=$buffer, highlight=$highlight, text=\"$text\"";
 
+}
+
+sub data_parsers_gt_write_menu {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $source = ($data->[0] & 0b1110_0000) >> 5;
+	my $config = ($data->[0] & 0b1111_1111);
+	my $option = ($data->[1] & 0b0011_1111);
+
+	my $text = "";
+	for (my $i = 2; $i<length(\$data); $i++) {
+		if ($data->[$i] == 0) {
+			last;
+		}
+		$text .= chr($data->[$i]);
+	}
+
+	my %sources = (
+		0b000 => "SERVICE",
+		0b001 => "WEATHER",
+		0b010 => "ANALOGUE",
+		0b011 => "DIGITAL",
+		0b100 => "TAPE",
+		0b101 => "TRAFFIC",
+		0b110 => "CDC"
+	);
+
+	my %configs = (
+		# Source: Service Mode (0b000 << 5)
+		0b0000_0010 => "SERVICE_SERIAL_NUMBER", 
+		0b0000_0011 => "SERVICE_SOFTWARE_VERSION", 
+		0b0000_0100 => "SERVICE_GAL", 
+		0b0000_0101 => "SERVICE_FQ", 
+		0b0000_0110 => "SERVICE_DSP", 
+		0b0000_0111 => "SERVICE_SEEK_LEVEL", 
+		0b0000_1000 => "SERVICE_TP_VOLUME", 
+		0b0000_1001 => "SERVICE_AF", 
+		0b0000_1010 => "SERVICE_REGION", 
+
+		# Source: Weather Band (0b001 << 5)
+		0b0010_0000 => "WEATHER_NONE", 
+		0b0010_0001 => "WEATHER_CH_1", 
+		0b0010_0010 => "WEATHER_CH_2", 
+		0b0010_0011 => "WEATHER_CH_3", 
+		0b0010_0100 => "WEATHER_CH_4", 
+		0b0010_0101 => "WEATHER_CH_5", 
+		0b0010_0110 => "WEATHER_CH_6", 
+		0b0010_0111 => "WEATHER_CH_7", 
+
+		# Source: Analogue (i.e. FMA) (0b010 << 5)    
+		0b0100_0000 => "ANALOGUE_UPDATE", 
+		0b0100_0001 => "ANALOGUE_MODE_MANUAL",   # [m]
+		0b0100_0010 => "ANALOGUE_MODE_SCAN",   # [SCA]
+		0b0100_0011 => "ANALOGUE_MODE_SENSITIVE",   # [II]
+		0b0100_0100 => "ANALOGUE_MODE_NON_SENSITIVE",   # [I]
+		0b0100_0110 => "ANALOGUE_TRAFFIC",   # < 3/1-30
+		0b0100_0111 => "ANALOGUE_TRAFFIC_PROGRAM",   # < 3/1-30
+
+		0b0100_0000 => "ANALOGUE_TRAFFIC_OFF", 
+		0b0100_1000 => "ANALOGUE_TRAFFIC_ON",   # [T]
+
+		0b0101_0000 => "ANALOGUE_ST",   # < 3/1-30
+
+		# Source: Digital (i.e. FMD) (0b011 << 5)
+		0b0110_0000 => "DIGITAL_MENU",   # Stations, Info.
+		0b0110_0001 => "DIGITAL_RDS", 
+		0b0110_0010 => "DIGITAL_HEADER", 
+		0b0110_0011 => "DIGITAL_MP3", 
+
+		# Source: Tape (0b100 << 5)
+		0b1000_0000 => "TAPE_ERROR",   # "TAPE ERROR"
+		0b1000_0010 => "TAPE_PRES", 
+		0b1000_0011 => "TAPE_FFW", 
+		0b1000_0110 => "TAPE_FW", 
+		0b1000_0100 => "TAPE_RRW", 
+		0b1000_0111 => "TAPE_RW", 
+		0b1000_1000 => "TAPE_CLEAN", 
+		0b1000_1001 => "TAPE_INVERSE", 
+
+		0b1000_0000 => "TAPE_SIDE_A", 
+		0b1001_0000 => "TAPE_SIDE_B", 
+
+		# Source: Traffic (0b101 << 5)
+		0b1010_0000 => "TRAFFIC_NO_STATION", 
+		0b1010_0001 => "TRAFFIC_1", 
+		0b1010_0010 => "TRAFFIC_2", 
+
+		# Source: CDC (0b110 << 5)
+		0b1100_0000 => "CDC_ERROR",   # "CD ERROR"
+		0b1100_0001 => "CDC_NO_MAG",   # "NO MAGAZINE"
+		0b1100_0010 => "CDC_NO_DISC",   # "NO DISC"
+		0b1100_0011 => "CDC_CHECK",   # "CD CHECK"
+
+		0b1100_0101 => "CDC_FF",   # [>>]
+		0b1100_0110 => "CDC_RW",   # [<<R]
+
+		0b1100_0100 => "CDC_SEARCH",   # [< >] Default
+		0b1100_0111 => "CDC_SCAN",   # [SCAN]
+		0b1100_1000 => "CDC_RAND",   # [RND]
+		0b1100_1010 => "CDC_FF_RW",   # [<< >>]
+
+		0b1100_1011 => "CDC_LOADING",   # I think...?
+	);
+
+
+	$source = $sources{$source} || $source;
+	$config = $configs{$config} || $config;
+
+	$text =~ s/\x06/<nl>/go;
+	$text =~ s/[^[:ascii:]]/~/go;
+	return "source=$source, config=$config, options=$option, text=\"$text\"";
+}
+
+sub data_parsers_obc_text {
+	my ($src, $dst, $string, $data, $time) = @_;
+
+	my $property = $data->[0];
+
+	my %properties = (
+		0x01 => "TIME",
+		0x02 => "DATE",
+		0x03 => "TEMP",
+		0x04 => "CONSUMPTION 1",
+		0x05 => "CONSUMPTION 2",
+		0x06 => "RANGE",
+		0x07 => "DISTANCE",
+		0x08 => "ARRIVAL",
+		0x09 => "LIMIT",
+		0x0a => "AVG SPEED",
+		0x0e => "TIMER",
+		0x0f => "AUX TIMER 1",
+		0x10 => "AUX TIMER 2",
+		0x16 => "CODE EMERGENCY DEACIVATION",
+		0x1a => "TIMER LAP",
+	);
+
+	my $text = "";
+	for (my $i = 2; $i<length(\$data); $i++) {
+		if ($data->[$i] == 0) {
+			last;
+		}
+		$text .= chr($data->[$i]);
+	}
+	$text =~ s/[^[:ascii:]]/~/go;
+
+	$property = $properties{$property} || $property;
+
+
+	if ($property eq 'TIME') {
+		if ($text=~/(\d+):(\d+)(.)/o) {
+			my $time_local = ( $1 * 60 + $2 ) * 60;
+			if (($3 eq 'P' || $3 eq 'p') && ($1 < 12)) {
+				$time_local += 12 * 60 * 60;
+			};
+			if (($3 eq 'A' || $3 eq 'a') && ($1 == 12)) {
+				$time_local -= 12 * 60 * 60;
+			}
+			$time_offset = $time_local*1000 - $time;
+		}
+	}
+
+
+	return "property=$property, text=\"$text\"";
 }
 
 my %data_parsers = (
@@ -405,6 +580,11 @@ my %data_parsers = (
 	"GT_WRITE_WITH_CURSOR" => \&data_parsers_gt_write,
 	"GT_WRITE_MENU" => \&data_parsers_gt_write,
 
+	"GT_WRITE_TITLE" =>  \&data_parsers_gt_write_menu,
+	"IKE_WRITE_TITLE" =>  \&data_parsers_gt_write_menu,
+	"RAD_BROADCAST_WRITE_TITLE" =>  \&data_parsers_gt_write_menu,
+
+	"IKE_BROADCAST_OBC_TEXT" => \&data_parsers_obc_text,
 );
 
 
@@ -424,7 +604,21 @@ while (<>) {
 		my $cmd;
 		my $broadcast = " ";
 
-		if ($dst eq "LOC" || $dst eq "GLO" || $dst eq "MUL" || $dst eq "ANZ") {
+		my $time_local;
+
+		if ($time_offset != 0) {
+
+			$time_local = $time + $time_offset;
+			my $sec = ($time_local % (60*1000))/1000;
+			my $min = int($time_local/(60*1000)) % 60;
+			my $hour = int($time_local/(60*60*1000));
+
+			$time_local = sprintf("%3d:%02d:%06.3f local", $hour, $min, $sec);
+		} else {
+			$time_local = ' ' x 19;
+		}
+
+		if ($dst eq "LOC" || $dst eq "GLO" || $dst eq "MUL" || $dst eq "ANZV") {
 			$broadcast = "B";
 
 			$cmd_assumed = $src."_BROADCAST_".$cmd_raw;
@@ -435,7 +629,7 @@ while (<>) {
 			} else { 
 				$cmd = $cmd_assumed;
 			};
-		} elsif ($cmd{$cmd_raw} =~ /RESP/i) {
+		} elsif ($cmd{$cmd_raw} =~ /RESP/io) {
 				$cmd = $src."_".$cmd{$cmd_raw};
 		} else {
 			$cmd_assumed = $dst."_".$cmd_raw;
@@ -467,18 +661,18 @@ while (<>) {
 
 		my $data_parsed;
 		if ($data_parsers{$cmd}) {
-			my @data = hex_string_to_array($data);
+			my @data = hex_string_to_array($data,$len - 5);
 			if (length(@data) > 0) {
-				$data_parsed = $data_parsers{$cmd}->($src,$dst, $data, \@data);
+				$data_parsed = $data_parsers{$cmd}->($src,$dst, $data, \@data, $time);
 			} else {
 				$data_parsed = "";
 			}
 		} else {
 			$data_parsed = $data;
 		}
-		printf ("%3d:%02d:%06.3f %1s%1s %4s -> %-4s %2s %s\n". ' 'x 30 ."%s (%s)\n\n", $hour, $min, $sec, $self, $broadcast, $src, $dst, $cmd_raw, $data, $cmd, $data_parsed);
+		printf ("%3d:%02d:%06.3f %1s%1s %4s -> %-4s %2s %s\n%s". ' ' x 11 ."%s (%s)\n\n", $hour, $min, $sec, $self, $broadcast, $src, $dst, $cmd_raw, $data, $time_local, $cmd, $data_parsed);
 
 	} else {
-#		print;
+		print;
 	}
 };
