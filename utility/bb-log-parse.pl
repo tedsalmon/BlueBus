@@ -148,11 +148,12 @@ my %cmd = (
 	"4A" => "LED_TAPE_CTRL",
 	"4E" => "TV_STATUS",
 	"4F" => "MONITOR_CONTROL",
-	"53" => "LCM_REQ_REDUNDANT_DATA",
-	"54" => "LCM_RESP_REDUNDANT_DATA",
+	"53" => "REQ_REDUNDANT_DATA",
+	"54" => "RESP_REDUNDANT_DATA",
+	"55" => "REPLICATE_REDUNDANT_DATA",
 	"59" => "RLS_STATUS",
-	"5A" => "LCM_INDICATORS_REQ",
-	"5A" => "LCM_INDICATORS_RESP",
+	"5A" => "INDICATORS_REQ",
+	"5A" => "INDICATORS_RESP",
 	"5C" => "INSTRUMENT_BACKLIGHTING",
 	"60" => "WRITE_INDEX",
 	"61" => "WRITE_INDEX_TMC",
@@ -565,18 +566,18 @@ sub data_parsers_obc_text {
 		0x01 => "TIME",
 		0x02 => "DATE",
 		0x03 => "TEMP",
-		0x04 => "CONSUMPTION 1",
-		0x05 => "CONSUMPTION 2",
+		0x04 => "CONSUMPTION_1",
+		0x05 => "CONSUMPTION_2",
 		0x06 => "RANGE",
 		0x07 => "DISTANCE",
 		0x08 => "ARRIVAL",
 		0x09 => "LIMIT",
-		0x0a => "AVG SPEED",
+		0x0a => "AVG_SPEED",
 		0x0e => "TIMER",
-		0x0f => "AUX TIMER 1",
-		0x10 => "AUX TIMER 2",
-		0x16 => "CODE EMERGENCY DEACIVATION",
-		0x1a => "TIMER LAP",
+		0x0f => "AUX_TIMER_1",
+		0x10 => "AUX_TIMER_2",
+		0x16 => "CODE_EMERGENCY_DEACIVATION",
+		0x1a => "TIMER_LAP",
 	);
 
 	my $text = "";
@@ -679,6 +680,99 @@ sub data_parsers_cdc_response {
 	return sprintf("status=%s, audio=%s, error=%s, magazines=%06b, disk=%x, track=%x", $status, $audio, $error, $magazine, $disk, $track);
 };
 
+sub data_parsers_speed_rpm {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $speed = $data->[0] * 2;
+	my $rpm = $data->[1] * 100;
+
+	return "speed=$speed km/h, rpm=$rpm";
+};
+
+sub data_parsers_ike_temp {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $coolant = $data->[1];
+	my $amb = $data->[0];
+	if ($amb>127) {
+		$amb = $amb-256;
+	}
+	return "coolant=$coolant, amb=$amb C";
+};
+
+sub data_parsers_ike_sensor {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $handbrake 		= ( $data->[0] & 0b0000_0001 );
+	my $oil_pressure 	= ( $data->[0] & 0b0000_0010 ) >> 1;
+	my $brake_pads 		= ( $data->[0] & 0b0000_0100 ) >> 2;
+	my $transmission 	= ( $data->[0] & 0b0001_0000 ) >> 4;
+
+	my $ignition		= ( $data->[1] & 0b0000_0001 ) ;
+	my $door 			= ( $data->[1] & 0b0000_0010 ) >> 1;
+	my $gear		 	= ( $data->[1] & 0b1111_0000 ) >> 4;
+
+	my $aux_vent		= ( $data->[2] & 0b0000_1000 ) >> 3;
+
+	my %gears = (
+		0b0000 => "GEAR_NONE",
+		0b1011 => "GEAR_PARK",
+		0b0001 => "GEAR_REVERSE",
+		0b0111 => "GEAR_NEUTRAL",
+		0b1000 => "GEAR_DRIVE",
+		0b0010 => "GEAR_FIRST",
+		0b0110 => "GEAR_SECOND",
+		0b1101 => "GEAR_THIRD",
+		0b1100 => "GEAR_FOURTH",
+		0b1110 => "GEAR_FIFTH",
+		0b1111 => "GEAR_SIXTH"
+	);
+
+	$gear = $gears{$gear} || $gear;
+
+	return "handbrake=$handbrake, ignition=$ignition, gear=$gear, ?door=$door, , aux_vent=$aux_vent, warn_oil_pressure=$oil_pressure, warn_brake_pads=$brake_pads, warn_transmission=$transmission";
+};
+
+sub data_parsers_ike_ignition {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $ignition = ( $data->[0] & 0b0000_0111 );
+
+	my %ign = (
+		0b0000_0000   => "POS_0",
+		0b0000_0001   => "POS_1",
+		0b0000_0011   => "POS_2",
+		0b0000_0111   => "POS_3",
+	);
+
+	$ignition = $ign{$ignition} || $ignition;
+
+	return "ignition=$ignition";
+};
+
+sub data_parsers_redundant_data {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $odo  = ( $data->[0]*256+$data->[1] ) * 100;
+	my $fuel = $data->[3]*10;
+	my $oil  = ( $data->[4]*256+$data->[5] );
+	my $time = ( $data->[6]*256+$data->[7] );
+
+	return "odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
+};
+
+sub data_parsers_lcm_redundant_data {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $odo  = ( $data->[5]*256+$data->[6] ) * 100;
+	my $fuel = $data->[8]*10;
+	my $oil  = ( $data->[9]*256+$data->[10] );
+	my $time = ( $data->[11]*256+$data->[12] );
+	my $vin  = sprintf("%c%c%02X%02X%1X", $data->[0], $data->[1], $data->[2],  $data->[3], $data->[4]>>4);
+
+	return "vin=$vin, odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
+};
+
 my %data_parsers = (
 	"BMBT_STATUS_RESP" => \&data_parsers_module_status,
 	"TEL_STATUS_RESP" => \&data_parsers_module_status,
@@ -716,6 +810,14 @@ my %data_parsers = (
 
 	"CDC_RESPONSE" => \&data_parsers_cdc_response,
 	"CDC_REQUEST" => \&data_parsers_cdc_request,
+
+	"IKE_BROADCAST_SPEED_RPM_UPDATE" => \&data_parsers_speed_rpm,
+	"IKE_BROADCAST_TEMP_UPDATE" => \&data_parsers_ike_temp,
+	"IKE_BROADCAST_SENSOR_RESP" => \&data_parsers_ike_sensor,
+	"IKE_BROADCAST_IGN_STATUS_RESP" => \&data_parsers_ike_ignition,
+	"IKE_BROADCAST_REPLICATE_REDUNDANT_DATA" => \&data_parsers_redundant_data,
+	"LCM_RESP_REDUNDANT_DATA" => \&data_parsers_lcm_redundant_data,
+
 );
 
 sub local_time {
@@ -883,7 +985,7 @@ while (<>) {
 		};
 
 
-		printf ("%1s   %4s -> %-4s %s\n", $self, $src, $dst, $command);
+		printf ("%1s   %4s -> %-4s    %s\n", $self, $src, $dst, $command);
 
 	} else {
 		print $line."\n";
