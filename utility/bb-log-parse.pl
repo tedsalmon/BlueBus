@@ -32,10 +32,18 @@ my $config_local_time = 1;
 my $config_original_line = 0;
 
 # return also original packet, to validate the payload parsing 
-my $config_original_data = 0;
+my $config_original_data = 1;
 
 # return also lines that cannot be parsed ( eg. Notifications and debug messages )
 my $config_nonparsed_lines = 1;
+
+# list device names or IDs that are to be ignored ( both when they send, or when messages are for them )
+#my @ignore_devices = ( "LCM", 0x18 );
+my @ignore_devices = ( );
+
+# list of command names or ids that are ignored in output
+#my @ignore_commands = ( 0x7D, "RAD_TV_STATUS" );
+my @ignore_commands = ( );
 
 # end of configuration
 ###########################################################
@@ -731,6 +739,15 @@ sub local_time {
 	}
 };
 
+sub in_array {
+	my($needle, $array) = @_;
+
+	foreach (@$array) {
+		return 1 if ($needle eq $_);
+	}
+	return 0;
+};
+
 while (<>) {
 	chomp;
 	s/[\n\s\r]+$//o;
@@ -744,8 +761,13 @@ while (<>) {
 		my $packet = "$3 $4 $5 $6 $7";
 		my $src = $bus{$3} || "0x".$3;
 		my $dst = $bus{$5} || "0x".$5;
+		my $src_orig = hex($3);
+		my $dst_orig = hex($5);
 		my $cmd_raw = $6;
 		my $data = $7;
+
+		next if (in_array($src, \@ignore_devices) || in_array($dst, \@ignore_devices) || in_array($src_orig, \@ignore_devices) || in_array($dst_orig, \@ignore_devices));
+		next if (in_array($cmd_raw, \@ignore_commands) || in_array(hex($cmd_raw), \@ignore_commands));
 
 		my $cmd_assumed;
 		my $cmd;
@@ -782,6 +804,8 @@ while (<>) {
 			}
 		}
 
+		next if (in_array($cmd, \@ignore_commands));
+
 		my $self = " ";
 
 		if ($data =~ s/\s+\[SELF\]//o) {
@@ -816,7 +840,7 @@ while (<>) {
 			printf ("%2d:%02d:%06.3f ",$hour, $min, $sec);
 		};
 
-		printf ("%1s %1s %4s -> %-4s %s (%s)", $self, $broadcast, $src, $dst,  $cmd, $data_parsed);
+		printf ("%1s %1s %4s -> %-4s %2s %s (%s)", $self, $broadcast, $src, $dst, $cmd_raw, $cmd, $data_parsed);
 		if ($config_original_data) {
 			printf (" [%s]", $packet);
 		};
@@ -839,6 +863,8 @@ while (<>) {
 			$dst = "BT";
 			$self = "*";
 		}
+
+		next if (in_array($src, \@ignore_devices) || in_array($dst, \@ignore_devices));
 
 		my $time_local = local_time($time);
 
