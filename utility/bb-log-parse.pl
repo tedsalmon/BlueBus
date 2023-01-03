@@ -2,16 +2,16 @@
 use strict;
 
 # Usage: in your terminal run and treat it as any tool that processes text files in pipes
-# ./ibus-log-parse.pl < your_blubus_session.log
+# ./bb-log-parse.pl < your_blubus_session.log
 #
 # page the file and interactivelly search
-# ./ibus-log-parse.pl < your_blubus_session.log | more
+# ./bb-log-parse.pl < your_blubus_session.log | more
 #
 # find all messaget to GT and return few lines around it
-# ./ibus-log-parse.pl < your_blubus_session.log | grep -a --context=5 ' -> GT'
+# ./bb-log-parse.pl < your_blubus_session.log | grep -a --context=5 ' -> GT'
 #
 # parse the file and store it to new file
-# ./ibus-log-parse.pl < your_blubus_session.log > parsed_log.txt
+# ./bb-log-parse.pl < your_blubus_session.log > parsed_log.txt
 #
 #
 # configuration options:
