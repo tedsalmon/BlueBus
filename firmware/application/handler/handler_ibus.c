@@ -151,7 +151,7 @@ static void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
 {
     uint8_t curStatus = IBUS_CDC_STAT_STOP;
     if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PAUSE) {
-        curStatus = IBUS_CDC_FUNC_PAUSE;
+        curStatus = IBUS_CDC_STAT_PAUSE;
     } else if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
         curStatus = IBUS_CDC_STAT_PLAYING;
     }
