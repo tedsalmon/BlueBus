@@ -2058,6 +2058,8 @@ void BMBTRADDisplayMenu(void *ctx, uint8_t *pkt)
  */
 void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
 {
+    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_IKE) return;
+    
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == IBUS_C43_TITLE_MODE) {
         context->status.radType = IBUS_RADIO_TYPE_C43;
