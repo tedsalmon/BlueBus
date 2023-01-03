@@ -1,5 +1,35 @@
-#!env perl
+#!perl
 use strict;
+
+# Usage: in your terminal run and treat it as any tool that processes text files in pipes
+# ./ibus-log-parse.pl < your_blubus_session.log
+#
+# page the file and interactivelly search
+# ./ibus-log-parse.pl < your_blubus_session.log | more
+#
+# find all messaget to GT and return few lines around it
+# ./ibus-log-parse.pl < your_blubus_session.log | grep -a --context=5 ' -> GT'
+#
+# parse the file and store it to new file
+# ./ibus-log-parse.pl < your_blubus_session.log > parsed_log.txt
+#
+#
+# configuration options:
+
+# return also real local time of events, when possible
+my $config_local_time = 1;
+
+# return also original line, to validate the parsing 
+my $config_original_line = 0;
+
+# return also original packet, to validate the payload parsing 
+my $config_original_data = 1;
+
+# return also lines that cannot be parsed ( eg. Notifications and debug messages )
+my $config_nonparsed_lines = 1;
+
+# end of configuration
+###########################################################
 
 my $time_offset = 0;
 
