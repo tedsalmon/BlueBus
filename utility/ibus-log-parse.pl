@@ -142,6 +142,16 @@ sub hex_string_to_array {
 	return @data;
 }
 
+sub cleanup_string {
+	my ($text) = @_;
+
+	$text =~ s/\x06/<nl>/go;
+	$text =~ s/\r/<cr>/go;
+	$text =~ s/\n/<nl>/go;
+	$text =~ s/[^[:ascii:]]/~/go;
+	return $text;	
+}
+
 sub data_parsers_module_status {
 	my ($src, $dst, $string, $data) = @_;
 	my $announce = $data->[0] & 0b00000001;
@@ -382,8 +392,8 @@ sub data_parsers_gt_write {
 	$layout = $layouts{$layout} || $layout;
 #	$function = $functions{$function} || $function;
 
-	$text =~ s/\x06/<nl>/go;
-	$text =~ s/[^[:ascii:]]/~/go;
+	$text = cleanup_string($text);
+
 	return "layout=$layout, func/cursor=$function, index=$index, clear=$clear, buffer=$buffer, highlight=$highlight, text=\"$text\"";
 
 }
@@ -494,8 +504,8 @@ sub data_parsers_gt_write_menu {
 	$source = $sources{$source} || $source;
 	$config = $configs{$config} || $config;
 
-	$text =~ s/\x06/<nl>/go;
-	$text =~ s/[^[:ascii:]]/~/go;
+	$text = cleanup_string($text);
+
 	return "source=$source, config=$config, options=$option, text=\"$text\"";
 }
 
@@ -529,7 +539,8 @@ sub data_parsers_obc_text {
 		}
 		$text .= chr($data->[$i]);
 	}
-	$text =~ s/[^[:ascii:]]/~/go;
+
+	$text = cleanup_string($text);
 
 	$property = $properties{$property} || $property;
 
