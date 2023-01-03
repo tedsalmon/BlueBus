@@ -160,7 +160,8 @@ my %cmd = (
 	"62" => "WRITE_ZONE",
 	"63" => "WRITE_STATIC",
 	"74" => "IMMOBILISER_STATUS",
-	"7A" => "DOORS_FLAPS_STATUS_RESP",
+	"79" => "DOORS_STATUS_REQUEST",
+	"7A" => "DOORS_STATUS_RESP",
 	"9F" => "DIA_DIAG_TERMINATE",
 	"A0" => "DIA_DIAG_RESPONSE",
 	"A2" => "TELEMATICS_COORDINATES",
@@ -773,6 +774,29 @@ sub data_parsers_lcm_redundant_data {
 	return "vin=$vin, odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
 };
 
+sub data_parsers_doors_status {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $doors 			= ( $data->[0] & 0b0000_1111 );
+	my $central_lock 	= ( $data->[0] & 0b0011_0000 ) >> 4;
+	my $lamp_interiour	= ( $data->[0] & 0b0100_0000 ) >> 6;
+
+	my $windows			= ( $data->[1] & 0b0000_1111 ) ;
+	my $sunroof			= ( $data->[1] & 0b0001_0000 ) >> 4;
+	my $rear_trunk	 	= ( $data->[1] & 0b0010_0000 ) >> 5;
+	my $front_boot	 	= ( $data->[1] & 0b0100_0000 ) >> 6;
+
+	my %locks = (
+		0b0001 => "CENTRAL_LOCKING_UNLOCKED",
+		0b0010 => "CENTRAL_LOCKING_LOCKED",
+		0b0011 => "CENTRAL_LOCKING_ARRESTED",
+	);
+
+	$central_lock = $locks{$central_lock} || $central_lock;
+
+	return sprintf("doors=%04b, windows=%04b, locks=%s, lamp=$lamp_interiour, sunroof=$sunroof, front_lid=$front_boot, rear_lid=$rear_trunk", $doors, $windows, $central_lock);
+};
+
 my %data_parsers = (
 	"BMBT_STATUS_RESP" => \&data_parsers_module_status,
 	"TEL_STATUS_RESP" => \&data_parsers_module_status,
@@ -817,6 +841,8 @@ my %data_parsers = (
 	"IKE_BROADCAST_IGN_STATUS_RESP" => \&data_parsers_ike_ignition,
 	"IKE_BROADCAST_REPLICATE_REDUNDANT_DATA" => \&data_parsers_redundant_data,
 	"LCM_RESP_REDUNDANT_DATA" => \&data_parsers_lcm_redundant_data,
+
+	"GM_BROADCAST_DOORS_STATUS_RESP" => \&data_parsers_doors_status,
 
 );
 
