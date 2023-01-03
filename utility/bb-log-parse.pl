@@ -1,18 +1,27 @@
 #!perl
 use strict;
 
-# Usage: in your terminal run and treat it as any tool that processes text files in pipes
+# Usage: in your terminal run and treat it as any tool that processes text files in pipes:
 # ./bb-log-parse.pl < your_blubus_session.log
 #
-# page the file and interactivelly search
+# page the file and interactivelly search:
 # ./bb-log-parse.pl < your_blubus_session.log | more
 #
-# find all messaget to GT and return few lines around it
+# find all messaget to GT and return few lines around it:
 # ./bb-log-parse.pl < your_blubus_session.log | grep -a --context=5 ' -> GT'
 #
-# parse the file and store it to new file
+# parse the file and store it to new file:
 # ./bb-log-parse.pl < your_blubus_session.log > parsed_log.txt
 #
+# translate logs as they appear in live session:
+# 1. start your "screen" command with -L 
+#    screen -L /dev/tty.usbserial-AB0M7T7E 115200
+#
+# 2. in new terminal window, setup the file logging to be instant
+#    screen -r -x -p0 -X logfile flush 0
+#
+# 3. watch the live log ( filename may be different - but similar )
+#    tail -f screenlog.0 | ./bb-log-parse.pl
 #
 # configuration options:
 
@@ -23,7 +32,7 @@ my $config_local_time = 1;
 my $config_original_line = 0;
 
 # return also original packet, to validate the payload parsing 
-my $config_original_data = 1;
+my $config_original_data = 0;
 
 # return also lines that cannot be parsed ( eg. Notifications and debug messages )
 my $config_nonparsed_lines = 1;
@@ -194,8 +203,8 @@ sub data_parsers_module_status {
 			0b01110 => "BMBT_16_9"
 			},
 		"TEL" => {
-			0b00111 => "Everest+Bluetooth",
-			0b00110 => "Motorola V-Series",
+			0b00111 => "EVEREST",
+			0b00110 => "MOTOROLA",
 			0b00000 => "CMT3000"
 			},
 		"NAVE" => {
