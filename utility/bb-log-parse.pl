@@ -609,6 +609,55 @@ sub data_parsers_obc_text {
 
 
 	return "property=$property, text=\"$text\"";
+};
+
+sub data_parsers_ike_obc_input {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $property = $data->[0];
+
+	my %properties = (
+		0x01 => "TIME",
+		0x02 => "DATE",
+		0x03 => "TEMP",
+		0x04 => "CONSUMPTION_1",
+		0x05 => "CONSUMPTION_2",
+		0x06 => "RANGE",
+		0x07 => "DISTANCE",
+		0x08 => "ARRIVAL",
+		0x09 => "LIMIT",
+		0x0a => "AVG_SPEED",
+		0x0e => "TIMER",
+		0x0f => "AUX_TIMER_1",
+		0x10 => "AUX_TIMER_2",
+		0x16 => "CODE_EMERGENCY_DEACIVATION",
+		0x1a => "TIMER_LAP",
+	);
+
+	$property = $properties{$property} || $property;
+
+	my $value = '';
+
+	if (($property eq 'TIME')||($property eq 'AUX_TIMER_1')||($property eq 'AUX_TIMER_2')) {
+		my $pm = '';
+		$value = $data->[1];
+		if ($value >= 0x80) {
+			$value -= 0x80;
+			$pm = 'PM';
+		};
+		$value = sprintf("%02d:%02d$pm", $value, $data->[2]);
+	} elsif ($property eq 'DATE') {
+		$value = sprintf("%02d.%02d.%04d", $data->[1], $data->[2], $data->[3]+2000);
+	} elsif (($property eq 'DISTANCE')||($property eq 'LIMIT')) {
+		$value = $data->[1] << 8 +  $data->[2];
+	} elsif ($property eq 'CODE_EMERGENCY_DEACIVATION') {
+		$value = sprintf("%04d", $data->[1] << 8 +  $data->[2]);
+	} else {
+		$string =~ s/^...//o;
+		$value = sprintf("($string)");
+	}
+
+	return "property=$property, value=$value";
 }
 
 sub data_parsers_cdc_request {
@@ -830,11 +879,11 @@ my %data_parsers = (
 	"IKE_WRITE_TITLE" =>  \&data_parsers_gt_write_menu,
 	"RAD_BROADCAST_WRITE_TITLE" =>  \&data_parsers_gt_write_menu,
 
-	"IKE_BROADCAST_OBC_TEXT" => \&data_parsers_obc_text,
-
 	"CDC_RESPONSE" => \&data_parsers_cdc_response,
 	"CDC_REQUEST" => \&data_parsers_cdc_request,
 
+	"IKE_OBC_INPUT" => \&data_parsers_ike_obc_input,
+	"IKE_BROADCAST_OBC_TEXT" => \&data_parsers_obc_text,
 	"IKE_BROADCAST_SPEED_RPM_UPDATE" => \&data_parsers_speed_rpm,
 	"IKE_BROADCAST_TEMP_UPDATE" => \&data_parsers_ike_temp,
 	"IKE_BROADCAST_SENSOR_RESP" => \&data_parsers_ike_sensor,
@@ -843,7 +892,6 @@ my %data_parsers = (
 	"LCM_RESP_REDUNDANT_DATA" => \&data_parsers_lcm_redundant_data,
 
 	"GM_BROADCAST_DOORS_STATUS_RESP" => \&data_parsers_doors_status,
-
 );
 
 sub local_time {
