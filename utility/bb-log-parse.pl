@@ -974,10 +974,11 @@ while (<>) {
 		};
 		print "\n";
 
-	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BT:\s+([RW]):\s+'(.+)'$/os) {
+	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BT:\s+([RW]):\s+'(\S+)\s*(.*)\s*'$/os) {
 # BlueTooth BC127 Messages
 		my $time = $1;
 		my $command = $3;
+		my $data = $4;
 		my $src;
 		my $dst;
 		my $self;
@@ -993,6 +994,7 @@ while (<>) {
 		}
 
 		next if (in_array($src, \@ignore_devices) || in_array($dst, \@ignore_devices));
+		next if (in_array($command, \@ignore_commands));
 
 		my $time_local = local_time($time);
 
@@ -1010,10 +1012,8 @@ while (<>) {
 			printf ("%2d:%02d:%06.3f ",$hour, $min, $sec);
 		};
 
-
-		printf ("%1s   %4s -> %-4s    %s\n", $self, $src, $dst, $command);
-
+		printf ("%1s   %4s -> %-4s    %s %s\n", $self, $src, $dst, $command, $data);
 	} else {
-		print $line."\n";
+		print $line."\n" if ($config_nonparsed_lines);
 	}
 };
