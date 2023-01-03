@@ -701,37 +701,48 @@ my %data_parsers = (
 	"CDC_REQUEST" => \&data_parsers_cdc_request,
 );
 
+sub local_time {
+	my ($time) = @_;
 
+	if ($config_local_time) {
+		my $time_local;
+		if ($time_offset != 0) {
+			$time_local = $time + $time_offset;
+			my $sec = int($time_local/1000) % 60;
+			my $min = int($time_local/(60*1000)) % 60;
+			my $hour = int($time_local/(60*60*1000));
+
+			$time_local = sprintf("%2d:%02d:%02d", $hour, $min, $sec);
+		} else {
+			$time_local = ' ' x 8;
+		}
+		return $time_local;
+	} else {
+		return;
+	}
+};
 
 while (<>) {
+	chomp;
+	s/[\n\s\r]+$//o;
+
 	my $line = $_;
 
-	if (/^\[(\d+)\]\s+DEBUG:\s+IBus:\s+RX\[(\d+)\]:\s+?(..)\s+..\s+(..)\s+(..)\s*(.*?)[\s\r\n]+$/osi) {	
+	if (/^\[(\d+)\]\s+DEBUG:\s+IBus:\s+RX\[(\d+)\]:\s+?(..)\s+(..)\s+(..)\s+(..)\s*(.*?)$/osi) {	
 # IBUS message
 		my $time = $1;
 		my $len = $2;
+		my $packet = "$3 $4 $5 $6 $7";
 		my $src = $bus{$3} || "0x".$3;
-		my $dst = $bus{$4} || "0x".$4;
-		my $cmd_raw = $5;
-		my $data = $6;
+		my $dst = $bus{$5} || "0x".$5;
+		my $cmd_raw = $6;
+		my $data = $7;
 
 		my $cmd_assumed;
 		my $cmd;
 		my $broadcast = " ";
 
-		my $time_local;
-
-		if ($time_offset != 0) {
-
-			$time_local = $time + $time_offset;
-			my $sec = ($time_local % (60*1000))/1000;
-			my $min = int($time_local/(60*1000)) % 60;
-			my $hour = int($time_local/(60*60*1000));
-
-			$time_local = sprintf("%3d:%02d:%06.3f local", $hour, $min, $sec);
-		} else {
-			$time_local = ' ' x 19;
-		}
+		my $time_local = local_time($time);
 
 		if ($dst eq "LOC" || $dst eq "GLO" || $dst eq "MUL" || $dst eq "ANZV") {
 			$broadcast = "B";
@@ -777,7 +788,7 @@ while (<>) {
 		my $data_parsed;
 		if ($data_parsers{$cmd}) {
 			my @data = hex_string_to_array($data,$len - 5);
-			if (length(@data) > 0) {
+			if (scalar(@data) > 0) {
 				$data_parsed = $data_parsers{$cmd}->($src,$dst, $data, \@data, $time);
 			} else {
 				$data_parsed = "";
@@ -785,9 +796,24 @@ while (<>) {
 		} else {
 			$data_parsed = $data;
 		}
-		printf ("%3d:%02d:%06.3f %1s%1s %4s -> %-4s %2s %s\n%s". ' ' x 11 ."%s (%s)\n\n", $hour, $min, $sec, $self, $broadcast, $src, $dst, $cmd_raw, $data, $time_local, $cmd, $data_parsed);
 
-	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BT:\s+([RW]):\s+'(.+)'\s+$/os) {
+		if ($config_original_line) {
+			print $line."\n";
+		}
+
+		if ($config_local_time) {
+			printf ("%2d:%02d:%06.3f (%s) ",$hour, $min, $sec, $time_local);
+		} else {
+			printf ("%2d:%02d:%06.3f ",$hour, $min, $sec);
+		};
+
+		printf ("%1s %1s %4s -> %-4s %s (%s)", $self, $broadcast, $src, $dst,  $cmd, $data_parsed);
+		if ($config_original_data) {
+			printf (" [%s]", $packet);
+		};
+		print "\n";
+
+	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BT:\s+([RW]):\s+'(.+)'$/os) {
 # BlueTooth BC127 Messages
 		my $time = $1;
 		my $command = $3;
@@ -796,37 +822,35 @@ while (<>) {
 		my $self;
 
 		if ($2 eq 'R') {
-			$src = "BLUE";
+			$src = "BT";
 			$dst = "BBUS";
 			$self = " ";
 		} else {
 			$src = "BBUS";
-			$dst = "BLUE";
+			$dst = "BT";
 			$self = "*";
 		}
 
-		my $time_local;
-
-		if ($time_offset != 0) {
-
-			$time_local = $time + $time_offset;
-			my $sec = ($time_local % (60*1000))/1000;
-			my $min = int($time_local/(60*1000)) % 60;
-			my $hour = int($time_local/(60*60*1000));
-
-			$time_local = sprintf("%3d:%02d:%06.3f local", $hour, $min, $sec);
-		} else {
-			$time_local = ' ' x 19;
-		}
+		my $time_local = local_time($time);
 
 		my $sec = ($time % (60*1000))/1000;
 		my $min = int($time/(60*1000)) % 60;
 		my $hour = int($time/(60*60*1000));
 
-		printf ("%3d:%02d:%06.3f %1s  %4s -> %-4s %s\n%s". ' ' x 11 ."%s\n\n", $hour, $min, $sec, $self, $src, $dst, $command, $time_local, $command);
+		if ($config_original_line) {
+			print $line."\n";
+		};
+
+		if ($config_local_time) {
+			printf ("%2d:%02d:%06.3f (%s) ",$hour, $min, $sec, $time_local);
+		} else {
+			printf ("%2d:%02d:%06.3f ",$hour, $min, $sec);
+		};
+
+
+		printf ("%1s   %4s -> %-4s %s\n", $self, $src, $dst, $command);
 
 	} else {
-		print;
-
+		print $line."\n";
 	}
 };
