@@ -43,7 +43,7 @@ my @ignore_devices = ( );
 
 # list of command names or ids that are ignored in output
 #my @ignore_commands = ( 0x7D, "RAD_TV_STATUS" );
-my @ignore_commands = ( );
+my @ignore_commands = ( 'RAD_TMC_REQUEST', 'RAD_TMC_RESPONSE', 'TEL_TELEMATICS_LOCATION', 'TEL_TELEMATICS_COORDINATES', 'RAD_BMW_ASSIST_DATA', 'TEL_BMW_ASSIST_DATA');
 
 # end of configuration
 ###########################################################
