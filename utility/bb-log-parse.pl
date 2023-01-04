@@ -38,6 +38,9 @@ my $config_original_data = 0;
 # return also lines that cannot be parsed ( eg. Notifications and debug messages )
 my $config_nonparsed_lines = 1;
 
+# print final command and device statistics
+my $config_stats = 1;
+
 # list device names or IDs that are to be ignored ( both when they send, or when messages are for them )
 #my @ignore_devices = ( "LCM", 0x18 );
 my @ignore_devices = ( );
@@ -60,7 +63,8 @@ my @ignore_commands = (
 	'GM_BROADCAST_DOORS_STATUS_RESP',
 	'IKE_BROADCAST_SENSOR_RESP',
 	'RAD_BROADCAST_STATUS_RESP',
-	'AVRCP_MEDIA'
+	'AVRCP_MEDIA',
+	'IKE_83_UNK'
 );
 
 # end of configuration
@@ -1019,6 +1023,10 @@ sub in_array {
 	return 0;
 };
 
+my %counters_commands;
+my %counters_devices;
+my %counters_payload_size;
+
 while (<>) {
 	chomp;
 	s/[\n\s\r]+$//o;
@@ -1036,9 +1044,6 @@ while (<>) {
 		my $dst_orig = hex($5);
 		my $cmd_raw = $6;
 		my $data = $7;
-
-		next if (in_array($src, \@ignore_devices) || in_array($dst, \@ignore_devices) || in_array($src_orig, \@ignore_devices) || in_array($dst_orig, \@ignore_devices));
-		next if (in_array($cmd_raw, \@ignore_commands) || in_array(hex($cmd_raw), \@ignore_commands));
 
 		my $cmd_assumed;
 		my $cmd;
@@ -1075,6 +1080,8 @@ while (<>) {
 			}
 		}
 
+		next if (in_array($src, \@ignore_devices) || in_array($dst, \@ignore_devices) || in_array($src_orig, \@ignore_devices) || in_array($dst_orig, \@ignore_devices));
+		next if (in_array($cmd_raw, \@ignore_commands) || in_array(hex($cmd_raw), \@ignore_commands));
 		next if (in_array($cmd, \@ignore_commands));
 
 		my $self = " ";
@@ -1082,7 +1089,6 @@ while (<>) {
 		if ($data =~ s/\s+\[SELF\]//o) {
 			$self = "*";
 		}
-
 		$data =~ s/\s*..$//;
 
 		my $sec = ($time % (60*1000))/1000;
@@ -1094,12 +1100,22 @@ while (<>) {
 			my @data = hex_string_to_array($data,$len - 5);
 			if (scalar(@data) > 0) {
 				$data_parsed = $data_parsers{$cmd}->($src,$dst, $data, \@data, $time);
+				$counters_payload_size{$cmd}+=scalar(@data);
 			} else {
 				$data_parsed = "";
 			}
+			$counters_commands{$cmd}++;
 		} else {
 			$data_parsed = $data;
+			if ($data eq "") {
+				$counters_commands{$cmd}++;
+			} else {
+				$counters_commands{$cmd.' (payload not processed)'}++;
+				$counters_payload_size{$cmd.' (payload not processed)'}+=int((length($data)+1)/3);
+			}
 		}
+
+		$counters_devices{$src}++;
 
 		if ($config_original_line) {
 			print $line."\n";
@@ -1120,7 +1136,7 @@ while (<>) {
 	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BT:\s+([RW]):\s+'(\S+)\s*(.*)\s*'$/os) {
 # BlueTooth BC127 Messages
 		my $time = $1;
-		my $command = $3;
+		my $cmd = $3;
 		my $data = $4;
 		my $src;
 		my $dst;
@@ -1137,7 +1153,10 @@ while (<>) {
 		}
 
 		next if (in_array($src, \@ignore_devices) || in_array($dst, \@ignore_devices));
-		next if (in_array($command, \@ignore_commands));
+		next if (in_array($cmd, \@ignore_commands));
+
+		$counters_commands{$cmd}++;
+		$counters_devices{$src}++;
 
 		my $time_local = local_time($time);
 
@@ -1155,8 +1174,23 @@ while (<>) {
 			printf ("%2d:%02d:%06.3f ",$hour, $min, $sec);
 		};
 
-		printf ("%1s   %4s -> %-4s    %s %s\n", $self, $src, $dst, $command, $data);
+		printf ("%1s   %4s -> %-4s    %s %s\n", $self, $src, $dst, $cmd, $data);
 	} else {
+		$counters_commands{"UNPROCESSED_LINE"}++;
 		print $line."\n" if ($config_nonparsed_lines);
 	}
 };
+
+if ($config_stats) {
+	print "---------------\nStatistics:\n";
+
+	print "Count,\tAvg sz\tof non-ignored commands:\n";
+	foreach (sort { $counters_commands{$b} <=> $counters_commands{$a} } keys(%counters_commands)) {
+		print $counters_commands{$_}."\t".int($counters_payload_size{$_}/$counters_commands{$_})."\t$_\n";
+	}
+
+	print "\nCount\tof non-ignored devices sending packets:\n";
+	foreach (sort { $counters_devices{$b} <=> $counters_devices{$a} } keys(%counters_devices)) {
+		print $counters_devices{$_}."\t$_\n";
+	}
+}
