@@ -1,18 +1,34 @@
 #!perl
-use strict;
-use DateTime;
-
-# Usage: in your terminal run and treat it as any tool that processes text files in pipes:
-# ./bb-log-parse.pl < your_blubus_session.log
+# Usage: 
 #
-# page the file and interactivelly search:
-# ./bb-log-parse.pl < your_blubus_session.log | more
+# in your terminal run and treat it as any tool that processes text files and pipes:
 #
-# find all messaget to GT and return few lines around it:
-# ./bb-log-parse.pl < your_blubus_session.log | grep -a --context=5 ' -> GT'
+# ./bb-log-parse.pl [... parameters ...] your_blubus_session.log
+#
+# optional parameters
+# --time		Try provide real-time with event lines based on time set by IKE
+# --no-time		... or not 
+#
+# --raw			Print original full line from source
+# --no-raw		... or not
+#
+# --payload		Always provide the raw command payload, even for parsed events
+# --no-payload	... or not. Original payload is provided only for functions where we do not have parser
+#
+# --unprocessed	Also return lines that we cannot parse, eg. Debug messages, warnings, terminal input
+# --no-unprocessed	Lines we cannot parse are not returned at all.
+#
+# --stats		Return simple statistics about commands and payload lengths, devices talking on a bus
+#
+# Examples:
+# parse the file adding time and ignoring non bus messages, page and interactively search:
+# ./bb-log-parse.pl your_blubus_session.log | more
+#
+# find all messages to GT and return few lines around it:
+# ./bb-log-parse.pl your_blubus_session.log | grep -a --context=5 ' -> GT'
 #
 # parse the file and store it to new file:
-# ./bb-log-parse.pl < your_blubus_session.log > parsed_log.txt
+# ./bb-log-parse.pl your_blubus_session.log > parsed_log.txt
 #
 # translate logs as they appear in live session:
 # 1. start your "screen" command with -L 
@@ -21,25 +37,27 @@ use DateTime;
 # 2. in new terminal window, setup the file logging to be instant
 #    screen -r -x -p0 -X logfile flush 0
 #
-# 3. watch the live log ( filename may be different - but similar )
-#    tail -f screenlog.0 | ./bb-log-parse.pl
+# 3. watch the live log ( filename may be different - but similar ) - notice the dash (-) at the end of command - important for PIPE usage
+#    tail -f screenlog.0 | ./bb-log-parse.pl -
 #
-# configuration options:
+
+use strict;
+use DateTime;
 
 # return also real local time of events, when possible
-my $config_local_time = 1;
+my $config_local_time = in_array('--time', \@ARGV)?1:in_array('--no-time', \@ARGV)?0:1;
 
 # return also original line, to validate the parsing 
-my $config_original_line = 0;
+my $config_original_line = in_array('--raw', \@ARGV)?1:in_array('--no-raw', \@ARGV)?0:0;
 
 # return also original packet, to validate the payload parsing 
-my $config_original_data = 0;
+my $config_original_data = in_array('--payload', \@ARGV)?1:in_array('--no-payload', \@ARGV)?0:0;
 
 # return also lines that cannot be parsed ( eg. Notifications and debug messages )
-my $config_nonparsed_lines = 1;
+my $config_nonparsed_lines = in_array('--unprocessed', \@ARGV)?1:in_array('--no-unprocessed', \@ARGV)?0:0;
 
 # print final command and device statistics
-my $config_stats = 1;
+my $config_stats = in_array('--stats', \@ARGV)?1:in_array('--no-stats', \@ARGV)?0:0;
 
 # list device names or IDs that are to be ignored ( both when they send, or when messages are for them )
 #my @ignore_devices = ( "LCM", 0x18 );
