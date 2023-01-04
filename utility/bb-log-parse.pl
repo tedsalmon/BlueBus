@@ -227,7 +227,7 @@ sub data_parsers_module_status {
 			}
 	);
 
-	$variant = $variants{$src}{$variant} || $variant;
+	$variant = $variants{$src}{$variant} || sprintf("0x%02X", $variant);
 	return "announce=$announce, variant=$variant";
 };
 
@@ -249,8 +249,8 @@ sub data_parsers_mfl_buttons {
 		0b1000_0000 => "TEL"
 	);
 
-	$button = $buttons{$button} || $button;
-	$state = $states{$state} || $state;
+	$button = $buttons{$button} || sprintf("0x%02X", $button);
+	$state = $states{$state} || sprintf("0x%02X", $state);
 
 	return "button=$button, state=$state";
 }
@@ -296,8 +296,8 @@ sub data_parsers_bmbt_buttons {
 
 	);
 
-	$button = $buttons{$button} || $button;
-	$state = $states{$state} || $state;
+	$button = $buttons{$button} || sprintf("0x%02X", $button);
+	$state = $states{$state} || sprintf("0x%02X", $state);
 
 	return "button=$button, state=$state";
 }
@@ -317,8 +317,8 @@ sub data_parsers_bmbt_soft_buttons {
 		0b00_1111 => "SELECT",
 		0b11_1000 => "INFO",
 	);
-	$button = $buttons{$button} || $button;
-	$state = $states{$state} || $state;
+	$button = $buttons{$button} || sprintf("0x%02X", $button);
+	$state = $states{$state} || sprintf("0x%02X", $state);
 
 	return "button=$button, state=$state, extra=$data->[0]";
 }
@@ -364,9 +364,9 @@ sub data_parsers_monitor_control {
 		0b0000_0011 => "ZOOM",
 	);
 
-	$source = $sources{$source} || $source;
-	$encoding = $encodings{$encoding} || $encoding;
-	$aspect = $aspects{$aspect} || $aspect;
+	$source = $sources{$source} || sprintf("0x%02X", $source);
+	$encoding = $encodings{$encoding} || sprintf("0x%02X", $encoding);
+	$aspect = $aspects{$aspect} || sprintf("0x%02X", $aspect);
 
 	return "power=$power, source=$source, aspect=$aspect, enc=$encoding";
 }
@@ -384,7 +384,7 @@ sub data_parsers_request_screen {
 		0b0000_1100 => "HIDE_BODY_MENU",
 	);
 
-	$hide_body = $bodies{$hide_body} || $hide_body;
+	$hide_body = $bodies{$hide_body} || sprintf("0x%02X", $hide_body);
 
 	return "priority=".(($priority==0)?"RAD":"GT").", hide_header=".(($hide_header==1)?"HIDE":"SHOW").", hide=$hide_body";
 }
@@ -438,8 +438,8 @@ sub data_parsers_gt_write {
 		0x08 => "INFO"
 	);
 
-	$layout = $layouts{$layout} || $layout;
-#	$function = $functions{$function} || $function;
+	$layout = $layouts{$layout} || sprintf("0x%02X", $layout);
+#	$function = $functions{$function} || sprintf("0x%02X", $function);
 
 	$text = cleanup_string($text);
 
@@ -550,8 +550,9 @@ sub data_parsers_gt_write_menu {
 	);
 
 
-	$source = $sources{$source} || $source;
-	$config = $configs{$config} || $config;
+	$source = $sources{$source} || sprintf("0x%02X", $source);
+	$config = $configs{$config} || sprintf("0x%02X", $config);
+	$option = $options{$option} || sprintf("0x%02X", $option);
 
 	$text = cleanup_string($text);
 
@@ -591,7 +592,7 @@ sub data_parsers_obc_text {
 
 	$text = cleanup_string($text);
 
-	$property = $properties{$property} || $property;
+	$property = $properties{$property} || sprintf("0x%02X", $property);
 
 
 	if ($property eq 'TIME') {
@@ -634,7 +635,7 @@ sub data_parsers_ike_obc_input {
 		0x1a => "TIMER_LAP",
 	);
 
-	$property = $properties{$property} || $property;
+	$property = $properties{$property} || sprintf("0x%02X", $property);
 
 	my $value = '';
 
@@ -678,7 +679,7 @@ sub data_parsers_cdc_request {
 		0x08 => "RANDOM_MODE",
 	);
 
-	$command = $commands{$command} || $command;
+	$command = $commands{$command} || sprintf("0x%02X", $command);
 	return "command=$command";
 };
 
@@ -723,11 +724,11 @@ sub data_parsers_cdc_response {
 		0X10 => "NO_MAGAZINE",
 	);
 
-	$status = $statuses{$status} || $status;
-	$audio = $audios{$audio} || $audio;
-	$error = $errors{$error} || $error;
+	$status = $statuses{$status} || sprintf("0x%02X", $status);
+	$audio = $audios{$audio} || sprintf("0x%02X", $audio);
+	$error = $errors{$error} || sprintf("0x%02X", $error);
 
-	return sprintf("status=%s, audio=%s, error=%s, magazines=%06b, disk=%x, track=%x", $status, $audio, $error, $magazine, $disk, $track);
+	return sprintf("status=%s, audio=%s, error=%s, magazines=0b%06b, disk=%x, track=%x", $status, $audio, $error, $magazine, $disk, $track);
 };
 
 sub data_parsers_speed_rpm {
@@ -778,7 +779,7 @@ sub data_parsers_ike_sensor {
 		0b1111 => "GEAR_SIXTH"
 	);
 
-	$gear = $gears{$gear} || $gear;
+	$gear = $gears{$gear} || sprintf("0x%02X", $gear);
 
 	return "handbrake=$handbrake, ignition=$ignition, gear=$gear, ?door=$door, , aux_vent=$aux_vent, warn_oil_pressure=$oil_pressure, warn_brake_pads=$brake_pads, warn_transmission=$transmission";
 };
@@ -795,7 +796,7 @@ sub data_parsers_ike_ignition {
 		0b0000_0111   => "POS_3",
 	);
 
-	$ignition = $ign{$ignition} || $ignition;
+	$ignition = $ign{$ignition} || sprintf("0x%02X", $ignition);
 
 	return "ignition=$ignition";
 };
@@ -841,9 +842,9 @@ sub data_parsers_doors_status {
 		0b0011 => "CENTRAL_LOCKING_ARRESTED",
 	);
 
-	$central_lock = $locks{$central_lock} || $central_lock;
+	$central_lock = $locks{$central_lock} || sprintf("0x%02X", $central_lock);
 
-	return sprintf("doors=%04b, windows=%04b, locks=%s, lamp=$lamp_interiour, sunroof=$sunroof, front_lid=$front_boot, rear_lid=$rear_trunk", $doors, $windows, $central_lock);
+	return sprintf("doors=0b%04b, windows=0b%04b, locks=%s, lamp=$lamp_interiour, sunroof=$sunroof, front_lid=$front_boot, rear_lid=$rear_trunk", $doors, $windows, $central_lock);
 };
 
 my %data_parsers = (
