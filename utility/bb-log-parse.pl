@@ -60,42 +60,60 @@ my %bus = (
 	"30" => "CCM",	# Check control module
 	"3B" => "GT",	# Graphics driver (in navigation system)
 	"3F" => "DIA",	# Diagnostic
-	"43" => "GTR",	# Graphics driver for rear screen (in navigation system)
+	"40" => "FBZV", # Remote Control for Central Locking [E38]
+	"43" => "GT2",	# Graphics driver for rear screen (in navigation system)
 	"44" => "EWS",	# EWS (Immobiliser)
+	"45" => "DWA",	# Anti-Theft System (DWA3, DWA4)
+	"47" => "RCM",	# Rear Compartment Monitor (FOND_BT) [E38]
 	"46" => "CID",	# Central information display (flip-up LCD screen)
 	"50" => "MFL",	# Multi function steering wheel
-	"51" => "SM1",	# Seat memory - 1
+	"51" => "MMP",	# Mirror Memory (Passenger) [ZKE5]
 	"53" => "MUL",	# Multicast, broadcast address
-	"5B" => "IHK",	# HVAC
+	"57" => "LWS",	# Steering Angle Sensor (LWS) [D-BUS]
+	"5B" => "IHKA",	# HVAC
 	"60" => "PDC",	# Park Distance Control
 	"66" => "ALC",	# Active Light Control
 	"68" => "RAD",	# Radio
 	"69" => "EKM",	# Electronic Body Module
 	"6A" => "DSP",	# DSP
 	"6B" => "HEAT",	# Webasto
+	"70" => "RDC",	# Tire Pressure Control/Warning (RDC/W)
 	"71" => "SM0",	# Seat memory - 0
-	"72" => "SM0",	# Seat memory - 0
+	"72" => "SMD",	# Seat Memory (Driver) [SM] [ZKE5]
 	"73" => "SDRS",	# Sirius Radio
 	"76" => "CDCD",	# CD changer, DIN size.
-	"7F" => "NAVE",	# Navigation (Europe)
+	"7F" => "NAV",	# Navigation (Europe)
 	"80" => "IKE",	# Instrument cluster electronics
-	"A0" => "MIDR",	# Rear Multi-info display
+	"86" => "XENR", # Xenon Light Right [E46?]
+	"98" => "XENL", # Xenon Light Left [E46?]
+	"9B" => "MMD",	# Mirror Memory (Driver) [seat control, driver (SBFA)] [ZKE5]
+	"9C" => "CVM",	# The Convertible Top Module (CVM) [ZKE5]
+	"9E" => "RPS",	# Roll-over Protection System (RPS) [D-BUS] [E46?]
+	"A0" => "FMID",	# Rear Multi-info display
 	"A4" => "MRS",	# Multiple Restraint System
+	"A6" => "CC",	# GR2, FGR2, FGR2_5, FGR_KW
+	"A7" => "FHK",	# Rear compartment heating/air conditioning [E38]
+	"AC" => "EHC",	# Electronic Height Control (EHC), Self Leveling Suspension (SLS)
 	"B0" => "SES",	# Speech Input System
+	"B9" => "RC",	# compact radio/IR remote control (FUNKKOMP, IRS_KOMP)
 	"BB" => "NAVJ",	# Navigation (Japan)
 	"BF" => "GLO",	# Global, broadcast address
 	"C0" => "MID",	# Multi-info display
+	"C2" => "SVT",	# Servotronic for E83
 	"C8" => "TEL",	# Telephone
 	"CA" => "TCU",	# BMW Assist
 	"D0" => "LCM",	# Light control module
-	"E0" => "IRI",	# Integrated radio information system
+	"DA" => "SMB",	# Seat Memory (Passenger)
+	"E0" => "IRIS",	# Integrated radio information system
 	"E7" => "ANZV",	# Displays Multicast
 	"E8" => "RLS",	# Rain/Driving Light Sensor
 	"EA" => "DSPC",	# DSP Controler
-	"ED" => "VM",	# Video Module
+	"ED" => "VMTV",	# Video Module, TV
 	"F0" => "BMBT",	# On-board monitor
 	"FF" => "LOC"	# Local
 );
+
+my @broadcast_addresses = ("LOC", "GLO", "GLOH", "GLOL", "MUL", "ANZV");
 
 my %cmd = (
 	"00" => "GET_STATUS",
@@ -952,7 +970,7 @@ while (<>) {
 
 		my $time_local = local_time($time);
 
-		if ($dst eq "LOC" || $dst eq "GLO" || $dst eq "MUL" || $dst eq "ANZV") {
+		if (in_array($dst, \@broadcast_addresses)) {
 			$broadcast = "B";
 
 			$cmd_assumed = $src."_BROADCAST_".$cmd_raw;
