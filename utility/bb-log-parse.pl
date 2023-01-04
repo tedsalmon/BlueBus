@@ -1,5 +1,6 @@
 #!perl
 use strict;
+use DateTime;
 
 # Usage: in your terminal run and treat it as any tool that processes text files in pipes:
 # ./bb-log-parse.pl < your_blubus_session.log
@@ -32,7 +33,7 @@ my $config_local_time = 1;
 my $config_original_line = 0;
 
 # return also original packet, to validate the payload parsing 
-my $config_original_data = 1;
+my $config_original_data = 0;
 
 # return also lines that cannot be parsed ( eg. Notifications and debug messages )
 my $config_nonparsed_lines = 1;
@@ -127,6 +128,7 @@ my %bus = (
 	"EA" => "DSPC",	# DSP Controler
 	"ED" => "VMTV",	# Video Module, TV
 	"F0" => "BMBT",	# On-board monitor
+	"F5" => "SZM",	# Center Console Switch Center (SZM) [E38, E46], LKM2
 	"FF" => "LOC"	# Local
 );
 
@@ -137,7 +139,7 @@ my %cmd = (
 	"01" => "STATUS_REQ",
 	"02" => "STATUS_RESP",
 	"07" => "PDC_STATUS",
-	"0B" => "IO_STATUS",
+	"0B" => "DIA_STATUS",
 	"0C" => "DIA_JOB_REQUEST",
 	"10" => "IGN_STATUS_REQ",
 	"11" => "IGN_STATUS_RESP",
@@ -145,8 +147,12 @@ my %cmd = (
 	"13" => "SENSOR_RESP",
 	"14" => "REQ_VEHICLE_TYPE",
 	"15" => "RESP_VEHICLE_CONFIG",
+	"16" => "ODO_REQUEST",
+	"17" => "ODO_RESPONSE",
 	"18" => "SPEED_RPM_UPDATE",
 	"19" => "TEMP_UPDATE",
+	"1D" => "TEMP_REQUEST",
+	"1F" => "GPS_TIMEDATE",
 	"20" => "MODE",
 	"GT_20" => "GT_CHANGE_UI_REQ",
 	"21" => "MAIN_MENU",
@@ -186,19 +192,26 @@ my %cmd = (
 	"53" => "REQ_REDUNDANT_DATA",
 	"54" => "RESP_REDUNDANT_DATA",
 	"55" => "REPLICATE_REDUNDANT_DATA",
+	"58" => "RLS_STATUS",
 	"59" => "RLS_STATUS",
 	"5A" => "INDICATORS_REQ",
 	"5B" => "INDICATORS_RESP",
 	"5C" => "INSTRUMENT_BACKLIGHTING",
+	"5D" => "INSTRUMENT_BACKLIGHTING_REQUEST",
 	"60" => "WRITE_INDEX",
 	"61" => "WRITE_INDEX_TMC",
 	"62" => "WRITE_ZONE",
 	"63" => "WRITE_STATIC",
+	"72" => "KEYLESS_STATUS",
 	"74" => "IMMOBILISER_STATUS",
+	"75" => "RLS_REQUEST",
+	"76" => "VIS_ACK",
+	"77" => "RLS_RESPONSE",
 	"79" => "DOORS_STATUS_REQUEST",
 	"7A" => "DOORS_STATUS_RESP",
 	"9F" => "DIA_DIAG_TERMINATE",
 	"A0" => "DIA_DIAG_RESPONSE",
+	"A1" => "DIA_DIAG_RESPONSE_BUSY",
 	"A2" => "TELEMATICS_COORDINATES",
 	"A4" => "TELEMATICS_LOCATION",
 	"A5" => "WRITE_WITH_CURSOR",
@@ -234,6 +247,11 @@ sub cleanup_string {
 	$text =~ s/\n/<nl>/go;
 	$text =~ s/[^[:ascii:]]/~/go;
 	return $text;	
+}
+
+sub unpack_8bcd {
+	my ($data) = @_;
+	return ($data >> 4)*10 + ($data & 0x0F);
 }
 
 sub data_parsers_module_status {
@@ -584,6 +602,11 @@ sub data_parsers_gt_write_menu {
 		0b1100_1011 => "CDC_LOADING",   # I think...?
 	);
 
+	my %options = (
+		0x10	=> "SET_0x10",
+		0x20	=> "UPDATE",
+		0x30	=> "SET_0x30",
+	);
 
 	$source = $sources{$source} || sprintf("0x%02X", $source);
 	$config = $configs{$config} || sprintf("0x%02X", $config);
@@ -695,6 +718,39 @@ sub data_parsers_ike_obc_input {
 
 	return "property=$property, value=$value";
 }
+
+sub data_parsers_ike_odo_response {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $km = ($data->[2] << 16) + ($data->[1] << 8) + $data->[0];
+
+	return "odo=${km} km";
+}
+
+sub data_parsers_ike_gps_time {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $hour = unpack_8bcd($data->[1]);
+	my $min  = unpack_8bcd($data->[2]);
+	my $day  = unpack_8bcd($data->[3]);
+	my $mon  = unpack_8bcd($data->[5]);
+	my $year = unpack_8bcd($data->[6])*100 + unpack_8bcd($data->[7]);
+
+# fix epoch problem
+	my $dt = DateTime->new(
+	    year       => $year,
+	    month      => $mon,
+	    day        => $day,
+	    hour       => $hour,
+	    minute     => $min,
+	    second     => 0,
+	    time_zone  => 'UTC'
+    );
+    $dt->add( weeks => 1024 );
+
+	return sprintf("UTC,24,dd.mm.yyyy time=%02d:%02d, date=%02d.%02d.%04d, gps_date=%02d.%02d.%04d",$hour,$min,$dt->day(),$dt->month(),$dt->year(), $day, $mon, $year);
+}
+
 
 sub data_parsers_cdc_request {
 	my ($src, $dst, $string, $data) = @_;
@@ -839,10 +895,10 @@ sub data_parsers_ike_ignition {
 sub data_parsers_redundant_data {
 	my ($src, $dst, $string, $data) = @_;
 
-	my $odo  = ( $data->[0]*256+$data->[1] ) * 100;
+	my $odo  = ( ($data->[0] << 8) + $data->[1] ) * 100;
 	my $fuel = $data->[3]*10;
-	my $oil  = ( $data->[4]*256+$data->[5] );
-	my $time = ( $data->[6]*256+$data->[7] );
+	my $oil  = ( ($data->[4] << 8) + $data->[5] );
+	my $time = ( ($data->[6] << 8) + $data->[7] );
 
 	return "odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
 };
@@ -850,10 +906,10 @@ sub data_parsers_redundant_data {
 sub data_parsers_lcm_redundant_data {
 	my ($src, $dst, $string, $data) = @_;
 
-	my $odo  = ( $data->[5]*256+$data->[6] ) * 100;
+	my $odo  = ( ($data->[5] << 8) + $data->[6] ) * 100;
 	my $fuel = $data->[8]*10;
-	my $oil  = ( $data->[9]*256+$data->[10] );
-	my $time = ( $data->[11]*256+$data->[12] );
+	my $oil  = ( ($data->[9] << 8) + $data->[10] );
+	my $time = ( ($data->[11] << 8) + $data->[12] );
 	my $vin  = sprintf("%c%c%02X%02X%1X", $data->[0], $data->[1], $data->[2],  $data->[3], $data->[4]>>4);
 
 	return "vin=$vin, odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
@@ -925,7 +981,10 @@ my %data_parsers = (
 	"IKE_BROADCAST_SENSOR_RESP" => \&data_parsers_ike_sensor,
 	"IKE_BROADCAST_IGN_STATUS_RESP" => \&data_parsers_ike_ignition,
 	"IKE_BROADCAST_REPLICATE_REDUNDANT_DATA" => \&data_parsers_redundant_data,
+	"IKE_BROADCAST_ODO_RESPONSE" => \&data_parsers_ike_odo_response,
 	"LCM_RESP_REDUNDANT_DATA" => \&data_parsers_lcm_redundant_data,
+
+	"IKE_GPS_TIMEDATE" => \&data_parsers_ike_gps_time,
 
 	"GM_BROADCAST_DOORS_STATUS_RESP" => \&data_parsers_doors_status,
 );
@@ -996,7 +1055,7 @@ while (<>) {
 			} elsif ($cmd{$cmd_raw}) {
 				$cmd = $src."_BROADCAST_".$cmd{$cmd_raw};
 			} else { 
-				$cmd = $cmd_assumed;
+				$cmd = $cmd_assumed."_UNK";
 			};
 		} elsif ($cmd{$cmd_raw} =~ /RESP/io) {
 				$cmd = $src."_".$cmd{$cmd_raw};
@@ -1011,7 +1070,7 @@ while (<>) {
 				} elsif ($cmd{$cmd_raw}) {
 					$cmd = $dst."_".$cmd{$cmd_raw};
 				} else { 
-					$cmd = $dst."_".$cmd_raw;
+					$cmd = $dst."_".$cmd_raw."_UNK";
 				};
 			}
 		}
