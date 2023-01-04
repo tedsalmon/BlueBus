@@ -20,6 +20,16 @@
 #
 # --stats		Return simple statistics about commands and payload lengths, devices talking on a bus
 #
+# --ignore-commands
+# -i	
+#				Ignores default set of noise commands
+#
+# --ignore-commands=cmd1,cmd2 --ignore-command=03
+#				Ignore specified commands by name or hex ID, comma separate, or multiple
+#
+# --ignore-device=dev1,dev2 --ignore-device=FF
+#				Ignore listed devices, specified by name, or hex ID
+#
 # Examples:
 # parse the file adding time and ignoring non bus messages, page and interactively search:
 # ./bb-log-parse.pl your_blubus_session.log | more
@@ -38,37 +48,38 @@
 #    screen -r -x -p0 -X logfile flush 0
 #
 # 3. watch the live log ( filename may be different - but similar ) - notice the dash (-) at the end of command - important for PIPE usage
-#    tail -f screenlog.0 | ./bb-log-parse.pl -
+#    tail -f screenlog.0 | ./bb-log-parse.pl 
 #
 
 use strict;
 use DateTime;
+use Getopt::Long;
 
 # return also real local time of events, when possible
-my $config_local_time = in_array('--time', \@ARGV)?1:in_array('--no-time', \@ARGV)?0:1;
-
-# return also original line, to validate the parsing 
-my $config_original_line = in_array('--raw', \@ARGV)?1:in_array('--no-raw', \@ARGV)?0:0;
-
-# return also original packet, to validate the payload parsing 
-my $config_original_data = in_array('--payload', \@ARGV)?1:in_array('--no-payload', \@ARGV)?0:0;
-
-# return also lines that cannot be parsed ( eg. Notifications and debug messages )
-my $config_nonparsed_lines = in_array('--unprocessed', \@ARGV)?1:in_array('--no-unprocessed', \@ARGV)?0:0;
-
-# print final command and device statistics
-my $config_stats = in_array('--stats', \@ARGV)?1:in_array('--no-stats', \@ARGV)?0:0;
-
-# list device names or IDs that are to be ignored ( both when they send, or when messages are for them )
-#my @ignore_devices = ( "LCM", 0x18 );
+my $config_local_time = 1;
+my $config_original_line = 0;
+my $config_original_data = 0;
+my $config_nonparsed_lines = 1;
+my $config_stats = 0;
 my @ignore_devices = ( );
+my @ignore_commands = ( );
 
-# list of command names or ids that are ignored in output
-#my @ignore_commands = ( 0x7D, "RAD_TV_STATUS" );
-my @ignore_commands = ( 
-	'RAD_TMC_REQUEST', 
-	'RAD_TMC_RESPONSE', 
-	'TEL_TELEMATICS_LOCATION', 
+GetOptions(
+	"time!"			=> \$config_local_time,
+	"raw!"			=> \$config_original_line,
+	"payload!"		=> \$config_original_data,
+	"unprocessed!" 	=> \$config_nonparsed_lines,
+	"stats!"		=> \$config_stats,
+	"ignore-device=s"	=> \@ignore_devices,
+	"ignore-commands|i:s" => \@ignore_commands,
+);
+@ignore_commands = split(/,/,join(',',@ignore_commands));
+
+if (in_array('', \@ignore_commands)) {
+	push(@ignore_commands, ( 
+		'RAD_TMC_REQUEST', 
+		'RAD_TMC_RESPONSE', 
+		'TEL_TELEMATICS_LOCATION', 
 	'TEL_TELEMATICS_COORDINATES', 
 	'RAD_BMW_ASSIST_DATA', 
 	'TEL_BMW_ASSIST_DATA', 
@@ -80,10 +91,11 @@ my @ignore_commands = (
 	'LCM_BROADCAST_INDICATORS_RESP',
 	'GM_BROADCAST_DOORS_STATUS_RESP',
 	'IKE_BROADCAST_SENSOR_RESP',
-	'RAD_BROADCAST_STATUS_RESP',
-	'BC127_AVRCP_MEDIA_RESPONSE',
-	'IKE_83_UNK'
-);
+		'RAD_BROADCAST_STATUS_RESP',
+		'BC127_AVRCP_MEDIA_RESPONSE',
+		'IKE_83_UNK'
+	));
+};
 
 # end of configuration
 ###########################################################
