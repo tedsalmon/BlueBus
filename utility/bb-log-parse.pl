@@ -81,7 +81,7 @@ my @ignore_commands = (
 	'GM_BROADCAST_DOORS_STATUS_RESP',
 	'IKE_BROADCAST_SENSOR_RESP',
 	'RAD_BROADCAST_STATUS_RESP',
-	'AVRCP_MEDIA',
+	'BC127_AVRCP_MEDIA_RESPONSE',
 	'IKE_83_UNK'
 );
 
@@ -1121,12 +1121,14 @@ while (<>) {
 				$counters_payload_size{$cmd}+=scalar(@data);
 			} else {
 				$data_parsed = "";
+				$counters_payload_size{$cmd}+=0;
 			}
 			$counters_commands{$cmd}++;
 		} else {
 			$data_parsed = $data;
 			if ($data eq "") {
 				$counters_commands{$cmd}++;
+				$counters_payload_size{$cmd}+=0;
 			} else {
 				$counters_commands{$cmd.' (payload not processed)'}++;
 				$counters_payload_size{$cmd.' (payload not processed)'}+=int((length($data)+1)/3);
@@ -1154,7 +1156,7 @@ while (<>) {
 	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BT:\s+([RW]):\s+'(\S+)\s*(.*)\s*'$/os) {
 # BlueTooth BC127 Messages
 		my $time = $1;
-		my $cmd = $3;
+		my $cmd = 'BC127_'.$3;
 		my $data = $4;
 		my $src;
 		my $dst;
@@ -1164,6 +1166,7 @@ while (<>) {
 			$src = "BT";
 			$dst = "BBUS";
 			$self = " ";
+			$cmd .= '_RESPONSE';
 		} else {
 			$src = "BBUS";
 			$dst = "BT";
@@ -1204,7 +1207,7 @@ if ($config_stats) {
 
 	print "Count,\tAvg sz\tof non-ignored commands:\n";
 	foreach (sort { $counters_commands{$b} <=> $counters_commands{$a} } keys(%counters_commands)) {
-		print $counters_commands{$_}."\t".int($counters_payload_size{$_}/$counters_commands{$_})."\t$_\n";
+		print $counters_commands{$_}."\t".(defined($counters_payload_size{$_})?int($counters_payload_size{$_}/$counters_commands{$_}):' ')."\t$_\n";
 	}
 
 	print "\nCount\tof non-ignored devices sending packets:\n";
