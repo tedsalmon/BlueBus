@@ -602,8 +602,8 @@ sub bm83_data_parsers_bmt_status {
 	}
 
 	if ( $state == 0x16 ) {
-		my $bt_mac = sprintf("%02X%02X%02X%02X%02X%02X", $data->[1], $data->[2], $data->[3], $data->[4], $data->[5], $data->[6]);
-		return "state=$state_readable, bt_mac=$bt_mac";
+		my $bt_mac = print_mac($data, 1, 1);
+		return "state=$state_readable, mac=$bt_mac";
 	}
 	return "state=$state_readable, link_info=($string)";
 }
@@ -1304,6 +1304,41 @@ sub ike_data_parsers_doors_status {
 	return sprintf("doors=0b%04b, windows=0b%04b, locks=%s, lamp=$lamp_interiour, sunroof=$sunroof, front_lid=$front_boot, rear_lid=$rear_trunk", $doors, $windows, $central_lock);
 };
 
+sub print_time {
+	my ($time, $ms, $print_ms) = @_;
+
+	my $sec;
+	my $min;
+	my $hour;
+
+	if ($ms) {
+		$sec = ($time % 60000)/1000;
+		$min = int($time/60000) % 60;
+		$hour = int($time/(60*60*1000));
+	} else {
+		$sec = int($time) % 60;
+		$min = int($time/60) % 60;
+		$hour = int($time/(60*60));
+	}
+
+	if (!$print_ms) {
+		return sprintf("%2d:%02d:%02d", $hour, $min, $sec);
+	} else {
+		return sprintf("%2d:%02d:%06.3f", $hour, $min, $sec)
+	}
+
+}
+
+sub print_mac {
+	my ($data, $index, $reverse) = @_;
+
+	if ($reverse) {
+		return sprintf("%02X%02X%02X%02X%02X%02X", $data->[$index+5], $data->[$index+4], $data->[$index+3], $data->[$index+2], $data->[$index+1], $data->[$index]);
+	} else {
+		return sprintf("%02X%02X%02X%02X%02X%02X", $data->[$index], $data->[$index+1], $data->[$index+2], $data->[$index+3], $data->[$index+4], $data->[$index+5]);
+	}
+}
+
 sub lookup_value {
 	my ($key, $hash) = @_;
 
@@ -1365,11 +1400,7 @@ sub local_time {
 		my $time_local;
 		if ($time_offset != 0) {
 			$time_local = $time + $time_offset;
-			my $sec = int($time_local/1000) % 60;
-			my $min = int($time_local/(60*1000)) % 60;
-			my $hour = int($time_local/(60*60*1000));
-
-			$time_local = sprintf("%2d:%02d:%02d", $hour, $min, $sec);
+			$time_local = print_time($time_local,1,0);
 		} else {
 			$time_local = ' ' x 8;
 		}
@@ -1456,10 +1487,6 @@ while (<>) {
 		}
 		$data =~ s/\s*..$//;
 
-		my $sec = ($time % (60*1000))/1000;
-		my $min = int($time/(60*1000)) % 60;
-		my $hour = int($time/(60*60*1000));
-
 		my $data_parsed;
 		if ($data_parsers{$cmd}) {
 			my @data = hex_string_to_array($data,$len - 5);
@@ -1489,9 +1516,9 @@ while (<>) {
 		}
 
 		if ($config_local_time) {
-			printf ("%2d:%02d:%06.3f (%s) ",$hour, $min, $sec, $time_local);
+			print print_time($time, 1, 1)." ($time_local) ";
 		} else {
-			printf ("%2d:%02d:%06.3f ",$hour, $min, $sec);
+			print print_time($time, 1, 1)." ";
 		};
 
 		printf ("%1s %1s %4s -> %-4s %2s %s (%s)", $self, $broadcast, $src, $dst, $cmd_raw, $cmd, $data_parsed);
@@ -1528,18 +1555,14 @@ while (<>) {
 
 		my $time_local = local_time($time);
 
-		my $sec = ($time % (60*1000))/1000;
-		my $min = int($time/(60*1000)) % 60;
-		my $hour = int($time/(60*60*1000));
-
 		if ($config_original_line) {
 			print $line."\n";
 		};
 
 		if ($config_local_time) {
-			printf ("%2d:%02d:%06.3f (%s) ",$hour, $min, $sec, $time_local);
+			print print_time($time, 1, 1)." ($time_local) ";
 		} else {
-			printf ("%2d:%02d:%06.3f ",$hour, $min, $sec);
+			print print_time($time, 1, 1)." ";
 		};
 
 		printf ("%1s   %4s -> %-4s    %s %s\n", $self, $src, $dst, $cmd, $data);
@@ -1584,10 +1607,6 @@ while (<>) {
 
 		my $time_local = local_time($time);
 
-		my $sec = ($time % (60*1000))/1000;
-		my $min = int($time/(60*1000)) % 60;
-		my $hour = int($time/(60*60*1000));
-
 		$data =~ s/\s*..$//;
 
 		my $data_parsed;
@@ -1617,9 +1636,9 @@ while (<>) {
 		};
 
 		if ($config_local_time) {
-			printf ("%2d:%02d:%06.3f (%s) ",$hour, $min, $sec, $time_local);
+			print print_time($time, 1, 1)." ($time_local) ";
 		} else {
-			printf ("%2d:%02d:%06.3f ",$hour, $min, $sec);
+			print print_time($time, 1, 1)." ";
 		};
 
 		printf ("%1s   %4s -> %-4s %2s %s (%s)", $self, $src, $dst, $cmd_raw, $cmd, $data_parsed);
