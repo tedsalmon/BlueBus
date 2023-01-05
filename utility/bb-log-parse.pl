@@ -74,23 +74,24 @@ GetOptions(
 	"ignore-commands|i:s" => \@ignore_commands,
 );
 @ignore_commands = split(/,/,join(',',@ignore_commands));
+@ignore_devices = split(/,/,join(',',@ignore_devices));
 
 if (in_array('', \@ignore_commands)) {
 	push(@ignore_commands, ( 
 		'RAD_TMC_REQUEST', 
 		'RAD_TMC_RESPONSE', 
 		'TEL_TELEMATICS_LOCATION', 
-	'TEL_TELEMATICS_COORDINATES', 
-	'RAD_BMW_ASSIST_DATA', 
-	'TEL_BMW_ASSIST_DATA', 
-	'GM_RLS_STATUS', 
-	'LCM_RLS_STATUS', 
-	'IKE_BROADCAST_SPEED_RPM_UPDATE', 
-	'IKE_BROADCAST_TEMP_UPDATE', 
-	'LCM_BROADCAST_INSTRUMENT_BACKLIGHTING',
-	'LCM_BROADCAST_INDICATORS_RESP',
-	'GM_BROADCAST_DOORS_STATUS_RESP',
-	'IKE_BROADCAST_SENSOR_RESP',
+		'TEL_TELEMATICS_COORDINATES', 
+		'RAD_BMW_ASSIST_DATA', 
+		'TEL_BMW_ASSIST_DATA', 
+		'GM_RLS_STATUS', 
+		'LCM_RLS_STATUS', 
+		'IKE_BROADCAST_SPEED_RPM_UPDATE', 
+		'IKE_BROADCAST_TEMP_UPDATE', 
+		'LCM_BROADCAST_INSTRUMENT_BACKLIGHTING',
+		'LCM_BROADCAST_INDICATORS_RESP',
+		'GM_BROADCAST_DOORS_STATUS_RESP',
+		'IKE_BROADCAST_SENSOR_RESP',
 		'RAD_BROADCAST_STATUS_RESP',
 		'BC127_AVRCP_MEDIA_RESPONSE',
 		'IKE_83_UNK'
@@ -168,7 +169,7 @@ my %bus = (
 
 my @broadcast_addresses = ("LOC", "GLO", "GLOH", "GLOL", "MUL", "ANZV");
 
-my %cmd = (
+my %cmd_ibus = (
 	"00" => "GET_STATUS",
 	"01" => "STATUS_REQ",
 	"02" => "STATUS_RESP",
@@ -257,38 +258,394 @@ my %cmd = (
 	"C0" => "C43_SET_MENU_MODE"
 );
 
-sub hex_string_to_array {
-	my ($string, $len) = @_;
-	my @data;
-	my $cnt = 0;
+my %cmd_bm83 = (
+	"BM83_CMD_00" => "Make_Call",
+	"BM83_CMD_01" => "Make_Extension_Call",
+	"BM83_CMD_02" => "MMI_Action",
+	"BM83_CMD_03" => "Event_Mask_Setting",
+	"BM83_CMD_04" => "Music_Control",
+	"BM83_CMD_05" => "Change_Device_Name",
+	"BM83_CMD_06" => "Change_PIN_Code",
+	"BM83_CMD_07" => "BTM_Parameter_Setting",
+	"BM83_CMD_08" => "Read_BTM_Version",
+	"BM83_CMD_0A" => "Vendor_AT_Command",
+	"BM83_CMD_0B" => "AVC_Vendor_Dependent_Cmd",
+	"BM83_CMD_0C" => "AVC_Group_Navigation",
+	"BM83_CMD_0D" => "Read_Link_Status",
+	"BM83_CMD_0E" => "Read_Paired_Device_Record",
+	"BM83_CMD_0F" => "Read_Local_BD_Address",
+	"BM83_CMD_10" => "Read_Local_Device_Name",
+	"BM83_CMD_12" => "Send_SPP/iAP_Or _LE_Data",
+	"BM83_CMD_13" => "BTM_Utility_Function",
+	"BM83_CMD_14" => "Event_ACK",
+	"BM83_CMD_15" => "Additional_Profiles_Link_Setup",
+	"BM83_CMD_16" => "Read_Linked_Device_Information",
+	"BM83_CMD_17" => "Profiles_Link_Back",
+	"BM83_CMD_18" => "Disconnect",
+	"BM83_CMD_19" => "MCU_Status_Indication",
+	"BM83_CMD_1A" => "User_Confirm_SPP_Req_Reply",
+	"BM83_CMD_1B" => "Set_HF_Speaker_Gain_Level",
+	"BM83_CMD_1C" => "EQ_Mode_Setting",
+	"BM83_CMD_1D" => "DSP_NR_CTRL",
+	"BM83_CMD_1E" => "GPIO__Control",
+	"BM83_CMD_1F" => "MC_UART_Rx_Buffer_Size",
+	"BM83_CMD_20" => "Voice_Prompt_Cmd",
+	"BM83_CMD_23" => "Set_Overall_Gain",
+	"BM83_CMD_24" => "Read_BTM_Setting",
+	"BM83_CMD_25" => "Read_BTM_Battery__Charge_Status",
+	"BM83_CMD_26" => "MCU_Update_Cmd",
+	"BM83_CMD_27" => "Report_Battery_Capacity",
+	"BM83_CMD_28" => "LE_ANCS_Service_Cmd",
+	"BM83_CMD_29" => "LE_Signaling_Cmd",
+	"BM83_CMD_2A" => "MSPK_Vendor_Cmd",
+	"BM83_CMD_2B" => "Read_MSPK_Link_Status",
+	"BM83_CMD_2C" => "MSPK_Sync_Audio_Effect",
+	"BM83_CMD_2D" => "LE__GATT_CMD",
+	"BM83_CMD_2F" => "LE_App_CMD",
+	"BM83_CMD_30" => "Dsp_Runtime_Program",
+	"BM83_CMD_31" => "Read_Vendor_Stored_Data",
+	"BM83_CMD_32" => "Read_IC_Version_linfo",
+	"BM83_CMD_34" => "Read_BTM_Link_Mode",
+	"BM83_CMD_35" => "Configure_Vendor_Parameter",
+	"BM83_CMD_37" => "MSPK_Exchange _Link _Info_Cmd",
+	"BM83_CMD_38" => "MSPK_Set_GIAC",
+	"BM83_CMD_39" => "Read_Feature_List",
+	"BM83_CMD_3A" => "Personal_MSPK_GROUP_Control",
+	"BM83_CMD_3B" => "Test_Device",
+	"BM83_CMD_3C" => "Read_EEPROM_Data",
+	"BM83_CMD_3D" => "Write_EEPROM_Data",
+	"BM83_CMD_3E" => "LE_Signaling2_Cmd",
+	"BM83_CMD_3F" => "PBAPC_Cmd",
+	"BM83_CMD_40" => "TWS_CMD",
+	"BM83_CMD_41" => "AVRCP_Browsing_Cmd",
+	"BM83_CMD_42" => "Read_Paired_Link_Key_lifo",
+	"BM83_CMD_44" => "Audio_Transceiver_Cmd",
+	"BM83_CMD_46" => "Button_MMI_Setting_Cmd",
+	"BM83_CMD_47" => "Button_Operation_Cmd",
+	"BM83_CMD_48" => "Read_Button_MMI_Setting_Cmd",
+	"BM83_CMD_49" => "DFU",
+	"BM83_CMD_4A" => "AVRCP_Vendor_Dependent_Cmd",
+	"BM83_CMD_4B" => "Concert_Mode_Endless_Grouping",
+	"BM83_CMD_4C" => "Read_Runtime_Latency",
+	"BM83_CMD_CC" => "Toggle_Audio_Source",
 
-	foreach(split(" ",$string)) {
-		if ($cnt<$len) {
-			push(@data, hex($_));
-			$cnt++;
-		} else {
-			last;
-		}
+	"BM83_EVT_00" => "Command_ACK",
+	"BM83_EVT_01" => "BTM_Status",
+	"BM83_EVT_02" => "Call_Status",
+	"BM83_EVT_03" => "Caller_ID",
+	"BM83_EVT_04" => "SMS_Received_Indication",
+	"BM83_EVT_05" => "Missed_Call_Indication",
+	"BM83_EVT_06" => "Phone_Max_Battery_Level",
+	"BM83_EVT_07" => "Phone_Current_Battery_Level",
+	"BM83_EVT_08" => "Roaming_Status",
+	"BM83_EVT_09" => "Phone_Max_Signal_Strength_Level",
+	"BM83_EVT_0A" => "Phone_Current_Signal_Strength_Level ",
+	"BM83_EVT_0B" => "Phone_Service_Status",
+	"BM83_EVT_0C" => "BTM_Battery_Status",
+	"BM83_EVT_0D" => "BTM_Charging_Status",
+	"BM83_EVT_0E" => "Reset_To_Default",
+	"BM83_EVT_0F" => "Report_HF_Gain_Level",
+	"BM83_EVT_10" => "EQ_Mode_Indication",
+	"BM83_EVT_17" => "Read_Linked_Device_Information_Reply",
+	"BM83_EVT_18" => "Read_BTM_Version_Reply",
+	"BM83_EVT_19" => "Call_List_Report",
+	"BM83_EVT_1A" => "AVC_Specific_Rsp",
+	"BM83_EVT_1B" => "BTM_Utility_Req",
+	"BM83_EVT_1C" => "Vendor_AT_Cmd_Rsp",
+	"BM83_EVT_1E" => "Read_Link_Status_Reply",
+	"BM83_EVT_1F" => "Read_Paired_Device_Record_Reply",
+	"BM83_EVT_20" => "Read_Local_BD_Address_Reply",
+	"BM83_EVT_22" => "Report_SPP/iAP_Data",
+	"BM83_EVT_23" => "Report_Link_Back_Status",
+	"BM83_EVT_24" => "Report_Ring_Tone_Status",
+	"BM83_EVT_26" => "Report_AVRCP_Vol_Ctrl",
+	"BM83_EVT_28" => "Report_iAP_Info",
+	"BM83_EVT_2A" => "Report_Voice_Prompt_Status",
+	"BM83_EVT_2D" => "Report_Type_Codec",
+	"BM83_EVT_2E" => "Report_Type_BTM_Setting ",
+	"BM83_EVT_30" => "Report_BTM_Initial_Status ",
+	"BM83_EVT_32" => "LE_Signaling_Event",
+	"BM83_EVT_33" => "Report_MSPK_Link_Status",
+	"BM83_EVT_34" => "Report_MSPK_Vendor_Event ",
+	"BM83_EVT_35" => "Report_MSPK_Audio_Setting",
+	"BM83_EVT_36" => "Report_Sound_Effect_Status ",
+	"BM83_EVT_37" => "Report_Vendor_Stored_Data",
+	"BM83_EVT_38" => "Report_IC_Version_Info ",
+	"BM83_EVT_39" => "Report_LE_GATT_Event",
+	"BM83_EVT_3A" => "Report_BTM_Link_Mode ",
+	"BM83_EVT_3C" => "Reserved",
+	"BM83_EVT_3D" => "Report_MSPK_Exchange_Link_Info",
+	"BM83_EVT_3E" => "Report_Customized_Information ",
+	"BM83_EVT_3F" => "Report_CSB_CLK",
+	"BM83_EVT_40" => "Report_Read_Feature_List_Reply ",
+	"BM83_EVT_41" => "Report_Test_Result_Reply",
+	"BM83_EVT_42" => "Report_Read_EEPROM_Data ",
+	"BM83_EVT_43" => "PBAPC_Event",
+	"BM83_EVT_44" => "AVRCP_Browsing_Event",
+	"BM83_EVT_45" => "Report_Paired_Link_Key_Info",
+	"BM83_EVT_53" => "Report_TWS_Rx_Vendor_Event",
+	"BM83_EVT_54" => "Report_TWS_Local_Device_Status ",
+	"BM83_EVT_55" => "Report_TWS_VAD_Data",
+	"BM83_EVT_56" => "Report_TWS_Radio_Condition",
+	"BM83_EVT_57" => "Report_TWS_Ear_Bud_Position",
+	"BM83_EVT_58" => "Report_TWS_Secondary_Device_Status ",
+	"BM83_EVT_59" => "Reserved",
+	"BM83_EVT_5A" => "Audio_Transceiver_Event_Status",
+	"BM83_EVT_5C" => "Read_Button_MMI_Setting_Reply",
+	"BM83_EVT_5D" => "AVRCP_Vendor_Dependent_Rsp",
+	"BM83_EVT_5E" => "Runtime_Latency",
+);
+
+my %data_parsers = (
+	"BMBT_STATUS_RESP" => \&ike_data_parsers_module_status,
+	"TEL_STATUS_RESP" => \&ike_data_parsers_module_status,
+	"NAVE_STATUS_RESP" => \&ike_data_parsers_module_status,
+	"GT_STATUS_RESP" => \&ike_data_parsers_module_status,
+
+	"BMBT_MONITOR_CONTROL" => \&ike_data_parsers_monitor_control,
+
+	"TEL_BTN_PRESS" => \&ike_data_parsers_mfl_buttons,
+	"RAD_BTN_PRESS" => \&ike_data_parsers_mfl_buttons,
+
+	"GT_BUTTON" => \&ike_data_parsers_bmbt_buttons,
+	"BMBT_BROADCAST_BUTTON" => \&ike_data_parsers_bmbt_buttons,
+	"RAD_BUTTON" => \&ike_data_parsers_bmbt_buttons,
+
+	"BMBT_SOFT_BUTTON" => \&ike_data_parsers_bmbt_soft_buttons,
+
+	"RAD_VOLUME" => \&ike_data_parsers_volume,
+	"TEL_VOLUME" => \&ike_data_parsers_volume,
+
+	"BMBT_DIAL_KNOB" => \&ike_data_parsers_navi_knob,
+	"GT_DIAL_KNOB" => \&ike_data_parsers_navi_knob,
+
+	"GT_SCREEN_MODE_REQUEST" => \&ike_data_parsers_request_screen,
+	"RAD_SCREEN_MODE_SET" => \&ike_data_parsers_set_radio_ui,
+
+	"GT_WRITE_WITH_CURSOR" => \&ike_data_parsers_gt_write,
+	"GT_WRITE_MENU" => \&ike_data_parsers_gt_write,
+
+	"GT_WRITE_TITLE" =>  \&ike_data_parsers_gt_write_menu,
+	"IKE_WRITE_TITLE" =>  \&ike_data_parsers_gt_write_menu,
+	"RAD_BROADCAST_WRITE_TITLE" =>  \&ike_data_parsers_gt_write_menu,
+
+	"CDC_RESPONSE" => \&ike_data_parsers_cdc_response,
+	"CDC_REQUEST" => \&ike_data_parsers_cdc_request,
+
+	"IKE_OBC_INPUT" => \&ike_data_parsers_ike_obc_input,
+	"IKE_BROADCAST_OBC_TEXT" => \&ike_data_parsers_obc_text,
+	"IKE_BROADCAST_SPEED_RPM_UPDATE" => \&ike_data_parsers_speed_rpm,
+	"IKE_BROADCAST_TEMP_UPDATE" => \&ike_data_parsers_ike_temp,
+	"IKE_BROADCAST_SENSOR_RESP" => \&ike_data_parsers_ike_sensor,
+	"IKE_BROADCAST_IGN_STATUS_RESP" => \&ike_data_parsers_ike_ignition,
+	"IKE_BROADCAST_REPLICATE_REDUNDANT_DATA" => \&ike_data_parsers_redundant_data,
+	"IKE_BROADCAST_ODO_RESPONSE" => \&ike_data_parsers_ike_odo_response,
+	"LCM_RESP_REDUNDANT_DATA" => \&ike_data_parsers_lcm_redundant_data,
+
+	"IKE_GPS_TIMEDATE" => \&ike_data_parsers_ike_gps_time,
+
+	"GM_BROADCAST_DOORS_STATUS_RESP" => \&ike_data_parsers_doors_status,
+
+	"BM83_CMD_Event_ACK" => \&bm83_data_parsers_event_ack,
+	"BM83_EVT_Command_ACK" => \&bm83_data_parsers_command_ack,
+	"BM83_EVT_BTM_Status" => \&bm83_data_parsers_bmt_status,
+
+	"BM83_EVT_Call_Status" => \&bm83_data_parsers_call_status,
+	"BM83_EVT_Caller_ID" => \&bm83_data_parsers_caller_id,
+
+	"BM83_EVT_Read_Linked_Device_Information_Reply" => \&bm83_data_parsers_device_info,
+);
+
+sub bm83_data_parsers_device_info {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $db = $data->[0];
+	my $type = $data->[1];
+
+	my %types = (
+		0x00 => 'DEVICE_NAME',
+		0x01 => 'IN-BAND-RINGTONE',
+		0x02 => 'DEVICE_TYPE',
+		0x03 => 'AVRCP_SUPPORTED',
+		0x04 => 'HF_A2DP_GAIN',
+		0x05 => 'LINE_IN_GAIN',
+		0x06 => 'A2DP_CODEC'
+	);
+
+	my $property = lookup_value($type,\%types);
+
+	if ($type == 0x00) {
+		return "property=$property, value=\"".cleanup_string(array_to_string($data, 2))."\"";
 	}
-	return @data;
+
+	if ($type == 0x03) {
+		my $player_notification = $data->[2] & 0b0000_0001;
+		my $abs_volume_control = ($data->[2] & 0b0000_0010) >> 1;
+
+		return "property=$property, player_notification=$player_notification, abs_volume_control=$abs_volume_control";
+	}
+
+	if ($type == 0x04) {
+		my $a2dp_gain = $data->[2] & 0b0000_1111;
+		my $hf_gain = ($data->[2] & 0b1111_0000) >> 4;
+
+		return "property=$property, a2dp_gain=$a2dp_gain, hf_gain=$hf_gain";
+	}
+
+	if ($type == 0x05) {
+		my $gain = $data->[2];
+		return "property=$property, linein_gain=$gain";
+	}
+
+	if ($type == 0x06) {
+		return "property=$property, value=".($data->[2]==0x00?'SBC':$data->[2]==0x02?'AAC':print_hex($data->[2],2,'0x'));
+	};
+
+
+	return "property=$property, value=".print_hex($data->[2],2,'0x');
+};
+
+sub bm83_data_parsers_caller_id {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $db = $data->[0];
+	my $caller_id = cleanup_string(array_to_string($data, 1));
+
+	return "caller_id=\"$caller_id\", db=$db";
 }
 
-sub cleanup_string {
-	my ($text) = @_;
+sub bm83_data_parsers_call_status {
+	my ($src, $dst, $string, $data) = @_;
 
-	$text =~ s/\x06/<nl>/go;
-	$text =~ s/\r/<cr>/go;
-	$text =~ s/\n/<nl>/go;
-	$text =~ s/[^[:ascii:]]/~/go;
-	return $text;	
+	my $db = $data->[0];
+	my $status = $data->[1];
+
+	my %states = (
+		0x00 => "IDLE",
+		0x01 => "VR",
+		0x02 => "INCOMING",
+		0x03 => "OUTGOING",
+		0x04 => "ACTIVE",
+		0x05 => "ACTIVE_CALL_WAITING",
+		0x06 => "ACTIVE_CALL_HOLD",
+	);
+
+	return "status=".lookup_value($status,\%states).", db=$db";
+};
+
+sub bm83_data_parsers_bmt_status {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $state = $data->[0];
+
+	my %states = (
+		0x00 => "POWER_OFF",
+		0x01 => "PAIRING_ON",
+		0x02 => "POWER_ON",
+		0x03 => "PAIRING_OK",
+		0x04 => "PAIRING_NOK",
+		0x05 => "HFP_CONN",
+		0x06 => "A2DP_CONN",
+		0x07 => "HFP_DISCO",
+		0x08 => "A2DP_DISCO",
+		0x09 => "SCO_CONN",
+		0x0A => "SCO_DISCO",
+		0x0B => "AVRCP_CONN",
+		0x0C => "AVRCP_DISCO",
+		0x0D => "STANDARD_SPP_CONN",
+		0x0E => "STANDARD_SPP_IAP_DISCO",
+		0x0F => "STANDBY_ON",
+		0x10 => "IAP_CONN",
+		0x11 => "ACL_DISCO",
+		0x12 => "MAP_CONN",
+		0x13 => "MAP_OPERATION_FORBIDDEN",
+		0x14 => "MAP_DISCONN",
+		0x15 => "ACL_CONN",
+		0x16 => "SPP_IAP_DISCONN_NO_OTHER_PROFILE",
+		0x17 => "LINK_BACK_ACL",
+		0x18 => "INQUIRY_ON",
+		0x80 => "AUDIO_SRC_NOT_AUX_NOT_A2DP",
+		0x81 => "AUDIO_SRC_AUX_IN",
+		0x82 => "AUDIO_SRC_A2DP",
+	);
+
+	my $state_readable = lookup_value($state,\%states);
+
+	if ( $state == 0x02 ) {
+		return "state=$state_readable, ".(($data->[0]==1)?'ALREADY_':''."POWER_ON");
+	}
+	if ( $state == 0x03 || $state == 0x09 || $state == 0x0A ) {
+		return "state=$state_readable, link=".$data->[1];
+	}
+	if ( $state == 0x04 ) {
+		return "state=$state_readable, ".(($data->[1]==0x01)?'TIMEOUT':($data->[1]==0x02)?'FAIL':($data->[1]==0x03)?'EXIT_PAIRING':print_hex($data->[1],2,'0x'));
+	}
+	if ( $state == 0x05 ) {
+		my $link = ($data->[1] & 0b1111_0000) >> 4;
+		my $db = $data->[1] & 0b0000_1111;
+
+		return "state=$state_readable, ".((($data->[2]==0x00)?'HSP':($data->[2]==0x01)?'HFP':print_hex($data->[2],2,'0x')).", link=$link, db=$db");
+	}
+	if ( $state == 0x06 || $state == 0x0b ) {
+		my $link = ($data->[1] & 0b1111_0000) >> 4;
+		my $db = $data->[1] & 0b0000_1111;
+
+		return "state=$state_readable, link=$link, db=$db";
+	}
+
+	if ( $state == 0x07 || $state == 0x08 || $state == 0x0C || $state == 0x15 || $state == 0x17) {
+		return "state=$state_readable, db=".$data->[1];
+	}
+
+	if ( $state == 0x11 ) {
+		return "state=$state_readable, ".(($data->[1]==0x00)?'DISCONNNECT':($data->[1]==0x01)?'LINK_LOSS':print_hex($data->[1],2,'0x'));
+	}
+
+	if ( $state == 0x16 ) {
+		my $bt_mac = sprintf("%02X%02X%02X%02X%02X%02X", $data->[1], $data->[2], $data->[3], $data->[4], $data->[5], $data->[6]);
+		return "state=$state_readable, bt_mac=$bt_mac";
+	}
+	return "state=$state_readable, link_info=($string)";
 }
 
-sub unpack_8bcd {
-	my ($data) = @_;
-	return ($data >> 4)*10 + ($data & 0x0F);
+sub bm83_data_parsers_event_ack {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $hex_event =  print_hex($data->[0],2,'');
+	return "event=$hex_event, name=".$cmd_bm83{"BM83_EVT_${hex_event}"};
 }
 
-sub data_parsers_module_status {
+sub bm83_data_parsers_command_ack {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $hex_cmd =  print_hex($data->[0]);
+	my $status = $data->[1];
+
+	my %status = (
+		0x00 => "COMPLETE",
+		0x01 => "NOT_ALLOWED",
+		0x02 => "UNKNOWN",
+		0x03 => "PARAMETER_ERROR",
+		0x04 => "BTM_BUSY",
+		0x05 => "BTM_MEMORY_FULL",
+	);
+
+	$status = lookup_value($status,\%status);
+
+	return "command=$hex_cmd, name=".$cmd_bm83{"BM83_CMD_${hex_cmd}"}.", status=$status";
+}
+
+sub print_hex {
+	my ($value, $length, $prefix ) = @_;
+
+	$length = 2 if (!$length);
+	$prefix = '' if (!$prefix);
+
+	return sprintf("$prefix\%0${length}X",$value);
+};
+
+
+sub ike_data_parsers_module_status {
 	my ($src, $dst, $string, $data) = @_;
 	my $announce = $data->[0] & 0b00000001;
 	my $variant = ($data->[0] & 0b11111000) >> 3;
@@ -314,11 +671,11 @@ sub data_parsers_module_status {
 			}
 	);
 
-	$variant = $variants{$src}{$variant} || sprintf("0x%02X", $variant);
+	$variant = lookup_value($variant,$variants{$src});
 	return "announce=$announce, variant=$variant";
 };
 
-sub data_parsers_mfl_buttons {
+sub ike_data_parsers_mfl_buttons {
 	my ($src, $dst, $string, $data) = @_;
 	my $button = $data->[0] & 0b1100_1001;
 	my $state = $data->[0] & 0b0011_0000;
@@ -336,13 +693,13 @@ sub data_parsers_mfl_buttons {
 		0b1000_0000 => "TEL"
 	);
 
-	$button = $buttons{$button} || sprintf("0x%02X", $button);
-	$state = $states{$state} || sprintf("0x%02X", $state);
+	$button = lookup_value($button,\%buttons);
+	$state = lookup_value($state,\%states);
 
 	return "button=$button, state=$state";
 }
 
-sub data_parsers_bmbt_buttons {
+sub ike_data_parsers_bmbt_buttons {
 	my ($src, $dst, $string, $data) = @_;
 	my $button = $data->[0] & 0b0011_1111;
 	my $state = $data->[0] & 0b1100_0000;
@@ -383,13 +740,13 @@ sub data_parsers_bmbt_buttons {
 
 	);
 
-	$button = $buttons{$button} || sprintf("0x%02X", $button);
-	$state = $states{$state} || sprintf("0x%02X", $state);
+	$button = lookup_value($button,\%buttons);
+	$state = lookup_value($state,\%states);
 
 	return "button=$button, state=$state";
 }
 
-sub data_parsers_bmbt_soft_buttons {
+sub ike_data_parsers_bmbt_soft_buttons {
 	my ($src, $dst, $string, $data) = @_;
 	my $button = $data->[1] & 0b0011_1111;
 	my $state = $data->[1] & 0b1100_0000;
@@ -404,13 +761,13 @@ sub data_parsers_bmbt_soft_buttons {
 		0b00_1111 => "SELECT",
 		0b11_1000 => "INFO",
 	);
-	$button = $buttons{$button} || sprintf("0x%02X", $button);
-	$state = $states{$state} || sprintf("0x%02X", $state);
+	$button = lookup_value($button,\%buttons);
+	$state = lookup_value($state,\%states);
 
 	return "button=$button, state=$state, extra=$data->[0]";
 }
 
-sub data_parsers_volume {
+sub ike_data_parsers_volume {
 	my ($src, $dst, $string, $data) = @_;
 	my $direction = $data->[0] & 0b0000_0001;
 	my $steps = ($data->[0] & 0b1111_0000) >> 4;
@@ -418,7 +775,7 @@ sub data_parsers_volume {
 	return "volume_change=".(($direction==0)?'-':'+').$steps;
 }
 
-sub data_parsers_navi_knob {
+sub ike_data_parsers_navi_knob {
 	my ($src, $dst, $string, $data) = @_;
 	my $direction = $data->[0] & 0b1000_0000;
 	my $steps = $data->[0] & 0b0000_1111;
@@ -426,7 +783,7 @@ sub data_parsers_navi_knob {
 	return "turn=".(($direction==0)?'-':'+').$steps;
 }
 
-sub data_parsers_monitor_control {
+sub ike_data_parsers_monitor_control {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $source = $data->[0] & 0b0000_0011;
@@ -451,14 +808,14 @@ sub data_parsers_monitor_control {
 		0b0000_0011 => "ZOOM",
 	);
 
-	$source = $sources{$source} || sprintf("0x%02X", $source);
-	$encoding = $encodings{$encoding} || sprintf("0x%02X", $encoding);
-	$aspect = $aspects{$aspect} || sprintf("0x%02X", $aspect);
+	$source = lookup_value($source,\%sources);
+	$encoding = lookup_value($encoding,\%encodings);
+	$aspect = lookup_value($aspect,\%aspects);
 
 	return "power=$power, source=$source, aspect=$aspect, enc=$encoding";
 }
 
-sub data_parsers_request_screen {
+sub ike_data_parsers_request_screen {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $priority = $data->[0] & 0b0000_0001;
@@ -471,12 +828,12 @@ sub data_parsers_request_screen {
 		0b0000_1100 => "HIDE_BODY_MENU",
 	);
 
-	$hide_body = $bodies{$hide_body} || sprintf("0x%02X", $hide_body);
+	$hide_body = lookup_value($hide_body,\%bodies);
 
 	return "priority=".(($priority==0)?"RAD":"GT").", hide_header=".(($hide_header==1)?"HIDE":"SHOW").", hide=$hide_body";
 }
 
-sub data_parsers_set_radio_ui {
+sub ike_data_parsers_set_radio_ui {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $priority = $data->[0] & 0b0000_0001;
@@ -487,7 +844,7 @@ sub data_parsers_set_radio_ui {
 	return "priority=".(($priority==0)?"RAD":"GT").", audio+obc=$audio_obc, new_ui=$new_ui, new_ui_hide=$new_ui_hide";
 }
 
-sub data_parsers_gt_write {
+sub ike_data_parsers_gt_write {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $layout = $data->[0];
@@ -497,13 +854,7 @@ sub data_parsers_gt_write {
 	my $buffer = ($data->[2] & 0b0100_0000 ) >> 6;
 	my $highlight = ($data->[2] & 0b1000_0000 ) >> 7;
 
-	my $text = "";
-	for (my $i = 3; $i<length(\$data); $i++) {
-		if ($data->[$i] == 0) {
-			last;
-		}
-		$text .= chr($data->[$i]);
-	}
+	my $text = cleanup_string(array_to_string($data,3));
 
 	my %layouts = (
 		0x42 => "DIAL",
@@ -525,29 +876,21 @@ sub data_parsers_gt_write {
 		0x08 => "INFO"
 	);
 
-	$layout = $layouts{$layout} || sprintf("0x%02X", $layout);
-#	$function = $functions{$function} || sprintf("0x%02X", $function);
-
-	$text = cleanup_string($text);
+	$layout = lookup_value($layout,\%layouts);
+#	$function = lookup_value($function,\%functions);
 
 	return "layout=$layout, func/cursor=$function, index=$index, clear=$clear, buffer=$buffer, highlight=$highlight, text=\"$text\"";
 
 }
 
-sub data_parsers_gt_write_menu {
+sub ike_data_parsers_gt_write_menu {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $source = ($data->[0] & 0b1110_0000) >> 5;
 	my $config = ($data->[0] & 0b1111_1111);
 	my $option = ($data->[1] & 0b0011_1111);
 
-	my $text = "";
-	for (my $i = 2; $i<length(\$data); $i++) {
-		if ($data->[$i] == 0) {
-			last;
-		}
-		$text .= chr($data->[$i]);
-	}
+	my $text = cleanup_string(array_to_string($data, 2));
 
 	my %sources = (
 		0b000 => "SERVICE",
@@ -642,16 +985,14 @@ sub data_parsers_gt_write_menu {
 		0x30	=> "SET_0x30",
 	);
 
-	$source = $sources{$source} || sprintf("0x%02X", $source);
-	$config = $configs{$config} || sprintf("0x%02X", $config);
-	$option = $options{$option} || sprintf("0x%02X", $option);
-
-	$text = cleanup_string($text);
+	$source = lookup_value($source,\%sources);
+	$config = lookup_value($config,\%configs);
+	$option = lookup_value($option,\%options);
 
 	return "source=$source, config=$config, options=$option, text=\"$text\"";
 }
 
-sub data_parsers_obc_text {
+sub ike_data_parsers_obc_text {
 	my ($src, $dst, $string, $data, $time) = @_;
 
 	my $property = $data->[0];
@@ -674,17 +1015,8 @@ sub data_parsers_obc_text {
 		0x1a => "TIMER_LAP",
 	);
 
-	my $text = "";
-	for (my $i = 2; $i<length(\$data); $i++) {
-		if ($data->[$i] == 0) {
-			last;
-		}
-		$text .= chr($data->[$i]);
-	}
-
-	$text = cleanup_string($text);
-
-	$property = $properties{$property} || sprintf("0x%02X", $property);
+	my $text = cleanup_string(array_to_string($data,2));
+	$property = lookup_value($property,\%properties);
 
 
 	if ($property eq 'TIME') {
@@ -704,7 +1036,7 @@ sub data_parsers_obc_text {
 	return "property=$property, text=\"$text\"";
 };
 
-sub data_parsers_ike_obc_input {
+sub ike_data_parsers_ike_obc_input {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $property = $data->[0];
@@ -727,7 +1059,7 @@ sub data_parsers_ike_obc_input {
 		0x1a => "TIMER_LAP",
 	);
 
-	$property = $properties{$property} || sprintf("0x%02X", $property);
+	$property = lookup_value($property,\%properties);
 
 	my $value = '';
 
@@ -753,7 +1085,7 @@ sub data_parsers_ike_obc_input {
 	return "property=$property, value=$value";
 }
 
-sub data_parsers_ike_odo_response {
+sub ike_data_parsers_ike_odo_response {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $km = ($data->[2] << 16) + ($data->[1] << 8) + $data->[0];
@@ -761,7 +1093,7 @@ sub data_parsers_ike_odo_response {
 	return "odo=${km} km";
 }
 
-sub data_parsers_ike_gps_time {
+sub ike_data_parsers_ike_gps_time {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $hour = unpack_8bcd($data->[1]);
@@ -786,7 +1118,7 @@ sub data_parsers_ike_gps_time {
 }
 
 
-sub data_parsers_cdc_request {
+sub ike_data_parsers_cdc_request {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $command = $data->[0];
@@ -804,11 +1136,11 @@ sub data_parsers_cdc_request {
 		0x08 => "RANDOM_MODE",
 	);
 
-	$command = $commands{$command} || sprintf("0x%02X", $command);
+	$command = lookup_value($command,\%commands);
 	return "command=$command";
 };
 
-sub data_parsers_cdc_response {
+sub ike_data_parsers_cdc_response {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $status = $data->[0];
@@ -849,14 +1181,14 @@ sub data_parsers_cdc_response {
 		0X10 => "NO_MAGAZINE",
 	);
 
-	$status = $statuses{$status} || sprintf("0x%02X", $status);
-	$audio = $audios{$audio} || sprintf("0x%02X", $audio);
-	$error = $errors{$error} || sprintf("0x%02X", $error);
+	$status = lookup_value($status,\%statuses);
+	$audio = lookup_value($audio,\%audios);
+	$error = lookup_value($error,\%errors);
 
 	return sprintf("status=%s, audio=%s, error=%s, magazines=0b%06b, disk=%x, track=%x", $status, $audio, $error, $magazine, $disk, $track);
 };
 
-sub data_parsers_speed_rpm {
+sub ike_data_parsers_speed_rpm {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $speed = $data->[0] * 2;
@@ -865,7 +1197,7 @@ sub data_parsers_speed_rpm {
 	return "speed=$speed km/h, rpm=$rpm";
 };
 
-sub data_parsers_ike_temp {
+sub ike_data_parsers_ike_temp {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $coolant = $data->[1];
@@ -876,7 +1208,7 @@ sub data_parsers_ike_temp {
 	return "coolant=$coolant, amb=$amb C";
 };
 
-sub data_parsers_ike_sensor {
+sub ike_data_parsers_ike_sensor {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $handbrake 		= ( $data->[0] & 0b0000_0001 );
@@ -904,12 +1236,12 @@ sub data_parsers_ike_sensor {
 		0b1111 => "GEAR_SIXTH"
 	);
 
-	$gear = $gears{$gear} || sprintf("0x%02X", $gear);
+	$gear = lookup_value($gear,\%gears);
 
 	return "handbrake=$handbrake, ignition=$ignition, gear=$gear, ?door=$door, , aux_vent=$aux_vent, warn_oil_pressure=$oil_pressure, warn_brake_pads=$brake_pads, warn_transmission=$transmission";
 };
 
-sub data_parsers_ike_ignition {
+sub ike_data_parsers_ike_ignition {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $ignition = ( $data->[0] & 0b0000_0111 );
@@ -921,12 +1253,12 @@ sub data_parsers_ike_ignition {
 		0b0000_0111   => "POS_3",
 	);
 
-	$ignition = $ign{$ignition} || sprintf("0x%02X", $ignition);
+	$ignition = lookup_value($ignition,\%ign);
 
 	return "ignition=$ignition";
 };
 
-sub data_parsers_redundant_data {
+sub ike_data_parsers_redundant_data {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $odo  = ( ($data->[0] << 8) + $data->[1] ) * 100;
@@ -937,7 +1269,7 @@ sub data_parsers_redundant_data {
 	return "odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
 };
 
-sub data_parsers_lcm_redundant_data {
+sub ike_data_parsers_lcm_redundant_data {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $odo  = ( ($data->[5] << 8) + $data->[6] ) * 100;
@@ -949,7 +1281,7 @@ sub data_parsers_lcm_redundant_data {
 	return "vin=$vin, odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
 };
 
-sub data_parsers_doors_status {
+sub ike_data_parsers_doors_status {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $doors 			= ( $data->[0] & 0b0000_1111 );
@@ -967,61 +1299,64 @@ sub data_parsers_doors_status {
 		0b0011 => "CENTRAL_LOCKING_ARRESTED",
 	);
 
-	$central_lock = $locks{$central_lock} || sprintf("0x%02X", $central_lock);
+	$central_lock = lookup_value($central_lock,\%locks);
 
 	return sprintf("doors=0b%04b, windows=0b%04b, locks=%s, lamp=$lamp_interiour, sunroof=$sunroof, front_lid=$front_boot, rear_lid=$rear_trunk", $doors, $windows, $central_lock);
 };
 
-my %data_parsers = (
-	"BMBT_STATUS_RESP" => \&data_parsers_module_status,
-	"TEL_STATUS_RESP" => \&data_parsers_module_status,
-	"NAVE_STATUS_RESP" => \&data_parsers_module_status,
-	"GT_STATUS_RESP" => \&data_parsers_module_status,
+sub lookup_value {
+	my ($key, $hash) = @_;
 
-	"BMBT_MONITOR_CONTROL" => \&data_parsers_monitor_control,
+	return %$hash{$key} || print_hex($key);
+}
 
-	"TEL_BTN_PRESS" => \&data_parsers_mfl_buttons,
-	"RAD_BTN_PRESS" => \&data_parsers_mfl_buttons,
+sub array_to_string {
+	my ($data, $start, $len) = @_;
 
-	"GT_BUTTON" => \&data_parsers_bmbt_buttons,
-	"BMBT_BROADCAST_BUTTON" => \&data_parsers_bmbt_buttons,
-	"RAD_BUTTON" => \&data_parsers_bmbt_buttons,
+	my $text = "";
+	my $done = 0;
+	for (my $i = $start; $i<length(\$data); $i++) {
+		if ($data->[$i] == 0) {
+			last;
+		}
+		$text .= chr($data->[$i]);
+		$done++;
+		last if ($len && ($done>=$len));
+	}
+	return $text;
+}
 
-	"BMBT_SOFT_BUTTON" => \&data_parsers_bmbt_soft_buttons,
+sub hex_string_to_array {
+	my ($string, $len) = @_;
+	my @data;
+	my $cnt = 0;
 
-	"RAD_VOLUME" => \&data_parsers_volume,
-	"TEL_VOLUME" => \&data_parsers_volume,
+	foreach(split(" ",$string)) {
+		if ($cnt<$len) {
+			push(@data, hex($_));
+			$cnt++;
+		} else {
+			last;
+		}
+	}
+	return @data;
+}
 
-	"BMBT_DIAL_KNOB" => \&data_parsers_navi_knob,
-	"GT_DIAL_KNOB" => \&data_parsers_navi_knob,
+sub cleanup_string {
+	my ($text) = @_;
 
-	"GT_SCREEN_MODE_REQUEST" => \&data_parsers_request_screen,
-	"RAD_SCREEN_MODE_SET" => \&data_parsers_set_radio_ui,
+	$text =~ s/\x06/<nl>/go;
+	$text =~ s/\r/<cr>/go;
+	$text =~ s/\n/<nl>/go;
+	$text =~ s/[^[:ascii:]]/~/go;
+	return $text;	
+}
 
-	"GT_WRITE_WITH_CURSOR" => \&data_parsers_gt_write,
-	"GT_WRITE_MENU" => \&data_parsers_gt_write,
+sub unpack_8bcd {
+	my ($data) = @_;
+	return ($data >> 4)*10 + ($data & 0x0F);
+}
 
-	"GT_WRITE_TITLE" =>  \&data_parsers_gt_write_menu,
-	"IKE_WRITE_TITLE" =>  \&data_parsers_gt_write_menu,
-	"RAD_BROADCAST_WRITE_TITLE" =>  \&data_parsers_gt_write_menu,
-
-	"CDC_RESPONSE" => \&data_parsers_cdc_response,
-	"CDC_REQUEST" => \&data_parsers_cdc_request,
-
-	"IKE_OBC_INPUT" => \&data_parsers_ike_obc_input,
-	"IKE_BROADCAST_OBC_TEXT" => \&data_parsers_obc_text,
-	"IKE_BROADCAST_SPEED_RPM_UPDATE" => \&data_parsers_speed_rpm,
-	"IKE_BROADCAST_TEMP_UPDATE" => \&data_parsers_ike_temp,
-	"IKE_BROADCAST_SENSOR_RESP" => \&data_parsers_ike_sensor,
-	"IKE_BROADCAST_IGN_STATUS_RESP" => \&data_parsers_ike_ignition,
-	"IKE_BROADCAST_REPLICATE_REDUNDANT_DATA" => \&data_parsers_redundant_data,
-	"IKE_BROADCAST_ODO_RESPONSE" => \&data_parsers_ike_odo_response,
-	"LCM_RESP_REDUNDANT_DATA" => \&data_parsers_lcm_redundant_data,
-
-	"IKE_GPS_TIMEDATE" => \&data_parsers_ike_gps_time,
-
-	"GM_BROADCAST_DOORS_STATUS_RESP" => \&data_parsers_doors_status,
-);
 
 sub local_time {
 	my ($time) = @_;
@@ -1085,25 +1420,25 @@ while (<>) {
 			$broadcast = "B";
 
 			$cmd_assumed = $src."_BROADCAST_".$cmd_raw;
-			if ($cmd{$cmd_assumed}) {
-				$cmd = $cmd{$cmd_assumed};
-			} elsif ($cmd{$cmd_raw}) {
-				$cmd = $src."_BROADCAST_".$cmd{$cmd_raw};
+			if ($cmd_ibus{$cmd_assumed}) {
+				$cmd = $cmd_ibus{$cmd_assumed};
+			} elsif ($cmd_ibus{$cmd_raw}) {
+				$cmd = $src."_BROADCAST_".$cmd_ibus{$cmd_raw};
 			} else { 
 				$cmd = $cmd_assumed."_UNK";
 			};
-		} elsif ($cmd{$cmd_raw} =~ /RESP/io) {
-				$cmd = $src."_".$cmd{$cmd_raw};
+		} elsif ($cmd_ibus{$cmd_raw} =~ /RESP/io) {
+				$cmd = $src."_".$cmd_ibus{$cmd_raw};
 		} else {
 			$cmd_assumed = $dst."_".$cmd_raw;
-			if ($cmd{$cmd_assumed}) {
-				$cmd = $cmd{$cmd_assumed};
+			if ($cmd_ibus{$cmd_assumed}) {
+				$cmd = $cmd_ibus{$cmd_assumed};
 			} else {
 				$cmd_assumed = $src."_".$cmd_raw;
-				if ($cmd{$cmd_assumed}) {
-					$cmd = $cmd{$cmd_assumed};
-				} elsif ($cmd{$cmd_raw}) {
-					$cmd = $dst."_".$cmd{$cmd_raw};
+				if ($cmd_ibus{$cmd_assumed}) {
+					$cmd = $cmd_ibus{$cmd_assumed};
+				} elsif ($cmd_ibus{$cmd_raw}) {
+					$cmd = $dst."_".$cmd_ibus{$cmd_raw};
 				} else { 
 					$cmd = $dst."_".$cmd_raw."_UNK";
 				};
@@ -1208,6 +1543,92 @@ while (<>) {
 		};
 
 		printf ("%1s   %4s -> %-4s    %s %s\n", $self, $src, $dst, $cmd, $data);
+	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BM83:\s+([RT])X:\s+AA\s(..)\s(..)\s(..)\s(.*)\s*$/os) {
+# BlueTooth BM83 Messages
+		my $packet = "AA $3 $4 $5 $6";
+		my $time = $1;
+		my $len = (hex($3) << 8) + hex($4) - 1;
+		my $cmd;
+		my $cmd_raw = $5;
+		my $data = $6;
+		my $src;
+		my $dst;
+		my $self;
+
+		if ($2 eq 'R') {
+			$src = "BT";
+			$dst = "BBUS";
+			$self = " ";
+			$cmd = 'BM83_EVT_'.$cmd_raw;
+			if ($cmd_bm83{$cmd}) {
+				$cmd = 'BM83_EVT_'.$cmd_bm83{$cmd};
+			} else {
+				$cmd.='_UNK';
+			}
+		} else {
+			$src = "BBUS";
+			$dst = "BT";
+			$self = "*";
+			$cmd = 'BM83_CMD_'.$cmd_raw;
+			if ($cmd_bm83{$cmd}) {
+				$cmd = 'BM83_CMD_'.$cmd_bm83{$cmd};
+			} else {
+				$cmd.='_UNK';
+			}
+		}
+
+		next if (in_array($src, \@ignore_devices) || in_array($dst, \@ignore_devices));
+		next if (in_array($cmd, \@ignore_commands));
+
+		$counters_devices{$src}++;
+
+		my $time_local = local_time($time);
+
+		my $sec = ($time % (60*1000))/1000;
+		my $min = int($time/(60*1000)) % 60;
+		my $hour = int($time/(60*60*1000));
+
+		$data =~ s/\s*..$//;
+
+		my $data_parsed;
+		if ($data_parsers{$cmd}) {
+			my @data = hex_string_to_array($data,$len);
+			if (scalar(@data) > 0) {
+				$data_parsed = $data_parsers{$cmd}->($src,$dst, $data, \@data, $time);
+			} else {
+				$data_parsed = "";
+			}
+			$counters_commands{$cmd}++;
+			$counters_payload_size{$cmd}+=$len;
+		} else {
+			$data_parsed = $data;
+			if ($data eq "") {
+				$counters_commands{$cmd}++;
+				$counters_payload_size{$cmd}+=0;
+			} else {
+				$counters_payload_size{$cmd.' (payload not processed)'}+=$len;
+				$counters_commands{$cmd.' (payload not processed)'}++;
+			}
+		}
+
+
+		if ($config_original_line) {
+			print $line."\n";
+		};
+
+		if ($config_local_time) {
+			printf ("%2d:%02d:%06.3f (%s) ",$hour, $min, $sec, $time_local);
+		} else {
+			printf ("%2d:%02d:%06.3f ",$hour, $min, $sec);
+		};
+
+		printf ("%1s   %4s -> %-4s %2s %s (%s)", $self, $src, $dst, $cmd_raw, $cmd, $data_parsed);
+
+		if ($config_original_data) {
+			printf (" [%s]", $packet);
+		};
+		print "\n";
+
 	} else {
 		$counters_commands{"UNPROCESSED_LINE"}++;
 		print $line."\n" if ($config_nonparsed_lines);
