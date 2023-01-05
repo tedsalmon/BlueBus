@@ -454,7 +454,601 @@ my %data_parsers = (
 	"BM83_EVT_Caller_ID" => \&bm83_data_parsers_caller_id,
 
 	"BM83_EVT_Read_Linked_Device_Information_Reply" => \&bm83_data_parsers_device_info,
+	"BM83_EVT_Read_Paired_Device_Record_Reply" => \&bm83_data_parsers_paired_device_info,
+	"BM83_EVT_Report_Link_Back_Status" => \&bm83_data_parsers_link_back_status,
+
+	"BM83_EVT_AVC_Specific_Rsp" => \&bm83_data_parsers_avc_spec_response,
+	"BM83_EVT_AVRCP_Browsing_Event" => \&bm83_data_parsers_avrcp_browsing,
+	"BM83_EVT_AVRCP_Vendor_Dependent_Rsp" => \&bm83_data_parsers_avrcp_vendor_dep,
+
+	"BM83_CMD_Music_Control" => \&bm83_data_parsers_music_control,
+	"BM83_CMD_MMI_Action" => \&bm83_data_parsers_mmi_action,
+	"BM83_CMD_Profiles_Link_Back" => \&bm83_data_parsers_profile_link_back,
+	"BM83_CMD_AVC_Vendor_Dependent_Cmd" => \&bm83_data_parsers_avc_command,
 );
+
+sub bm83_data_parsers_avc_command {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $db = $data->[0];
+	my $pdu = $data->[1];
+
+
+	my %pdu = (
+		0x10 => "GET_CAPABILITIES",
+		0x11 => "LIST_PLAYER_APPLICATION_SETTING_ATTRIBUTES",
+		0x12 => "LIST_PLAYER_APPLICATION_SETTING_VALUES",
+		0x13 => "GET_CURRENT_PLAYER_APPLICATION_SETTING_VALUE",
+		0x14 => "SET_PLAYER_APPLICATION_SETTING_VALUE",
+		0x15 => "GET_PLAYER_APPLICATION_SETTING_ATTRIBUTE_TEXT",
+		0x16 => "GET_PLAYER_APPLICATION_SETTING_VALUE_TEXT",
+		0x17 => "INFORM_DISPLAYABLE_CHARACTER_SET",
+		0x18 => "INFORM_BATTERY_STATUS_OF_CT",
+		0x20 => "GET_ELEMENT_ATTRIBUTES",
+		0x30 => "GET_PLAY_STATUS",
+		0x31 => "REGISTER_NOTIFICATION",
+		0x40 => "REQUEST_CONTINUING_RESPONSE",
+		0x41 => "ABORT_CONTINUING_RESPONSE",
+	);
+
+	my $resp = lookup_value($pdu,\%pdu)." ( ";
+
+	if ($pdu == 0x31) {
+		my %notifications = (
+			0x01 => "PLAYBACK_STATUS_CHANGED",
+			0x02 => "TRACK_CHANGED",
+			0x03 => "TRACK_REACHED_END",
+			0x04 => "TRACK_REACHED_START",
+			0x05 => "PLAYBACK_POS_CHANGED",
+			0x06 => "BATT_STATUS_CHANGED",
+			0x07 => "SYSTEM_STATUS_CHANGED",
+			0x08 => "PLAYER_APPLICATION_SETTING_CHANGED",
+		);
+		$resp .= lookup_value($data->[5],\%notifications)." ";
+
+	} elsif ($pdu == 0x20) {
+		my $attr_start = 13;
+
+		my %attributes = (
+			0x0001	=> "TITLE",
+			0x0002	=> "ARTIST",
+			0x0003	=> "ALBUM",
+			0x0004	=> "TRACK",
+			0x0005	=> "TRACKS",
+			0x0006	=> "GENRE",
+			0x0007	=> "PLAYTIME_MS",
+			0x0008	=> "COVER_ART"
+		);
+
+		$resp .= '[ ';
+		my $count = $data->[$attr_start++];
+
+		while ($count-->0) {
+			my $attr_id = ( $data->[$attr_start] << 24 ) + ( $data->[$attr_start+1] << 16 ) + ( $data->[$attr_start+2] << 8 ) + $data->[$attr_start+3];
+			$resp .= lookup_value($attr_id, \%attributes).", ";
+			$attr_start+=4;
+		}
+
+		$resp .= '] ';
+	} else {
+		for (my $i = 5; $i<scalar(@$data); $i++ ) {
+			$resp .= print_hex($data->[$i])." ";
+		}
+	}
+	$resp .= ")";
+
+	return $resp;
+
+}
+
+sub avrcp_pdu_response {
+	my ( $pdu, $data, $start, $avrcp_vendor_dep ) = @_;
+
+	my %pdu = (
+		0x10 => "CAPABILITIES",
+		0x11 => "PLAYER_APPLICATION_SETTING_ATTRIBUTES",
+		0x12 => "PLAYER_APPLICATION_SETTING_VALUES",
+		0x13 => "CURRENT_PLAYER_APPLICATION_SETTING_VALUE",
+		0x14 => "PLAYER_APPLICATION_SETTING_VALUE",
+		0x15 => "PLAYER_APPLICATION_SETTING_ATTRIBUTE_TEXT",
+		0x16 => "PLAYER_APPLICATION_SETTING_VALUE_TEXT",
+		0x17 => "DISPLAYABLE_CHARACTER_SET",
+		0x18 => "BATTERY_STATUS_OF_CT",
+		0x20 => "ELEMENT_ATTRIBUTES",
+		0x30 => "PLAY_STATUS",
+		0x31 => "NOTIFICATION",
+		0x40 => "CONTINUING_RESPONSE",
+		0x41 => "ABORT_CONTINUING_RESPONSE",
+	);
+
+	my $resp = lookup_value($pdu,\%pdu)." ( ";
+
+
+	if ($pdu == 0x31) {
+		my %notifications = (
+			0x01 => "PLAYBACK_STATUS_CHANGED",
+			0x02 => "TRACK_CHANGED",
+			0x03 => "TRACK_REACHED_END",
+			0x04 => "TRACK_REACHED_START",
+			0x05 => "PLAYBACK_POS_CHANGED",
+			0x06 => "BATT_STATUS_CHANGED",
+			0x07 => "SYSTEM_STATUS_CHANGED",
+			0x08 => "PLAYER_APPLICATION_SETTING_CHANGED",
+		);
+
+		$resp .= lookup_value($data->[$start],\%notifications);
+
+		if ($data->[$start] == 0x01) {
+			my %play_status = (
+				0x00 => "STOPPED",
+				0x01 => "PLAYING",
+				0x02 => "PAUSED",
+				0x03 => "FWD_SEEK",
+				0x04 => "REV_SEEK",
+				0x05 => "ERROR"
+			);
+
+			$resp .= ", status=".lookup_value($data->[$start+1], \%play_status);
+		} elsif ($data->[$start] == 0x02) {
+			$resp .= ", track=";
+			for (my $i = $start+1; $i<$start+1+9; $i++ ) {
+				$resp .= print_hex($data->[$i]);
+			};
+		} elsif ($data->[$start] == 0x05) {
+			my $pos_ms = ( $data->[$start+1] << 24 ) + ( $data->[$start+2] << 16 ) + ( $data->[$start+3] << 8 ) + $data->[$start+4];
+
+			if ($pos_ms =! 0xFFFFFFFF) {
+				$resp .= ', pos='.print_time($pos_ms, 1, 1);
+			} else {
+				$resp .= ', pos=UNKNOWN';
+			}
+		} elsif ($data->[$start] == 0x06 || $data->[$start] == 0x07 ) {
+			$resp .= ', status='.print_hex($data->[$start+1]);
+		} else {
+			$resp .= ' ( ';
+			for (my $i = $start+1; $i<scalar(@$data); $i++ ) {
+				$resp .= print_hex($data->[$i])." ";
+			}
+			$resp .= ') ';
+		}
+
+	} elsif ($pdu == 0x20) {
+		my $num_attr = $data->[$start];
+
+		my %attributes = (
+			0x0001	=> "TITLE",
+			0x0002	=> "ARTIST",
+			0x0003	=> "ALBUM",
+			0x0004	=> "TRACK",
+			0x0005	=> "TRACKS",
+			0x0006	=> "GENRE",
+			0x0007	=> "PLAYTIME_MS",
+			0x0008	=> "COVER_ART"
+		);
+
+		my %charsets = (
+
+			0x0003	=> "ASCII",
+			0x0004	=> "ISO_8859_1",
+			0x000F	=> "JIS_X0201",
+			0x0011	=> "SHIFT_JIS",
+			36		=> "KS_C_5601_1987",
+			0x006A  => "UTF8",
+			1013	=> "UTF16_BE",
+			2025	=> "GB2312",
+			2026	=> "BIG5"
+		);
+
+		$resp .= ' [';
+		my $attr = 0;
+		my $attr_start = $start+1;
+
+		if ($avrcp_vendor_dep) {
+			$attr_start += 2;
+		}
+
+		while ($attr<$num_attr) {
+			my $attr_id = ( $data->[$attr_start] << 24 ) + ( $data->[$attr_start+1] << 16 ) + ( $data->[$attr_start+2] << 8 ) + $data->[$attr_start+3];
+			my $attr_charset = ($data->[$attr_start+4] << 8) + $data->[$attr_start+5];
+			my $attr_len = ($data->[$attr_start+6] << 8) + $data->[$attr_start+7];
+
+			my $value = cleanup_string(array_to_string($data, $attr_start+8, $attr_len));
+			if ($attr_id == 0x0007) {
+				$value = print_time($value,1,1);
+			}
+			$resp .= sprintf("{ %s=\"%s\", attr_charset=%s }, ", lookup_value($attr_id,\%attributes), $value, lookup_value($attr_charset,\%charsets));
+			$attr++;
+			$attr_start += 8+$attr_len;
+		}
+		$resp .= ' ] ';
+
+
+	} else {
+		for (my $i = $start; $i<scalar(@$data); $i++ ) {
+			$resp .= print_hex($data->[$i])." ";
+		}
+	};
+
+	$resp .= ') ';
+
+	return $resp;
+}
+
+sub bm83_data_parsers_avrcp_vendor_dep {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $pdu = $data->[0];
+	my $db = $data->[1];
+	my $resp = $data->[2];
+	my $full_packer = $data->[3];
+
+	my %responses = (
+		0x08 => "NOT_IMPLEMENTED",
+		0x09 => "ACCEPT",
+		0x0A => "REJECT",
+		0x0C => "STABLE",
+		0x0D => "CHANGED",
+		0x0F => "INTERIM"
+	);
+
+	return "db=$db, resp=".lookup_value($resp,\%responses).", pdu=".avrcp_pdu_response($pdu, $data, 4, 1);
+}
+
+sub bm83_data_parsers_avc_spec_response {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $db = $data->[0];
+	my $resp = $data->[1];
+
+	my $subunit_type = ($data->[2] & 0b1111_1000 ) >> 3;
+	my $subunit_id = ($data->[2] & 0b0000_0111 );
+
+	my $opcode = $data->[3];
+
+	my @company_id = ( $data->[4], $data->[5], $data->[6] );
+	my $pdu = $data->[7];
+	my $packet_length = ($data->[9] << 8) + $data->[10];
+
+
+	my %responses = (
+		0x08 => "NOT_IMPLEMENTED",
+		0x09 => "ACCEPT",
+		0x0A => "REJECT",
+		0x0C => "STABLE",
+		0x0D => "CHANGED",
+		0x0F => "INTERIM"
+	);
+
+	my $resp = "db=$db, resp=".lookup_value($resp,\%responses).", pdu=".avrcp_pdu_response($pdu, $data, 11);
+
+	return $resp;
+};
+
+
+my @avrcp_browsing_packet = ();
+sub bm83_data_parsers_avrcp_browsing {
+	my ($src, $dst, $string, $data) = @_;
+	
+	my $type = $data->[0];
+	my $total_length = ($data->[1] << 8) + $data->[2];
+	my $packet_length = ($data->[3] << 8) + $data->[4];
+
+	if (($type == 0x00)||($type == 0x01)) {
+		@avrcp_browsing_packet = ();
+	};
+
+	for (my $i = 0; $i < $packet_length; $i++) {
+		push @avrcp_browsing_packet, $data->[5+$i];
+	}
+
+	if (($type == 0x00) || ($type == 0x03)) {
+# single or last packet
+
+		my $subevent = $avrcp_browsing_packet[0];
+		my $db = $avrcp_browsing_packet[1];
+
+		my %subevents = (
+			0x08 => "ADD_TO_NOW_PLAYING_RSP",
+			0x09 => "GENERAL_REJECT_RSP",
+			0x0A => "NOW_PLAYING_CONTENT_CHANGED",
+			0x0B => "AVAILABLE_PLAYER_CHANGED",
+			0x0C => "ADDRESSED_PLAYER_CHANGED",
+			0x0D => "UIDS_CHANGED",
+			0x0E => "CONNECTION_STATUS",
+		);
+
+		my %states = (
+			0x00 => "INVALID_COMMAND",
+			0x01 => "INVALID_PARAMETER",
+			0x02 => "PARAMETER_CONTENT_ERROR",
+			0x03 => "INTERNAL_ERROR",
+			0x04 => "OPERATION_COMPLETED_WITHOUT_ERROR",
+			0x05 => "UID_CHANGED",
+			0x06 => "RESERVED",
+			0x07 => "INVALID_DIRECTION",
+			0x08 => "NOT_A_DIRECTORY",
+			0x09 => "DOES_NOT_EXIST",
+			0x0A => "INVALID_SCOPE",
+			0x0B => "RANGE_OUT_OF_BOUNDS",
+			0x0C => "FOLDER_ITEM_IS_NOT_PLAYABLE",
+			0x0D => "MEDIA_IN_USE",
+			0x0E => "NOW_PLAYING_LIST_FULL",
+			0x0F => "SEARCH_NOT_SUPPORTED",
+			0x10 => "SEARCH_IN_PROGRESS",
+			0x11 => "INVALID_PLAYER_ID",
+			0x12 => "PLAYER_NOT_BROWSABLE",
+			0x13 => "PLAYER_NOT_ADDRESSED",
+			0x14 => "NO_VALID_SEARCH_RESULTS",
+			0x15 => "NO_AVAILABLE_PLAYERS",
+			0x16 => "ADDRESSED_PLAYER_CHANGED",
+		);
+
+		my %responses = (
+			0x08 => "NOT_IMPLEMENTED",
+			0x09 => "ACCEPT",
+			0x0A => "REJECT",
+			0x0C => "STABLE",
+			0x0D => "CHANGED",
+			0x0F => "INTERIM"
+		);
+
+		my $resp = (($type == 0x00)?'full_packet':'final_packet').", subevent=".lookup_value($subevent,\%subevents);
+
+		if ($subevent == 0x02 || $subevent == 0x07 || $subevent == 0x08 ) {
+			$resp .= ", db=$db, response=". lookup_value($avrcp_browsing_packet[2],\%responses).", status=".lookup_value($avrcp_browsing_packet[3],\%states);
+		} elsif ($subevent == 0x09 ) {
+			$resp .= ", db=$db, status=".lookup_value($avrcp_browsing_packet[2],\%states);
+		} elsif ($subevent == 0x0A || $subevent == 0x0B ) {
+			$resp .= ", db=$db, status=".lookup_value($avrcp_browsing_packet[2],\%responses);
+		} elsif ($subevent == 0x0C) {
+			$resp .= ", db=$db, status=".lookup_value($avrcp_browsing_packet[2],\%responses).", playerId=".print_hex(($avrcp_browsing_packet[3]<<8)+$avrcp_browsing_packet[4],4).", UIDCounter=".print_hex(($avrcp_browsing_packet[5]<<8)+$avrcp_browsing_packet[6],4);
+		} elsif ($subevent == 0x0D) {
+			$resp .= ", db=$db, status=".lookup_value($avrcp_browsing_packet[2],\%responses).", UIDCounter=".print_hex(($avrcp_browsing_packet[3]<<8)+$avrcp_browsing_packet[4],4);
+		} elsif ($subevent == 0x0E) {
+			$resp .= ", db=$db, status=".$avrcp_browsing_packet[2];
+		} else {
+			$resp .= " ( ";
+			for (my $i = 1; $i<scalar(@avrcp_browsing_packet); $i++ ) {
+				$resp .= print_hex($avrcp_browsing_packet[$i])." ";
+			}
+			$resp .= ")";
+		}
+
+		@avrcp_browsing_packet = ();
+		return $resp;
+
+	} else {
+		return "patial_packet, sequence=".(($type==0x01)?'START':'MIDDLE')."total=$total_length, packet=$packet_length";
+	}
+};
+
+sub bm83_data_parsers_link_back_status {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $connection = $data->[0];
+	my $val = $data->[1];
+
+	my %connections = (
+		0x00 => "ACL",
+		0x01 => "HFP",
+		0x02 => "A2DP",
+		0x03 => "SPP",
+	);
+
+	my $con_r = lookup_value($connection,\%connections);
+
+	if ($connection == 0x00) {
+		if ($val == 0xFF) {
+			return "connection=$con_r, FAIL";
+		} else {
+			my $device = ( $val & 0b0111_0000 ) >> 4;
+			my $db = ( $val & 0b0000_1111 );
+			return "connection=$con_r, SUCCESS, dev=$device(".(($val & 0b1111_0000 )>>4)."), db=$db";
+		};
+	} else {
+		return "connection=$con_r, ".(($val == 0)?'SUCCSS':'FAIL');
+	}
+
+
+};
+
+sub bm83_data_parsers_profile_link_back {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $type = $data->[0];
+
+	my %types = (
+		0x00 => "CONNECT_LAST_DEVICE_ALL",
+		0x01 => "CONNECT_LAST_DEVICE_HF",
+		0x02 => "CONNECT_LAST_DEVIDCE_A2DP",
+		0x03 => "CONNECT_LAST_DEVICE_SPP",
+		0x04 => "CONNECT_PROFILE_DEVICE",
+		0x05 => "CONNECT_PROFILE_MAC",
+		0x07 => "CONNECT_PROFILE_UNPAIRED",
+	);
+
+	my $type_r = lookup_value($type, \%types);
+
+	if ($type == 0x00 || $type == 0x01 || $type == 0x02 || $type == 0x03) {
+		return "type=$type_r";
+	}
+
+	if ( $type == 0x04 || $type == 0x05 ) {
+		my $dev = $data->[1];
+		my $profile = $data->[2];
+
+		my $hs = $profile & 0b0000_0001;
+		my $hf = ($profile & 0b0000_0010)>>1;
+		my $a2dp = ($profile & 0b0000_0100)>>2;
+
+		my $resp = "type=$type_r, device=$dev, profile=".(($profile == 0)?'DEFAULT':(($hs?'HSP ':'').($hf?' HFP ':'').($a2dp?'A2DP':'')));
+
+		if ($type == 0x05) {
+			$resp .= ", mac=".print_mac($data, 3, 1);
+		}
+
+		return $resp;
+	}
+
+	if ($type == 0x07) {
+		my $profile = $data->[1];
+
+		my $hs = $profile & 0b0000_0001;
+		my $hf = ($profile & 0b0000_0010)>>1;
+		my $a2dp = ($profile & 0b0000_0100)>>2;
+
+		return "type=$type_r, profile=".(($profile == 0)?'DEFAULT':(($hs?'HSP ':'').($hf?' HFP ':'').($a2dp?'A2DP':''))).", mac=".print_mac($data, 2, 1);
+	}
+}
+
+sub bm83_data_parsers_music_control {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $db = $data->[0];
+	my $action = $data->[1];
+
+	my %actions = (
+		0x00 => "STOP_FF_RW",
+		0x01 => "FF",
+		0x02 => "FF_REPEAT",
+		0x03 => "RW",
+		0x04 => "RW_REPEAT",
+		0x05 => "PLAY",
+		0x06 => "PAUSE",
+		0x07 => "PLAY_PAUSE_TOGGLE",
+		0x08 => "STOP",
+		0x09 => "NEXT",
+		0x0A => "PREVIOUS",
+	);
+
+	return "action=".lookup_value($action,\%actions).", reserved=".print_hex($db);
+};
+
+sub bm83_data_parsers_mmi_action {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $db = $data->[0];
+	my $action = $data->[1];
+
+	my %actions = (
+		0x01 => "ADD_REMOVE_SCO_LINK",
+		0x02 => "FORCE_END_CALL_DEPRECATED",
+		0x03 => "ENABLE_DEVICE_TEST_MODE",
+		0x04 => "ACCEPT_CALL",
+		0x05 => "REJECT_CALL",
+		0x06 => "END_CALL",
+		0x07 => "TOGGLE_MIC",
+		0x08 => "MUTE_MIC",
+		0x09 => "ACTIVATE_MIC",
+		0x0A => "VR_OPEN",
+		0x0B => "VR_CLOSE",
+		0x0C => "REDIAL",
+		0x0D => "SWITCH_HELD_CALLS",
+		0x0E => "SWITCH_HEADSET_PHONE",
+		0x0F => "QUERY_CALL_LISTS",
+		0x10 => "THREE_WAY_CALL",
+		0x11 => "RELEASE_WAITING_CALL",
+		0x12 => "ACCEPT_WAITING_HOLD_CALL",
+		0x16 => "INITIATE_HF_CALL_DEPRECATED",
+		0x17 => "DISCONNECT_HF_LINK",
+		0x18 => "ENABLE_RX_NR",
+		0x19 => "DISABLE_RX_NR",
+		0x1A => "TOGGLE_RX_NR_DEPRECATED",
+		0x1B => "ENABLE_TX_NR_DEPRECATED",
+		0x1C => "DISABLE_TX_NR_DEPRECATED",
+		0x1D => "TOGGLE_TX_NR_DEPRECATED",
+		0x1E => "ENABLE_AEC_WHEN_SCO_READY",
+		0x1F => "DISABLE_AEC_WHEN_SCO_READY",
+		0x20 => "SWITCH_AC_ENABLE/DISABLE_WHEN_SCO_READY",
+		0x21 => "ENABLE_AC_RX_NOISE_REDUCTION_WHEN_SCO_READY",
+		0x22 => "DISABLE_AC_RX_NOISE_REDUCTION_WHEN_SCO_READY",
+		0x23 => "SWITCH_AEC_RX_NOISE_REDUCTION_WHEN_SCO_READY",
+		0x24 => "INCREASE_MICROPHONE_GAIN",
+		0x25 => "DECREASE_MICROPHONE_GAIN",
+		0x26 => "SWITCH_PRIMARY_HF_DEVICE_AND_SECONDARY_HF_DEVICE_ROLE",
+		0x30 => "INCREASE_SPEAKER_GAIN_DEPRECATED",
+		0x31 => "DECREASE_SPEAKER_GAIN_DEPRECATED",
+		0x32 => "PLAY/PAUSE_MUSIC_DEPRECATED",
+		0x33 => "STOP_MUSIC_DEPRECATED",
+		0x34 => "NEXT_SONG_DEPRECATED",
+		0x35 => "PREVIOUS_SONG_DEPRECATED",
+		0x36 => "FAST_FORWARD_DEPRECATED",
+		0x37 => "REWIND_DEPRECATED",
+		0x38 => "EQ_MODE_UP_DEPRECATED",
+		0x39 => "EQ_MODE_DOWN_DEPRECATED",
+		0x3A => "LOCK_BUTTON",
+		0x3B => "DISCONNECT_A2DP_LINK",
+		0x3C => "NEXT_AUDIO_EFFECT",
+		0x3D => "PREVIOUS_AUDIO_EFFECT",
+		0x3E => "TOGGLE_3D_EFFECT_DEPRECATED",
+		0x3F => "REPORT_CURRENT_EQ_MODE",
+		0x40 => "REPORT_CURRENT_AUDIO_EFFECT_STATUS",
+		0x41 => "TOGGLE_AUDIO_PLAYBACK",
+		0x50 => "ENTER_PAIRING_MODE_FROM_POWER_OFF_STATE_DEPRECATED",
+		0x51 => "POWER_ON_BUTTON_PRESS",
+		0x52 => "POWER_ON_BUTTON_RELEASE",
+		0x53 => "POWER_OFF_BUTTON_PRESS",
+		0x54 => "POWER_OFF_BUTTON_RELEASE",
+		0x55 => "RESERVED",
+		0x56 => "RESET_SOME_EEPROM_SETTING_TO_DEFAULT_SETTING",
+		0x57 => "FORCE_SPEAKER_GAIN_TOGGLE",
+		0x58 => "TOGGLE_BUTTON_INDICATION",
+		0x59 => "COMBINE_FUNCTION_0",
+		0x5A => "COMBINE_FUNCTION_1",
+		0x5B => "COMBINE_FUNCTION_2",
+		0x5C => "COMBINE_FUNCTION_3",
+		0x5D => "FAST_ENTER_PAIRING_MODE_FROM_NON-OFF_MODE",
+		0x5E => "SWITCH_POWER_OFF",
+		0x5F => "DISABLE_LED",
+		0x60 => "TOGGLE_BUZZER",
+		0x61 => "DISABLE_BUZZER",
+		0x62 => "ENABLE_BUZZER",
+		0x63 => "CHANGE_TONE_SET_SPK_MODULE_SUPPORT_TWO_SETS_OF_TONE",
+		0x64 => "RETRIEVE_PHONEBOOK_DEPRECATED",
+		0x65 => "RETRIEVE_MCH_DEPRECATED",
+		0x66 => "RETRIEVE_ICH_DEPRECATED",
+		0x67 => "RETRIEVE_OCH_DEPRECATED",
+		0x68 => "RETRIEVE_CCH_DEPRECATED",
+		0x69 => "CANCEL_ACCESS_PBAP_DEPRECATED",
+		0x6A => "INDICATE_BATTERY_STATUS",
+		0x6B => "EXIT_PAIRING_MODE",
+		0x6C => "LINK_LAST_DEVICE_DEPRECATED",
+		0x6D => "DISCONNECT_ALL_LINK_DEPRECATED",
+		0x6E => "OHS_EVENT_1",
+		0x6F => "OHS_EVENT_2",
+		0x70 => "OHS_EVENT_3",
+		0x71 => "OHS_EVENT_4",
+		0x72 => "SHS_SEND_USER_DATA_1_FOR_EMBEDDED_APPLICATION_MODE",
+		0x73 => "SHS_SEND_USER_DATA_2_FOR_EMBEDDED_APPLICATION_MODE",
+		0x74 => "SHS_SEND_USER_DATA_3_FOR_EMBEDDED_APPLICATION_MODE",
+		0x75 => "SHS_SEND_USER_DATA_4_FOR_EMBEDDED_APPLICATION_MODE",
+		0x76 => "SHS_SEND_USER_DATA_5_FOR_EMBEDDED_APPLICATION_MODE",
+		0x77 => "REPORT_CURRENT_RX_NR_STATUS",
+		0x78 => "REPORT_CURRENT_TX_NR_STATUS",
+		0x79 => "FORCE_BUZZER_ALARM",
+		0x7A => "CANCEL_ALL_BT_PAGING",
+		0x7B => "OHS_EVENT_5",
+		0x7C => "OHS_EVENT_6",
+		0x7D => "DISCONNECT_SPP_LINK",
+		0x80 => "ENABLE_A2DP_MIX_LINEIN",
+		0x81 => "DISABLE_A2DP_MIX_LINEIN",
+		0x82 => "INCREASE_LINEIN_INPUT_GAIN",
+		0x83 => "DECREASE_LINEIN_INPUT_GAIN",
+	);
+
+	return "action=".lookup_value($action,\%actions).", db=$db";
+};
+
+sub bm83_data_parsers_paired_device_info {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $db = $data->[0];
+	my $prio = $data->[1];
+
+	my $bt_mac = print_mac($data, 2, 1);
+
+	return "dev=$db, prio=$prio, mac=$bt_mac";
+};
 
 sub bm83_data_parsers_device_info {
 	my ($src, $dst, $string, $data) = @_;
@@ -1350,7 +1944,7 @@ sub array_to_string {
 
 	my $text = "";
 	my $done = 0;
-	for (my $i = $start; $i<length(\$data); $i++) {
+	for (my $i = $start; $i<scalar(\$data); $i++) {
 		if ($data->[$i] == 0) {
 			last;
 		}
