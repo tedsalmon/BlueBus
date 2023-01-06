@@ -54,6 +54,7 @@
 use strict;
 use DateTime;
 use Getopt::Long;
+use Data::Dumper;
 
 # return also real local time of events, when possible
 my $config_local_time = 1;
@@ -102,6 +103,10 @@ if (in_array('', \@ignore_commands)) {
 ###########################################################
 
 my $time_offset = 0;
+
+my %counters_commands;
+my %counters_devices;
+my %counters_payload_size;
 
 my %bus = (
 	"00" => "GM",	# Body module
@@ -1960,7 +1965,7 @@ sub hex_string_to_array {
 	my @data;
 	my $cnt = 0;
 
-	foreach(split(" ",$string)) {
+	foreach(split(/\s+/,$string)) {
 		if ($cnt<$len) {
 			push(@data, hex($_));
 			$cnt++;
@@ -1968,6 +1973,7 @@ sub hex_string_to_array {
 			last;
 		}
 	}
+
 	return @data;
 }
 
@@ -2013,9 +2019,87 @@ sub in_array {
 	return 0;
 };
 
-my %counters_commands;
-my %counters_devices;
-my %counters_payload_size;
+sub process_ibus_packet {
+	my ($time, $packet, $self) = @_;
+
+	my @packet = split(/\s+/,$packet);
+
+	my $src = $bus{$packet[0]} || "0x".$3;
+	my $dst = $bus{$packet[2]} || "0x".$5;
+	my $src_orig = hex($packet[0]);
+	my $dst_orig = hex($packet[2]);
+	my $cmd_raw = $packet[3];
+	my $data = join(' ', @packet[4..scalar(@packet)]);
+
+	my $cmd_assumed;
+	my $cmd;
+	my $broadcast = " ";
+
+	if (in_array($dst, \@broadcast_addresses)) {
+		$broadcast = "B";
+
+		$cmd_assumed = $src."_BROADCAST_".$cmd_raw;
+		if ($cmd_ibus{$cmd_assumed}) {
+			$cmd = $cmd_ibus{$cmd_assumed};
+		} elsif ($cmd_ibus{$cmd_raw}) {
+			$cmd = $src."_BROADCAST_".$cmd_ibus{$cmd_raw};
+		} else { 
+			$cmd = $cmd_assumed."_UNK";
+		};
+	} elsif ($cmd_ibus{$cmd_raw} =~ /RESP/io) {
+			$cmd = $src."_".$cmd_ibus{$cmd_raw};
+	} else {
+		$cmd_assumed = $dst."_".$cmd_raw;
+		if ($cmd_ibus{$cmd_assumed}) {
+			$cmd = $cmd_ibus{$cmd_assumed};
+		} else {
+			$cmd_assumed = $src."_".$cmd_raw;
+			if ($cmd_ibus{$cmd_assumed}) {
+				$cmd = $cmd_ibus{$cmd_assumed};
+			} elsif ($cmd_ibus{$cmd_raw}) {
+				$cmd = $dst."_".$cmd_ibus{$cmd_raw};
+			} else { 
+				$cmd = $dst."_".$cmd_raw."_UNK";
+			};
+		}
+	}
+
+	return if (in_array($src, \@ignore_devices) || in_array($dst, \@ignore_devices) || in_array($src_orig, \@ignore_devices) || in_array($dst_orig, \@ignore_devices));
+	return if (in_array($cmd_raw, \@ignore_commands) || in_array(hex($cmd_raw), \@ignore_commands));
+	return if (in_array($cmd, \@ignore_commands));
+
+	my $self = ($self == 1)?"*":" ";
+
+	$data =~ s/\s+..$//;
+
+	my $data_parsed;
+	if ($data_parsers{$cmd}) {
+		my @data = hex_string_to_array($data, scalar(@packet) - 5);
+		if (scalar(@data) > 0) {
+			$data_parsed = $data_parsers{$cmd}->($src, $dst, $data, \@data, $time);
+			$counters_payload_size{$cmd}+=scalar(@data);
+		} else {
+			$data_parsed = "";
+			$counters_payload_size{$cmd}+=0;
+		}
+		$counters_commands{$cmd}++;
+	} else {
+		$data_parsed = $data;
+		if ($data eq "") {
+			$counters_commands{$cmd}++;
+			$counters_payload_size{$cmd}+=0;
+		} else {
+			$counters_commands{$cmd.' (payload not processed)'}++;
+			$counters_payload_size{$cmd.' (payload not processed)'}+=int((length($data)+1)/3);
+		}
+	}
+
+	$counters_devices{$src}++;
+
+	return sprintf("%1s %1s %4s -> %-4s %2s %s (%s)", $self, $broadcast, $src, $dst, $cmd_raw, $cmd, $data_parsed);
+};
+
+my $time;
 
 while (<>) {
 	chomp;
@@ -2025,85 +2109,21 @@ while (<>) {
 
 	if (/^\[(\d+)\]\s+DEBUG:\s+IBus:\s+RX\[(\d+)\]:\s+?(..)\s+(..)\s+(..)\s+(..)\s*(.*?)$/osi) {	
 # IBUS message
-		my $time = $1;
+		$time = $1;
 		my $len = $2;
 		my $packet = "$3 $4 $5 $6 $7";
-		my $src = $bus{$3} || "0x".$3;
-		my $dst = $bus{$5} || "0x".$5;
-		my $src_orig = hex($3);
-		my $dst_orig = hex($5);
-		my $cmd_raw = $6;
-		my $data = $7;
+		my $self;
+		my $broadcast;
 
-		my $cmd_assumed;
-		my $cmd;
-		my $broadcast = " ";
 
+		my $self = 0;
+
+		if ($packet =~ s#\s+\[SELF\]##o) {
+			$self = 1;
+		}
+
+		my $resp = process_ibus_packet($time, $packet, $self);
 		my $time_local = local_time($time);
-
-		if (in_array($dst, \@broadcast_addresses)) {
-			$broadcast = "B";
-
-			$cmd_assumed = $src."_BROADCAST_".$cmd_raw;
-			if ($cmd_ibus{$cmd_assumed}) {
-				$cmd = $cmd_ibus{$cmd_assumed};
-			} elsif ($cmd_ibus{$cmd_raw}) {
-				$cmd = $src."_BROADCAST_".$cmd_ibus{$cmd_raw};
-			} else { 
-				$cmd = $cmd_assumed."_UNK";
-			};
-		} elsif ($cmd_ibus{$cmd_raw} =~ /RESP/io) {
-				$cmd = $src."_".$cmd_ibus{$cmd_raw};
-		} else {
-			$cmd_assumed = $dst."_".$cmd_raw;
-			if ($cmd_ibus{$cmd_assumed}) {
-				$cmd = $cmd_ibus{$cmd_assumed};
-			} else {
-				$cmd_assumed = $src."_".$cmd_raw;
-				if ($cmd_ibus{$cmd_assumed}) {
-					$cmd = $cmd_ibus{$cmd_assumed};
-				} elsif ($cmd_ibus{$cmd_raw}) {
-					$cmd = $dst."_".$cmd_ibus{$cmd_raw};
-				} else { 
-					$cmd = $dst."_".$cmd_raw."_UNK";
-				};
-			}
-		}
-
-		next if (in_array($src, \@ignore_devices) || in_array($dst, \@ignore_devices) || in_array($src_orig, \@ignore_devices) || in_array($dst_orig, \@ignore_devices));
-		next if (in_array($cmd_raw, \@ignore_commands) || in_array(hex($cmd_raw), \@ignore_commands));
-		next if (in_array($cmd, \@ignore_commands));
-
-		my $self = " ";
-
-		if ($data =~ s/\s+\[SELF\]//o) {
-			$self = "*";
-		}
-		$data =~ s/\s*..$//;
-
-		my $data_parsed;
-		if ($data_parsers{$cmd}) {
-			my @data = hex_string_to_array($data,$len - 5);
-			if (scalar(@data) > 0) {
-				$data_parsed = $data_parsers{$cmd}->($src,$dst, $data, \@data, $time);
-				$counters_payload_size{$cmd}+=scalar(@data);
-			} else {
-				$data_parsed = "";
-				$counters_payload_size{$cmd}+=0;
-			}
-			$counters_commands{$cmd}++;
-		} else {
-			$data_parsed = $data;
-			if ($data eq "") {
-				$counters_commands{$cmd}++;
-				$counters_payload_size{$cmd}+=0;
-			} else {
-				$counters_commands{$cmd.' (payload not processed)'}++;
-				$counters_payload_size{$cmd.' (payload not processed)'}+=int((length($data)+1)/3);
-			}
-		}
-
-		$counters_devices{$src}++;
 
 		if ($config_original_line) {
 			print $line."\n";
@@ -2115,11 +2135,37 @@ while (<>) {
 			print print_time($time, 1, 1)." ";
 		};
 
-		printf ("%1s %1s %4s -> %-4s %2s %s (%s)", $self, $broadcast, $src, $dst, $cmd_raw, $cmd, $data_parsed);
+		printf $resp;
+
 		if ($config_original_data) {
 			printf (" [%s]", $packet);
 		};
 		print "\n";
+	} elsif (/^([0-9a-fA-F\s]+)\s*$/o) {
+#raw IBUS packet
+
+		my $packet = $1;
+		$time += 10;
+		my $resp = process_ibus_packet($time, $packet, 0);
+		my $time_local = local_time($time);
+
+		if ($config_original_line) {
+			print $line."\n";
+		}
+
+		if ($config_local_time) {
+			print print_time($time, 1, 1)." ($time_local) ";
+		} else {
+			print print_time($time, 1, 1)." ";
+		};
+
+		printf $resp;
+
+		if ($config_original_data) {
+			printf (" [%s]", $packet);
+		};
+		print "\n";
+
 
 	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BT:\s+([RW]):\s+'(\S+)\s*(.*)\s*'$/os) {
 # BlueTooth BC127 Messages
