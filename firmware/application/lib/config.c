@@ -6,8 +6,8 @@
  */
 #include "config.h"
 
-unsigned char CONFIG_SETTING_CACHE[CONFIG_SETTING_CACHE_SIZE] = {0};
-unsigned char CONFIG_VALUE_CACHE[CONFIG_VALUE_CACHE_SIZE] = {0};
+uint8_t CONFIG_SETTING_CACHE[CONFIG_SETTING_CACHE_SIZE] = {0};
+uint8_t CONFIG_VALUE_CACHE[CONFIG_VALUE_CACHE_SIZE] = {0};
 
 /**
  * ConfigGetBC127BootFailures()
@@ -34,15 +34,16 @@ uint16_t ConfigGetBC127BootFailures()
  *     Description:
  *         Pull a byte from the EEPROM. If that byte is 0xFF, assume it's 0x00
  *     Params:
- *         unsigned char address - The address to read from
+ *         uint8_t address - The address to read from
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-static inline unsigned char ConfigGetByte(unsigned char address)
+static inline uint8_t ConfigGetByte(uint8_t address)
 {
-    unsigned char value = 0;
-    if (address < CONFIG_SETTING_CACHE_SIZE)
+    uint8_t value = 0;
+    if (address < CONFIG_SETTING_CACHE_SIZE) {
         value = CONFIG_SETTING_CACHE[address];
+    }
     if (value == 0x00) {
         value = EEPROMReadByte(address);
         if (value == 0xFF) {
@@ -56,18 +57,21 @@ static inline unsigned char ConfigGetByte(unsigned char address)
 }
 
 /**
- * ConfigSetByte()
+ * ConfigGetBytes()
  *     Description:
- *         Set a byte into the EEPROM and update cache
+ *         Get a byte into the EEPROM and update cache
  *     Params:
- *         unsigned char address - The address to read from
- *         unsigned char value - Value to set
+ *         uint8_t address - The address to read from
+ *         uint8_t *data - The data pointer
+ *         uint8_t size - The length of the data in the pointer
  */
-static inline void ConfigSetByte(unsigned char address, unsigned char value)
+void ConfigGetBytes(uint8_t address, uint8_t *data, uint8_t size)
 {
-    if (address < CONFIG_SETTING_CACHE_SIZE)
-        CONFIG_SETTING_CACHE[address] = value;
-    EEPROMWriteByte(address, value);
+    uint8_t i = 0;
+    for (i = 0; i < size; i++) {
+        data[i] = ConfigGetByte(address);
+        address++;
+    }
 }
 
 /**
@@ -75,13 +79,13 @@ static inline void ConfigSetByte(unsigned char address, unsigned char value)
  *     Description:
  *         Get the lower nibble of a given byte from the EEPROM
  *     Params:
- *         unsigned char byte - The byte to get
+ *         uint8_t byte - The byte to get
  *     Returns:
- *         unsigned char - The value
+ *         uint8_t - The value
  */
-unsigned char ConfigGetByteLowerNibble(unsigned char byte)
+uint8_t ConfigGetByteLowerNibble(uint8_t byte)
 {
-    unsigned char value = ConfigGetByte(byte);
+    uint8_t value = ConfigGetByte(byte);
     return value & 0x0F;
 }
 
@@ -90,13 +94,13 @@ unsigned char ConfigGetByteLowerNibble(unsigned char byte)
  *     Description:
  *         Get the upper nibble of a given byte from the EEPROM
  *     Params:
- *         unsigned char byte - The byte to get
+ *         uint8_t byte - The byte to get
  *     Returns:
- *         unsigned char - The value
+ *         uint8_t - The value
  */
-unsigned char ConfigGetByteUpperNibble(unsigned char byte)
+uint8_t ConfigGetByteUpperNibble(uint8_t byte)
 {
-    unsigned char value = ConfigGetByte(byte);
+    uint8_t value = ConfigGetByte(byte);
     return (value & 0xF0) >> 4;
 }
 
@@ -107,12 +111,11 @@ unsigned char ConfigGetByteUpperNibble(unsigned char byte)
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetBuildWeek()
+uint8_t ConfigGetBuildWeek()
 {
-    unsigned char value = ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_WEEK);
-    return value;
+    return ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_WEEK);
 }
 
 /**
@@ -122,12 +125,11 @@ unsigned char ConfigGetBuildWeek()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetBuildYear()
+uint8_t ConfigGetBuildYear()
 {
-    unsigned char value = ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_YEAR);
-    return value;
+    return ConfigGetByte(CONFIG_BUILD_DATE_ADDRESS_YEAR);
 }
 
 /**
@@ -137,9 +139,9 @@ unsigned char ConfigGetBuildYear()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetComfortLock()
+uint8_t ConfigGetComfortLock()
 {
     return ConfigGetByteUpperNibble(CONFIG_SETTING_COMFORT_LOCKS);
 }
@@ -151,9 +153,9 @@ unsigned char ConfigGetComfortLock()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetComfortUnlock()
+uint8_t ConfigGetComfortUnlock()
 {
     return ConfigGetByteLowerNibble(CONFIG_SETTING_COMFORT_LOCKS);
 }
@@ -165,12 +167,11 @@ unsigned char ConfigGetComfortUnlock()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetFirmwareVersionMajor()
+uint8_t ConfigGetFirmwareVersionMajor()
 {
-    unsigned char value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS);
-    return value;
+    return ConfigGetByte(CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS);
 }
 
 /**
@@ -180,12 +181,11 @@ unsigned char ConfigGetFirmwareVersionMajor()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetFirmwareVersionMinor()
+uint8_t ConfigGetFirmwareVersionMinor()
 {
-    unsigned char value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS);
-    return value;
+    return ConfigGetByte(CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS);
 }
 
 /**
@@ -195,12 +195,11 @@ unsigned char ConfigGetFirmwareVersionMinor()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetFirmwareVersionPatch()
+uint8_t ConfigGetFirmwareVersionPatch()
 {
-    unsigned char value = ConfigGetByte(CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS);
-    return value;
+    return ConfigGetByte(CONFIG_FIRMWARE_VERSION_PATCH_ADDRESS);
 }
 
 /**
@@ -231,9 +230,9 @@ void ConfigGetFirmwareVersionString(char *version)
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetIKEType()
+uint8_t ConfigGetIKEType()
 {
     return ConfigGetByteUpperNibble(CONFIG_VEHICLE_TYPE_ADDRESS);
 }
@@ -245,9 +244,9 @@ unsigned char ConfigGetIKEType()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetLightingFeaturesActive()
+uint8_t ConfigGetLightingFeaturesActive()
 {
     if (ConfigGetSetting(CONFIG_SETTING_COMFORT_BLINKERS) > 0x01 ||
         ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS) > 0x01
@@ -264,12 +263,11 @@ unsigned char ConfigGetLightingFeaturesActive()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetLMVariant()
+uint8_t ConfigGetLMVariant()
 {
-    unsigned char value = ConfigGetByte(CONFIG_LM_VARIANT_ADDRESS);
-    return value;
+    return ConfigGetByte(CONFIG_LM_VARIANT_ADDRESS);
 }
 
 /**
@@ -277,13 +275,13 @@ unsigned char ConfigGetLMVariant()
  *     Description:
  *         Get the log level for different systems
  *     Params:
- *         unsigned char system - The system to get the log mode for
+ *         uint8_t system - The system to get the log mode for
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetLog(unsigned char system)
+uint8_t ConfigGetLog(uint8_t system)
 {
-    unsigned char currentSetting = ConfigGetByte(CONFIG_SETTING_LOG_ADDRESS);
+    uint8_t currentSetting = ConfigGetByte(CONFIG_SETTING_LOG_ADDRESS);
     if (currentSetting == 0x00) {
         currentSetting = 0x01;
         ConfigSetByte(CONFIG_SETTING_LOG_ADDRESS, currentSetting);
@@ -298,11 +296,11 @@ unsigned char ConfigGetLog(unsigned char system)
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetNavType()
+uint8_t ConfigGetNavType()
 {
-    unsigned char value = ConfigGetByte(CONFIG_NAV_TYPE_ADDRESS);
+    uint8_t value = ConfigGetByte(CONFIG_NAV_TYPE_ADDRESS);
     return value;
 }
 
@@ -318,8 +316,8 @@ unsigned char ConfigGetNavType()
 uint16_t ConfigGetSerialNumber()
 {
     // Do not use ConfigGetByte() because our LSB could very well be 0xFF
-    unsigned char snMSB = EEPROMReadByte(CONFIG_SN_ADDRESS_MSB);
-    unsigned char snLSB = EEPROMReadByte(CONFIG_SN_ADDRESS_LSB);
+    uint8_t snMSB = EEPROMReadByte(CONFIG_SN_ADDRESS_MSB);
+    uint8_t snLSB = EEPROMReadByte(CONFIG_SN_ADDRESS_LSB);
     return (snMSB << 8) + snLSB;
 }
 
@@ -328,13 +326,13 @@ uint16_t ConfigGetSerialNumber()
  *     Description:
  *         Get a given setting from the EEPROM
  *     Params:
- *         unsigned char setting - The setting to get
+ *         uint8_t setting - The setting to get
  *     Returns:
- *         unsigned char - The value
+ *         uint8_t - The value
  */
-unsigned char ConfigGetSetting(unsigned char setting)
+uint8_t ConfigGetSetting(uint8_t setting)
 {
-    unsigned char value = 0x00;
+    uint8_t value = 0x00;
     // Catch invalid setting addresses
     if (setting >= CONFIG_SETTING_START_ADDRESS &&
         setting <= CONFIG_SETTING_END_ADDRESS
@@ -345,15 +343,33 @@ unsigned char ConfigGetSetting(unsigned char setting)
 }
 
 /**
+ * ConfigGetString()
+ *     Description:
+ *         Pull a string of <size> from the given address
+ *     Params:
+ *         uint8_t setting - The setting to get
+ *     Returns:
+ *         uint8_t - The value
+ */
+void ConfigGetString(uint8_t address, char *string, uint8_t size)
+{
+    uint8_t i = 0;
+    for (i = 0; i < size; i++) {
+        string[i] = ConfigGetByte(address);
+        address++;
+    }
+}
+
+/**
  * ConfigGetTelephonyFeaturesActive()
  *     Description:
  *         Check if any telephone features are active and return a boolean
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetTelephonyFeaturesActive()
+uint8_t ConfigGetTelephonyFeaturesActive()
 {
     if (ConfigGetSetting(CONFIG_SETTING_HFP_ADDRESS) == CONFIG_SETTING_ON ||
         ConfigGetSetting(CONFIG_SETTING_SELF_PLAY_ADDRESS) == CONFIG_SETTING_ON
@@ -370,9 +386,9 @@ unsigned char ConfigGetTelephonyFeaturesActive()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetTempDisplay()
+uint8_t ConfigGetTempDisplay()
 {
     return ConfigGetByteLowerNibble(CONFIG_SETTING_BMBT_TEMP_DISPLAY);
 }
@@ -384,9 +400,9 @@ unsigned char ConfigGetTempDisplay()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetTempUnit()
+uint8_t ConfigGetTempUnit()
 {
     return ConfigGetByteUpperNibble(CONFIG_SETTING_BMBT_TEMP_DISPLAY);
 }
@@ -396,11 +412,11 @@ unsigned char ConfigGetTempUnit()
  *     Description:
  *         Get the number of times a trap has been triggered
  *     Params:
- *         unsigned char trap - The trap
+ *         uint8_t trap - The trap
  *     Returns:
  *         void
  */
-unsigned char ConfigGetTrapCount(unsigned char trap)
+uint8_t ConfigGetTrapCount(uint8_t trap)
 {
     return ConfigGetByte(trap);
 }
@@ -414,7 +430,7 @@ unsigned char ConfigGetTrapCount(unsigned char trap)
  *     Returns:
  *         void
  */
-unsigned char ConfigGetTrapLast()
+uint8_t ConfigGetTrapLast()
 {
     return ConfigGetByte(CONFIG_TRAP_LAST_ERR);
 }
@@ -426,12 +442,11 @@ unsigned char ConfigGetTrapLast()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetUIMode()
+uint8_t ConfigGetUIMode()
 {
-    unsigned char value = ConfigGetByte(CONFIG_UI_MODE_ADDRESS);
-    return value;
+    return ConfigGetByte(CONFIG_UI_MODE_ADDRESS);
 }
 
 /**
@@ -441,9 +456,9 @@ unsigned char ConfigGetUIMode()
  *     Params:
  *         None
  *     Returns:
- *         unsigned char
+ *         uint8_t
  */
-unsigned char ConfigGetVehicleType()
+uint8_t ConfigGetVehicleType()
 {
     return ConfigGetByteLowerNibble(CONFIG_VEHICLE_TYPE_ADDRESS);
 }
@@ -453,13 +468,13 @@ unsigned char ConfigGetVehicleType()
  *     Description:
  *         Get a given value from the EEPROM
  *     Params:
- *         unsigned char value - The value to get
+ *         uint8_t value - The value to get
  *     Returns:
- *         unsigned char - The value
+ *         uint8_t - The value
  */
-unsigned char ConfigGetValue(unsigned char value)
+uint8_t ConfigGetValue(uint8_t value)
 {
-    unsigned char data = 0x00;
+    uint8_t data = 0x00;
     // Catch invalid setting addresses
     if (value >= CONFIG_VALUE_START_ADDRESS &&
         value <= CONFIG_VALUE_END_ADDRESS
@@ -478,13 +493,13 @@ unsigned char ConfigGetValue(unsigned char value)
  *     Description:
  *         Get the vehicle VIN from the EEPROM
  *     Params:
- *         unsigned char *
+ *         uint8_t *
  *     Returns:
  *         void
  */
-void ConfigGetVehicleIdentity(unsigned char *vin)
+void ConfigGetVehicleIdentity(uint8_t *vin)
 {
-    unsigned char vinAddress[] = CONFIG_VEHICLE_VIN_ADDRESS;
+    uint8_t vinAddress[] = CONFIG_VEHICLE_VIN_ADDRESS;
     uint8_t i;
     for (i = 0; i < 5; i++) {
         vin[i] = ConfigGetByte(vinAddress[i]);
@@ -511,13 +526,47 @@ void ConfigSetBC127BootFailures(uint16_t failureCount)
  *     Description:
  *         Set the bootloader mode
  *     Params:
- *         unsigned char bootloaderMode - The Bootloader mode to set
+ *         uint8_t bootloaderMode - The Bootloader mode to set
  *     Returns:
  *         void
  */
-void ConfigSetBootloaderMode(unsigned char bootloaderMode)
+void ConfigSetBootloaderMode(uint8_t bootloaderMode)
 {
     ConfigSetByte(CONFIG_BOOTLOADER_MODE_ADDRESS, bootloaderMode);
+}
+
+/**
+ * ConfigSetByte()
+ *     Description:
+ *         Set a byte into the EEPROM and update cache
+ *     Params:
+ *         uint8_t address - The address to read from
+ *         uint8_t value - Value to set
+ */
+inline void ConfigSetByte(uint8_t address, uint8_t value)
+{
+    if (address < CONFIG_SETTING_CACHE_SIZE) {
+        CONFIG_SETTING_CACHE[address] = value;
+    }
+    EEPROMWriteByte(address, value);
+}
+
+/**
+ * ConfigSetBytes()
+ *     Description:
+ *         Set a byte into the EEPROM and update cache
+ *     Params:
+ *         uint8_t address - The address to read from
+ *         const uint8_t *data - The data pointer
+ *         uint8_t size - The length of the data in the pointer
+ */
+void ConfigSetBytes(uint8_t address, const uint8_t *data, uint8_t size)
+{
+    uint8_t i = 0;
+    for (i = 0; i < size; i++) {
+        ConfigSetByte(address, data[i]);
+        address++;
+    }
 }
 
 /**
@@ -525,14 +574,14 @@ void ConfigSetBootloaderMode(unsigned char bootloaderMode)
  *     Description:
  *         Set a given setting into the lower nibble of a byte in the EEPROM
  *     Params:
- *         unsigned char setting - The setting to set
- *         unsigned char value - The value to set
+ *         uint8_t setting - The setting to set
+ *         uint8_t value - The value to set
  *     Returns:
  *         void
  */
-void ConfigSetByteLowerNibble(unsigned char setting, unsigned char value)
+void ConfigSetByteLowerNibble(uint8_t setting, uint8_t value)
 {
-    unsigned char currentValue = ConfigGetByte(setting);
+    uint8_t currentValue = ConfigGetByte(setting);
     // Store the value in the lower nibble of the comfort locks setting
     currentValue &= 0xF0;
     currentValue |= value & 0x0F;
@@ -544,14 +593,14 @@ void ConfigSetByteLowerNibble(unsigned char setting, unsigned char value)
  *     Description:
  *         Set a given setting into the upper nibble of a byte in the EEPROM
  *     Params:
- *         unsigned char setting - The setting to set
- *         unsigned char value - The value to set
+ *         uint8_t setting - The setting to set
+ *         uint8_t value - The value to set
  *     Returns:
  *         void
  */
-void ConfigSetByteUpperNibble(unsigned char setting, unsigned char value)
+void ConfigSetByteUpperNibble(uint8_t setting, uint8_t value)
 {
-    unsigned char currentValue = ConfigGetByte(setting);
+    uint8_t currentValue = ConfigGetByte(setting);
     // Store the value in the upper nibble of the vehicle type byte
     currentValue &= 0x0F;
     currentValue |= (value << 4) & 0xF0;
@@ -563,11 +612,11 @@ void ConfigSetByteUpperNibble(unsigned char setting, unsigned char value)
  *     Description:
  *         Set the comfort lock setting
  *     Params:
- *         unsigned char comfortLock - The comfort lock setting
+ *         uint8_t comfortLock - The comfort lock setting
  *     Returns:
  *         void
  */
-void ConfigSetComfortLock(unsigned char comfortLock)
+void ConfigSetComfortLock(uint8_t comfortLock)
 {
     ConfigSetByteUpperNibble(CONFIG_SETTING_COMFORT_LOCKS, comfortLock);
 }
@@ -577,11 +626,11 @@ void ConfigSetComfortLock(unsigned char comfortLock)
  *     Description:
  *         Set the comfort unlock setting
  *     Params:
- *         unsigned char comfortUnlock - The comfort unlock setting
+ *         uint8_t comfortUnlock - The comfort unlock setting
  *     Returns:
  *         void
  */
-void ConfigSetComfortUnlock(unsigned char comfortUnlock)
+void ConfigSetComfortUnlock(uint8_t comfortUnlock)
 {
     ConfigSetByteLowerNibble(CONFIG_SETTING_COMFORT_LOCKS, comfortUnlock);
 }
@@ -591,16 +640,16 @@ void ConfigSetComfortUnlock(unsigned char comfortUnlock)
  *     Description:
  *         Set the firmware version
  *     Params:
- *         unsigned char major - The major version
- *         unsigned char minor - The minor version
- *         unsigned char patch - The patch version
+ *         uint8_t major - The major version
+ *         uint8_t minor - The minor version
+ *         uint8_t patch - The patch version
  *     Returns:
  *         void
  */
 void ConfigSetFirmwareVersion(
-    unsigned char major,
-    unsigned char minor,
-    unsigned char patch
+    uint8_t major,
+    uint8_t minor,
+    uint8_t patch
 ) {
     ConfigSetByte(CONFIG_FIRMWARE_VERSION_MAJOR_ADDRESS, major);
     ConfigSetByte(CONFIG_FIRMWARE_VERSION_MINOR_ADDRESS, minor);
@@ -612,11 +661,11 @@ void ConfigSetFirmwareVersion(
  *     Description:
  *         Set the IKE type
  *     Params:
- *         unsigned char ikeType - The IKE type
+ *         uint8_t ikeType - The IKE type
  *     Returns:
  *         void
  */
-void ConfigSetIKEType(unsigned char ikeType)
+void ConfigSetIKEType(uint8_t ikeType)
 {
     ConfigSetByteUpperNibble(CONFIG_VEHICLE_TYPE_ADDRESS, ikeType);
 }
@@ -626,11 +675,11 @@ void ConfigSetIKEType(unsigned char ikeType)
  *     Description:
  *         Set the Light Module variant
  *     Params:
- *         unsigned char version
+ *         uint8_t version
  *     Returns:
  *         void
  */
-void ConfigSetLMVariant(unsigned char variant)
+void ConfigSetLMVariant(uint8_t variant)
 {
     ConfigSetByte(CONFIG_LM_VARIANT_ADDRESS, variant);
 }
@@ -640,15 +689,15 @@ void ConfigSetLMVariant(unsigned char variant)
  *     Description:
  *         Set the log level for different systems
  *     Params:
- *         unsigned char system - The system to set the log mode for
- *         unsigned char mode - The mode
+ *         uint8_t system - The system to set the log mode for
+ *         uint8_t mode - The mode
  *     Returns:
  *         void
  */
-void ConfigSetLog(unsigned char system, unsigned char mode)
+void ConfigSetLog(uint8_t system, uint8_t mode)
 {
-    unsigned char currentSetting = ConfigGetByte(CONFIG_SETTING_LOG_ADDRESS);
-    unsigned char currentVal = (currentSetting >> system) & 1;
+    uint8_t currentSetting = ConfigGetByte(CONFIG_SETTING_LOG_ADDRESS);
+    uint8_t currentVal = (currentSetting >> system) & 1;
     if (mode != currentVal) {
         currentSetting ^= 1 << system;
     }
@@ -661,11 +710,11 @@ void ConfigSetLog(unsigned char system, unsigned char mode)
  *     Description:
  *         Set the Nav Type discovered
  *     Params:
- *         unsigned char version
+ *         uint8_t version
  *     Returns:
  *         void
  */
-void ConfigSetNavType(unsigned char type)
+void ConfigSetNavType(uint8_t type)
 {
     ConfigSetByte(CONFIG_NAV_TYPE_ADDRESS, type);
 }
@@ -675,12 +724,12 @@ void ConfigSetNavType(unsigned char type)
  *     Description:
  *         Set a given setting into the EEPROM
  *     Params:
- *         unsigned char setting - The setting to set
- *         unsigned char value - The value to set
+ *         uint8_t setting - The setting to set
+ *         uint8_t value - The value to set
  *     Returns:
  *         void
  */
-void ConfigSetSetting(unsigned char setting, unsigned char value)
+void ConfigSetSetting(uint8_t setting, uint8_t value)
 {
     // Catch invalid setting addresses
     if (setting >= CONFIG_SETTING_START_ADDRESS &&
@@ -691,15 +740,36 @@ void ConfigSetSetting(unsigned char setting, unsigned char value)
 }
 
 /**
+ * ConfigSetString()
+ *     Description:
+ *         Write a string to a given address
+ *     Params:
+ *         uint8_t address - The start address
+ *         char *string - The string to write to memory
+ *         uint8_t size - The size of the string
+ *     Returns:
+ *         void
+ */
+void ConfigSetString(uint8_t address, char *string, uint8_t size)
+{
+    uint8_t i = 0;
+    for (i = 0; i < size; i++) {
+        ConfigSetByte(address, string[i]);
+        address++;
+    }
+    ConfigSetByte(address, 0);
+}
+
+/**
  * ConfigSetTempDisplay()
  *     Description:
  *         Set the temperature display setting
  *     Params:
- *         unsigned char tempDisplay - The temperature display setting
+ *         uint8_t tempDisplay - The temperature display setting
  *     Returns:
  *         void
  */
-void ConfigSetTempDisplay(unsigned char tempDisplay)
+void ConfigSetTempDisplay(uint8_t tempDisplay)
 {
     ConfigSetByteLowerNibble(CONFIG_SETTING_BMBT_TEMP_DISPLAY, tempDisplay);
 }
@@ -709,11 +779,11 @@ void ConfigSetTempDisplay(unsigned char tempDisplay)
  *     Description:
  *         Set the temperature unit setting
  *     Params:
- *         unsigned char tempUnit - The temperature unit
+ *         uint8_t tempUnit - The temperature unit
  *     Returns:
  *         void
  */
-void ConfigSetTempUnit(unsigned char tempUnit)
+void ConfigSetTempUnit(uint8_t tempUnit)
 {
     ConfigSetByteUpperNibble(CONFIG_SETTING_BMBT_TEMP_DISPLAY, tempUnit);
 }
@@ -723,12 +793,12 @@ void ConfigSetTempUnit(unsigned char tempUnit)
  *     Description:
  *         Set the trap count for the given trap
  *     Params:
- *         unsigned char trap - The trap triggered
+ *         uint8_t trap - The trap triggered
  *         uint8_t count - The number 
  *     Returns:
  *         void
  */
-void ConfigSetTrapCount(unsigned char trap, unsigned char count)
+void ConfigSetTrapCount(uint8_t trap, uint8_t count)
 {
     if (count >= 0xFE) {
         // Reset the count so we don't overflow
@@ -742,13 +812,13 @@ void ConfigSetTrapCount(unsigned char trap, unsigned char count)
  *     Description:
  *         Increment the trap count for the given trap
  *     Params:
- *         unsigned char trap - The trap triggered
+ *         uint8_t trap - The trap triggered
  *     Returns:
  *         void
  */
-void ConfigSetTrapIncrement(unsigned char trap)
+void ConfigSetTrapIncrement(uint8_t trap)
 {
-    unsigned char count = ConfigGetTrapCount(trap);
+    uint8_t count = ConfigGetTrapCount(trap);
     ConfigSetTrapCount(trap, count + 1);
     ConfigSetTrapLast(trap);
 }
@@ -758,11 +828,11 @@ void ConfigSetTrapIncrement(unsigned char trap)
  *     Description:
  *         Set the last trap that was raised
  *     Params:
- *         unsigned char trap - The trap triggered
+ *         uint8_t trap - The trap triggered
  *     Returns:
  *         void
  */
-void ConfigSetTrapLast(unsigned char trap)
+void ConfigSetTrapLast(uint8_t trap)
 {
     ConfigSetByte(CONFIG_TRAP_LAST_ERR, trap);
 }
@@ -772,11 +842,11 @@ void ConfigSetTrapLast(unsigned char trap)
  *     Description:
  *         Set the UI mode
  *     Params:
- *         unsigned char uiMode - The UI mode to set
+ *         uint8_t uiMode - The UI mode to set
  *     Returns:
  *         void
  */
-void ConfigSetUIMode(unsigned char uiMode)
+void ConfigSetUIMode(uint8_t uiMode)
 {
     ConfigSetByte(CONFIG_UI_MODE_ADDRESS, uiMode);
 }
@@ -786,11 +856,11 @@ void ConfigSetUIMode(unsigned char uiMode)
  *     Description:
  *         Set the vehicle type
  *     Params:
- *         unsigned char vehicleType - The vehicle type
+ *         uint8_t vehicleType - The vehicle type
  *     Returns:
  *         void
  */
-void ConfigSetVehicleType(unsigned char vehicleType)
+void ConfigSetVehicleType(uint8_t vehicleType)
 {
     ConfigSetByteLowerNibble(CONFIG_VEHICLE_TYPE_ADDRESS, vehicleType);
 }
@@ -800,56 +870,15 @@ void ConfigSetVehicleType(unsigned char vehicleType)
  *     Description:
  *         Set the vehicle VIN
  *     Params:
- *         unsigned char *vin - The array to populate
+ *         uint8_t *vin - The array to populate
  *     Returns:
  *         void
  */
-void ConfigSetVehicleIdentity(unsigned char *vin)
+void ConfigSetVehicleIdentity(uint8_t *vin)
 {
-    unsigned char vinAddress[] = CONFIG_VEHICLE_VIN_ADDRESS;
+    uint8_t vinAddress[] = CONFIG_VEHICLE_VIN_ADDRESS;
     uint8_t i;
     for (i = 0; i < 5; i++) {
         ConfigSetByte(vinAddress[i], vin[i]);
     }
-}
-
-void ConfigSetString(unsigned char address, char *str, uint8_t size) {
-    while ((size>0)&&(str[0])!=0) {
-        ConfigSetByte(address,str[0]);
-        size--;
-        str++;
-        address++;
-    };
-    ConfigSetByte(address,0);
-}
-
-void ConfigGetString(unsigned char address, char *str, uint8_t size) {
-    char b = ConfigGetByte(address);
-    while ((size>0)&&(b!=0)) {
-        str[0]=b;
-        size--;
-        str++;
-        address++;
-        b = ConfigGetByte(address);
-    };
-    str[0]=0;
-}
-
-void ConfigSetBytes(unsigned char address, const uint8_t *str, uint8_t size) {
-    while (size>0) {
-        ConfigSetByte(address,str[0]);
-        size--;
-        str++;
-        address++;
-    };
-}
-
-void ConfigGetBytes(unsigned char address, uint8_t *str, uint8_t size) {
-    while (size>0) {
-        uint8_t b = ConfigGetByte(address);
-        str[0]=b;
-        size--;
-        str++;
-        address++;
-    };
 }

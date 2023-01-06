@@ -96,7 +96,6 @@ void BC127CommandVolume(BT_t *, uint8_t, char *);
 void BC127CommandWrite(BT_t *);
 uint8_t BC127GetConnectedDeviceCount(BT_t *);
 uint8_t BC127GetDeviceId(char *);
-void BC127ProcessEventA2DPStreamStart(BT_t *, char **);
 void BC127ProcessEventA2DPStreamSuspend(BT_t *, char **);
 void BC127ProcessEventAbsVol(BT_t *, char **);
 void BC127ProcessEventAT(BT_t *, char **, uint8_t);
@@ -121,6 +120,4 @@ void BC127SendCommandEmpty(BT_t *);
 void BC127ConvertMACIDToHex(char *, unsigned char *);
 uint8_t BC127ConnectionCloseProfile(BTConnection_t *, char *);
 void BC127ConnectionOpenProfile(BTConnection_t *, char *, uint8_t);
-
-void BC127RequestTimeOnTimer(void *);
 #endif /* BC127_H */

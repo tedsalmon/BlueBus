@@ -62,6 +62,8 @@ static const char UTILS_CHARS_LATIN[] =
     "SsTtTtTtUuUuUuUu" /* 0160-016F */
     "UuUuWwYyYZzZzZzF"; /* 0170-017F */
 
+static int8_t BOARD_VERSION = -1;
+
 /**
  * UtilsDisplayValueInit()
  *     Description:
@@ -93,11 +95,14 @@ UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *text, uint8_t status)
  */
 uint8_t UtilsGetBoardVersion()
 {
-    if (BOARD_VERSION_STATUS == BOARD_VERSION_ONE) {
-        return BOARD_VERSION_ONE;
-    } else {
-        return BOARD_VERSION_TWO;
+    if (BOARD_VERSION == -1) {
+        if (BOARD_VERSION_STATUS == BOARD_VERSION_ONE) {
+            BOARD_VERSION = BOARD_VERSION_ONE;
+        } else {
+            BOARD_VERSION = BOARD_VERSION_TWO;
+        }
     }
+    return BOARD_VERSION;
 }
 
 /**
@@ -317,22 +322,17 @@ void UtilsSetRPORMode(uint8_t pin, uint16_t mode)
  */
 void UtilsSetPinMode(uint8_t pin, uint8_t mode)
 {
-    switch (pin) {
-        case UTILS_PIN_TEL_ON: {
-            if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
-                TEL_ON_V1 = mode;
-            } else {
-                TEL_ON_V2 = mode;
-            }
-            break;
+    if (pin == UTILS_PIN_TEL_ON) {
+        if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+            TEL_ON_V1 = mode;
+        } else {
+            TEL_ON_V2 = mode;
         }
-        case UTILS_PIN_TEL_MUTE: {
-            if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
-                TEL_MUTE_V1 = mode;
-            } else {
-                TEL_MUTE_V2 = mode;
-            }
-            break;
+    } else if (pin == UTILS_PIN_TEL_MUTE) {
+        if (UtilsGetBoardVersion() == BOARD_VERSION_ONE) {
+            TEL_MUTE_V1 = mode;
+        } else {
+            TEL_MUTE_V2 = mode;
         }
     }
 }
