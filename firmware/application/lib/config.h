@@ -69,7 +69,7 @@
 #define CONFIG_SETTING_IGN_ALWAYS_ON_ADDRESS 0x62
 #define CONFIG_SETTING_SELF_PLAY_ADDRESS 0x63
 #define CONFIG_SETTING_LAST_CONNECTED_DEVICE_ADDRESS 0x64
-#define CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC_ADDRESS 0x65 // + 0x66 0x67 0x68 0x69 0x6a 
+#define CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC_ADDRESS 0x65 // 0x65 - 0x6A
 
 /* Values 0xA0 - 0xB0: Informational & Counters */
 #define CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB_ADDRESS 0xA0
@@ -156,66 +156,60 @@
 #define CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB_ADDRESS
 #define CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB_ADDRESS
 /* Settings Boundary Helpers */
-#define CONFIG_SETTING_START_ADDRESS 0x1A
+#define CONFIG_SETTING_START_ADDRESS CONFIG_UI_MODE_ADDRESS
 #define CONFIG_SETTING_END_ADDRESS 0x70
 #define CONFIG_VALUE_START_ADDRESS 0xA0
 #define CONFIG_VALUE_END_ADDRESS 0xB0
 
 
 uint16_t ConfigGetBC127BootFailures();
-//unsigned char ConfigGetByte(unsigned char);
-//void ConfigSetByte(unsigned char, unsigned char);
-//unsigned char ConfigGetByteLowerNibble(unsigned char);
-//unsigned char ConfigGetByteUpperNibble(unsigned char);
-unsigned char ConfigGetBuildWeek();
-unsigned char ConfigGetBuildYear();
-unsigned char ConfigGetComfortLock();
-unsigned char ConfigGetComfortUnlock();
-unsigned char ConfigGetFirmwareVersionMajor();
-unsigned char ConfigGetFirmwareVersionMinor();
-unsigned char ConfigGetFirmwareVersionPatch();
+uint8_t ConfigGetBuildWeek();
+uint8_t ConfigGetBuildYear();
+void ConfigGetBytes(uint8_t, uint8_t *, uint8_t);
+uint8_t ConfigGetComfortLock();
+uint8_t ConfigGetComfortUnlock();
+uint8_t ConfigGetFirmwareVersionMajor();
+uint8_t ConfigGetFirmwareVersionMinor();
+uint8_t ConfigGetFirmwareVersionPatch();
 void ConfigGetFirmwareVersionString(char *);
-unsigned char ConfigGetIKEType();
-unsigned char ConfigGetLightingFeaturesActive();
-unsigned char ConfigGetLMVariant();
-unsigned char ConfigGetLog(unsigned char);
-unsigned char ConfigGetNavType();
+uint8_t ConfigGetIKEType();
+uint8_t ConfigGetLightingFeaturesActive();
+uint8_t ConfigGetLMVariant();
+uint8_t ConfigGetLog(uint8_t);
+uint8_t ConfigGetNavType();
 uint16_t ConfigGetSerialNumber();
-unsigned char ConfigGetSetting(unsigned char);
-unsigned char ConfigGetTelephonyFeaturesActive();
-unsigned char ConfigGetTempDisplay();
-unsigned char ConfigGetTempUnit();
-unsigned char ConfigGetTrapCount(unsigned char);
-unsigned char ConfigGetTrapLast();
-unsigned char ConfigGetUIMode();
-unsigned char ConfigGetValue(unsigned char);
-unsigned char ConfigGetVehicleType();
-unsigned char ConfigGetLanguage();
-void ConfigGetVehicleIdentity(unsigned char *);
-void ConfigGetString(unsigned char, char *, uint8_t);
-void ConfigGetBytes(unsigned char, uint8_t *, uint8_t);
-
+uint8_t ConfigGetSetting(uint8_t);
+uint8_t ConfigGetTelephonyFeaturesActive();
+uint8_t ConfigGetTempDisplay();
+uint8_t ConfigGetTempUnit();
+uint8_t ConfigGetTrapCount(uint8_t);
+uint8_t ConfigGetTrapLast();
+uint8_t ConfigGetUIMode();
+uint8_t ConfigGetValue(uint8_t);
+uint8_t ConfigGetVehicleType();
+uint8_t ConfigGetLanguage();
+void ConfigGetVehicleIdentity(uint8_t *);
+void ConfigGetString(uint8_t, char *, uint8_t);
 void ConfigSetBC127BootFailures(uint16_t);
-//void ConfigSetByteLowerNibble(unsigned char, unsigned char);
-//void ConfigSetByteUpperNibble(unsigned char, unsigned char);
-void ConfigSetBootloaderMode(unsigned char);
-void ConfigSetComfortLock(unsigned char);
-void ConfigSetComfortUnlock(unsigned char);
-void ConfigSetFirmwareVersion(unsigned char, unsigned char, unsigned char);
-void ConfigSetIKEType(unsigned char);
-void ConfigSetLMVariant(unsigned char);
-void ConfigSetLog(unsigned char, unsigned char);
-void ConfigSetSetting(unsigned char, unsigned char);
-void ConfigSetNavType(unsigned char);
-void ConfigSetTempDisplay(unsigned char);
-void ConfigSetTempUnit(unsigned char);
-void ConfigSetTrapCount(unsigned char, unsigned char);
-void ConfigSetTrapIncrement(unsigned char);
-void ConfigSetTrapLast(unsigned char);
-void ConfigSetUIMode(unsigned char);
-void ConfigSetVehicleType(unsigned char);
-void ConfigSetVehicleIdentity(unsigned char *);
-void ConfigSetLanguage(unsigned char);
-void ConfigSetString(unsigned char, char *, uint8_t);
-void ConfigSetBytes(unsigned char, const uint8_t *, uint8_t);
+void ConfigSetBootloaderMode(uint8_t);
+inline void ConfigSetByte(uint8_t, uint8_t);
+void ConfigSetBytes(uint8_t, const uint8_t *, uint8_t);
+void ConfigSetComfortLock(uint8_t);
+void ConfigSetComfortUnlock(uint8_t);
+void ConfigSetFirmwareVersion(uint8_t, uint8_t, uint8_t);
+void ConfigSetIKEType(uint8_t);
+void ConfigSetLMVariant(uint8_t);
+void ConfigSetLog(uint8_t, uint8_t);
+void ConfigSetSetting(uint8_t, uint8_t);
+void ConfigSetNavType(uint8_t);
+void ConfigSetTempDisplay(uint8_t);
+void ConfigSetTempUnit(uint8_t);
+void ConfigSetTrapCount(uint8_t, uint8_t);
+void ConfigSetTrapIncrement(uint8_t);
+void ConfigSetTrapLast(uint8_t);
+void ConfigSetUIMode(uint8_t);
+void ConfigSetVehicleType(uint8_t);
+void ConfigSetVehicleIdentity(uint8_t *);
+void ConfigSetLanguage(uint8_t);
+void ConfigSetString(uint8_t, char *, uint8_t);
 #endif /* CONFIG_H */

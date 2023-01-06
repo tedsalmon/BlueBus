@@ -524,10 +524,11 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
         strncpy(f1, " ", 2);
     }
 
-    if ((strlen(f2) == 0) && (strlen(f3) == 0)) {
+    // Prevent duplication of fields
+    if (strlen(f2) == 0 && strlen(f3) == 0) {
         strncpy(f2, " ", 2);
         strncpy(f3, " ", 2);
-    } else if ((strlen(f2) == 0) && (strlen(f3) != 0)) {
+    } else if (strlen(f2) == 0 && strlen(f3) != 0) {
         char *tmp = f2;
         f2 = f3;
         f3 = tmp;
@@ -535,12 +536,12 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
         if (strncmp(f1, f2, BT_METADATA_FIELD_SIZE) == 0) {
             strncpy(f2, " ", 2);
         }
-    } else if ((strlen(f3) == 0)) {
+    } else if (strlen(f3) == 0) {
         strncpy(f3, " ", 2);
         if (strncmp(f1, f2, BT_METADATA_FIELD_SIZE) == 0) {
             strncpy(f2, " ", 2);
         }
-    } else if ((strlen(f2) != 0) && (strncmp(f2, f3, BT_METADATA_FIELD_SIZE) == 0)) {
+    } else if (strlen(f2) != 0 && strncmp(f2, f3, BT_METADATA_FIELD_SIZE) == 0) {
         strncpy(f3, " ", 2);
         if (strncmp(f1, f2, BT_METADATA_FIELD_SIZE) == 0) {
             strncpy(f2, " ", 2);
@@ -578,20 +579,31 @@ static void BMBTMenuDashboard(BMBTContext_t *context)
     char artist[BT_METADATA_FIELD_SIZE] = {0};
     char album[BT_METADATA_FIELD_SIZE] = {0};
     UtilsStrncpy(title, context->bt->title, BT_METADATA_FIELD_SIZE);
-    UtilsStrncpy(artist, context->bt->artist, BT_METADATA_FIELD_SIZE);
-    UtilsStrncpy(album, context->bt->album, BT_METADATA_FIELD_SIZE);
+    uint8_t metadataKnown = 1;
     if (context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED) {
         if (strlen(title) == 0) {
-            UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_NOT_PLAYING), BT_METADATA_FIELD_SIZE);
-            artist[0]=0;
-            album[0]=0;
+            UtilsStrncpy(
+                title,
+                LocaleGetText(LOCALE_STRING_NOT_PLAYING),
+                BT_METADATA_FIELD_SIZE
+            );
+            metadataKnown = 0;
         }
     } else {
         // Set "Unknown" text for title and artist when missing but ignore
         // missing album or artist information as many streaming apps do not provide it
         if (strlen(title) == 0) {
-            UtilsStrncpy(title, LocaleGetText(LOCALE_STRING_UNKNOWN_TITLE), BT_METADATA_FIELD_SIZE);
+            UtilsStrncpy(
+                title,
+                LocaleGetText(LOCALE_STRING_UNKNOWN_TITLE),
+                BT_METADATA_FIELD_SIZE
+            );
         }
+    }
+    // Only copy the data if we need it
+    if (metadataKnown == 1) {
+        UtilsStrncpy(artist, context->bt->artist, BT_METADATA_FIELD_SIZE);
+        UtilsStrncpy(album, context->bt->album, BT_METADATA_FIELD_SIZE);
     }
     BMBTMenuDashboardUpdate(context, title, artist, album);
     context->menu = BMBT_MENU_DASHBOARD;
@@ -2058,8 +2070,11 @@ void BMBTRADDisplayMenu(void *ctx, uint8_t *pkt)
  */
 void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
 {
-    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_IKE) return;
-    
+    // Main area updates to the IKE should not trigger BMBT refreshes
+    // This message is only intended to support the CD54 more consistently
+    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_IKE) {
+        return;
+    }    
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == IBUS_C43_TITLE_MODE) {
         context->status.radType = IBUS_RADIO_TYPE_C43;

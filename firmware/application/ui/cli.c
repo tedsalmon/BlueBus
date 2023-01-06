@@ -773,11 +773,11 @@ void CLIProcess()
                     BC127CommandWrite(cli.bt);
                     // Set the Mic Gain to -23dB by default
                     micGain = 0x01;
-                    ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
+                    ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC, 0x00);
                 } else {
                     BM83CommandRestore(cli.bt);
                     ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
-                    ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
+                    ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC, 0x00);
                     micGain = 0x00;
                 }
                 // Reset the UI

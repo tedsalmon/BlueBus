@@ -718,11 +718,14 @@ void HandlerTimerBTTCUStateChange(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
         LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU > Enable");
-        // Enable the amp and mute the radio
-        PAM_SHDN = 1;
+        // Enable TEL_ON in case it is not already
+        UtilsSetPinMode(UTILS_PIN_TEL_ON, 1);
+        // Mute the Radio
         UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 1);
         // Set the DAC Volume to the "telephone" volume
         PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL));
+        // Enable the telephone amplifier
+        PAM_SHDN = 1;
     }
     TimerSetTaskInterval(
         context->tcuStateChangeTimerId,
