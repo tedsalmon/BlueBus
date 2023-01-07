@@ -1232,9 +1232,28 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             datetime[4] >= 0 && datetime[4] <= 59 &&
             datetime[5] >= 0 && datetime[5] <= 59
         ) {
-            EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
+            if (datetime[5]<2) {
+                EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
+            } else {
+                TimerRegisterScheduledTask(&BC127RequestTimeOnTimer, bt, (60-datetime[5])*1000);
+            }
         }
     }
+}
+
+/**
+ * BC127RequestTimeOnTimer()
+ *     Description:
+ *         Request time from BT device on turn of minute
+ *     Params:
+ *         BT_t *ctx - A pointer to the BT object
+ *     Returns:
+ *         void
+ */
+void BC127RequestTimeOnTimer(void *ctx) {
+    BT_t    *bt = (BT_t *)ctx;
+    TimerUnregisterScheduledTask(&BC127RequestTimeOnTimer);
+    BC127CommandAT(bt, "+CCLK?");
 }
 
 /**
