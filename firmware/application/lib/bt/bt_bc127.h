@@ -120,4 +120,5 @@ void BC127SendCommandEmpty(BT_t *);
 void BC127ConvertMACIDToHex(char *, unsigned char *);
 uint8_t BC127ConnectionCloseProfile(BTConnection_t *, char *);
 void BC127ConnectionOpenProfile(BTConnection_t *, char *, uint8_t);
+void BC127RequestTimeOnTimer(void *);
 #endif /* BC127_H */
