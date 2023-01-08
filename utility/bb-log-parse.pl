@@ -446,6 +446,7 @@ my %data_parsers = (
 	"IKE_BROADCAST_REPLICATE_REDUNDANT_DATA" => \&ike_data_parsers_redundant_data,
 	"IKE_BROADCAST_ODO_RESPONSE" => \&ike_data_parsers_ike_odo_response,
 	"LCM_RESP_REDUNDANT_DATA" => \&ike_data_parsers_lcm_redundant_data,
+	"LCM_BROADCAST_INDICATORS_RESP" =>\&ike_data_parsers_lcm_indicator_resp,
 
 	"IKE_GPS_TIMEDATE" => \&ike_data_parsers_ike_gps_time,
 
@@ -1879,6 +1880,57 @@ sub ike_data_parsers_lcm_redundant_data {
 
 	return "vin=$vin, odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
 };
+
+sub ike_data_parsers_lcm_indicator_resp {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $turn_rapid = 		$data->[0] & 0b1000_0000;
+	my $turn_right = 		$data->[0] & 0b0100_0000;
+	my $turn_left =  		$data->[0] & 0b0010_0000;
+	my $fog_rear =   		$data->[0] & 0b0001_0000;
+	my $fog_front =  		$data->[0] & 0b0000_1000;
+	my $beam_high =  		$data->[0] & 0b0000_0100;
+	my $beam_low  =  		$data->[0] & 0b0000_0010;
+	my $parking =    		$data->[0] & 0b0000_0001;
+
+	my $ccm_lic_plate =  	$data->[1] & 0b1000_0000;
+	my $ccm_turn_right = 	$data->[1] & 0b0100_0000;
+	my $ccm_turn_left =  	$data->[1] & 0b0010_0000;
+	my $ccm_fog_rear =   	$data->[1] & 0b0001_0000;
+	my $ccm_fog_front =  	$data->[1] & 0b0000_1000;
+	my $ccm_beam_high =  	$data->[1] & 0b0000_0100;
+	my $ccm_beam_low  =  	$data->[1] & 0b0000_0010;
+	my $ccm_parking =    	$data->[1] & 0b0000_0001;
+
+	my $ccm_reverse = 		$data->[2] & 0b0010_0000;
+	my $indicators = 		$data->[2] & 0b0000_0100;
+	my $ccm_brake = 		$data->[2] & 0b0000_0010;
+
+	my $fog_rear_switch = 	$data->[3] & 0b0100_0000;
+	my $kombi_low_left = 	$data->[3] & 0b0010_0000;
+	my $kombi_low_right = 	$data->[3] & 0b0001_0000;
+	my $kombi_brake_left = 	$data->[3] & 0b0000_0010;
+	my $kombi_brake_right =	$data->[3] & 0b0000_0001;
+
+	my $resp = "turn=".($turn_left?'LEFT,':'').($turn_right?'RIGHT,':'').($turn_rapid?'RAPID,':'').($indicators?'INDICATORS,':'').
+			" fog=".($fog_front?'FRONT,':'').($fog_rear?'REAR,':'').
+			" fog_switch=".($fog_rear_switch?'REAR,':'').
+			" kombi_low=".($kombi_low_left?'LEFT,':'').($kombi_low_right?'RIGHT,':'').
+			" kombi_brake=".($kombi_brake_left?'LEFT,':'').($kombi_brake_right?'RIGHT,':'').
+			" other=".($parking?'PARKING,':'').($beam_low?'BEAM_LOW,':'').($beam_high?'BEAM_HIGH,':'').
+			" ccm=".($ccm_turn_left?'TURN_LEFT,':'').($ccm_turn_right?'TURN_RIGHT,':'').
+					($ccm_fog_front?'FOG_FRONT,':'').($ccm_fog_rear?'FOG_REAR,':'').
+					($ccm_beam_low?'BEAM_LOW,':'').($ccm_beam_high?'BEAM_HIGH,':'').
+					($ccm_lic_plate?'LICENCE_PLATE,':'').
+					($ccm_parking?'PARKING,':'').
+					($ccm_reverse?'REVERSE,':'').
+					($ccm_brake?'BRAKE,':'').
+			" raw=$string";
+	$resp =~ s/[a-z_]+=\s//go;
+
+	return $resp;
+}
+
 
 sub ike_data_parsers_doors_status {
 	my ($src, $dst, $string, $data) = @_;
