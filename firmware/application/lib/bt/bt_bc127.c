@@ -1223,6 +1223,8 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         uint8_t di = 0;
         uint8_t i = 0;
         uint8_t ampm12 = 0; // 0 = 24h, 1 = 12h am, 2 = 12h pm
+        char *time = msgBuf[5];
+        char *ampm = 0;
         
         while ((msgBuf[4][i]!=0) && (di<3)) {
             if (msgBuf[4][i]>='0' && msgBuf[4][i]<='9') {
@@ -1232,30 +1234,41 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             }
             i++;
         }
-
-        i = 0;
-        while ((msgBuf[5][i]!=0) && (di<6)) {
-            if (msgBuf[5][i]>='0' && msgBuf[5][i]<='9') {
-                datetime[di] = 10 * datetime[di] + ( msgBuf[5][i] - '0' ); 
+        
+        if ((msgBuf[4][i]!=0) && (di==3)) {
+            time=msgBuf[4]+i;
+            if (delimCount > 5) {
+                ampm=msgBuf[5];
+            };
+        } else {
+            time=msgBuf[5];
+            if (delimCount > 6) {
+                ampm=msgBuf[6];
+            };
+        };
+        
+        i = 0;        
+        while ((time[i]!=0) && (di<6)) {
+            if (time[i]>='0' && time[i]<='9') {
+                datetime[di] = 10 * datetime[di] + ( time[i] - '0' ); 
             } else {
-                if ((msgBuf[5][i]=='a') || (msgBuf[5][i]=='A')) {
+                if ((time[i]=='a') || (time[i]=='A')) {
                     ampm12 = 1;
-                } else if ((msgBuf[5][i]=='p') || (msgBuf[5][i]=='P')) {
+                } else if ((time[i]=='p') || (time[i]=='P')) {
                     ampm12 = 2;
                 }
                 di++;
             }
             i++;
         }
-        
-        if ((ampm12 == 0) && (delimCount > 6)) {
-            if ((msgBuf[6][0]=='a') || (msgBuf[6][0]=='A')) {
+        if ((ampm12 == 0) && ampm) {
+            if ((ampm[0]=='a') || (ampm[0]=='A')) {
                 ampm12 = 1;
-            } else if ((msgBuf[6][0]=='p') || (msgBuf[6][0]=='P')) {
+            } else if ((ampm[0]=='p') || (ampm[0]=='P')) {
                 ampm12 = 2;
             }
         }
-        
+                
         if (ampm12 == 1) {
             if ( datetime[3] == 12 ) {
                 datetime[3] = 0;
