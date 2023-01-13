@@ -1213,17 +1213,59 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         }
     } else if (strcmp(msgBuf[3], "+CCLK:") == 0) {
         // Parse the returned date and time so we can update the vehicle
-        // Example: \2222/10/19, 00:08:18\22
+        // Example 24h: \2222/10/19, 00:08:18\22
+        //         12h: \2223/01/13, 1:31:00 pm\22 
+
         UtilsRemoveSubstring(msgBuf[4],"\\22");
         UtilsRemoveSubstring(msgBuf[5],"\\22");        
+        
+        uint8_t datetime[6]={0};
+        uint8_t di = 0;
+        uint8_t i = 0;
+        uint8_t ampm12 = 0; // 0 = 24h, 1 = 12h am, 2 = 12h pm
+        
+        while ((msgBuf[4][i]!=0) && (di<3)) {
+            if (msgBuf[4][i]>='0' && msgBuf[4][i]<='9') {
+                datetime[di] = 10 * datetime[di] + ( msgBuf[4][i] - '0' ); 
+            } else {
+                di++;
+            }
+            i++;
+        }
 
-        uint8_t datetime[6];
-        datetime[0] = UtilsStrToInt(msgBuf[4]); // year
-        datetime[1] = UtilsStrToInt(msgBuf[4] + 3); // month
-        datetime[2] = UtilsStrToInt(msgBuf[4] + 6); // day
-        datetime[3] = UtilsStrToInt(msgBuf[5]); // hour
-        datetime[4] = UtilsStrToInt(msgBuf[5] + 3); // min
-        datetime[5] = UtilsStrToInt(msgBuf[5] + 6); // sec
+        i = 0;
+        while ((msgBuf[5][i]!=0) && (di<6)) {
+            if (msgBuf[5][i]>='0' && msgBuf[5][i]<='9') {
+                datetime[di] = 10 * datetime[di] + ( msgBuf[5][i] - '0' ); 
+            } else {
+                if ((msgBuf[5][i]=='a') || (msgBuf[5][i]=='A')) {
+                    ampm12 = 1;
+                } else if ((msgBuf[5][i]=='p') || (msgBuf[5][i]=='P')) {
+                    ampm12 = 2;
+                }
+                di++;
+            }
+            i++;
+        }
+        
+        if ((ampm12 == 0) && (delimCount > 6)) {
+            if ((msgBuf[6][0]=='a') || (msgBuf[6][0]=='A')) {
+                ampm12 = 1;
+            } else if ((msgBuf[6][0]=='p') || (msgBuf[6][0]=='P')) {
+                ampm12 = 2;
+            }
+        }
+        
+        if (ampm12 == 1) {
+            if ( datetime[3] == 12 ) {
+                datetime[3] = 0;
+            }
+        } else if (ampm12 == 2) {
+            if (datetime[3] < 12) {
+                datetime[3] += 12;
+            }
+        }
+        
         // Validate the date and time
         if (datetime[0] > 20 &&
             datetime[1] >= 1 && datetime[1] <= 12 &&
