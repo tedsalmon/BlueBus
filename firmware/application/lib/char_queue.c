@@ -15,9 +15,9 @@
  *     Returns:
  *         volatile CharQueue_t *
  */
-CharQueue_t CharQueueInit()
+volatile CharQueue_t CharQueueInit()
 {
-    CharQueue_t queue;
+    volatile CharQueue_t queue;
     // Initialize size and cursors
     CharQueueReset(&queue);
     return queue;

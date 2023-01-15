@@ -140,7 +140,6 @@ int main(void)
     }
 
     ON_LED = 1;
-
     // Initialize handlers
     HandlerInit(&bt, &ibus);
     // Initialize the CLI

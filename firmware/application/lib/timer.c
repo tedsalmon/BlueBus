@@ -100,6 +100,10 @@ void TimerProcessScheduledTasks()
  */
 uint8_t TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
 {
+    if (TimerRegisteredTasksCount == TIMER_TASKS_MAX) {
+        LogError("FAILED TO REGISTER TIMER -- Allocations Full");
+        return 0;
+    }
     TimerScheduledTask_t scheduledTask;
     scheduledTask.task = task;
     scheduledTask.context = ctx;
