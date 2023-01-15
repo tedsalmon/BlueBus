@@ -333,7 +333,7 @@ void BC127CommandBtState(BT_t *bt, uint8_t connectable, uint8_t discoverable)
     } else if (discoverable == 0) {
         UtilsStrncpy(discoverMode, "OFF", 4);
     }
-    char command[17];
+    char command[17] = {0};
     snprintf(command, 17, "BT_STATE %s %s", connectMode, discoverMode);
     BC127SendCommand(bt, command);
 }

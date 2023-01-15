@@ -6,48 +6,6 @@
  */
 #include "utils.h"
 
-/* Hold a pin to register map for all programmable output pins */
-static uint16_t *ROPR_PINS[] = {
-    GET_RPOR(0),
-    GET_RPOR(0),
-    GET_RPOR(1),
-    GET_RPOR(1),
-    GET_RPOR(2),
-    GET_RPOR(2),
-    GET_RPOR(3),
-    GET_RPOR(3),
-    GET_RPOR(4),
-    GET_RPOR(4),
-    GET_RPOR(5),
-    GET_RPOR(5),
-    GET_RPOR(6),
-    GET_RPOR(6),
-    GET_RPOR(7),
-    GET_RPOR(7),
-    GET_RPOR(8),
-    GET_RPOR(8),
-    GET_RPOR(9),
-    GET_RPOR(9),
-    GET_RPOR(10),
-    GET_RPOR(10),
-    GET_RPOR(11),
-    GET_RPOR(11),
-    GET_RPOR(12),
-    GET_RPOR(12),
-    GET_RPOR(13),
-    GET_RPOR(13),
-    GET_RPOR(14),
-    GET_RPOR(14),
-    GET_RPOR(15),
-    GET_RPOR(15),
-    GET_RPOR(16),
-    GET_RPOR(16),
-    GET_RPOR(17),
-    GET_RPOR(17),
-    GET_RPOR(18),
-    GET_RPOR(18)
-};
-
 static const char UTILS_CHARS_LATIN[] =
     "AAAA\xa1""AACEEEEIIII" /* 00C0-00CF */
     "D\xaf""OOOO\xa2*\xa7UUU\xa3Yp\xa0" /* 00D0-00DF */
@@ -299,14 +257,23 @@ void UtilsReset()
  */
 void UtilsSetRPORMode(uint8_t pin, uint16_t mode)
 {
+    // Prevent writing to memory that does not exist
+    if (pin > UTILS_MAX_RPOR_PIN) {
+        return 0;
+    }
+    uint8_t regNum = 0;
+    if (pin > 1) {
+        regNum = pin / 2;
+    }
+    volatile uint16_t *PROG_PIN = GET_RPOR(regNum);
     if ((pin % 2) == 0) {
-        uint16_t msb = *ROPR_PINS[pin] >> 8;
+        uint16_t msb = *PROG_PIN >> 8;
         // Set the least significant bits for the even pin number
-        *ROPR_PINS[pin] = (msb << 8) + mode;
+        *PROG_PIN = (msb << 8) + mode;
     } else {
-        uint16_t lsb = *ROPR_PINS[pin] & 0xFF;
+        uint16_t lsb = *PROG_PIN & 0xFF;
         // Set the least significant bits of the register for the odd pin number
-        *ROPR_PINS[pin] = (mode << 8) + lsb;
+        *PROG_PIN = (mode << 8) + lsb;
     }
 }
 

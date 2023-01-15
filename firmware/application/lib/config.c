@@ -10,26 +10,6 @@ uint8_t CONFIG_SETTING_CACHE[CONFIG_SETTING_CACHE_SIZE] = {0};
 uint8_t CONFIG_VALUE_CACHE[CONFIG_VALUE_CACHE_SIZE] = {0};
 
 /**
- * ConfigGetBC127BootFailures()
- *     Description:
- *         Get the count of BC127 boot failures
- *     Params:
- *         None
- *     Returns:
- *         uint16_t
- */
-uint16_t ConfigGetBC127BootFailures()
-{
-    uint8_t lsb = ConfigGetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB);
-    uint8_t msb = ConfigGetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB);
-    // 0xFFFF is the max allowable value, so reset the counter
-    if (lsb == 0xFF && msb == 0xFF) {
-        return 0;
-    }
-    return (msb << 8) + lsb;
-}
-
-/**
  * ConfigGetByte()
  *     Description:
  *         Pull a byte from the EEPROM. If that byte is 0xFF, assume it's 0x00
@@ -54,6 +34,42 @@ static inline uint8_t ConfigGetByte(uint8_t address)
         }
     }
     return value;
+}
+
+/**
+ * ConfigSetByte()
+ *     Description:
+ *         Set a byte into the EEPROM and update cache
+ *     Params:
+ *         uint8_t address - The address to read from
+ *         uint8_t value - Value to set
+ */
+static inline void ConfigSetByte(uint8_t address, uint8_t value)
+{
+    if (address < CONFIG_SETTING_CACHE_SIZE) {
+        CONFIG_SETTING_CACHE[address] = value;
+    }
+    EEPROMWriteByte(address, value);
+}
+
+/**
+ * ConfigGetBC127BootFailures()
+ *     Description:
+ *         Get the count of BC127 boot failures
+ *     Params:
+ *         None
+ *     Returns:
+ *         uint16_t
+ */
+uint16_t ConfigGetBC127BootFailures()
+{
+    uint8_t lsb = ConfigGetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB);
+    uint8_t msb = ConfigGetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB);
+    // 0xFFFF is the max allowable value, so reset the counter
+    if (lsb == 0xFF && msb == 0xFF) {
+        return 0;
+    }
+    return (msb << 8) + lsb;
 }
 
 /**
@@ -517,8 +533,10 @@ void ConfigGetVehicleIdentity(uint8_t *vin)
  */
 void ConfigSetBC127BootFailures(uint16_t failureCount)
 {
-    ConfigSetSetting(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB, failureCount >> 8);
-    ConfigSetSetting(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB, failureCount & 0xFF);
+    // The use of EEPROMWriteByte() is required because we are writing
+    // outside of the bounds of the Configuration value address space
+    EEPROMWriteByte(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB, failureCount >> 8);
+    EEPROMWriteByte(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB, failureCount & 0xFF);
 }
 
 /**
@@ -533,22 +551,6 @@ void ConfigSetBC127BootFailures(uint16_t failureCount)
 void ConfigSetBootloaderMode(uint8_t bootloaderMode)
 {
     ConfigSetByte(CONFIG_BOOTLOADER_MODE_ADDRESS, bootloaderMode);
-}
-
-/**
- * ConfigSetByte()
- *     Description:
- *         Set a byte into the EEPROM and update cache
- *     Params:
- *         uint8_t address - The address to read from
- *         uint8_t value - Value to set
- */
-inline void ConfigSetByte(uint8_t address, uint8_t value)
-{
-    if (address < CONFIG_SETTING_CACHE_SIZE) {
-        CONFIG_SETTING_CACHE[address] = value;
-    }
-    EEPROMWriteByte(address, value);
 }
 
 /**
