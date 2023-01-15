@@ -562,7 +562,7 @@ Australia &amp; U.S.A.</text>
 <wire x1="-2.2" y1="-1.5" x2="2.2" y2="-1.5" width="0.1" layer="21"/>
 <wire x1="-2.2" y1="1.5" x2="2.2" y2="1.5" width="0.1" layer="21"/>
 <circle x="-4.2" y="0.975" radius="0.1" width="0.2" layer="21"/>
-<text x="0" y="1.65" size="1" layer="21" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
+<text x="0" y="1.65" size="1" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
 </package>
 <package name="SOP-16">
 <description>&lt;b&gt;SMALL OUTLINE PACKAGE 16&lt;/b&gt;</description>
@@ -883,8 +883,8 @@ Australia &amp; U.S.A.</text>
 <smd name="3" x="0" y="0" dx="0.4" dy="1.35" layer="1"/>
 <smd name="4" x="0.65" y="0" dx="0.4" dy="1.35" layer="1"/>
 <smd name="5" x="1.3" y="0" dx="0.4" dy="1.35" layer="1"/>
-<hole x="-1.95" y="-0.53" drill="0.55"/>
-<hole x="1.95" y="-0.53" drill="0.55"/>
+<hole x="-1.95" y="-0.53" drill="0.65"/>
+<hole x="1.95" y="-0.53" drill="0.65"/>
 <pad name="MNT1" x="-2.825" y="-2.68" drill="0.45" diameter="1.075" shape="long" rot="R90"/>
 <pad name="MNT2" x="2.825" y="-2.68" drill="0.45" diameter="1.075" shape="long" rot="R90"/>
 <wire x1="-3.7" y1="-5.01" x2="3.7" y2="-5.01" width="0.1" layer="21"/>
@@ -898,8 +898,8 @@ Australia &amp; U.S.A.</text>
 <wire x1="-3.7" y1="-4.13" x2="3.7" y2="-4.13" width="0.1" layer="21"/>
 <smd name="MNT3" x="-1.1" y="-2.68" dx="1.8" dy="1.8" layer="1" rot="R90"/>
 <smd name="MNT4" x="1.1" y="-2.68" dx="1.8" dy="1.8" layer="1" rot="R90"/>
-<rectangle x1="-3.4" y1="-3.75" x2="-2.25" y2="-1.6" layer="31"/>
-<rectangle x1="2.25" y1="-3.75" x2="3.4" y2="-1.6" layer="31"/>
+<rectangle x1="-3.75" y1="-3.85" x2="-2.25" y2="-1.5" layer="31"/>
+<rectangle x1="2.25" y1="-3.85" x2="3.75" y2="-1.5" layer="31"/>
 </package>
 <package name="CUI_SJ2_35853A_SMT_TR">
 <wire x1="-6" y1="2.9" x2="-2.5" y2="2.9" width="0.127" layer="51"/>
@@ -1925,10 +1925,10 @@ OSHW_LOGO</description>
 <attribute name="NAME" x="48" y="49.95" size="1" layer="25" font="vector" ratio="15" rot="R180" align="bottom-center"/>
 <attribute name="PN" value="DIT4096IPW" x="48" y="55" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
-<element name="U6" library="ICs" package="TSSOP-8" value="CAT25M01" x="32.5" y="27.5" smashed="yes" rot="R180">
+<element name="U6" library="ICs" package="TSSOP-8" value="CAT25128" x="32.5" y="27.5" smashed="yes" rot="R180">
 <attribute name="MFG" value="ONSEMI" x="32.5" y="27.5" size="1.778" layer="27" rot="R180" display="off"/>
-<attribute name="NAME" x="32.5" y="25.85" size="1" layer="21" font="vector" ratio="15" rot="R180" align="bottom-center"/>
-<attribute name="PN" value="CAT25M01YI-GT3" x="32.5" y="27.5" size="1.778" layer="27" rot="R180" display="off"/>
+<attribute name="NAME" x="32.5" y="25.85" size="1" layer="25" font="vector" ratio="15" rot="R180" align="bottom-center"/>
+<attribute name="PN" value="CAT25128YI-GT3" x="32.5" y="27.5" size="1.778" layer="27" rot="R180" display="off"/>
 </element>
 <element name="C38" library="Passives" package="0603" value="0.1uF" x="53.3" y="55.5" smashed="yes" rot="R90">
 <attribute name="DEVICE" value="0.1UF-0603-5%-50V" x="53.3" y="55.5" size="1.778" layer="27" rot="R90" display="off"/>
@@ -4167,9 +4167,9 @@ OSHW_LOGO</description>
 <errors>
 <approved hash="1,20,a9ab5fd95f40a932"/>
 <approved hash="1,20,af28595a5ef0a882"/>
-<approved hash="4,1,c234a17498ae2136"/>
-<approved hash="4,1,6ede42276f5a7363"/>
 <approved hash="19,1,11fd091373e40c51"/>
+<approved hash="4,1,41dd8b984529b346"/>
+<approved hash="4,1,d90c9226ebb71527"/>
 </errors>
 </board>
 </drawing>

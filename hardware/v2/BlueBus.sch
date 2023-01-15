@@ -529,7 +529,7 @@ FRAME-LETTER</description>
 <wire x1="-2.2" y1="-1.5" x2="2.2" y2="-1.5" width="0.1" layer="21"/>
 <wire x1="-2.2" y1="1.5" x2="2.2" y2="1.5" width="0.1" layer="21"/>
 <circle x="-4.2" y="0.975" radius="0.1" width="0.2" layer="21"/>
-<text x="0" y="1.65" size="1" layer="21" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
+<text x="0" y="1.65" size="1" layer="25" font="vector" ratio="15" align="bottom-center">&gt;NAME</text>
 </package>
 <package name="SOP-16">
 <description>&lt;b&gt;SMALL OUTLINE PACKAGE 16&lt;/b&gt;</description>
@@ -891,7 +891,7 @@ FRAME-LETTER</description>
 <text x="0" y="27.94" size="1.778" layer="95" align="center">&gt;NAME</text>
 <text x="0" y="-27.94" size="1.778" layer="96" align="center">&gt;VALUE</text>
 </symbol>
-<symbol name="AT25M01">
+<symbol name="CAT25128">
 <description>&lt;p&gt;The 25LC512 is a SPI-based 512kB EEPROM&lt;/p&gt;</description>
 <wire x1="-10.16" y1="7.62" x2="-10.16" y2="-5.08" width="0.254" layer="94"/>
 <wire x1="-10.16" y1="-5.08" x2="10.16" y2="-5.08" width="0.254" layer="94"/>
@@ -906,7 +906,6 @@ FRAME-LETTER</description>
 <pin name="SCK" x="12.7" y="0" length="short" rot="R180"/>
 <pin name="SI" x="12.7" y="-2.54" length="short" rot="R180"/>
 <text x="0" y="8.89" size="1.778" layer="95" font="vector" align="bottom-center">&gt;NAME</text>
-<text x="0" y="-7.62" size="1.778" layer="96" align="center">&gt;VALUE</text>
 </symbol>
 <symbol name="PAM8406">
 <wire x1="-12.7" y1="15.24" x2="-12.7" y2="-15.24" width="0.254" layer="94"/>
@@ -1317,9 +1316,9 @@ FRAME-LETTER</description>
 </device>
 </devices>
 </deviceset>
-<deviceset name="CAT25M01" prefix="U">
+<deviceset name="CAT25128" prefix="U">
 <gates>
-<gate name="G$1" symbol="AT25M01" x="0" y="0"/>
+<gate name="G$1" symbol="CAT25128" x="0" y="0"/>
 </gates>
 <devices>
 <device name="" package="TSSOP-8">
@@ -1336,7 +1335,7 @@ FRAME-LETTER</description>
 <technologies>
 <technology name="">
 <attribute name="MFG" value="ONSEMI" constant="no"/>
-<attribute name="PN" value="CAT25M01YI-GT3" constant="no"/>
+<attribute name="PN" value="CAT25128YI-GT3" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -3093,8 +3092,8 @@ Switches electrical signals</description>
 <smd name="3" x="0" y="0" dx="0.4" dy="1.35" layer="1"/>
 <smd name="4" x="0.65" y="0" dx="0.4" dy="1.35" layer="1"/>
 <smd name="5" x="1.3" y="0" dx="0.4" dy="1.35" layer="1"/>
-<hole x="-1.95" y="-0.53" drill="0.55"/>
-<hole x="1.95" y="-0.53" drill="0.55"/>
+<hole x="-1.95" y="-0.53" drill="0.65"/>
+<hole x="1.95" y="-0.53" drill="0.65"/>
 <pad name="MNT1" x="-2.825" y="-2.68" drill="0.45" diameter="1.075" shape="long" rot="R90"/>
 <pad name="MNT2" x="2.825" y="-2.68" drill="0.45" diameter="1.075" shape="long" rot="R90"/>
 <wire x1="-3.7" y1="-5.01" x2="3.7" y2="-5.01" width="0.1" layer="21"/>
@@ -3108,8 +3107,8 @@ Switches electrical signals</description>
 <wire x1="-3.7" y1="-4.13" x2="3.7" y2="-4.13" width="0.1" layer="21"/>
 <smd name="MNT3" x="-1.1" y="-2.68" dx="1.8" dy="1.8" layer="1" rot="R90"/>
 <smd name="MNT4" x="1.1" y="-2.68" dx="1.8" dy="1.8" layer="1" rot="R90"/>
-<rectangle x1="-3.4" y1="-3.75" x2="-2.25" y2="-1.6" layer="31"/>
-<rectangle x1="2.25" y1="-3.75" x2="3.4" y2="-1.6" layer="31"/>
+<rectangle x1="-3.75" y1="-3.85" x2="-2.25" y2="-1.5" layer="31"/>
+<rectangle x1="2.25" y1="-3.85" x2="3.75" y2="-1.5" layer="31"/>
 </package>
 <package name="TE_AMPMODU_6_PIN">
 <description>&lt;h3&gt;Plated Through Hole - 2x3&lt;/h3&gt;
@@ -3864,7 +3863,7 @@ Switches electrical signals</description>
 <part name="SUPPLY27" library="SparkFun-PowerSymbols" library_urn="urn:adsk.eagle:library:530" deviceset="5V" device=""/>
 <part name="U8" library="ICs" deviceset="BM83SM1" device="" value="BM83SM1"/>
 <part name="U9" library="ICs" deviceset="DIT4096" device=""/>
-<part name="U6" library="ICs" deviceset="CAT25M01" device=""/>
+<part name="U6" library="ICs" deviceset="CAT25128" device=""/>
 <part name="C38" library="Passives" deviceset="0.1UF" device="0603" value="0.1uF"/>
 <part name="C37" library="Passives" deviceset="0.1UF" device="0603" value="0.1uF"/>
 <part name="J4" library="Connectors" deviceset="SJ2-35853A-SMT-TR" device=""/>
