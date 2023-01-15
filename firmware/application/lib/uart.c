@@ -157,10 +157,9 @@ static uint8_t UARTRXInterruptHandler(uint8_t moduleIndex)
     // While there is data in the RX buffer
     while ((uart->registers->uxsta & 0x1) == 1) {
         // No frame or parity errors
-        uint16_t usta = uart->registers->uxsta;
-        if ((usta & 0xC) == 0) {
+        if ((uart->registers->uxsta & 0xC) == 0) {
             // Clear the buffer overflow error, if it exists
-            if (CHECK_BIT(usta, 1) != 0) {
+            if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
                 uart->rxError ^= UART_ERR_OERR;
                 uart->registers->uxsta ^= 0x2;
             }
@@ -169,18 +168,31 @@ static uint8_t UARTRXInterruptHandler(uint8_t moduleIndex)
             // Set a "General" Error
             uart->rxError ^= UART_ERR_GERR;
             // Clear the buffer overflow error, if it is set
-            if (CHECK_BIT(usta, 1) != 0) {
+            if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
                 uart->rxError ^= UART_ERR_OERR;
                 uart->registers->uxsta ^= 0x2;
             }
-            if (CHECK_BIT(usta, 2) != 0) {
+            if (CHECK_BIT(uart->registers->uxsta, 2) != 0) {
                 uart->rxError ^= UART_ERR_FERR;
             }
-            if (CHECK_BIT(usta, 3) != 0) {
+            if (CHECK_BIT(uart->registers->uxsta, 3) != 0) {
                 uart->rxError ^= UART_ERR_PERR;
             }
             // Clear the byte in the RX buffer
-            uart->registers->uxrxreg;
+            // DO NOT use uart->registers->uxrxreg. As of xc16 2.0.0 it will
+            // not clear the byte when an error has occurred
+            if (moduleIndex == 0) {
+                U1RXREG;
+            }
+            if (moduleIndex == 1) {
+                U2RXREG;
+            }
+            if (moduleIndex == 2) {
+                U3RXREG;
+            }
+            if (moduleIndex == 3) {
+                U4RXREG;
+            }
         }
         if ((uart->registers->uxsta & 0x1) == 0) {
             // Buffer is clear -- immediately clear the interrupt flag

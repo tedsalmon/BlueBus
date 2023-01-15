@@ -192,7 +192,6 @@ void ConfigGetVehicleIdentity(uint8_t *);
 void ConfigGetString(uint8_t, char *, uint8_t);
 void ConfigSetBC127BootFailures(uint16_t);
 void ConfigSetBootloaderMode(uint8_t);
-inline void ConfigSetByte(uint8_t, uint8_t);
 void ConfigSetBytes(uint8_t, const uint8_t *, uint8_t);
 void ConfigSetComfortLock(uint8_t);
 void ConfigSetComfortUnlock(uint8_t);

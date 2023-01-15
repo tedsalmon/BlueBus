@@ -5,7 +5,7 @@
  *     Implement an event system so that modules can interact with each other
  */
 #include "event.h"
-Event_t EVENT_CALLBACKS[EVENT_MAX_CALLBACKS];
+volatile Event_t EVENT_CALLBACKS[EVENT_MAX_CALLBACKS];
 uint8_t EVENT_CALLBACKS_COUNT = 0;
 
 /**
@@ -45,11 +45,11 @@ uint8_t EventUnregisterCallback(uint8_t eventType, void *callback)
 {
     uint8_t idx;
     for (idx = 0; idx < EVENT_CALLBACKS_COUNT; idx++) {
-        Event_t *cb = &EVENT_CALLBACKS[idx];
+        volatile Event_t *cb = &EVENT_CALLBACKS[idx];
         if (cb->type == eventType &&
             cb->callback == callback
         ) {
-            memset(cb, 0, sizeof(Event_t));
+            memset((void *) cb, 0, sizeof(Event_t));
             return 0;
         }
     }
@@ -70,7 +70,7 @@ void EventTriggerCallback(uint8_t eventType, unsigned char *data)
 {
     uint8_t idx;
     for (idx = 0; idx < EVENT_CALLBACKS_COUNT; idx++) {
-        Event_t *cb = &EVENT_CALLBACKS[idx];
+        volatile Event_t *cb = &EVENT_CALLBACKS[idx];
         if (cb->type == eventType) {
             cb->callback(cb->context, data);
         }

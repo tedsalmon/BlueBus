@@ -24,7 +24,6 @@
 #define UART_PARITY_EVEN 1
 #define UART_PARITY_ODD 2
 
-
 /**
  * UART_t
  *     Description:
