@@ -6,8 +6,6 @@
  */
 #ifndef HANDLER_H
 #define HANDLER_H
-#define _ADDED_C_LIB 1
-#include <stdio.h>
 #include "handler/handler_bt.h"
 #include "handler/handler_common.h"
 #include "handler/handler_ibus.h"

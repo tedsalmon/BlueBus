@@ -6,7 +6,6 @@
  */
 #ifndef LOG_H
 #define LOG_H
-#define _ADDED_C_LIB 1
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -15,12 +14,14 @@
 #include "config.h"
 #include "timer.h"
 #include "uart.h"
+// Metadata is the largest single buffer at 384 bytes, so add another 32 bytes
+// to that in order to get a usable buffer size
 #define LOG_MESSAGE_SIZE 416
 #define LOG_SOURCE_BT CONFIG_DEVICE_LOG_BT
 #define LOG_SOURCE_IBUS CONFIG_DEVICE_LOG_IBUS
 #define LOG_SOURCE_SYSTEM CONFIG_DEVICE_LOG_SYSTEM
 #define LOG_SOURCE_UI CONFIG_DEVICE_LOG_UI
-void LogMessage(const char *, char *);
+void LogMessage(const char *, const char *);
 void LogRaw(const char *, ...);
 void LogRawDebug(uint8_t, const char *, ...);
 void LogError(const char *, ...);
