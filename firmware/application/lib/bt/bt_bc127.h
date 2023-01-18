@@ -6,9 +6,7 @@
  */
 #ifndef BC127_H
 #define BC127_H
-#define _ADDED_C_LIB 1
 #include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include "../../mappings.h"

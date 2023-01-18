@@ -533,10 +533,8 @@ void ConfigGetVehicleIdentity(uint8_t *vin)
  */
 void ConfigSetBC127BootFailures(uint16_t failureCount)
 {
-    // The use of EEPROMWriteByte() is required because we are writing
-    // outside of the bounds of the Configuration value address space
-    EEPROMWriteByte(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB, failureCount >> 8);
-    EEPROMWriteByte(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB, failureCount & 0xFF);
+    ConfigSetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_MSB, failureCount >> 8);
+    ConfigSetValue(CONFIG_INFO_BC127_BOOT_FAIL_COUNTER_LSB, failureCount & 0xFF);
 }
 
 /**
@@ -851,6 +849,25 @@ void ConfigSetTrapLast(uint8_t trap)
 void ConfigSetUIMode(uint8_t uiMode)
 {
     ConfigSetByte(CONFIG_UI_MODE_ADDRESS, uiMode);
+}
+
+/**
+ * ConfigSetValue()
+ *     Description:
+ *         Ssave the given config value at the given address
+ *     Params:
+ *         uint8_t address - The address to store the data at
+ *     Returns:
+ *         void
+ */
+void ConfigSetValue(uint8_t address, uint8_t value)
+{
+    // Catch invalid setting addresses
+    if (address >= CONFIG_VALUE_START_ADDRESS &&
+        address <= CONFIG_VALUE_END_ADDRESS
+    ) {
+        ConfigSetByte(address, value);
+    }
 }
 
 /**

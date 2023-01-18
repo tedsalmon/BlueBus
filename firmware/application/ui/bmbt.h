@@ -6,7 +6,6 @@
  */
 #ifndef BMBT_H
 #define BMBT_H
-#define _ADDED_C_LIB 1
 #include <stdio.h>
 #include "../lib/bt/bt_bc127.h"
 #include "../lib/bt/bt_bm83.h"

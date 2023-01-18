@@ -259,7 +259,7 @@ void UtilsSetRPORMode(uint8_t pin, uint16_t mode)
 {
     // Prevent writing to memory that does not exist
     if (pin > UTILS_MAX_RPOR_PIN) {
-        return 0;
+        return;
     }
     uint8_t regNum = 0;
     if (pin > 1) {

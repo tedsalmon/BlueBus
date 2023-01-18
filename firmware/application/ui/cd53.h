@@ -6,7 +6,6 @@
  */
 #ifndef CD53_H
 #define CD53_H
-#define _ADDED_C_LIB 1
 #include <stdio.h>
 #include "../lib/bt/bt_bc127.h"
 #include "../lib/bt.h"
