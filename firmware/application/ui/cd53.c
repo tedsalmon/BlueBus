@@ -151,7 +151,7 @@ static void CD53SetMainDisplayText(
     memset(context->mainDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
     strncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
     // If the source is longer than the destination, we would not null terminate
-    context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE] = '\0';
+    context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
     context->mainDisplay.length = strlen(context->mainDisplay.text);
     context->mainDisplay.index = 0;
     TimerTriggerScheduledTask(context->displayUpdateTaskId);

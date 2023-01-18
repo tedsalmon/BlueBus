@@ -6,7 +6,6 @@
  */
 #ifndef CLI_H
 #define CLI_H
-#define _ADDED_C_LIB 1
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

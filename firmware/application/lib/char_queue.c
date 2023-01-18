@@ -190,7 +190,7 @@ void CharQueueReset(volatile CharQueue_t *queue)
 uint16_t CharQueueSeek(volatile CharQueue_t *queue, const uint8_t needle)
 {
     uint16_t readCursor = queue->readCursor;
-    uint16_t size = CharQueueGetSize(queue) + 1;
+    uint16_t size = CharQueueGetSize(queue);
     uint16_t cnt = 1;
     while (size > 0) {
         if (queue->data[readCursor] == needle) {

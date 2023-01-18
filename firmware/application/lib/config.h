@@ -9,7 +9,7 @@
 #include "eeprom.h"
 
 #define CONFIG_SETTING_CACHE_SIZE 0x70
-#define CONFIG_VALUE_CACHE_SIZE 16
+#define CONFIG_VALUE_CACHE_SIZE 0x0F
 /* EEPROM 0x00 - 0x07: Reserved for the BlueBus */
 #define CONFIG_SN_ADDRESS_MSB 0x00
 #define CONFIG_SN_ADDRESS_LSB 0x01
@@ -197,9 +197,11 @@ void ConfigSetComfortLock(uint8_t);
 void ConfigSetComfortUnlock(uint8_t);
 void ConfigSetFirmwareVersion(uint8_t, uint8_t, uint8_t);
 void ConfigSetIKEType(uint8_t);
+void ConfigSetLanguage(uint8_t);
 void ConfigSetLMVariant(uint8_t);
 void ConfigSetLog(uint8_t, uint8_t);
 void ConfigSetSetting(uint8_t, uint8_t);
+void ConfigSetString(uint8_t, char *, uint8_t);
 void ConfigSetNavType(uint8_t);
 void ConfigSetTempDisplay(uint8_t);
 void ConfigSetTempUnit(uint8_t);
@@ -207,8 +209,7 @@ void ConfigSetTrapCount(uint8_t, uint8_t);
 void ConfigSetTrapIncrement(uint8_t);
 void ConfigSetTrapLast(uint8_t);
 void ConfigSetUIMode(uint8_t);
+void ConfigSetValue(uint8_t, uint8_t);
 void ConfigSetVehicleType(uint8_t);
 void ConfigSetVehicleIdentity(uint8_t *);
-void ConfigSetLanguage(uint8_t);
-void ConfigSetString(uint8_t, char *, uint8_t);
 #endif /* CONFIG_H */

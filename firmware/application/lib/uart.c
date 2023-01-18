@@ -255,8 +255,10 @@ void UARTSendData(UART_t *uart, unsigned char *data, uint16_t length)
 
 void UARTSendString(UART_t *uart, char *data)
 {
-    char c;
-    while ((c = *data++)) {
+    uint16_t stringLength = strlen(data);
+    uint16_t i = 0;
+    for (i = 0; i < stringLength; i++) {
+        char c = data[i];
         // Print only readable and newline characters
         if ((c >= 0x20 && c <= 0x7E) || c == 0x0D || c == 0x0A) {
             uart->registers->uxtxreg = c;
