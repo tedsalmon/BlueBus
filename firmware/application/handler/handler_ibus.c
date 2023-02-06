@@ -1252,7 +1252,6 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
 void HandlerIBusRADVolumeChange(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    uint8_t direction = pkt[IBUS_PKT_DB1] & 0xF;
     LogDebug(
         CONFIG_DEVICE_LOG_SYSTEM,
         "RAD Vol Change, telContext=0x%02X, source=0x%02X",
@@ -1261,6 +1260,7 @@ void HandlerIBusRADVolumeChange(void *ctx, uint8_t *pkt)
     );
     // Only watch for changes when not on a call
     if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE) {
+        uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
         uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
         uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
 
@@ -1274,17 +1274,19 @@ void HandlerIBusRADVolumeChange(void *ctx, uint8_t *pkt)
                 pkt[IBUS_PKT_SRC],
                 pkt[IBUS_PKT_DB1]
         );
+
         if (direction == IBUS_RAD_VOLUME_DOWN) {
-            while (steps > 0 && volume < CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
-                volume = volume + 1;
-                steps--;
+            volume += steps;
+            if (volume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
+                volume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
             }
         } else if (direction == IBUS_RAD_VOLUME_UP) {
-            while (steps > 0 && volume > 0) {
-                volume = volume - 1;
-                steps--;
+            if (volume > steps) {
+                volume -= steps;
+            } else {
+                volume = 0;
             }
-        }
+        };
         
         LogDebug(
             CONFIG_DEVICE_LOG_SYSTEM,
@@ -1329,7 +1331,10 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
 void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    uint8_t direction = pkt[IBUS_PKT_DB1] & 0x0F;
+    uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
+    uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
+    uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+
     LogDebug(
         CONFIG_DEVICE_LOG_SYSTEM,
         "TEL Vol change, vol=%i, dir=%i, steps=%i, src=0x%02X, pkt[4]=0x%02X",
@@ -1339,6 +1344,7 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
             pkt[IBUS_PKT_SRC],
             pkt[IBUS_PKT_DB1]
     );
+    
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
     if ((context->uiMode != CONFIG_UI_CD53 &&
          context->uiMode != CONFIG_UI_BUSINESS_NAV) &&
@@ -1352,21 +1358,22 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
             context->ibus,
             sourceSystem,
             IBUS_DEVICE_RAD,
-            pkt[4]
+            pkt[IBUS_PKT_DB1]
         );
-        uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
-        uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        
         if (direction == IBUS_RAD_VOLUME_UP) {
-            while (steps > 0 && volume < CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
-                volume = volume + 1;
-                steps--;
+            volume += steps;
+            if (volume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
+                volume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
             }
         } else if (direction == IBUS_RAD_VOLUME_DOWN) {
-            while (steps > 0 && volume > 0) {
-                volume = volume - 1;
-                steps--;
+            if (volume > steps) {
+                volume -= steps;
+            } else {
+                volume = 0;
             }
-        }
+        };
+        
         LogDebug(
             CONFIG_DEVICE_LOG_SYSTEM,
             "TEL VOLoffset change, newvol=%i",
@@ -1377,9 +1384,17 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
         uint8_t volume = ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL);
         // PCM51XX volume gets lower as you raise the value in the register
         if (direction == IBUS_RAD_VOLUME_UP && volume > 0x00) {
-            volume = volume - 1;
-        } else if (IBUS_RAD_VOLUME_DOWN == 0 && volume < 0xFF) {
-            volume = volume + 1;
+            if (volume > steps) {
+                volume -= steps;
+            } else {
+                volume = 0;
+            }
+        } else if (direction == IBUS_RAD_VOLUME_DOWN && volume < 0xFF) {
+            if (volume < (0xFF - steps)) {
+                volume += steps;
+            } else {
+                volume = 0xFF;
+            }
         }
         PCM51XXSetVolume(volume);
         ConfigSetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL, volume);
