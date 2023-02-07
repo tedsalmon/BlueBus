@@ -99,6 +99,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_MFLVolume,
+        &HandlerIBusRADVolumeChange,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_SENSOR_VALUE_UPDATE,
         &HandlerIBusSensorValueUpdate,
         context
