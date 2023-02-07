@@ -242,11 +242,16 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             LogDebug(LOG_SOURCE_SYSTEM, "Call > End");
             UtilsStrncpy(context->bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             // Reset the volume
-            // Use TEL as source so we do not alter
+            // Set the private bit on volume direction IBUS command so we do not alter
             // the volume we are lowering ourselves
             LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume DOWN: %d", volume);
+            uint8_t sourceSystem = IBUS_DEVICE_BMBT;
             uint8_t volStepMax = 0x03;
+            if (context->ibus->moduleStatus.MID == 1) {
+                sourceSystem = IBUS_DEVICE_MID;
+            }
             if (context->uiMode == CONFIG_UI_CD53) {
+                sourceSystem = IBUS_DEVICE_MFL;
                 volStepMax = 0x01;
             }
             while (volume > 0) {
@@ -256,9 +261,9 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                 }
                 IBusCommandSetVolume(
                     context->ibus,
-                    IBUS_DEVICE_TEL,
+                    sourceSystem,
                     IBUS_DEVICE_RAD,
-                    volStep << 4
+                    (volStep << 4) | 0x08
                 );
                 volume = volume - volStep;
             }
