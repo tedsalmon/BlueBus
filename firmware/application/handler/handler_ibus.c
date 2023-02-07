@@ -1261,17 +1261,16 @@ void HandlerIBusRADVolumeChange(void *ctx, uint8_t *pkt)
     if ((context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE) && (pkt[IBUS_PKT_SRC] != IBUS_DEVICE_TEL) && ((pkt[IBUS_PKT_DB1] & 0x08) == 0)) {
         uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
         uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
-        uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
         if (direction == IBUS_RAD_VOLUME_DOWN) {
             volume += steps;
             if (volume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
                 volume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
             }
         } else if (direction == IBUS_RAD_VOLUME_UP) {
-            if (volume > steps) {
-                volume -= steps;
-            } else {
-                volume = 0;
+            volume -= steps;
+            if (volume < -CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
+                volume = -CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
             }
         }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
@@ -1313,7 +1312,7 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
-    uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+    int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
 
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
     if ((context->uiMode != CONFIG_UI_CD53 &&
@@ -1337,10 +1336,9 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
                 volume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
             }
         } else if (direction == IBUS_RAD_VOLUME_DOWN) {
-            if (volume > steps) {
-                volume -= steps;
-            } else {
-                volume = 0;
+            volume -= steps;
+            if (volume < -CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
+                volume = -CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
             }
         }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
