@@ -937,7 +937,7 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
     if (context->bt->type == BT_BTM_TYPE_BC127) {
         volOffsetSkip = 3;
     }
-    uint8_t volumeOffset = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+    int8_t volumeOffset = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
     char volOffsetText[BMBT_MENU_STRING_MAX_SIZE] = {0};
     snprintf(
         volOffsetText,
@@ -1341,7 +1341,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             0
         );
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_VOL_OFFSET) {
-        uint8_t volumeOffset = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        int8_t volumeOffset = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
         volumeOffset = volumeOffset + 1;
         char volOffsetText[BMBT_MENU_STRING_MAX_SIZE] = {0};
         if (volumeOffset > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
