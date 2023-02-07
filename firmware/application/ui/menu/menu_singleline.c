@@ -392,12 +392,12 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
         );
     }
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_TEL_VOL_OFFSET) {
-        uint8_t telephoneVolume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
-        if (telephoneVolume > 0xF || telephoneVolume == 0) {
-            telephoneVolume = 1;
+        int8_t telephoneVolume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        if (telephoneVolume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
+            telephoneVolume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
         }
         char telephoneVolumeText[21] = {0};
-        snprintf(telephoneVolumeText, 21, "Call Vol. Offset: %d", telephoneVolume);
+        snprintf(telephoneVolumeText, 21, "Call Vol. Offset: %+d", telephoneVolume);
         MenuSingleLineSetMainDisplayText(context, telephoneVolumeText, 0);
         context->settingValue = telephoneVolume;
     }

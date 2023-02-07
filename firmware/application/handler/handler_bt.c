@@ -197,7 +197,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
         }
     } else {
         uint8_t dspMode = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
-        uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
         if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
             if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
                 dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
@@ -215,7 +215,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                 volume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
                 ConfigSetSetting(CONFIG_SETTING_TEL_VOL, CONFIG_SETTING_TEL_VOL_OFFSET_MAX);
             }
-            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume UP: %d", volume);
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %+d", volume);
             uint8_t sourceSystem = IBUS_DEVICE_BMBT;
             uint8_t volStepMax = 0x03;
             if (context->ibus->moduleStatus.MID == 1) {
@@ -224,6 +224,11 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             if (context->uiMode == CONFIG_UI_CD53) {
                 sourceSystem = IBUS_DEVICE_MFL;
                 volStepMax = 0x01;
+            }
+            uint8_t direction = 1;
+            if (volume < 0) {
+                direction = 0;
+                volume = -volume;
             }
             while (volume > 0) {
                 uint8_t volStep = volume;
@@ -234,7 +239,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                     context->ibus,
                     sourceSystem,
                     IBUS_DEVICE_RAD,
-                    (volStep << 4) | 0x01
+                    (volStep << 4) | direction
                 );
                 volume = volume - volStep;
             }
@@ -244,7 +249,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             // Reset the volume
             // Set the private bit on volume direction IBUS command so we do not alter
             // the volume we are lowering ourselves
-            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume DOWN: %d", volume);
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %+d", -volume);
             uint8_t sourceSystem = IBUS_DEVICE_BMBT;
             uint8_t volStepMax = 0x03;
             if (context->ibus->moduleStatus.MID == 1) {
@@ -253,6 +258,11 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             if (context->uiMode == CONFIG_UI_CD53) {
                 sourceSystem = IBUS_DEVICE_MFL;
                 volStepMax = 0x01;
+            }
+            uint8_t direction = 0;
+            if (volume < 0) {
+                direction = 1;
+                volume = -volume;
             }
             while (volume > 0) {
                 uint8_t volStep = volume;
@@ -263,7 +273,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                     context->ibus,
                     sourceSystem,
                     IBUS_DEVICE_RAD,
-                    (volStep << 4) | 0x08
+                    (volStep << 4) | direction | 0x08
                 );
                 volume = volume - volStep;
             }
