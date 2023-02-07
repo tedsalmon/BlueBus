@@ -244,7 +244,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             // Reset the volume
             // Use TEL as source so we do not alter
             // the volume we are lowering ourselves
-            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume DOWN: telStatus=0x%02X, volOffset=%i", context->telStatus, volume);
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume DOWN: %d", volume);
             uint8_t volStepMax = 0x03;
             if (context->uiMode == CONFIG_UI_CD53) {
                 volStepMax = 0x01;
@@ -263,7 +263,6 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                 volume = volume - volStep;
             }
             context->telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
-            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume DOWN: after IBusCommandSetVolume() telStatus=0x%02X", context->telStatus);
             if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
                 dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
                 context->ibus->moduleStatus.DSP == 1

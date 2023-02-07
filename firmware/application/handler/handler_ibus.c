@@ -1252,29 +1252,11 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
 void HandlerIBusRADVolumeChange(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    LogDebug(
-        CONFIG_DEVICE_LOG_SYSTEM,
-        "RAD Vol Change, telContext=0x%02X, source=0x%02X",
-        context->telStatus,
-        pkt[IBUS_PKT_SRC]
-    );
     // Only watch for changes when not on a call and not reverting volume after call ended
     if ((context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE) && (pkt[IBUS_PKT_SRC] != IBUS_DEVICE_TEL)) {
         uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
         uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
         uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
-
-        LogDebug(
-            CONFIG_DEVICE_LOG_SYSTEM,
-            "RAD Vol change, vol=%i, dir=%i, steps=%i, telContext=0x%02X, src=0x%02X, pkt[4]=0x%02X",
-                volume,
-                direction,
-                steps,
-                context->telStatus,
-                pkt[IBUS_PKT_SRC],
-                pkt[IBUS_PKT_DB1]
-        );
-
         if (direction == IBUS_RAD_VOLUME_DOWN) {
             volume += steps;
             if (volume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
@@ -1286,14 +1268,7 @@ void HandlerIBusRADVolumeChange(void *ctx, uint8_t *pkt)
             } else {
                 volume = 0;
             }
-        };
-        
-        LogDebug(
-            CONFIG_DEVICE_LOG_SYSTEM,
-            "RAD VOLoffset change, newvol=%i",
-            volume
-        );
-
+        }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
     }
 }
@@ -1335,16 +1310,6 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
     uint8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
 
-    LogDebug(
-        CONFIG_DEVICE_LOG_SYSTEM,
-        "TEL Vol change, vol=%i, dir=%i, steps=%i, src=0x%02X, pkt[4]=0x%02X",
-            volume,
-            direction,
-            steps,
-            pkt[IBUS_PKT_SRC],
-            pkt[IBUS_PKT_DB1]
-    );
-    
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
     if ((context->uiMode != CONFIG_UI_CD53 &&
          context->uiMode != CONFIG_UI_BUSINESS_NAV) &&
@@ -1372,13 +1337,7 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
             } else {
                 volume = 0;
             }
-        };
-        
-        LogDebug(
-            CONFIG_DEVICE_LOG_SYSTEM,
-            "TEL VOLoffset change, newvol=%i",
-            volume
-        );
+        }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
     } else {
         uint8_t volume = ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL);
