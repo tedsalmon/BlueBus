@@ -278,7 +278,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                 );
                 volume = volume - volStep;
             }
-            IBusCommandSetBlueBusStatus(
+            IBusCommandSendBlueBusCommand(
                 context->ibus,
                 IBUS_BLUEBUS_CMD_TEL_STATUS,
                 IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE

@@ -2733,7 +2733,7 @@ void IBusCommandLCMTurnRight(IBus_t *ibus)
     IBusSendCommand(ibus, IBUS_DEVICE_LCM, IBUS_DEVICE_GLO, statusMessage, 5);
 }
 
-void IBusCommandSetBlueBusStatus(IBus_t *ibus, uint8_t fnct, uint8_t data) {
+void IBusCommandSendBlueBusCommand(IBus_t *ibus, uint8_t fnct, uint8_t data) {
     unsigned char statusMessage[] = {fnct, data};
     IBusSendCommand(ibus, IBUS_DEVICE_BLUEBUS, IBUS_DEVICE_BLUEBUS, statusMessage, 2);
 }
