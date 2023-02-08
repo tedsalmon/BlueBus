@@ -9,6 +9,11 @@
 void HandlerIBusInit(HandlerContext_t *context)
 {
     EventRegisterCallback(
+        IBUS_EVENT_BMBTButton,
+        &HandlerIBusBMBTButtonPress,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_CDStatusRequest,
         &HandlerIBusCDCStatus,
         context
@@ -283,7 +288,7 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
 /**
  * HandlerIBusBlueBusTELStatusUpdate()
  *     Description:
- *         Take action based on serialized packets sent to ourself
+ *         Take action based on serialized packets sent to ourselves
  *     Params:
  *         void *ctx - The context provided at registration
  *         uint8_t *tmp - Any event data
