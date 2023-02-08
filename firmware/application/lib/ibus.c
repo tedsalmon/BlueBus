@@ -654,6 +654,11 @@ static void IBusHandleVMMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
+static void IBusHandleBlueBusMessage(IBus_t *ibus, unsigned char *pkt)
+{
+    EventTriggerCallback(IBUS_EVENT_BLUEBUS, pkt);
+}
+
 static uint8_t IBusValidateChecksum(unsigned char *msg)
 {
     uint8_t chk = 0;
@@ -725,6 +730,9 @@ void IBusProcess(IBus_t *ibus)
                 LogRawDebug(LOG_SOURCE_IBUS, "\r\n");
                 if (IBusValidateChecksum(pkt) == 1) {
                     unsigned char srcSystem = pkt[IBUS_PKT_SRC];
+                    if ((srcSystem == IBUS_DEVICE_BLUEBUS) && (pkt[IBUS_PKT_DST] == IBUS_DEVICE_BLUEBUS)) {
+                        IBusHandleBlueBusMessage(ibus, pkt);
+                    }
                     if (srcSystem == IBUS_DEVICE_RAD) {
                         IBusHandleRADMessage(ibus, pkt);
                     }
@@ -2723,4 +2731,9 @@ void IBusCommandLCMTurnRight(IBus_t *ibus)
 {
     unsigned char statusMessage[] = {0x5B, 0x23, 0xEF, 0x26, 0x33};
     IBusSendCommand(ibus, IBUS_DEVICE_LCM, IBUS_DEVICE_GLO, statusMessage, 5);
+}
+
+void IBusCommandSetBlueBusStatus(IBus_t *ibus, uint8_t fnct, uint8_t data) {
+    unsigned char statusMessage[] = {fnct, data};
+    IBusSendCommand(ibus, IBUS_DEVICE_BLUEBUS, IBUS_DEVICE_BLUEBUS, statusMessage, 2);
 }

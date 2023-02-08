@@ -113,6 +113,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         &HandlerIBusTELVolumeChange,
         context
     );
+    EventRegisterCallback(
+        IBUS_EVENT_BLUEBUS,
+        &HandlerIBusBlueBus,
+        context
+    );
     TimerRegisterScheduledTask(
         &HandlerTimerIBusCDCAnnounce,
         context,
@@ -1613,5 +1618,12 @@ void HandlerTimerIBusPings(void *ctx)
             TimerUnregisterScheduledTask(&HandlerTimerIBusPings);
             break;
         }
+    }
+}
+
+void HandlerIBusBlueBus(void *ctx, uint8_t *pkt) {
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (pkt[IBUS_PKT_CMD] == IBUS_BLUEBUS_CMD_TEL_STATUS) {
+        context->telStatus = pkt[IBUS_PKT_DB1];
     }
 }

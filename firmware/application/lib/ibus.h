@@ -48,6 +48,7 @@
 #define IBUS_DEVICE_VM 0xED /* Video Module */
 #define IBUS_DEVICE_BMBT 0xF0 /* On-board monitor */
 #define IBUS_DEVICE_LOC 0xFF /* Local */
+#define IBUS_DEVICE_BLUEBUS IBUS_DEVICE_CDC
 
 // IBus Packet Indices
 #define IBUS_PKT_SRC 0
@@ -323,6 +324,8 @@
 #define IBUS_TEL_LED_STATUS_GREEN 0x10
 #define IBUS_TEL_SIG_EVEREST 0x38
 
+#define IBUS_BLUEBUS_CMD_TEL_STATUS 0x88
+
 #define IBUS_C43_TITLE_MODE 0xC4
 
 #define IBUS_RADIO_TYPE_C43 1
@@ -429,6 +432,7 @@
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
 #define IBUS_EVENT_GT_TELEMATICS_DATA 72
+#define IBUS_EVENT_BLUEBUS 73
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -565,4 +569,5 @@ void IBusCommandOBCControlTempRequest(IBus_t *);
 void IBusCommandIgnitionStatus(IBus_t *, uint8_t);
 void IBusCommandLCMTurnLeft(IBus_t *);
 void IBusCommandLCMTurnRight(IBus_t *);
+void IBusCommandSetBlueBusStatus(IBus_t *, uint8_t, uint8_t);
 #endif /* IBUS_H */
