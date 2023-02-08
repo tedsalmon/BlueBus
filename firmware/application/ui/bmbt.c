@@ -1961,7 +1961,11 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
     char config = ConfigGetTempDisplay();
 
     if (context->ibus->ambientTemperatureCalculated[0] == 0) {
-       IBusCommandOBCControlTempRequest(context->ibus);
+       IBusCommandIKEOBCControl(
+            context->ibus,
+            IBUS_IKE_OBC_PROPERTY_TEMPERATURE,
+            IBUS_IKE_OBC_PROPERTY_REQUEST_TEXT
+        );
     }
 
     if (context->status.displayMode == BMBT_DISPLAY_ON) {

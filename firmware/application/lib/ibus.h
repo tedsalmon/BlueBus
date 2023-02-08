@@ -48,7 +48,8 @@
 #define IBUS_DEVICE_VM 0xED /* Video Module */
 #define IBUS_DEVICE_BMBT 0xF0 /* On-board monitor */
 #define IBUS_DEVICE_LOC 0xFF /* Local */
-#define IBUS_DEVICE_BLUEBUS IBUS_DEVICE_CDC
+
+#define IBUS_DEVICE_BLUEBUS IBUS_DEVICE_CDC /* Reuse CDC Address as we know a CDC will never be present with the BlueBus */
 
 // IBus Packet Indices
 #define IBUS_PKT_SRC 0
@@ -224,6 +225,11 @@
 // is off but the radio requests playback to begin
 #define IBUS_IGNITION_KL99 0x08
 
+#define IBUS_CMD_OBC_CONTROL 0x41
+
+#define IBUS_IKE_OBC_PROPERTY_TEMPERATURE 0x03
+#define IBUS_IKE_OBC_PROPERTY_REQUEST_TEXT 0x01
+
 #define IBUS_LCM_LIGHT_STATUS_REQ 0x5A
 #define IBUS_LCM_LIGHT_STATUS_RESP 0x5B
 #define IBUS_LCM_DIMMER_STATUS 0x5C
@@ -325,7 +331,9 @@
 #define IBUS_TEL_LED_STATUS_GREEN 0x10
 #define IBUS_TEL_SIG_EVEREST 0x38
 
-#define IBUS_BLUEBUS_CMD_TEL_STATUS 0x88
+#define IBUS_BLUEBUS_CMD_SET_STATUS 0xBB
+
+#define IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL 0x01
 
 #define IBUS_C43_TITLE_MODE 0xC4
 
@@ -411,7 +419,7 @@
 #define IBUS_EVENT_LCMLightStatus 47
 #define IBUS_EVENT_LCMDimmerStatus 48
 #define IBUS_EVENT_GTWriteResponse 49
-#define IBUS_EVENT_MFLVolume 50
+#define IBUS_EVENT_MFLVolumeChange 50
 #define IBUS_EVENT_MIDButtonPress 51
 #define IBUS_EVENT_MIDModeChange 52
 #define IBUS_EVENT_MODULE_STATUS_RESP 54
@@ -433,7 +441,7 @@
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
 #define IBUS_EVENT_GT_TELEMATICS_DATA 72
-#define IBUS_EVENT_BLUEBUS 73
+#define IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE 73
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -510,6 +518,7 @@ uint8_t IBusGetNavSWVersion(uint8_t *);
 uint8_t IBusGetNavType(uint8_t *);
 uint8_t IBusGetVehicleType(uint8_t *);
 uint8_t IBusGetConfigTemp(uint8_t *);
+void IBusCommandBlueBusSetStatus(IBus_t *, uint8_t, uint8_t);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, uint8_t, uint8_t, uint8_t, uint8_t);
 void IBusCommandDIAGetCodingData(IBus_t *, uint8_t, uint8_t, uint8_t);
@@ -540,6 +549,8 @@ void IBusCommandGTWriteTitleC43(IBus_t *, char *);
 void IBusCommandGTWriteZone(IBus_t *, uint8_t, char *);
 void IBusCommandIKEGetIgnitionStatus(IBus_t *);
 void IBusCommandIKEGetVehicleConfig(IBus_t *);
+void IBusCommandIKEOBCControl(IBus_t *, uint8_t, uint8_t);
+void IBusCommandIKESetIgnitionStatus(IBus_t *, uint8_t);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKESetDate(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELIKEDisplayWrite(IBus_t *, char *);
@@ -565,10 +576,4 @@ void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);
 void IBusCommandTELSetLED(IBus_t *, uint8_t);
 void IBusCommandTELStatus(IBus_t *, uint8_t);
 void IBusCommandTELStatusText(IBus_t *, char *, uint8_t);
-void IBusCommandOBCControlTempRequest(IBus_t *);
-/* Temporary */
-void IBusCommandIgnitionStatus(IBus_t *, uint8_t);
-void IBusCommandLCMTurnLeft(IBus_t *);
-void IBusCommandLCMTurnRight(IBus_t *);
-void IBusCommandSendBlueBusCommand(IBus_t *, uint8_t, uint8_t);
 #endif /* IBUS_H */
