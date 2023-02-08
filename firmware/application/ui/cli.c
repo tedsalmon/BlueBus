@@ -657,7 +657,7 @@ void CLIProcess()
                 } else if (UtilsStricmp(msgBuf[1], "IGN") == 0) {
                     if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         uint8_t ignitionStatus = 0x00;
-                        IBusCommandIgnitionStatus(cli.ibus, ignitionStatus);
+                        IBusCommandIKESetIgnitionStatus(cli.ibus, ignitionStatus);
                         EventTriggerCallback(
                             IBUS_EVENT_IKEIgnitionStatus,
                             (uint8_t *)&ignitionStatus
@@ -666,7 +666,7 @@ void CLIProcess()
                         cli.ibus->ignitionStatus = 0;
                     } else if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                         uint8_t ignitionStatus = 0x01;
-                        IBusCommandIgnitionStatus(cli.ibus, ignitionStatus);
+                        IBusCommandIKESetIgnitionStatus(cli.ibus, ignitionStatus);
                         EventTriggerCallback(
                             IBUS_EVENT_IKEIgnitionStatus,
                             (uint8_t *)&ignitionStatus
