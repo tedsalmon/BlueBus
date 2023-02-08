@@ -569,5 +569,5 @@ void IBusCommandOBCControlTempRequest(IBus_t *);
 void IBusCommandIgnitionStatus(IBus_t *, uint8_t);
 void IBusCommandLCMTurnLeft(IBus_t *);
 void IBusCommandLCMTurnRight(IBus_t *);
-void IBusCommandSetBlueBusStatus(IBus_t *, uint8_t, uint8_t);
+void IBusCommandSendBlueBusCommand(IBus_t *, uint8_t, uint8_t);
 #endif /* IBUS_H */
