@@ -44,4 +44,5 @@ void HandlerTimerIBusCDCSendStatus(void *);
 void HandlerTimerIBusLCMIOStatus(void *);
 void HandlerTimerIBusLightingState(void *);
 void HandlerTimerIBusPings(void *);
+void HandlerIBusBlueBus(void *, uint8_t *);
 #endif /* HANDLER_IBUS_H */

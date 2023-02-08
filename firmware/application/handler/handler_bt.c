@@ -247,8 +247,9 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             LogDebug(LOG_SOURCE_SYSTEM, "Call > End");
             UtilsStrncpy(context->bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             // Reset the volume
-            // Set the private bit on volume direction IBUS command so we do not alter
+            // Temporarily set the call status flag to on so we do not alter
             // the volume we are lowering ourselves
+            context->telStatus = HANDLER_TEL_STATUS_VOL_CHANGE;
             LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %+d", -volume);
             uint8_t sourceSystem = IBUS_DEVICE_BMBT;
             uint8_t volStepMax = 0x03;
@@ -273,11 +274,15 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                     context->ibus,
                     sourceSystem,
                     IBUS_DEVICE_RAD,
-                    (volStep << 4) | direction | 0x08
+                    (volStep << 4) | direction 
                 );
                 volume = volume - volStep;
             }
-            context->telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
+            IBusCommandSetBlueBusStatus(
+                context->ibus,
+                IBUS_BLUEBUS_CMD_TEL_STATUS,
+                IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE
+            );
             if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
                 dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
                 context->ibus->moduleStatus.DSP == 1
