@@ -105,6 +105,24 @@ static void IBusHandleModuleStatus(IBus_t *ibus, uint8_t module)
 }
 
 /**
+ * IBusHandleBlueBusMessage()
+ *     Description:
+ *         Handle any messages received from the BlueBus (Masquerading as the CDC)
+ *     Params:
+ *         unsigned char *pkt - The frame received on the IBus
+ *     Returns:
+ *         None
+ */
+static void IBusHandleBlueBusMessage(IBus_t *ibus, unsigned char *pkt)
+{
+    if (pkt[IBUS_PKT_CMD] == IBUS_BLUEBUS_CMD_SET_STATUS) {
+        if (IBUS_PKT_DB1 == IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL) {
+            EventTriggerCallback(IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE, pkt);
+        }
+    }
+}
+
+/**
  * IBusHandleBMBTMessage()
  *     Description:
  *         Handle any messages received from the BMBT (Board Monitor)
@@ -471,7 +489,7 @@ static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
         EventTriggerCallback(IBUS_EVENT_MFLButton, pkt);
     }
     if (pkt[IBUS_PKT_CMD] == IBUS_MFL_CMD_VOL_PRESS) {
-        EventTriggerCallback(IBUS_EVENT_MFLVolume, pkt);
+        EventTriggerCallback(IBUS_EVENT_MFLVolumeChange, pkt);
     }
 }
 
@@ -654,11 +672,6 @@ static void IBusHandleVMMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandleBlueBusMessage(IBus_t *ibus, unsigned char *pkt)
-{
-    EventTriggerCallback(IBUS_EVENT_BLUEBUS, pkt);
-}
-
 static uint8_t IBusValidateChecksum(unsigned char *msg)
 {
     uint8_t chk = 0;
@@ -730,7 +743,9 @@ void IBusProcess(IBus_t *ibus)
                 LogRawDebug(LOG_SOURCE_IBUS, "\r\n");
                 if (IBusValidateChecksum(pkt) == 1) {
                     unsigned char srcSystem = pkt[IBUS_PKT_SRC];
-                    if ((srcSystem == IBUS_DEVICE_BLUEBUS) && (pkt[IBUS_PKT_DST] == IBUS_DEVICE_BLUEBUS)) {
+                    if (srcSystem == IBUS_DEVICE_BLUEBUS &&
+                        pkt[IBUS_PKT_DST] == IBUS_DEVICE_LOC
+                    ) {
                         IBusHandleBlueBusMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_RAD) {
@@ -1160,6 +1175,28 @@ uint8_t IBusGetConfigTemp(unsigned char *packet)
 {
     unsigned char tempUnit = (packet[5] >> 1) & 0x1;
     return tempUnit;
+}
+
+/**
+ * IBusCommandBlueBusSetStatus()
+ *     Description:
+ *        Sends a sub-status command and value to the local broadcast address
+ *        so that the BlueBus can perform an action based on it
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t subCommand - The sub-command to emit
+ *         uint8_t value - The value of the sub-command
+ *     Returns:
+ *         void
+ */
+void IBusCommandBlueBusSetStatus(IBus_t *ibus, uint8_t subCommand, uint8_t value)
+{
+    unsigned char statusMessage[] = {
+        IBUS_BLUEBUS_CMD_SET_STATUS,
+        subCommand,
+        value
+    };
+    IBusSendCommand(ibus, IBUS_DEVICE_BLUEBUS, IBUS_DEVICE_LOC, statusMessage, 3);
 }
 
 /**
@@ -1908,6 +1945,40 @@ void IBusCommandIKEGetVehicleConfig(IBus_t *ibus)
         msg,
         1
     );
+}
+
+/**
+ * IBusCommandIKEOBCControl()
+ *     Description:
+ *        Asks IKE for OBC control of the given property
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t property - The given property to control
+ *         uint8_t control - The active to take on the given property
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKEOBCControl(IBus_t *ibus, uint8_t property, uint8_t control)
+{
+    unsigned char controlMessage[] = {IBUS_CMD_OBC_CONTROL, property, control};
+    IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_IKE, controlMessage, 3);
+}
+
+/**
+ * IBusCommandIKEIgnitionStatus()
+ *     Description:
+ *        Masquerade as the IKE sending the Ignition status message.
+ *        This is useful only on a bench without an IKE present.
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t status - The ignition status to set
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKESetIgnitionStatus(IBus_t *ibus, uint8_t status)
+{
+    unsigned char statusMessage[2] = {IBUS_CMD_IKE_IGN_STATUS_RESP, status};
+    IBusSendCommand(ibus, IBUS_DEVICE_IKE, IBUS_DEVICE_GLO, statusMessage, 2);
 }
 
 /**
@@ -2687,9 +2758,6 @@ void IBusCommandTELStatus(IBus_t *ibus, unsigned char status)
  */
 void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
 {
-    LogDebug(
-        LOG_SOURCE_BT, "Displaying callerId: %s", text
-    );
     uint8_t textLength = strlen(text);
     unsigned char statusText[textLength + 3];
     statusText[0] = IBUS_CMD_GT_WRITE_TITLE;
@@ -2697,43 +2765,4 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
     statusText[2] = 0x20;
     memcpy(statusText + 3, text, textLength);
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
-}
-
-/**
- * IBusCommandOBCControlTempRequest()
- *     Description:
- *        Asks IKE for formated Ambient Temp string
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandOBCControlTempRequest(IBus_t *ibus)
-{
-    unsigned char statusMessage[] = {0x41, 0x03, 0x01};
-    IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_IKE, statusMessage, 3);    
-}
-
-/* Temporary Commands for debugging */
-void IBusCommandIgnitionStatus(IBus_t *ibus, unsigned char status)
-{
-    unsigned char statusMessage[2] = {0x11, status};
-    IBusSendCommand(ibus, IBUS_DEVICE_IKE, IBUS_DEVICE_GLO, statusMessage, 2);
-}
-
-void IBusCommandLCMTurnLeft(IBus_t *ibus)
-{
-    unsigned char statusMessage[] = {0x5B, 0xC3, 0xEF, 0x26, 0x33};
-    IBusSendCommand(ibus, IBUS_DEVICE_LCM, IBUS_DEVICE_GLO, statusMessage, 5);
-}
-
-void IBusCommandLCMTurnRight(IBus_t *ibus)
-{
-    unsigned char statusMessage[] = {0x5B, 0x23, 0xEF, 0x26, 0x33};
-    IBusSendCommand(ibus, IBUS_DEVICE_LCM, IBUS_DEVICE_GLO, statusMessage, 5);
-}
-
-void IBusCommandSendBlueBusCommand(IBus_t *ibus, uint8_t fnct, uint8_t data) {
-    unsigned char statusMessage[] = {fnct, data};
-    IBusSendCommand(ibus, IBUS_DEVICE_BLUEBUS, IBUS_DEVICE_BLUEBUS, statusMessage, 2);
 }

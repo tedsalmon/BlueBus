@@ -94,13 +94,13 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_RADVolumeChange,
-        &HandlerIBusRADVolumeChange,
+        IBUS_EVENT_MFLVolumeChange,
+        &HandlerIBusVolumeChange,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_MFLVolume,
-        &HandlerIBusRADVolumeChange,
+        IBUS_EVENT_RADVolumeChange,
+        &HandlerIBusVolumeChange,
         context
     );
     EventRegisterCallback(
@@ -114,8 +114,8 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_BLUEBUS,
-        &HandlerIBusBlueBus,
+        IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE,
+        &HandlerIBusBlueBusTELStatusUpdate,
         context
     );
     TimerRegisterScheduledTask(
@@ -281,7 +281,25 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
 }
 
 /**
- * HandlerIBusBMBTButtonPress)
+ * HandlerIBusBlueBusTELStatusUpdate()
+ *     Description:
+ *         Take action based on serialized packets sent to ourself
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusBlueBusTELStatusUpdate(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (pkt[IBUS_PKT_DB1] == IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL) {
+        context->telStatus = pkt[IBUS_PKT_DB2];
+    }
+}
+
+/**
+ * HandlerIBusBMBTButtonPress()
  *     Description:
  *         Track BMBT Button presses and turn the monitor back on if we
  *         have set it off
@@ -1272,21 +1290,23 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
 
 
 /**
- * HandlerIBusRADVolumeChange()
+ * HandlerIBusVolumeChange()
  *     Description:
- *         Adjust the volume for calls based on where the user is adjusting
- *         the audio volume.
+ *         Adjust the volume for calls based on how the user is adjusting
+ *         the audio volume. Handles MFL volume changes and radio volume changes
  *     Params:
  *         void *ctx - The context provided at registration
  *         uint8_t *pkt - The IBus packet
  *     Returns:
  *         void
  */
-void HandlerIBusRADVolumeChange(void *ctx, uint8_t *pkt)
+void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // Only watch for changes when not on a call and not reverting volume after call ended
-    if ((context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE) && (pkt[IBUS_PKT_SRC] != IBUS_DEVICE_TEL) && ((pkt[IBUS_PKT_DB1] & 0x08) == 0)) {
+    if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE &&
+        pkt[IBUS_PKT_SRC] != IBUS_DEVICE_TEL
+    ) {
         uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
         uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
         int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
@@ -1641,12 +1661,5 @@ void HandlerTimerIBusPings(void *ctx)
             TimerUnregisterScheduledTask(&HandlerTimerIBusPings);
             break;
         }
-    }
-}
-
-void HandlerIBusBlueBus(void *ctx, uint8_t *pkt) {
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (pkt[IBUS_PKT_CMD] == IBUS_BLUEBUS_CMD_TEL_STATUS) {
-        context->telStatus = pkt[IBUS_PKT_DB1];
     }
 }

@@ -19,6 +19,7 @@
 #include "../ui/mid.h"
 
 void HandlerIBusInit(HandlerContext_t *);
+void HandlerIBusBlueBusTELStatusUpdate(void *, uint8_t *);
 void HandlerIBusBMBTButtonPress(void *, uint8_t *);
 void HandlerIBusCDCStatus(void *, uint8_t *);
 void HandlerIBusDSPConfigSet(void *, uint8_t *);
@@ -37,7 +38,7 @@ void HandlerIBusMFLButton(void *, uint8_t *);
 void HandlerIBusModuleStatusResponse(void *, uint8_t *);
 void HandlerIBusModuleStatusRequest(void *, uint8_t *);
 void HandlerIBusPDCStatus(void *, uint8_t *);
-void HandlerIBusRADVolumeChange(void *, uint8_t *);
+void HandlerIBusVolumeChange(void *, uint8_t *);
 void HandlerIBusSensorValueUpdate(void *, uint8_t *);
 void HandlerIBusTELVolumeChange(void *, uint8_t *);
 void HandlerTimerIBusCDCAnnounce(void *);
@@ -45,5 +46,4 @@ void HandlerTimerIBusCDCSendStatus(void *);
 void HandlerTimerIBusLCMIOStatus(void *);
 void HandlerTimerIBusLightingState(void *);
 void HandlerTimerIBusPings(void *);
-void HandlerIBusBlueBus(void *, uint8_t *);
 #endif /* HANDLER_IBUS_H */
