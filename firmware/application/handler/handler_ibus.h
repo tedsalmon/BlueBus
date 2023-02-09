@@ -19,6 +19,7 @@
 #include "../ui/mid.h"
 
 void HandlerIBusInit(HandlerContext_t *);
+void HandlerIBusBMBTButtonPress(void *, uint8_t *);
 void HandlerIBusCDCStatus(void *, uint8_t *);
 void HandlerIBusDSPConfigSet(void *, uint8_t *);
 void HandlerIBusFirstMessageReceived(void *, uint8_t *);
