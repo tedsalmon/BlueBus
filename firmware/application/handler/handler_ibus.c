@@ -1309,9 +1309,7 @@ void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // Only watch for changes when not on a call and not reverting volume after call ended
-    if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE &&
-        pkt[IBUS_PKT_SRC] != IBUS_DEVICE_TEL
-    ) {
+    if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE) {
         uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
         uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
         int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
