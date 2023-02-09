@@ -281,6 +281,29 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
 }
 
 /**
+ * HandlerIBusBMBTButtonPress)
+ *     Description:
+ *         Track BMBT Button presses and turn the monitor back on if we
+ *         have set it off
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // Turn on the BMBT when the end user hits any button on the BMBT
+    if (ConfigGetSetting(CONFIG_SETTING_MONITOR_OFF) == CONFIG_SETTING_ON &&
+        context->monitorStatus == HANDLER_MONITOR_STATUS_POWERED_OFF
+    ) {
+        IBusCommandGTBMBTControl(context->ibus, IBUS_GT_MONITOR_AT_KL_R);
+        context->monitorStatus = HANDLER_MONITOR_STATUS_POWERED_ON;
+    }
+}
+
+/**
  * HandlerIBusCDCStatus()
  *     Description:
  *         Track the current CD Changer status based on what the radio
@@ -784,11 +807,11 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
     }
     // Turn off the BMBT when the vehicle sets off
     if (ConfigGetSetting(CONFIG_SETTING_MONITOR_OFF) == CONFIG_SETTING_ON &&
-        speed > 5 &&
-        context->monitorStatus == HANDLER_MONITOR_STATUS_UNSET
+        context->monitorStatus == HANDLER_MONITOR_STATUS_UNSET &&
+        speed > 5
     ) {
         IBusCommandGTBMBTControl(context->ibus, IBUS_GT_MONITOR_OFF);
-        context->monitorStatus = HANDLER_MONITOR_STATUS_SET;
+        context->monitorStatus = HANDLER_MONITOR_STATUS_POWERED_OFF;
     }
 }
 
