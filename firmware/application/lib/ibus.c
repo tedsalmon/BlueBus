@@ -116,7 +116,7 @@ static void IBusHandleModuleStatus(IBus_t *ibus, uint8_t module)
 static void IBusHandleBlueBusMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_BLUEBUS_CMD_SET_STATUS) {
-        if (IBUS_PKT_DB1 == IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL) {
+        if (pkt[IBUS_PKT_DB1] == IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL) {
             EventTriggerCallback(IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE, pkt);
         }
     }
