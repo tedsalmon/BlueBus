@@ -146,7 +146,20 @@ static uint8_t UARTRXInterruptHandler(uint8_t moduleIndex)
             CharQueueAdd(&uart->rxQueue, uart->registers->uxrxreg);
         } else {
             // Clear the byte in the RX buffer
-            uart->registers->uxrxreg;
+            // DO NOT use uart->registers->uxrxreg. As of xc16 2.0.0 it will
+            // not clear the byte when an error has occurred
+            if (moduleIndex == 0) {
+                U1RXREG;
+            }
+            if (moduleIndex == 1) {
+                U2RXREG;
+            }
+            if (moduleIndex == 2) {
+                U3RXREG;
+            }
+            if (moduleIndex == 3) {
+                U4RXREG;
+            }
         }
         if ((uart->registers->uxsta & 0x1) == 0) {
             uart->rxTimestamp = TimerGetMillis();

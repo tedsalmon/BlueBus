@@ -9,6 +9,8 @@
 #include <xc.h>
 #include "../mappings.h"
 
+#define UTILS_MAX_RPOR_PIN 31
+
 /* Check if a bit is set in a byte */
 #define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
 /* Return a programmable output port register */
