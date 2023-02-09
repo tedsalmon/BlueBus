@@ -85,7 +85,8 @@
 #define HANDLER_TEL_STATUS_VOL_CHANGE 0xFF
 #define HANDLER_WAIT_REV_VOL 1000
 #define HANDLER_MONITOR_STATUS_UNSET 0
-#define HANDLER_MONITOR_STATUS_SET 1
+#define HANDLER_MONITOR_STATUS_POWERED_OFF 1
+#define HANDLER_MONITOR_STATUS_POWERED_ON 2
 
 #define HANDLER_VOLUME_DIRECTION_DOWN 0
 #define HANDLER_VOLUME_DIRECTION_UP 1
@@ -116,7 +117,7 @@ typedef struct HandlerContext_t {
     uint8_t seekMode: 2;
     uint8_t volumeMode: 1;
     uint8_t gtStatus: 1;
-    uint8_t monitorStatus: 1;
+    uint8_t monitorStatus: 2;
     uint8_t uiMode;
     uint8_t lmDimmerChecksum;
     uint8_t telStatus;
