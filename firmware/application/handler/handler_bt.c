@@ -946,6 +946,14 @@ void HandlerTimerBTBC127ScanDevices(void *ctx)
     } else {
         context->scanIntervals += 1;
     }
+    
+    if (context->bt->status != BT_STATUS_DISCONNECTED &&
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
+        context->bt->activeDevice.avrcpId != 0   
+    ) {
+        // sync play/pause status every 5 seconds
+        BC127SendCommand(context->bt,"STATUS AVRCP");
+    }
 }
 
 /**

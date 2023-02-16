@@ -1117,7 +1117,7 @@ uint8_t BC127GetDeviceId(char *str)
  */
 void BC127ProcessEventA2DPStreamSuspend(BT_t *bt, char **msgBuf)
 {
-    if (bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
+    if (bt->playbackStatus != BT_AVRCP_STATUS_PAUSED) {
         bt->playbackStatus = BT_AVRCP_STATUS_PAUSED;
         LogDebug(LOG_SOURCE_BT, "BT: Paused [A2DP Stream Suspend]");
         EventTriggerCallback(BT_EVENT_PLAYBACK_STATUS_CHANGE, 0);
@@ -1541,8 +1541,6 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
             }
             EventTriggerCallback(BT_EVENT_PLAYBACK_STATUS_CHANGE, 0);
         }
-        // @TODO identify link type
-        EventTriggerCallback(BT_EVENT_DEVICE_LINK_CONNECTED, (uint8_t *) msgBuf[1]);
     }
     if (isNew == 1) {
         bt->status = BT_STATUS_CONNECTED;
