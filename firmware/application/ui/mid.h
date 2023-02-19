@@ -100,13 +100,14 @@ typedef struct MIDContext_t {
 void MIDInit(BT_t *, IBus_t *);
 void MIDDestroy();
 void MIDDisplayUpdateText(void *, char *, int8_t, uint8_t);
-void MIDBTMetadataUpdate(void *, unsigned char *);
-void MIDBTPlaybackStatus(void *, unsigned char *);
-void MIDIBusCDChangerStatus(void *, unsigned char *);
-void MIDIBusMIDButtonPress(void *, unsigned char *);
-void MIDIIBusRADMIDDisplayUpdate(void *, unsigned char *);
-void MIDIIBusRADMIDMenuUpdate(void *, unsigned char *);
-void MIDIBusMIDModeChange(void *, unsigned char *);
+void MIDBTDeviceDisconnected(void *, uint8_t *);
+void MIDBTMetadataUpdate(void *, uint8_t *);
+void MIDBTPlaybackStatus(void *, uint8_t *);
+void MIDIBusCDChangerStatus(void *, uint8_t *);
+void MIDIBusMIDButtonPress(void *, uint8_t *);
+void MIDIIBusRADMIDDisplayUpdate(void *, uint8_t *);
+void MIDIIBusRADMIDMenuUpdate(void *, uint8_t *);
+void MIDIBusMIDModeChange(void *, uint8_t *);
 void MIDTimerMenuWrite(void *);
 void MIDTimerDisplay(void *);
 #endif /* MID_H */

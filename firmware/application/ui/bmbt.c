@@ -958,14 +958,21 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
             BMBTGTWriteIndex(
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
-                LocaleGetText(LOCALE_STRING_MODE_DEFAULT),
+                LocaleGetText(LOCALE_STRING_MODE_TCU),
+                2
+            );
+        } else if (telMode == CONFIG_SETTING_TEL_MODE_NO_MUTE) {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_NO_MUTE),
                 2
             );
         } else {
             BMBTGTWriteIndex(
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
-                LocaleGetText(LOCALE_STRING_MODE_TCU),
+                LocaleGetText(LOCALE_STRING_MODE_DEFAULT),
                 2
             );
         }
@@ -1368,6 +1375,14 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
                 LocaleGetText(LOCALE_STRING_MODE_TCU),
+                0
+            );
+        } else if (telMode == CONFIG_SETTING_TEL_MODE_TCU) {
+            ConfigSetSetting(CONFIG_SETTING_TEL_MODE, CONFIG_SETTING_TEL_MODE_NO_MUTE);
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_NO_MUTE),
                 0
             );
         } else {
