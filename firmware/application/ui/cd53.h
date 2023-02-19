@@ -75,16 +75,16 @@ typedef struct CD53Context_t {
 void CD53Init(BT_t *, IBus_t *);
 void CD53Destroy();
 void CD53DisplayUpdateText(void *, char *, int8_t, uint8_t);
-void CD53BTCallerID(void *, unsigned char *);
-void CD53BTCallStatus(void *, unsigned char *);
-void CD53BTDeviceDisconnected(void *, unsigned char *);
-void CD53BTDeviceReady(void *, unsigned char *);
-void CD53BTMetadata(CD53Context_t *, unsigned char *);
-void CD53BTPlaybackStatus(void *, unsigned char *);
-void CD53IBusBMBTButtonPress(void *, unsigned char *);
-void CD53IBusCDChangerStatus(void *, unsigned char *);
-void CD53IBusMFLButton(void *, unsigned char *);
-void CD53IBusRADWriteDisplay(void *, unsigned char *);
+void CD53BTCallerID(void *, uint8_t *);
+void CD53BTCallStatus(void *, uint8_t *);
+void CD53BTDeviceDisconnected(void *, uint8_t *);
+void CD53BTDeviceReady(void *, uint8_t *);
+void CD53BTMetadata(CD53Context_t *, uint8_t *);
+void CD53BTPlaybackStatus(void *, uint8_t *);
+void CD53IBusBMBTButtonPress(void *, uint8_t *);
+void CD53IBusCDChangerStatus(void *, uint8_t *);
+void CD53IBusMFLButton(void *, uint8_t *);
+void CD53IBusRADWriteDisplay(void *, uint8_t *);
 void CD53GTScreenModeSet(void *, uint8_t *);
 void CD53TimerDisplay(void *);
 #endif /* CD53_H */

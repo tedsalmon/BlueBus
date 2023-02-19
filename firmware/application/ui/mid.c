@@ -20,6 +20,11 @@ void MIDInit(BT_t *bt, IBus_t *ibus)
     Context.menuContext = MenuSingleLineInit(ibus, bt, &MIDDisplayUpdateText, &Context);
     strncpy(Context.mainText, "Bluetooth", 10);
     EventRegisterCallback(
+        BT_EVENT_DEVICE_LINK_DISCONNECTED,
+        &MIDBTDeviceDisconnected,
+        &Context
+    );
+    EventRegisterCallback(
         BT_EVENT_METADATA_UPDATE,
         &MIDBTMetadataUpdate,
         &Context
@@ -72,6 +77,10 @@ void MIDInit(BT_t *bt, IBus_t *ibus)
  */
 void MIDDestroy()
 {
+    EventUnregisterCallback(
+        BT_EVENT_DEVICE_LINK_DISCONNECTED,
+        &MIDBTDeviceDisconnected
+    );
     EventUnregisterCallback(
         BT_EVENT_METADATA_UPDATE,
         &MIDBTMetadataUpdate
@@ -258,6 +267,14 @@ void MIDDisplayUpdateText(void *ctx, char *text, int8_t timeout, uint8_t updateT
         MIDSetMainDisplayText(context, text, timeout);
     } else if (updateType == MENU_SINGLELINE_DISPLAY_UPDATE_TEMP) {
         MIDSetTempDisplayText(context, text, timeout);
+    }
+}
+
+void MIDBTDeviceDisconnected(void *ctx, unsigned char *tmp)
+{
+    MIDContext_t *context = (MIDContext_t *) ctx;
+    if (context->mode == MID_MODE_ACTIVE) {
+        MIDSetMainDisplayText(context, "Bluetooth", 0);
     }
 }
 
