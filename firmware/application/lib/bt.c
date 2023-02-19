@@ -244,7 +244,6 @@ void BTCommandPause(BT_t *bt)
     } else {
         BM83CommandMusicControl(bt, BM83_CMD_ACTION_PAUSE);
     }
-    bt->playbackStatus = BT_AVRCP_STATUS_PAUSED;
 }
 
 /**
@@ -263,7 +262,6 @@ void BTCommandPlay(BT_t *bt)
     } else {
         BM83CommandMusicControl(bt, BM83_CMD_ACTION_PLAY);
     }
-    bt->playbackStatus = BT_AVRCP_STATUS_PLAYING;
 }
 
 /**
