@@ -242,6 +242,8 @@ void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
         BM83SendCommand(cli.bt, command, sizeof(command));
     } else if (UtilsStricmp(msgBuf[1], "LIST") == 0) {
         BM83CommandReadPairedDevices(cli.bt);
+    } else if (UtilsStricmp(msgBuf[1], "STATUS") == 0) {
+        BM83CommandReadLinkStatus(cli.bt);
     } else if (UtilsStricmp(msgBuf[1], "PAIR") == 0) {
         BM83CommandPairingEnable(cli.bt);
     } else if (UtilsStricmp(msgBuf[1], "MACID") == 0) {

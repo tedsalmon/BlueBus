@@ -757,7 +757,7 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             bt->status = BT_STATUS_DISCONNECTED;
             bt->activeDevice.hfpId = 0;
             uint8_t linkType = BT_LINK_TYPE_HFP;
-            EventTriggerCallback(BT_EVENT_DEVICE_LINK_CONNECTED, &linkType);
+            EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
             break;
         }
         case BM83_DATA_BTM_STATUS_A2DP_DISCO: {
@@ -766,7 +766,7 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             bt->activeDevice.deviceId = 0;
             bt->activeDevice.a2dpId = 0;
             uint8_t linkType = BT_LINK_TYPE_A2DP;
-            EventTriggerCallback(BT_EVENT_DEVICE_LINK_CONNECTED, &linkType);
+            EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
             break;
         }
         case BM83_DATA_BTM_STATUS_SCO_CONN: {
@@ -802,7 +802,7 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             bt->status = BT_STATUS_DISCONNECTED;
             bt->activeDevice.avrcpId = 0;
             uint8_t linkType = BT_LINK_TYPE_AVRCP;
-            EventTriggerCallback(BT_EVENT_DEVICE_LINK_CONNECTED, &linkType);
+            EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
             break;
         }
         case BM83_DATA_BTM_STATUS_STANDARD_SPP_CONN: {
@@ -815,11 +815,12 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         case BM83_DATA_BTM_STATUS_STANDBY_ON: {
             LogDebug(LOG_SOURCE_BT, "BT: Standby On");
             if (bt->activeDevice.deviceId != 0) {
-                bt->status = BT_STATUS_DISCONNECTED;
                 memset(&bt->activeDevice, 0, sizeof(BTConnection_t));
                 LogDebug(LOG_SOURCE_BT, "BT: Device Disconnected [BTM Standby]");
                 EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
             }
+            // We need to set this flag so we can attempt to connect
+            bt->status = BT_STATUS_DISCONNECTED;
             bt->powerState = BT_STATE_STANDBY;
             EventTriggerCallback(BT_EVENT_BOOT_STATUS, 0);
             break;
@@ -833,7 +834,7 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             memset(&bt->activeDevice, 0, sizeof(BTConnection_t));
             LogDebug(LOG_SOURCE_BT, "BT: Device Disconnected");
             uint8_t linkType = BT_LINK_TYPE_ACL;
-            EventTriggerCallback(BT_EVENT_DEVICE_LINK_CONNECTED, &linkType);
+            EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
             EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
             break;
         }

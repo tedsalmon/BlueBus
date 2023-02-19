@@ -1380,7 +1380,6 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
             IBUS_DEVICE_RAD,
             pkt[IBUS_PKT_DB1]
         );
-        
         if (direction == IBUS_RAD_VOLUME_UP) {
             volume += steps;
             if (volume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {

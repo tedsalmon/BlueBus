@@ -403,10 +403,12 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
     }
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_TEL_TCU_MODE) {
         context->settingValue = ConfigGetSetting(CONFIG_SETTING_TEL_MODE);
-        if (context->settingValue == CONFIG_SETTING_TEL_MODE_DEFAULT) {
-            MenuSingleLineSetMainDisplayText(context, "Call Mode: Default (Rec.)", 0);
-        } else {
+        if (context->settingValue == CONFIG_SETTING_TEL_MODE_TCU) {
             MenuSingleLineSetMainDisplayText(context, "Call Mode: TCU", 0);
+        } else if (context->settingValue == CONFIG_SETTING_TEL_MODE_NO_MUTE) {
+            MenuSingleLineSetMainDisplayText(context, "Call Mode: No Mute", 0);
+        } else {
+            MenuSingleLineSetMainDisplayText(context, "Call Mode: Default (Rec.)", 0);
         }
     }
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_BLINKERS) {
@@ -575,6 +577,9 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
         if (context->settingValue == CONFIG_SETTING_TEL_MODE_DEFAULT) {
             MenuSingleLineSetMainDisplayText(context, "TCU", 0);
             context->settingValue = CONFIG_SETTING_TEL_MODE_TCU;
+        } else if (context->settingValue == CONFIG_SETTING_TEL_MODE_TCU) {
+            MenuSingleLineSetMainDisplayText(context, "No Mute", 0);
+            context->settingValue = CONFIG_SETTING_TEL_MODE_NO_MUTE;
         } else {
             MenuSingleLineSetMainDisplayText(context, "Default (Recommended)", 0);
             context->settingValue = CONFIG_SETTING_TEL_MODE_DEFAULT;

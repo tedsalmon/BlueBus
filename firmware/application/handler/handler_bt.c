@@ -198,6 +198,15 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
     } else {
         uint8_t dspMode = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
         int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        uint8_t sourceSystem = IBUS_DEVICE_BMBT;
+        uint8_t volStepMax = 0x03;
+        if (context->ibus->moduleStatus.MID == 1) {
+            sourceSystem = IBUS_DEVICE_MID;
+        }
+        if (context->uiMode == CONFIG_UI_CD53) {
+            sourceSystem = IBUS_DEVICE_MFL;
+            volStepMax = 0x01;
+        }
         if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
             if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
                 dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
@@ -216,15 +225,6 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                 ConfigSetSetting(CONFIG_SETTING_TEL_VOL, CONFIG_SETTING_TEL_VOL_OFFSET_MAX);
             }
             LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %+d", volume);
-            uint8_t sourceSystem = IBUS_DEVICE_BMBT;
-            uint8_t volStepMax = 0x03;
-            if (context->ibus->moduleStatus.MID == 1) {
-                sourceSystem = IBUS_DEVICE_MID;
-            }
-            if (context->uiMode == CONFIG_UI_CD53) {
-                sourceSystem = IBUS_DEVICE_MFL;
-                volStepMax = 0x01;
-            }
             uint8_t direction = 1;
             if (volume < 0) {
                 direction = 0;
@@ -255,15 +255,6 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             // so we do not alter the volume that we are lowering ourselves
             context->telStatus = HANDLER_TEL_STATUS_VOL_CHANGE;
             LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %+d", -volume);
-            uint8_t sourceSystem = IBUS_DEVICE_BMBT;
-            uint8_t volStepMax = 0x03;
-            if (context->ibus->moduleStatus.MID == 1) {
-                sourceSystem = IBUS_DEVICE_MID;
-            }
-            if (context->uiMode == CONFIG_UI_CD53) {
-                sourceSystem = IBUS_DEVICE_MFL;
-                volStepMax = 0x01;
-            }
             uint8_t direction = 0;
             if (volume < 0) {
                 direction = 1;
@@ -495,10 +486,10 @@ void HandlerBTDeviceDisconnected(void *ctx, uint8_t *data)
     }
     if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF) {
         if (context->btSelectedDevice != HANDLER_BT_SELECTED_DEVICE_NONE) {
-            //BTPairedDevice_t *dev = &context->bt->pairedDevices[
-            //    context->btSelectedDevice
-            //];
-            //BTCommandProfileOpen(context->bt, "A2DP");
+            BTPairedDevice_t *dev = &context->bt->pairedDevices[
+                context->btSelectedDevice
+            ];
+            BTCommandConnect(context->bt, dev);
         } else {
             if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
                 IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
@@ -683,8 +674,19 @@ void HandlerBTBM83AVRCPUpdates(void *ctx, uint8_t *data)
 void HandlerBTBM83LinkBackStatus(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint8_t linkType = pkt[0];
+    uint8_t linkStatus = pkt[1];
     if (context->ibus->ignitionStatus != IBUS_IGNITION_OFF) {
-        // Ensure the proper link status
+        if (linkType == BM83_DATA_LINK_BACK_HF &&
+            linkStatus == BM83_DATA_LINK_BACK_A2DP_HF_SUCCESS
+        ) {
+            // The mic gain has to be reset every time we reconnect
+            uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
+            while (micGain > 0) {
+                BM83CommandMicGainUp(context->bt);
+                micGain--;
+            }
+        }
     }
 }
 
@@ -742,10 +744,10 @@ void HandlerTimerBTTCUStateChange(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
         LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU > Enable");
-        // Enable TEL_ON in case it is not already
-        UtilsSetPinMode(UTILS_PIN_TEL_ON, 1);
-        // Mute the Radio
-        UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 1);
+        if (ConfigGetSetting(CONFIG_SETTING_TEL_MODE) != CONFIG_SETTING_TEL_MODE_NO_MUTE) {
+            // Mute the Radio
+            UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 1);
+        }
         // Set the DAC Volume to the "telephone" volume
         PCM51XXSetVolume(ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL));
         // Enable the telephone amplifier
