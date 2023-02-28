@@ -1428,11 +1428,11 @@ void BC127ProcessEventCall(BT_t *bt, uint8_t callStatus)
 {
     if (bt->callStatus != callStatus) {
         if (callStatus == BT_CALL_INCOMING) {
-            bt->callerId[0]=0;
+            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_CALL), BT_CALLER_ID_FIELD_SIZE);
         }
         if (callStatus == BT_CALL_OUTGOING) {
             if (strncmp(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE) == 0) {
-                bt->callerId[0]=0;
+                UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_CALL), BT_CALLER_ID_FIELD_SIZE);
             }
         }
         bt->callStatus = callStatus;

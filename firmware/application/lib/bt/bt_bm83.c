@@ -127,7 +127,7 @@ void BM83CommandBTMUtilityFunction(BT_t *bt, uint8_t type, uint8_t param)
 /**
  * BM83CommandCallAccept()
  *     Description:
- *         Accept the incomming call (MMI_Action -> 0x02)
+ *         Accept the incoming call (MMI_Action -> 0x02)
  *     Params:
  *         BT_t *bt - A pointer to the module object
  *     Returns:
@@ -901,13 +901,13 @@ void BM83ProcessEventCallStatus(BT_t *bt, uint8_t *data, uint16_t length)
             bt->callStatus = BT_CALL_VR;
             UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             break;
-        case BM83_DATA_CALL_STATUS_INCOMMING:
-            bt->callerId[0] = 0;
+        case BM83_DATA_CALL_STATUS_INCOMING:
+            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_CALL), BT_CALLER_ID_FIELD_SIZE);
             bt->callStatus = BT_CALL_INCOMING;
             break;
         case BM83_DATA_CALL_STATUS_OUTGOING:
             if (strncmp(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE) == 0) {
-                bt->callerId[0] = 0;
+                UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_CALL), BT_CALLER_ID_FIELD_SIZE);
             }
             bt->callStatus = BT_CALL_OUTGOING;
             break;
