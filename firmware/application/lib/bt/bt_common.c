@@ -122,7 +122,7 @@ void BTPairedDeviceInit(
         BTPairedDevice_t pairedDevice;
         memcpy(pairedDevice.macId, macId, BT_MAC_ID_LEN);
         memset(pairedDevice.deviceName, 0, BT_DEVICE_NAME_LEN);
-        strncpy(pairedDevice.deviceName, deviceName, BT_DEVICE_NAME_LEN - 1);
+        UtilsStrncpy(pairedDevice.deviceName, deviceName, BT_DEVICE_NAME_LEN);
         if (deviceNumber > 0 && deviceNumber <= BT_MAX_DEVICE_PAIRED) {
             pairedDevice.number = deviceNumber;
             LogDebug(LOG_SOURCE_BT, "Add PD: %d", deviceNumber - 1);

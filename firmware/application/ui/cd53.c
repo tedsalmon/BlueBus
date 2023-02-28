@@ -148,10 +148,7 @@ static void CD53SetMainDisplayText(
     const char *str,
     int8_t timeout
 ) {
-    memset(context->mainDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
-    strncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
-    // If the source is longer than the destination, we would not null terminate
-    context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
+    UtilsStrncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
     context->mainDisplay.length = strlen(context->mainDisplay.text);
     context->mainDisplay.index = 0;
     TimerTriggerScheduledTask(context->displayUpdateTaskId);
@@ -163,10 +160,7 @@ static void CD53SetTempDisplayText(
     char *str,
     int8_t timeout
 ) {
-    memset(context->tempDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
-    strncpy(context->tempDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
-    // If the source is longer than the destination, we would not null terminate
-    context->tempDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
+    UtilsStrncpy(context->tempDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
     context->tempDisplay.length = strlen(context->tempDisplay.text);
     context->tempDisplay.index = 0;
     context->tempDisplay.status = CD53_DISPLAY_STATUS_NEW;
@@ -221,7 +215,7 @@ static void CD53ShowNextAvailableDevice(CD53Context_t *context, uint8_t directio
     }
     BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
     char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};
-    strncpy(text, dev->deviceName, CD53_DISPLAY_TEXT_LEN);
+    UtilsStrncpy(text, dev->deviceName, CD53_DISPLAY_TEXT_LEN);
     // Add a space and asterisks to the end of the device name
     // if it's the currently selected device
     if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) == 0) {

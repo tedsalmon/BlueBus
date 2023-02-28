@@ -124,9 +124,7 @@ static void MIDSetMainDisplayText(
         str
     );
     memset(context->mainDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
-    strncpy(context->mainDisplay.text, text, UTILS_DISPLAY_TEXT_SIZE);
-    // If the source is longer than the destination, we would not null terminate
-    context->mainDisplay.text[UTILS_DISPLAY_TEXT_SIZE - 1] = '\0';
+    UtilsStrncpy(context->mainDisplay.text, text, UTILS_DISPLAY_TEXT_SIZE);
     context->mainDisplay.length = strlen(context->mainDisplay.text);
     context->mainDisplay.index = 0;
     TimerTriggerScheduledTask(context->displayUpdateTaskId);
@@ -146,7 +144,7 @@ static void MIDSetTempDisplayText(
         context->mainText,
         str
     );
-    strncpy(context->tempDisplay.text, text, UTILS_DISPLAY_TEXT_SIZE - 1);
+    UtilsStrncpy(context->tempDisplay.text, text, UTILS_DISPLAY_TEXT_SIZE);
     context->tempDisplay.length = strlen(context->tempDisplay.text);
     context->tempDisplay.index = 0;
     context->tempDisplay.status = MID_DISPLAY_STATUS_NEW;
