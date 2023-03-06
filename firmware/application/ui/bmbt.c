@@ -23,6 +23,30 @@ uint16_t menuSettingsLabelIndices[] = {
     LOCALE_STRING_UI
 };
 
+// IBUS constants, do not edit
+static const uint8_t nav_zoomConstants[BMBT_AUTOZOOM_LEVELS] = {
+    0x01, // 125 - special case when stationary
+    0x01, // 125
+    0x02, // 250
+    0x04, // 500
+    0x10, // 900
+    0x12, // 2.5
+    0x13, // 5
+    0x14  // 10
+};
+
+// Map Auto-zoom, max speed (km/h) per scale
+static const uint16_t nav_zoomSpeeds[BMBT_AUTOZOOM_LEVELS] = {
+     1,     // 125 - special case when stationary, do not edit the "1"
+    10,     // 125
+    60,     // 250
+    90,     // 500
+    120,    // 900
+    150,    // 2.5
+    999,    // 5
+    999     // 10
+};
+
 void BMBTInit(BT_t *bt, IBus_t *ibus)
 {
     Context.bt = bt;
@@ -37,6 +61,9 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     Context.timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     Context.timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     Context.mainDisplay = UtilsDisplayValueInit(LocaleGetText(LOCALE_STRING_BLUETOOTH), BMBT_DISPLAY_OFF);
+    Context.navZoom = -1;
+    Context.navZoom_last = 0;
+    
     EventRegisterCallback(
         BT_EVENT_DEVICE_CONNECTED,
         &BMBTBTDeviceConnected,
@@ -120,6 +147,11 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBUS_EVENT_IKE_VEHICLE_CONFIG,
         &BMBTIBusVehicleConfig,
+        &Context
+    );
+    EventRegisterCallback(
+        IBUS_EVENT_IKESpeedRPMUpdate,
+        &BMBTSpeedRPMUpdate,
         &Context
     );
     Context.headerWriteTaskId = TimerRegisterScheduledTask(
@@ -2411,6 +2443,34 @@ void BMBTTimerScrollDisplay(void *ctx)
                 }
                 context->mainDisplay.index = 1;
             }
+        }
+    }
+}
+void BMBTSpeedRPMUpdate(void *ctx, uint8_t *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    uint16_t speed_kmh = pkt[4] * 2;
+    
+    uint8_t zoom_level = 0;
+
+    while ((zoom_level < BMBT_AUTOZOOM_LEVELS-1)&&(speed_kmh > nav_zoomSpeeds[zoom_level])) {
+        zoom_level++;
+    }
+
+    if ((context->navZoom > zoom_level)&&((speed_kmh + BMBT_AUTOZOOM_TOLERANCE) > nav_zoomSpeeds[context->navZoom-1])) {
+        zoom_level = context->navZoom;
+    } else if (context->navZoom != zoom_level) {
+        uint32_t now = TimerGetMillis();
+        LogDebug(LOG_SOURCE_SYSTEM, "Autozoom: kmh=%i, currentZoom=%i, wishedZoom=%i, now=%lu, last=%lu", speed_kmh, context->navZoom, zoom_level, now, context->navZoom_last);
+        if (context->navZoom_last + BMBT_AUTOZOOM_DELAY < now) {
+            context->navZoom = zoom_level;
+            context->navZoom_last = now;
+            uint8_t zoomMessage[] = {
+                0xAA,
+                0x10,
+                nav_zoomConstants[zoom_level]
+            };
+            IBusSendCommand(context->ibus, IBUS_DEVICE_SES, IBUS_DEVICE_NAVE, zoomMessage, 3);
         }
     }
 }
