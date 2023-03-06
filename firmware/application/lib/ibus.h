@@ -38,6 +38,7 @@
 #define IBUS_DEVICE_CDCD 0x76 /* CD changer, DIN size. */
 #define IBUS_DEVICE_NAVE 0x7F /* Navigation (Europe) */
 #define IBUS_DEVICE_IKE 0x80 /* Instrument cluster electronics */
+#define IBUS_DEVICE_SES 0xB0 /* Speach recognition system */
 #define IBUS_DEVICE_GLO 0xBF /* Global, broadcast address */
 #define IBUS_DEVICE_MID 0xC0 /* Multi-info display */
 #define IBUS_DEVICE_TEL 0xC8 /* Telephone */

@@ -101,6 +101,11 @@
 #define BMBT_SCROLL_TEXT_TIMER 500
 #define BMBT_TV_STATUS_OFF 0
 #define BMBT_TV_STATUS_ON 1
+
+#define BMBT_AUTOZOOM_LEVELS 8
+#define BMBT_AUTOZOOM_TOLERANCE 4
+#define BMBT_AUTOZOOM_DELAY 10000
+
 typedef struct BMBTStatus_t {
     uint8_t playerMode: 1;
     uint8_t displayMode: 2;
@@ -121,6 +126,9 @@ typedef struct BMBTContext_t {
     uint8_t menuWriteTaskId;
     uint8_t dspMode;
     UtilsAbstractDisplayValue_t mainDisplay;
+    int8_t navZoom;
+    uint32_t navZoom_last;
+    
 } BMBTContext_t;
 void BMBTInit(BT_t *, IBus_t *);
 void BMBTDestroy();
@@ -144,4 +152,5 @@ void BMBTIBusVehicleConfig(void *, unsigned char *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);
 void BMBTTimerScrollDisplay(void *);
+void BMBTSpeedRPMUpdate(void *, uint8_t *);
 #endif /* BMBT_H */
