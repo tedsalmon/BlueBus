@@ -6,6 +6,85 @@
  */
 #include "locale.h"
 
+static char *LOCALE_LANG_ENGLISH[] = {
+    "- Not Playing -",
+    "About",
+    "Audio",
+    "Autoplay: Off",
+    "Autoplay: On",
+    "Back",
+    "Blinkers: %d",
+    "Bluetooth",
+    "Built: %d/%d",
+    "Calling",
+    "Car: E3x/E53",
+    "Car: E46/Z4",
+    "Car: Unset",
+    "Clear Pairings",
+    "Comfort",
+    "Dashboard",
+    "Devices",
+    "DSP: Default",
+    "DSP: Analog",
+    "DSP: Digital",
+    "FW: %s",
+    "Handsfree: Off",
+    "Handsfree: On",
+    "Lock: 10km/h",
+    "Lock: 20km/h",
+    "Lock: Off",
+    "Main Menu",
+    "Menu: Dashboard",
+    "Menu: Main",
+    "Metadata: Chunk",
+    "Metadata: Off",
+    "Metadata: Party",
+    "Mic Bias: Off",
+    "Mic Bias: On",
+    "Mic Gain: %idB",
+    "No Device",
+    "Pairing: Off",
+    "Pairing: On",
+    "S/N: %u",
+    "Settings",
+    "Settings > About",
+    "Settings > Audio",
+    "Settings > Calling",
+    "Settings > Comfort",
+    "Settings > UI",
+    "Temps: Coolant",
+    "Temps: Off",
+    "Temps: Ambient",
+    "Temps: Oil",
+    "UI",
+    "Unknown Artist",
+    "Unknown Title",
+    "Unlock: Off",
+    "Unlock: Pos 0",
+    "Unlock: Pos 1",
+    "Volume: -%ddB",
+    "Volume: +%ddB",
+    "Volume: +24dB",
+    "Volume: 0dB",
+    "Lang: %s",
+    "Park Lts.: On",
+    "Park Lts.: Off",
+    "Vol. Mgmt: On",
+    "Vol. Mgmt: Off",
+    "Vol. Rev: On",
+    "Vol. Rev: Off",
+    "Dash. OBC: On",
+    "Dash. OBC: Off",
+    "BMBT Off: Off",
+    "BMBT Off: On",
+    "Vol. Offset: %+d",
+    "Mode: Default",
+    "Mode: TCU",
+    "Mode: No Mute",
+    "Voice Assistant",
+    "Call",
+};
+
 static char *LOCALE_LANG_ITALIAN[] = {
     "- In Pausa -",
     "Info su...",
@@ -82,6 +161,7 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Mode: TCU",
     "Mode: No Mute",
     "Voice Assistant",
+    "Telefonata",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -160,84 +240,7 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Mode: TCU",
     "Mode: No Mute",
     "Voice Assistant",
-};
-
-static char *LOCALE_LANG_ENGLISH[] = {
-    "- Not Playing -",
-    "About",
-    "Audio",
-    "Autoplay: Off",
-    "Autoplay: On",
-    "Back",
-    "Blinkers: %d",
-    "Bluetooth",
-    "Built: %d/%d",
-    "Calling",
-    "Car: E3x/E53",
-    "Car: E46/Z4",
-    "Car: Unset",
-    "Clear Pairings",
-    "Comfort",
-    "Dashboard",
-    "Devices",
-    "DSP: Default",
-    "DSP: Analog",
-    "DSP: Digital",
-    "FW: %s",
-    "Handsfree: Off",
-    "Handsfree: On",
-    "Lock: 10km/h",
-    "Lock: 20km/h",
-    "Lock: Off",
-    "Main Menu",
-    "Menu: Dashboard",
-    "Menu: Main",
-    "Metadata: Chunk",
-    "Metadata: Off",
-    "Metadata: Party",
-    "Mic Bias: Off",
-    "Mic Bias: On",
-    "Mic Gain: %idB",
-    "No Device",
-    "Pairing: Off",
-    "Pairing: On",
-    "S/N: %u",
-    "Settings",
-    "Settings > About",
-    "Settings > Audio",
-    "Settings > Calling",
-    "Settings > Comfort",
-    "Settings > UI",
-    "Temps: Coolant",
-    "Temps: Off",
-    "Temps: Ambient",
-    "Temps: Oil",
-    "UI",
-    "Unknown Artist",
-    "Unknown Title",
-    "Unlock: Off",
-    "Unlock: Pos 0",
-    "Unlock: Pos 1",
-    "Volume: -%ddB",
-    "Volume: +%ddB",
-    "Volume: +24dB",
-    "Volume: 0dB",
-    "Lang: %s",
-    "Park Lts.: On",
-    "Park Lts.: Off",
-    "Vol. Mgmt: On",
-    "Vol. Mgmt: Off",
-    "Vol. Rev: On",
-    "Vol. Rev: Off",
-    "Dash. OBC: On",
-    "Dash. OBC: Off",
-    "BMBT Off: Off",
-    "BMBT Off: On",
-    "Vol. Offset: %+d",
-    "Mode: Default",
-    "Mode: TCU",
-    "Mode: No Mute",
-    "Voice Assistant",
+    "Oproep",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -316,6 +319,7 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Mode: TCU",
     "Mode: No Mute",
     "Voice Assistant",
+    "Kõne",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -394,6 +398,7 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Mode: TCU",
     "Mode: No Mute",
     "Voice Assistant",
+    "Call",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -472,6 +477,7 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Mode: TCU",
     "Mode: No Mute",
     "Voice Assistant",
+    "Anruf",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -550,6 +556,7 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Mode: TCU",
     "Mode: No Mute",
     "Voice Assistant",
+    "Llamar",
 };
 
 /**
@@ -563,24 +570,37 @@ static char *LOCALE_LANG_SPANISH[] = {
  */
 char *LocaleGetText(uint16_t stringIndex)
 {
+    if (stringIndex>LOCALE_STRING_MAX_INDEX) {
+        return "Err: Missing txt";
+    }
+
+    char *text = NULL;
     unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+
     switch (language) {
         case CONFIG_SETTING_LANGUAGE_DUTCH:
-            return LOCALE_LANG_DUTCH[stringIndex];
-        case CONFIG_SETTING_LANGUAGE_ENGLISH:
-            return LOCALE_LANG_ENGLISH[stringIndex];
+            text = LOCALE_LANG_DUTCH[stringIndex];
+            break;
         case CONFIG_SETTING_LANGUAGE_ESTONIAN:
-            return LOCALE_LANG_ESTONIAN[stringIndex];
+            text = LOCALE_LANG_ESTONIAN[stringIndex];
+            break;
         case CONFIG_SETTING_LANGUAGE_GERMAN:
-            return LOCALE_LANG_GERMAN[stringIndex];
+            text = LOCALE_LANG_GERMAN[stringIndex];
+            break;
         case CONFIG_SETTING_LANGUAGE_ITALIAN:
-            return LOCALE_LANG_ITALIAN[stringIndex];
+            text = LOCALE_LANG_ITALIAN[stringIndex];
+            break;
         case CONFIG_SETTING_LANGUAGE_RUSSIAN:
-            return LOCALE_LANG_RUSSIAN[stringIndex];
+            text = LOCALE_LANG_RUSSIAN[stringIndex];
+            break;
         case CONFIG_SETTING_LANGUAGE_SPANISH:
-            return LOCALE_LANG_SPANISH[stringIndex];
-        default:
-            // Default to English
-            return LOCALE_LANG_ENGLISH[stringIndex];
+            text = LOCALE_LANG_SPANISH[stringIndex];
+            break;
     }
+
+    if ( text == NULL ) {
+        text = LOCALE_LANG_ENGLISH[stringIndex];
+    }
+    
+    return text;
 }

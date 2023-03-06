@@ -127,7 +127,7 @@ void BM83CommandBTMUtilityFunction(BT_t *bt, uint8_t type, uint8_t param)
 /**
  * BM83CommandCallAccept()
  *     Description:
- *         Accept the incomming call (MMI_Action -> 0x02)
+ *         Accept the incoming call (MMI_Action -> 0x02)
  *     Params:
  *         BT_t *bt - A pointer to the module object
  *     Returns:
@@ -901,13 +901,13 @@ void BM83ProcessEventCallStatus(BT_t *bt, uint8_t *data, uint16_t length)
             bt->callStatus = BT_CALL_VR;
             UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
             break;
-        case BM83_DATA_CALL_STATUS_INCOMMING:
-            bt->callerId[0] = 0;
+        case BM83_DATA_CALL_STATUS_INCOMING:
+            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_CALL), BT_CALLER_ID_FIELD_SIZE);
             bt->callStatus = BT_CALL_INCOMING;
             break;
         case BM83_DATA_CALL_STATUS_OUTGOING:
             if (strncmp(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE) == 0) {
-                bt->callerId[0] = 0;
+                UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_CALL), BT_CALLER_ID_FIELD_SIZE);
             }
             bt->callStatus = BT_CALL_OUTGOING;
             break;
@@ -930,14 +930,14 @@ void BM83ProcessEventCallStatus(BT_t *bt, uint8_t *data, uint16_t length)
  */
 void BM83ProcessEventCallerID(BT_t *bt, uint8_t *data, uint16_t length)
 {
-    char callerId[length];
-    memset(callerId, 0, length);
+    char callerId[length+1];
     uint16_t i = 0;
     for (i = 0; i < length; i++) {
         callerId[i] = data[i + BM83_FRAME_DB1];
     }
+    callerId[i]=0;
     memset(bt->callerId, 0, BT_CALLER_ID_FIELD_SIZE);
-    strncpy(bt->callerId, callerId, BT_CALLER_ID_FIELD_SIZE);
+    UtilsStrncpy(bt->callerId, callerId, BT_CALLER_ID_FIELD_SIZE);
     EventTriggerCallback(BT_EVENT_CALLER_ID_UPDATE, 0);
 }
 
@@ -1009,7 +1009,7 @@ void BM83ProcessEventReadLinkedDeviceInformation(BT_t *bt, uint8_t *data, uint16
             }
             UtilsNormalizeText(deviceName, nameData, BT_DEVICE_NAME_LEN + 1);
             LogDebug(LOG_SOURCE_BT, "Connected Device: %s", deviceName);
-            strncpy(bt->activeDevice.deviceName, deviceName, BT_DEVICE_NAME_LEN);
+            UtilsStrncpy(bt->activeDevice.deviceName, deviceName, BT_DEVICE_NAME_LEN);
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
             break;
         }
@@ -1105,7 +1105,7 @@ void BM83ProcessDataGetAllAttributes(
                 if (memcmp(text, bt->title, BT_METADATA_FIELD_SIZE) != 0) {
                     dataDiffers = 1;
                     memset(bt->title, 0, BT_METADATA_FIELD_SIZE);
-                    strncpy(bt->title, text, BT_METADATA_FIELD_SIZE);
+                    UtilsStrncpy(bt->title, text, BT_METADATA_FIELD_SIZE);
                 }
                 break;
             }
@@ -1120,7 +1120,7 @@ void BM83ProcessDataGetAllAttributes(
                 if (memcmp(text, bt->artist, BT_METADATA_FIELD_SIZE) != 0) {
                     dataDiffers = 1;
                     memset(bt->artist, 0, BT_METADATA_FIELD_SIZE);
-                    strncpy(bt->artist, text, BT_METADATA_FIELD_SIZE);
+                    UtilsStrncpy(bt->artist, text, BT_METADATA_FIELD_SIZE);
                 }
                 break;
             }
@@ -1135,7 +1135,7 @@ void BM83ProcessDataGetAllAttributes(
                 if (memcmp(text, bt->album, BT_METADATA_FIELD_SIZE) != 0) {
                     dataDiffers = 1;
                     memset(bt->album, 0, BT_METADATA_FIELD_SIZE);
-                    strncpy(bt->album, text, BT_METADATA_FIELD_SIZE);
+                    UtilsStrncpy(bt->album, text, BT_METADATA_FIELD_SIZE);
                 }
                 break;
             }
