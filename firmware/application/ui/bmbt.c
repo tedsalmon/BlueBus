@@ -2475,28 +2475,30 @@ void BMBTTimerScrollDisplay(void *ctx)
 void BMBTSpeedRPMUpdate(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    uint16_t speed_kmh = pkt[4] * 2;
-    
-    uint8_t zoom_level = 0;
 
-    while ((zoom_level < BMBT_AUTOZOOM_LEVELS-1)&&(speed_kmh > nav_zoomSpeeds[zoom_level])) {
-        zoom_level++;
-    }
+    if (ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM) == CONFIG_SETTING_ON) {
+        uint16_t speed_kmh = pkt[4] * 2;
+        uint8_t zoom_level = 0;
 
-    if ((context->navZoom > zoom_level)&&((speed_kmh + BMBT_AUTOZOOM_TOLERANCE) > nav_zoomSpeeds[context->navZoom-1])) {
-        zoom_level = context->navZoom;
-    } else if (context->navZoom != zoom_level) {
-        uint32_t now = TimerGetMillis();
-        LogDebug(LOG_SOURCE_SYSTEM, "Autozoom: kmh=%i, currentZoom=%i, wishedZoom=%i, now=%lu, last=%lu", speed_kmh, context->navZoom, zoom_level, now, context->navZoom_last);
-        if (context->navZoom_last + BMBT_AUTOZOOM_DELAY < now) {
-            context->navZoom = zoom_level;
-            context->navZoom_last = now;
-            uint8_t zoomMessage[] = {
-                0xAA,
-                0x10,
-                nav_zoomConstants[zoom_level]
-            };
-            IBusSendCommand(context->ibus, IBUS_DEVICE_SES, IBUS_DEVICE_NAVE, zoomMessage, 3);
+        while ((zoom_level < BMBT_AUTOZOOM_LEVELS-1)&&(speed_kmh > nav_zoomSpeeds[zoom_level])) {
+            zoom_level++;
+        }
+
+        if ((context->navZoom > zoom_level)&&((speed_kmh + BMBT_AUTOZOOM_TOLERANCE) > nav_zoomSpeeds[context->navZoom-1])) {
+            zoom_level = context->navZoom;
+        } else if (context->navZoom != zoom_level) {
+            uint32_t now = TimerGetMillis();
+            LogDebug(LOG_SOURCE_SYSTEM, "Autozoom: kmh=%i, currentZoom=%i, wishedZoom=%i, now=%lu, last=%lu", speed_kmh, context->navZoom, zoom_level, now, context->navZoom_last);
+            if (context->navZoom_last + BMBT_AUTOZOOM_DELAY < now) {
+                context->navZoom = zoom_level;
+                context->navZoom_last = now;
+                uint8_t zoomMessage[] = {
+                    0xAA,
+                    0x10,
+                    nav_zoomConstants[zoom_level]
+                };
+                IBusSendCommand(context->ibus, IBUS_DEVICE_SES, IBUS_DEVICE_NAVE, zoomMessage, 3);
+            }
         }
     }
 }
