@@ -83,6 +83,8 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Call",
+    "Autozoom: On",
+    "Autozoom: Off",
 };
 
 static char *LOCALE_LANG_ITALIAN[] = {
@@ -162,6 +164,8 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Telefonata",
+    "Autozoom: On",
+    "Autozoom: Off",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -241,6 +245,8 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Oproep",
+    "Autozoom: On",
+    "Autozoom: Off",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -320,6 +326,8 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Kõne",
+    "Autozoom: On",
+    "Autozoom: Off",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -399,6 +407,8 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Call",
+    "Autozoom: On",
+    "Autozoom: Off",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -478,6 +488,8 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Anruf",
+    "Autozoom: On",
+    "Autozoom: Off",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -557,6 +569,8 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Llamar",
+    "Autozoom: On",
+    "Autozoom: Off",
 };
 
 /**
