@@ -913,16 +913,32 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
             context,
             BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS,
             LocaleGetText(LOCALE_STRING_PARK_LAMPS_ON),
-            2
+            0
         );
     } else {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS,
             LocaleGetText(LOCALE_STRING_PARK_LAMPS_OFF),
-            2
+            0
+        );
+    };
+    if (ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM) == CONFIG_SETTING_ON) {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM,
+            LocaleGetText(LOCALE_STRING_AUTOZOOM_ON),
+            1
+        );
+    } else {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM,
+            LocaleGetText(LOCALE_STRING_AUTOZOOM_OFF),
+            1
         );
     }
+            
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
     IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT));
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
@@ -1294,6 +1310,16 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             ConfigSetComfortUnlock(CONFIG_SETTING_OFF);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_UNLOCK_OFF), 0);
         }
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM) {
+        uint8_t value = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
+        if (value == CONFIG_SETTING_OFF) {
+            value = CONFIG_SETTING_ON;
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_AUTOZOOM_ON), 0);
+        } else {
+            value = CONFIG_SETTING_OFF;
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_AUTOZOOM_OFF), 0);
+        }
+        ConfigSetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM, value);
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
