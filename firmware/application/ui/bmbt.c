@@ -26,13 +26,13 @@ uint16_t menuSettingsLabelIndices[] = {
 // IBUS constants, do not edit
 static const uint8_t nav_zoomConstants[BMBT_AUTOZOOM_LEVELS] = {
     0x01, // 125 - special case when stationary
-    0x01, // 125
-    0x02, // 250
-    0x04, // 500
-    0x10, // 900
-    0x12, // 2.5
-    0x13, // 5
-    0x14  // 10
+    0x01, // 125 yds    100m
+    0x02, // 250        200m
+    0x04, // 450        500m
+    0x10, // 900        1km
+    0x11, // 1 mls      2km
+    0x12, // 2.5        5km
+    0x13  // 5          10km
 };
 
 // Map Auto-zoom, max speed (km/h) per scale
@@ -40,11 +40,11 @@ static const uint16_t nav_zoomSpeeds[BMBT_AUTOZOOM_LEVELS] = {
      1,     // 125 - special case when stationary, do not edit the "1"
     10,     // 125
     60,     // 250
-    90,     // 500
+    90,     // 450
     120,    // 900
-    150,    // 2.5
-    999,    // 5
-    999     // 10
+    150,    // 1
+    999,    // 2.5
+    999     // 5
 };
 
 void BMBTInit(BT_t *bt, IBus_t *ibus)
