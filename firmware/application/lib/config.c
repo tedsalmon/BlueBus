@@ -424,6 +424,20 @@ uint8_t ConfigGetTempUnit()
 }
 
 /**
+ * ConfigGetDistUnit()
+ *     Description:
+ *         Return the distance units that the vehicle is configured for
+ *     Params:
+ *         None
+ *     Returns:
+ *         uint8_t
+ */
+uint8_t ConfigGetDistUnit()
+{
+    return ConfigGetByteUpperNibble(CONFIG_SETTING_BMBT_DIST_UNIT_ADDRESS);
+}
+
+/**
  * ConfigGetTrapCount()
  *     Description:
  *         Get the number of times a trap has been triggered
@@ -786,6 +800,20 @@ void ConfigSetTempDisplay(uint8_t tempDisplay)
 void ConfigSetTempUnit(uint8_t tempUnit)
 {
     ConfigSetByteUpperNibble(CONFIG_SETTING_BMBT_TEMP_DISPLAY, tempUnit);
+}
+
+/**
+ * ConfigSetDistUnit()
+ *     Description:
+ *         Set the temperature unit setting
+ *     Params:
+ *         uint8_t distUnit - The distance unit
+ *     Returns:
+ *         void
+ */
+void ConfigSetDistUnit(uint8_t distUnit)
+{
+    ConfigSetByteUpperNibble(CONFIG_SETTING_BMBT_DIST_UNIT_ADDRESS, distUnit);
 }
 
 /**

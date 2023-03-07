@@ -41,6 +41,7 @@
 #define CONFIG_SETTING_BMBT_TEMP_DISPLAY_ADDRESS 0x20
 #define CONFIG_SETTING_LANGUAGE_ADDRESS 0x21
 #define CONFIG_SETTING_MONITOR_OFF_ADDRESS 0x22
+#define CONFIG_SETTING_BMBT_DIST_UNIT_ADDRESS 0x23
 /* Config 0x25 - 0x35: Comfort Settings */
 #define CONFIG_SETTING_COMFORT_BLINKERS_ADDRESS 0x25
 #define CONFIG_SETTING_COMFORT_LOCKS_ADDRESS 0x26
@@ -124,6 +125,7 @@
 #define CONFIG_SETTING_BMBT_TEMP_DISPLAY CONFIG_SETTING_BMBT_TEMP_DISPLAY_ADDRESS
 #define CONFIG_SETTING_LANGUAGE CONFIG_SETTING_LANGUAGE_ADDRESS
 #define CONFIG_SETTING_MONITOR_OFF CONFIG_SETTING_MONITOR_OFF_ADDRESS
+#define CONFIG_SETTING_BMBT_DIST_UNIT CONFIG_SETTING_BMBT_DIST_UNIT_ADDRESS
 /* Config 0x25 - 0x35: Comfort Settings */
 #define CONFIG_SETTING_COMFORT_BLINKERS CONFIG_SETTING_COMFORT_BLINKERS_ADDRESS
 #define CONFIG_SETTING_COMFORT_LOCKS CONFIG_SETTING_COMFORT_LOCKS_ADDRESS
@@ -185,6 +187,7 @@ uint8_t ConfigGetSetting(uint8_t);
 uint8_t ConfigGetTelephonyFeaturesActive();
 uint8_t ConfigGetTempDisplay();
 uint8_t ConfigGetTempUnit();
+uint8_t ConfigGetDistUnit();
 uint8_t ConfigGetTrapCount(uint8_t);
 uint8_t ConfigGetTrapLast();
 uint8_t ConfigGetUIMode();
@@ -208,6 +211,7 @@ void ConfigSetString(uint8_t, char *, uint8_t);
 void ConfigSetNavType(uint8_t);
 void ConfigSetTempDisplay(uint8_t);
 void ConfigSetTempUnit(uint8_t);
+void ConfigSetDistUnit(uint8_t);
 void ConfigSetTrapCount(uint8_t, uint8_t);
 void ConfigSetTrapIncrement(uint8_t);
 void ConfigSetTrapLast(uint8_t);
