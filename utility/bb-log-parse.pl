@@ -191,6 +191,9 @@ my %cmd_ibus = (
 	"17" => "ODO_RESPONSE",
 	"18" => "SPEED_RPM_UPDATE",
 	"19" => "TEMP_UPDATE",
+	"1A" => "IKE_TEXT_DISPLAY_GONG",
+	"1B" => "IKE_TEXT_STATUS",
+	"1C" => "GONG",
 	"1D" => "TEMP_REQUEST",
 	"1F" => "GPS_TIMEDATE",
 	"20" => "MODE",
@@ -221,6 +224,7 @@ my %cmd_ibus = (
 	"40" => "OBC_INPUT",
 	"41" => "OBC_CONTROL",
 	"42" => "OBC_REMOTE_CONTROL",
+	"44" => "WRITE_NUMERIC",
 	"45" => "SCREEN_MODE_SET",
 	"46" => "SCREEN_MODE_REQUEST",
 	"47" => "SOFT_BUTTON",
@@ -433,6 +437,8 @@ my %data_parsers = (
 	"GT_WRITE_TITLE" =>  \&ike_data_parsers_gt_write_menu,
 	"IKE_WRITE_TITLE" =>  \&ike_data_parsers_gt_write_menu,
 	"RAD_BROADCAST_WRITE_TITLE" =>  \&ike_data_parsers_gt_write_menu,
+
+	"IKE_WRITE_NUMERIC" => \&ike_data_parsers_write_numeric,
 
 	"CDC_RESPONSE" => \&ike_data_parsers_cdc_response,
 	"CDC_REQUEST" => \&ike_data_parsers_cdc_request,
@@ -1481,6 +1487,15 @@ sub ike_data_parsers_gt_write {
 
 	return "layout=$layout, func/cursor=$function, index=$index, clear=$clear, buffer=$buffer, highlight=$highlight, text=\"$text\"";
 
+}
+
+sub ike_data_parsers_write_numeric {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $cmd = $data->[0];
+	my $value = unpack_8bcd($data->[1]);
+
+	return "command=".($cmd==0x20?'clear':($cmd==0x2B?'extended, display='.($value*10):'normal, display='.$value));
 }
 
 sub ike_data_parsers_gt_write_menu {
