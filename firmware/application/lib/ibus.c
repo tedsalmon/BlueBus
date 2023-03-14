@@ -549,7 +549,7 @@ static void IBusHandlerPDCMessage(IBus_t *ibus, unsigned char *pkt)
                 ibus->pdc.rear_center_left,
                 ibus->pdc.rear_center_right,
                 ibus->pdc.rear_right
-                );
+        );
         EventTriggerCallback(IBUS_EVENT_PDC_UPDATE, pkt);
     }
 }
