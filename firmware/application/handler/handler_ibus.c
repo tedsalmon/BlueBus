@@ -123,6 +123,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         &HandlerIBusBlueBusTELStatusUpdate,
         context
     );
+    EventRegisterCallback(
+        IBUS_EVENT_PDC_UPDATE,
+        &HandlerIBusPDCUpdate,
+        context
+    );
     TimerRegisterScheduledTask(
         &HandlerTimerIBusCDCAnnounce,
         context,
@@ -1291,8 +1296,113 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
         );
         HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
     }
+    if ((context->pdcActive == 0) && (ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF)) {
+        context->pdcActive = 1;
+        unsigned char msg[] = { IBUS_CMD_PDC_REQUEST };
+        IBusSendCommand(context->ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_PDC, msg, 1);
+        TimerRegisterScheduledTask(
+            &HandlerTimerIBusPDCdistance,
+            context,
+            HANDLER_INT_PDC_DISTANCE
+        );
+        LogInfo(LOG_SOURCE_SYSTEM, "Activating PDC timer");
+    }
 }
 
+/**
+ * HandlerIBusPDCUpdate()
+ *     Description:
+ *         Handle PDC Distance Updates
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusPDCUpdate(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    IBus_t *ibus = context->ibus;
+    
+    uint8_t pdc_config = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+
+    if ((context->pdcActive == 0) || ((ibus->pdc.front_left == 255) &&
+        (ibus->pdc.front_center_left == 255) &&
+        (ibus->pdc.front_center_right == 255) &&
+        (ibus->pdc.front_right == 255) &&
+        (ibus->pdc.rear_left == 255) &&
+        (ibus->pdc.rear_center_left == 255) &&
+        (ibus->pdc.rear_center_right == 255) &&
+        (ibus->pdc.rear_right == 255))) {
+// clear displays
+        LogInfo(LOG_SOURCE_SYSTEM, "Clearing PDC displays");
+        if (pdc_config == CONFIG_SETTING_PDC_CLUSTER || pdc_config == CONFIG_SETTING_PDC_BOTH) {
+            unsigned char msg[] = { IBUS_CMD_IKE_WRITE_NUMERIC, 0x20, 0x00 };
+            IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
+        };
+        if (pdc_config == CONFIG_SETTING_PDC_BMBT || pdc_config == CONFIG_SETTING_PDC_BOTH) {        
+            // send to BMBT        
+        }
+    } else {
+        LogInfo(LOG_SOURCE_SYSTEM, "Writing PDC displays");
+        if (pdc_config == CONFIG_SETTING_PDC_CLUSTER || pdc_config == CONFIG_SETTING_PDC_BOTH) {
+            uint8_t min_dist = 255;
+            if (ibus->pdc.front_left < min_dist) {
+                min_dist = ibus->pdc.front_left;
+            }
+            if (ibus->pdc.front_center_left < min_dist) {
+                min_dist = ibus->pdc.front_center_left;
+            }
+            if (ibus->pdc.front_center_right < min_dist) {
+                min_dist = ibus->pdc.front_center_right;
+            }
+            if (ibus->pdc.front_right < min_dist) {
+                min_dist = ibus->pdc.front_right;
+            }
+            if (ibus->pdc.rear_left < min_dist) {
+                min_dist = ibus->pdc.rear_left;
+            }
+            if (ibus->pdc.rear_center_left < min_dist) {
+                min_dist = ibus->pdc.rear_center_left;
+            }
+            if (ibus->pdc.rear_center_right < min_dist) {
+                min_dist = ibus->pdc.front_center_right;
+            }
+            if (ibus->pdc.rear_right < min_dist) {
+                min_dist = ibus->pdc.rear_right;
+            }
+            LogInfo(LOG_SOURCE_SYSTEM, "Min PDC to display in cm: %d", min_dist);
+    // send to cluster ( small or large )
+            LogDebug(LOG_SOURCE_IBUS, "Recheck PDC distances(cm): Front: %i - %i - %i - %i, Rear: %i - %i - %i - %i",
+                ibus->pdc.front_left,
+                ibus->pdc.front_center_left,
+                ibus->pdc.front_center_right,
+                ibus->pdc.front_right,
+                ibus->pdc.rear_left,
+                ibus->pdc.rear_center_left,
+                ibus->pdc.rear_center_right,
+                ibus->pdc.rear_right
+            );
+            
+            if (min_dist<100) {
+                if (ConfigGetDistUnit() != 0) {
+    // convert to inch for Imperial
+                    min_dist = min_dist / 2.54;
+                }
+                LogInfo(LOG_SOURCE_SYSTEM, "Min PDC to display: %d", min_dist);
+                unsigned char msg[] = { IBUS_CMD_IKE_WRITE_NUMERIC, 0x23, (((int)(min_dist/10))<<4) + (min_dist%10) };
+                IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
+            } else {
+                unsigned char msg[] = { IBUS_CMD_IKE_WRITE_NUMERIC, 0x20, 0x00 };
+                IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
+            }
+        }
+    };
+    if (pdc_config == CONFIG_SETTING_PDC_BMBT || pdc_config == CONFIG_SETTING_PDC_BOTH) {        
+// send to BMBT        
+        
+    }
+}
 
 /**
  * HandlerIBusVolumeChange()
@@ -1663,5 +1773,39 @@ void HandlerTimerIBusPings(void *ctx)
             TimerUnregisterScheduledTask(&HandlerTimerIBusPings);
             break;
         }
+    }
+}
+
+/**
+ * HandlerTimerIBusPDCdistance()
+ *     Description:
+ *         While in reverse, request detailed distances from PDC
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+
+void HandlerTimerIBusPDCdistance(void *ctx) {
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    
+    if ((context->pdcLastStatus + 2000)<TimerGetMillis()) {
+// stop polling after 2 seconds of not being in Reverse
+        LogInfo(LOG_SOURCE_SYSTEM, "Disabling PDC timer");
+        TimerUnregisterScheduledTask(&HandlerTimerIBusPDCdistance);
+        context->pdcActive = 0;
+        context->ibus->pdc.front_left=255;
+        context->ibus->pdc.front_center_left=255;
+        context->ibus->pdc.front_center_right=255;
+        context->ibus->pdc.front_right=255;
+        context->ibus->pdc.rear_left=255;
+        context->ibus->pdc.rear_center_left=255;
+        context->ibus->pdc.rear_center_right=255;
+        context->ibus->pdc.rear_right=255;
+        EventTriggerCallback(IBUS_EVENT_PDC_UPDATE, NULL);        
+    } else {
+        LogInfo(LOG_SOURCE_SYSTEM, "Refreshing PDC distance");
+        unsigned char msg[] = { IBUS_CMD_PDC_REQUEST };
+        IBusSendCommand(context->ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_PDC, msg, 1);
     }
 }

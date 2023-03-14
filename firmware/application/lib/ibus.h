@@ -175,6 +175,8 @@
 #define IBUS_CMD_IKE_SET_REQUEST 0x40
 #define IBUS_CMD_IKE_SET_REQUEST_TIME 0x01
 #define IBUS_CMD_IKE_SET_REQUEST_DATE 0x02
+#define IBUS_CMD_IKE_WRITE_NUMERIC 0x44
+#define IBUS_CMD_IKE_WRITE_TEXT 0x1A
 
 #define IBUS_CMD_LCM_REQ_REDUNDANT_DATA 0x53
 #define IBUS_CMD_LCM_RESP_REDUNDANT_DATA 0x54
@@ -184,6 +186,8 @@
 #define IBUS_CMD_MOD_STATUS_RESP 0x02
 
 #define IBUS_CMD_PDC_STATUS 0x07
+#define IBUS_CMD_PDC_REQUEST 0x1B
+#define IBUS_CMD_PDC_RESPONSE 0xA0
 
 #define IBUS_CMD_RAD_LED_TAPE_CTRL 0x4A
 
@@ -439,10 +443,11 @@
 #define IBUS_EVENT_LMIdentResponse 67
 #define IBUS_EVENT_TV_STATUS 68
 #define IBUS_EVENT_PDC_STATUS 69
-#define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
-#define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
-#define IBUS_EVENT_GT_TELEMATICS_DATA 72
-#define IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE 73
+#define IBUS_EVENT_PDC_UPDATE 70
+#define IBUS_EVENT_SENSOR_VALUE_UPDATE 71
+#define IBUS_EVENT_SCREEN_BUFFER_FLUSH 72
+#define IBUS_EVENT_GT_TELEMATICS_DATA 73
+#define IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE 74
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -467,6 +472,17 @@ typedef struct IBusModuleStatus_t {
     uint8_t VM: 1;
     uint8_t PDC: 1;
 } IBusModuleStatus_t;
+
+typedef struct IBusPDC_t {
+    uint8_t front_left;
+    uint8_t front_center_left;
+    uint8_t front_center_right;
+    uint8_t front_right;
+    uint8_t rear_left;
+    uint8_t rear_center_left;
+    uint8_t rear_center_right;
+    uint8_t rear_right;    
+} IBusPDC_t;
 
 /**
  * IBus_t
@@ -499,6 +515,7 @@ typedef struct IBus_t {
     uint8_t oilTemperature;
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
+    IBusPDC_t pdc;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];

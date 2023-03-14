@@ -971,9 +971,39 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         context,
         BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM,
         autozoom_text,
+        0
+    );
+
+    uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+    if (pdc>CONFIG_SETTING_PDC_BOTH) {
+        pdc = CONFIG_SETTING_OFF;
+    }
+    
+    char pdc_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(
+        pdc_text, 
+        BMBT_MENU_STRING_MAX_SIZE, 
+        LocaleGetText(LOCALE_STRING_PDC), 
+        (
+            (pdc == CONFIG_SETTING_OFF) ?
+                "Off":
+                (   
+                    (pdc == CONFIG_SETTING_PDC_CLUSTER)?
+                        "cluster":
+                        (pdc == CONFIG_SETTING_PDC_BMBT)?
+                            "navi":
+                            "both"
+                )   
+        )
+    );
+    
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_PDC,
+        pdc_text,
         1
     );
-            
+
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
     IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT));
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
@@ -1369,7 +1399,45 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
                 )
         );
         BMBTGTWriteIndex(context, selectedIdx, autozoom_text, 0);
-        
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_PDC) {
+        uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+        if (pdc == CONFIG_SETTING_OFF) {
+            pdc=CONFIG_SETTING_PDC_CLUSTER;
+        } else if (pdc == CONFIG_SETTING_PDC_CLUSTER) {
+            pdc=CONFIG_SETTING_PDC_BMBT;
+        } else if (pdc == CONFIG_SETTING_PDC_BMBT) {
+            pdc=CONFIG_SETTING_PDC_BOTH;
+        } else {
+            pdc=CONFIG_SETTING_OFF;
+        }
+
+        ConfigSetSetting(CONFIG_SETTING_COMFORT_PDC, pdc);
+
+        char pdc_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+        snprintf(
+            pdc_text, 
+            BMBT_MENU_STRING_MAX_SIZE, 
+            LocaleGetText(LOCALE_STRING_PDC), 
+            (
+                (pdc == CONFIG_SETTING_OFF) ?
+                    "Off":
+                    (   
+                        (pdc == CONFIG_SETTING_PDC_CLUSTER)?
+                            "cluster":
+                            (pdc == CONFIG_SETTING_PDC_BMBT)?
+                                "navi":
+                                "both"
+                    )   
+            )
+        );
+
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_PDC,
+            pdc_text,
+            0
+        );
+
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }

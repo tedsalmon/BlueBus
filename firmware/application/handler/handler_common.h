@@ -53,6 +53,7 @@
 #define HANDLER_INT_BM83_POWER_RESET 200
 #define HANDLER_INT_BM83_POWER_MFB_ON 150
 #define HANDLER_INT_BM83_POWER_MFB_OFF 500
+#define HANDLER_INT_PDC_DISTANCE 500
 #define HANDLER_LCM_STATUS_BLINKER_OFF 0
 #define HANDLER_LCM_STATUS_BLINKER_ON 1
 #define HANDLER_LM_BLINK_OFF 0x00
@@ -135,6 +136,7 @@ typedef struct HandlerContext_t {
     uint32_t lmLastIOStatus;
     uint32_t lmLastStatusSet;
     uint32_t pdcLastStatus;
+    uint8_t pdcActive: 1;
 } HandlerContext_t;
 
 uint8_t HandlerGetTelMode(HandlerContext_t *);
