@@ -1380,41 +1380,31 @@ void HandlerIBusPDCUpdate(void *ctx, uint8_t *pkt)
         min_dist = MIN(fm,rm);
 
         if (pdc_config == CONFIG_SETTING_PDC_CLUSTER || pdc_config == CONFIG_SETTING_PDC_BOTH) {
-            // send to cluster ( small or large )
-            if (min_dist<100) {
-                if (unit != 0) {
-                    // convert to inch for Imperial
-                    min_dist = min_dist / 2.54;
-                }
-                
-                if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
+        // send to cluster ( small or large )
+            if (unit != 0) {
+                // convert to inch for Imperial
+                min_dist = min_dist / 2.54;
+            }
+
+            if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
 // display on LOW IKE
-                    LogInfo(LOG_SOURCE_SYSTEM, "Min PDC to IKE LOW : %d", min_dist);
-                    unsigned char msg[] = { IBUS_CMD_IKE_WRITE_NUMERIC, 0x23, (((int)(min_dist/10))<<4) + (min_dist%10) };
-                    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
-                } else {
-// display on HIGH IKE
-                    char disp[21]={0};
-                    if (fm>=rm) {
-                        snprintf(disp, 21, "F:%2.2d R:%2.2d %2.2d %2.2d %2.2d%s", MIN(99, (int) (fm / koef)), MIN(99, (int) (ibus->pdc.rear_left / koef)), MIN(99, (int) (ibus->pdc.rear_center_left / koef)), MIN(99, (int) (ibus->pdc.rear_center_right / koef)), MIN(99, (int) (ibus->pdc.rear_right / koef)), (unit==0)?"cm":"in");
-                    } else {
-                        snprintf(disp, 21, "F:%2.2d %2.2d %2.2d %2.2d R:%2.2d%s", MIN(99, (int) (ibus->pdc.front_left / koef)), MIN(99, (int) (ibus->pdc.front_center_left / koef)), MIN(99, (int) (ibus->pdc.front_center_right / koef)), MIN(99, (int) (ibus->pdc.front_right / koef)), MIN(99, (int) (rm / koef)), (unit==0)?"cm":"in");
-                    };                    
-                    LogInfo(LOG_SOURCE_SYSTEM, "PDC to IKE HIGH : %s", disp);
-                    unsigned char msg[24] = { IBUS_CMD_IKE_WRITE_TEXT, 0x30, 0x00 };
-                    memcpy(msg+3, disp, 20);
-                    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 23 );
-                }
+                min_dist = MIN(99, min_dist);
+                LogInfo(LOG_SOURCE_SYSTEM, "Min PDC to IKE LOW : %d", min_dist);
+
+                unsigned char msg[] = { IBUS_CMD_IKE_WRITE_NUMERIC, 0x23, (((int)(min_dist/10))<<4) + (min_dist%10) };
+                IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
             } else {
-// clear LOW IKE
-                if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
-                    unsigned char msg[] = { IBUS_CMD_IKE_WRITE_NUMERIC, 0x20, 0x00 };
-                    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
+// display on HIGH IKE
+                char disp[21]={0};
+                if (fm>=rm) {
+                    snprintf(disp, 21, "F:%2.2d R:%2.2d %2.2d %2.2d %2.2d%s", MIN(99, (int) (fm / koef)), MIN(99, (int) (ibus->pdc.rear_left / koef)), MIN(99, (int) (ibus->pdc.rear_center_left / koef)), MIN(99, (int) (ibus->pdc.rear_center_right / koef)), MIN(99, (int) (ibus->pdc.rear_right / koef)), (unit==0)?"cm":"in");
                 } else {
-// clear HIGH IKE
-                    unsigned char msg[] = { IBUS_CMD_IKE_WRITE_TEXT, 0x30, 0x00 };
-                    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
-                }
+                    snprintf(disp, 21, "F:%2.2d %2.2d %2.2d %2.2d R:%2.2d%s", MIN(99, (int) (ibus->pdc.front_left / koef)), MIN(99, (int) (ibus->pdc.front_center_left / koef)), MIN(99, (int) (ibus->pdc.front_center_right / koef)), MIN(99, (int) (ibus->pdc.front_right / koef)), MIN(99, (int) (rm / koef)), (unit==0)?"cm":"in");
+                };                    
+                LogInfo(LOG_SOURCE_SYSTEM, "PDC to IKE HIGH : %s", disp);
+                unsigned char msg[24] = { IBUS_CMD_IKE_WRITE_TEXT, 0x30, 0x00 };
+                memcpy(msg+3, disp, 20);
+                IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 23 );
             }
         }
     };
