@@ -990,7 +990,7 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
                 (   
                     (pdc == CONFIG_SETTING_PDC_CLUSTER)?
                         "cluster":
-                        (pdc == CONFIG_SETTING_PDC_BMBT)?
+                        (pdc == CONFIG_SETTING_PDC_RADIO)?
                             "navi":
                             "both"
                 )   
@@ -1404,8 +1404,9 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         if (pdc == CONFIG_SETTING_OFF) {
             pdc=CONFIG_SETTING_PDC_CLUSTER;
         } else if (pdc == CONFIG_SETTING_PDC_CLUSTER) {
-            pdc=CONFIG_SETTING_PDC_BMBT;
-        } else if (pdc == CONFIG_SETTING_PDC_BMBT) {
+//            pdc=CONFIG_SETTING_PDC_RADIO;
+            pdc=CONFIG_SETTING_OFF;
+        } else if (pdc == CONFIG_SETTING_PDC_RADIO) {
             pdc=CONFIG_SETTING_PDC_BOTH;
         } else {
             pdc=CONFIG_SETTING_OFF;
@@ -1424,7 +1425,7 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
                     (   
                         (pdc == CONFIG_SETTING_PDC_CLUSTER)?
                             "cluster":
-                            (pdc == CONFIG_SETTING_PDC_BMBT)?
+                            (pdc == CONFIG_SETTING_PDC_RADIO)?
                                 "navi":
                                 "both"
                     )   

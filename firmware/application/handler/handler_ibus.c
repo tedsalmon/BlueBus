@@ -1346,7 +1346,7 @@ void HandlerIBusPDCUpdate(void *ctx, uint8_t *pkt)
                 IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
             }
         };
-        if (pdc_config == CONFIG_SETTING_PDC_BMBT || pdc_config == CONFIG_SETTING_PDC_BOTH) {        
+        if (pdc_config == CONFIG_SETTING_PDC_RADIO || pdc_config == CONFIG_SETTING_PDC_BOTH) {        
             // send to BMBT        
         }
     } else {
@@ -1408,7 +1408,7 @@ void HandlerIBusPDCUpdate(void *ctx, uint8_t *pkt)
             }
         }
     };
-    if (pdc_config == CONFIG_SETTING_PDC_BMBT || pdc_config == CONFIG_SETTING_PDC_BOTH) {        
+    if (pdc_config == CONFIG_SETTING_PDC_RADIO || pdc_config == CONFIG_SETTING_PDC_BOTH) {        
 // send to BMBT        
         
     }
