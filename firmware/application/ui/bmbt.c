@@ -1444,12 +1444,14 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
         if (context->bt->type == BT_BTM_TYPE_BC127) {
             if (value == 0x00) {
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
+                BC127CommandSetProfiles(context->bt, 1, 1, 1, 1);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
                 BC127CommandProfileOpen(context->bt, "HFP");
             } else {
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
                 BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
+                BC127CommandSetProfiles(context->bt, 1, 1, 1, 0);
             }
         } else {
             if (value == 0x01) {
