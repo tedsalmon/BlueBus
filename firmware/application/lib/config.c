@@ -572,6 +572,40 @@ void ConfigGetVehicleIdentity(uint8_t *vin)
 }
 
 /**
+ * ConfigGetTimeSource()
+ *     Description:
+ *         Return the configured source of time
+ *     Returns:
+ *         uint8_t - CONFIG_SETTING_TIME_PHONE | CONFIG_SETTING_TIME_GPS | CONFIG_SETTING_OFF
+ */
+uint8_t ConfigGetTimeSource() {
+    return ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & ( CONFIG_SETTING_TIME_PHONE | CONFIG_SETTING_TIME_GPS );
+};
+
+
+/**
+ * ConfigGetTimeDST()
+ *     Description:
+ *         Return the configured DST state
+ *     Returns:
+ *         uint8_t - CONFIG_SETTING_TIME_DST | CONFIG_SETTING_OFF
+ */
+uint8_t ConfigGetTimeDST() {
+    return ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & CONFIG_SETTING_TIME_DST;
+};
+
+/**
+ * ConfigGetTimeOffset()
+ *     Description:
+ *         Return the configured time offest in minutes
+ *     Returns:
+ *         int16_t - time offset in minutes
+ */
+int16_t ConfigGetTimeOffset() {
+    return tz_offsets[(ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & CONFIG_SETTING_TIME_TZ) >> 3] * 15;
+}
+
+/**
  * ConfigSetBC127BootFailures()
  *     Description:
  *         Set count of BC127 boot failures
@@ -965,18 +999,15 @@ void ConfigSetVehicleIdentity(uint8_t *vin)
     }
 }
 
-uint8_t ConfigGetTimeSource() {
-    return ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & ( CONFIG_SETTING_TIME_PHONE | CONFIG_SETTING_TIME_GPS );
-};
-
-uint8_t ConfigGetTimeDST() {
-    return ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & CONFIG_SETTING_TIME_DST;
-};
-
-int16_t ConfigGetTimeOffset() {
-    return tz_offsets[(ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & CONFIG_SETTING_TIME_TZ) >> 3];
-}
-
+/**
+ * ConfigSetTimeSource()
+ *     Description:
+ *         Set the time source
+ *     Params:
+ *         uint8_t source - CONFIG_SETTING_TIME_PHONE | CONFIG_SETTING_TIME_GPS | CONFIG_SETTING_OFF
+ *     Returns:
+ *         void
+ */
 void ConfigSetTimeSource(uint8_t source) {
     if (source == CONFIG_SETTING_TIME_PHONE || source == CONFIG_SETTING_TIME_GPS || source == CONFIG_SETTING_OFF) {
         uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b11111100 ) | source;
@@ -984,6 +1015,15 @@ void ConfigSetTimeSource(uint8_t source) {
     }
 };
 
+/**
+ * ConfigSetTimeDST()
+ *     Description:
+ *         Set the DST state
+ *     Params:
+ *         uint8_t source - CONFIG_SETTING_TIME_DST | CONFIG_SETTING_OFF
+ *     Returns:
+ *         void
+ */
 void ConfigSetTimeDST(uint8_t dst) {
     if (dst == CONFIG_SETTING_OFF || dst == CONFIG_SETTING_TIME_DST ) {
         uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b11111011 ) | dst;
@@ -991,6 +1031,15 @@ void ConfigSetTimeDST(uint8_t dst) {
     }
 };
 
+/**
+ * ConfigSetTimeOffset()
+ *     Description:
+ *         Set the time offset (eg timezone)
+ *     Params:
+ *         int16_t offset - time offset in minutes
+ *     Returns:
+ *         void
+ */
 void ConfigSetTimeOffset(int16_t offset) {
     uint8_t min_dif = 255;
     int8_t off = offset / 15;
