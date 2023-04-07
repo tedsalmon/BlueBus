@@ -207,6 +207,7 @@ uint8_t ConfigGetLanguage();
 uint8_t ConfigGetTimeSource();
 uint8_t ConfigGetTimeDST();
 int16_t ConfigGetTimeOffset();
+uint8_t ConfigGetTimeOffsetIndex();
 
 void ConfigGetVehicleIdentity(uint8_t *);
 void ConfigGetString(uint8_t, char *, uint8_t);
@@ -236,4 +237,5 @@ void ConfigSetVehicleIdentity(uint8_t *);
 void ConfigSetTimeSource(uint8_t);
 void ConfigSetTimeDST(uint8_t);
 void ConfigSetTimeOffset(int16_t);
+void ConfigSetTimeOffsetIndex(uint8_t);
 #endif /* CONFIG_H */

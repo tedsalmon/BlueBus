@@ -728,7 +728,7 @@ static void BMBTMenuSettings(BMBTContext_t *context)
     for (idx = 0; idx < menuSettingsSize; idx++) {
         uint8_t feedCount = 0;
         if (idx == (menuSettingsSize - 1)) {
-            feedCount = BMBT_MENU_IDX_BACK - (menuSettingsSize + 1);
+            feedCount = BMBT_MENU_IDX_BACK - menuSettingsSize;
         }
         BMBTGTWriteIndex(
             context,
@@ -991,18 +991,133 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
             "Dual"
         )
     );
-    
+
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_COMFORT_PDC,
         pdc_text,
-        1
+        0
     );
 
+    uint8_t autotime = ConfigGetTimeSource();
+    char autotime_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(
+        autotime_text, 
+        BMBT_MENU_STRING_MAX_SIZE, 
+        LocaleGetText(LOCALE_STRING_AUTOTIME), 
+        (
+            (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone": 
+            (autotime == CONFIG_SETTING_TIME_GPS) ? "GPS":
+            "Off"
+        )
+    );
+    
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_TIME,
+        autotime_text,
+        0
+    );
+    
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
     IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT));
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
     context->menu = BMBT_MENU_SETTINGS_COMFORT;
+}
+
+static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
+{
+    char text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    uint8_t autotime = ConfigGetTimeSource();
+    snprintf(
+        text, 
+        BMBT_MENU_STRING_MAX_SIZE, 
+        LocaleGetText(LOCALE_STRING_AUTOTIME), 
+        (
+            (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone": 
+            (autotime == CONFIG_SETTING_TIME_GPS) ? "GPS":
+            "Off"
+        )
+    );
+    
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE,
+        text,
+        (autotime == CONFIG_SETTING_TIME_GPS)? 0:6
+    );
+
+    if (autotime == CONFIG_SETTING_TIME_GPS) {
+        uint8_t dst = ConfigGetTimeDST();
+        int16_t off = ConfigGetTimeOffset();
+
+        snprintf(
+            text, 
+            BMBT_MENU_STRING_MAX_SIZE, 
+            LocaleGetText(LOCALE_STRING_AUTOTIME_DST), 
+            (dst == 0) ? "Off":"+01:00"
+        );
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST,
+            text,
+            0
+        );
+
+        snprintf(
+            text, 
+            BMBT_MENU_STRING_MAX_SIZE, 
+            LocaleGetText(LOCALE_STRING_AUTOTIME_OFFSET), 
+            off / 60,
+            abs(off) % 60
+        );
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET,
+            text,
+            1
+        );
+
+        struct tm *ptm;
+        
+        ptm = gmtime(&context->ibus->gpsTime);
+
+        snprintf(
+            text, 
+            BMBT_MENU_STRING_MAX_SIZE, 
+            "GPSD: %2d.%2d.%4d", 
+            ptm->tm_mday,
+            ptm->tm_mon+1,
+            ptm->tm_year+1900
+        );
+
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSDATE,
+            text,
+            0
+        );
+        
+        snprintf(
+            text, 
+            BMBT_MENU_STRING_MAX_SIZE, 
+            "GPST: %02d:%02d", 
+            ptm->tm_hour,
+            ptm->tm_min
+        );
+
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSTIME,
+            text,
+            1
+        );
+    }
+    
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
+    IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT_TIME));
+    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    context->menu = BMBT_MENU_SETTINGS_COMFORT_TIME;
 }
 
 static void BMBTMenuSettingsCalling(BMBTContext_t *context)
@@ -1428,12 +1543,93 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             pdc_text,
             0
         );
-
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME) {
+        BMBTMenuSettingsComfortTime(context);
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
         IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    }
+}
+
+static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t selectedIdx)
+{
+    if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE) {
+        uint8_t time_source = ConfigGetTimeSource();
+        switch (time_source) {
+            case CONFIG_SETTING_OFF:
+                if (context->bt->type == BT_BTM_TYPE_BC127) {
+                    time_source = CONFIG_SETTING_TIME_PHONE;
+                    BC127CommandAT(context->bt, "+CCLK?");
+                } else {
+                    time_source = CONFIG_SETTING_TIME_GPS;
+                };
+                break;
+            case CONFIG_SETTING_TIME_PHONE:
+                time_source = CONFIG_SETTING_TIME_GPS;
+                break;
+            case CONFIG_SETTING_TIME_GPS:
+            default:
+                time_source = CONFIG_SETTING_OFF;
+        };
+        ConfigSetTimeSource(time_source);
+        if (time_source == CONFIG_SETTING_TIME_GPS) {
+// calculate the default offset if not previously set and reasonable GPS & IKE times are available
+            uint8_t time_dst = ConfigGetTimeDST();
+            int16_t time_offset = ConfigGetTimeOffsetIndex();
+
+            if ((time_dst == 0) && (time_offset == 0)) {
+                ConfigSetTimeOffset(0);
+            }
+        }
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) {
+        uint8_t time_dst = ConfigGetTimeDST();
+        if (time_dst == CONFIG_SETTING_OFF) {
+            time_dst = CONFIG_SETTING_TIME_DST;
+        } else {
+            time_dst = CONFIG_SETTING_OFF;
+        }
+        ConfigSetTimeDST(time_dst);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) {
+        uint8_t offset = ConfigGetTimeOffsetIndex();
+        if (offset<31) {
+            offset++;
+        } else {
+            offset = 1;
+        }
+        ConfigSetTimeOffsetIndex(offset);
+    } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
+        BMBTMenuSettingsComfort(context);
+    };
+    
+    if ((selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) || (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST)) {
+        uint8_t datetime[6]={0};
+        struct tm *gps_time = gmtime(&context->ibus->gpsTime);
+
+        gps_time->tm_min += ConfigGetTimeOffset() + ((ConfigGetTimeDST()!=0)?60:0);
+        mktime(gps_time);
+
+        datetime[0] = gps_time->tm_year + 1900 - 2000;
+        datetime[1] = gps_time->tm_mon + 1;
+        datetime[2] = gps_time->tm_mday;
+        datetime[3] = gps_time->tm_hour;
+        datetime[4] = gps_time->tm_min;
+        datetime[5] = gps_time->tm_sec;
+
+        if (datetime[0] > 20 &&
+            datetime[1] >= 1 && datetime[1] <= 12 &&
+            datetime[2] >= 1 && datetime[2] <= 31 &&
+            datetime[3] >= 0 && datetime[3] <= 23 &&
+            datetime[4] >= 0 && datetime[4] <= 59 &&
+            datetime[5] >= 0 && datetime[5] <= 59
+        ) {
+            EventTriggerCallback(IBUS_EVENT_TIME_UPDATE, datetime);
+        }
+    }
+    
+    if (selectedIdx != BMBT_MENU_IDX_BACK) {
+        BMBTMenuSettingsComfortTime(context);
     }
 }
 
@@ -2097,6 +2293,8 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
             BMBTSettingsUpdateAudio(context, selectedIdx);
         } else if (context->menu == BMBT_MENU_SETTINGS_COMFORT) {
             BMBTSettingsUpdateComfort(context, selectedIdx);
+        } else if (context->menu == BMBT_MENU_SETTINGS_COMFORT_TIME) {
+            BMBTSettingsUpdateComfortTime(context, selectedIdx);
         } else if (context->menu == BMBT_MENU_SETTINGS_CALLING) {
             BMBTSettingsUpdateCalling(context, selectedIdx);
         } else if (context->menu == BMBT_MENU_SETTINGS_UI) {
@@ -2505,6 +2703,9 @@ void BMBTTimerMenuWrite(void *ctx)
                         break;
                     case BMBT_MENU_SETTINGS_COMFORT:
                         BMBTMenuSettingsComfort(context);
+                        break;
+                    case BMBT_MENU_SETTINGS_COMFORT_TIME:
+                        BMBTMenuSettingsComfortTime(context);
                         break;
                     case BMBT_MENU_SETTINGS_CALLING:
                         BMBTMenuSettingsCalling(context);

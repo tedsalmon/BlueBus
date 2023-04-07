@@ -10,6 +10,7 @@ uint8_t CONFIG_SETTING_CACHE[CONFIG_SETTING_CACHE_SIZE] = {0};
 uint8_t CONFIG_VALUE_CACHE[CONFIG_VALUE_CACHE_SIZE] = {0};
 
 static int8_t tz_offsets[32] = {
+/* no val */    0,
 /* -12:00 */    -1*(12*60+00)/15,
 /* -11:00 */    -1*(11*60+00)/15,
 /* -10:00 */    -1*(10*60+00)/15,
@@ -32,7 +33,6 @@ static int8_t tz_offsets[32] = {
 /* +04:30 */    +1*( 4*60+30)/15,
 /* +05:00 */    +1*( 5*60+00)/15,
 /* +05:30 */    +1*( 5*60+30)/15,
-/* +05:45 */    +1*( 5*60+45)/15,
 /* +06:00 */    +1*( 6*60+00)/15,
 /* +07:00 */    +1*( 7*60+00)/15,
 /* +08:00 */    +1*( 8*60+00)/15,
@@ -597,12 +597,23 @@ uint8_t ConfigGetTimeDST() {
 /**
  * ConfigGetTimeOffset()
  *     Description:
- *         Return the configured time offest in minutes
+ *         Return the configured time offset in minutes
  *     Returns:
  *         int16_t - time offset in minutes
  */
 int16_t ConfigGetTimeOffset() {
     return tz_offsets[(ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & CONFIG_SETTING_TIME_TZ) >> 3] * 15;
+}
+
+/**
+ * ConfigGetTimeOffsetIndex()
+ *     Description:
+ *         Return the configured time offset index
+ *     Returns:
+ *         int16_t - time offset as table index
+ */
+uint8_t ConfigGetTimeOffsetIndex() {
+    return (ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & CONFIG_SETTING_TIME_TZ) >> 3;
 }
 
 /**
@@ -1046,7 +1057,7 @@ void ConfigSetTimeOffset(int16_t offset) {
     uint8_t min_idx = 13; // ( UTC )
     uint8_t i;
     
-    for (i=0; i<32; i++) {
+    for (i=1; i<32; i++) {
         int8_t dif = abs(tz_offsets[i]-off);
         if (dif<min_dif) {
             min_dif = dif;
@@ -1055,7 +1066,21 @@ void ConfigSetTimeOffset(int16_t offset) {
     }
     
     if (min_dif != 255) {
-        uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b11111000 ) | ( min_idx << 3);
+        uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b00000111 ) | (min_idx << 3);
         ConfigSetByte(CONFIG_SETTING_COMFORT_TIME, val);
     }
+}
+
+/**
+ * ConfigSetTimeOffsetIndex()
+ *     Description:
+ *         Set the time offset (eg timezone)
+ *     Params:
+ *         uint8_t offset - time offset table index
+ *     Returns:
+ *         void
+ */
+void ConfigSetTimeOffsetIndex(uint8_t idx) {
+    uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b00000111 ) | (idx << 3);
+    ConfigSetByte(CONFIG_SETTING_COMFORT_TIME, val);
 }
