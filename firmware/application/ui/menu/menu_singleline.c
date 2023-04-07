@@ -341,14 +341,12 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
             MenuSingleLineSetMainDisplayText(context, "DSP: Not Equipped", 0);
         } else {
             context->settingValue = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
-            if (context->ibus->moduleStatus.DSP == 0) {
-                if (context->settingValue == CONFIG_SETTING_DSP_INPUT_SPDIF) {
-                    MenuSingleLineSetMainDisplayText(context, "DSP: Digital", 0);
-                } else if (context->settingValue == CONFIG_SETTING_DSP_INPUT_ANALOG) {
-                    MenuSingleLineSetMainDisplayText(context, "DSP: Analog", 0);
-                } else {
-                    MenuSingleLineSetMainDisplayText(context, "DSP: Default", 0);
-                }
+            if (context->settingValue == CONFIG_SETTING_DSP_INPUT_SPDIF) {
+                MenuSingleLineSetMainDisplayText(context, "DSP: Digital", 0);
+            } else if (context->settingValue == CONFIG_SETTING_DSP_INPUT_ANALOG) {
+                MenuSingleLineSetMainDisplayText(context, "DSP: Analog", 0);
+            } else {
+                MenuSingleLineSetMainDisplayText(context, "DSP: Default", 0);
             }
         }
     }
