@@ -38,6 +38,12 @@
 #define BC127_LINK_HFP 3
 #define BC127_LINK_BLE 4
 #define BC127_LINK_MAP 8
+#define BC127_AT_DATE_YEAR 0
+#define BC127_AT_DATE_MONTH 1
+#define BC127_AT_DATE_DAY 2
+#define BC127_AT_DATE_HOUR 3
+#define BC127_AT_DATE_MIN 4
+#define BC127_AT_DATE_SEC 5
 
 extern int8_t BTBC127MicGainTable[];
 

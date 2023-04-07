@@ -562,7 +562,7 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // If it's the first second of the minute, use the time update
     // Otherwise, request the time again at the top of the next minute
-    if (datetime[5] < 2) {
+    if (dt[5] < 2) {
         LogDebug(
             LOG_SOURCE_BT,
             "Setting time from BT: %d-%d-%d, %d:%d",
@@ -577,7 +577,7 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
     } else {
         TimerRegisterScheduledTask(
             &HandlerTimerBTBC127RequestDateTime,
-            bt,
+            context->bt,
             (60 - dt[5]) * 1000
         );
     }
@@ -950,7 +950,7 @@ void HandlerTimerBTBC127DeviceConnection(void *ctx)
 void HandlerTimerBTBC127RequestDateTime(void *ctx) {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     TimerUnregisterScheduledTask(&HandlerTimerBTBC127RequestDateTime);
-    BC127CommandAT(bt, "+CCLK?");
+    BC127CommandAT(context->bt, "+CCLK?");
 }
 
 /**
