@@ -274,7 +274,7 @@ void MIDBTDeviceDisconnected(void *ctx, unsigned char *tmp)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
     if (context->mode == MID_MODE_ACTIVE) {
-        MIDSetMainDisplayText(context, "Bluetooth", 0);
+        MIDSetMainDisplayText(context, "", 0);
     }
 }
 

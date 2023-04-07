@@ -1074,6 +1074,25 @@ void BM83ProcessEventReportLinkBackStatus(BT_t *bt, uint8_t *data, uint16_t leng
     EventTriggerCallback(BT_EVENT_LINK_BACK_STATUS, eventData);
 }
 
+/**
+ * BM83ProcessEventReportTypeCodec()
+ *     Description:
+ *         Process the sample rate reported by the DSP
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         uint8_t *data - The data portion of the frame,
+ *             beginning with the byte after the event code
+ *         uint16_t length - The length of the data
+ *     Returns:
+ *         void
+ */
+void BM83ProcessEventReportTypeCodec(BT_t *bt, uint8_t *data, uint16_t length)
+{
+    // DB0 = Sample Rate, DB1 = Mode
+    uint8_t eventData[2] = {data[BM83_FRAME_DB0], data[BM83_FRAME_DB1]};
+    EventTriggerCallback(BT_EVENT_DSP_STATUS, eventData);
+}
+
 void BM83ProcessDataGetAllAttributes(
     BT_t *bt,
     uint8_t *data,
@@ -1274,6 +1293,9 @@ void BM83Process(BT_t *bt)
                     eventData,
                     dataLength
                 );
+            }
+            if (event == BM83_EVT_REPORT_TYPE_CODEC) {
+                BM83ProcessEventReportTypeCodec(bt, eventData, dataLength);
             }
         }
     }

@@ -240,6 +240,23 @@ void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
             0x01
         };
         BM83SendCommand(cli.bt, command, sizeof(command));
+    } else if (UtilsStricmp(msgBuf[1], "BLE") == 0) {
+        if (UtilsStricmp(msgBuf[2], "CONN") == 0) {
+            uint8_t cmd[] = {0x29, 0x01, 0x01};
+            BM83SendCommand(cli.bt, cmd, sizeof(cmd));
+        } else if (UtilsStricmp(msgBuf[2], "STAT") == 0) {
+            uint8_t cmd[] = {0x29, 0x00};
+            BM83SendCommand(cli.bt, cmd, sizeof(cmd));
+        } else if (UtilsStricmp(msgBuf[2], "ADVR") == 0) {
+            uint8_t cmd[] = {0x29, 0x04, 0x00};
+            BM83SendCommand(cli.bt, cmd, sizeof(cmd));
+        } else if (UtilsStricmp(msgBuf[2], "ANCS") == 0) {
+            uint8_t cmd[] = {0x28, 0x01, 0x01};
+            BM83SendCommand(cli.bt, cmd, sizeof(cmd));
+        } else if (UtilsStricmp(msgBuf[2], "GATT") == 0) {
+            uint8_t cmd[] = {0x2D, 0x04};
+            BM83SendCommand(cli.bt, cmd, sizeof(cmd));
+        }
     } else if (UtilsStricmp(msgBuf[1], "LIST") == 0) {
         BM83CommandReadPairedDevices(cli.bt);
     } else if (UtilsStricmp(msgBuf[1], "STATUS") == 0) {
@@ -470,8 +487,8 @@ void CLIProcess()
                         LogRaw("UI Mode: MID\r\n");
                     } else if (uiMode == CONFIG_UI_MID_BMBT) {
                         LogRaw("UI Mode: MID / Navigation\r\n");
-                    } else if (uiMode == CONFIG_UI_BUSINESS_NAV) {
-                        LogRaw("UI Mode: Business Navigation\r\n");
+                    } else if (uiMode == CONFIG_UI_MIR) {
+                        LogRaw("UI Mode: Business Navigation (MIR)\r\n");
                     } else {
                         LogRaw("UI Mode: Not set or Invalid\r\n");
                     }
@@ -648,7 +665,7 @@ void CLIProcess()
                     } else if (UtilsStricmp(msgBuf[2], "4") == 0) {
                         ConfigSetUIMode(CONFIG_UI_MID_BMBT);
                     } else if (UtilsStricmp(msgBuf[2], "5") == 0) {
-                        ConfigSetUIMode(CONFIG_UI_BUSINESS_NAV);
+                        ConfigSetUIMode(CONFIG_UI_MIR);
                     } else if (UtilsStricmp(msgBuf[2], "6") == 0) {
                         // Force static GT UI mode
                         ConfigSetUIMode(CONFIG_UI_BMBT);
@@ -858,7 +875,7 @@ void CLIProcess()
                 LogRaw("    REBOOT - Reboot the device\r\n");
                 LogRaw("    SET COMFORT BLINKERS x - Set the comfort blinkers between 1 and 8\r\n");
                 LogRaw("    SET COMFORT LOCK x - Lock the car at the given KM/h. 10, 20 or OFF\r\n");
-                LogRaw("    SET COMFORT UNLOCK x - Unock the car at the given ignition position. POS0, POS1 or OFF\r\n");
+                LogRaw("    SET COMFORT UNLOCK x - Unlock the car at the given ignition position. POS0, POS1 or OFF\r\n");
                 LogRaw("    SET DAC GAIN xx - Set the PCM5122 gain from 0x00 - 0xCF (higher is lower)\r\n");
                 LogRaw("    SET DSP INPUT ANALOG/DIGITAL/DEFAULT - Set the CD Changer DSP input\r\n");
                 LogRaw("    SET IGN ON/OFF/ALWAYSON - Send the ignition status message or configure the BlueBus to assume the ignition is always on\r\n");
@@ -871,7 +888,7 @@ void CLIProcess()
                 LogRaw("        x = 2. BMBT (Navigation)\r\n");
                 LogRaw("        x = 3. MID (Multi-Info Display)\r\n");
                 LogRaw("        x = 4. BMBT / MID\r\n");
-                LogRaw("        x = 5. Business Navigation\r\n");
+                LogRaw("        x = 5. Business Navigation (MIR)\r\n");
                 LogRaw("    RESTORE - Fully Reset the BlueBus and BC127 to factory defaults\r\n");
                 LogRaw("    VERSION - Get the BlueBus Hardware/Software Versions\r\n");
             } else {

@@ -446,7 +446,7 @@
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
-#define IBUS_RX_BUFFER_SIZE 256
+#define IBUS_RX_BUFFER_SIZE 255 // 8-bit Max
 #define IBUS_TX_BUFFER_SIZE 16
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 7 // If we transmit faster, other modules may not hear us

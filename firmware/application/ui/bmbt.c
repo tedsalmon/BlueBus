@@ -954,7 +954,7 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
     // Hide TCU Mode option on HW Version 1. It is not necessary there.
     if (context->bt->type != BT_BTM_TYPE_BC127) {
         uint8_t telMode = ConfigGetSetting(CONFIG_SETTING_TEL_MODE);
-        if (telMode == CONFIG_SETTING_TEL_MODE_DEFAULT) {
+        if (telMode == CONFIG_SETTING_TEL_MODE_TCU) {
             BMBTGTWriteIndex(
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,

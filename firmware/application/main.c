@@ -107,7 +107,7 @@ int main(void)
         UART_PARITY_NONE
     );
 
-    // Grab the board version
+    // Grab the hardware version
     uint8_t boardVersion = UtilsGetBoardVersion();
 
     // All UART handler registrations need to be done at
