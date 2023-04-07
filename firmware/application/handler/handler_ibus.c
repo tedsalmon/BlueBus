@@ -259,7 +259,7 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
     if (context->uiMode != newUi) {
         // Unregister the previous UI
         if (context->uiMode == CONFIG_UI_CD53 ||
-            context->uiMode == CONFIG_UI_BUSINESS_NAV
+            context->uiMode == CONFIG_UI_MIR
         ) {
             CD53Destroy();
         } else if (context->uiMode == CONFIG_UI_BMBT) {
@@ -270,7 +270,7 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
             MIDDestroy();
             BMBTDestroy();
         }
-        if (newUi == CONFIG_UI_CD53 || newUi == CONFIG_UI_BUSINESS_NAV) {
+        if (newUi == CONFIG_UI_CD53 || newUi == CONFIG_UI_MIR) {
             CD53Init(context->bt, context->ibus);
         } else if (newUi == CONFIG_UI_BMBT) {
             BMBTInit(context->bt, context->ibus);
@@ -392,7 +392,7 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         curStatus = IBUS_CDC_STAT_PLAYING;
         // Do not go backwards/forwards if the UI is CD53 because
         // those actions can be used to use the UI
-        if (context->uiMode != CONFIG_UI_CD53) {
+        if (context->uiMode != CONFIG_UI_CD53 && context->uiMode != CONFIG_UI_MIR) {
             if (pkt[5] == 0x00) {
                 BTCommandPlaybackTrackNext(context->bt);
             } else {
@@ -495,16 +495,14 @@ void HandlerIBusDSPConfigSet(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
-    if (context->ibus->moduleStatus.DSP == 1 &&
-        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
-    ) {
-        if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
+    if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+        if (pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
             dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF
         ) {
             // Set the Input to S/PDIF if we are overridden
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
         }
-        if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF &&
+        if (pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF &&
             dspInput == CONFIG_SETTING_DSP_INPUT_ANALOG
         ) {
             // Set the Input to the radio if we are overridden
@@ -512,7 +510,9 @@ void HandlerIBusDSPConfigSet(void *ctx, uint8_t *pkt)
         }
     }
     // Identify the vehicle using S/PDIF so we can use additional features
-    if (pkt[4] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF && dspInput == CONFIG_SETTING_OFF) {
+    if (pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF &&
+        dspInput == CONFIG_SETTING_OFF
+    ) {
         ConfigSetSetting(
             CONFIG_SETTING_DSP_INPUT_SRC,
             CONFIG_SETTING_DSP_INPUT_SPDIF
@@ -639,9 +639,9 @@ void HandlerIBusGTDIAOSIdentityResponse(void *ctx, uint8_t *pkt)
             }
         }
     } else if (UtilsStricmp(navigationOS, "BMWM01S") == 0) {
-        if (ConfigGetUIMode() != CONFIG_UI_BUSINESS_NAV) {
+        if (ConfigGetUIMode() != CONFIG_UI_MIR) {
             LogInfo(LOG_SOURCE_SYSTEM, "Detected Business Nav UI");
-            HandlerIBusSwitchUI(context, CONFIG_UI_BUSINESS_NAV);
+            HandlerIBusSwitchUI(context, CONFIG_UI_MIR);
         }
     } else {
         LogError("Unable to identify GT OS: %s", navigationOS);
@@ -1367,7 +1367,7 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
 
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
     if ((context->uiMode != CONFIG_UI_CD53 &&
-         context->uiMode != CONFIG_UI_BUSINESS_NAV) &&
+         context->uiMode != CONFIG_UI_MIR) &&
         HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
     ) {
         uint8_t sourceSystem = IBUS_DEVICE_BMBT;
@@ -1436,7 +1436,7 @@ void HandlerIBusModuleStatusResponse(void *ctx, uint8_t *pkt)
         uint8_t uiMode = ConfigGetUIMode();
         if (uiMode != CONFIG_UI_BMBT &&
             uiMode != CONFIG_UI_MID_BMBT &&
-            uiMode != CONFIG_UI_BUSINESS_NAV
+            uiMode != CONFIG_UI_MIR
         ) {
             // Request the Graphics Terminal Identity
             IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);

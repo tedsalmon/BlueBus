@@ -62,7 +62,7 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     HandlerBTInit(&Context);
     HandlerIBusInit(&Context);
     if (Context.uiMode == CONFIG_UI_CD53 ||
-        Context.uiMode == CONFIG_UI_BUSINESS_NAV
+        Context.uiMode == CONFIG_UI_MIR
     ) {
         CD53Init(bt, ibus);
     } else if (Context.uiMode == CONFIG_UI_BMBT) {

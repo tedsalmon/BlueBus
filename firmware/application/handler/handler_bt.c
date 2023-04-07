@@ -117,6 +117,11 @@ void HandlerBTInit(HandlerContext_t *context)
             &HandlerBTBM83LinkBackStatus,
             context
         );
+        EventRegisterCallback(
+            BT_EVENT_DSP_STATUS,
+            &HandlerBTBM83DSPStatus,
+            context
+        );
         TimerRegisterScheduledTask(
             &HandlerTimerBTBM83ScanDevices,
             context,
@@ -686,6 +691,31 @@ void HandlerBTBM83LinkBackStatus(void *ctx, uint8_t *pkt)
                 BM83CommandMicGainUp(context->bt);
                 micGain--;
             }
+        }
+    }
+}
+
+/**
+ * HandlerBTBM83DSPStatus()
+ *     Description:
+ *         React to DSP status updates. Disable S/PDIF when the sample
+ *         rate is not 44.1khz
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBTBM83DSPStatus(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint8_t sampleRate = pkt[0];
+    if (context->ibus->ignitionStatus != IBUS_IGNITION_OFF) {
+        if (sampleRate != BM83_DATA_DSP_REPORTED_SR_44_1kHz) {
+            LogDebug(LOG_SOURCE_BT, "Disable S/PDIF");
+            SPDIF_RST = 0;
+        } else {
+            SPDIF_RST = 1;
         }
     }
 }

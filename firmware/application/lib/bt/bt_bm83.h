@@ -218,6 +218,23 @@ extern int8_t BTBM83MicGainTable[];
 #define BM83_DATA_LINK_BACK_A2DP_HF_SUCCESS 0x00
 #define BM83_DATA_LINK_BACK_A2DP_HF_FAILED 0x01
 
+#define BM83_DATA_DSP_REPORTED_SR_8kHz 0x00
+#define BM83_DATA_DSP_REPORTED_SR_16kHz 0x02
+#define BM83_DATA_DSP_REPORTED_SR_32kHz 0x04
+#define BM83_DATA_DSP_REPORTED_SR_48kHz 0x05
+#define BM83_DATA_DSP_REPORTED_SR_44_1kHz 0x06
+#define BM83_DATA_DSP_REPORTED_SR_88kHz 0x07
+#define BM83_DATA_DSP_REPORTED_SR_96kHz 0x08
+
+#define BM83_DATA_DSP_REPORTED_MODE_NONE 0x00
+#define BM83_DATA_DSP_REPORTED_MODE_PREPARE 0x01
+#define BM83_DATA_DSP_REPORTED_MODE_AUDIO_IN 0x02
+#define BM83_DATA_DSP_REPORTED_MODE_PCM 0x03
+#define BM83_DATA_DSP_REPORTED_MODE_A2DP 0x04
+#define BM83_DATA_DSP_REPORTED_MODE_SCO 0x06
+#define BM83_DATA_DSP_REPORTED_MODE_TONE 0x07
+#define BM83_DATA_DSP_REPORTED_MODE_VP 0x08
+
 #define BM83_DATA_BOOT_STATUS_POWER_ON 0x01
 
 
@@ -331,6 +348,7 @@ void BM83ProcessEventReadLinkStatus(BT_t *, uint8_t *, uint16_t);
 void BM83ProcessEventReadLinkedDeviceInformation(BT_t *, uint8_t *, uint16_t);
 void BM83ProcessEventReadPairedDeviceRecord(BT_t *, uint8_t *, uint16_t);
 void BM83ProcessEventReportLinkBackStatus(BT_t *, uint8_t *, uint16_t);
+void BM83ProcessEventReportTypeCodec(BT_t *, uint8_t *, uint16_t );
 void BM83ProcessDataGetAllAttributes(BT_t *, uint8_t *, uint8_t, uint8_t);
 /* RX / TX */
 void BM83Process(BT_t *);

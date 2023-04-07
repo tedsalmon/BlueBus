@@ -724,7 +724,8 @@ void IBusProcess(IBus_t *ibus)
                 CharQueueReset(&ibus->uart.rxQueue);
             } else if (msgLength == ibus->rxBufferIdx) {
                 uint8_t idx;
-                unsigned char pkt[msgLength];
+                uint8_t pkt[msgLength];
+                memset(pkt, 0, msgLength);
                 long long unsigned int ts = (long long unsigned int) TimerGetMillis();
                 LogRawDebug(LOG_SOURCE_IBUS, "[%llu] DEBUG: IBus: RX[%d]: ", ts, msgLength);
                 for(idx = 0; idx < msgLength; idx++) {
@@ -790,7 +791,7 @@ void IBusProcess(IBus_t *ibus)
                 } else {
                     LogError(
                         "IBus: %02X -> %02X Length: %d - Invalid Checksum",
-                        pkt[0],
+                        pkt[IBUS_PKT_SRC],
                         pkt[IBUS_PKT_DST],
                         msgLength,
                         (uint8_t) pkt[IBUS_PKT_LEN]
