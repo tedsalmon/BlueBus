@@ -7,7 +7,7 @@
 #include "bmbt.h"
 static BMBTContext_t Context;
 
-uint8_t menuSettings[] = {
+static const uint8_t menuSettings[] = {
     BMBT_MENU_IDX_SETTINGS_ABOUT,
     BMBT_MENU_IDX_SETTINGS_AUDIO,
     BMBT_MENU_IDX_SETTINGS_CALLING,
@@ -15,7 +15,7 @@ uint8_t menuSettings[] = {
     BMBT_MENU_IDX_SETTINGS_UI
 };
 
-uint16_t menuSettingsLabelIndices[] = {
+static const uint16_t menuSettingsLabelIndices[] = {
     LOCALE_STRING_ABOUT,
     LOCALE_STRING_AUDIO,
     LOCALE_STRING_CALLING,
@@ -1165,14 +1165,14 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
     if (dashboardOBC == CONFIG_SETTING_ON) {
         BMBTGTWriteIndex(
             context,
-            BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
+            BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC,
             LocaleGetText(LOCALE_STRING_DASH_OBC_ON),
             0
         );
     } else if (dashboardOBC == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
             context,
-            BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
+            BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC,
             LocaleGetText(LOCALE_STRING_DASH_OBC_OFF),
             0
         );
@@ -1642,11 +1642,11 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             ConfigSetTempDisplay(CONFIG_SETTING_OFF);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OFF), 0);
         }
-    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC) {
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC) {
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS) == CONFIG_SETTING_ON) {
             BMBTGTWriteIndex(
                 context,
-                BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
+                BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC,
                 LocaleGetText(LOCALE_STRING_DASH_OBC_OFF),
                 0
             );
@@ -1657,7 +1657,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         } else {
             BMBTGTWriteIndex(
                 context,
-                BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
+                BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC,
                 LocaleGetText(LOCALE_STRING_DASH_OBC_ON),
                 0
             );
