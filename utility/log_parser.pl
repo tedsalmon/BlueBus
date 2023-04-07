@@ -639,7 +639,6 @@ sub avrcp_pdu_response {
 		);
 
 		my %charsets = (
-
 			0x0003	=> "ASCII",
 			0x0004	=> "ISO_8859_1",
 			0x000F	=> "JIS_X0201",
@@ -2175,7 +2174,7 @@ while (<>) {
 	my $line = $_;
 
 	if (/^\[(\d+)\]\s+DEBUG:\s+IBus:\s+RX\[(\d+)\]:\s+?(..)\s+(..)\s+(..)\s+(..)\s*(.*?)$/osi) {	
-# IBUS message
+		# IBUS message
 		$time = $1;
 		my $len = $2;
 		my $packet = "$3 $4 $5 $6 $7";
@@ -2209,7 +2208,7 @@ while (<>) {
 		};
 		print "\n";
 	} elsif (/^([0-9a-fA-F\s]+)\s*$/o) {
-#raw IBUS packet
+		# Raw IBUS packet
 
 		my $packet = $1;
 		$time += 10;
@@ -2235,7 +2234,7 @@ while (<>) {
 
 
 	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BT:\s+([RW]):\s+'(\S+)\s*(.*)\s*'$/os) {
-# BlueTooth BC127 Messages
+		# BlueTooth BC127 Messages
 		my $time = $1;
 		my $cmd = 'BC127_'.$3;
 		my $data = $4;
@@ -2274,7 +2273,7 @@ while (<>) {
 
 		printf ("%1s   %4s -> %-4s    %s %s\n", $self, $src, $dst, $cmd, $data);
 	} elsif (/^\[(\d+)\]\s+DEBUG:\s+BM83:\s+([RT])X:\s+AA\s(..)\s(..)\s(..)\s(.*)\s*$/os) {
-# BlueTooth BM83 Messages
+		# BlueTooth BM83 Messages
 		my $packet = "AA $3 $4 $5 $6";
 		my $time = $1;
 		my $len = (hex($3) << 8) + hex($4) - 1;
