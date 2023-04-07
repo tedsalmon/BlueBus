@@ -1235,6 +1235,7 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         UtilsRemoveSubstring(msgBuf[5],"\\22");        
         
         uint8_t datetime[6] = {0};
+
         uint8_t di = 0;
         uint8_t i = 0;
         uint8_t ampm12 = 0; // 0 = 24h, 1 = 12h am, 2 = 12h pm
@@ -1249,43 +1250,43 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             }
             i++;
         }
-
-        if (msgBuf[4][i] != 0 && di == 3) {
-            time = msgBuf[4]+i;
+        
+        if ((msgBuf[4][i]!=0) && (di==3)) {
+            time=msgBuf[4]+i;
             if (delimCount > 5) {
                 ampm = msgBuf[5];
             }
         } else {
-            time = msgBuf[5];
+            time=msgBuf[5];
             if (delimCount > 6) {
                 ampm = msgBuf[6];
             }
-        }
-
-        i = 0;
+        };
+        
+        i = 0;        
         while (time[i] != 0 && di < 6) {
             if (time[i] >= '0' && time[i] <= '9') {
-                datetime[di] = 10 * datetime[di] + (time[i] - '0');
+                datetime[di] = 10 * datetime[di] + ( time[i] - '0'); 
             } else {
-                if (ampm[0] == 'a' || ampm[0] == 'A') {
+                if (time[i ]== 'a' || time[i] == 'A') {
                     ampm12 = 1;
-                } else if (ampm[0]=='p' || ampm[0] == 'P') {
+                } else if (time[i ]== 'p' || time[i] == 'P') {
                     ampm12 = 2;
                 }
                 di++;
             }
             i++;
         }
-        if (ampm12 == 0 && ampm) {
-            if (ampm[0]=='a' || ampm[0]=='A') {
+        if ((ampm12 == 0) && ampm) {
+            if ((ampm[0]=='a') || (ampm[0]=='A')) {
                 ampm12 = 1;
-            } else if (ampm[0]=='p' || ampm[0]=='P') {
+            } else if ((ampm[0]=='p') || (ampm[0]=='P')) {
                 ampm12 = 2;
             }
         }
-        // Convert 12 hour clock to 24 hour clock
+                
         if (ampm12 == 1) {
-            if (datetime[3] == 12) {
+            if ( datetime[3] == 12 ) {
                 datetime[3] = 0;
             }
         } else if (ampm12 == 2) {
@@ -1302,7 +1303,8 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             datetime[4] >= 0 && datetime[4] <= 59 &&
             datetime[5] >= 0 && datetime[5] <= 59
         ) {
-            EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
+            if (datetime[5]<2) {
+                EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
         }
     }
 }
