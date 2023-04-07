@@ -642,6 +642,54 @@ static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
+#define unpack_8bcd(a) ((a & 0x0f)+(10 * (a >> 4)))
+
+static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
+{
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_GPSTIME) {
+
+        struct tm gps_time = {0};
+        
+        gps_time.tm_hour = unpack_8bcd(pkt[5]);
+        gps_time.tm_min = unpack_8bcd(pkt[6]);
+        gps_time.tm_sec = 0;
+        gps_time.tm_mday = unpack_8bcd(pkt[7]);
+        gps_time.tm_mon = unpack_8bcd(pkt[9]) - 1;
+        gps_time.tm_year = unpack_8bcd(pkt[10])*100 + unpack_8bcd(pkt[11]) - 1900;
+
+        LogDebug(LOG_SOURCE_SYSTEM, "Raw GPS time: %2d.%2d.%4d %02d:%02d", gps_time.tm_mday, gps_time.tm_mon, gps_time.tm_year+1900, gps_time.tm_hour, gps_time.tm_min );
+
+        // adjust GPS epoch problem
+        gps_time.tm_mday += 1024*7;
+        
+        ibus->gpsTime = mktime(&gps_time);
+        
+        if (ConfigGetTimeSource() == CONFIG_SETTING_TIME_GPS) {
+            gps_time.tm_min += ConfigGetTimeOffset() + ((ConfigGetTimeDST()!=0)?60:0);
+            mktime(&gps_time);
+            LogDebug(LOG_SOURCE_SYSTEM,"About to set GPS time, GPS=%s LOC=%s", ctime(& ibus->gpsTime),asctime(&gps_time));
+            // Validate the date and time
+            uint8_t datetime[6]={0};
+            datetime[0] = gps_time.tm_year + 1900 - 2000;
+            datetime[1] = gps_time.tm_mon + 1;
+            datetime[2] = gps_time.tm_mday;
+            datetime[3] = gps_time.tm_hour;
+            datetime[4] = gps_time.tm_min;
+            datetime[5] = gps_time.tm_sec;
+            
+            if (datetime[0] > 20 &&
+                datetime[1] >= 1 && datetime[1] <= 12 &&
+                datetime[2] >= 1 && datetime[2] <= 31 &&
+                datetime[3] >= 0 && datetime[3] <= 23 &&
+                datetime[4] >= 0 && datetime[4] <= 59 &&
+                datetime[5] >= 0 && datetime[5] <= 59
+            ) {
+                EventTriggerCallback(IBUS_EVENT_TIME_UPDATE, datetime);
+            }
+        }
+    }        
+}
+
 static void IBusHandleTELMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
@@ -815,6 +863,9 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_PDC) {
                         IBusHandlerPDCMessage(ibus, pkt);
+                    }
+                    if (srcSystem == IBUS_DEVICE_NAVE) {
+                        IBusHandleNAVMessage(ibus, pkt);
                     }
                     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
                         IBusHandleTELMessage(ibus, pkt);

@@ -31,7 +31,7 @@ void HandlerBTInit(HandlerContext_t *context)
     );
     EventRegisterCallback(
         BT_EVENT_TIME_UPDATE,
-        &HandlerBTTimeUpdate,
+        &HandlerTimeUpdate,
         context
     );
     EventRegisterCallback(
@@ -540,32 +540,6 @@ void HandlerBTPlaybackStatus(void *ctx, uint8_t *data)
         // We're playing but not in Bluetooth mode - stop playback
         BTCommandPause(context->bt);
     }
-}
-
-/**
- * HandlerBTTimeUpdate()
- *     Description:
- *         Handle updates from the BT module from the +CLLK? query
- *     Params:
- *         void *ctx - The context provided at registration
- *         uint8_t *datetime - Date + Time
- *     Returns:
- *         void
- */
-void HandlerBTTimeUpdate(void *ctx, uint8_t *datetime)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    LogDebug(
-        LOG_SOURCE_BT,
-        "Setting time from BT: %d-%d-%d, %d:%d",
-        datetime[2],
-        datetime[1],
-        datetime[0],
-        datetime[3],
-        datetime[4]
-    );
-    IBusCommandIKESetDate(context->ibus, datetime[0], datetime[1], datetime[2]);
-    IBusCommandIKESetTime(context->ibus, datetime[3], datetime[4]);
 }
 
 /* BC127 Specific Handlers */

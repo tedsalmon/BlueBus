@@ -128,6 +128,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         &HandlerIBusPDCUpdate,
         context
     );
+    EventRegisterCallback(
+        IBUS_EVENT_TIME_UPDATE,
+        &HandlerTimeUpdate,
+        context
+    );
     TimerRegisterScheduledTask(
         &HandlerTimerIBusCDCAnnounce,
         context,

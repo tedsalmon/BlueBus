@@ -101,3 +101,28 @@ void HandlerSetVolume(HandlerContext_t *context, uint8_t direction)
     );
     context->bt->activeDevice.a2dpVolume = newVolume;
 }
+
+/**
+ * HandlerTimeUpdate()
+ *     Description:
+ *         Handle updates from the BT or GPS
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *datetime - Date + Time
+ *     Returns:
+ *         void
+ */
+void HandlerTimeUpdate(HandlerContext_t *context, uint8_t *datetime)
+{
+    LogDebug(
+        LOG_SOURCE_SYSTEM,
+        "Setting time: %d-%d-%d, %d:%d",
+        datetime[2],
+        datetime[1],
+        datetime[0],
+        datetime[3],
+        datetime[4]
+    );
+    IBusCommandIKESetDate(context->ibus, datetime[0], datetime[1], datetime[2]);
+    IBusCommandIKESetTime(context->ibus, datetime[3], datetime[4]);
+}

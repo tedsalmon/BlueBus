@@ -142,4 +142,5 @@ typedef struct HandlerContext_t {
 uint8_t HandlerGetTelMode(HandlerContext_t *);
 uint8_t HandlerSetIBusTELStatus(HandlerContext_t *, unsigned char);
 void HandlerSetVolume(HandlerContext_t *, uint8_t);
+void HandlerTimeUpdate(HandlerContext_t *, uint8_t *);
 #endif /* HANDLER_CONTEXT_H */

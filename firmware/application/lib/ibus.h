@@ -9,6 +9,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include "../mappings.h"
 #include "char_queue.h"
 #include "log.h"
@@ -177,6 +178,7 @@
 #define IBUS_CMD_IKE_SET_REQUEST_DATE 0x02
 #define IBUS_CMD_IKE_WRITE_NUMERIC 0x44
 #define IBUS_CMD_IKE_WRITE_TEXT 0x1A
+#define IBUS_CMD_IKE_GPSTIME 0x1F
 
 #define IBUS_CMD_LCM_REQ_REDUNDANT_DATA 0x53
 #define IBUS_CMD_LCM_RESP_REDUNDANT_DATA 0x54
@@ -448,6 +450,7 @@
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 72
 #define IBUS_EVENT_GT_TELEMATICS_DATA 73
 #define IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE 74
+#define IBUS_EVENT_TIME_UPDATE 75
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -516,6 +519,7 @@ typedef struct IBus_t {
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
     IBusPDC_t pdc;
+    time_t gpsTime;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];
