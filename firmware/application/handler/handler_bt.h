@@ -45,6 +45,7 @@ void HandlerTimerBTVolumeManagement(void *);
 
 void HandlerTimerBTBC127State(void *);
 void HandlerTimerBTBC127DeviceConnection(void *);
+void HandlerTimerBTBC127RequestDateTime(void *);
 void HandlerTimerBTBC127OpenProfileErrors(void *);
 void HandlerTimerBTBC127ScanDevices(void *);
 void HandlerTimerBTBC127Metadata(HandlerContext_t *);

@@ -86,6 +86,7 @@ void BC127CommandSetPin(BT_t *, char *);
 void BC127CommandSetProfiles(BT_t *, uint8_t, uint8_t, uint8_t, uint8_t);
 void BC127CommandSetUART(BT_t *, uint32_t, char *, uint8_t);
 void BC127CommandStatus(BT_t *);
+void BC127CommandStatusAVRCP(BT_t *);
 void BC127CommandToggleVR(BT_t *);
 void BC127CommandTone(BT_t *, char *);
 void BC127CommandUnpair(BT_t *);
@@ -118,5 +119,4 @@ void BC127SendCommandEmpty(BT_t *);
 void BC127ConvertMACIDToHex(char *, unsigned char *);
 uint8_t BC127ConnectionCloseProfile(BTConnection_t *, char *);
 void BC127ConnectionOpenProfile(BTConnection_t *, char *, uint8_t);
-void BC127RequestTimeOnTimer(void *);
 #endif /* BC127_H */

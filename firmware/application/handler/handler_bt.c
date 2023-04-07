@@ -557,20 +557,31 @@ void HandlerBTPlaybackStatus(void *ctx, uint8_t *data)
  *     Returns:
  *         void
  */
-void HandlerBTTimeUpdate(void *ctx, uint8_t *datetime)
+void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    LogDebug(
-        LOG_SOURCE_BT,
-        "Setting time from BT: %d-%d-%d, %d:%d",
-        datetime[2],
-        datetime[1],
-        datetime[0],
-        datetime[3],
-        datetime[4]
-    );
-    IBusCommandIKESetDate(context->ibus, datetime[0], datetime[1], datetime[2]);
-    IBusCommandIKESetTime(context->ibus, datetime[3], datetime[4]);
+    // If it's the first second of the minute, use the time update
+    // Otherwise, request the time again at the top of the next minute
+    if (datetime[5] < 2) {
+        LogDebug(
+            LOG_SOURCE_BT,
+            "Setting time from BT: %d-%d-%d, %d:%d",
+            dt[2],
+            dt[1],
+            dt[0],
+            dt[3],
+            dt[4]
+        );
+        IBusCommandIKESetDate(context->ibus, dt[0], dt[1], dt[2]);
+        IBusCommandIKESetTime(context->ibus, dt[3], dt[4]);
+    } else {
+        TimerRegisterScheduledTask(
+            &HandlerTimerBTBC127RequestDateTime,
+            bt,
+            (60 - dt[5]) * 1000
+        );
+    }
+
 }
 
 /* BC127 Specific Handlers */
@@ -928,6 +939,21 @@ void HandlerTimerBTBC127DeviceConnection(void *ctx)
 }
 
 /**
+ * HandlerTimerBTBC127RequestDateTime()
+ *     Description:
+ *         Request time from BT device
+ *     Params:
+ *         BT_t *ctx - A pointer to the BT object
+ *     Returns:
+ *         void
+ */
+void HandlerTimerBTBC127RequestDateTime(void *ctx) {
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    TimerUnregisterScheduledTask(&HandlerTimerBTBC127RequestDateTime);
+    BC127CommandAT(bt, "+CCLK?");
+}
+
+/**
  * HandlerTimerOpenProfileErrors()
  *     Description:
  *         If there are any profile open errors, request the profile
@@ -983,8 +1009,8 @@ void HandlerTimerBTBC127ScanDevices(void *ctx)
         context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
         context->bt->activeDevice.avrcpId != 0   
     ) {
-        // sync play/pause status every 5 seconds
-        BC127SendCommand(context->bt,"STATUS AVRCP");
+        // Sync the playback state every 5 seconds
+        BC127CommandStatusAVRCP(context->bt);
     }
 }
 
