@@ -1211,7 +1211,7 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             UtilsStrncpy(bt->callerId, callerId, BT_CALLER_ID_FIELD_SIZE);
             EventTriggerCallback(BT_EVENT_CALLER_ID_UPDATE, 0);
         }
-    } else if (strcmp(msgBuf[3], "+CCLK:") == 0) {
+    } else if ((strcmp(msgBuf[3], "+CCLK:") == 0) && (ConfigGetTimeSource() == CONFIG_SETTING_TIME_PHONE)) {
         // Parse the returned date and time so we can update the vehicle
         // Example 24h: \2222/10/19, 00:08:18\22
         //         12h: \2223/01/13, 1:31:00 pm\22 
@@ -1308,7 +1308,9 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
 void BC127RequestTimeOnTimer(void *ctx) {
     BT_t    *bt = (BT_t *)ctx;
     TimerUnregisterScheduledTask(&BC127RequestTimeOnTimer);
-    BC127CommandAT(bt, "+CCLK?");
+    if (ConfigGetTimeSource() == CONFIG_SETTING_TIME_PHONE) {
+        BC127CommandAT(bt, "+CCLK?");
+    }
 }
 
 /**

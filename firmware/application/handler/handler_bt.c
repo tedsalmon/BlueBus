@@ -431,9 +431,11 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                     BC127CommandATSet(context->bt, "CSCS", "\"UTF-8\"");
                     // Explicitly enable Calling Line Identification (Caller ID)
                     BC127CommandATSet(context->bt, "CLIP", "1");
-                    // Request the date and time
-                    // NOTE: This is only compatible with iOS at this time
-                    BC127CommandAT(context->bt, "+CCLK?");
+                    if (ConfigGetTimeSource() == CONFIG_SETTING_TIME_PHONE) {
+                        // Request the date and time
+                        // NOTE: This is only compatible with iOS at this time
+                        BC127CommandAT(context->bt, "+CCLK?");
+                    };
                     if (context->bt->activeDevice.hfpId != 0 &&
                         context->bt->activeDevice.pbapId == 0
                     ) {
