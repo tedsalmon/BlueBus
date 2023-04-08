@@ -985,15 +985,10 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         BMBT_MENU_STRING_MAX_SIZE, 
         LocaleGetText(LOCALE_STRING_PDC), 
         (
-            (pdc == CONFIG_SETTING_OFF) ?
-                "Off":
-                (   
-                    (pdc == CONFIG_SETTING_PDC_CLUSTER)?
-                        "cluster":
-                        (pdc == CONFIG_SETTING_PDC_RADIO)?
-                            "navi":
-                            "both"
-                )   
+            (pdc == CONFIG_SETTING_OFF) ? "Off":
+            (pdc == CONFIG_SETTING_PDC_CLUSTER)? "Cluster":
+            (pdc == CONFIG_SETTING_PDC_RADIO)? "Screen":
+            "Dual"
         )
     );
     
@@ -1420,15 +1415,10 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             BMBT_MENU_STRING_MAX_SIZE, 
             LocaleGetText(LOCALE_STRING_PDC), 
             (
-                (pdc == CONFIG_SETTING_OFF) ?
-                    "Off":
-                    (   
-                        (pdc == CONFIG_SETTING_PDC_CLUSTER)?
-                            "cluster":
-                            (pdc == CONFIG_SETTING_PDC_RADIO)?
-                                "navi":
-                                "both"
-                    )   
+                (pdc == CONFIG_SETTING_OFF) ? "Off":
+                (pdc == CONFIG_SETTING_PDC_CLUSTER)? "Cluster":
+                (pdc == CONFIG_SETTING_PDC_RADIO)? "Screen":
+                "Dual"
             )
         );
 
