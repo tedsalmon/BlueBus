@@ -108,21 +108,21 @@ void HandlerSetVolume(HandlerContext_t *context, uint8_t direction)
  *         Handle updates from the BT or GPS
  *     Params:
  *         void *ctx - The context provided at registration
- *         uint8_t *datetime - Date + Time
+ *         uint8_t *dt - Date + Time
  *     Returns:
  *         void
  */
-void HandlerTimeUpdate(HandlerContext_t *context, uint8_t *datetime)
+void HandlerTimeUpdate(HandlerContext_t *context, uint8_t *dt)
 {
     LogDebug(
         LOG_SOURCE_SYSTEM,
-        "Setting time: %d-%d-%d, %d:%d",
-        datetime[2],
-        datetime[1],
-        datetime[0],
-        datetime[3],
-        datetime[4]
+        "Setting time: %02d-%02d-%02d, %02d:%02d",
+        dt[DATETIME_DAY],
+        dt[DATETIME_MON],
+        dt[DATETIME_YEAR],
+        dt[DATETIME_HOUR],
+        dt[DATETIME_MIN]
     );
-    IBusCommandIKESetDate(context->ibus, datetime[0], datetime[1], datetime[2]);
-    IBusCommandIKESetTime(context->ibus, datetime[3], datetime[4]);
+    IBusCommandIKESetDate(context->ibus, dt[DATETIME_YEAR], dt[DATETIME_MON], dt[DATETIME_DAY]);
+    IBusCommandIKESetTime(context->ibus, dt[DATETIME_HOUR], dt[DATETIME_HOUR]);
 }

@@ -1213,6 +1213,8 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         }
     } else if ((strcmp(msgBuf[3], "+CCLK:") == 0) && (ConfigGetTimeSource() == CONFIG_SETTING_TIME_PHONE)) {
         // Parse the returned date and time so we can update the vehicle
+        // NOTE: Only iOS responds to AT+CCLK?
+        // AT 13 27 +CCLK: \2223/04/07, 15:58:28\22
         // Example 24h: \2222/10/19, 00:08:18\22
         //         12h: \2223/01/13, 1:31:00 pm\22 
 
@@ -1220,23 +1222,24 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         UtilsRemoveSubstring(msgBuf[5],"\\22");        
         
         uint8_t datetime[6]={0};
-        uint8_t di = 0;
+        uint8_t sepCount = 0;
         uint8_t i = 0;
-        uint8_t ampm12 = 0; // 0 = 24h, 1 = 12h am, 2 = 12h pm
+        uint8_t ampm12 = 0; // 0 = 24h, 'a' = 12h am, 'p' = 12h pm
+        char *date = msgBuf[4];
         char *time = msgBuf[5];
         char *ampm = 0;
         
-        while ((msgBuf[4][i]!=0) && (di<3)) {
-            if (msgBuf[4][i]>='0' && msgBuf[4][i]<='9') {
-                datetime[di] = 10 * datetime[di] + ( msgBuf[4][i] - '0' ); 
+        while ((date[i]!=0) && (sepCount<3)) {
+            if (date[i]>='0' && date[i]<='9') {
+                datetime[sepCount] = 10 * datetime[sepCount] + (date[i] - '0'); 
             } else {
-                di++;
+                sepCount++;
             }
             i++;
         }
         
-        if ((msgBuf[4][i]!=0) && (di==3)) {
-            time=msgBuf[4]+i;
+        if ((date[i]!=0) && (sepCount==3)) {
+            time=date+i;
             if (delimCount > 5) {
                 ampm=msgBuf[5];
             };
@@ -1248,49 +1251,50 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         };
         
         i = 0;        
-        while ((time[i]!=0) && (di<6)) {
+        while ((time[i]!=0) && (sepCount<6)) {
             if (time[i]>='0' && time[i]<='9') {
-                datetime[di] = 10 * datetime[di] + ( time[i] - '0' ); 
+                datetime[sepCount] = 10 * datetime[sepCount] + (time[i] - '0'); 
             } else {
                 if ((time[i]=='a') || (time[i]=='A')) {
-                    ampm12 = 1;
+                    ampm12 = 'a';
                 } else if ((time[i]=='p') || (time[i]=='P')) {
-                    ampm12 = 2;
+                    ampm12 = 'p';
                 }
-                di++;
+                sepCount++;
             }
             i++;
         }
-        if ((ampm12 == 0) && ampm) {
+
+        if ((ampm12==0) && (ampm!=0)) {
             if ((ampm[0]=='a') || (ampm[0]=='A')) {
-                ampm12 = 1;
+                ampm12 = 'a';
             } else if ((ampm[0]=='p') || (ampm[0]=='P')) {
-                ampm12 = 2;
+                ampm12 = 'p';
             }
         }
                 
-        if (ampm12 == 1) {
-            if ( datetime[3] == 12 ) {
-                datetime[3] = 0;
+        if (ampm12 == 'a') {
+            if (datetime[DATETIME_HOUR] == 12) {
+                datetime[DATETIME_HOUR] = 0;
             }
-        } else if (ampm12 == 2) {
-            if (datetime[3] < 12) {
-                datetime[3] += 12;
+        } else if (ampm12 == 'p') {
+            if (datetime[DATETIME_HOUR] < 12) {
+                datetime[DATETIME_HOUR] += 12;
             }
         }
         
         // Validate the date and time
-        if (datetime[0] > 20 &&
-            datetime[1] >= 1 && datetime[1] <= 12 &&
-            datetime[2] >= 1 && datetime[2] <= 31 &&
-            datetime[3] >= 0 && datetime[3] <= 23 &&
-            datetime[4] >= 0 && datetime[4] <= 59 &&
-            datetime[5] >= 0 && datetime[5] <= 59
+        if (datetime[DATETIME_YEAR] > 20 &&
+            datetime[DATETIME_MON] >= 1 && datetime[DATETIME_MON] <= 12 &&
+            datetime[DATETIME_DAY] >= 1 && datetime[DATETIME_DAY] <= 31 &&
+            datetime[DATETIME_HOUR] >= 0 && datetime[DATETIME_HOUR] <= 23 &&
+            datetime[DATETIME_MIN] >= 0 && datetime[DATETIME_MIN] <= 59 &&
+            datetime[DATETIME_SEC] >= 0 && datetime[DATETIME_SEC] <= 59
         ) {
-            if (datetime[5]<2) {
+            if (datetime[DATETIME_SEC]<2) {
                 EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
             } else {
-                TimerRegisterScheduledTask(&BC127RequestTimeOnTimer, bt, (60-datetime[5])*1000);
+                TimerRegisterScheduledTask(&BC127RequestTimeOnTimer, bt, (60-datetime[DATETIME_SEC])*1000);
             }
         }
     }
