@@ -124,5 +124,5 @@ void HandlerTimeUpdate(HandlerContext_t *context, uint8_t *dt)
         dt[DATETIME_MIN]
     );
     IBusCommandIKESetDate(context->ibus, dt[DATETIME_YEAR], dt[DATETIME_MON], dt[DATETIME_DAY]);
-    IBusCommandIKESetTime(context->ibus, dt[DATETIME_HOUR], dt[DATETIME_HOUR]);
+    IBusCommandIKESetTime(context->ibus, dt[DATETIME_HOUR], dt[DATETIME_MIN]);
 }
