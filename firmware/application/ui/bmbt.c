@@ -1610,19 +1610,19 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
         gps_time->tm_min += ConfigGetTimeOffset() + ((ConfigGetTimeDST()!=0)?60:0);
         mktime(gps_time);
 
-        datetime[0] = gps_time->tm_year + 1900 - 2000;
-        datetime[1] = gps_time->tm_mon + 1;
-        datetime[2] = gps_time->tm_mday;
-        datetime[3] = gps_time->tm_hour;
-        datetime[4] = gps_time->tm_min;
-        datetime[5] = gps_time->tm_sec;
+        datetime[DATETIME_YEAR] = gps_time->tm_year + 1900 - 2000;
+        datetime[DATETIME_MON] = gps_time->tm_mon + 1;
+        datetime[DATETIME_DAY] = gps_time->tm_mday;
+        datetime[DATETIME_HOUR] = gps_time->tm_hour;
+        datetime[DATETIME_MIN] = gps_time->tm_min;
+        datetime[DATETIME_SEC] = gps_time->tm_sec;
 
-        if (datetime[0] > 20 &&
-            datetime[1] >= 1 && datetime[1] <= 12 &&
-            datetime[2] >= 1 && datetime[2] <= 31 &&
-            datetime[3] >= 0 && datetime[3] <= 23 &&
-            datetime[4] >= 0 && datetime[4] <= 59 &&
-            datetime[5] >= 0 && datetime[5] <= 59
+        if (datetime[DATETIME_YEAR] > 20 &&
+            datetime[DATETIME_MON] >= 1 && datetime[DATETIME_MON] <= 12 &&
+            datetime[DATETIME_DAY] >= 1 && datetime[DATETIME_DAY] <= 31 &&
+            datetime[DATETIME_HOUR] >= 0 && datetime[DATETIME_HOUR] <= 23 &&
+            datetime[DATETIME_MIN] >= 0 && datetime[DATETIME_MIN] <= 59 &&
+            datetime[DATETIME_SEC] >= 0 && datetime[DATETIME_SEC] <= 59
         ) {
             EventTriggerCallback(IBUS_EVENT_TIME_UPDATE, datetime);
         }

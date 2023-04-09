@@ -86,9 +86,10 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Autozoom: %s",
     "PDC: %s",
     "Settings > Time",
-    "Autotime: %s",
+    "Time: %s",
     "DST: %s",
     "Offset: %+02.2d:%02.2d",
+    "Manual",
 };
 
 static char *LOCALE_LANG_ITALIAN[] = {
@@ -174,6 +175,7 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Autotime: %s",
     "DST: %s",
     "Offset: %+02.2d:%02.2d",
+    "Manual",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -259,6 +261,7 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Autotime: %s",
     "DST: %s",
     "Offset: %+02.2d:%02.2d",
+    "Manual",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -344,6 +347,7 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Autotime: %s",
     "DST: %s",
     "Offset: %+02.2d:%02.2d",
+    "Manual",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -429,6 +433,7 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Autotime: %s",
     "DST: %s",
     "Offset: %+02.2d:%02.2d",
+    "Manual",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -506,14 +511,15 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Mode: Default",
     "Mode: TCU",
     "Mode: No Mute",
-    "Voice Assistant",
+    "Sprachassistent",
     "Anruf",
     "Autozoom: %s",
     "PDC: %s",
     "Einstellungen > Zeit",
-    "Autotime: %s",
-    "DST: %s",
+    "Zeit: %s",
+    "Sommerzeit: %s",
     "Offset: %+02.2d:%02.2d",
+    "Manuell",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -599,6 +605,7 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Autotime: %s",
     "DST: %s",
     "Offset: %+02.2d:%02.2d",
+    "Manual",
 };
 
 /**
