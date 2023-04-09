@@ -1008,7 +1008,7 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         (
             (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone": 
             (autotime == CONFIG_SETTING_TIME_GPS) ? "GPS":
-            "Off"
+            LocaleGetText(LOCALE_STRING_AUTOTIME_MANUAL)
         )
     );
     
@@ -1036,7 +1036,7 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
         (
             (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone": 
             (autotime == CONFIG_SETTING_TIME_GPS) ? "GPS":
-            "Off"
+            LocaleGetText(LOCALE_STRING_AUTOTIME_MANUAL)
         )
     );
     
@@ -1077,12 +1077,12 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
             text,
             1
         );
-
-        struct tm *ptm;
         
-        ptm = gmtime(&context->ibus->gpsTime);
+        if (&context->ibus->gpsTime != 0) {
+            struct tm *ptm;
+            ptm = gmtime(&context->ibus->gpsTime);
 
-        snprintf(
+            snprintf(
             text, 
             BMBT_MENU_STRING_MAX_SIZE, 
             "GPSD: %2d.%2d.%4d", 
@@ -1109,9 +1109,17 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSTIME,
-            text,
-            1
-        );
+                text,
+                1
+            );
+        } else {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSDATE,
+                LocaleGetText(LOCALE_STRING_AUTOTIME_NOSIGNAL),
+                2
+            );
+        }
     }
     
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);

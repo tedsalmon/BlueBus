@@ -88,8 +88,9 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Settings > Time",
     "Time: %s",
     "DST: %s",
-    "Offset: %+02.2d:%02.2d",
+    "Zone: %+02.2d:%02.2d",
     "Manual",
+    "No GPS signal",
 };
 
 static char *LOCALE_LANG_ITALIAN[] = {
@@ -172,10 +173,11 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Autozoom: %s",
     "PDC: %s",
     "Impostazioni > Tempo",
-    "Autotime: %s",
+    "Time: %s",
     "DST: %s",
-    "Offset: %+02.2d:%02.2d",
+    "Zone: %+02.2d:%02.2d",
     "Manual",
+    "No GPS signal",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -258,10 +260,11 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Autozoom: %s",
     "PDC: %s",
     "Instellingen > Time",
-    "Autotime: %s",
+    "Time: %s",
     "DST: %s",
-    "Offset: %+02.2d:%02.2d",
+    "Zone: %+02.2d:%02.2d",
     "Manual",
+    "No GPS signal",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -344,10 +347,11 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Autozoom: %s",
     "PDC: %s",
     "Seaded > Time",
-    "Autotime: %s",
+    "Time: %s",
     "DST: %s",
-    "Offset: %+02.2d:%02.2d",
+    "Zone: %+02.2d:%02.2d",
     "Manual",
+    "No GPS signal",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -430,10 +434,11 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Autozoom: %s",
     "PDC: %s",
     "Settings > Time",
-    "Autotime: %s",
+    "Time: %s",
     "DST: %s",
-    "Offset: %+02.2d:%02.2d",
+    "Zone: %+02.2d:%02.2d",
     "Manual",
+    "No GPS signal",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -517,9 +522,10 @@ static char *LOCALE_LANG_GERMAN[] = {
     "PDC: %s",
     "Einstellungen > Zeit",
     "Zeit: %s",
-    "Sommerzeit: %s",
-    "Offset: %+02.2d:%02.2d",
+    "Sommerzt:%s",
+    "Zeitzone:%+02.2d:%02.2d",
     "Manuell",
+    "Kein GPS signal",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -602,10 +608,11 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Autozoom: %s",
     "PDC: %s",
     "Ajustes > Time",
-    "Autotime: %s",
+    "Time: %s",
     "DST: %s",
-    "Offset: %+02.2d:%02.2d",
+    "Zone: %+02.2d:%02.2d",
     "Manual",
+    "No GPS signal",
 };
 
 /**
