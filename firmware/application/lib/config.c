@@ -1036,6 +1036,9 @@ void ConfigSetTimeSource(uint8_t source) {
  *         void
  */
 void ConfigSetTimeDST(uint8_t dst) {
+    if (dst == 1) {
+        dst = CONFIG_SETTING_TIME_DST;
+    }
     if (dst == CONFIG_SETTING_OFF || dst == CONFIG_SETTING_TIME_DST ) {
         uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b11111011 ) | dst;
         ConfigSetByte(CONFIG_SETTING_COMFORT_TIME, val);

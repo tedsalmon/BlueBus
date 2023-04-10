@@ -1055,7 +1055,7 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
             text, 
             BMBT_MENU_STRING_MAX_SIZE, 
             LocaleGetText(LOCALE_STRING_AUTOTIME_DST), 
-            (dst == 0) ? "Off":"+01:00"
+            (dst == 0) ? "---":"+01:00"
         );
         BMBTGTWriteIndex(
             context,
@@ -1078,7 +1078,7 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
             1
         );
         
-        if (&context->ibus->gpsTime != 0) {
+        if (context->ibus->gpsTime != 0) {
             struct tm *ptm;
             ptm = gmtime(&context->ibus->gpsTime);
 
@@ -1563,8 +1563,8 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
 
 static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t selectedIdx)
 {
+    uint8_t time_source = ConfigGetTimeSource();
     if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE) {
-        uint8_t time_source = ConfigGetTimeSource();
         switch (time_source) {
             case CONFIG_SETTING_OFF:
                 if (context->bt->type == BT_BTM_TYPE_BC127) {
@@ -1587,8 +1587,42 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
             uint8_t time_dst = ConfigGetTimeDST();
             int16_t time_offset = ConfigGetTimeOffsetIndex();
 
-            if ((time_dst == 0) && (time_offset == 0)) {
-                ConfigSetTimeOffset(0);
+            if ((time_dst == 0) && (time_offset == 0) && (context->ibus->gpsTime != 0) && (context->ibus->localTime != 0)) {
+                LogDebug(LOG_SOURCE_SYSTEM, "Calc DST & Zone offsets, GPS: %s", ctime(&context->ibus->gpsTime));
+                LogDebug(LOG_SOURCE_SYSTEM, "Calc DST & Zone offsets, LOCAL: %s", ctime(&context->ibus->localTime));
+            
+                struct tm *local_time = gmtime(&context->ibus->localTime);
+
+                if ((local_time->tm_hour!=0)||(local_time->tm_min!=0)) {
+
+                    uint8_t hour = local_time->tm_hour;
+                    uint8_t min = local_time->tm_min;
+
+                    local_time = gmtime(&context->ibus->gpsTime);
+
+                    local_time->tm_hour = hour;
+                    local_time->tm_min = min;
+
+                    if ((local_time->tm_mon>=3)&&(local_time->tm_mon<=9)) {
+                        // assume Apr to Oct is summer time for sake of preset of DST
+                        time_dst = CONFIG_SETTING_TIME_DST;
+                        local_time->tm_hour -= 1;
+                    }
+
+                    time_t localTime = mktime(local_time);
+
+                    time_offset = (difftime(localTime,context->ibus->gpsTime) / 60);
+
+                    if (time_offset > 12*60) {
+                        time_offset -= 24*60;
+                    } else if (time_offset < -12*60) {
+                        time_offset += 24*60;
+                    }
+                    LogDebug(LOG_SOURCE_SYSTEM, "Calc DST & Zone offsets, DST=%d, OFFSET=%+d min", (time_dst==CONFIG_SETTING_TIME_DST), time_offset);
+
+                    ConfigSetTimeOffset(time_offset);
+                    ConfigGetTimeDST(time_dst);
+                }
             }
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) {
@@ -1611,7 +1645,12 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
         BMBTMenuSettingsComfort(context);
     };
     
-    if ((selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) || (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST)) {
+    if (((selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) || 
+        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) ||
+        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE)) && 
+        (time_source == CONFIG_SETTING_TIME_GPS) &&
+        (context->ibus->gpsTime != 0)) {
+
         uint8_t datetime[6]={0};
         struct tm *gps_time = gmtime(&context->ibus->gpsTime);
 
