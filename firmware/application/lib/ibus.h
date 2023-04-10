@@ -234,6 +234,8 @@
 
 #define IBUS_CMD_OBC_CONTROL 0x41
 
+#define IBUS_IKE_OBC_PROPERTY_TIME 0x01
+#define IBUS_IKE_OBC_PROPERTY_DATE 0x02
 #define IBUS_IKE_OBC_PROPERTY_TEMPERATURE 0x03
 #define IBUS_IKE_OBC_PROPERTY_REQUEST_TEXT 0x01
 
@@ -520,6 +522,7 @@ typedef struct IBus_t {
     IBusModuleStatus_t moduleStatus;
     IBusPDC_t pdc;
     time_t gpsTime;
+    time_t localTime;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];
