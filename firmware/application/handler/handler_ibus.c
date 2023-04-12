@@ -1310,7 +1310,7 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
             context,
             HANDLER_INT_PDC_DISTANCE
         );
-        LogInfo(LOG_SOURCE_SYSTEM, "Activating PDC timer");
+        LogInfo(LOG_SOURCE_SYSTEM, "Activating PDC timer on PDC STATUS");
     }
 }
 
@@ -1329,16 +1329,20 @@ void HandlerIBusPDCUpdate(void *ctx, uint8_t *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     IBus_t *ibus = context->ibus;
     
+    if (ibus->gearPosition == IBUS_IKE_GEAR_REVERSE) {
+        context->pdcLastStatus = TimerGetMillis();
+    }
+    
     uint8_t pdc_config = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
 
-    if ((context->pdcActive == 0) || ((ibus->pdc.front_left == 255) &&
+    if ((context->pdcActive == 0) /*|| ((ibus->pdc.front_left == 255) &&
         (ibus->pdc.front_center_left == 255) &&
         (ibus->pdc.front_center_right == 255) &&
         (ibus->pdc.front_right == 255) &&
         (ibus->pdc.rear_left == 255) &&
         (ibus->pdc.rear_center_left == 255) &&
         (ibus->pdc.rear_center_right == 255) &&
-        (ibus->pdc.rear_right == 255))) {
+        (ibus->pdc.rear_right == 255))*/ ) {
 // clear displays
         LogInfo(LOG_SOURCE_SYSTEM, "Clearing PDC displays");
         if (pdc_config == CONFIG_SETTING_PDC_CLUSTER || pdc_config == CONFIG_SETTING_PDC_BOTH) {
@@ -1373,7 +1377,7 @@ void HandlerIBusPDCUpdate(void *ctx, uint8_t *pkt)
         rm = MIN(ibus->pdc.rear_center_right, rm);
         rm = MIN(ibus->pdc.rear_right, rm);
 
-        LogInfo(LOG_SOURCE_SYSTEM, "Min PDC to display in cm: (%d,%d)", fm, rm);
+        LogInfo(LOG_SOURCE_SYSTEM, "Min PDC to display in cm: (F:%d,R:%d)", fm, rm);
         if (fm < 5) {
             fm = 0;
         }
@@ -1468,6 +1472,42 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (*type == IBUS_SENSOR_VALUE_GEAR_POS) {
         context->gearLastStatus = TimerGetMillis();
+
+        if ((context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE) &&
+//            (context->ibus->moduleStatus.PDC == 1) &&
+            (context->pdcActive == 0) &&
+            (ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF))
+        {
+            context->pdcActive = 1;
+            unsigned char msg[] = { IBUS_CMD_PDC_REQUEST };
+            IBusSendCommand(context->ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_PDC, msg, 1);
+            TimerRegisterScheduledTask(
+                &HandlerTimerIBusPDCdistance,
+                context,
+                HANDLER_INT_PDC_DISTANCE
+            );
+            LogInfo(LOG_SOURCE_SYSTEM, "Activating PDC timer, ON GEAR CHANGE");
+        }
+
+        if ((context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE) &&
+//            (context->ibus->moduleStatus.PDC == 1) &&
+            (context->pdcActive == 1) &&
+            (ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF))
+        {
+            LogInfo(LOG_SOURCE_SYSTEM, "Disabling PDC timer ON GEAR CHANGE");
+            TimerUnregisterScheduledTask(&HandlerTimerIBusPDCdistance);
+            context->pdcActive = 0;
+            context->pdcLastStatus = 0;
+            context->ibus->pdc.front_left=255;
+            context->ibus->pdc.front_center_left=255;
+            context->ibus->pdc.front_center_right=255;
+            context->ibus->pdc.front_right=255;
+            context->ibus->pdc.rear_left=255;
+            context->ibus->pdc.rear_center_left=255;
+            context->ibus->pdc.rear_center_right=255;
+            context->ibus->pdc.rear_right=255;
+            EventTriggerCallback(IBUS_EVENT_PDC_UPDATE, NULL);        
+        }
     }
 }
 
@@ -1804,11 +1844,14 @@ void HandlerTimerIBusPings(void *ctx)
 void HandlerTimerIBusPDCdistance(void *ctx) {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     
-    if ((context->pdcLastStatus + 2000)<TimerGetMillis()) {
+    if ((context->pdcActive != 1) || ( 
+        (context->pdcLastStatus != 0) && 
+        ((context->pdcLastStatus + 2000)<TimerGetMillis()))) {
 // stop polling after 2 seconds of not being in Reverse
         LogInfo(LOG_SOURCE_SYSTEM, "Disabling PDC timer");
         TimerUnregisterScheduledTask(&HandlerTimerIBusPDCdistance);
         context->pdcActive = 0;
+        context->pdcLastStatus = 0;
         context->ibus->pdc.front_left=255;
         context->ibus->pdc.front_center_left=255;
         context->ibus->pdc.front_center_right=255;
