@@ -191,8 +191,8 @@ my %cmd_ibus = (
 	"17" => "ODO_RESPONSE",
 	"18" => "SPEED_RPM_UPDATE",
 	"19" => "TEMP_UPDATE",
-	"1A" => "IKE_TEXT_DISPLAY_GONG",
-	"1B" => "IKE_TEXT_STATUS",
+	"1A" => "DISPLAY_GONG",
+	"1B" => "STATUS",
 	"1C" => "GONG",
 	"1D" => "TEMP_REQUEST",
 	"1F" => "GPS_TIMEDATE",
@@ -264,7 +264,8 @@ my %cmd_ibus = (
 	"A9" =>	"BMW_ASSIST_DATA",
 	"AA" => "NAV_CONTROL_REAR",
 	"AB" => "NAV_CONTROL_FRONT",
-	"C0" => "C43_SET_MENU_MODE"
+	"C0" => "C43_SET_MENU_MODE",
+	"D4" => "DYNAMIC_STATIONS"
 );
 
 my %cmd_bm83 = (
@@ -406,57 +407,59 @@ my %cmd_bm83 = (
 );
 
 my %data_parsers = (
-	"BMBT_STATUS_RESP" => \&ike_data_parsers_module_status,
-	"TEL_STATUS_RESP" => \&ike_data_parsers_module_status,
-	"NAVE_STATUS_RESP" => \&ike_data_parsers_module_status,
-	"GT_STATUS_RESP" => \&ike_data_parsers_module_status,
+	"BMBT_STATUS_RESP" => \&ibus_data_parsers_module_status,
+	"TEL_STATUS_RESP" => \&ibus_data_parsers_module_status,
+	"NAVE_STATUS_RESP" => \&ibus_data_parsers_module_status,
+	"GT_STATUS_RESP" => \&ibus_data_parsers_module_status,
 
-	"BMBT_MONITOR_CONTROL" => \&ike_data_parsers_monitor_control,
+	"BMBT_MONITOR_CONTROL" => \&ibus_data_parsers_monitor_control,
 
-	"TEL_BTN_PRESS" => \&ike_data_parsers_mfl_buttons,
-	"RAD_BTN_PRESS" => \&ike_data_parsers_mfl_buttons,
+	"TEL_BTN_PRESS" => \&ibus_data_parsers_mfl_buttons,
+	"RAD_BTN_PRESS" => \&ibus_data_parsers_mfl_buttons,
 
-	"GT_BUTTON" => \&ike_data_parsers_bmbt_buttons,
-	"BMBT_BROADCAST_BUTTON" => \&ike_data_parsers_bmbt_buttons,
-	"RAD_BUTTON" => \&ike_data_parsers_bmbt_buttons,
+	"GT_BUTTON" => \&ibus_data_parsers_bmbt_buttons,
+	"BMBT_BROADCAST_BUTTON" => \&ibus_data_parsers_bmbt_buttons,
+	"RAD_BUTTON" => \&ibus_data_parsers_bmbt_buttons,
 
-	"BMBT_SOFT_BUTTON" => \&ike_data_parsers_bmbt_soft_buttons,
+	"BMBT_SOFT_BUTTON" => \&ibus_data_parsers_bmbt_soft_buttons,
 
-	"RAD_VOLUME" => \&ike_data_parsers_volume,
-	"TEL_VOLUME" => \&ike_data_parsers_volume,
+	"RAD_VOLUME" => \&ibus_data_parsers_volume,
+	"TEL_VOLUME" => \&ibus_data_parsers_volume,
 
-	"BMBT_DIAL_KNOB" => \&ike_data_parsers_navi_knob,
-	"GT_DIAL_KNOB" => \&ike_data_parsers_navi_knob,
+	"BMBT_DIAL_KNOB" => \&ibus_data_parsers_navi_knob,
+	"GT_DIAL_KNOB" => \&ibus_data_parsers_navi_knob,
 
-	"GT_SCREEN_MODE_REQUEST" => \&ike_data_parsers_request_screen,
-	"RAD_SCREEN_MODE_SET" => \&ike_data_parsers_set_radio_ui,
+	"GT_SCREEN_MODE_REQUEST" => \&ibus_data_parsers_request_screen,
+	"RAD_SCREEN_MODE_SET" => \&ibus_data_parsers_set_radio_ui,
 
-	"GT_WRITE_WITH_CURSOR" => \&ike_data_parsers_gt_write,
-	"GT_WRITE_MENU" => \&ike_data_parsers_gt_write,
+	"GT_WRITE_WITH_CURSOR" => \&ibus_data_parsers_gt_write,
+	"GT_WRITE_MENU" => \&ibus_data_parsers_gt_write,
 
-	"GT_WRITE_TITLE" =>  \&ike_data_parsers_gt_write_menu,
-	"IKE_WRITE_TITLE" =>  \&ike_data_parsers_gt_write_menu,
-	"RAD_BROADCAST_WRITE_TITLE" =>  \&ike_data_parsers_gt_write_menu,
+	"GT_WRITE_TITLE" =>  \&ibus_data_parsers_gt_write_menu,
+	"IKE_WRITE_TITLE" =>  \&ibus_data_parsers_gt_write_menu,
+	"RAD_BROADCAST_WRITE_TITLE" =>  \&ibus_data_parsers_gt_write_menu,
 
-	"IKE_WRITE_NUMERIC" => \&ike_data_parsers_write_numeric,
+	"GT_DYNAMIC_STATIONS" => \&ibus_data_parsers_gt_dynamic_stations,
 
-	"CDC_RESPONSE" => \&ike_data_parsers_cdc_response,
-	"CDC_REQUEST" => \&ike_data_parsers_cdc_request,
+	"IKE_WRITE_NUMERIC" => \&ibus_data_parsers_write_numeric,
 
-	"IKE_OBC_INPUT" => \&ike_data_parsers_ike_obc_input,
-	"IKE_BROADCAST_OBC_TEXT" => \&ike_data_parsers_obc_text,
-	"IKE_BROADCAST_SPEED_RPM_UPDATE" => \&ike_data_parsers_speed_rpm,
-	"IKE_BROADCAST_TEMP_UPDATE" => \&ike_data_parsers_ike_temp,
-	"IKE_BROADCAST_SENSOR_RESP" => \&ike_data_parsers_ike_sensor,
-	"IKE_BROADCAST_IGN_STATUS_RESP" => \&ike_data_parsers_ike_ignition,
-	"IKE_BROADCAST_REPLICATE_REDUNDANT_DATA" => \&ike_data_parsers_redundant_data,
-	"IKE_BROADCAST_ODO_RESPONSE" => \&ike_data_parsers_ike_odo_response,
-	"LCM_RESP_REDUNDANT_DATA" => \&ike_data_parsers_lcm_redundant_data,
-	"LCM_BROADCAST_INDICATORS_RESP" =>\&ike_data_parsers_lcm_indicator_resp,
+	"CDC_RESPONSE" => \&ibus_data_parsers_cdc_response,
+	"CDC_REQUEST" => \&ibus_data_parsers_cdc_request,
 
-	"IKE_GPS_TIMEDATE" => \&ike_data_parsers_ike_gps_time,
+	"IKE_OBC_INPUT" => \&ibus_data_parsers_ike_obc_input,
+	"IKE_BROADCAST_OBC_TEXT" => \&ibus_data_parsers_obc_text,
+	"IKE_BROADCAST_SPEED_RPM_UPDATE" => \&ibus_data_parsers_speed_rpm,
+	"IKE_BROADCAST_TEMP_UPDATE" => \&ibus_data_parsers_ike_temp,
+	"IKE_BROADCAST_SENSOR_RESP" => \&ibus_data_parsers_ike_sensor,
+	"IKE_BROADCAST_IGN_STATUS_RESP" => \&ibus_data_parsers_ike_ignition,
+	"IKE_BROADCAST_REPLICATE_REDUNDANT_DATA" => \&ibus_data_parsers_redundant_data,
+	"IKE_BROADCAST_ODO_RESPONSE" => \&ibus_data_parsers_ike_odo_response,
+	"LCM_RESP_REDUNDANT_DATA" => \&ibus_data_parsers_lcm_redundant_data,
+	"LCM_BROADCAST_INDICATORS_RESP" =>\&ibus_data_parsers_lcm_indicator_resp,
 
-	"GM_BROADCAST_DOORS_STATUS_RESP" => \&ike_data_parsers_doors_status,
+	"IKE_GPS_TIMEDATE" => \&ibus_data_parsers_ike_gps_time,
+
+	"GM_BROADCAST_DOORS_STATUS_RESP" => \&ibus_data_parsers_doors_status,
 
 	"BM83_CMD_Event_ACK" => \&bm83_data_parsers_event_ack,
 	"BM83_EVT_Command_ACK" => \&bm83_data_parsers_command_ack,
@@ -1251,7 +1254,7 @@ sub print_hex {
 };
 
 
-sub ike_data_parsers_module_status {
+sub ibus_data_parsers_module_status {
 	my ($src, $dst, $string, $data) = @_;
 	my $announce = $data->[0] & 0b00000001;
 	my $variant = ($data->[0] & 0b11111000) >> 3;
@@ -1281,7 +1284,7 @@ sub ike_data_parsers_module_status {
 	return "announce=$announce, variant=$variant";
 };
 
-sub ike_data_parsers_mfl_buttons {
+sub ibus_data_parsers_mfl_buttons {
 	my ($src, $dst, $string, $data) = @_;
 	my $button = $data->[0] & 0b1100_1001;
 	my $state = $data->[0] & 0b0011_0000;
@@ -1305,7 +1308,7 @@ sub ike_data_parsers_mfl_buttons {
 	return "button=$button, state=$state";
 }
 
-sub ike_data_parsers_bmbt_buttons {
+sub ibus_data_parsers_bmbt_buttons {
 	my ($src, $dst, $string, $data) = @_;
 	my $button = $data->[0] & 0b0011_1111;
 	my $state = $data->[0] & 0b1100_0000;
@@ -1352,7 +1355,7 @@ sub ike_data_parsers_bmbt_buttons {
 	return "button=$button, state=$state";
 }
 
-sub ike_data_parsers_bmbt_soft_buttons {
+sub ibus_data_parsers_bmbt_soft_buttons {
 	my ($src, $dst, $string, $data) = @_;
 	my $button = $data->[1] & 0b0011_1111;
 	my $state = $data->[1] & 0b1100_0000;
@@ -1373,7 +1376,7 @@ sub ike_data_parsers_bmbt_soft_buttons {
 	return "button=$button, state=$state, extra=$data->[0]";
 }
 
-sub ike_data_parsers_volume {
+sub ibus_data_parsers_volume {
 	my ($src, $dst, $string, $data) = @_;
 	my $direction = $data->[0] & 0b0000_0001;
 	my $steps = ($data->[0] & 0b1111_0000) >> 4;
@@ -1381,7 +1384,7 @@ sub ike_data_parsers_volume {
 	return "volume_change=".(($direction==0)?'-':'+').$steps;
 }
 
-sub ike_data_parsers_navi_knob {
+sub ibus_data_parsers_navi_knob {
 	my ($src, $dst, $string, $data) = @_;
 	my $direction = $data->[0] & 0b1000_0000;
 	my $steps = $data->[0] & 0b0000_1111;
@@ -1389,7 +1392,7 @@ sub ike_data_parsers_navi_knob {
 	return "turn=".(($direction==0)?'-':'+').$steps;
 }
 
-sub ike_data_parsers_monitor_control {
+sub ibus_data_parsers_monitor_control {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $source = $data->[0] & 0b0000_0011;
@@ -1421,7 +1424,7 @@ sub ike_data_parsers_monitor_control {
 	return "power=$power, source=$source, aspect=$aspect, enc=$encoding";
 }
 
-sub ike_data_parsers_request_screen {
+sub ibus_data_parsers_request_screen {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $priority = $data->[0] & 0b0000_0001;
@@ -1439,7 +1442,7 @@ sub ike_data_parsers_request_screen {
 	return "priority=".(($priority==0)?"RAD":"GT").", hide_header=".(($hide_header==1)?"HIDE":"SHOW").", hide=$hide_body";
 }
 
-sub ike_data_parsers_set_radio_ui {
+sub ibus_data_parsers_set_radio_ui {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $priority = $data->[0] & 0b0000_0001;
@@ -1450,7 +1453,25 @@ sub ike_data_parsers_set_radio_ui {
 	return "priority=".(($priority==0)?"RAD":"GT").", audio+obc=$audio_obc, new_ui=$new_ui, new_ui_hide=$new_ui_hide";
 }
 
-sub ike_data_parsers_gt_write {
+sub ibus_data_parsers_gt_dynamic_stations {
+	my ($src, $dst, $string, $data) = @_;
+
+	my $data1 = $data->[0];
+	my $count = $data->[1];
+	my $page  = $data->[2];
+
+	my $text1 = cleanup_string(array_to_string($data,3,8));
+	my $text2 = cleanup_string(array_to_string($data,12,8));
+	my $text3 = cleanup_string(array_to_string($data,21,8));
+
+	my $sel1 = ($data->[11]!=0)?' selected':'';
+	my $sel2 = ($data->[20]!=0)?' selected':'';
+	my $sel3 = ($data->[29]!=0)?' selected':'';
+
+	return "val1=$data1, count=$count, page=$page, text1=\"$text1\"$sel1, text2=\"$text2\"$sel2, text3=\"$text3\"$sel3";
+}
+
+sub ibus_data_parsers_gt_write {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $layout = $data->[0];
@@ -1489,7 +1510,7 @@ sub ike_data_parsers_gt_write {
 
 }
 
-sub ike_data_parsers_write_numeric {
+sub ibus_data_parsers_write_numeric {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $cmd = $data->[0];
@@ -1498,7 +1519,7 @@ sub ike_data_parsers_write_numeric {
 	return "command=".($cmd==0x20?'clear':($cmd==0x2B?'extended, display='.($value*10):'normal, display='.$value));
 }
 
-sub ike_data_parsers_gt_write_menu {
+sub ibus_data_parsers_gt_write_menu {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $source = ($data->[0] & 0b1110_0000) >> 5;
@@ -1607,7 +1628,7 @@ sub ike_data_parsers_gt_write_menu {
 	return "source=$source, config=$config, options=$option, text=\"$text\"";
 }
 
-sub ike_data_parsers_obc_text {
+sub ibus_data_parsers_obc_text {
 	my ($src, $dst, $string, $data, $time) = @_;
 
 	my $property = $data->[0];
@@ -1651,7 +1672,7 @@ sub ike_data_parsers_obc_text {
 	return "property=$property, text=\"$text\"";
 };
 
-sub ike_data_parsers_ike_obc_input {
+sub ibus_data_parsers_ike_obc_input {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $property = $data->[0];
@@ -1700,7 +1721,7 @@ sub ike_data_parsers_ike_obc_input {
 	return "property=$property, value=$value";
 }
 
-sub ike_data_parsers_ike_odo_response {
+sub ibus_data_parsers_ike_odo_response {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $km = ($data->[2] << 16) + ($data->[1] << 8) + $data->[0];
@@ -1708,7 +1729,7 @@ sub ike_data_parsers_ike_odo_response {
 	return "odo=${km} km";
 }
 
-sub ike_data_parsers_ike_gps_time {
+sub ibus_data_parsers_ike_gps_time {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $hour = unpack_8bcd($data->[1]);
@@ -1733,7 +1754,7 @@ sub ike_data_parsers_ike_gps_time {
 }
 
 
-sub ike_data_parsers_cdc_request {
+sub ibus_data_parsers_cdc_request {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $command = $data->[0];
@@ -1755,7 +1776,7 @@ sub ike_data_parsers_cdc_request {
 	return "command=$command";
 };
 
-sub ike_data_parsers_cdc_response {
+sub ibus_data_parsers_cdc_response {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $status = $data->[0];
@@ -1803,7 +1824,7 @@ sub ike_data_parsers_cdc_response {
 	return sprintf("status=%s, audio=%s, error=%s, magazines=0b%06b, disk=%x, track=%x", $status, $audio, $error, $magazine, $disk, $track);
 };
 
-sub ike_data_parsers_speed_rpm {
+sub ibus_data_parsers_speed_rpm {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $speed = $data->[0] * 2;
@@ -1812,7 +1833,7 @@ sub ike_data_parsers_speed_rpm {
 	return "speed=$speed km/h, rpm=$rpm";
 };
 
-sub ike_data_parsers_ike_temp {
+sub ibus_data_parsers_ike_temp {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $coolant = $data->[1];
@@ -1823,7 +1844,7 @@ sub ike_data_parsers_ike_temp {
 	return "coolant=$coolant, amb=$amb C";
 };
 
-sub ike_data_parsers_ike_sensor {
+sub ibus_data_parsers_ike_sensor {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $handbrake 		= ( $data->[0] & 0b0000_0001 );
@@ -1856,7 +1877,7 @@ sub ike_data_parsers_ike_sensor {
 	return "handbrake=$handbrake, ignition=$ignition, gear=$gear, ?door=$door, , aux_vent=$aux_vent, warn_oil_pressure=$oil_pressure, warn_brake_pads=$brake_pads, warn_transmission=$transmission";
 };
 
-sub ike_data_parsers_ike_ignition {
+sub ibus_data_parsers_ike_ignition {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $ignition = ( $data->[0] & 0b0000_0111 );
@@ -1873,7 +1894,7 @@ sub ike_data_parsers_ike_ignition {
 	return "ignition=$ignition";
 };
 
-sub ike_data_parsers_redundant_data {
+sub ibus_data_parsers_redundant_data {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $odo  = ( ($data->[0] << 8) + $data->[1] ) * 100;
@@ -1884,7 +1905,7 @@ sub ike_data_parsers_redundant_data {
 	return "odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
 };
 
-sub ike_data_parsers_lcm_redundant_data {
+sub ibus_data_parsers_lcm_redundant_data {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $odo  = ( ($data->[5] << 8) + $data->[6] ) * 100;
@@ -1896,7 +1917,7 @@ sub ike_data_parsers_lcm_redundant_data {
 	return "vin=$vin, odo=$odo km, fuel=$fuel l, ?oil=$oil, time=$time days";
 };
 
-sub ike_data_parsers_lcm_indicator_resp {
+sub ibus_data_parsers_lcm_indicator_resp {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $turn_rapid = 	$data->[0] & 0b1000_0000;
@@ -1947,7 +1968,7 @@ sub ike_data_parsers_lcm_indicator_resp {
 }
 
 
-sub ike_data_parsers_doors_status {
+sub ibus_data_parsers_doors_status {
 	my ($src, $dst, $string, $data) = @_;
 
 	my $doors 		= ( $data->[0] & 0b0000_1111 );
@@ -2137,7 +2158,7 @@ sub process_ibus_packet {
 
 	my $self = ($self == 1)?"*":" ";
 
-	$data =~ s/\s+..$//;
+	$data =~ s/\s*[0-9a-fA-F][0-9a-fA-F]\s*$//;
 
 	my $data_parsed;
 	if ($data_parsers{$cmd}) {
@@ -2174,7 +2195,7 @@ while (<>) {
 
 	my $line = $_;
 
-	if (/^\[(\d+)\]\s+DEBUG:\s+IBus:\s+RX\[(\d+)\]:\s+?(..)\s+(..)\s+(..)\s+(..)\s*(.*?)$/osi) {	
+	if (/^[#\s]*\[(\d+)\]\s+DEBUG:\s+IBus:\s+RX\[(\d+)\]:\s+?(..)\s+(..)\s+(..)\s+(..)\s*(.*?)$/osi) {	
 # IBUS message
 		$time = $1;
 		my $len = $2;
