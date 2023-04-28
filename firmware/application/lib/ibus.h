@@ -357,6 +357,8 @@
 #define IBUS_SENSOR_VALUE_GEAR_POS 0x05
 #define IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED 0x06
 
+#define IBUS_SES_ZOOM_LEVELS 8
+
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
 #define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
 #define IBUS_MFL_BTN_EVENT_PREV_REL 0x28
@@ -572,6 +574,7 @@ void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
+void IBusCommandSESSetMapZoom(IBus_t *, uint8_t);
 void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);

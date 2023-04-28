@@ -6,6 +6,17 @@
  */
 #include "ibus.h"
 
+static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
+    0x01, // 125 - special case when stationary
+    0x01, // 125 yd 100m
+    0x02, // 250 yd 200m
+    0x04, // 450 yd 500m
+    0x10, // 900 yd 1km
+    0x11, // 1 mi 2km
+    0x12, // 2.5 mi 5km
+    0x13  // 5 mi 10km
+};
+
 /**
  * IBusInit()
  *     Description:
@@ -2654,6 +2665,32 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
         IBUS_DEVICE_RAD,
         msg,
         sizeof(msg)
+    );
+}
+
+/**
+ * IBusCommandSESSetMapZoom()
+ *     Description:
+ *        Set the Navigation Zoom level via SES commands
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t zoomLevel - The requested zoom level
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESSetMapZoom(IBus_t *ibus, uint8_t zoomLevel)
+{
+    uint8_t msg[] = {
+        0xAA,
+        0x10,
+        IBUS_SES_NAV_ZOOM_CONSTANT[zoomLevel]
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
     );
 }
 
