@@ -895,19 +895,35 @@ void BM83ProcessEventCallStatus(BT_t *bt, uint8_t *data, uint16_t length)
     switch (data[BM83_FRAME_DB1]) {
         case BM83_DATA_CALL_STATUS_IDLE:
             bt->callStatus = BT_CALL_INACTIVE;
-            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
+            UtilsStrncpy(
+                bt->callerId,
+                LocaleGetText(LOCALE_STRING_CALL),
+                BT_CALLER_ID_FIELD_SIZE
+            );
             break;
         case BM83_DATA_CALL_STATUS_VR:
             bt->callStatus = BT_CALL_VR;
-            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
+            UtilsStrncpy(
+                bt->callerId,
+                LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT),
+                BT_CALLER_ID_FIELD_SIZE
+            );
             break;
         case BM83_DATA_CALL_STATUS_INCOMING:
-            UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_CALL), BT_CALLER_ID_FIELD_SIZE);
+            UtilsStrncpy(
+                bt->callerId,
+                LocaleGetText(LOCALE_STRING_CALL),
+                BT_CALLER_ID_FIELD_SIZE
+            );
             bt->callStatus = BT_CALL_INCOMING;
             break;
         case BM83_DATA_CALL_STATUS_OUTGOING:
             if (strncmp(bt->callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE) == 0) {
-                UtilsStrncpy(bt->callerId, LocaleGetText(LOCALE_STRING_CALL), BT_CALLER_ID_FIELD_SIZE);
+                UtilsStrncpy(
+                    bt->callerId,
+                    LocaleGetText(LOCALE_STRING_CALL),
+                    BT_CALLER_ID_FIELD_SIZE
+                );
             }
             bt->callStatus = BT_CALL_OUTGOING;
             break;
@@ -930,12 +946,12 @@ void BM83ProcessEventCallStatus(BT_t *bt, uint8_t *data, uint16_t length)
  */
 void BM83ProcessEventCallerID(BT_t *bt, uint8_t *data, uint16_t length)
 {
-    char callerId[length+1];
+    char callerId[length + 1];
     uint16_t i = 0;
     for (i = 0; i < length; i++) {
         callerId[i] = data[i + BM83_FRAME_DB1];
     }
-    callerId[i]=0;
+    callerId[i] = 0;
     memset(bt->callerId, 0, BT_CALLER_ID_FIELD_SIZE);
     UtilsStrncpy(bt->callerId, callerId, BT_CALLER_ID_FIELD_SIZE);
     EventTriggerCallback(BT_EVENT_CALLER_ID_UPDATE, 0);

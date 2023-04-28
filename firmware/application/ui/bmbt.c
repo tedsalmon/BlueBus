@@ -1399,11 +1399,13 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             } else {
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
                 BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             }
         } else {
             if (value == 0x01) {
                 BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             } else {
                 BTPairedDevice_t *device = 0;
                 uint8_t i = 0;
@@ -1421,6 +1423,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                     );
                 }
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
             }
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN) {
