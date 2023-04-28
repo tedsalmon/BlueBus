@@ -626,7 +626,9 @@ void HandlerIBusGTDIAOSIdentityResponse(void *ctx, uint8_t *pkt)
     }
     // The string should come null terminated, but we should not trust that
     navigationOS[7] = '\0';
-    if (UtilsStricmp(navigationOS, "BMWC01S") == 0) {
+    if (UtilsStricmp(navigationOS, "BMWC01S") == 0 ||
+        UtilsStricmp(navigationOS, "ROVC01S") == 0
+    ) {
         if (context->ibus->moduleStatus.MID == 0) {
             if (ConfigGetUIMode() != CONFIG_UI_BMBT) {
                 LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT UI");
