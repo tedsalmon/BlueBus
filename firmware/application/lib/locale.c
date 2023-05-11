@@ -566,6 +566,86 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Autozoom: %s",
 };
 
+static char *LOCALE_LANG_POLISH[] = {
+    "- Nie odtwarza -",
+    "Informacje",
+    "D\378wi\281k",
+    "Auto-odtw.: Wy\322.",
+    "Auto-odtw.: W\322.",
+    "Powr\243t",
+    "Kierunkowsk.: %d",
+    "Bluetooth",
+    "Wersja: %d/%d",
+    "Dzwonienie",
+    "Auto: E3x/E53",
+    "Auto: E46/Z4",
+    "Auto: Nie ust.",
+    "Wyczy\357\263 urz\261dz.",
+    "Komfort",
+    "D. rozdzielcza",
+    "Urz\261dzenia",
+    "DSP: Domy\357lny",
+    "DSP: Analogowy",
+    "DSP: Cyfrowy",
+    "FW: %s",
+    "Handsfree: Wy\322.",
+    "Handsfree: W\322.",
+    "Blok.: 10km/h",
+    "Blok.: 20km/h",
+    "Blok.: Wy\322.",
+    "Menu G\322\243wne",
+    "Menu: D. Rozdz.",
+    "Menu: G\322\243wne",
+    "Metadane: Kaw.",
+    "Metadane: Wy\322.",
+    "Metadane: Impr.",
+    "Bal. mikr.: Wy\322.",
+    "Bal. mikr.: W\322.",
+    "Wzm. mikr.: %idB",
+    "Brak urz\261dzenia",
+    "Parowanie: Wy\322.",
+    "Parowanie: W\322.",
+    "S/N: %u",
+    "Ustawienia",
+    "Ustawienia > Informacje",
+    "Ustawienia > D\378wi\281k",
+    "Ustawienia > Dzwonienie",
+    "Ustawienia > Komfort",
+    "Ustawienia > Int. U\380ytk.",
+    "Temp.: P. Ch\322od.",
+    "Temp.: Wy\322.",
+    "Temp.: Otoczenie",
+    "Temp.: Olej",
+    "Interfejs U\380ytk.",
+    "Nieznany Artysta",
+    "Nieznany Tytu\322",
+    "Odblok.: Wy\322.",
+    "Odblok.: Poz. 0",
+    "Odblok.: Pos. 1",
+    "G\322o\357no\357\263: -%ddB",
+    "G\322o\357no\357\263: +%ddB",
+    "G\322o\357no\357\263: +24dB",
+    "G\322o\357no\357\263: 0dB",
+    "J\281zyk: %s",
+    "\346w. pozyc.: W\322.",
+    "\346w. pozyc.: Wy\322.",
+    "Zarz. G\322o\357.: W\322.",
+    "Zarz. G\322o\357.: Wy\322",
+    "Kor. D\378w.: W\322.",
+    "Kor. D\378w.: Wy\322.",
+    "D. Roz. OBC: W\322.",
+    "D. Roz. OBC: Wy\322",
+    "Wy\322. BMBT: Wy\322.",
+    "Wy\322. BMBT: W\322.",
+    "Offset D\378w.: %+d",
+    "Tryb: Domy\357lny",
+    "Tryb: TCU",
+    "Tryb: Nie wycisz",
+    "Asystent G\322osowy",
+    "Zadzwo\324",
+    "Autozoom: %s",
+};
+
 /**
  * LocaleGetText()
  *     Description:
@@ -602,6 +682,9 @@ char *LocaleGetText(uint16_t stringIndex)
             break;
         case CONFIG_SETTING_LANGUAGE_SPANISH:
             text = LOCALE_LANG_SPANISH[stringIndex];
+            break;
+        case CONFIG_SETTING_LANGUAGE_POLISH:
+            text = LOCALE_LANG_POLISH[stringIndex];
             break;
     }
 
