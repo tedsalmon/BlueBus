@@ -575,10 +575,10 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
         );
         IBusCommandIKESetDate(context->ibus, dt[0], dt[1], dt[2]);
         IBusCommandIKESetTime(context->ibus, dt[3], dt[4]);
-    } else {
+    } else if (dt[5]<60)  {
         TimerRegisterScheduledTask(
             &HandlerTimerBTBC127RequestDateTime,
-            context->bt,
+            ctx,
             (60 - dt[5]) * 1000
         );
     }
