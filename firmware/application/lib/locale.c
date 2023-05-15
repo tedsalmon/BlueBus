@@ -582,7 +582,7 @@ static char *LOCALE_LANG_POLISH[] = {
     "Auto: Nie ustaw.",
     "Wyczysc liste",
     "Komfort",
-    "Widok glowny"
+    "Widok glowny",
     "Urzadzenia",
     "DSP: Domyslny",
     "DSP: Analogowy",
