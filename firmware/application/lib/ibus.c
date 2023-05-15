@@ -1804,8 +1804,8 @@ void IBusCommandGTWriteIndexTMC(
  */
 void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     uint8_t length = strlen(message);
-    if (length > 15) {
-        length = 15;
+    if (length > 28) {
+        length = 28;
     }
     const size_t pktLenght = length + 6;
     uint8_t text[pktLenght];
