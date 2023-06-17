@@ -816,10 +816,11 @@ void HandlerTimerBTVolumeManagement(void *ctx)
     if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
         context->volumeMode != HANDLER_VOLUME_MODE_LOWERED &&
         context->bt->activeDevice.a2dpId != 0 &&
-        context->bt->type != BT_BTM_TYPE_BM83
+        context->bt->type != BT_BTM_TYPE_BM83  &&
+        context->bt->activeDevice.a2dpVolume != 0
     ) {
         if (context->bt->activeDevice.a2dpVolume < 127) {
-            LogWarning("SET MAX VOLUME -- Currently %d", context->bt->activeDevice.a2dpVolume);
+            LogWarning("BT: SET MAX VOLUME -- Currently %d", context->bt->activeDevice.a2dpVolume);
             BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpId, "F");
             context->bt->activeDevice.a2dpVolume = 127;
         }

@@ -113,10 +113,19 @@ void BC127CommandATSet(BT_t *bt, char *param, char *value)
 void BC127CommandBackward(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        bt->metadataTimestamp = 0;
+        if ((ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON) &&
+             bt->activeDevice.a2dpId != 0
+        ) {
+            // silence the volume to workaround for buffered audio
+            LogWarning("BT: Music Backward, mute for a while");
+            BC127CommandVolume(bt, bt->activeDevice.a2dpId, "0");
+            bt->activeDevice.a2dpVolume = 0;
+        }
+        
         char command[18];
         snprintf(command, 18, "MUSIC %d BACKWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
+        bt->metadataTimestamp = 0;
     } else {
         LogWarning("BT: Unable to BACKWARD - AVRCP link unopened");
     }
@@ -350,10 +359,19 @@ void BC127CommandBtState(BT_t *bt, uint8_t connectable, uint8_t discoverable)
 void BC127CommandForward(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        bt->metadataTimestamp = 0;
+        if ((ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON) &&
+             bt->activeDevice.a2dpId != 0
+        ) {
+            // silence the volume to workaround for buffered audio
+            LogWarning("BT: Music Forward, mute for a while");
+            BC127CommandVolume(bt, bt->activeDevice.a2dpId, "0");
+            bt->activeDevice.a2dpVolume = 0;
+        }
+        
         char command[17];
         snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
+        bt->metadataTimestamp = 0;
     } else {
         LogWarning("BT: Unable to FORWARD - AVRCP link unopened");
     }
@@ -1336,6 +1354,16 @@ void BC127ProcessEventAVRCPMedia(BT_t *bt, char **msgBuf, char *msg)
             EventTriggerCallback(BT_EVENT_METADATA_UPDATE, 0);
         }
         bt->metadataStatus = BT_METADATA_STATUS_CUR;
+    }
+    if ((ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON) &&
+        bt->activeDevice.a2dpId != 0 &&
+        bt->activeDevice.a2dpVolume == 0
+    ) {
+        // return the volume back after FWD/BACK workaround, on next interval volume management timer
+        // BC127 set to just 1 - because it actually still may have some old data in buffer
+        LogWarning("BT: Music is back, unmute soon");
+        BC127CommandVolume(bt, bt->activeDevice.a2dpId, "1");
+        bt->activeDevice.a2dpVolume = 1;
     }
     bt->metadataTimestamp = TimerGetMillis();
 }
