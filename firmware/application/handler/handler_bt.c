@@ -31,7 +31,7 @@ void HandlerBTInit(HandlerContext_t *context)
     );
     EventRegisterCallback(
         BT_EVENT_TIME_UPDATE,
-        &HandlerTimeUpdate,
+        &HandlerBTTimeUpdate,
         context
     );
     EventRegisterCallback(
@@ -115,6 +115,11 @@ void HandlerBTInit(HandlerContext_t *context)
         EventRegisterCallback(
             BT_EVENT_LINK_BACK_STATUS,
             &HandlerBTBM83LinkBackStatus,
+            context
+        );
+        EventRegisterCallback(
+            BT_EVENT_DSP_STATUS,
+            &HandlerBTBM83DSPStatus,
             context
         );
         TimerRegisterScheduledTask(
@@ -392,7 +397,9 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
         // Once A2DP and AVRCP are connected, we can disable connectability
         // If HFP is enabled, do not disable connectability until the
         // profile opens
-        if ((linkType == BT_LINK_TYPE_A2DP) && (context->bt->activeDevice.a2dpId != 0)) {
+        if (linkType == BT_LINK_TYPE_A2DP && 
+            context->bt->activeDevice.a2dpId != 0
+        ) {
             // Raise the volume one step to trigger the absolute volume notification
             if (context->bt->type == BT_BTM_TYPE_BC127) {
                 BC127CommandVolume(
@@ -410,7 +417,11 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                 }
             }
         }
-        if (((linkType == BT_LINK_TYPE_AVRCP) || (linkType == BT_LINK_TYPE_A2DP)) && (context->bt->activeDevice.a2dpId != 0) && (context->bt->activeDevice.avrcpId != 0)) {
+        if ((linkType == BT_LINK_TYPE_AVRCP || 
+             linkType == BT_LINK_TYPE_A2DP) && 
+            context->bt->activeDevice.a2dpId != 0 && 
+            context->bt->activeDevice.avrcpId != 0
+        ) {
             if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
                 context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING 
             ) {
@@ -542,6 +553,42 @@ void HandlerBTPlaybackStatus(void *ctx, uint8_t *data)
     }
 }
 
+/**
+ * HandlerBTTimeUpdate()
+ *     Description:
+ *         Handle updates from the BT module from the +CLLK? query
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *datetime - Date + Time
+ *     Returns:
+ *         void
+ */
+void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // If it's the first second of the minute, use the time update
+    // Otherwise, request the time again at the top of the next minute
+    if (dt[BC127_AT_DATE_SEC] < 2) {
+        LogDebug(
+            LOG_SOURCE_BT,
+            "Setting time from BT: %d-%d-%d, %d:%d",
+            dt[BC127_AT_DATE_DAY], 
+            dt[BC127_AT_DATE_MONTH],
+            dt[BC127_AT_DATE_YEAR],
+            dt[BC127_AT_DATE_HOUR],
+            dt[BC127_AT_DATE_MIN]
+        );
+        IBusCommandIKESetDate(context->ibus, dt[BC127_AT_DATE_YEAR], dt[BC127_AT_DATE_MONTH], dt[BC127_AT_DATE_DAY]);
+        IBusCommandIKESetTime(context->ibus, dt[BC127_AT_DATE_HOUR], dt[BC127_AT_DATE_MIN]);
+    } else {
+        TimerRegisterScheduledTask(
+            &HandlerTimerBTBC127RequestDateTime,
+            ctx,
+            (60 - dt[BC127_AT_DATE_SEC]) * 1000
+        );
+    }
+}
+
 /* BC127 Specific Handlers */
 
 /**
@@ -665,6 +712,31 @@ void HandlerBTBM83LinkBackStatus(void *ctx, uint8_t *pkt)
 }
 
 /**
+ * HandlerBTBM83DSPStatus()
+ *     Description:
+ *         React to DSP status updates. Disable S/PDIF when the sample
+ *         rate is not 44.1khz
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBTBM83DSPStatus(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint8_t sampleRate = pkt[0];
+    if (context->ibus->ignitionStatus != IBUS_IGNITION_OFF) {
+        if (sampleRate != BM83_DATA_DSP_REPORTED_SR_44_1kHz) {
+            LogDebug(LOG_SOURCE_BT, "Disable S/PDIF");
+            SPDIF_RST = 0;
+        } else {
+            SPDIF_RST = 1;
+        }
+    }
+}
+
+/**
  * HandlerBTBM83Boot()
  *     Description:
  *         When the BM83 reports that it has booted, power it on
@@ -748,10 +820,11 @@ void HandlerTimerBTVolumeManagement(void *ctx)
     if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
         context->volumeMode != HANDLER_VOLUME_MODE_LOWERED &&
         context->bt->activeDevice.a2dpId != 0 &&
-        context->bt->type != BT_BTM_TYPE_BM83
+        context->bt->type != BT_BTM_TYPE_BM83  &&
+        context->bt->activeDevice.a2dpVolume != 0
     ) {
         if (context->bt->activeDevice.a2dpVolume < 127) {
-            LogWarning("SET MAX VOLUME -- Currently %d", context->bt->activeDevice.a2dpVolume);
+            LogWarning("BT: SET MAX VOLUME -- Currently %d", context->bt->activeDevice.a2dpVolume);
             BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpId, "F");
             context->bt->activeDevice.a2dpVolume = 127;
         }
@@ -872,6 +945,21 @@ void HandlerTimerBTBC127DeviceConnection(void *ctx)
 }
 
 /**
+ * HandlerTimerBTBC127RequestDateTime()
+ *     Description:
+ *         Request time from BT device
+ *     Params:
+ *         BT_t *ctx - A pointer to the BT object
+ *     Returns:
+ *         void
+ */
+void HandlerTimerBTBC127RequestDateTime(void *ctx) {
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    TimerUnregisterScheduledTask(&HandlerTimerBTBC127RequestDateTime);
+    BC127CommandAT(context->bt, "+CCLK?");
+}
+
+/**
  * HandlerTimerOpenProfileErrors()
  *     Description:
  *         If there are any profile open errors, request the profile
@@ -927,8 +1015,8 @@ void HandlerTimerBTBC127ScanDevices(void *ctx)
         context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
         context->bt->activeDevice.avrcpId != 0   
     ) {
-        // sync play/pause status every 5 seconds
-        BC127SendCommand(context->bt,"STATUS AVRCP");
+        // Sync the playback state every 5 seconds
+        BC127CommandStatusAVRCP(context->bt);
     }
 }
 

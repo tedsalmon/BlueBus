@@ -38,6 +38,12 @@
 #define BC127_LINK_HFP 3
 #define BC127_LINK_BLE 4
 #define BC127_LINK_MAP 8
+#define BC127_AT_DATE_YEAR 0
+#define BC127_AT_DATE_MONTH 1
+#define BC127_AT_DATE_DAY 2
+#define BC127_AT_DATE_HOUR 3
+#define BC127_AT_DATE_MIN 4
+#define BC127_AT_DATE_SEC 5
 
 extern int8_t BTBC127MicGainTable[];
 
@@ -86,6 +92,7 @@ void BC127CommandSetPin(BT_t *, char *);
 void BC127CommandSetProfiles(BT_t *, uint8_t, uint8_t, uint8_t, uint8_t);
 void BC127CommandSetUART(BT_t *, uint32_t, char *, uint8_t);
 void BC127CommandStatus(BT_t *);
+void BC127CommandStatusAVRCP(BT_t *);
 void BC127CommandToggleVR(BT_t *);
 void BC127CommandTone(BT_t *, char *);
 void BC127CommandUnpair(BT_t *);
@@ -118,5 +125,4 @@ void BC127SendCommandEmpty(BT_t *);
 void BC127ConvertMACIDToHex(char *, unsigned char *);
 uint8_t BC127ConnectionCloseProfile(BTConnection_t *, char *);
 void BC127ConnectionOpenProfile(BTConnection_t *, char *, uint8_t);
-void BC127RequestTimeOnTimer(void *);
 #endif /* BC127_H */

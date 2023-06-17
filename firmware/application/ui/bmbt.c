@@ -23,44 +23,32 @@ static const uint16_t menuSettingsLabelIndices[] = {
     LOCALE_STRING_UI
 };
 
-// IBUS constants, do not edit
-static const uint8_t nav_zoomConstants[BMBT_AUTOZOOM_LEVELS] = {
-    0x01, // 125 - special case when stationary
-    0x01, // 125 yds    100m
-    0x02, // 250        200m
-    0x04, // 450        500m
-    0x10, // 900        1km
-    0x11, // 1 mls      2km
-    0x12, // 2.5        5km
-    0x13  // 5          10km
-};
-
 // Map Auto-zoom, max speed (km/h) per scale
-static const uint16_t nav_zoomSpeeds[BMBT_AUTOZOOM_LEVELS] = {
-     1,     // 125 - special case when stationary, do not edit the "1"
-    10,     // 125
-    60,     // 250
-    90,     // 450
-    120,    // 900
-    150,    // 1
-    999,    // 2.5
-    999     // 5
+static const uint16_t navZoomSpeeds[IBUS_SES_ZOOM_LEVELS] = {
+     1,  // 125 - special case when stationary, do not edit the "1"
+    10,  // 125
+    60,  // 250
+    90,  // 450
+    120, // 900
+    150, // 1
+    999, // 2.5
+    999  // 5
 };
 
 // Map Auto-zoom, scales
-static const char *nav_zoomScaleImp[BMBT_AUTOZOOM_LEVELS] = {
-    "125yds",
-    "125yds",
-    "250yds",
-    "450yds",
-    "900yds",
-    "1mls",
-    "2.5mls",
-    "5mls"
+static const char *navZoomScaleImperial[IBUS_SES_ZOOM_LEVELS] = {
+    "125yd",
+    "125yd",
+    "250yd",
+    "450yd",
+    "900yd",
+    "1mi",
+    "2.5mi",
+    "5mi"
 };
 
 // Map Auto-zoom, scales
-static const char *nav_zoomScaleMet[BMBT_AUTOZOOM_LEVELS] = {
+static const char *navZoomScaleMetric[IBUS_SES_ZOOM_LEVELS] = {
     "100m",
     "100m",
     "200m",
@@ -86,7 +74,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     Context.timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     Context.mainDisplay = UtilsDisplayValueInit(LocaleGetText(LOCALE_STRING_BLUETOOTH), BMBT_DISPLAY_OFF);
     Context.navZoom = -1;
-    Context.navZoom_last = 0;
+    Context.navZoomTime = 0;
     
     EventRegisterCallback(
         BT_EVENT_DEVICE_CONNECTED,
@@ -175,7 +163,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     );
     EventRegisterCallback(
         IBUS_EVENT_IKESpeedRPMUpdate,
-        &BMBTSpeedRPMUpdate,
+        &BMBTIKESpeedRPMUpdate,
         &Context
     );
     Context.headerWriteTaskId = TimerRegisterScheduledTask(
@@ -946,79 +934,62 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
             LocaleGetText(LOCALE_STRING_PARK_LAMPS_OFF),
             0
         );
-    };
+    }
     uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
-    if (autozoom >= BMBT_AUTOZOOM_LEVELS) {
+    if (autozoom >= IBUS_SES_ZOOM_LEVELS) {
         autozoom = CONFIG_SETTING_OFF;
     }
-    char autozoom_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
-    snprintf(
-        autozoom_text, 
-        BMBT_MENU_STRING_MAX_SIZE, 
-        LocaleGetText(LOCALE_STRING_AUTOZOOM), 
-        (
-            (autozoom == CONFIG_SETTING_OFF) ?
-                "Off":
-                (   
-                    (ConfigGetDistUnit() == 0)?
-                        nav_zoomScaleMet[autozoom]:
-                        nav_zoomScaleImp[autozoom]
-                )
-            )
-    );
-    
+    char autoZoomText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    if (autozoom == CONFIG_SETTING_OFF) {
+        snprintf(
+            autoZoomText,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_AUTOZOOM),
+            "Off"
+        );
+    } else {
+        if (ConfigGetDistUnit() == 0) {
+            snprintf(
+                autoZoomText,
+                BMBT_MENU_STRING_MAX_SIZE,
+                LocaleGetText(LOCALE_STRING_AUTOZOOM),
+                navZoomScaleMetric[autozoom]
+            );
+        } else {
+            snprintf(
+                autoZoomText,
+                BMBT_MENU_STRING_MAX_SIZE,
+                LocaleGetText(LOCALE_STRING_AUTOZOOM),
+                navZoomScaleImperial[autozoom]
+            );
+        }
+    }
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM,
-        autozoom_text,
-        0
-    );
-
-    uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
-    if (pdc>CONFIG_SETTING_PDC_BOTH) {
-        pdc = CONFIG_SETTING_OFF;
-    }
-    
-    char pdc_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
-    snprintf(
-        pdc_text, 
-        BMBT_MENU_STRING_MAX_SIZE, 
-        LocaleGetText(LOCALE_STRING_PDC), 
-        (
-            (pdc == CONFIG_SETTING_OFF) ? "Off":
-            (pdc == CONFIG_SETTING_PDC_CLUSTER)? "Cluster":
-            (pdc == CONFIG_SETTING_PDC_RADIO)? "Screen":
-            "Dual"
-        )
-    );
-
-    BMBTGTWriteIndex(
-        context,
-        BMBT_MENU_IDX_SETTINGS_COMFORT_PDC,
-        pdc_text,
+        autoZoomText,
         0
     );
 
     uint8_t autotime = ConfigGetTimeSource();
     char autotime_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
     snprintf(
-        autotime_text, 
-        BMBT_MENU_STRING_MAX_SIZE, 
-        LocaleGetText(LOCALE_STRING_AUTOTIME), 
+        autotime_text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_AUTOTIME),
         (
-            (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone": 
+            (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone":
             (autotime == CONFIG_SETTING_TIME_GPS) ? "GPS":
             LocaleGetText(LOCALE_STRING_AUTOTIME_MANUAL)
         )
     );
-    
+
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_COMFORT_TIME,
         autotime_text,
         0
     );
-    
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
     IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT));
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
@@ -1151,12 +1122,22 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
         if (micGain > 21) {
             micGain = 0;
         }
-        snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t) BTBC127MicGainTable[micGain]);
+        snprintf(
+            micGainText,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_MIC_GAIN),
+            (int8_t) BTBC127MicGainTable[micGain]
+        );
     } else {
         if (micGain > 0x0F) {
             micGain = 0;
         }
-        snprintf(micGainText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_MIC_GAIN), (int8_t) BTBM83MicGainTable[micGain]);
+        snprintf(
+            micGainText,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_MIC_GAIN),
+            (int8_t) BTBM83MicGainTable[micGain]
+        );
     }
     BMBTGTWriteIndex(
         context,
@@ -1185,7 +1166,7 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
     // Hide TCU Mode option on HW Version 1. It is not necessary there.
     if (context->bt->type != BT_BTM_TYPE_BC127) {
         uint8_t telMode = ConfigGetSetting(CONFIG_SETTING_TEL_MODE);
-        if (telMode == CONFIG_SETTING_TEL_MODE_DEFAULT) {
+        if (telMode == CONFIG_SETTING_TEL_MODE_TCU) {
             BMBTGTWriteIndex(
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
@@ -1495,64 +1476,37 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM) {
         uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
-        
         autozoom++;
-        if (autozoom >= BMBT_AUTOZOOM_LEVELS) {
+        if (autozoom >= IBUS_SES_ZOOM_LEVELS) {
             autozoom = CONFIG_SETTING_OFF;
         }
         ConfigSetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM, autozoom);
-        char autozoom_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
-        snprintf(
-            autozoom_text, 
-            BMBT_MENU_STRING_MAX_SIZE, 
-            LocaleGetText(LOCALE_STRING_AUTOZOOM), 
-            (
-                (autozoom == CONFIG_SETTING_OFF) ?
-                    "Off":
-                    (   
-                        (ConfigGetDistUnit() == 0)?
-                            nav_zoomScaleMet[autozoom]:
-                            nav_zoomScaleImp[autozoom]
-                    )
-                )
-        );
-        BMBTGTWriteIndex(context, selectedIdx, autozoom_text, 0);
-    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_PDC) {
-        uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
-        if (pdc == CONFIG_SETTING_OFF) {
-            pdc=CONFIG_SETTING_PDC_CLUSTER;
-        } else if (pdc == CONFIG_SETTING_PDC_CLUSTER) {
-//            pdc=CONFIG_SETTING_PDC_RADIO;
-            pdc=CONFIG_SETTING_OFF;
-        } else if (pdc == CONFIG_SETTING_PDC_RADIO) {
-            pdc=CONFIG_SETTING_PDC_BOTH;
+        char autoZoomText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+        if (autozoom == CONFIG_SETTING_OFF) {
+            snprintf(
+                autoZoomText,
+                BMBT_MENU_STRING_MAX_SIZE,
+                LocaleGetText(LOCALE_STRING_AUTOZOOM),
+                "Off"
+            );
         } else {
-            pdc=CONFIG_SETTING_OFF;
+            if (ConfigGetDistUnit() == 0) {
+                snprintf(
+                    autoZoomText,
+                    BMBT_MENU_STRING_MAX_SIZE,
+                    LocaleGetText(LOCALE_STRING_AUTOZOOM),
+                    navZoomScaleMetric[autozoom]
+                );
+            } else {
+                snprintf(
+                    autoZoomText,
+                    BMBT_MENU_STRING_MAX_SIZE,
+                    LocaleGetText(LOCALE_STRING_AUTOZOOM),
+                    navZoomScaleImperial[autozoom]
+                );
+            }
         }
-
-        ConfigSetSetting(CONFIG_SETTING_COMFORT_PDC, pdc);
-
-        char pdc_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
-        snprintf(
-            pdc_text, 
-            BMBT_MENU_STRING_MAX_SIZE, 
-            LocaleGetText(LOCALE_STRING_PDC), 
-            (
-                (pdc == CONFIG_SETTING_OFF) ? "Off":
-                (pdc == CONFIG_SETTING_PDC_CLUSTER)? "Cluster":
-                (pdc == CONFIG_SETTING_PDC_RADIO)? "Screen":
-                "Dual"
-            )
-        );
-
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_COMFORT_PDC,
-            pdc_text,
-            0
-        );
-    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME) {
-        BMBTMenuSettingsComfortTime(context);
+        BMBTGTWriteIndex(context, selectedIdx, autoZoomText, 0);
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
@@ -1694,7 +1648,6 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
                 BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
-                BC127CommandSetProfiles(context->bt, 1, 1, 1, 0);
             }
         } else {
             if (value == 0x01) {
@@ -2236,6 +2189,63 @@ void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
             IBusCommandTELSetGTDisplayMenu(context->ibus);
             IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
+        }
+    }
+}
+
+/**
+ * BMBTIKESpeedRPMUpdate()
+ *     Description:
+ *         Handle Map Auto Zoom as the speed changes
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         uint8_t *pkt - A pointer to the data packet
+ *     Returns:
+ *         void
+ */
+void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+
+    uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
+    if (autozoom == CONFIG_SETTING_OFF) {
+        return;
+    }
+    uint16_t speed = pkt[IBUS_PKT_DB1] * 2;
+    uint8_t zoomLevel;
+
+    if (autozoom == 1) {
+        zoomLevel = 0;
+    } else if (autozoom >= IBUS_SES_ZOOM_LEVELS - 1) {
+        zoomLevel = IBUS_SES_ZOOM_LEVELS - 1;
+    } else {
+        zoomLevel = autozoom;
+    }
+
+    while (zoomLevel < IBUS_SES_ZOOM_LEVELS - 1 &&
+           speed > navZoomSpeeds[zoomLevel]
+    ) {
+        zoomLevel++;
+    }
+
+    if (context->navZoom > zoomLevel &&
+        (speed + BMBT_AUTOZOOM_TOLERANCE) > navZoomSpeeds[context->navZoom - 1]
+    ) {
+        zoomLevel = context->navZoom;
+    } else if (context->navZoom != zoomLevel) {
+        uint32_t now = TimerGetMillis();
+        LogDebug(
+            LOG_SOURCE_UI,
+            "Autozoom: kmh=%i, currentZoom=%i, wishedZoom=%i, timeDiff=%lu",
+            speed,
+            context->navZoom,
+            zoomLevel,
+            now - context->navZoomTime
+        );
+        if (context->navZoomTime + BMBT_AUTOZOOM_DELAY < now) {
+            context->navZoom = zoomLevel;
+            context->navZoomTime = now;
+            IBusCommandSESSetMapZoom(context->ibus, zoomLevel);
         }
     }
 }
@@ -2835,45 +2845,6 @@ void BMBTTimerScrollDisplay(void *ctx)
                     BMBTGTWriteTitle(context, context->mainDisplay.text);
                 }
                 context->mainDisplay.index = 1;
-            }
-        }
-    }
-}
-void BMBTSpeedRPMUpdate(void *ctx, uint8_t *pkt)
-{
-    BMBTContext_t *context = (BMBTContext_t *) ctx;
-
-    uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
-    if (autozoom != CONFIG_SETTING_OFF) {
-        uint16_t speed_kmh = pkt[4] * 2;
-        uint8_t zoom_level;
-
-        if (autozoom == 1) {
-            zoom_level = 0;
-        } else if (autozoom >= BMBT_AUTOZOOM_LEVELS-1) {
-            zoom_level = BMBT_AUTOZOOM_LEVELS-1;
-        } else {
-            zoom_level = autozoom;
-        }
-
-        while ((zoom_level < BMBT_AUTOZOOM_LEVELS-1)&&(speed_kmh > nav_zoomSpeeds[zoom_level])) {
-            zoom_level++;
-        }
-
-        if ((context->navZoom > zoom_level)&&((speed_kmh + BMBT_AUTOZOOM_TOLERANCE) > nav_zoomSpeeds[context->navZoom-1])) {
-            zoom_level = context->navZoom;
-        } else if (context->navZoom != zoom_level) {
-            uint32_t now = TimerGetMillis();
-            LogDebug(LOG_SOURCE_SYSTEM, "Autozoom: kmh=%i, currentZoom=%i, wishedZoom=%i, now=%lu, last=%lu", speed_kmh, context->navZoom, zoom_level, now, context->navZoom_last);
-            if (context->navZoom_last + BMBT_AUTOZOOM_DELAY < now) {
-                context->navZoom = zoom_level;
-                context->navZoom_last = now;
-                uint8_t zoomMessage[] = {
-                    0xAA,
-                    0x10,
-                    nav_zoomConstants[zoom_level]
-                };
-                IBusSendCommand(context->ibus, IBUS_DEVICE_SES, IBUS_DEVICE_NAVE, zoomMessage, 3);
             }
         }
     }

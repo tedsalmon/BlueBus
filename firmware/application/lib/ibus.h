@@ -188,8 +188,6 @@
 #define IBUS_CMD_MOD_STATUS_RESP 0x02
 
 #define IBUS_CMD_PDC_STATUS 0x07
-#define IBUS_CMD_PDC_REQUEST 0x1B
-#define IBUS_CMD_PDC_RESPONSE 0xA0
 
 #define IBUS_CMD_RAD_LED_TAPE_CTRL 0x4A
 
@@ -365,6 +363,8 @@
 #define IBUS_SENSOR_VALUE_GEAR_POS 0x05
 #define IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED 0x06
 
+#define IBUS_SES_ZOOM_LEVELS 8
+
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
 #define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
 #define IBUS_MFL_BTN_EVENT_PREV_REL 0x28
@@ -447,7 +447,6 @@
 #define IBUS_EVENT_LMIdentResponse 67
 #define IBUS_EVENT_TV_STATUS 68
 #define IBUS_EVENT_PDC_STATUS 69
-#define IBUS_EVENT_PDC_UPDATE 70
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 71
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 72
 #define IBUS_EVENT_GT_TELEMATICS_DATA 73
@@ -457,7 +456,7 @@
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
-#define IBUS_RX_BUFFER_SIZE 256
+#define IBUS_RX_BUFFER_SIZE 255 // 8-bit Max
 #define IBUS_TX_BUFFER_SIZE 16
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 7 // If we transmit faster, other modules may not hear us
@@ -477,17 +476,6 @@ typedef struct IBusModuleStatus_t {
     uint8_t VM: 1;
     uint8_t PDC: 1;
 } IBusModuleStatus_t;
-
-typedef struct IBusPDC_t {
-    uint8_t front_left;
-    uint8_t front_center_left;
-    uint8_t front_center_right;
-    uint8_t front_right;
-    uint8_t rear_left;
-    uint8_t rear_center_left;
-    uint8_t rear_center_right;
-    uint8_t rear_right;    
-} IBusPDC_t;
 
 /**
  * IBus_t
@@ -520,7 +508,6 @@ typedef struct IBus_t {
     uint8_t oilTemperature;
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
-    IBusPDC_t pdc;
     time_t gpsTime;
     time_t localTime;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
@@ -596,6 +583,7 @@ void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
+void IBusCommandSESSetMapZoom(IBus_t *, uint8_t);
 void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);

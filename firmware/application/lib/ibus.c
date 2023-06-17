@@ -6,6 +6,17 @@
  */
 #include "ibus.h"
 
+static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
+    0x01, // 125 - special case when stationary
+    0x01, // 125 yd 100m
+    0x02, // 250 yd 200m
+    0x04, // 450 yd 500m
+    0x10, // 900 yd 1km
+    0x11, // 1 mi 2km
+    0x12, // 2.5 mi 5km
+    0x13  // 5 mi 10km
+};
+
 /**
  * IBusInit()
  *     Description:
@@ -52,14 +63,6 @@ IBus_t IBusInit()
     ibus.txBufferReadbackIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
-    ibus.pdc.front_left = 255;
-    ibus.pdc.front_center_left = 255;
-    ibus.pdc.front_center_right = 255;
-    ibus.pdc.front_right = 255;
-    ibus.pdc.rear_left = 255;
-    ibus.pdc.rear_center_left = 255;
-    ibus.pdc.rear_center_right = 255;
-    ibus.pdc.rear_right = 255;
     return ibus;
 }
 
@@ -119,11 +122,11 @@ static void IBusHandleModuleStatus(IBus_t *ibus, uint8_t module)
  *     Description:
  *         Handle any messages received from the BlueBus (Masquerading as the CDC)
  *     Params:
- *         unsigned char *pkt - The frame received on the IBus
+ *         uint8_t *pkt - The frame received on the IBus
  *     Returns:
  *         None
  */
-static void IBusHandleBlueBusMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleBlueBusMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_BLUEBUS_CMD_SET_STATUS) {
         if (pkt[IBUS_PKT_DB1] == IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL) {
@@ -137,11 +140,11 @@ static void IBusHandleBlueBusMessage(IBus_t *ibus, unsigned char *pkt)
  *     Description:
  *         Handle any messages received from the BMBT (Board Monitor)
  *     Params:
- *         unsigned char *pkt - The frame received on the IBus
+ *         uint8_t *pkt - The frame received on the IBus
  *     Returns:
  *         None
  */
-static void IBusHandleBMBTMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleBMBTMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
@@ -159,11 +162,11 @@ static void IBusHandleBMBTMessage(IBus_t *ibus, unsigned char *pkt)
  *     Description:
  *         Handle any messages received from the DSP Amplifier
  *     Params:
- *         unsigned char *pkt - The frame received on the IBus
+ *         uint8_t *pkt - The frame received on the IBus
  *     Returns:
  *         None
  */
-static void IBusHandleDSPMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleDSPMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
@@ -175,11 +178,11 @@ static void IBusHandleDSPMessage(IBus_t *ibus, unsigned char *pkt)
  *     Description:
  *         Handle any messages received from the EWS
  *     Params:
- *         unsigned char *pkt - The frame received on the IBus
+ *         uint8_t *pkt - The frame received on the IBus
  *     Returns:
  *         None
  */
-static void IBusHandleEWSMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleEWSMessage(IBus_t *ibus, uint8_t *pkt)
 {
     // Do nothing for now -- for future use
 }
@@ -189,11 +192,11 @@ static void IBusHandleEWSMessage(IBus_t *ibus, unsigned char *pkt)
  *     Description:
  *         Handle any messages received from the GM (Body Module)
  *     Params:
- *         unsigned char *pkt - The frame received on the IBus
+ *         uint8_t *pkt - The frame received on the IBus
  *     Returns:
  *         None
  */
-static void IBusHandleGMMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleGMMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
@@ -261,11 +264,11 @@ static void IBusHandleGMMessage(IBus_t *ibus, unsigned char *pkt)
  *     Description:
  *         Handle any messages received from the GT (Graphics Terminal)
  *     Params:
- *         unsigned char *pkt - The frame received on the IBus
+ *         uint8_t *pkt - The frame received on the IBus
  *     Returns:
  *         None
  */
-static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleGTMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
          IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
@@ -330,11 +333,11 @@ static void IBusHandleGTMessage(IBus_t *ibus, unsigned char *pkt)
  *     Description:
  *         Handle any messages received from the IKE (Instrument Cluster)
  *     Params:
- *         unsigned char *pkt - The frame received on the IBus
+ *         uint8_t *pkt - The frame received on the IBus
  *     Returns:
  *         None
  */
-static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
@@ -352,7 +355,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_SENSOR_RESP) {
         ibus->gearPosition = pkt[IBUS_PKT_DB2] >> 4;
-        unsigned char valueType = IBUS_SENSOR_VALUE_GEAR_POS;
+        uint8_t valueType = IBUS_SENSOR_VALUE_GEAR_POS;
         EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_RESP_VEHICLE_CONFIG) {
         ibus->vehicleType = IBusGetVehicleType(pkt);
@@ -363,13 +366,13 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
         // Do not update the system if the value is the same
         if (ibus->coolantTemperature != pkt[IBUS_PKT_DB2] && pkt[IBUS_PKT_DB2] <= 0x7F) {
             ibus->coolantTemperature = pkt[IBUS_PKT_DB2];
-            unsigned char valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
+            uint8_t valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
         signed char tmp = pkt[IBUS_PKT_DB1];
         if (ibus->ambientTemperature != tmp && tmp > -60 && tmp < 60) {
             ibus->ambientTemperature = tmp;
-            unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
+            uint8_t valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_OBC_TEXT) {
@@ -380,8 +383,8 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
             pkt[IBUS_PKT_LEN] <= 11
         ) {
 
-            unsigned char *temp = pkt+6;
-            unsigned char size = pkt[IBUS_PKT_LEN] - 5;
+            uint8_t *temp = pkt+6;
+            uint8_t size = pkt[IBUS_PKT_LEN] - 5;
 
             while ((size > 0) && (temp[0] == ' ')) {
                 temp++;
@@ -403,7 +406,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
                 size
             );
 
-            unsigned char valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED;
+            uint8_t valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         } else if (property == IBUS_IKE_OBC_PROPERTY_TIME) {
             // 15:31,  3:31PM, 
@@ -412,10 +415,15 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
             local_time->tm_hour = ((pkt[6]>='0' && pkt[6]<='9')?(pkt[6]-'0'):0) * 10 + ((pkt[7]>='0' && pkt[7]<='9')?(pkt[7]-'0'):0);
             local_time->tm_min = ((pkt[9]>='0' && pkt[9]<='9')?(pkt[9]-'0'):0) * 10 + ((pkt[10]>='0' && pkt[10]<='9')?(pkt[10]-'0'):0);
             
-            if ((pkt[11] == 'P' || pkt[11] == 'p') && (local_time->tm_hour < 12)) {
+            if ((pkt[11] == 'P' || pkt[11] == 'p') && 
+                (local_time->tm_hour < 12)
+            ) {
                 local_time->tm_hour += 12;
             }
-            if ((pkt[11] == 'A' || pkt[11] == 'a') && (local_time->tm_hour == 12)) {
+
+            if ((pkt[11] == 'A' || pkt[11] == 'a') && 
+                (local_time->tm_hour == 12)
+            ) {
                 local_time->tm_hour -= 12;
             }
 
@@ -454,11 +462,11 @@ static void IBusHandleIKEMessage(IBus_t *ibus, unsigned char *pkt)
  *     Description:
  *         Handle any messages received from the LCM (Lighting Control Module)
  *     Params:
- *         unsigned char *pkt - The frame received on the IBus
+ *         uint8_t *pkt - The frame received on the IBus
  *     Returns:
  *         None
  */
-static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleLCMMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
@@ -503,10 +511,10 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
                 offset = 510;
             }
             float rawTemperature = (pkt[23] * 0.00005) + (pkt[24] * 0.01275);
-            unsigned char oilTemperature = 67.2529 * log(rawTemperature) + offset;
+            uint8_t oilTemperature = 67.2529 * log(rawTemperature) + offset;
             if (oilTemperature != ibus->oilTemperature) {
                 ibus->oilTemperature = oilTemperature;
-                unsigned char valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
+                uint8_t valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
                 EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
             }
         }
@@ -533,7 +541,7 @@ static void IBusHandleLCMMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleMFLMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_MFL_CMD_BTN_PRESS) {
         EventTriggerCallback(IBUS_EVENT_MFLButton, pkt);
@@ -543,7 +551,7 @@ static void IBusHandleMFLMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleMIDMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
@@ -562,7 +570,7 @@ static void IBusHandleMIDMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandlerPDCMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandlerPDCMessage(IBus_t *ibus, uint8_t *pkt)
 {
     // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
     // any time we see 0x5A from the PDC. Keep this above all other code to
@@ -571,34 +579,10 @@ static void IBusHandlerPDCMessage(IBus_t *ibus, unsigned char *pkt)
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS) {
         EventTriggerCallback(IBUS_EVENT_PDC_STATUS, pkt);
-    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_RESPONSE) {
-// let's process the data, store and then call the UI event
-        if ((pkt[13] & 0b00000001) == 1) { // PDC active
-            ibus->pdc.front_left = pkt[9];
-            ibus->pdc.front_center_left = pkt[11];
-            ibus->pdc.front_center_right = pkt[12];
-            ibus->pdc.front_right = pkt[10];
-            ibus->pdc.rear_left = pkt[5];
-            ibus->pdc.rear_center_left = pkt[7];
-            ibus->pdc.rear_center_right = pkt[8];
-            ibus->pdc.rear_right = pkt[6];    
-
-            LogDebug(LOG_SOURCE_IBUS, "PDC distances(cm): Front: %i - %i - %i - %i, Rear: %i - %i - %i - %i",
-                    ibus->pdc.front_left,
-                    ibus->pdc.front_center_left,
-                    ibus->pdc.front_center_right,
-                    ibus->pdc.front_right,
-                    ibus->pdc.rear_left,
-                    ibus->pdc.rear_center_left,
-                    ibus->pdc.rear_center_right,
-                    ibus->pdc.rear_right
-            );
-            EventTriggerCallback(IBUS_EVENT_PDC_UPDATE, pkt);
-        }
     }
 }
 
-static void IBusHandleRADMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
@@ -691,7 +675,7 @@ static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_GPSTIME) {
 
         struct tm gps_time = {0};
-        
+
         gps_time.tm_hour = unpack_8bcd(pkt[5]);
         gps_time.tm_min = unpack_8bcd(pkt[6]);
         gps_time.tm_sec = 0;
@@ -701,9 +685,9 @@ static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
 
         // adjust GPS epoch problem
         gps_time.tm_mday += 1024*7;
-        
+
         ibus->gpsTime = mktime(&gps_time);
-        
+
         if (ConfigGetTimeSource() == CONFIG_SETTING_TIME_GPS) {
             gps_time.tm_min += ConfigGetTimeOffset() + ((ConfigGetTimeDST()!=0)?60:0);
             mktime(&gps_time);
@@ -715,7 +699,7 @@ static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
             datetime[DATETIME_HOUR] = gps_time.tm_hour;
             datetime[DATETIME_MIN] = gps_time.tm_min;
             datetime[DATETIME_SEC] = gps_time.tm_sec;
-            
+
             // Validate the date and time and set
             if (datetime[DATETIME_YEAR] > 20 &&
                 datetime[DATETIME_MON] >= 1 && datetime[DATETIME_MON] <= 12 &&
@@ -727,7 +711,7 @@ static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
                 EventTriggerCallback(IBUS_EVENT_TIME_UPDATE, datetime);
             }
         }
-    }        
+    }
 }
 
 static void IBusHandleTELMessage(IBus_t *ibus, unsigned char *pkt)
@@ -783,7 +767,7 @@ static void IBusHandleTELMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static void IBusHandleVMMessage(IBus_t *ibus, unsigned char *pkt)
+static void IBusHandleVMMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
@@ -792,7 +776,7 @@ static void IBusHandleVMMessage(IBus_t *ibus, unsigned char *pkt)
     }
 }
 
-static uint8_t IBusValidateChecksum(unsigned char *msg)
+static uint8_t IBusValidateChecksum(uint8_t *msg)
 {
     uint8_t chk = 0;
     uint8_t msgSize = msg[1] + 2;
@@ -844,7 +828,8 @@ void IBusProcess(IBus_t *ibus)
                 CharQueueReset(&ibus->uart.rxQueue);
             } else if (msgLength == ibus->rxBufferIdx) {
                 uint8_t idx;
-                unsigned char pkt[msgLength];
+                uint8_t pkt[msgLength];
+                memset(pkt, 0, msgLength);
                 long long unsigned int ts = (long long unsigned int) TimerGetMillis();
                 LogRawDebug(LOG_SOURCE_IBUS, "[%llu] DEBUG: IBus: RX[%d]: ", ts, msgLength);
                 for(idx = 0; idx < msgLength; idx++) {
@@ -862,7 +847,7 @@ void IBusProcess(IBus_t *ibus)
                 }
                 LogRawDebug(LOG_SOURCE_IBUS, "\r\n");
                 if (IBusValidateChecksum(pkt) == 1) {
-                    unsigned char srcSystem = pkt[IBUS_PKT_SRC];
+                    uint8_t srcSystem = pkt[IBUS_PKT_SRC];
                     if (srcSystem == IBUS_DEVICE_BLUEBUS &&
                         pkt[IBUS_PKT_DST] == IBUS_DEVICE_LOC
                     ) {
@@ -913,7 +898,7 @@ void IBusProcess(IBus_t *ibus)
                 } else {
                     LogError(
                         "IBus: %02X -> %02X Length: %d - Invalid Checksum",
-                        pkt[0],
+                        pkt[IBUS_PKT_SRC],
                         pkt[IBUS_PKT_DST],
                         msgLength,
                         (uint8_t) pkt[IBUS_PKT_LEN]
@@ -996,22 +981,22 @@ void IBusProcess(IBus_t *ibus)
  *         char queue so we can send it later.
  *     Params:
  *         IBus_t *ibus
- *         const unsigned char src
- *         const unsigned char dst
- *         const unsigned char *data
+ *         const uint8_t src
+ *         const uint8_t dst
+ *         const uint8_t *data
  *     Returns:
  *         void
  */
 void IBusSendCommand(
     IBus_t *ibus,
-    const unsigned char src,
-    const unsigned char dst,
-    const unsigned char *data,
+    const uint8_t src,
+    const uint8_t dst,
+    const uint8_t *data,
     const size_t dataSize
 ) {
     uint8_t idx, msgSize;
     msgSize = dataSize + 4;
-    unsigned char msg[msgSize];
+    uint8_t msg[msgSize];
     msg[0] = src;
     msg[1] = dataSize + 2;
     msg[2] = dst;
@@ -1039,18 +1024,18 @@ void IBusSendCommand(
  *        Allow outside callers to set the current ignition state from the Bus
  *     Params:
  *         IBus_t *ibus
- *         unsigned char ignitionStatus - The ignition status
+ *         uint8_t ignitionStatus - The ignition status
  *     Returns:
  *         void
  */
-void IBusSetInternalIgnitionStatus(IBus_t *ibus, unsigned char ignitionStatus)
+void IBusSetInternalIgnitionStatus(IBus_t *ibus, uint8_t ignitionStatus)
 {
     if (ignitionStatus != IBUS_IGNITION_KL15) {
         ibus->ignitionStatus = ignitionStatus;
     }
     EventTriggerCallback(
         IBUS_EVENT_IKEIgnitionStatus,
-        (unsigned char *)&ignitionStatus
+        (uint8_t *)&ignitionStatus
     );
     ibus->ignitionStatus = ignitionStatus;
 }
@@ -1060,11 +1045,11 @@ void IBusSetInternalIgnitionStatus(IBus_t *ibus, unsigned char ignitionStatus)
  *     Description:
  *        Get the light module coding index
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - the light module coding index
  */
-uint8_t IBusGetLMCodingIndex(unsigned char *packet)
+uint8_t IBusGetLMCodingIndex(uint8_t *packet)
 {
     uint8_t codingIndex = {
         packet[IBUS_LM_CI_ID_OFFSET]
@@ -1077,11 +1062,11 @@ uint8_t IBusGetLMCodingIndex(unsigned char *packet)
  *     Description:
  *        Get the light module diagnostic index
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - the light module diagnostic index
  */
-uint8_t IBusGetLMDiagnosticIndex(unsigned char *packet)
+uint8_t IBusGetLMDiagnosticIndex(uint8_t *packet)
 {
     uint8_t diagnosticIndex = {
         packet[IBUS_LM_DI_ID_OFFSET]
@@ -1094,11 +1079,11 @@ uint8_t IBusGetLMDiagnosticIndex(unsigned char *packet)
  *     Description:
  *        Get the dimmer checksum
  *     Params:
- *         unsigned char *packet - The Light Module Dimmer Status Packet
+ *         uint8_t *packet - The Light Module Dimmer Status Packet
  *     Returns:
  *         uint8_t - the light module coding index
  */
-uint8_t IBusGetLMDimmerChecksum(unsigned char *packet)
+uint8_t IBusGetLMDimmerChecksum(uint8_t *packet)
 {
     // Do not use the XOR
     uint8_t frameLength = packet[1] - 3;
@@ -1119,11 +1104,11 @@ uint8_t IBusGetLMDimmerChecksum(unsigned char *packet)
  *        Group file: D_00D0.GRP
 *         Version:    1.5.1
  *     Params:
- *         unsigned char *packet - Diagnostics ident packet
+ *         uint8_t *packet - Diagnostics ident packet
  *     Returns:
  *         uint8_t - The light module variant
  */
-uint8_t IBusGetLMVariant(unsigned char *packet)
+uint8_t IBusGetLMVariant(uint8_t *packet)
 {
     uint8_t diagnosticIndex = IBusGetLMDiagnosticIndex(packet);
     uint8_t codingIndex = IBusGetLMCodingIndex(packet);
@@ -1167,11 +1152,11 @@ uint8_t IBusGetLMVariant(unsigned char *packet)
  *     Description:
  *        Get the nav diagnostic index
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - The nav hardware version
  */
-uint8_t IBusGetNavDiagnosticIndex(unsigned char *packet)
+uint8_t IBusGetNavDiagnosticIndex(uint8_t *packet)
 {
     char diVersion[3] = {
         packet[IBUS_GT_DI_ID_OFFSET],
@@ -1186,11 +1171,11 @@ uint8_t IBusGetNavDiagnosticIndex(unsigned char *packet)
  *     Description:
  *        Get the nav type hardware version
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - The nav hardware version
  */
-uint8_t IBusGetNavHWVersion(unsigned char *packet)
+uint8_t IBusGetNavHWVersion(uint8_t *packet)
 {
     char hwVersion[3] = {
         packet[IBUS_GT_HW_ID_OFFSET],
@@ -1205,11 +1190,11 @@ uint8_t IBusGetNavHWVersion(unsigned char *packet)
  *     Description:
  *        Get the nav type software version
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - The nav software version
  */
-uint8_t IBusGetNavSWVersion(unsigned char *packet)
+uint8_t IBusGetNavSWVersion(uint8_t *packet)
 {
     char swVersion[3] = {
         (char) packet[IBUS_GT_SW_ID_OFFSET],
@@ -1224,11 +1209,11 @@ uint8_t IBusGetNavSWVersion(unsigned char *packet)
  *     Description:
  *        Get the nav type based on the hardware and software versions
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - The nav type
  */
-uint8_t IBusGetNavType(unsigned char *packet)
+uint8_t IBusGetNavType(uint8_t *packet)
 {
     uint8_t diagnosticIndex = IBusGetNavDiagnosticIndex(packet);
     uint8_t navType = 0;
@@ -1268,14 +1253,14 @@ uint8_t IBusGetNavType(unsigned char *packet)
  *     Description:
  *        Get the vehicle type from the cluster type response
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - The nav type
  */
-uint8_t IBusGetVehicleType(unsigned char *packet)
+uint8_t IBusGetVehicleType(uint8_t *packet)
 {
-    unsigned char vehicleType = (packet[4] >> 4) & 0xF;
-    unsigned char detectedVehicleType = 0xFF;
+    uint8_t vehicleType = (packet[4] >> 4) & 0xF;
+    uint8_t detectedVehicleType = 0xFF;
     if (vehicleType == 0x0F || vehicleType == 0x0A) {
         detectedVehicleType = IBUS_VEHICLE_TYPE_E46_Z4;
     } else {
@@ -1290,13 +1275,13 @@ uint8_t IBusGetVehicleType(unsigned char *packet)
  *     Description:
  *        Get the configured temperature unit from cluster type response
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - the Celsius or Fahrhenheit configuration
  */
-uint8_t IBusGetConfigTemp(unsigned char *packet)
+uint8_t IBusGetConfigTemp(uint8_t *packet)
 {
-    unsigned char tempUnit = (packet[5] >> 1) & 0x1;
+    uint8_t tempUnit = (packet[5] >> 1) & 0x1;
     return tempUnit;
 }
 
@@ -1329,7 +1314,7 @@ uint8_t IBusGetConfigDistance(unsigned char *packet)
  */
 void IBusCommandBlueBusSetStatus(IBus_t *ibus, uint8_t subCommand, uint8_t value)
 {
-    unsigned char statusMessage[] = {
+    uint8_t statusMessage[] = {
         IBUS_BLUEBUS_CMD_SET_STATUS,
         subCommand,
         value
@@ -1348,7 +1333,7 @@ void IBusCommandBlueBusSetStatus(IBus_t *ibus, uint8_t subCommand, uint8_t value
  */
 void IBusCommandCDCAnnounce(IBus_t *ibus)
 {
-    const unsigned char cdcAlive[] = {0x02, 0x01};
+    const uint8_t cdcAlive[] = {0x02, 0x01};
     IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_LOC, cdcAlive, sizeof(cdcAlive));
 }
 
@@ -1363,7 +1348,7 @@ void IBusCommandCDCAnnounce(IBus_t *ibus)
  */
 void IBusCommandCDCPollResponse(IBus_t *ibus)
 {
-    const unsigned char cdcPing[] = {0x02, 0x00};
+    const uint8_t cdcPing[] = {0x02, 0x00};
     IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_RAD, cdcPing, sizeof(cdcPing));
 }
 
@@ -1375,22 +1360,22 @@ void IBusCommandCDCPollResponse(IBus_t *ibus)
  *          18 0E 68 39 00 82 00 60 00 07 11 00 01 00 0B CK
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char status - The current CDC status
- *         unsigned char function - The current CDC function
- *         unsigned char discCount - The number of discs to report loaded
- *         unsigned char discNumber - The disc number to report
+ *         uint8_t status - The current CDC status
+ *         uint8_t function - The current CDC function
+ *         uint8_t discCount - The number of discs to report loaded
+ *         uint8_t discNumber - The disc number to report
  *     Returns:
  *         void
  */
 void IBusCommandCDCStatus(
     IBus_t *ibus,
-    unsigned char status,
-    unsigned char function,
-    unsigned char discCount,
-    unsigned char discNumber
+    uint8_t status,
+    uint8_t function,
+    uint8_t discCount,
+    uint8_t discNumber
 ) {
     function = function + 0x80;
-    const unsigned char cdcStatus[] = {
+    const uint8_t cdcStatus[] = {
         IBUS_COMMAND_CDC_RESPONSE,
         status,
         function,
@@ -1419,17 +1404,17 @@ void IBusCommandCDCStatus(
  *        Request the given systems coding data
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char system - The system to target
+ *         uint8_t system - The system to target
  *     Returns:
  *         void
  */
 void IBusCommandDIAGetCodingData(
     IBus_t *ibus,
-    unsigned char system,
-    unsigned char addr,
-    unsigned char offset
+    uint8_t system,
+    uint8_t addr,
+    uint8_t offset
 ) {
-    unsigned char msg[] = {0x08, 0x00, addr, offset};
+    uint8_t msg[] = {0x08, 0x00, addr, offset};
     IBusSendCommand(ibus, IBUS_DEVICE_DIA, system, msg, 1);
 }
 
@@ -1441,13 +1426,13 @@ void IBusCommandDIAGetCodingData(
  *        3F 00 3B 11 00
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char system - The system to target
+ *         uint8_t system - The system to target
  *     Returns:
  *         void
  */
-void IBusCommandDIAGetIdentity(IBus_t *ibus, unsigned char system)
+void IBusCommandDIAGetIdentity(IBus_t *ibus, uint8_t system)
 {
-    unsigned char msg[] = {0x00};
+    uint8_t msg[] = {0x00};
     IBusSendCommand(ibus, IBUS_DEVICE_DIA, system, msg, 1);
 }
 
@@ -1457,13 +1442,13 @@ void IBusCommandDIAGetIdentity(IBus_t *ibus, unsigned char system)
  *        Request the IO Status of the given system
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char system - The system to target
+ *         uint8_t system - The system to target
  *     Returns:
  *         void
  */
-void IBusCommandDIAGetIOStatus(IBus_t *ibus, unsigned char system)
+void IBusCommandDIAGetIOStatus(IBus_t *ibus, uint8_t system)
 {
-    unsigned char msg[] = {0x0B};
+    uint8_t msg[] = {0x0B};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_DIA,
@@ -1481,13 +1466,13 @@ void IBusCommandDIAGetIOStatus(IBus_t *ibus, unsigned char system)
  *        3F 00 3B 11 00
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char system - The system to target
+ *         uint8_t system - The system to target
  *     Returns:
  *         void
  */
-void IBusCommandDIAGetOSIdentity(IBus_t *ibus, unsigned char system)
+void IBusCommandDIAGetOSIdentity(IBus_t *ibus, uint8_t system)
 {
-    unsigned char msg[] = {0x11};
+    uint8_t msg[] = {0x11};
     IBusSendCommand(ibus, IBUS_DEVICE_DIA, system, msg, 1);
 }
 
@@ -1497,13 +1482,13 @@ void IBusCommandDIAGetOSIdentity(IBus_t *ibus, unsigned char system)
  *        Terminate any ongoing diagnostic request on the given system
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char system - The system to target
+ *         uint8_t system - The system to target
  *     Returns:
  *         void
  */
-void IBusCommandDIATerminateDiag(IBus_t *ibus, unsigned char system)
+void IBusCommandDIATerminateDiag(IBus_t *ibus, uint8_t system)
 {
-    unsigned char msg[] = {0x9F};
+    uint8_t msg[] = {0x9F};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_DIA,
@@ -1519,13 +1504,13 @@ void IBusCommandDIATerminateDiag(IBus_t *ibus, unsigned char system)
  *        Set the DSP mode
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char mode - The mode to set the DSP to
+ *         uint8_t mode - The mode to set the DSP to
  *     Returns:
  *         void
  */
-void IBusCommandDSPSetMode(IBus_t *ibus, unsigned char mode)
+void IBusCommandDSPSetMode(IBus_t *ibus, uint8_t mode)
 {
-    unsigned char msg[] = {IBUS_DSP_CMD_CONFIG_SET, mode};
+    uint8_t msg[] = {IBUS_DSP_CMD_CONFIG_SET, mode};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_RAD,
@@ -1541,17 +1526,17 @@ void IBusCommandDSPSetMode(IBus_t *ibus, unsigned char mode)
  *        Request a "pong" from a given module to see if it is present
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char source - The system to send the request from
- *         unsigned char system - The system to target
+ *         uint8_t source - The system to send the request from
+ *         uint8_t system - The system to target
  *     Returns:
  *         void
  */
 void IBusCommandGetModuleStatus(
     IBus_t *ibus,
-    unsigned char source,
-    unsigned char system
+    uint8_t source,
+    uint8_t system
 ) {
-    unsigned char msg[] = {0x01};
+    uint8_t msg[] = {0x01};
     IBusSendCommand(ibus, source, system, msg, 1);
 }
 
@@ -1561,18 +1546,18 @@ void IBusCommandGetModuleStatus(
  *        Request a "pong" from a given module to see if it is present
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char source - The system to send the request from
- *         unsigned char system - The system to target
+ *         uint8_t source - The system to send the request from
+ *         uint8_t system - The system to target
  *     Returns:
  *         void
  */
 void IBusCommandSetModuleStatus(
     IBus_t *ibus,
-    unsigned char source,
-    unsigned char system,
-    unsigned char status
+    uint8_t source,
+    uint8_t system,
+    uint8_t status
 ) {
-    unsigned char msg[] = {IBUS_CMD_MOD_STATUS_RESP, status};
+    uint8_t msg[] = {IBUS_CMD_MOD_STATUS_RESP, status};
     IBusSendCommand(ibus, source, system, msg, 2);
 }
 
@@ -1589,14 +1574,14 @@ void IBusCommandSetModuleStatus(
 void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
 {
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             IBUS_CMD_ZKE3_GM4_JOB_CENTRAL_LOCK, // Job
@@ -1618,14 +1603,14 @@ void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
 void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
 {
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             IBUS_CMD_ZKE3_GM4_JOB_UNLOCK_HIGH, // Job
@@ -1647,14 +1632,14 @@ void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
 void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
 {
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_UNLOCK_LOW, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             IBUS_CMD_ZKE3_GM4_JOB_UNLOCK_LOW, // Job
@@ -1676,14 +1661,14 @@ void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
 void IBusCommandGMDoorLockHigh(IBus_t *ibus)
 {
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             IBUS_CMD_ZKE3_GM4_JOB_LOCK_HIGH, // Job
@@ -1705,14 +1690,14 @@ void IBusCommandGMDoorLockHigh(IBus_t *ibus)
 void IBusCommandGMDoorLockLow(IBus_t *ibus)
 {
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             IBUS_CMD_ZKE3_GM4_JOB_LOCK_LOW, // Job
@@ -1734,7 +1719,7 @@ void IBusCommandGMDoorLockLow(IBus_t *ibus)
 void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
 {
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
             0x01 // On / Off
@@ -1742,7 +1727,7 @@ void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
         // Central unlock unlocks all doors on the ZKE3
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             IBUS_CMD_ZKE3_GM4_JOB_CENTRAL_LOCK, // Job
@@ -1764,14 +1749,14 @@ void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
 void IBusCommandGMDoorLockAll(IBus_t *ibus)
 {
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             IBUS_CMD_ZKE3_GM4_JOB_LOCK_ALL, // Job
@@ -1793,16 +1778,16 @@ void IBusCommandGMDoorLockAll(IBus_t *ibus)
  */
 void IBusCommandGTBMBTControl(IBus_t *ibus, uint8_t status)
 {
-    unsigned char msg[2] = {
+    uint8_t msg[2] = {
         IBUS_CMD_GT_MONITOR_CONTROL,
         status,
     };
     IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_BMBT, msg, 2);
 }
 
-void IBusCommandGTUpdate(IBus_t *ibus, unsigned char updateType)
+void IBusCommandGTUpdate(IBus_t *ibus, uint8_t updateType)
 {
-    unsigned char msg[4] = {
+    uint8_t msg[4] = {
         IBUS_CMD_GT_WRITE_WITH_CURSOR,
         updateType,
         0x01,
@@ -1815,7 +1800,7 @@ static void IBusInternalCommandGTWriteIndex(
     IBus_t *ibus,
     uint8_t index,
     char *message,
-    unsigned char indexMode
+    uint8_t indexMode
 ) {
     // @TODO: This is 14 for the older UI. Come up with a better solution
     uint8_t maxLength = 23;
@@ -1823,15 +1808,14 @@ static void IBusInternalCommandGTWriteIndex(
     if (length > maxLength) {
         length = maxLength;
     }
-    const size_t pktLenght = maxLength + 5;
-    unsigned char text[pktLenght];
-    memset(text, 0x20, pktLenght);
+    const size_t pktLenght = length + 5;
+    uint8_t text[pktLenght];
+    memset(text, 0x06, pktLenght);
     text[0] = IBUS_CMD_GT_WRITE_NO_CURSOR;
     text[1] = indexMode;
     text[2] = 0x00;
-    text[3] = 0x40 + (unsigned char) index;
+    text[3] = 0x40 + index;
     memcpy(text + 4, message, length);
-    text[pktLenght - 1] = 0x06;
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
@@ -1843,7 +1827,7 @@ static void IBusCommandGTWriteIndexStaticInternal(
 ) {
     uint8_t length = strlen(message);
     const size_t pktLenght = length + 4;
-    unsigned char text[pktLenght];
+    uint8_t text[pktLenght];
     text[0] = IBUS_CMD_GT_WRITE_WITH_CURSOR;
     text[1] = IBUS_CMD_GT_WRITE_STATIC;
     text[2] = cursorPos;
@@ -1859,7 +1843,7 @@ static void IBusCommandGTWriteIndexStaticInternal(
  *        It supports a maximum of 11 characters
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char system - The system to target
+ *         uint8_t system - The system to target
  *     Returns:
  *         void
  */
@@ -1916,18 +1900,17 @@ void IBusCommandGTWriteIndexTMC(
  */
 void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     uint8_t length = strlen(message);
-    if (length > 24) {
-        length = 24;
+    if (length > 28) {
+        length = 28;
     }
     const size_t pktLenght = length + 6;
-    unsigned char text[pktLenght];
+    uint8_t text[pktLenght];
+    memset(text, 0x06, pktLenght);
     text[0] = IBUS_CMD_GT_WRITE_NO_CURSOR;
     text[1] = IBUS_CMD_GT_WRITE_INDEX_TMC;
     text[2] = 0x00; // Cursor at 0
     text[3] = 0x09; // Write menu title index
     memcpy(text + 4, message, length);
-    text[pktLenght - 2] = 0x06;
-    text[pktLenght - 1] = 0x06;
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
 
@@ -1977,7 +1960,7 @@ void IBusCommandGTWriteTitleArea(IBus_t *ibus, char *message)
     }
     // Length + Write Type + Write Area + Size
     const size_t pktLenght = length + 3;
-    unsigned char text[pktLenght];
+    uint8_t text[pktLenght];
     text[0] = IBUS_CMD_GT_WRITE_TITLE;
     text[1] = IBUS_CMD_GT_WRITE_ZONE;
     text[2] = 0x30;
@@ -2003,7 +1986,7 @@ void IBusCommandGTWriteTitleIndex(IBus_t *ibus, char *message)
     }
     // Length + Write Type + Write Area + Write Index + Size
     const size_t pktLenght = length + 4;
-    unsigned char text[pktLenght];
+    uint8_t text[pktLenght];
     text[0] = IBUS_CMD_GT_WRITE_NO_CURSOR;
     text[1] = IBUS_CMD_GT_WRITE_ZONE;
     text[2] = 0x01; // Unused in this layout
@@ -2020,7 +2003,7 @@ void IBusCommandGTWriteTitleC43(IBus_t *ibus, char *message)
     }
     // Length + Write Type + Write Area + Size + Watermark
     const size_t pktLenght = length + 8;
-    unsigned char text[pktLenght];
+    uint8_t text[pktLenght];
     text[0] = IBUS_CMD_GT_WRITE_TITLE;
     text[1] = 0x40;
     text[2] = 0x20;
@@ -2038,11 +2021,11 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
 {
     uint8_t length = strlen(message);
     const size_t pktLenght = length + 4;
-    unsigned char text[pktLenght];
+    uint8_t text[pktLenght];
     text[0] = IBUS_CMD_GT_WRITE_WITH_CURSOR;
     text[1] = IBUS_CMD_GT_WRITE_ZONE;
     text[2] = 0x01;
-    text[3] = (unsigned char) index;
+    text[3] = index;
     memcpy(text + 4, message, length);
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
@@ -2059,7 +2042,7 @@ void IBusCommandGTWriteZone(IBus_t *ibus, uint8_t index, char *message)
  */
 void IBusCommandIKEGetIgnitionStatus(IBus_t *ibus)
 {
-    unsigned char msg[] = {IBUS_CMD_IKE_IGN_STATUS_REQ};
+    uint8_t msg[] = {IBUS_CMD_IKE_IGN_STATUS_REQ};
     IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_IKE, msg, 1);
 }
 
@@ -2075,7 +2058,7 @@ void IBusCommandIKEGetIgnitionStatus(IBus_t *ibus)
  */
 void IBusCommandIKEGetVehicleConfig(IBus_t *ibus)
 {
-    unsigned char msg[] = {IBUS_CMD_IKE_REQ_VEHICLE_TYPE};
+    uint8_t msg[] = {IBUS_CMD_IKE_REQ_VEHICLE_TYPE};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_RAD,
@@ -2098,7 +2081,7 @@ void IBusCommandIKEGetVehicleConfig(IBus_t *ibus)
  */
 void IBusCommandIKEOBCControl(IBus_t *ibus, uint8_t property, uint8_t control)
 {
-    unsigned char controlMessage[] = {IBUS_CMD_OBC_CONTROL, property, control};
+    uint8_t controlMessage[] = {IBUS_CMD_OBC_CONTROL, property, control};
     IBusSendCommand(ibus, IBUS_DEVICE_GT, IBUS_DEVICE_IKE, controlMessage, 3);
 }
 
@@ -2115,7 +2098,7 @@ void IBusCommandIKEOBCControl(IBus_t *ibus, uint8_t property, uint8_t control)
  */
 void IBusCommandIKESetIgnitionStatus(IBus_t *ibus, uint8_t status)
 {
-    unsigned char statusMessage[2] = {IBUS_CMD_IKE_IGN_STATUS_RESP, status};
+    uint8_t statusMessage[2] = {IBUS_CMD_IKE_IGN_STATUS_RESP, status};
     IBusSendCommand(ibus, IBUS_DEVICE_IKE, IBUS_DEVICE_GLO, statusMessage, 2);
 }
 
@@ -2131,7 +2114,7 @@ void IBusCommandIKESetIgnitionStatus(IBus_t *ibus, uint8_t status)
  */
 void IBusCommandIKESetTime(IBus_t *ibus, uint8_t hour, uint8_t minute)
 {
-    unsigned char msg[] = {
+    uint8_t msg[] = {
         IBUS_CMD_IKE_SET_REQUEST,
         IBUS_CMD_IKE_SET_REQUEST_TIME,
         hour,
@@ -2161,7 +2144,7 @@ void IBusCommandIKESetTime(IBus_t *ibus, uint8_t hour, uint8_t minute)
  */
 void IBusCommandIKESetDate(IBus_t *ibus, uint8_t year, uint8_t mon, uint8_t day)
 {
-    unsigned char msg[] = {
+    uint8_t msg[] = {
         IBUS_CMD_IKE_SET_REQUEST,
         IBUS_CMD_IKE_SET_REQUEST_DATE,
         day,
@@ -2225,19 +2208,19 @@ void IBusCommandTELIKEDisplayClear(IBus_t *ibus)
  *        Light module diagnostics: Activate bulbs
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char blinkerSide - left or right blinker
- *         unsigned char parkingLights - Activate the parking lights
+ *         uint8_t blinkerSide - left or right blinker
+ *         uint8_t parkingLights - Activate the parking lights
  *     Returns:
  *         void
  */
 void IBusCommandLMActivateBulbs(
     IBus_t *ibus,
-    unsigned char blinkerSide,
-    unsigned char parkingLights
+    uint8_t blinkerSide,
+    uint8_t parkingLights
 ) {
-    unsigned char blinker = IBUS_LSZ_BLINKER_OFF;
-    unsigned char parkingLightLeft = IBUS_LM_BULB_OFF;
-    unsigned char parkingLightRight = IBUS_LM_BULB_OFF;
+    uint8_t blinker = IBUS_LSZ_BLINKER_OFF;
+    uint8_t parkingLightLeft = IBUS_LM_BULB_OFF;
+    uint8_t parkingLightRight = IBUS_LM_BULB_OFF;
     if (ibus->lmVariant == IBUS_LM_LME38) {
         switch (blinkerSide) {
             case IBUS_LM_BLINKER_LEFT:
@@ -2255,7 +2238,7 @@ void IBusCommandLMActivateBulbs(
             parkingLightRight = IBUS_LME38_SIDE_MARKER_RIGHT;
         }
         // No LWR load sensor/HVAC pot voltage for LME38
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             blinker,
             0x00,
@@ -2297,7 +2280,7 @@ void IBusCommandLMActivateBulbs(
         }
         // This is an issue! I'm not sure what differentiates S1 and S2.
         // It's meaningful enough a distinction that it is displayed in INPA.
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // S2_BLK_L, S2_BLK_R 0
             blinker, // S1_BLK_L, S1_BLK_R 1
@@ -2338,7 +2321,7 @@ void IBusCommandLMActivateBulbs(
             parkingLightLeft = IBUS_LCM_SIDE_MARKER_LEFT;
             parkingLightRight = IBUS_LCM_SIDE_MARKER_RIGHT;
         }
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00,
             0x00,
@@ -2379,7 +2362,7 @@ void IBusCommandLMActivateBulbs(
             parkingLightLeft = IBUS_LSZ_SIDE_MARKER_LEFT;
             parkingLightRight = IBUS_LSZ_SIDE_MARKER_RIGHT;
         }
-        unsigned char msg[] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00,
             0x00,
@@ -2420,7 +2403,7 @@ void IBusCommandLMActivateBulbs(
  */
 void IBusCommandLMGetClusterIndicators(IBus_t *ibus)
 {
-    unsigned char msg[] = {IBUS_LCM_LIGHT_STATUS_REQ};
+    uint8_t msg[] = {IBUS_LCM_LIGHT_STATUS_REQ};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_BMBT,
@@ -2443,7 +2426,7 @@ void IBusCommandLMGetClusterIndicators(IBus_t *ibus)
  */
 void IBusCommandLMGetRedundantData(IBus_t *ibus)
 {
-    unsigned char msg[] = {IBUS_CMD_LCM_REQ_REDUNDANT_DATA};
+    uint8_t msg[] = {IBUS_CMD_LCM_REQ_REDUNDANT_DATA};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_IKE,
@@ -2466,10 +2449,10 @@ void IBusCommandLMGetRedundantData(IBus_t *ibus)
  */
 void IBusCommandMIDButtonPress(
     IBus_t *ibus,
-    unsigned char dest,
-    unsigned char button
+    uint8_t dest,
+    uint8_t button
 ) {
-    unsigned char msg[] = {
+    uint8_t msg[] = {
         IBus_MID_Button_Press,
         0x00,
         0x00,
@@ -2562,10 +2545,10 @@ void IBusCommandMIDDisplayText(IBus_t *ibus, char *message)
 void IBusCommandMIDMenuWriteMany(
     IBus_t *ibus,
     uint8_t startIdx,
-    unsigned char *menu,
+    uint8_t *menu,
     uint8_t menuLength
 ) {
-    unsigned char menuText[menuLength + 4];
+    uint8_t menuText[menuLength + 4];
     menuText[0] = IBUS_CMD_RAD_WRITE_MID_MENU;
     menuText[1] = 0x40;
     menuText[2] = 0x00;
@@ -2599,7 +2582,7 @@ void IBusCommandMIDMenuWriteSingle(
     if (textLength > IBus_MID_MENU_MAX_CHARS) {
         textLength = IBus_MID_MENU_MAX_CHARS;
     }
-    unsigned char menuText[textLength + 4];
+    uint8_t menuText[textLength + 4];
     menuText[0] = IBUS_CMD_RAD_WRITE_MID_MENU;
     menuText[1] = 0xC3;
     menuText[2] = 0x00;
@@ -2623,17 +2606,17 @@ void IBusCommandMIDMenuWriteSingle(
  *            0x02 - Disable the main display and menus buttons
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char system - The system to send the mode request from
- *         unsigned char param - The parameter to set
+ *         uint8_t system - The system to send the mode request from
+ *         uint8_t param - The parameter to set
  *     Returns:
  *         void
  */
 void IBusCommandMIDSetMode(
     IBus_t *ibus,
-    unsigned char system,
-    unsigned char param
+    uint8_t system,
+    uint8_t param
 ) {
-    unsigned char msg[] = {
+    uint8_t msg[] = {
         IBUS_MID_CMD_SET_MODE,
         param
     };
@@ -2652,13 +2635,13 @@ void IBusCommandMIDSetMode(
  *        Send the command that the C43 sends to update the screen mode
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char mode - The mode to broadcast
+ *         uint8_t mode - The mode to broadcast
  *     Returns:
  *         void
  */
-void IBusCommandRADC43ScreenModeSet(IBus_t *ibus, unsigned char mode)
+void IBusCommandRADC43ScreenModeSet(IBus_t *ibus, uint8_t mode)
 {
-    unsigned char msg[4] = {
+    uint8_t msg[4] = {
         IBUS_CMD_RAD_C43_SCREEN_UPDATE,
         IBUS_CMD_RAD_C43_SET_MENU_MODE,
         0x00,
@@ -2679,13 +2662,13 @@ void IBusCommandRADC43ScreenModeSet(IBus_t *ibus, unsigned char mode)
  *        Issue a command from the RAD to CDC
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char command - The command to send the CD Changer
+ *         uint8_t command - The command to send the CD Changer
  *     Returns:
  *         void
  */
-void IBusCommandRADCDCRequest(IBus_t *ibus, unsigned char command)
+void IBusCommandRADCDCRequest(IBus_t *ibus, uint8_t command)
 {
-    unsigned char msg[] = {IBUS_COMMAND_CDC_REQUEST, command};
+    uint8_t msg[] = {IBUS_COMMAND_CDC_REQUEST, command};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_RAD,
@@ -2708,7 +2691,7 @@ void IBusCommandRADCDCRequest(IBus_t *ibus, unsigned char command)
  */
 void IBusCommandRADClearMenu(IBus_t *ibus)
 {
-    unsigned char msg[] = {0x46, 0x0A};
+    uint8_t msg[] = {0x46, 0x0A};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_RAD,
@@ -2729,7 +2712,7 @@ void IBusCommandRADClearMenu(IBus_t *ibus)
  */
 void IBusCommandRADDisableMenu(IBus_t *ibus)
 {
-    unsigned char msg[] = {0x45, 0x02};
+    uint8_t msg[] = {0x45, 0x02};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_GT,
@@ -2750,7 +2733,7 @@ void IBusCommandRADDisableMenu(IBus_t *ibus)
  */
 void IBusCommandRADEnableMenu(IBus_t *ibus)
 {
-    unsigned char msg[] = {0x45, 0x00};
+    uint8_t msg[] = {0x45, 0x00};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_GT,
@@ -2771,7 +2754,7 @@ void IBusCommandRADEnableMenu(IBus_t *ibus)
  */
 void IBusCommandRADExitMenu(IBus_t *ibus)
 {
-    unsigned char msg[] = {0x45, 0x91};
+    uint8_t msg[] = {0x45, 0x91};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_GT,
@@ -2782,24 +2765,50 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
 }
 
 /**
+ * IBusCommandSESSetMapZoom()
+ *     Description:
+ *        Set the Navigation Zoom level via SES commands
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t zoomLevel - The requested zoom level
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESSetMapZoom(IBus_t *ibus, uint8_t zoomLevel)
+{
+    uint8_t msg[] = {
+        0xAA,
+        0x10,
+        IBUS_SES_NAV_ZOOM_CONSTANT[zoomLevel]
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
  * IBusCommandSetVolume()
  *     Description:
  *        Exit the radio menu and return to the BMBT home screen
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char source - The source system of the command
- *         unsigned char dest - The destination system of the command
- *         unsigned char volume - The volume and direction to issue
+ *         uint8_t source - The source system of the command
+ *         uint8_t dest - The destination system of the command
+ *         uint8_t volume - The volume and direction to issue
  *     Returns:
  *         void
  */
 void IBusCommandSetVolume(
     IBus_t *ibus,
-    unsigned char source,
-    unsigned char dest,
-    unsigned char volume
+    uint8_t source,
+    uint8_t dest,
+    uint8_t volume
 ) {
-    unsigned char msg[] = {IBUS_CMD_VOLUME_SET, volume};
+    uint8_t msg[] = {IBUS_CMD_VOLUME_SET, volume};
     IBusSendCommand(
         ibus,
         source,
@@ -2820,7 +2829,7 @@ void IBusCommandSetVolume(
  */
 void IBusCommandTELSetGTDisplayMenu(IBus_t *ibus)
 {
-    const unsigned char msg[] = {IBUS_TEL_CMD_MAIN_MENU, 0x42, 0x02, 0x20};
+    const uint8_t msg[] = {IBUS_TEL_CMD_MAIN_MENU, 0x42, 0x02, 0x20};
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, sizeof(msg));
 }
 /**
@@ -2846,7 +2855,7 @@ void IBusCommandTELSetGTDisplayNumber(IBus_t *ibus, char *dialBuffer)
         snprintf((char *) msg + 3, bufferLength - 1, "%s", dialBuffer);
         IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, frameLength);
     } else {
-        const unsigned char msg[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};
+        const uint8_t msg[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};
         IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, sizeof(msg));
     }
 }
@@ -2857,13 +2866,13 @@ void IBusCommandTELSetGTDisplayNumber(IBus_t *ibus, char *dialBuffer)
  *        Set the LED indicator status
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char leds - The bitmask of LEDs to light up
+ *         uint8_t leds - The bitmask of LEDs to light up
  *     Returns:
  *         void
  */
-void IBusCommandTELSetLED(IBus_t *ibus, unsigned char leds)
+void IBusCommandTELSetLED(IBus_t *ibus, uint8_t leds)
 {
-    const unsigned char msg[] = {IBUS_TEL_CMD_LED_STATUS, leds};
+    const uint8_t msg[] = {IBUS_TEL_CMD_LED_STATUS, leds};
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, msg, sizeof(msg));
 }
 
@@ -2873,13 +2882,13 @@ void IBusCommandTELSetLED(IBus_t *ibus, unsigned char leds)
  *        Send the TEL Announcement Message so the car knows we're here
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         unsigned char status - The status to send to the front display
+ *         uint8_t status - The status to send to the front display
  *     Returns:
  *         void
  */
-void IBusCommandTELStatus(IBus_t *ibus, unsigned char status)
+void IBusCommandTELStatus(IBus_t *ibus, uint8_t status)
 {
-    const unsigned char msg[] = {IBUS_TEL_CMD_STATUS, status};
+    const uint8_t msg[] = {IBUS_TEL_CMD_STATUS, status};
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, msg, sizeof(msg));
 }
 
@@ -2890,14 +2899,14 @@ void IBusCommandTELStatus(IBus_t *ibus, unsigned char status)
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         char *text - The text to send to the front display
- *         unsigned char index - The index to write to
+ *         uint8_t index - The index to write to
  *     Returns:
  *         void
  */
-void IBusCommandTELStatusText(IBus_t *ibus, char *text, unsigned char index)
+void IBusCommandTELStatusText(IBus_t *ibus, char *text, uint8_t index)
 {
     uint8_t textLength = strlen(text);
-    unsigned char statusText[textLength + 3];
+    uint8_t statusText[textLength + 3];
     statusText[0] = IBUS_CMD_GT_WRITE_TITLE;
     statusText[1] = 0x80 + index;
     statusText[2] = 0x20;

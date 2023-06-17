@@ -60,7 +60,7 @@ uint8_t HandlerSetIBusTELStatus(
             // the radio volume controls to remain active
             if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE &&
                 (context->uiMode == CONFIG_UI_CD53 ||
-                 context->uiMode == CONFIG_UI_BUSINESS_NAV) &&
+                 context->uiMode == CONFIG_UI_MIR) &&
                 context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
             ) {
                 return 1;
@@ -100,29 +100,4 @@ void HandlerSetVolume(HandlerContext_t *context, uint8_t direction)
         hexVolString
     );
     context->bt->activeDevice.a2dpVolume = newVolume;
-}
-
-/**
- * HandlerTimeUpdate()
- *     Description:
- *         Handle updates from the BT or GPS
- *     Params:
- *         void *ctx - The context provided at registration
- *         uint8_t *dt - Date + Time
- *     Returns:
- *         void
- */
-void HandlerTimeUpdate(HandlerContext_t *context, uint8_t *dt)
-{
-    LogDebug(
-        LOG_SOURCE_SYSTEM,
-        "Setting time: %02d-%02d-%02d, %02d:%02d",
-        dt[DATETIME_DAY],
-        dt[DATETIME_MON],
-        dt[DATETIME_YEAR],
-        dt[DATETIME_HOUR],
-        dt[DATETIME_MIN]
-    );
-    IBusCommandIKESetDate(context->ibus, dt[DATETIME_YEAR], dt[DATETIME_MON], dt[DATETIME_DAY]);
-    IBusCommandIKESetTime(context->ibus, dt[DATETIME_HOUR], dt[DATETIME_MIN]);
 }

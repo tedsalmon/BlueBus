@@ -41,11 +41,9 @@ void HandlerIBusPDCStatus(void *, uint8_t *);
 void HandlerIBusVolumeChange(void *, uint8_t *);
 void HandlerIBusSensorValueUpdate(void *, uint8_t *);
 void HandlerIBusTELVolumeChange(void *, uint8_t *);
-void HandlerIBusPDCUpdate(void *, uint8_t *);
 void HandlerTimerIBusCDCAnnounce(void *);
 void HandlerTimerIBusCDCSendStatus(void *);
 void HandlerTimerIBusLCMIOStatus(void *);
 void HandlerTimerIBusLightingState(void *);
 void HandlerTimerIBusPings(void *);
-void HandlerTimerIBusPDCdistance(void *);
 #endif /* HANDLER_IBUS_H */

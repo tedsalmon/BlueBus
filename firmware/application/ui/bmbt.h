@@ -70,8 +70,7 @@
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS 2
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS 3
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM 4
-#define BMBT_MENU_IDX_SETTINGS_COMFORT_PDC 5
-#define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME 6
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME 5
 /* Comfort Settings -> Time */
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE 0
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST 1
@@ -113,7 +112,6 @@
 #define BMBT_TV_STATUS_OFF 0
 #define BMBT_TV_STATUS_ON 1
 
-#define BMBT_AUTOZOOM_LEVELS 8
 #define BMBT_AUTOZOOM_TOLERANCE 4
 #define BMBT_AUTOZOOM_DELAY 10000
 
@@ -125,6 +123,7 @@ typedef struct BMBTStatus_t {
     uint8_t tvStatus: 1;
     uint8_t navIndexType;
 } BMBTStatus_t;
+
 typedef struct BMBTContext_t {
     BT_t *bt;
     IBus_t *ibus;
@@ -137,31 +136,32 @@ typedef struct BMBTContext_t {
     uint8_t menuWriteTaskId;
     uint8_t dspMode;
     UtilsAbstractDisplayValue_t mainDisplay;
-    int8_t navZoom;
-    uint32_t navZoom_last;
+    uint8_t navZoom: 4;
+    uint32_t navZoomTime;
     
 } BMBTContext_t;
+
 void BMBTInit(BT_t *, IBus_t *);
 void BMBTDestroy();
-void BMBTBTDeviceConnected(void *, unsigned char *);
-void BMBTBTDeviceDisconnected(void *, unsigned char *);
-void BMBTBTMetadata(void *, unsigned char *);
-void BMBTBTPlaybackStatus(void *, unsigned char *);
-void BMBTBTReady(void *, unsigned char *);
-void BMBTIBusBMBTButtonPress(void *, unsigned char *);
-void BMBTIBusCDChangerStatus(void *, unsigned char *);
-void BMBTIBusGTChangeUIRequest(void *, unsigned char *);
-void BMBTIBusMenuSelect(void *, unsigned char *);
-void BMBTIBusScreenBufferFlush(void *, unsigned char *);
-void BMBTIBusSensorValueUpdate(void *, unsigned char *);
-void BMBTRADDisplayMenu(void *, unsigned char *);
-void BMBTRADUpdateMainArea(void *, unsigned char *);
-void BMBTRADScreenModeRequest(void *, unsigned char *);
-void BMBTGTScreenModeSet(void *, unsigned char *);
-void BMBTTVStatusUpdate(void *, unsigned char *);
-void BMBTIBusVehicleConfig(void *, unsigned char *);
+void BMBTBTDeviceConnected(void *, uint8_t *);
+void BMBTBTDeviceDisconnected(void *, uint8_t *);
+void BMBTBTMetadata(void *, uint8_t *);
+void BMBTBTPlaybackStatus(void *, uint8_t *);
+void BMBTBTReady(void *, uint8_t *);
+void BMBTIBusBMBTButtonPress(void *, uint8_t *);
+void BMBTIBusCDChangerStatus(void *, uint8_t *);
+void BMBTIBusGTChangeUIRequest(void *, uint8_t *);
+void BMBTIKESpeedRPMUpdate(void *, uint8_t *);
+void BMBTIBusMenuSelect(void *, uint8_t *);
+void BMBTIBusScreenBufferFlush(void *, uint8_t *);
+void BMBTIBusSensorValueUpdate(void *, uint8_t *);
+void BMBTRADDisplayMenu(void *, uint8_t *);
+void BMBTRADUpdateMainArea(void *, uint8_t *);
+void BMBTRADScreenModeRequest(void *, uint8_t *);
+void BMBTGTScreenModeSet(void *, uint8_t *);
+void BMBTTVStatusUpdate(void *, uint8_t *);
+void BMBTIBusVehicleConfig(void *, uint8_t *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);
 void BMBTTimerScrollDisplay(void *);
-void BMBTSpeedRPMUpdate(void *, uint8_t *);
 #endif /* BMBT_H */

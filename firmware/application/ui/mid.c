@@ -272,7 +272,7 @@ void MIDBTDeviceDisconnected(void *ctx, unsigned char *tmp)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
     if (context->mode == MID_MODE_ACTIVE) {
-        MIDSetMainDisplayText(context, "Bluetooth", 0);
+        MIDSetMainDisplayText(context, "", 0);
     }
 }
 
@@ -465,7 +465,8 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
         pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD &&
         context->modeChangeStatus == MID_MODE_CHANGE_RELEASE
     ) {
-        IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE | 0x40);
+        IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE_RELEASE);
+        context->modeChangeStatus = MID_MODE_CHANGE_OFF;
     }
     // Handle Next and Previous
     if (context->ibus->cdChangerFunction != IBUS_CDC_FUNC_NOT_PLAYING) {
@@ -535,7 +536,7 @@ void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
         if (pkt[IBUS_PKT_DB2] == 0xB0 &&
                context->modeChangeStatus == MID_MODE_CHANGE_PRESS
         ) {
-            IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE);
+            IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE_PRESS);
             context->modeChangeStatus = MID_MODE_CHANGE_RELEASE;
         }
     } else {

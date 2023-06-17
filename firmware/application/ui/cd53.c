@@ -620,7 +620,7 @@ void CD53IBusRADWriteDisplay(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == 0xC4) {
-        context->radioType = CONFIG_UI_BUSINESS_NAV;
+        context->radioType = CONFIG_UI_MIR;
     }
     // Ensure that the display mode is 0xC4 so we know we did not write this
     // to the display
@@ -653,7 +653,7 @@ void CD53TimerDisplay(void *ctx)
                     context->ibus,
                     context->tempDisplay.text
                 );
-            } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
+            } else if (context->radioType == CONFIG_UI_MIR) {
                 IBusCommandGTWriteBusinessNavTitle(
                     context->ibus,
                     context->tempDisplay.text
@@ -692,7 +692,7 @@ void CD53TimerDisplay(void *ctx)
                 }
                 if (context->radioType == CONFIG_UI_CD53) {
                     IBusCommandTELIKEDisplayWrite(context->ibus, text);
-                } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
+                } else if (context->radioType == CONFIG_UI_MIR) {
                     IBusCommandGTWriteBusinessNavTitle(context->ibus, text);
                 }
                 uint8_t metaMode = ConfigGetSetting(CONFIG_SETTING_METADATA_MODE);
@@ -737,7 +737,7 @@ void CD53TimerDisplay(void *ctx)
                             context->ibus, 
                             context->mainDisplay.text
                         );
-                    } else if (context->radioType == CONFIG_UI_BUSINESS_NAV) {
+                    } else if (context->radioType == CONFIG_UI_MIR) {
                         IBusCommandGTWriteBusinessNavTitle(
                             context->ibus,
                             context->mainDisplay.text

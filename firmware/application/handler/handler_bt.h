@@ -38,12 +38,14 @@ void HandlerBTBM83AVRCPUpdates(void *, uint8_t *);
 void HandlerBTBM83Boot(void *, uint8_t *);
 void HandlerBTBM83BootStatus(void *, uint8_t *);
 void HandlerBTBM83LinkBackStatus(void *, uint8_t *);
+void HandlerBTBM83DSPStatus(void *, uint8_t *);
 
 void HandlerTimerBTTCUStateChange(void *);
 void HandlerTimerBTVolumeManagement(void *);
 
 void HandlerTimerBTBC127State(void *);
 void HandlerTimerBTBC127DeviceConnection(void *);
+void HandlerTimerBTBC127RequestDateTime(void *);
 void HandlerTimerBTBC127OpenProfileErrors(void *);
 void HandlerTimerBTBC127ScanDevices(void *);
 void HandlerTimerBTBC127Metadata(HandlerContext_t *);
