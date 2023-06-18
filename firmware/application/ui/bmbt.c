@@ -1507,6 +1507,8 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             }
         }
         BMBTGTWriteIndex(context, selectedIdx, autoZoomText, 0);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME) {
+        BMBTMenuSettingsComfortTime(context);
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
@@ -1605,27 +1607,28 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
         (time_source == CONFIG_SETTING_TIME_GPS) &&
         (context->ibus->gpsTime != 0)) {
 
-        uint8_t datetime[6]={0};
+        uint8_t dt[6]={0};
         struct tm *gps_time = gmtime(&context->ibus->gpsTime);
 
         gps_time->tm_min += ConfigGetTimeOffset() + ((ConfigGetTimeDST()!=0)?60:0);
         mktime(gps_time);
 
-        datetime[DATETIME_YEAR] = gps_time->tm_year + 1900 - 2000;
-        datetime[DATETIME_MON] = gps_time->tm_mon + 1;
-        datetime[DATETIME_DAY] = gps_time->tm_mday;
-        datetime[DATETIME_HOUR] = gps_time->tm_hour;
-        datetime[DATETIME_MIN] = gps_time->tm_min;
-        datetime[DATETIME_SEC] = gps_time->tm_sec;
+        dt[DATETIME_YEAR] = gps_time->tm_year + 1900 - 2000;
+        dt[DATETIME_MON] = gps_time->tm_mon + 1;
+        dt[DATETIME_DAY] = gps_time->tm_mday;
+        dt[DATETIME_HOUR] = gps_time->tm_hour;
+        dt[DATETIME_MIN] = gps_time->tm_min;
+        dt[DATETIME_SEC] = gps_time->tm_sec;
 
-        if (datetime[DATETIME_YEAR] > 20 &&
-            datetime[DATETIME_MON] >= 1 && datetime[DATETIME_MON] <= 12 &&
-            datetime[DATETIME_DAY] >= 1 && datetime[DATETIME_DAY] <= 31 &&
-            datetime[DATETIME_HOUR] >= 0 && datetime[DATETIME_HOUR] <= 23 &&
-            datetime[DATETIME_MIN] >= 0 && datetime[DATETIME_MIN] <= 59 &&
-            datetime[DATETIME_SEC] >= 0 && datetime[DATETIME_SEC] <= 59
+        if (dt[DATETIME_YEAR] > 20 &&
+            dt[DATETIME_MON] >= 1 && dt[DATETIME_MON] <= 12 &&
+            dt[DATETIME_DAY] >= 1 && dt[DATETIME_DAY] <= 31 &&
+            dt[DATETIME_HOUR] >= 0 && dt[DATETIME_HOUR] <= 23 &&
+            dt[DATETIME_MIN] >= 0 && dt[DATETIME_MIN] <= 59 &&
+            dt[DATETIME_SEC] >= 0 && dt[DATETIME_SEC] <= 59
         ) {
-            EventTriggerCallback(IBUS_EVENT_TIME_UPDATE, datetime);
+            IBusCommandIKESetDate(context->ibus, dt[DATETIME_YEAR], dt[DATETIME_MON], dt[DATETIME_DAY]);
+            IBusCommandIKESetTime(context->ibus, dt[DATETIME_HOUR], dt[DATETIME_MIN]);
         }
     }
     
