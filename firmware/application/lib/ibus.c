@@ -63,6 +63,14 @@ IBus_t IBusInit()
     ibus.txBufferReadbackIdx = 0;
     ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
+    ibus.pdc.front_left = 255;
+    ibus.pdc.front_center_left = 255;
+    ibus.pdc.front_center_right = 255;
+    ibus.pdc.front_right = 255;
+    ibus.pdc.rear_left = 255;
+    ibus.pdc.rear_center_left = 255;
+    ibus.pdc.rear_center_right = 255;
+    ibus.pdc.rear_right = 255;
     return ibus;
 }
 
@@ -579,6 +587,30 @@ static void IBusHandlerPDCMessage(IBus_t *ibus, uint8_t *pkt)
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS) {
         EventTriggerCallback(IBUS_EVENT_PDC_STATUS, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_RESPONSE) {
+// let's process the data, store and then call the UI event
+        if ((pkt[13] & 0b00000001) == 1) { // PDC active
+            ibus->pdc.front_left = pkt[9];
+            ibus->pdc.front_center_left = pkt[11];
+            ibus->pdc.front_center_right = pkt[12];
+            ibus->pdc.front_right = pkt[10];
+            ibus->pdc.rear_left = pkt[5];
+            ibus->pdc.rear_center_left = pkt[7];
+            ibus->pdc.rear_center_right = pkt[8];
+            ibus->pdc.rear_right = pkt[6];    
+
+            LogDebug(LOG_SOURCE_IBUS, "PDC distances(cm): Front: %i - %i - %i - %i, Rear: %i - %i - %i - %i",
+                    ibus->pdc.front_left,
+                    ibus->pdc.front_center_left,
+                    ibus->pdc.front_center_right,
+                    ibus->pdc.front_right,
+                    ibus->pdc.rear_left,
+                    ibus->pdc.rear_center_left,
+                    ibus->pdc.rear_center_right,
+                    ibus->pdc.rear_right
+            );
+            EventTriggerCallback(IBUS_EVENT_PDC_UPDATE, pkt);
+        }
     }
 }
 

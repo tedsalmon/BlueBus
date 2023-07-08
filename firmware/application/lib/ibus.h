@@ -188,6 +188,8 @@
 #define IBUS_CMD_MOD_STATUS_RESP 0x02
 
 #define IBUS_CMD_PDC_STATUS 0x07
+#define IBUS_CMD_PDC_REQUEST 0x1B
+#define IBUS_CMD_PDC_RESPONSE 0xA0
 
 #define IBUS_CMD_RAD_LED_TAPE_CTRL 0x4A
 
@@ -447,6 +449,7 @@
 #define IBUS_EVENT_LMIdentResponse 67
 #define IBUS_EVENT_TV_STATUS 68
 #define IBUS_EVENT_PDC_STATUS 69
+#define IBUS_EVENT_PDC_UPDATE 70
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 71
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 72
 #define IBUS_EVENT_GT_TELEMATICS_DATA 73
@@ -476,6 +479,17 @@ typedef struct IBusModuleStatus_t {
     uint8_t VM: 1;
     uint8_t PDC: 1;
 } IBusModuleStatus_t;
+
+typedef struct IBusPDC_t {
+    uint8_t front_left;
+    uint8_t front_center_left;
+    uint8_t front_center_right;
+    uint8_t front_right;
+    uint8_t rear_left;
+    uint8_t rear_center_left;
+    uint8_t rear_center_right;
+    uint8_t rear_right;    
+} IBusPDC_t;
 
 /**
  * IBus_t
@@ -510,6 +524,7 @@ typedef struct IBus_t {
     IBusModuleStatus_t moduleStatus;
     time_t gpsTime;
     time_t localTime;
+    IBusPDC_t pdc;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];

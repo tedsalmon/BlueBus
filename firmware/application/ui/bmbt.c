@@ -1001,16 +1001,16 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
     char text[BMBT_MENU_STRING_MAX_SIZE] = {0};
     uint8_t autotime = ConfigGetTimeSource();
     snprintf(
-        text, 
-        BMBT_MENU_STRING_MAX_SIZE, 
-        LocaleGetText(LOCALE_STRING_AUTOTIME), 
+        text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_AUTOTIME),
         (
-            (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone": 
+            (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone":
             (autotime == CONFIG_SETTING_TIME_GPS) ? "GPS":
             LocaleGetText(LOCALE_STRING_AUTOTIME_MANUAL)
         )
     );
-    
+
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE,
@@ -1023,9 +1023,9 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
         int16_t off = ConfigGetTimeOffset();
 
         snprintf(
-            text, 
-            BMBT_MENU_STRING_MAX_SIZE, 
-            LocaleGetText(LOCALE_STRING_AUTOTIME_DST), 
+            text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_AUTOTIME_DST),
             (dst == 0) ? "---":"+01:00"
         );
         BMBTGTWriteIndex(
@@ -1054,9 +1054,9 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
             ptm = gmtime(&context->ibus->gpsTime);
 
             snprintf(
-            text, 
-            BMBT_MENU_STRING_MAX_SIZE, 
-            "GPSD: %2d.%2d.%4d", 
+            text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            "GPSD: %2d.%2d.%4d",
             ptm->tm_mday,
             ptm->tm_mon+1,
             ptm->tm_year+1900
@@ -1068,11 +1068,11 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
             text,
             0
         );
-        
+
         snprintf(
-            text, 
-            BMBT_MENU_STRING_MAX_SIZE, 
-            "GPST: %02d:%02d", 
+            text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            "GPST: %02d:%02d",
             ptm->tm_hour,
             ptm->tm_min
         );
@@ -1092,7 +1092,7 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
             );
         }
     }
-    
+
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
     IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT_TIME));
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
@@ -1509,6 +1509,40 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         BMBTGTWriteIndex(context, selectedIdx, autoZoomText, 0);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME) {
         BMBTMenuSettingsComfortTime(context);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_PDC) {
+        uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+        if (pdc == CONFIG_SETTING_OFF) {
+            pdc=CONFIG_SETTING_PDC_CLUSTER;
+        } else if (pdc == CONFIG_SETTING_PDC_CLUSTER) {
+//            pdc=CONFIG_SETTING_PDC_RADIO;
+            pdc=CONFIG_SETTING_OFF;
+        } else if (pdc == CONFIG_SETTING_PDC_RADIO) {
+            pdc=CONFIG_SETTING_PDC_BOTH;
+        } else {
+            pdc=CONFIG_SETTING_OFF;
+        }
+
+        ConfigSetSetting(CONFIG_SETTING_COMFORT_PDC, pdc);
+
+        char pdc_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+        snprintf(
+            pdc_text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_PDC),
+            (
+                (pdc == CONFIG_SETTING_OFF) ? "Off":
+                (pdc == CONFIG_SETTING_PDC_CLUSTER)? "Cluster":
+                (pdc == CONFIG_SETTING_PDC_RADIO)? "Screen":
+                "Dual"
+            )
+        );
+
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_PDC,
+            pdc_text,
+            0
+        );
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
