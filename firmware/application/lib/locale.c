@@ -678,6 +678,86 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Auto",
 };
 
+static char *LOCALE_LANG_POLISH[] = {
+    "- Nie odtwarza -",
+    "Informacje",
+    "Dzwiek",
+    "Auto-odtw.: Wyl.",
+    "Auto-odtw.: Wl.",
+    "Powrot",
+    "Kierunkowsk.: %d",
+    "Bluetooth",
+    "Built: %d/%d",
+    "Dzwonienie",
+    "Auto: E3x/E53",
+    "Auto: E46/Z4",
+    "Auto: Nie ustaw.",
+    "Wyczysc liste",
+    "Komfort",
+    "Widok glowny",
+    "Urzadzenia",
+    "DSP: Domyslny",
+    "DSP: Analogowy",
+    "DSP: Cyfrowy",
+    "FW: %s",
+    "Handsfree: Wyl.",
+    "Handsfree: Wl.",
+    "Blok.: 10km/h",
+    "Blok.: 20km/h",
+    "Blok.: Wyl.",
+    "Menu Glowne",
+    "Menu: Widok gl.",
+    "Menu: Glowne",
+    "Metadane: Kawalek",
+    "Metadane: Wyl.",
+    "Metadane: Impreza",
+    "Bal. mikr.: Wyl.",
+    "Bal. mikr.: Wl.",
+    "Wzm. mikr.: %idB",
+    "Brak urzadzenia",
+    "Parowanie: Wyl.",
+    "Parowanie: Wl.",
+    "S/N: %u",
+    "Ustawienia",
+    "Ustawienia > Informacje",
+    "Ustawienia > Dzwiek",
+    "Ustawienia > Dzwonienie",
+    "Ustawienia > Komfort",
+    "Ustawienia > Int. Uzytk.",
+    "Temp.: Plyn Chlod.",
+    "Temp.: Wyl.",
+    "Temp.: Otoczenie",
+    "Temp.: Olej",
+    "Interfejs Uzytk.",
+    "Nieznany Artysta",
+    "Nieznany Tytul",
+    "Odblok.: Wyl.",
+    "Odblok.: Poz. 0",
+    "Odblok.: Poz. 1",
+    "Glosnosc: -%ddB",
+    "Glosnosc: +%ddB",
+    "Glosnosc: +24dB",
+    "Glosnosc: 0dB",
+    "Jezyk: %s",
+    "Swiatla poz: Wl.",
+    "Swiatla poz: Wyl.",
+    "Zarz. Glos.: Wl.",
+    "Zarz. Glos.: Wyl.",
+    "Kor. Dzw.: Wl.",
+    "Kor. Dzw.: Wyl.",
+    "D. Roz. OBC: Wl.",
+    "D. Roz. OBC: Wyl.",
+    "Wyl. BMBT: Wyl.",
+    "Wyl. BMBT: Wl.",
+    "Offset Dzw.: %+d",
+    "Tryb: Domyslny",
+    "Tryb: Modul TCU",
+    "Tryb: Nie wyciszaj",
+    "Asystent glosowy",
+    "Zadzwon",
+    "Autozoom: %s",
+};
+
 /**
  * LocaleGetText()
  *     Description:
@@ -714,6 +794,9 @@ char *LocaleGetText(uint16_t stringIndex)
             break;
         case CONFIG_SETTING_LANGUAGE_SPANISH:
             text = LOCALE_LANG_SPANISH[stringIndex];
+            break;
+        case CONFIG_SETTING_LANGUAGE_POLISH:
+            text = LOCALE_LANG_POLISH[stringIndex];
             break;
     }
 
