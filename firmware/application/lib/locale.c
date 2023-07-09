@@ -756,6 +756,21 @@ static char *LOCALE_LANG_POLISH[] = {
     "Asystent glosowy",
     "Zadzwon",
     "Autozoom: %s",
+    "PDC: %s",
+    "Settings > Time",
+    "Time: %s",
+    "DST: %s",
+    "Zone: %+02.2d:%02.2d",
+    "Manual",
+    "No GPS signal",
+    "Settings > Navigation",
+    "Auto Map: %s",
+    "Silent Nav: %s",
+    "Range Nav: %s",
+    "On",
+    "Off",
+    "Default",
+    "Auto",
 };
 
 /**
