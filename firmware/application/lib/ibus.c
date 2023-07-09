@@ -461,6 +461,12 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
             ) {
                 ibus->localTime = mktime(local_time);
             }
+        } else if (property == IBUS_IKE_OBC_PROPERTY_RANGE) {
+            uint16_t range = atoi((char *)pkt + 6);
+            if (range<=255) {
+                uint8_t r = range;
+                EventTriggerCallback(IBUS_EVENT_RANGE_UPDATE, &r);
+            }
         }
     }
 }
@@ -2800,7 +2806,7 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
 /**
  * IBusCommandSESSetMapZoom()
  *     Description:
- *        Set the Navigation Zoom level via SES commands
+ *        Set the Navigation Zoom level via SES command
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         uint8_t zoomLevel - The requested zoom level
@@ -2813,6 +2819,95 @@ void IBusCommandSESSetMapZoom(IBus_t *ibus, uint8_t zoomLevel)
         0xAA,
         0x10,
         IBUS_SES_NAV_ZOOM_CONSTANT[zoomLevel]
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESShowMap()
+ *     Description:
+ *        Display Map via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESShowMap(IBus_t *ibus)
+{
+    LogDebug(
+        LOG_SOURCE_SYSTEM,
+        "SES: Show Map"
+    );
+
+    uint8_t msg[] = {
+        0xAA,
+        0x04,
+        0x00
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESRouteFuel()
+ *     Description:
+ *        Find nearby Fuel Stations via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESRouteFuel(IBus_t *ibus)
+{
+    LogDebug(
+        LOG_SOURCE_SYSTEM,
+        "SES: Route to Fuel Station"
+    );
+    uint8_t msg[] = {
+        0xAA,
+        0x20,
+        0x03
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESSilentNavigation()
+ *     Description:
+ *        Disable Voice Guidance via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESSilentNavigation(IBus_t *ibus)
+{
+    LogDebug(
+        LOG_SOURCE_SYSTEM,
+        "SES: Set Silent Navigation"
+    );
+
+    uint8_t msg[] = {
+        0xAA,
+        0x06,
+        0x00
     };
     IBusSendCommand(
         ibus,

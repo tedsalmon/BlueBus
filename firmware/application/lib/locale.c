@@ -83,6 +83,7 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Call",
+    "Navigation",
     "Autozoom: %s",
     "PDC: %s",
     "Settings > Time",
@@ -91,6 +92,14 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Zone: %+02.2d:%02.2d",
     "Manual",
     "No GPS signal",
+    "Settings > Navigation",
+    "Auto Map: %s",
+    "Silent Nav: %s",
+    "Range Nav: %s",
+    "On",
+    "Off",
+    "Default",
+    "Auto",
 };
 
 static char *LOCALE_LANG_ITALIAN[] = {
@@ -170,6 +179,7 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Telefonata",
+    "Navigation",
     "Autozoom: %s",
     "PDC: %s",
     "Impostazioni > Tempo",
@@ -178,6 +188,14 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Zone: %+02.2d:%02.2d",
     "Manual",
     "No GPS signal",
+    "Impostazioni > Navigation",
+    "Auto Map: %s",
+    "Silent Nav: %s",
+    "Range Nav: %s",
+    "On",
+    "Off",
+    "Default",
+    "Auto",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -257,6 +275,7 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Oproep",
+    "Navigation",
     "Autozoom: %s",
     "PDC: %s",
     "Instellingen > Time",
@@ -265,6 +284,14 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Zone: %+02.2d:%02.2d",
     "Manual",
     "No GPS signal",
+    "Instellingen > Navigation",
+    "Auto Map: %s",
+    "Silent Nav: %s",
+    "Range Nav: %s",
+    "On",
+    "Off",
+    "Default",
+    "Auto",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -344,6 +371,7 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Kõne",
+    "Navigation",
     "Autozoom: %s",
     "PDC: %s",
     "Seaded > Time",
@@ -352,6 +380,14 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Zone: %+02.2d:%02.2d",
     "Manual",
     "No GPS signal",
+    "Seaded > Navi",
+    "Auto Map: %s",
+    "Silent Nav: %s",
+    "Range Nav: %s",
+    "On",
+    "Off",
+    "Default",
+    "Auto",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -431,6 +467,7 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Call",
+    "Navigation",
     "Autozoom: %s",
     "PDC: %s",
     "Settings > Time",
@@ -439,6 +476,14 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Zone: %+02.2d:%02.2d",
     "Manual",
     "No GPS signal",
+    "Settings > Navigation",
+    "Auto Map: %s",
+    "Silent Nav: %s",
+    "Range Nav: %s",
+    "On",
+    "Off",
+    "Default",
+    "Auto",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -518,6 +563,7 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Mode: No Mute",
     "Sprachassistent",
     "Anruf",
+    "Navigation",
     "Autozoom: %s",
     "PDC: %s",
     "Einstellungen > Zeit",
@@ -526,6 +572,14 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Zeitzone:%+02.2d:%02.2d",
     "Manuell",
     "Kein GPS signal",
+    "Einstellungen > Navi",
+    "Auto Map: %s",
+    "Silent Nav: %s",
+    "Range Nav: %s",
+    "On",
+    "Off",
+    "Default",
+    "Auto",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -605,6 +659,7 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Mode: No Mute",
     "Voice Assistant",
     "Llamar",
+    "Navigation",
     "Autozoom: %s",
     "PDC: %s",
     "Ajustes > Time",
@@ -613,6 +668,14 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Zone: %+02.2d:%02.2d",
     "Manual",
     "No GPS signal",
+    "Ajustes > Navi",
+    "Auto Map: %s",
+    "Silent Nav: %s",
+    "Range Nav: %s",
+    "On",
+    "Off",
+    "Default",
+    "Auto",
 };
 
 /**
