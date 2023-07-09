@@ -38,8 +38,9 @@
 #define BMBT_MENU_SETTINGS_AUDIO 6
 #define BMBT_MENU_SETTINGS_COMFORT 7
 #define BMBT_MENU_SETTINGS_COMFORT_TIME 8
-#define BMBT_MENU_SETTINGS_CALLING 9
-#define BMBT_MENU_SETTINGS_UI 10
+#define BMBT_MENU_SETTINGS_COMFORT_NAVI 9
+#define BMBT_MENU_SETTINGS_CALLING 10
+#define BMBT_MENU_SETTINGS_UI 11
 #define BMBT_MENU_IDX_BACK 7
 #define BMBT_MENU_IDX_DASHBOARD 0
 #define BMBT_MENU_IDX_DEVICE_SELECTION 1
@@ -69,16 +70,20 @@
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_UNLOCK 1
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS 2
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS 3
-#define BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM 4
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI 4
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME 5
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_PDC 6
+/* Comfort Settings -> Navi */
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_AUTOZOOM 0
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_MAP 1
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_SILENT 2
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_RANGE 3
 /* Comfort Settings -> Time */
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE 0
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST 1
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET 2
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSDATE 4
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSTIME 5
-
 /* UI Settings */
 #define BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU 0
 #define BMBT_MENU_IDX_SETTINGS_UI_METADATA_MODE 1
@@ -139,6 +144,9 @@ typedef struct BMBTContext_t {
     UtilsAbstractDisplayValue_t mainDisplay;
     uint8_t navZoom: 4;
     uint32_t navZoomTime;
+    uint8_t mapShown: 1;
+    uint8_t naviSilenced: 1;
+    uint8_t rangeNavi: 1;
 } BMBTContext_t;
 
 void BMBTInit(BT_t *, IBus_t *);
@@ -152,6 +160,7 @@ void BMBTIBusBMBTButtonPress(void *, uint8_t *);
 void BMBTIBusCDChangerStatus(void *, uint8_t *);
 void BMBTIBusGTChangeUIRequest(void *, uint8_t *);
 void BMBTIKESpeedRPMUpdate(void *, uint8_t *);
+void BMBTRangeUpdate(void *, uint8_t *);
 void BMBTIBusMenuSelect(void *, uint8_t *);
 void BMBTIBusScreenBufferFlush(void *, uint8_t *);
 void BMBTIBusSensorValueUpdate(void *, uint8_t *);

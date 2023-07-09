@@ -237,6 +237,7 @@
 #define IBUS_IKE_OBC_PROPERTY_TIME 0x01
 #define IBUS_IKE_OBC_PROPERTY_DATE 0x02
 #define IBUS_IKE_OBC_PROPERTY_TEMPERATURE 0x03
+#define IBUS_IKE_OBC_PROPERTY_RANGE 0x06
 #define IBUS_IKE_OBC_PROPERTY_REQUEST_TEXT 0x01
 
 #define IBUS_LCM_LIGHT_STATUS_REQ 0x5A
@@ -455,6 +456,7 @@
 #define IBUS_EVENT_GT_TELEMATICS_DATA 73
 #define IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE 74
 #define IBUS_EVENT_TIME_UPDATE 75
+#define IBUS_EVENT_RANGE_UPDATE 76
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -599,6 +601,9 @@ void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
 void IBusCommandSESSetMapZoom(IBus_t *, uint8_t);
+void IBusCommandSESShowMap(IBus_t *);
+void IBusCommandSESRouteFuel(IBus_t *);
+void IBusCommandSESSilentNavigation(IBus_t *);
 void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);
