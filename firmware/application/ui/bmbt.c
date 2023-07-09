@@ -990,6 +990,29 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         autotime_text,
         0
     );
+
+    uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+    char pdc_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(
+        pdc_text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_PDC),
+        (
+            (pdc == CONFIG_SETTING_OFF) ? "Off":
+            (pdc == CONFIG_SETTING_PDC_CLUSTER)? "Cluster":
+            (pdc == CONFIG_SETTING_PDC_RADIO)? "Screen":
+            "Dual"
+        )
+    );
+
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_PDC,
+        pdc_text,
+        0
+    );
+
+
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
     IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT));
     IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
