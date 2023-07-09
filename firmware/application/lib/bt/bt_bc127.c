@@ -121,7 +121,7 @@ void BC127CommandBackward(BT_t *bt)
             BC127CommandVolume(bt, bt->activeDevice.a2dpId, "0");
             bt->activeDevice.a2dpVolume = 0;
         }
-        
+
         char command[18];
         snprintf(command, 18, "MUSIC %d BACKWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
@@ -367,7 +367,7 @@ void BC127CommandForward(BT_t *bt)
             BC127CommandVolume(bt, bt->activeDevice.a2dpId, "0");
             bt->activeDevice.a2dpVolume = 0;
         }
-        
+
         char command[17];
         snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
@@ -1244,18 +1244,18 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             UtilsStrncpy(bt->callerId, callerId, BT_CALLER_ID_FIELD_SIZE);
             EventTriggerCallback(BT_EVENT_CALLER_ID_UPDATE, 0);
         }
-    } else if ((strcmp(msgBuf[3], "+CCLK:") == 0) && 
+    } else if ((strcmp(msgBuf[3], "+CCLK:") == 0) &&
                (ConfigGetTimeSource() == CONFIG_SETTING_TIME_PHONE)
     ) {
         // Parse the returned date and time so we can update the vehicle
         // NOTE: Only iOS responds to AT+CCLK?
         // AT 13 27 +CCLK: \2223/04/07, 15:58:28\22
         // Example 24h: \2222/10/19, 00:08:18\22
-        //         12h: \2223/01/13, 1:31:00 pm\22 
+        //         12h: \2223/01/13, 1:31:00 pm\22
 
         UtilsRemoveSubstring(msgBuf[4], "\\22");
         UtilsRemoveSubstring(msgBuf[5], "\\22");
-        
+
         uint8_t datetime[6] = {0};
         uint8_t sepCount = 0;
         uint8_t i = 0;
@@ -1369,7 +1369,7 @@ void BC127ProcessEventAVRCPMedia(BT_t *bt, char **msgBuf, char *msg)
         }
         if (bt->metadataStatus == BT_METADATA_STATUS_UPD) {
             LogDebug(
-                LOG_SOURCE_BT, 
+                LOG_SOURCE_BT,
                 "BT: title=%s,artist=%s,album=%s",
                 bt->title,
                 bt->artist,

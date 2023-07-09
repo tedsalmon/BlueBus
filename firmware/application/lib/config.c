@@ -1,7 +1,7 @@
 /*
  * File:   config.h
  * Author: Ted Salmon <tass2001@gmail.com>
- * Description: 
+ * Description:
  *     Get & Set Configuration items on the EEPROM
  */
 #include "config.h"
@@ -902,7 +902,7 @@ void ConfigSetDistUnit(uint8_t distUnit)
  *         Set the trap count for the given trap
  *     Params:
  *         uint8_t trap - The trap triggered
- *         uint8_t count - The number 
+ *         uint8_t count - The number
  *     Returns:
  *         void
  */
@@ -1059,7 +1059,7 @@ void ConfigSetTimeOffset(int16_t offset) {
     int8_t off = offset / 15;
     uint8_t min_idx = 13; // ( UTC )
     uint8_t i;
-    
+
     for (i=1; i<32; i++) {
         int8_t dif = abs(tz_offsets[i]-off);
         if (dif<min_dif) {
@@ -1067,7 +1067,7 @@ void ConfigSetTimeOffset(int16_t offset) {
             min_idx = i;
         }
     }
-    
+
     if (min_dif != 255) {
         uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b00000111 ) | (min_idx << 3);
         ConfigSetByte(CONFIG_SETTING_COMFORT_TIME, val);

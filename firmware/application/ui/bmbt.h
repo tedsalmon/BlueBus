@@ -139,7 +139,6 @@ typedef struct BMBTContext_t {
     UtilsAbstractDisplayValue_t mainDisplay;
     uint8_t navZoom: 4;
     uint32_t navZoomTime;
-    
 } BMBTContext_t;
 
 void BMBTInit(BT_t *, IBus_t *);

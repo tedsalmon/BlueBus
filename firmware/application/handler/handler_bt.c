@@ -274,7 +274,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                     context->ibus,
                     sourceSystem,
                     IBUS_DEVICE_RAD,
-                    (volStep << 4) | direction 
+                    (volStep << 4) | direction
                 );
                 volume = volume - volStep;
             }
@@ -397,7 +397,7 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
         // Once A2DP and AVRCP are connected, we can disable connectability
         // If HFP is enabled, do not disable connectability until the
         // profile opens
-        if (linkType == BT_LINK_TYPE_A2DP && 
+        if (linkType == BT_LINK_TYPE_A2DP &&
             context->bt->activeDevice.a2dpId != 0
         ) {
             // Raise the volume one step to trigger the absolute volume notification
@@ -417,13 +417,13 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                 }
             }
         }
-        if ((linkType == BT_LINK_TYPE_AVRCP || 
-             linkType == BT_LINK_TYPE_A2DP) && 
-            context->bt->activeDevice.a2dpId != 0 && 
+        if ((linkType == BT_LINK_TYPE_AVRCP ||
+             linkType == BT_LINK_TYPE_A2DP) &&
+            context->bt->activeDevice.a2dpId != 0 &&
             context->bt->activeDevice.avrcpId != 0
         ) {
             if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
-                context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING 
+                context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
             ) {
                 BTCommandPlay(context->bt);
             }
@@ -572,7 +572,7 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
         LogDebug(
             LOG_SOURCE_BT,
             "Setting time from BT: %d-%d-%d, %d:%d",
-            dt[BC127_AT_DATE_DAY], 
+            dt[BC127_AT_DATE_DAY],
             dt[BC127_AT_DATE_MONTH],
             dt[BC127_AT_DATE_YEAR],
             dt[BC127_AT_DATE_HOUR],
@@ -1010,10 +1010,10 @@ void HandlerTimerBTBC127ScanDevices(void *ctx)
     } else {
         context->scanIntervals += 1;
     }
-    
+
     if (context->bt->status != BT_STATUS_DISCONNECTED &&
         context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
-        context->bt->activeDevice.avrcpId != 0   
+        context->bt->activeDevice.avrcpId != 0
     ) {
         // Sync the playback state every 5 seconds
         BC127CommandStatusAVRCP(context->bt);

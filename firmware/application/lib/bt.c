@@ -149,7 +149,7 @@ void BTCommandRedial(BT_t *bt)
             BM83CommandRedial(bt);
         }
     }
-} 
+}
 
 /**
  * BTCommandConnect()

@@ -50,7 +50,7 @@ void BTClearPairedDevices(BT_t *bt, uint8_t clearType)
 {
     uint8_t idx;
     uint8_t found = 0;
-    
+
     BTPairedDevice_t btActiveConn;
     for (idx = 0; idx < bt->pairedDevicesCount; idx++) {
         BTPairedDevice_t *btConn = &bt->pairedDevices[idx];

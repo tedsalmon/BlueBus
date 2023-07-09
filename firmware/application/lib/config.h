@@ -1,7 +1,7 @@
 /*
  * File:   config.h
  * Author: Ted Salmon <tass2001@gmail.com>
- * Description: 
+ * Description:
  *     Get & Set Configuration items on the EEPROM
  */
 #ifndef CONFIG_H

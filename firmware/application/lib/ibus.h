@@ -268,7 +268,7 @@
 // LCM, LCM_A
 // Different bytes! Update the blinker msg if alternating.
 // Byte 0 (S2_BLK_L switch No.2 left turn / S2_BLK_R switch No.2 right turn)
-// #define IBUS_LCM_BLINKER_LEFT 0x80 
+// #define IBUS_LCM_BLINKER_LEFT 0x80
 // #define IBUS_LCM_BLINKER_RIGHT 0x40
 // Byte 1 (S2_BLK_L switch No.1 left turn / S2_BLK_R switch No.1 right turn)
 #define IBUS_LCM_BLINKER_OFF 0x00
@@ -488,7 +488,7 @@ typedef struct IBusPDC_t {
     uint8_t rear_left;
     uint8_t rear_center_left;
     uint8_t rear_center_right;
-    uint8_t rear_right;    
+    uint8_t rear_right;
 } IBusPDC_t;
 
 /**

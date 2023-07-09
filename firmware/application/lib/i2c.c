@@ -417,7 +417,7 @@ int8_t I2CWrite(
         return I2C_ERR_CommFail;
     }
     // Device Address + Write bit
-    slaveAddress = (deviceAddress << 1) | 0; 
+    slaveAddress = (deviceAddress << 1) | 0;
     retval = I2CWriteByte((char)slaveAddress);
     if (retval == I2C_ERR_NAK) {
         // Bad Slave Address or I2C slave device stopped responding

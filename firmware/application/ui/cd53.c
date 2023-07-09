@@ -734,7 +734,7 @@ void CD53TimerDisplay(void *ctx)
                 if (context->mainDisplay.index == 0) {
                     if (context->radioType == CONFIG_UI_CD53) {
                         IBusCommandTELIKEDisplayWrite(
-                            context->ibus, 
+                            context->ibus,
                             context->mainDisplay.text
                         );
                     } else if (context->radioType == CONFIG_UI_MIR) {

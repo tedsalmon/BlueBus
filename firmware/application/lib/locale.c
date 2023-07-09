@@ -657,6 +657,6 @@ char *LocaleGetText(uint16_t stringIndex)
     if ( text == NULL ) {
         text = LOCALE_LANG_ENGLISH[stringIndex];
     }
-    
+
     return text;
 }

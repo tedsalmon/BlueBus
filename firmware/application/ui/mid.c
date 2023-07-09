@@ -505,7 +505,7 @@ void MIDIIBusRADMIDDisplayUpdate(void *ctx, unsigned char *pkt)
 /**
  * MIDIBusMIDModeChange()
  *     Description:
- *         
+ *
  *     Params:
  *         void *context - A void pointer to the MIDContext_t struct
  *         unsigned char *pkt - The IBus packet

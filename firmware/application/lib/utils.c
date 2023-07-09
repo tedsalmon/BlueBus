@@ -93,7 +93,7 @@ uint8_t UtilsGetUnicodeByteLength(uint8_t byte)
  *     Params:
  *         char *string - The subject
  *         const char *input - The string to copy from
- *         uint16_t max_len - Max output buffer size 
+ *         uint16_t max_len - Max output buffer size
  *     Returns:
  *         void
  */
@@ -110,8 +110,8 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
     uint16_t strLength = strlen(input);
     uint8_t bytesInChar = 0;
     uint8_t language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-    
-    
+
+
     uint8_t uiMode = ConfigGetUIMode();
 
     while (idx < strLength && strIdx < (max_len - 1)) {
@@ -307,7 +307,7 @@ void UtilsSetPinMode(uint8_t pin, uint8_t mode)
 /**
  * UtilsStricmp()
  *     Description:
- *         Case-Insensitive string comparison 
+ *         Case-Insensitive string comparison
  *     Params:
  *         const char *string - The subject
  *         const char *compare - The string to compare the subject against

@@ -75,7 +75,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     Context.mainDisplay = UtilsDisplayValueInit(LocaleGetText(LOCALE_STRING_BLUETOOTH), BMBT_DISPLAY_OFF);
     Context.navZoom = -1;
     Context.navZoomTime = 0;
-    
+
     EventRegisterCallback(
         BT_EVENT_DEVICE_CONNECTED,
         &BMBTBTDeviceConnected,
@@ -510,7 +510,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         char ambtempstr[8] = {0};
         char oiltempstr[7] = {0};
         char cooltempstr[7] = {0};
-        
+
         if (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) {
             tempUnit = 'F';
         }
@@ -536,7 +536,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         } else {
             snprintf(ambtempstr, 8, "A:%+d", ambtemp);
         }
-        if (cooltemp > 0) { 
+        if (cooltemp > 0) {
             snprintf(cooltempstr, 7, "C:%d,", cooltemp);
         }
         if (oiltemp > 0) {
@@ -591,7 +591,7 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
             strncpy(f2, " ", 2);
         }
     }
-    
+
     if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
         IBusCommandGTWriteIndexStatic(context->ibus, 0x41, f1);
         IBusCommandGTWriteIndexStatic(context->ibus, 0x42, f2);
@@ -1036,9 +1036,9 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
         );
 
         snprintf(
-            text, 
-            BMBT_MENU_STRING_MAX_SIZE, 
-            LocaleGetText(LOCALE_STRING_AUTOTIME_OFFSET), 
+            text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_AUTOTIME_OFFSET),
             off / 60,
             abs(off) % 60
         );
@@ -1048,7 +1048,7 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
             text,
             1
         );
-        
+
         if (context->ibus->gpsTime != 0) {
             struct tm *ptm;
             ptm = gmtime(&context->ibus->gpsTime);
@@ -1256,14 +1256,14 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             BMBT_MENU_IDX_SETTINGS_UI_TEMPS,
             LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT),
             0
-        );       
+        );
     } else if (tempMode == CONFIG_SETTING_TEMP_OIL) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_UI_TEMPS,
             LocaleGetText(LOCALE_STRING_TEMPS_OIL),
             0
-        );       
+        );
     }
     uint8_t dashboardOBC = ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC);
     if (dashboardOBC == CONFIG_SETTING_ON) {
@@ -1580,7 +1580,7 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
             if ((time_dst == 0) && (time_offset == 0) && (context->ibus->gpsTime != 0) && (context->ibus->localTime != 0)) {
                 LogDebug(LOG_SOURCE_SYSTEM, "Calc DST & Zone offsets, GPS: %s", ctime(&context->ibus->gpsTime));
                 LogDebug(LOG_SOURCE_SYSTEM, "Calc DST & Zone offsets, LOCAL: %s", ctime(&context->ibus->localTime));
-            
+
                 struct tm *local_time = gmtime(&context->ibus->localTime);
 
                 if ((local_time->tm_hour!=0)||(local_time->tm_min!=0)) {
@@ -1634,10 +1634,10 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettingsComfort(context);
     };
-    
-    if (((selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) || 
+
+    if (((selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) ||
         (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) ||
-        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE)) && 
+        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE)) &&
         (time_source == CONFIG_SETTING_TIME_GPS) &&
         (context->ibus->gpsTime != 0)) {
 
@@ -1665,7 +1665,7 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
             IBusCommandIKESetTime(context->ibus, dt[DATETIME_HOUR], dt[DATETIME_MIN]);
         }
     }
-    
+
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
         BMBTMenuSettingsComfortTime(context);
     }
@@ -1702,8 +1702,8 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                 }
                 if (device != 0) {
                     BM83CommandConnect(
-                        context->bt, 
-                        device, 
+                        context->bt,
+                        device,
                         BM83_DATA_LINK_BACK_PROFILES_HF
                     );
                 }
@@ -2356,8 +2356,8 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                         devicesPos++;
                     }
                 }
-                
-                if ((dev != 0) && 
+
+                if ((dev != 0) &&
                     (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 )
                 ) {
                     // Trigger device selection event
@@ -2453,7 +2453,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
             tempUnit = 'F';
         }
 
-        if (config == CONFIG_SETTING_TEMP_AMBIENT && 
+        if (config == CONFIG_SETTING_TEMP_AMBIENT &&
             (updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED ||
              updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP ||
              updateType == IBUS_SENSOR_VALUE_TEMP_UNIT) &&
@@ -2492,12 +2492,12 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
                 }
                 if (config == CONFIG_SETTING_TEMP_AMBIENT) {
                     if (tempUnit == 'F') {
-                        snprintf(temperature, 7, "%+d\xB0%c", temp, tempUnit);                  
+                        snprintf(temperature, 7, "%+d\xB0%c", temp, tempUnit);
                     } else {
                         snprintf(temperature, 8, "%+d.0\xB0%c", temp, tempUnit);
                     }
                 } else {
-                    snprintf(temperature, 6, "%d\xB0%c", temp, tempUnit);                 
+                    snprintf(temperature, 6, "%d\xB0%c", temp, tempUnit);
                 }
             }
         }
@@ -2517,7 +2517,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
                 IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
             }
         }
-    }    
+    }
 }
 
 /**
@@ -2557,7 +2557,7 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
     // This message is only intended to support the CD54 more consistently
     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_IKE) {
         return;
-    }    
+    }
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == IBUS_C43_TITLE_MODE) {
         context->status.radType = IBUS_RADIO_TYPE_C43;
@@ -2723,7 +2723,7 @@ void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
         uint8_t valueType = IBUS_SENSOR_VALUE_TEMP_UNIT;
         BMBTIBusSensorValueUpdate(ctx, &valueType);
     }
-    
+
     tempUnit = IBusGetConfigDistance(pkt);
     if (tempUnit != ConfigGetDistUnit()) {
         ConfigSetDistUnit(tempUnit);
