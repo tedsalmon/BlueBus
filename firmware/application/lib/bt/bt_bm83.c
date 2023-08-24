@@ -1113,7 +1113,7 @@ void BM83ProcessDataGetAllAttributes(
     BT_t *bt,
     uint8_t *data,
     uint8_t attributeCount,
-    uint8_t bytePos
+    uint16_t bytePos
 ) {
     uint8_t dataDiffers = 0;
     bt->metadataStatus = BT_METADATA_STATUS_CUR;

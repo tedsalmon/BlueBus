@@ -63,7 +63,7 @@ void BC127ClearPairingErrors(BT_t *bt)
  */
 void BC127CommandAT(BT_t *bt, char *cmd)
 {
-    uint8_t commandLength = 10 + strlen(cmd);
+    uint8_t commandLength = strlen(cmd) + 9;
     char command[commandLength];
     memset(command, 0, commandLength);
     snprintf(

@@ -563,22 +563,27 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // If it's the first second of the minute, use the time update
     // Otherwise, request the time again at the top of the next minute
-    if (dt[5] < 2) {
+    if (dt[BC127_AT_DATE_SEC] < 2) {
         LogDebug(
             LOG_SOURCE_BT,
-            "Setting time from BT: %d-%d-%d, %d:%d",
-            dt[2],
-            dt[1],
-            dt[0],
-            dt[3],
-            dt[4]
+            "Setting time from BT: 20%d-%d-%d %d:%d",
+            dt[BC127_AT_DATE_YEAR],
+            dt[BC127_AT_DATE_MONTH],
+            dt[BC127_AT_DATE_DAY],
+            dt[BC127_AT_DATE_HOUR],
+            dt[BC127_AT_DATE_MIN]
         );
-        IBusCommandIKESetDate(context->ibus, dt[0], dt[1], dt[2]);
-        IBusCommandIKESetTime(context->ibus, dt[3], dt[4]);
-    } else {
+        IBusCommandIKESetDate(
+            context->ibus,
+            dt[BC127_AT_DATE_YEAR],
+            dt[BC127_AT_DATE_MONTH],
+            dt[BC127_AT_DATE_DAY]
+        );
+        IBusCommandIKESetTime(context->ibus, dt[BC127_AT_DATE_HOUR], dt[BC127_AT_DATE_MIN]);
+    } else if (dt[BC127_AT_DATE_SEC] < 60) {
         TimerRegisterScheduledTask(
             &HandlerTimerBTBC127RequestDateTime,
-            context->bt,
+            ctx,
             (60 - dt[5]) * 1000
         );
     }

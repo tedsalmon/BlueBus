@@ -349,7 +349,7 @@ void BM83ProcessEventReadLinkedDeviceInformation(BT_t *, uint8_t *, uint16_t);
 void BM83ProcessEventReadPairedDeviceRecord(BT_t *, uint8_t *, uint16_t);
 void BM83ProcessEventReportLinkBackStatus(BT_t *, uint8_t *, uint16_t);
 void BM83ProcessEventReportTypeCodec(BT_t *, uint8_t *, uint16_t );
-void BM83ProcessDataGetAllAttributes(BT_t *, uint8_t *, uint8_t, uint8_t);
+void BM83ProcessDataGetAllAttributes(BT_t *, uint8_t *, uint8_t, uint16_t);
 /* RX / TX */
 void BM83Process(BT_t *);
 void BM83SendCommand(BT_t *, uint8_t *, size_t);

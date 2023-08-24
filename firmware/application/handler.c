@@ -118,6 +118,7 @@ void HandlerUIInitiateConnection(void *ctx, unsigned char *deviceId)
         context->bt->pairedDevices[context->btSelectedDevice].macId,
         BT_MAC_ID_LEN
     );
+    BTCommandSetConnectable(context->bt, BT_STATE_ON);
 }
 
 /**
