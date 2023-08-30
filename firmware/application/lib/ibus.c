@@ -89,6 +89,10 @@ static void IBusHandleModuleStatus(IBus_t *ibus, uint8_t module)
         ibus->moduleStatus.GT = 1;
         LogInfo(LOG_SOURCE_IBUS, "GT Detected");
         detectedModule = IBUS_DEVICE_GT;
+    } else if (module == IBUS_DEVICE_NAVE && ibus->moduleStatus.NAV == 0) {
+        ibus->moduleStatus.NAV = 1;
+        LogInfo(LOG_SOURCE_IBUS, "NAV Detected");
+        detectedModule = IBUS_DEVICE_NAVE;
     } else if (module == IBUS_DEVICE_VM && ibus->moduleStatus.VM == 0) {
         ibus->moduleStatus.VM = 1;
         LogInfo(LOG_SOURCE_IBUS, "VM Detected");
@@ -523,6 +527,22 @@ static void IBusHandleMIDMessage(IBus_t *ibus, uint8_t *pkt)
     }
 }
 
+/**
+ * IBusHandleNAVMessage()
+ *     Description:
+ *         Handle any messages received from the non-Jap Navigation Computer
+ *     Params:
+ *         uint8_t *pkt - The frame received on the IBus
+ *     Returns:
+ *         None
+ */
+static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
+{
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
+    }
+}
+
 static void IBusHandlerPDCMessage(IBus_t *ibus, uint8_t *pkt)
 {
     // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
@@ -587,7 +607,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_DISPLAY_RADIO_MENU) {
             EventTriggerCallback(IBUS_EVENT_RADDisplayMenu, pkt);
         }
-        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_INDEX &&
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_WITH_CURSOR &&
             pkt[IBUS_PKT_DB2] == 0x01 &&
             pkt[IBUS_PKT_DB3] == 0x00
         ) {
@@ -777,6 +797,9 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_MID) {
                         IBusHandleMIDMessage(ibus, pkt);
+                    }
+                    if (srcSystem == IBUS_DEVICE_NAVE) {
+                        IBusHandleNAVMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_MFL) {
                         IBusHandleMFLMessage(ibus, pkt);
@@ -1804,8 +1827,8 @@ void IBusCommandGTWriteIndexTMC(
  */
 void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     uint8_t length = strlen(message);
-    if (length > 15) {
-        length = 15;
+    if (length > 24) {
+        length = 24;
     }
     const size_t pktLenght = length + 6;
     uint8_t text[pktLenght];

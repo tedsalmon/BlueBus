@@ -91,8 +91,10 @@
 #define IBUS_CDC_FUNC_SCAN_MODE 0x19
 #define IBUS_CDC_FUNC_RANDOM_MODE 0x29
 // CDC Disc Count
-#define IBUS_CDC_DISC_COUNT_1 0x01
-#define IBUS_CDC_DISC_COUNT_6 0x3F
+#define IBUS_CDC_DISC_LOADED_1 0x01
+#define IBUS_CDC_DISC_LOADED_6 0x20
+#define IBUS_CDC_DISC_LOADED_7 0x40
+#define IBUS_CDC_DISC_LOADED_ALL 0x3F
 
 // DSP
 #define IBUS_DSP_CMD_CONFIG_SET 0x36
@@ -465,6 +467,7 @@ typedef struct IBusModuleStatus_t {
     uint8_t IKE: 1;
     uint8_t LCM: 1;
     uint8_t MID: 1;
+    uint8_t NAV: 1;
     uint8_t RAD: 1;
     uint8_t VM: 1;
     uint8_t PDC: 1;

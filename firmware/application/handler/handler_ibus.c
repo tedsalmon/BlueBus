@@ -170,19 +170,19 @@ static void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
     } else if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
         curStatus = IBUS_CDC_STAT_PLAYING;
     }
-    uint8_t discCount = IBUS_CDC_DISC_COUNT_6;
+    uint8_t discLoaded = IBUS_CDC_DISC_LOADED_ALL;
     // Report disc 7 loaded so any button press causes a CD Changer command
     // to be sent by the RAD (since there is no 7th disc)
     uint8_t discNumber = 0x07;
     if (context->uiMode == CONFIG_UI_BMBT) {
-        discCount = IBUS_CDC_DISC_COUNT_1;
-        discNumber = 0x01;
+        discLoaded = IBUS_CDC_DISC_LOADED_7;
+        discNumber = 0x07;
     }
     IBusCommandCDCStatus(
         context->ibus,
         curStatus,
         context->ibus->cdChangerFunction,
-        discCount,
+        discLoaded,
         discNumber
     );
     context->cdChangerLastStatus = TimerGetMillis();
@@ -461,19 +461,19 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
             curStatus = requestedCommand;
         }
     }
-    uint8_t discCount = IBUS_CDC_DISC_COUNT_6;
+    uint8_t discLoaded = IBUS_CDC_DISC_LOADED_ALL;
     // Report disc 7 loaded so any button press causes a CD Changer command
     // to be sent by the RAD (since there is no 7th disc)
     uint8_t discNumber = 0x07;
     if (context->uiMode == CONFIG_UI_BMBT) {
-        discCount = IBUS_CDC_DISC_COUNT_1;
-        discNumber = 0x01;
+        discLoaded = IBUS_CDC_DISC_LOADED_7;
+        discNumber = 0x07;
     }
     IBusCommandCDCStatus(
         context->ibus,
         curStatus,
         curFunction,
-        discCount,
+        discLoaded,
         discNumber
     );
     context->cdChangerLastPoll = TimerGetMillis();

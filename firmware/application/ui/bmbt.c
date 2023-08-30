@@ -360,7 +360,8 @@ static void BMBTTriggerWriteMenu(BMBTContext_t *context)
     if (context->menu == BMBT_MENU_NONE ||
         context->menu == BMBT_MENU_DASHBOARD_FRESH ||
         context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI ||
-        context->status.radType == IBUS_RADIO_TYPE_C43
+        context->status.radType == IBUS_RADIO_TYPE_C43 ||
+        context->ibus->moduleStatus.NAV == 0
     ) {
         if (context->timerMenuIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
             TimerResetScheduledTask(context->menuWriteTaskId);
@@ -597,6 +598,7 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
         IBusCommandGTWriteIndexStatic(context->ibus, 0x42, f2);
         IBusCommandGTWriteIndexStatic(context->ibus, 0x43, f3);
         BMBTMenuDashboardUpdateOBCValues(context);
+        context->status.navIndexType = IBUS_CMD_GT_WRITE_STATIC;
         IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_STATIC);
     } else {
         IBusCommandGTWriteIndex(context->ibus, 0, f1);
@@ -1641,6 +1643,8 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ESTONIAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_GERMAN;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_GERMAN) {
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_ITALIAN;
+        } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ITALIAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_RUSSIAN;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_SPANISH;
@@ -1677,8 +1681,10 @@ void BMBTBTDeviceConnected(void *ctx, uint8_t *data)
     if (context->status.playerMode == BMBT_MODE_ACTIVE &&
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
-        BMBTHeaderWriteDeviceName(context, context->bt->activeDevice.deviceName);
-        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+        if (strlen(context->bt->activeDevice.deviceName) > 0) {
+            BMBTHeaderWriteDeviceName(context, context->bt->activeDevice.deviceName);
+            IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+        }
         if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             BMBTMenuDeviceSelection(context);
         }
@@ -1828,7 +1834,9 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                     if (context->menu != BMBT_MENU_DASHBOARD_FRESH) {
                         context->menu = BMBT_MENU_NONE;
                     }
-                    IBusCommandRADDisableMenu(context->ibus);
+                    if (context->ibus->moduleStatus.NAV == 1) {
+                        IBusCommandRADDisableMenu(context->ibus);
+                    }
                 } else {
                     context->status.displayMode = BMBT_DISPLAY_OFF;
                 }
@@ -1884,7 +1892,9 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
             BTCommandPause(context->bt);
         }
-        if (context->status.tvStatus == BMBT_TV_STATUS_OFF) {
+        if (context->status.tvStatus == BMBT_TV_STATUS_OFF &&
+            context->ibus->moduleStatus.NAV == 1
+        ) {
             IBusCommandRADEnableMenu(context->ibus);
         }
         context->menu = BMBT_MENU_NONE;
@@ -1903,8 +1913,15 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         ) {
             BTCommandPause(context->bt);
         }
-        IBusCommandRADDisableMenu(context->ibus);
+        // Only set Audio + OBC mode if we have a Nav computer equipped
+        // This message locks up certain Video Modules
+        if (context->ibus->moduleStatus.NAV == 1) {
+            IBusCommandRADDisableMenu(context->ibus);
+        }
+        context->timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
+        context->timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;
         context->status.playerMode = BMBT_MODE_ACTIVE;
+        context->status.displayMode = BMBT_DISPLAY_ON;
         BMBTTriggerWriteHeader(context);
         BMBTTriggerWriteMenu(context);
     } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE &&
@@ -2126,7 +2143,15 @@ void BMBTIBusScreenBufferFlush(void *ctx, uint8_t *pkt)
     // Ignore Zone (Header) updates
     if (pkt[IBUS_PKT_DB1] != IBUS_CMD_GT_WRITE_ZONE) {
         if (pkt[IBUS_PKT_DB1] != context->status.navIndexType) {
-            IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+            // Do not refresh menus on standalone Video Module setups
+            if (context->ibus->moduleStatus.NAV == 0) {
+                if (context->timerMenuIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
+                    TimerResetScheduledTask(context->menuWriteTaskId);
+                    context->timerMenuIntervals = 0;
+                }
+            } else {
+                IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+            }
         }
     }
 }
@@ -2363,7 +2388,9 @@ void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
         if (pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
             context->status.navState == BMBT_NAV_STATE_BOOT
         ) {
-            IBusCommandRADDisableMenu(context->ibus);
+            if (context->ibus->moduleStatus.NAV == 1) {
+                IBusCommandRADDisableMenu(context->ibus);
+            }
             context->status.navState = BMBT_NAV_STATE_ON;
         }
         if (pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&

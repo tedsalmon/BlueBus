@@ -476,6 +476,12 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
             BTCommandPlaybackTrackPrevious(context->bt);
         }
     }
+    // Hijack the "TAPE/CD/MD" button
+    if (ConfigGetSetting(CONFIG_SETTING_SELF_PLAY) == CONFIG_SETTING_ON) {
+        if (btnPressed == MID_BUTTON_MODE) {
+            IBusCommandRADCDCRequest(context->ibus, IBUS_CDC_CMD_START_PLAYING);
+        }
+    }
 }
 
 /**
@@ -534,7 +540,7 @@ void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
             context->mode = MID_MODE_DISPLAY_OFF;
         }
         if (pkt[IBUS_PKT_DB2] == 0xB0 &&
-               context->modeChangeStatus == MID_MODE_CHANGE_PRESS
+            context->modeChangeStatus == MID_MODE_CHANGE_PRESS
         ) {
             IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE_PRESS);
             context->modeChangeStatus = MID_MODE_CHANGE_RELEASE;
