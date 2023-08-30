@@ -824,7 +824,10 @@ void HandlerTimerBTVolumeManagement(void *ctx)
         context->bt->type != BT_BTM_TYPE_BM83
     ) {
         if (context->bt->activeDevice.a2dpVolume < 127) {
-            LogWarning("SET MAX VOLUME -- Currently %d", context->bt->activeDevice.a2dpVolume);
+            LogWarning(
+                "BT: Set Max Volume (%d)",
+                context->bt->activeDevice.a2dpVolume
+            );
             BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpId, "F");
             context->bt->activeDevice.a2dpVolume = 127;
         }
