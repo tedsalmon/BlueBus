@@ -2211,13 +2211,18 @@ void IBusCommandIKESetDate(IBus_t *ibus, uint8_t year, uint8_t mon, uint8_t day)
  */
 void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
 {
-    uint8_t len = strlen(message);
+    uint8_t len = (message != NULL)?strlen(message):0;
+    if (len > 16) {
+        len = 16;
+    };
     uint8_t displayText[len + 3];
     memset(&displayText, 0, sizeof(displayText));
     displayText[0] = 0x23;
     displayText[1] = 0x42;
     displayText[2] = 0x32;
-    memcpy(displayText + 3, message, len);
+    if (len>0 && message != NULL) {
+        memcpy(displayText + 3, message, len);
+    }
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_TEL,

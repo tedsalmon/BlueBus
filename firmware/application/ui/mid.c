@@ -181,11 +181,12 @@ static void MIDShowNextDevice(MIDContext_t *context, uint8_t direction)
         // if it's the currently selected device
         if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) == 0) {
             uint8_t startIdx = strlen(text);
-            if (startIdx > 15) {
-                startIdx = 16;
+            if (startIdx > 13) {
+                startIdx = 13;
             }
             text[startIdx++] = 0x20;
             text[startIdx++] = 0x2A;
+            text[startIdx] = 0;
         }
         MIDSetMainDisplayText(context, text, 0);
     }

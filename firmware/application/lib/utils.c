@@ -116,7 +116,7 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
 
     while (idx < strLength && strIdx < (max_len - 1)) {
         uint8_t currentChar = (uint8_t) input[idx];
-        unicodeChar = 0 | currentChar;
+        unicodeChar = currentChar;
 
         if (currentChar == '\\') {
             unicodeChar = 0;

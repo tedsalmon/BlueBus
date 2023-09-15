@@ -138,7 +138,7 @@ void I2CClearErrors()
 int8_t I2CPoll(unsigned char deviceAddress)
 {
     int8_t retval;
-    unsigned char slaveAddress = (deviceAddress << 1) | 0;
+    unsigned char slaveAddress = (deviceAddress << 1);
     if (I2CStatus == I2C_STATUS_ERR) {
         I2CClearErrors();
         if (I2CRecoverBus() == I2C_STATUS_OK) {
@@ -190,7 +190,7 @@ int8_t I2CRead(
         return I2C_ERR_CommFail;
     }
     // Device Address + Read bit
-    slaveAddress = (deviceAdress << 1) | 0x00;
+    slaveAddress = (deviceAdress << 1);
     retval = I2CWriteByte((char)slaveAddress);
     if (retval == I2C_ERR_NAK) {
         // Bad Slave Address or I2C slave device stopped responding
@@ -417,7 +417,7 @@ int8_t I2CWrite(
         return I2C_ERR_CommFail;
     }
     // Device Address + Write bit
-    slaveAddress = (deviceAddress << 1) | 0;
+    slaveAddress = (deviceAddress << 1);
     retval = I2CWriteByte((char)slaveAddress);
     if (retval == I2C_ERR_NAK) {
         // Bad Slave Address or I2C slave device stopped responding

@@ -118,7 +118,7 @@
         <platform>4</platform>
       </toolsSet>
       <packs>
-        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.8.217"/>
+        <pack name="PIC24F-GA-GB_DFP" vendor="Microchip" version="1.9.336"/>
       </packs>
       <ScriptingSettings>
       </ScriptingSettings>

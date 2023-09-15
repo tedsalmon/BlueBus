@@ -9,7 +9,7 @@
 #include "eeprom.h"
 
 #define CONFIG_SETTING_CACHE_SIZE 0x70
-#define CONFIG_VALUE_CACHE_SIZE 0x0F
+#define CONFIG_VALUE_CACHE_SIZE 0x11
 /* EEPROM 0x00 - 0x07: Reserved for the BlueBus */
 #define CONFIG_SN_ADDRESS_MSB 0x00
 #define CONFIG_SN_ADDRESS_LSB 0x01
