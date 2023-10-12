@@ -274,7 +274,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                     context->ibus,
                     sourceSystem,
                     IBUS_DEVICE_RAD,
-                    (volStep << 4) | direction 
+                    (volStep << 4) | direction
                 );
                 volume = volume - volStep;
             }
@@ -420,7 +420,7 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
         }
         if (linkType == BT_LINK_TYPE_AVRCP || linkType == BT_LINK_TYPE_A2DP) {
             if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
-                context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING 
+                context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
             ) {
                 BTCommandPlay(context->bt);
             }
@@ -1015,10 +1015,10 @@ void HandlerTimerBTBC127ScanDevices(void *ctx)
     } else {
         context->scanIntervals += 1;
     }
-    
+
     if (context->bt->status != BT_STATUS_DISCONNECTED &&
         context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
-        context->bt->activeDevice.avrcpId != 0   
+        context->bt->activeDevice.avrcpId != 0
     ) {
         // Sync the playback state every 5 seconds
         BC127CommandStatusAVRCP(context->bt);

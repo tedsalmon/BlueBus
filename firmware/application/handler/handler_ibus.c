@@ -1332,6 +1332,7 @@ void HandlerIBusVMDIAIdentityResponse(void *ctx, uint8_t *type)
     }
 }
 
+
 /**
  * HandlerIBusVolumeChange()
  *     Description:
