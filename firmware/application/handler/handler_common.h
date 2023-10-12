@@ -30,10 +30,12 @@
 #define HANDLER_IBUS_MODULE_PING_STATE_READY 1
 #define HANDLER_IBUS_MODULE_PING_STATE_IKE 2
 #define HANDLER_IBUS_MODULE_PING_STATE_GT 3
-#define HANDLER_IBUS_MODULE_PING_STATE_MID 4
-#define HANDLER_IBUS_MODULE_PING_STATE_RAD 5
-#define HANDLER_IBUS_MODULE_PING_STATE_LM 6
-#define HANDLER_IBUS_MODULE_PING_STATE_TEL 7
+#define HANDLER_IBUS_MODULE_PING_STATE_NAV 4
+#define HANDLER_IBUS_MODULE_PING_STATE_MID 5
+#define HANDLER_IBUS_MODULE_PING_STATE_VM 6
+#define HANDLER_IBUS_MODULE_PING_STATE_RAD 7
+#define HANDLER_IBUS_MODULE_PING_STATE_LM 8
+#define HANDLER_IBUS_MODULE_PING_STATE_TEL 9
 #define HANDLER_GT_STATUS_UNCHECKED 0
 #define HANDLER_GT_STATUS_CHECKED 1
 #define HANDLER_INT_BC127_STATE 1000
@@ -112,7 +114,7 @@ typedef struct HandlerContext_t {
     int8_t btSelectedDevice: 4;
     uint8_t btStartupIsRun: 1;
     uint8_t btBootState: 2;
-    uint8_t ibusModulePingState: 3;
+    uint8_t ibusModulePingState: 4;
     uint8_t mflButtonStatus: 1;
     uint8_t seekMode: 2;
     uint8_t volumeMode: 1;

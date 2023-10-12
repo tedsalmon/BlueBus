@@ -848,8 +848,12 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             break;
         }
         case BM83_DATA_BTM_STATUS_ACL_CONN: {
+            // Store the MAC ID for the new active device profile
+            uint8_t tempDeviceMacId[BT_MAC_ID_LEN] = {0};
+            memcpy(tempDeviceMacId, bt->activeDevice.macId, BT_MAC_ID_LEN);
             bt->activeDevice = BTConnectionInit();
             bt->status = BT_STATUS_CONNECTED;
+            memcpy(bt->activeDevice.macId, tempDeviceMacId, BT_MAC_ID_LEN);
             LogDebug(LOG_SOURCE_BT, "BT: Device Connected");
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
             break;
@@ -1024,8 +1028,22 @@ void BM83ProcessEventReadLinkedDeviceInformation(BT_t *bt, uint8_t *data, uint16
                 nameData[i] = data[i + BM83_FRAME_DB2];
             }
             UtilsNormalizeText(deviceName, nameData, BT_DEVICE_NAME_LEN + 1);
-            LogDebug(LOG_SOURCE_BT, "Connected Device: %s", deviceName);
+            LogDebug(LOG_SOURCE_BT, "Connected: %s", deviceName);
             UtilsStrncpy(bt->activeDevice.deviceName, deviceName, BT_DEVICE_NAME_LEN);
+            // Copy the device name to its pairing record
+            BTPairedDevice_t *dev = 0;
+            for (i = 0; i < bt->pairedDevicesCount; i++) {
+                dev = &bt->pairedDevices[i];
+                if (dev != 0) {
+                    if (memcmp(dev->macId, bt->activeDevice.macId, BT_MAC_ID_LEN) == 0) {
+                        UtilsStrncpy(
+                            dev->deviceName, 
+                            deviceName, 
+                            BT_DEVICE_NAME_LEN
+                        );
+                    }
+                }
+            }
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
             break;
         }

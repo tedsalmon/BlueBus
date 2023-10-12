@@ -424,6 +424,20 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
             ) {
                 BTCommandPlay(context->bt);
             }
+            if (context->bt->type == BT_BTM_TYPE_BM83) {
+                // Request Device Name if it is empty
+                char tmp[BT_DEVICE_NAME_LEN] = {0};
+                if (memcmp(tmp, context->bt->activeDevice.deviceName, BT_DEVICE_NAME_LEN) == 0) {
+                    ConfigSetSetting(
+                        CONFIG_SETTING_LAST_CONNECTED_DEVICE,
+                        context->btSelectedDevice
+                    );
+                    BM83CommandReadLinkedDeviceInformation(
+                        context->bt,
+                        BM83_LINKED_DEVICE_QUERY_NAME
+                    );
+                }
+            }
         }
         if (linkType == BT_LINK_TYPE_HFP) {
             if (hfpConfigStatus == CONFIG_SETTING_OFF) {
@@ -448,19 +462,6 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                         BC127CommandProfileOpen(
                             context->bt,
                             "PBAP"
-                        );
-                    }
-                } else if (context->bt->type == BT_BTM_TYPE_BM83) {
-                    // Request Device Name if it is empty
-                    char tmp[BT_DEVICE_NAME_LEN] = {0};
-                    if (memcmp(tmp, context->bt->activeDevice.deviceName, BT_DEVICE_NAME_LEN) == 0) {
-                        ConfigSetSetting(
-                            CONFIG_SETTING_LAST_CONNECTED_DEVICE,
-                            context->btSelectedDevice
-                        );
-                        BM83CommandReadLinkedDeviceInformation(
-                            context->bt,
-                            BM83_LINKED_DEVICE_QUERY_NAME
                         );
                     }
                 }
@@ -566,7 +567,7 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
     if (dt[BC127_AT_DATE_SEC] < 2) {
         LogDebug(
             LOG_SOURCE_BT,
-            "Setting time from BT: 20%d-%d-%d %d:%d",
+            "Setting time from BT: 20%d-%.2d-%.2d %.2d:%.2d",
             dt[BC127_AT_DATE_YEAR],
             dt[BC127_AT_DATE_MONTH],
             dt[BC127_AT_DATE_DAY],
@@ -821,7 +822,8 @@ void HandlerTimerBTVolumeManagement(void *ctx)
     if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
         context->volumeMode != HANDLER_VOLUME_MODE_LOWERED &&
         context->bt->activeDevice.a2dpId != 0 &&
-        context->bt->type != BT_BTM_TYPE_BM83
+        context->bt->type != BT_BTM_TYPE_BM83 &&
+        context->bt->activeDevice.a2dpVolume != 0
     ) {
         if (context->bt->activeDevice.a2dpVolume < 127) {
             LogWarning(

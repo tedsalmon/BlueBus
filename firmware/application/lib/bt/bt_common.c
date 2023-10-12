@@ -50,7 +50,6 @@ void BTClearPairedDevices(BT_t *bt, uint8_t clearType)
 {
     uint8_t idx;
     uint8_t found = 0;
-    
     BTPairedDevice_t btActiveConn;
     for (idx = 0; idx < bt->pairedDevicesCount; idx++) {
         BTPairedDevice_t *btConn = &bt->pairedDevices[idx];
@@ -129,13 +128,13 @@ void BTPairedDeviceInit(
             bt->pairedDevices[deviceNumber - 1] = pairedDevice;
             bt->pairedDevicesCount++;
             EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
-            LogDebug(LOG_SOURCE_BT, "BT: Rewrite Pairing Profile %s", deviceName);
+            LogDebug(LOG_SOURCE_BT, "BT: Rewrite Pairing Profile");
         } else if (bt->pairedDevicesCount+1 < BT_MAX_DEVICE_PAIRED) {
             bt->pairedDevices[bt->pairedDevicesCount++] = pairedDevice;
             EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
-            LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile %s", deviceName);
+            LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile");
         } else {
-            LogDebug(LOG_SOURCE_BT, "BT: Ignoring Pairing Profile %s", deviceName);
+            LogDebug(LOG_SOURCE_BT, "BT: Ignoring Pairing Profile");
         }
     }
 }

@@ -28,6 +28,8 @@
 #define BMBT_HEADER_PB_STAT 2
 #define BMBT_HEADER_TEMPS 5
 #define BMBT_HEADER_DEV_NAME 6
+// This value will force the index to write to selected index - 0x40 for VMs
+#define BMBT_FORCE_VM_FLUSH 0xBB
 #define BMBT_MENU_NONE 0
 #define BMBT_MENU_MAIN 1
 #define BMBT_MENU_DASHBOARD 2

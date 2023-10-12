@@ -541,6 +541,13 @@ static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     }
+    // It is imperative that we know if the NAV is on the bus
+    // so if we see any message from it, we must consider it "found"
+    if (ibus->moduleStatus.NAV == 0) {
+        ibus->moduleStatus.NAV = 1;
+        uint8_t detectedModule = pkt[IBUS_PKT_SRC];
+        EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
+    }
 }
 
 static void IBusHandlerPDCMessage(IBus_t *ibus, uint8_t *pkt)
@@ -700,6 +707,25 @@ static void IBusHandleVMMessage(IBus_t *ibus, uint8_t *pkt)
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
         EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+        pkt[IBUS_PKT_LEN] >= 0x0F
+    ) {
+        LogRaw(
+            "\r\nIBus: VM P/N: %02X%02X%02X%02X HW: %02X SW: %02X Build: %02X/%02X\r\n",
+            pkt[4],
+            pkt[5],
+            pkt[6],
+            pkt[7],
+            pkt[9],
+            pkt[14],
+            pkt[12],
+            pkt[13]
+        );
+        if (ibus->moduleStatus.NAV == 0) {
+            ibus->gtVersion = IBUS_GT_MKII;
+        }
+        EventTriggerCallback(IBUS_EVENT_VM_IDENT_RESP, &ibus->gtVersion);
     }
 }
 
@@ -1735,13 +1761,13 @@ static void IBusInternalCommandGTWriteIndex(
     if (length > maxLength) {
         length = maxLength;
     }
-    const size_t pktLenght = length + 5;
+    const size_t pktLenght = length + 4;
     uint8_t text[pktLenght];
-    memset(text, 0x06, pktLenght);
+    memset(text, 0x00, pktLenght);
     text[0] = IBUS_CMD_GT_WRITE_NO_CURSOR;
     text[1] = indexMode;
     text[2] = 0x00;
-    text[3] = 0x40 + index;
+    text[3] = index;
     memcpy(text + 4, message, length);
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
@@ -1826,6 +1852,32 @@ void IBusCommandGTWriteIndexTMC(
  *         void
  */
 void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
+    uint8_t length = strlen(message);
+    if (length > 20) {
+        length = 20;
+    }
+    const size_t pktLenght = 20;
+    uint8_t text[pktLenght];
+    memset(text, 0x20, pktLenght);
+    text[0] = IBUS_CMD_GT_WRITE_WITH_CURSOR;
+    text[1] = IBUS_CMD_GT_WRITE_ZONE;
+    text[2] = 0x01; // Cursor at 0
+    text[3] = 0x49; // Write menu title index
+    memcpy(text + 4, message, length);
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
+}
+
+/**
+ * IBusCommandGTWriteIndexTitleNGUI()
+ *     Description:
+ *        Write the TMC title "Strip"
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *message - The text
+ *     Returns:
+ *         void
+ */
+void IBusCommandGTWriteIndexTitleNGUI(IBus_t *ibus, char *message) {
     uint8_t length = strlen(message);
     if (length > 24) {
         length = 24;

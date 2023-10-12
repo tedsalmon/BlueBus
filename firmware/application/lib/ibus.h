@@ -443,10 +443,7 @@
 #define IBUS_EVENT_LMIdentResponse 67
 #define IBUS_EVENT_TV_STATUS 68
 #define IBUS_EVENT_PDC_STATUS 69
-#define IBUS_EVENT_SENSOR_VALUE_UPDATE 70
-#define IBUS_EVENT_SCREEN_BUFFER_FLUSH 71
-#define IBUS_EVENT_GT_TELEMATICS_DATA 72
-#define IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE 73
+#define IBUS_EVENT_VM_IDENT_RESP 75
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -549,6 +546,7 @@ void IBusCommandGTWriteBusinessNavTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteIndexTMC(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteIndexTitle(IBus_t *, char *);
+void IBusCommandGTWriteIndexTitleNGUI(IBus_t *, char *);
 void IBusCommandGTWriteIndexStatic(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteTitleArea(IBus_t *, char *);
 void IBusCommandGTWriteTitleIndex(IBus_t *, char *);

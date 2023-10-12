@@ -119,6 +119,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_VM_IDENT_RESP,
+        &HandlerIBusVMDIAIdentityResponse,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE,
         &HandlerIBusBlueBusTELStatusUpdate,
         context
@@ -272,6 +277,10 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
         }
         if (newUi == CONFIG_UI_CD53 || newUi == CONFIG_UI_MIR) {
             CD53Init(context->bt, context->ibus);
+            // This will ensure that the UI is correctly set up
+            if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+                IBusCommandRADCDCRequest(context->ibus, IBUS_CDC_CMD_START_PLAYING);
+            }
         } else if (newUi == CONFIG_UI_BMBT) {
             BMBTInit(context->bt, context->ibus);
         } else if (newUi == CONFIG_UI_MID) {
@@ -1293,8 +1302,35 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
         );
         HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
     }
+/**
+ * HandlerIBusVMDIAIdentityResponse()
+ *     Description:
+ *         Identify the video module hardware and software versions
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *type - The video module type
+ *     Returns:
+ *         void
+ */
+void HandlerIBusVMDIAIdentityResponse(void *ctx, uint8_t *type)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint8_t gtType = *type;
+    if (ConfigGetNavType() != gtType) {
+        ConfigSetNavType(gtType);
+    }
+    if (context->ibus->moduleStatus.MID == 0) {
+        if (ConfigGetUIMode() != CONFIG_UI_BMBT) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT UI");
+            HandlerIBusSwitchUI(context, CONFIG_UI_BMBT);
+        }
+    } else {
+        if (ConfigGetUIMode() != CONFIG_UI_MID_BMBT) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Detected MID / BMBT UI");
+            HandlerIBusSwitchUI(context, CONFIG_UI_MID_BMBT);
+        }
+    }
 }
-
 
 /**
  * HandlerIBusVolumeChange()
@@ -1606,12 +1642,38 @@ void HandlerTimerIBusPings(void *ctx)
             break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_GT: {
-            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_MID;
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_NAV;
+            if (context->ibus->moduleStatus.NAV == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_RAD,
+                    IBUS_DEVICE_NAVE
+                );
+            } else {
+                HandlerTimerIBusPings(ctx);
+            }
+            break;
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_NAV: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_VM;
             if (context->ibus->moduleStatus.MID == 0) {
                 IBusCommandGetModuleStatus(
                     context->ibus,
                     IBUS_DEVICE_RAD,
                     IBUS_DEVICE_MID
+                );
+            } else {
+                HandlerTimerIBusPings(ctx);
+            }
+            break;
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_VM: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_MID;
+            if (context->ibus->moduleStatus.VM == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_RAD,
+                    IBUS_DEVICE_VM
                 );
             } else {
                 HandlerTimerIBusPings(ctx);
