@@ -1332,7 +1332,6 @@ void HandlerIBusVMDIAIdentityResponse(void *ctx, uint8_t *type)
     }
 }
 
-
 /**
  * HandlerIBusVolumeChange()
  *     Description:
@@ -1478,7 +1477,11 @@ void HandlerIBusModuleStatusResponse(void *ctx, uint8_t *pkt)
             uiMode != CONFIG_UI_MIR
         ) {
             // Request the Graphics Terminal Identity
-            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+            if (module == IBUS_DEVICE_VM) {
+                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_VM);
+            } else {
+                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+            }
         }
     } else if (module == IBUS_DEVICE_MID) {
         uint8_t uiMode = ConfigGetUIMode();
