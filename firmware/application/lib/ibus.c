@@ -559,6 +559,36 @@ static void IBusHandlerPDCMessage(IBus_t *ibus, uint8_t *pkt)
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS) {
         EventTriggerCallback(IBUS_EVENT_PDC_STATUS, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_SENSOR_RESPONSE) {
+        // Reinstantiate all our sensors to a value of 255 / 0xFF by default
+        IBusPDCSensorStatus_t pdcSensors;
+        memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
+        ibus->pdcSensors = pdcSensors;
+        // Ensure PDC is active -- first bit of the tenth data byte of the packet
+        if ((pkt[13] & 0x1) == 1) {
+            ibus->pdcSensors.frontLeft = pkt[9];
+            ibus->pdcSensors.frontCenterLeft = pkt[11];
+            ibus->pdcSensors.frontCenterRight = pkt[12];
+            ibus->pdcSensors.frontRight = pkt[10];
+            ibus->pdcSensors.rearLeft = pkt[5];
+            ibus->pdcSensors.rearCenterLeft = pkt[7];
+            ibus->pdcSensors.rearCenterRight = pkt[8];
+            ibus->pdcSensors.rearRight = pkt[6];
+
+            LogDebug(
+                LOG_SOURCE_IBUS,
+                "PDC distances(cm): F: %i - %i - %i - %i, R: %i - %i - %i - %i",
+                ibus->pdcSensors.frontLeft,
+                ibus->pdcSensors.frontCenterLeft,
+                ibus->pdcSensors.frontCenterRight,
+                ibus->pdcSensors.frontRight,
+                ibus->pdcSensors.rearLeft,
+                ibus->pdcSensors.rearCenterLeft,
+                ibus->pdcSensors.rearCenterRight,
+                ibus->pdcSensors.rearRight
+            );
+            EventTriggerCallback(IBUS_EVENT_PDC_SENSOR_UPDATE, pkt);
+        }
     }
 }
 
@@ -2182,6 +2212,75 @@ void IBusCommandTELIKEDisplayClear(IBus_t *ibus)
 }
 
 /**
+ * IBusCommandIKECheckControlDisplayWrite()
+ *     Description:
+ *        Send a check control message to the High OBC display
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *text - The text to display
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKECheckControlDisplayWrite(IBus_t *ibus, char *text)
+{
+    uint8_t len = strlen(text);
+    uint8_t msgLen = len + 3;
+    uint8_t msg[msgLen];
+    memset(&msg, 0, msgLen);
+    msg[0] = IBUS_CMD_IKE_CCM_WRITE_TEXT;
+    msg[1] = IBUS_DATA_IKE_CCM_WRITE_CLEAR_TEXT;
+    msg[2] = 0x00;
+    memcpy(msg + 3, text, len);
+    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, msgLen);
+}
+
+/**
+ * IBusCommandIKECheckControlDisplayClear()
+ *     Description:
+ *        Send an empty string to the High OBC display to clear it
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKECheckControlDisplayClear(IBus_t *ibus)
+{
+    IBusCommandIKECheckControlDisplayWrite(ibus, 0);
+}
+
+/**
+ * IBusCommandIKENumbericDisplayWrite()
+ *     Description:
+ *        Send a message to write the numeric display on the low OBC
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t number - The number to write to the screen
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKENumbericDisplayWrite(IBus_t *ibus, uint8_t number)
+{
+    uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, IBUS_DATA_IKE_NUMERIC_WRITE, number};
+    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
+}
+
+/**
+ * IBusCommandIKENumbericDisplayClear()
+ *     Description:
+ *     Send a message to clear the numeric display on the low OBC
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKENumbericDisplayClear(IBus_t *ibus)
+{
+    uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, IBUS_DATA_IKE_NUMERIC_CLEAR, 0x00};
+    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
+}
+
+
+/**
  * IBusCommandLMActivateBulbs()
  *     Description:
  *        Light module diagnostics: Activate bulbs
@@ -2606,6 +2705,21 @@ void IBusCommandMIDSetMode(
         msg,
         sizeof(msg)
     );
+}
+
+/**
+ * IBusCommandPDCGetSensorStatus()
+ *     Description:
+ *        Ask the PDC module for the distance reported by each sensor
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandPDCGetSensorStatus(IBus_t *ibus)
+{
+    uint8_t msg[] = {IBUS_CMD_PDC_SENSOR_REQUEST};
+    IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_PDC, msg, 1);
 }
 
 /**

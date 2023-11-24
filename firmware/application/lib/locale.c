@@ -84,6 +84,7 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Voice Assistant",
     "Call",
     "Autozoom: %s",
+    "PDC: %s",
 };
 
 static char *LOCALE_LANG_ITALIAN[] = {
@@ -164,6 +165,7 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Voice Assistant",
     "Telefonata",
     "Autozoom: %s",
+    "PDC: %s",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -244,6 +246,7 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Voice Assistant",
     "Oproep",
     "Autozoom: %s",
+    "PDC: %s",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -324,6 +327,7 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Voice Assistant",
     "Kõne",
     "Autozoom: %s",
+    "PDC: %s",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -404,6 +408,7 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Voice Assistant",
     "Call",
     "Autozoom: %s",
+    "PDC: %s",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -484,6 +489,7 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Voice Assistant",
     "Anruf",
     "Autozoom: %s",
+    "PDC: %s",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -564,6 +570,7 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Voice Assistant",
     "Llamar",
     "Autozoom: %s",
+    "PDC: %s",
 };
 
 /**
@@ -578,10 +585,10 @@ static char *LOCALE_LANG_SPANISH[] = {
 char *LocaleGetText(uint16_t stringIndex)
 {
     if (stringIndex>LOCALE_STRING_MAX_INDEX) {
-        return "Err: Missing txt";
+        return "i18n Missing";
     }
 
-    char *text = NULL;
+    char *text = 0;
     unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
 
     switch (language) {
@@ -605,9 +612,9 @@ char *LocaleGetText(uint16_t stringIndex)
             break;
     }
 
-    if ( text == NULL ) {
+    if (text == 0) {
         text = LOCALE_LANG_ENGLISH[stringIndex];
     }
-    
+
     return text;
 }
