@@ -131,6 +131,7 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
     // Changes in version 1.4.0
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 4, 0) == 1) {
         ConfigSetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM, CONFIG_SETTING_OFF);
+        ConfigSetSetting(CONFIG_SETTING_COMFORT_PDC, CONFIG_SETTING_OFF);
         LogRaw("Ran Upgrade 1.4.0\r\n");
     }
     ConfigSetFirmwareVersion(

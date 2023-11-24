@@ -158,6 +158,9 @@ void HandlerBTInit(HandlerContext_t *context)
  */
 void HandlerBTCallStatus(void *ctx, uint8_t *data)
 {
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
+        return;
+    }
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // If we were playing before the call, try to resume playback
     if (context->bt->callStatus == BT_CALL_INACTIVE &&
@@ -440,6 +443,7 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
             }
         }
         if (linkType == BT_LINK_TYPE_HFP) {
+            HandlerSetIBusTELStatus(context, HANDLER_TEL_STATUS_FORCE);
             if (hfpConfigStatus == CONFIG_SETTING_OFF) {
                 if (context->bt->type == BT_BTM_TYPE_BM83) {
                     BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
@@ -1089,6 +1093,24 @@ void HandlerTimerBTBM83AVRCPManager(void *ctx)
                 HANDLER_INT_BT_AVRCP_UPDATER
             );
         }
+    }
+}
+
+
+/**
+ * HandlerTimerBTBM83AVRCPPlaybackState()
+ *     Description:
+ *         Request the current playback status and ensure that autplay is run
+ *         correctly
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerBTBM83AVRCPPlaybackState(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bt->activeDevice.avrcpId != 0) {
     }
 }
 
