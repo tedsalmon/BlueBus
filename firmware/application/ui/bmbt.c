@@ -117,6 +117,11 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_GT_MENU_BUFFER_UPDATE,
+        &BMBTIBusGTMenuBufferUpdate,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_GTMenuSelect,
         &BMBTIBusMenuSelect,
         &Context
@@ -235,6 +240,10 @@ void BMBTDestroy()
         &BMBTIBusGTChangeUIRequest
     );
     EventUnregisterCallback(
+        IBUS_EVENT_GT_MENU_BUFFER_UPDATE,
+        &BMBTIBusGTMenuBufferUpdate
+    );
+    EventUnregisterCallback(
         IBUS_EVENT_GTMenuSelect,
         &BMBTIBusMenuSelect
     );
@@ -266,6 +275,27 @@ void BMBTDestroy()
     TimerUnregisterScheduledTask(&BMBTTimerMenuWrite);
     TimerUnregisterScheduledTask(&BMBTTimerScrollDisplay);
     memset(&Context, 0, sizeof(BMBTContext_t));
+}
+
+/**
+ * BMBTGTBufferFlush()
+ *     Description:
+ *         Flush or set the flag to flush the buffer to the menu.
+ *         For the new UI, this must be done immediately while on the old UI
+ *         we should wait for the GT to confirm the buffer writes beforehand
+ *         to ensure we don't end up with empty menu indicies
+ *     Params:
+ *         BMBTContext_t *context - The BMBT context
+ *     Returns:
+ *         void
+ */
+static void BMBTGTBufferFlush(BMBTContext_t *context)
+{
+    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
+        context->status.menuBufferStatus = BMBT_MENU_BUFFER_FLUSH;
+    } else {
+        IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    }
 }
 
 /**
@@ -418,25 +448,23 @@ static void BMBTGTWriteIndex(
 ) {
 
     uint8_t stringLength = strlen(text);
-    // Account for video module
-    if (context->ibus->moduleStatus.NAV == 0) {
-        if (stringLength < 14) {
-            stringLength = 14;
+    uint8_t newTextLength = stringLength + clearIdxs + 1;
+    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
+        if (stringLength > 14) {
+            stringLength = IBUS_DATA_GT_MKIII_MAX_IDX_LEN;
         }
-        if (index + clearIdxs < 8) {
+        if (index + clearIdxs < 7) {
             index = index + 0x40;
         }
+        newTextLength = IBUS_DATA_GT_MKIII_MAX_IDX_LEN + clearIdxs + 1;
     } else {
         index = index + 0x40;
     }
-    if (clearIdxs == BMBT_FORCE_VM_FLUSH) {
-        clearIdxs = 0;
-    }
     context->status.navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
-    uint8_t newTextLength = stringLength + clearIdxs + 1;
     char newText[newTextLength];
     memset(&newText, 0x20, newTextLength);
-    strncpy(newText, text, strlen(text));
+    strncpy(newText, text, stringLength);
+    stringLength = newTextLength - (clearIdxs + 1);
     while (stringLength < newTextLength) {
         newText[stringLength] = 0x06;
         stringLength++;
@@ -482,10 +510,15 @@ static void BMBTGTWriteTitle(BMBTContext_t *context, char *text)
  */
 static void BMBTGTWriteTitleIndex(BMBTContext_t *context, char *text)
 {
-    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI ||
-        context->ibus->moduleStatus.NAV == 0
-    ) {
-        IBusCommandGTWriteIndexTitle(context->ibus, text);
+    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
+        if (strlen(text) > IBUS_DATA_GT_MKIII_MAX_TITLE_LEN) {
+             char shortText[IBUS_DATA_GT_MKIII_MAX_TITLE_LEN + 1] = {0};
+             UtilsStrncpy(shortText, text, IBUS_DATA_GT_MKIII_MAX_TITLE_LEN + 1);
+             IBusCommandGTWriteIndexTitle(context->ibus, shortText);
+        } else {
+            IBusCommandGTWriteIndexTitle(context->ibus, text);
+        }
+        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
     } else {
         IBusCommandGTWriteIndexTitleNGUI(context->ibus, text);
     }
@@ -533,11 +566,11 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
 
 static void BMBTMenuMain(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_MAIN_MENU));
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_DASHBOARD, LocaleGetText(LOCALE_STRING_DASHBOARD), 0);
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_DEVICE_SELECTION, LocaleGetText(LOCALE_STRING_DEVICES), 0);
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS, LocaleGetText(LOCALE_STRING_SETTINGS), 6);
-    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_MAIN_MENU));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS, LocaleGetText(LOCALE_STRING_SETTINGS), 5);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_MAIN;
 }
 
@@ -636,7 +669,7 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
         IBusCommandGTWriteIndexStatic(context->ibus, 0x43, f3);
         BMBTMenuDashboardUpdateOBCValues(context);
         context->status.navIndexType = IBUS_CMD_GT_WRITE_STATIC;
-        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_STATIC);
+        BMBTGTBufferFlush(context);
     } else {
         IBusCommandGTWriteIndex(context->ibus, 0, f1);
         IBusCommandGTWriteIndex(context->ibus, 1, f2);
@@ -652,7 +685,7 @@ static void BMBTMenuDashboardUpdate(BMBTContext_t *context, char *f1, char *f2, 
         IBusCommandGTWriteIndex(context->ibus, 2, newF3);
         BMBTMenuDashboardUpdateOBCValues(context);
         context->status.navIndexType = IBUS_CMD_GT_WRITE_INDEX;
-        IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+        BMBTGTBufferFlush(context);
     }
 }
 
@@ -694,6 +727,7 @@ static void BMBTMenuDashboard(BMBTContext_t *context)
 
 static void BMBTMenuDeviceSelection(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_DEVICES));
     uint8_t idx;
     uint8_t screenIdx = 2;
     if (context->bt->discoverable == BT_STATE_ON) {
@@ -710,7 +744,7 @@ static void BMBTMenuDeviceSelection(BMBTContext_t *context)
         }
     }
     if (devicesCount == 0) {
-        BMBTGTWriteIndex(context, BMBT_MENU_IDX_CLEAR_PAIRING, LocaleGetText(LOCALE_STRING_CLEAR_PAIRINGS), 4);
+        BMBTGTWriteIndex(context, BMBT_MENU_IDX_CLEAR_PAIRING, LocaleGetText(LOCALE_STRING_CLEAR_PAIRINGS), 5);
     } else {
         BMBTGTWriteIndex(context, BMBT_MENU_IDX_CLEAR_PAIRING, LocaleGetText(LOCALE_STRING_CLEAR_PAIRINGS), 0);
     }
@@ -742,20 +776,20 @@ static void BMBTMenuDeviceSelection(BMBTContext_t *context)
             screenIdx++;
         }
     }
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_DEVICES));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_DEVICE_SELECTION;
 }
 
 static void BMBTMenuSettings(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS));
     uint8_t menuSettingsSize = sizeof(menuSettings);
     uint8_t idx;
     for (idx = 0; idx < menuSettingsSize; idx++) {
         uint8_t feedCount = 0;
         if (idx == (menuSettingsSize - 1)) {
-            feedCount = BMBT_MENU_IDX_BACK - (menuSettingsSize + 1);
+            feedCount = BMBT_MENU_IDX_BACK - menuSettingsSize;
         }
         BMBTGTWriteIndex(
             context,
@@ -764,14 +798,15 @@ static void BMBTMenuSettings(BMBTContext_t *context)
             feedCount
         );
     }
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS;
 }
 
 static void BMBTMenuSettingsAbout(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_ABOUT));
     char version[9];
     ConfigGetFirmwareVersionString(version);
     char versionString[BMBT_MENU_STRING_MAX_SIZE] = {0};
@@ -796,16 +831,16 @@ static void BMBTMenuSettingsAbout(BMBTContext_t *context)
         context,
         BMBT_MENU_IDX_SETTINGS_ABOUT_SERIAL,
         serialNumberString,
-        2
+        4
     );
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_ABOUT));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_ABOUT;
 }
 
 static void BMBTMenuSettingsAudio(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_AUDIO));
     if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
             context,
@@ -893,14 +928,14 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
             2
         );
     }
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_AUDIO));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_AUDIO;
 }
 
 static void BMBTMenuSettingsComfort(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT));
     uint8_t comfortLock = ConfigGetComfortLock();
     if (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM) {
         BMBTGTWriteIndex(
@@ -1004,14 +1039,14 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         }
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM, autoZoomText, 1);
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_COMFORT;
 }
 
 static void BMBTMenuSettingsCalling(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_CALLING));
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == 0x00) {
         BMBTGTWriteIndex(
             context,
@@ -1058,7 +1093,7 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
     );
     uint8_t volOffsetSkip = 0;
     if (context->bt->type == BT_BTM_TYPE_BC127) {
-        volOffsetSkip = 3;
+        volOffsetSkip = 4;
     }
     int8_t volumeOffset = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
     char volOffsetText[BMBT_MENU_STRING_MAX_SIZE] = {0};
@@ -1082,32 +1117,32 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
                 LocaleGetText(LOCALE_STRING_MODE_TCU),
-                2
+                3
             );
         } else if (telMode == CONFIG_SETTING_TEL_MODE_NO_MUTE) {
             BMBTGTWriteIndex(
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
                 LocaleGetText(LOCALE_STRING_MODE_NO_MUTE),
-                2
+                3
             );
         } else {
             BMBTGTWriteIndex(
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
                 LocaleGetText(LOCALE_STRING_MODE_DEFAULT),
-                2
+                3
             );
         }
     }
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_CALLING));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_CALLING;
 }
 
 static void BMBTMenuSettingsUI(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_UI));
     if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
             context,
@@ -1248,9 +1283,8 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         langStr,
         1
     );
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_UI));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_UI;
 }
 
@@ -1282,51 +1316,51 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
             uint8_t gain = (0x30 - currentVolume) / 2;
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
         }
-        BMBTGTWriteIndex(context, selectedIdx, volText, BMBT_FORCE_VM_FLUSH);
+        BMBTGTWriteIndex(context, selectedIdx, volText, 0);
         PCM51XXSetVolume(currentVolume);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_DSP_INPUT) {
         uint8_t dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
         if (dspInput == CONFIG_SETTING_OFF) {
             ConfigSetSetting(CONFIG_SETTING_DSP_INPUT_SRC, CONFIG_SETTING_DSP_INPUT_SPDIF);
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_DIGITAL), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_DIGITAL), 0);
         } else if (dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF) {
             ConfigSetSetting(CONFIG_SETTING_DSP_INPUT_SRC, CONFIG_SETTING_DSP_INPUT_ANALOG);
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_ANALOG), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_ANALOG), 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_DSP_INPUT_SRC, CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_DEFAULT), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_DSP_DEFAULT), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_AUTOPLAY) {
         if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_OFF) {
             ConfigSetSetting(CONFIG_SETTING_AUTOPLAY, CONFIG_SETTING_ON);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_AUTOPLAY_ON), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_AUTOPLAY_ON), 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_AUTOPLAY, CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_AUTOPLAY_OFF), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_AUTOPLAY_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_MANAGE_VOL) {
         if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_OFF) {
             ConfigSetSetting(CONFIG_SETTING_MANAGE_VOLUME, CONFIG_SETTING_ON);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MANAGE_VOL_ON), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MANAGE_VOL_ON), 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_MANAGE_VOLUME, CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MANAGE_VOL_OFF), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MANAGE_VOL_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL) {
         if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_OFF) {
             ConfigSetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV, CONFIG_SETTING_ON);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_REV_VOL_LOW_ON), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_REV_VOL_LOW_ON), 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV, CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_REV_VOL_LOW_OFF), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_REV_VOL_LOW_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
-        IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+        BMBTGTBufferFlush(context);
     }
 }
 
@@ -1343,15 +1377,15 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
         ConfigSetSetting(CONFIG_SETTING_COMFORT_BLINKERS, value);
         char blinkerText[BMBT_MENU_STRING_MAX_SIZE] = {0};
         snprintf(blinkerText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_BLINKERS), value);
-        BMBTGTWriteIndex(context, selectedIdx, blinkerText, BMBT_FORCE_VM_FLUSH);
+        BMBTGTWriteIndex(context, selectedIdx, blinkerText, 0);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS) {
         uint8_t value = ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS);
         if (value == CONFIG_SETTING_OFF) {
             value = CONFIG_SETTING_ON;
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_ON), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_ON), 0);
         } else {
             value = CONFIG_SETTING_OFF;
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_OFF), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_OFF), 0);
         }
         // Request cluster indicators so we can trigger the new light setting
         // when the response (0x5B) is received
@@ -1363,13 +1397,13 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             comfortLock > CONFIG_SETTING_COMFORT_LOCK_20KM
         ) {
             ConfigSetComfortLock(CONFIG_SETTING_COMFORT_LOCK_10KM);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_LOCK_10KMH), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_LOCK_10KMH), 0);
         } else if (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM) {
             ConfigSetComfortLock(CONFIG_SETTING_COMFORT_LOCK_20KM);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_LOCK_20KMH), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_LOCK_20KMH), 0);
         } else {
             ConfigSetComfortLock(CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_LOCK_OFF), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_LOCK_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_UNLOCK) {
         uint8_t comfortUnlock = ConfigGetComfortUnlock();
@@ -1377,13 +1411,13 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             comfortUnlock > CONFIG_SETTING_COMFORT_UNLOCK_POS_0
         ) {
             ConfigSetComfortUnlock(CONFIG_SETTING_COMFORT_UNLOCK_POS_1);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_UNLOCK_POS_1), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_UNLOCK_POS_1), 0);
         } else if (comfortUnlock == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
             ConfigSetComfortUnlock(CONFIG_SETTING_COMFORT_UNLOCK_POS_0);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_UNLOCK_POS_0), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_UNLOCK_POS_0), 0);
         } else {
             ConfigSetComfortUnlock(CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_UNLOCK_OFF), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_UNLOCK_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM) {
         uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
@@ -1417,12 +1451,12 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
                 );
             }
         }
-        BMBTGTWriteIndex(context, selectedIdx, autoZoomText, BMBT_FORCE_VM_FLUSH);
+        BMBTGTWriteIndex(context, selectedIdx, autoZoomText, 0);
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
-        IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+        BMBTGTBufferFlush(context);
     }
 }
 
@@ -1433,24 +1467,24 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
         if (context->bt->type == BT_BTM_TYPE_BC127) {
             if (value == 0x00) {
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
-                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), BMBT_FORCE_VM_FLUSH);
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
                 BC127CommandProfileOpen(context->bt, "HFP");
             } else {
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
                 BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
-                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), BMBT_FORCE_VM_FLUSH);
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             }
         } else {
             if (value == 0x01) {
                 BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
-                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), BMBT_FORCE_VM_FLUSH);
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             } else {
                 BTPairedDevice_t *device = 0;
                 uint8_t i = 0;
                 for (i = 0; i < BT_MAC_ID_LEN; i++) {
                     BTPairedDevice_t *tmpDev = &context->bt->pairedDevices[i];
-                    if (memcmp(context->bt->activeDevice.macId, tmpDev->macId, BT_MAC_ID_LEN) == BMBT_FORCE_VM_FLUSH) {
+                    if (memcmp(context->bt->activeDevice.macId, tmpDev->macId, BT_MAC_ID_LEN) == 0) {
                         device = tmpDev;
                     }
                 }
@@ -1462,7 +1496,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                     );
                 }
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
-                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), BMBT_FORCE_VM_FLUSH);
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
             }
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN) {
@@ -1504,7 +1538,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             context,
             BMBT_MENU_IDX_SETTINGS_CALLING_MIC_GAIN,
             micGainText,
-            BMBT_FORCE_VM_FLUSH
+            0
         );
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_VOL_OFFSET) {
         int8_t volumeOffset = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
@@ -1524,7 +1558,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             context,
             BMBT_MENU_IDX_SETTINGS_CALLING_VOL_OFFSET,
             volOffsetText,
-            BMBT_FORCE_VM_FLUSH
+            0
         );
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_MODE) {
         uint8_t telMode = ConfigGetSetting(CONFIG_SETTING_TEL_MODE);
@@ -1534,7 +1568,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
                 LocaleGetText(LOCALE_STRING_MODE_TCU),
-                BMBT_FORCE_VM_FLUSH
+                0
             );
         } else if (telMode == CONFIG_SETTING_TEL_MODE_TCU) {
             ConfigSetSetting(CONFIG_SETTING_TEL_MODE, CONFIG_SETTING_TEL_MODE_NO_MUTE);
@@ -1542,7 +1576,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
                 LocaleGetText(LOCALE_STRING_MODE_NO_MUTE),
-                BMBT_FORCE_VM_FLUSH
+                0
             );
         } else {
             ConfigSetSetting(CONFIG_SETTING_TEL_MODE, CONFIG_SETTING_TEL_MODE_DEFAULT);
@@ -1550,14 +1584,14 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
                 LocaleGetText(LOCALE_STRING_MODE_DEFAULT),
-                BMBT_FORCE_VM_FLUSH
+                0
             );
         }
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
-        IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+        BMBTGTBufferFlush(context);
     }
 }
 
@@ -1567,13 +1601,13 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         uint8_t value = ConfigGetSetting(CONFIG_SETTING_METADATA_MODE);
         if (value == 0x00) {
             value = BMBT_METADATA_MODE_PARTY;
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_METADATA_PARTY), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_METADATA_PARTY), 0);
         } else if (value == 0x01) {
             value = BMBT_METADATA_MODE_CHUNK;
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_METADATA_CHUNK), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_METADATA_CHUNK), 0);
         } else {
             value = BMBT_METADATA_MODE_OFF;
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_METADATA_OFF), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_METADATA_OFF), 0);
         }
         ConfigSetSetting(CONFIG_SETTING_METADATA_MODE, value);
         if (value != BMBT_METADATA_MODE_OFF &&
@@ -1591,16 +1625,16 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             );
             BMBTSetMainDisplayText(context, text, 0, 0);
         } else if (value == BMBT_METADATA_MODE_OFF) {
-            IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+            BMBTGTBufferFlush(context);
             BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU) {
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x00) {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x01);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_DASHBOARD), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_DASHBOARD), 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x00);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_MAIN), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_MAIN), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_TEMPS) {
         uint8_t tempMode = ConfigGetTempDisplay();
@@ -1608,12 +1642,12 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             ConfigSetTempDisplay(CONFIG_SETTING_TEMP_COOLANT);
             uint8_t valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
             BMBTIBusSensorValueUpdate((void *)context, &valueType);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_COOLANT), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_COOLANT), 0);
         } else if (tempMode == CONFIG_SETTING_TEMP_COOLANT) {
             ConfigSetTempDisplay(CONFIG_SETTING_TEMP_AMBIENT);
             uint8_t valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
             BMBTIBusSensorValueUpdate((void *)context, &valueType);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT), 0);
         } else if (
                 tempMode == CONFIG_SETTING_TEMP_AMBIENT &&
                 context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E46_Z4
@@ -1621,13 +1655,13 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             ConfigSetTempDisplay(CONFIG_SETTING_TEMP_OIL);
             uint8_t valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
             BMBTIBusSensorValueUpdate((void *)context, &valueType);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OIL), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OIL), 0);
         } else {
             // Clear the header area
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, "      ");
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
             ConfigSetTempDisplay(CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OFF), BMBT_FORCE_VM_FLUSH);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC) {
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS) == CONFIG_SETTING_ON) {
@@ -1635,7 +1669,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 context,
                 BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
                 LocaleGetText(LOCALE_STRING_DASH_OBC_OFF),
-                BMBT_FORCE_VM_FLUSH
+                0
             );
             ConfigSetSetting(
                 CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS,
@@ -1646,7 +1680,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 context,
                 BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
                 LocaleGetText(LOCALE_STRING_DASH_OBC_ON),
-                BMBT_FORCE_VM_FLUSH
+                0
             );
             ConfigSetSetting(
                 CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS,
@@ -1659,7 +1693,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 context,
                 BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF,
                 LocaleGetText(LOCALE_STRING_BMBT_OFF_OFF),
-                BMBT_FORCE_VM_FLUSH
+                0
             );
             ConfigSetSetting(CONFIG_SETTING_MONITOR_OFF, CONFIG_SETTING_OFF);
         } else {
@@ -1667,7 +1701,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 context,
                 BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF,
                 LocaleGetText(LOCALE_STRING_BMBT_OFF_ON),
-                BMBT_FORCE_VM_FLUSH
+                0
             );
             ConfigSetSetting(CONFIG_SETTING_MONITOR_OFF, CONFIG_SETTING_ON);
         }
@@ -1698,7 +1732,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         BMBTMenuSettings(context);
     }
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
-        IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+        BMBTGTBufferFlush(context);
     }
 }
 
@@ -2056,6 +2090,25 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
     }
 }
 
+/**
+ * BMBTIBusGTMenuBufferUpdate()
+ *     Description:
+ *         Flush the menu buffer if we get a buffer update from the GT
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         uint8_t *pkt - A pointer to the data packet
+ *     Returns:
+ *         void
+ */
+void BMBTIBusGTMenuBufferUpdate(void *ctx, uint8_t *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    if (context->status.menuBufferStatus == BMBT_MENU_BUFFER_FLUSH) {
+        IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+        context->status.menuBufferStatus = BMBT_MENU_BUFFER_OK;
+    }
+}
+
 void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
@@ -2092,7 +2145,7 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                         EventTriggerCallback(UIEvent_CloseConnection, 0x00);
                     }
                 }
-                IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+                BMBTGTBufferFlush(context);
                 BTCommandSetDiscoverable(context->bt, state);
             } else if (selectedIdx == BMBT_MENU_IDX_CLEAR_PAIRING) {
                 if (context->bt->type == BT_BTM_TYPE_BC127) {
@@ -2177,19 +2230,17 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
 void BMBTIBusScreenBufferFlush(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    // Ignore Zone (Header) updates
-    if (pkt[IBUS_PKT_DB1] != IBUS_CMD_GT_WRITE_ZONE) {
-        if (pkt[IBUS_PKT_DB1] != context->status.navIndexType) {
-            // Do not refresh menus on standalone Video Module setups
-            if (context->ibus->moduleStatus.NAV == 0) {
-                if (context->timerMenuIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
-                    TimerResetScheduledTask(context->menuWriteTaskId);
-                    context->timerMenuIntervals = 0;
-                }
-            } else {
-                IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
-            }
-        }
+    // If we cannot write to the display, we are not the active
+    // player, or this is a "Zone" (header) update, then ignore the message.
+    if (context->status.playerMode != BMBT_MODE_ACTIVE ||
+        context->status.displayMode != BMBT_DISPLAY_ON ||
+        pkt[IBUS_PKT_DB1] != IBUS_CMD_GT_WRITE_ZONE
+    ) {
+        return;
+    }
+    // If the update does not match our current menu state, override it
+    if (pkt[IBUS_PKT_DB1] != context->status.navIndexType) {
+        IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
     }
 }
 
@@ -2286,11 +2337,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
             context->menu == BMBT_MENU_DASHBOARD_FRESH
         ) {
             BMBTMenuDashboardUpdateOBCValues(context);
-            if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
-                IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_STATIC);
-            } else {
-                IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
-            }
+            BMBTGTBufferFlush(context);
         }
     }
 }
@@ -2568,6 +2615,9 @@ void BMBTTimerMenuWrite(void *ctx)
                         break;
                     case BMBT_MENU_SETTINGS:
                         BMBTMenuSettings(context);
+                        break;
+                    case BMBT_MENU_SETTINGS_ABOUT:
+                        BMBTMenuSettingsAbout(context);
                         break;
                     case BMBT_MENU_SETTINGS_AUDIO:
                         BMBTMenuSettingsAudio(context);

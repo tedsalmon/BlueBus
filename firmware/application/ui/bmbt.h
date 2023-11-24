@@ -28,8 +28,6 @@
 #define BMBT_HEADER_PB_STAT 2
 #define BMBT_HEADER_TEMPS 5
 #define BMBT_HEADER_DEV_NAME 6
-// This value will force the index to write to selected index - 0x40 for VMs
-#define BMBT_FORCE_VM_FLUSH 0xBB
 #define BMBT_MENU_NONE 0
 #define BMBT_MENU_MAIN 1
 #define BMBT_MENU_DASHBOARD 2
@@ -79,6 +77,9 @@
 #define BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF 4
 #define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 5
 
+#define BMBT_MENU_BUFFER_OK 0
+#define BMBT_MENU_BUFFER_FLUSH 1
+
 #define BMBT_MAIN_AREA_LEN 9
 #define BMBT_MENU_IDX_PAIRING_MODE 0
 #define BMBT_MENU_IDX_CLEAR_PAIRING 1
@@ -114,6 +115,7 @@ typedef struct BMBTStatus_t {
     uint8_t navState: 1;
     uint8_t radType: 4;
     uint8_t tvStatus: 1;
+    uint8_t menuBufferStatus: 1;
     uint8_t navIndexType;
 } BMBTStatus_t;
 
@@ -131,7 +133,7 @@ typedef struct BMBTContext_t {
     UtilsAbstractDisplayValue_t mainDisplay;
     uint8_t navZoom: 4;
     uint32_t navZoomTime;
-    
+
 } BMBTContext_t;
 
 void BMBTInit(BT_t *, IBus_t *);
@@ -145,6 +147,7 @@ void BMBTIBusBMBTButtonPress(void *, uint8_t *);
 void BMBTIBusCDChangerStatus(void *, uint8_t *);
 void BMBTIBusGTChangeUIRequest(void *, uint8_t *);
 void BMBTIKESpeedRPMUpdate(void *, uint8_t *);
+void BMBTIBusGTMenuBufferUpdate(void *, uint8_t *);
 void BMBTIBusMenuSelect(void *, uint8_t *);
 void BMBTIBusScreenBufferFlush(void *, uint8_t *);
 void BMBTIBusSensorValueUpdate(void *, uint8_t *);

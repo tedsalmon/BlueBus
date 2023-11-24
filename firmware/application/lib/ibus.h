@@ -149,7 +149,7 @@
 
 #define IBUS_CMD_GT_CHANGE_UI_REQ 0x20
 #define IBUS_CMD_GT_CHANGE_UI_RESP 0x21
-#define IBUS_CMD_GT_WRITE_RESPONSE 0x22
+#define IBUS_CMD_GT_MENU_BUFFER_STATUS 0x22
 #define IBUS_CMD_GT_WRITE_TITLE 0x23
 #define IBUS_CMD_GT_MENU_SELECT 0x31
 #define IBUS_CMD_GT_DISPLAY_RADIO_MENU 0x37
@@ -227,6 +227,8 @@
 #define IBUS_GT_MONITOR_AT_KL_R 0x10
 #define IBUS_DATA_GT_TELEMATICS_LOCALE 0x01
 #define IBUS_DATA_GT_TELEMATICS_STREET 0x02
+#define IBUS_DATA_GT_MKIII_MAX_IDX_LEN 14
+#define IBUS_DATA_GT_MKIII_MAX_TITLE_LEN 16
 
 #define IBUS_IGNITION_OFF 0x00
 #define IBUS_IGNITION_KLR 0x01
@@ -329,6 +331,7 @@
 #define IBus_MID_Button_Press 0x31
 #define IBus_MID_BTN_TEL_RIGHT_RELEASE 0x4D
 #define IBus_MID_BTN_TEL_LEFT_RELEASE 0x4C
+
 #define IBUS_PDC_DEFAULT_SENSOR_VALUE 0xFF
 
 #define IBUS_TEL_CMD_LED_STATUS 0x2B
@@ -458,6 +461,7 @@
 #define IBUS_EVENT_GT_TELEMATICS_DATA 73
 #define IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE 74
 #define IBUS_EVENT_VM_IDENT_RESP 75
+#define IBUS_EVENT_GT_MENU_BUFFER_UPDATE 76
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -471,6 +475,12 @@
 #define IBUS_TX_TIMEOUT_DATA_SENT 2
 #define IBUS_TX_TIMEOUT_WAIT 250
 
+/**
+ * IBusModuleStatus_t
+ *     Description:
+ *         This object tracks the existence of certain modules on the bus based
+ *         on traffic seen from them
+ */
 typedef struct IBusModuleStatus_t {
     uint8_t BMBT: 1;
     uint8_t DSP: 1;
