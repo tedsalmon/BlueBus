@@ -256,7 +256,9 @@ static void HandlerIBusLMActivateBulbs(
             context->lmState.comfortParkingLampsStatus = HANDLER_LM_COMF_PARKING_ON;
             break;
     }
-    if (event == HANDLER_LM_EVENT_ALL_OFF){
+    if (blinkers == HANDLER_LM_COMF_BLINK_OFF &&
+        parkingLamps == HANDLER_LM_COMF_PARKING_OFF
+    ) {
         IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
     } else {
         IBusCommandLMActivateBulbs(context->ibus, blinkers, parkingLamps);
@@ -1107,9 +1109,14 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
     // Engage ANGEL EYEZ
     if (parkingLamps == CONFIG_SETTING_ON) {
         uint8_t lightStatus = pkt[4];
-        if (CHECK_BIT(lightStatus, IBUS_LM_PARKING_SIG_BIT) == 0) {
-            HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_ON);
+        if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON ||
+            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
+            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
+            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
+        ) {
+            return;
         }
+        HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_ON);
     } else {
         if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON) {
             HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_OFF);

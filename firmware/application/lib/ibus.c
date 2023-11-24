@@ -324,10 +324,11 @@ static void IBusHandleGTMessage(IBus_t *ibus, uint8_t *pkt)
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_CHANGE_UI_REQ) {
         // Example Frame: 3B 05 FF 20 02 0C EF [Telephone Selected]
         EventTriggerCallback(IBUS_EVENT_GTChangeUIRequest, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MENU_BUFFER_STATUS) {
+        EventTriggerCallback(IBUS_EVENT_GT_MENU_BUFFER_UPDATE, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON1) {
         // The GT broadcasts an emulated version of the BMBT button press
         // command 0x48 that matches the "Phone" button on the BMBT
-        LogDebug(LOG_SOURCE_IBUS, "Emulated GT BTN Press: %02X", pkt[IBUS_PKT_DB1]);
         EventTriggerCallback(IBUS_EVENT_BMBTButton, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
         EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);

@@ -252,7 +252,9 @@
 #define IBUS_LM_LEFT_SIG_BIT 5
 #define IBUS_LM_RIGHT_SIG_BIT 6
 #define IBUS_LM_BLINK_SIG_BIT 2
-#define IBUS_LM_PARKING_SIG_BIT 0
+#define IBUS_LM_SIG_BIT_PARKING 0
+#define IBUS_LM_SIG_BIT_LOW_BEAM 1
+#define IBUS_LM_SIG_BIT_HIGH_BEAM 2
 
 // LM diagnostics activate (0x0C)
 #define IBUS_LM_BLINKER_OFF 0
