@@ -687,7 +687,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
         // If the first bit is set, the key is in position 1 at least, otherwise
         // the ignition is off
         if (ignitionStatus == IBUS_IGNITION_OFF) {
-            // store last BT device if connected
+            // Store last BT device if connected
             if (context->bt->status == BT_STATUS_CONNECTED) {
                 ConfigSetBytes(
                     CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,
@@ -695,8 +695,9 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                     BT_MAC_ID_LEN
                 );
             }
-            // Disable Telephone On
+            // Disable Telephone On and Telephone Mute
             UtilsSetPinMode(UTILS_PIN_TEL_ON, 0);
+            UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 0);
             // Set the BT module not connectable/discoverable. Disconnect all devices
             BTCommandSetConnectable(context->bt, BT_STATE_OFF);
             if (context->bt->discoverable == BT_STATE_ON) {
@@ -1538,14 +1539,16 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
  */
 void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
 {
+    if (ConfigGetValue(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
+        return;
+    }
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
     int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
 
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
-    if ((context->uiMode != CONFIG_UI_CD53 &&
-         context->uiMode != CONFIG_UI_MIR) &&
+    if ((context->uiMode != CONFIG_UI_CD53 && context->uiMode != CONFIG_UI_MIR) &&
         HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
     ) {
         uint8_t sourceSystem = IBUS_DEVICE_BMBT;
