@@ -1557,6 +1557,7 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
     if ((context->uiMode != CONFIG_UI_CD53 && context->uiMode != CONFIG_UI_MIR) &&
         HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
+
     ) {
         uint8_t sourceSystem = IBUS_DEVICE_BMBT;
         if (context->ibus->moduleStatus.MID == 1) {
@@ -1649,6 +1650,18 @@ void HandlerIBusModuleStatusResponse(void *ctx, uint8_t *pkt)
     } else if (module == IBUS_DEVICE_RAD) {
         // If the radio responds, announce that the CD Changer is present
         IBusCommandCDCAnnounce(context->ibus);
+    } else if (module == IBUS_DEVICE_DSP) {
+        if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+            return;
+        }
+        uint8_t dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
+        // Set the Input to S/PDIF once told to start playback, if enabled
+        if (dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF) {
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+        } else if (dspInput == CONFIG_SETTING_DSP_INPUT_ANALOG) {
+            // Set the Input to the radio if we are overridden
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
+        }
     }
 }
 
@@ -1811,6 +1824,19 @@ void HandlerTimerIBusPings(void *ctx)
             break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_IKE: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_DSP;
+            if (context->ibus->moduleStatus.DSP == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_RAD,
+                    IBUS_DEVICE_DSP
+                );
+            } else {
+                HandlerTimerIBusPings(ctx);
+            }
+            break;
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_DSP: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_GT;
             if (context->ibus->moduleStatus.GT == 0) {
                 IBusCommandGetModuleStatus(
