@@ -185,8 +185,8 @@ static void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
     // to be sent by the RAD (since there is no 7th disc)
     uint8_t discNumber = 0x07;
     if (context->uiMode == CONFIG_UI_BMBT) {
-        discLoaded = IBUS_CDC_DISC_LOADED_7;
-        discNumber = 0x07;
+        discLoaded = IBUS_CDC_DISC_LOADED_1;
+        discNumber = 0x01;
     }
     IBusCommandCDCStatus(
         context->ibus,
@@ -480,8 +480,8 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
     // to be sent by the RAD (since there is no 7th disc)
     uint8_t discNumber = 0x07;
     if (context->uiMode == CONFIG_UI_BMBT) {
-        discLoaded = IBUS_CDC_DISC_LOADED_7;
-        discNumber = 0x07;
+        discLoaded = IBUS_CDC_DISC_LOADED_1;
+        discNumber = 0x01;
     }
     IBusCommandCDCStatus(
         context->ibus,
