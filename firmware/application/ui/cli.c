@@ -422,9 +422,9 @@ void CLIProcess()
             char *msgBuf[delimCount];
             char *p = strtok(tmpMsg, " ");
             i = 0;
-            while (p != NULL) {
+            while (p != 0x00) {
                 msgBuf[i++] = p;
-                p = strtok(NULL, " ");
+                p = strtok(0x00, " ");
             }
             if (UtilsStricmp(msgBuf[0], "BOOTLOADER") == 0) {
                 LogRaw("Rebooting into bootloader\r\n");
