@@ -33,7 +33,7 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     Context.seekMode = HANDLER_CDC_SEEK_MODE_NONE;
     Context.lmDimmerChecksum = 0x00;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
-    Context.telStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
+    Context.telStatus = IBUS_TEL_STATUS_NONE;
     Context.btBootState = HANDLER_BT_BOOT_OK;
     memset(&Context.gmState, 0, sizeof(HandlerBodyModuleStatus_t));
     memset(&Context.lmState, 0, sizeof(HandlerLightControlStatus_t));
@@ -119,6 +119,7 @@ void HandlerUIInitiateConnection(void *ctx, unsigned char *deviceId)
         context->bt->pairedDevices[context->btSelectedDevice].macId,
         BT_MAC_ID_LEN
     );
+    BTCommandSetConnectable(context->bt, BT_STATE_ON);
 }
 
 /**

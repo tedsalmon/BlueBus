@@ -785,10 +785,10 @@ static char *LOCALE_LANG_POLISH[] = {
 char *LocaleGetText(uint16_t stringIndex)
 {
     if (stringIndex>LOCALE_STRING_MAX_INDEX) {
-        return "Err: Missing txt";
+        return "i18n Missing";
     }
 
-    char *text = NULL;
+    char *text = 0;
     unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
 
     switch (language) {
@@ -815,7 +815,7 @@ char *LocaleGetText(uint16_t stringIndex)
             break;
     }
 
-    if ( text == NULL ) {
+    if (text == 0) {
         text = LOCALE_LANG_ENGLISH[stringIndex];
     }
 

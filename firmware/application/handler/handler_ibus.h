@@ -37,15 +37,17 @@ void HandlerIBusLMRedundantData(void *, uint8_t *);
 void HandlerIBusMFLButton(void *, uint8_t *);
 void HandlerIBusModuleStatusResponse(void *, uint8_t *);
 void HandlerIBusModuleStatusRequest(void *, uint8_t *);
+void HandlerIBusPDCSensorUpdate(void *, uint8_t *);
 void HandlerIBusPDCStatus(void *, uint8_t *);
+void HandlerIBusVMDIAIdentityResponse(void *, uint8_t *);
 void HandlerIBusVolumeChange(void *, uint8_t *);
 void HandlerIBusSensorValueUpdate(void *, uint8_t *);
 void HandlerIBusTELVolumeChange(void *, uint8_t *);
-void HandlerIBusPDCUpdate(void *, uint8_t *);
 void HandlerTimerIBusCDCAnnounce(void *);
 void HandlerTimerIBusCDCSendStatus(void *);
 void HandlerTimerIBusLCMIOStatus(void *);
 void HandlerTimerIBusLightingState(void *);
+void HandlerTimerIBusPDCDistance(void *);
 void HandlerTimerIBusPings(void *);
 void HandlerTimerIBusPDCdistance(void *);
 #endif /* HANDLER_IBUS_H */

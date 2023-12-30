@@ -92,8 +92,10 @@
 #define IBUS_CDC_FUNC_SCAN_MODE 0x19
 #define IBUS_CDC_FUNC_RANDOM_MODE 0x29
 // CDC Disc Count
-#define IBUS_CDC_DISC_COUNT_1 0x01
-#define IBUS_CDC_DISC_COUNT_6 0x3F
+#define IBUS_CDC_DISC_LOADED_1 0x01
+#define IBUS_CDC_DISC_LOADED_6 0x20
+#define IBUS_CDC_DISC_LOADED_7 0x40
+#define IBUS_CDC_DISC_LOADED_ALL 0x3F
 
 // DSP
 #define IBUS_DSP_CMD_CONFIG_SET 0x36
@@ -148,7 +150,7 @@
 
 #define IBUS_CMD_GT_CHANGE_UI_REQ 0x20
 #define IBUS_CMD_GT_CHANGE_UI_RESP 0x21
-#define IBUS_CMD_GT_WRITE_RESPONSE 0x22
+#define IBUS_CMD_GT_MENU_BUFFER_STATUS 0x22
 #define IBUS_CMD_GT_WRITE_TITLE 0x23
 #define IBUS_CMD_GT_MENU_SELECT 0x31
 #define IBUS_CMD_GT_DISPLAY_RADIO_MENU 0x37
@@ -177,8 +179,12 @@
 #define IBUS_CMD_IKE_SET_REQUEST_TIME 0x01
 #define IBUS_CMD_IKE_SET_REQUEST_DATE 0x02
 #define IBUS_CMD_IKE_WRITE_NUMERIC 0x44
-#define IBUS_CMD_IKE_WRITE_TEXT 0x1A
+#define IBUS_CMD_IKE_CCM_WRITE_TEXT 0x1A
 #define IBUS_CMD_IKE_GPSTIME 0x1F
+
+#define IBUS_DATA_IKE_CCM_WRITE_CLEAR_TEXT 0x30
+#define IBUS_DATA_IKE_NUMERIC_CLEAR 0x20
+#define IBUS_DATA_IKE_NUMERIC_WRITE 0x23
 
 #define IBUS_CMD_LCM_REQ_REDUNDANT_DATA 0x53
 #define IBUS_CMD_LCM_RESP_REDUNDANT_DATA 0x54
@@ -188,8 +194,8 @@
 #define IBUS_CMD_MOD_STATUS_RESP 0x02
 
 #define IBUS_CMD_PDC_STATUS 0x07
-#define IBUS_CMD_PDC_REQUEST 0x1B
-#define IBUS_CMD_PDC_RESPONSE 0xA0
+#define IBUS_CMD_PDC_SENSOR_REQUEST 0x1B
+#define IBUS_CMD_PDC_SENSOR_RESPONSE 0xA0
 
 #define IBUS_CMD_RAD_LED_TAPE_CTRL 0x4A
 
@@ -223,6 +229,8 @@
 #define IBUS_GT_MONITOR_AT_KL_R 0x10
 #define IBUS_DATA_GT_TELEMATICS_LOCALE 0x01
 #define IBUS_DATA_GT_TELEMATICS_STREET 0x02
+#define IBUS_DATA_GT_MKIII_MAX_IDX_LEN 14
+#define IBUS_DATA_GT_MKIII_MAX_TITLE_LEN 16
 
 #define IBUS_IGNITION_OFF 0x00
 #define IBUS_IGNITION_KLR 0x01
@@ -249,7 +257,9 @@
 #define IBUS_LM_LEFT_SIG_BIT 5
 #define IBUS_LM_RIGHT_SIG_BIT 6
 #define IBUS_LM_BLINK_SIG_BIT 2
-#define IBUS_LM_PARKING_SIG_BIT 0
+#define IBUS_LM_SIG_BIT_PARKING 0
+#define IBUS_LM_SIG_BIT_LOW_BEAM 1
+#define IBUS_LM_SIG_BIT_HIGH_BEAM 2
 
 // LM diagnostics activate (0x0C)
 #define IBUS_LM_BLINKER_OFF 0
@@ -328,6 +338,8 @@
 #define IBus_MID_Button_Press 0x31
 #define IBus_MID_BTN_TEL_RIGHT_RELEASE 0x4D
 #define IBus_MID_BTN_TEL_LEFT_RELEASE 0x4C
+
+#define IBUS_PDC_DEFAULT_SENSOR_VALUE 0xFF
 
 #define IBUS_TEL_CMD_LED_STATUS 0x2B
 #define IBUS_TEL_CMD_STATUS 0x2C
@@ -450,13 +462,15 @@
 #define IBUS_EVENT_LMIdentResponse 67
 #define IBUS_EVENT_TV_STATUS 68
 #define IBUS_EVENT_PDC_STATUS 69
-#define IBUS_EVENT_PDC_UPDATE 70
+#define IBUS_EVENT_PDC_SENSOR_UPDATE 70
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 71
 #define IBUS_EVENT_SCREEN_BUFFER_FLUSH 72
 #define IBUS_EVENT_GT_TELEMATICS_DATA 73
 #define IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE 74
-#define IBUS_EVENT_TIME_UPDATE 75
-#define IBUS_EVENT_RANGE_UPDATE 76
+#define IBUS_EVENT_VM_IDENT_RESP 75
+#define IBUS_EVENT_GT_MENU_BUFFER_UPDATE 76
+#define IBUS_EVENT_TIME_UPDATE 77
+#define IBUS_EVENT_RANGE_UPDATE 78
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -470,6 +484,12 @@
 #define IBUS_TX_TIMEOUT_DATA_SENT 2
 #define IBUS_TX_TIMEOUT_WAIT 250
 
+/**
+ * IBusModuleStatus_t
+ *     Description:
+ *         This object tracks the existence of certain modules on the bus based
+ *         on traffic seen from them
+ */
 typedef struct IBusModuleStatus_t {
     uint8_t BMBT: 1;
     uint8_t DSP: 1;
@@ -477,21 +497,27 @@ typedef struct IBusModuleStatus_t {
     uint8_t IKE: 1;
     uint8_t LCM: 1;
     uint8_t MID: 1;
+    uint8_t NAV: 1;
     uint8_t RAD: 1;
     uint8_t VM: 1;
     uint8_t PDC: 1;
 } IBusModuleStatus_t;
 
-typedef struct IBusPDC_t {
-    uint8_t front_left;
-    uint8_t front_center_left;
-    uint8_t front_center_right;
-    uint8_t front_right;
-    uint8_t rear_left;
-    uint8_t rear_center_left;
-    uint8_t rear_center_right;
-    uint8_t rear_right;
-} IBusPDC_t;
+/**
+ * IBusPDCSensorStatus_t
+ *     Description:
+ *         This object tracks the PDC distances given by each sensor
+ */
+typedef struct IBusPDCSensorStatus_t {
+    uint8_t frontLeft;
+    uint8_t frontCenterLeft;
+    uint8_t frontCenterRight;
+    uint8_t frontRight;
+    uint8_t rearLeft;
+    uint8_t rearCenterLeft;
+    uint8_t rearCenterRight;
+    uint8_t rearRight;
+} IBusPDCSensorStatus_t;
 
 /**
  * IBus_t
@@ -524,9 +550,9 @@ typedef struct IBus_t {
     uint8_t oilTemperature;
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
+    IBusPDCSensorStatus_t pdcSensors;
     time_t gpsTime;
     time_t localTime;
-    IBusPDC_t pdc;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];
@@ -572,6 +598,7 @@ void IBusCommandGTWriteBusinessNavTitle(IBus_t *, char *);
 void IBusCommandGTWriteIndex(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteIndexTMC(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteIndexTitle(IBus_t *, char *);
+void IBusCommandGTWriteIndexTitleNGUI(IBus_t *, char *);
 void IBusCommandGTWriteIndexStatic(IBus_t *, uint8_t, char *);
 void IBusCommandGTWriteTitleArea(IBus_t *, char *);
 void IBusCommandGTWriteTitleIndex(IBus_t *, char *);
@@ -585,6 +612,10 @@ void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKESetDate(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELIKEDisplayWrite(IBus_t *, char *);
 void IBusCommandTELIKEDisplayClear(IBus_t *);
+void IBusCommandIKECheckControlDisplayWrite(IBus_t *, char *);
+void IBusCommandIKECheckControlDisplayClear(IBus_t *);
+void IBusCommandIKENumbericDisplayWrite(IBus_t *, uint8_t);
+void IBusCommandIKENumbericDisplayClear(IBus_t *);
 void IBusCommandLMActivateBulbs(IBus_t *, uint8_t, uint8_t);
 void IBusCommandLMGetClusterIndicators(IBus_t *);
 void IBusCommandLMGetRedundantData(IBus_t *);
@@ -594,6 +625,7 @@ void IBusCommandMIDDisplayText(IBus_t *, char *);
 void IBusCommandMIDMenuWriteMany(IBus_t *, uint8_t, uint8_t *, uint8_t);
 void IBusCommandMIDMenuWriteSingle(IBus_t *, uint8_t, char *);
 void IBusCommandMIDSetMode(IBus_t *, uint8_t, uint8_t);
+void IBusCommandPDCGetSensorStatus(IBus_t *);
 void IBusCommandRADC43ScreenModeSet(IBus_t *, uint8_t);
 void IBusCommandRADCDCRequest(IBus_t *, uint8_t);
 void IBusCommandRADClearMenu(IBus_t *);

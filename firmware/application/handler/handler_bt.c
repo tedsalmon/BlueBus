@@ -158,6 +158,9 @@ void HandlerBTInit(HandlerContext_t *context)
  */
 void HandlerBTCallStatus(void *ctx, uint8_t *data)
 {
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
+        return;
+    }
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // If we were playing before the call, try to resume playback
     if (context->bt->callStatus == BT_CALL_INACTIVE &&
@@ -427,8 +430,23 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
             ) {
                 BTCommandPlay(context->bt);
             }
+            if (context->bt->type == BT_BTM_TYPE_BM83) {
+                // Request Device Name if it is empty
+                char tmp[BT_DEVICE_NAME_LEN] = {0};
+                if (memcmp(tmp, context->bt->activeDevice.deviceName, BT_DEVICE_NAME_LEN) == 0) {
+                    ConfigSetSetting(
+                        CONFIG_SETTING_LAST_CONNECTED_DEVICE,
+                        context->btSelectedDevice
+                    );
+                    BM83CommandReadLinkedDeviceInformation(
+                        context->bt,
+                        BM83_LINKED_DEVICE_QUERY_NAME
+                    );
+                }
+            }
         }
         if (linkType == BT_LINK_TYPE_HFP) {
+            HandlerSetIBusTELStatus(context, HANDLER_TEL_STATUS_FORCE);
             if (hfpConfigStatus == CONFIG_SETTING_OFF) {
                 if (context->bt->type == BT_BTM_TYPE_BM83) {
                     BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
@@ -453,19 +471,6 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                         BC127CommandProfileOpen(
                             context->bt,
                             "PBAP"
-                        );
-                    }
-                } else if (context->bt->type == BT_BTM_TYPE_BM83) {
-                    // Request Device Name if it is empty
-                    char tmp[BT_DEVICE_NAME_LEN] = {0};
-                    if (memcmp(tmp, context->bt->activeDevice.deviceName, BT_DEVICE_NAME_LEN) == 0) {
-                        ConfigSetSetting(
-                            CONFIG_SETTING_LAST_CONNECTED_DEVICE,
-                            context->btSelectedDevice
-                        );
-                        BM83CommandReadLinkedDeviceInformation(
-                            context->bt,
-                            BM83_LINKED_DEVICE_QUERY_NAME
                         );
                     }
                 }
@@ -571,16 +576,21 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
     if (dt[BC127_AT_DATE_SEC] < 2) {
         LogDebug(
             LOG_SOURCE_BT,
-            "Setting time from BT: %d-%d-%d, %d:%d",
-            dt[BC127_AT_DATE_DAY],
-            dt[BC127_AT_DATE_MONTH],
+            "Setting time from BT: 20%d-%.2d-%.2d %.2d:%.2d",
             dt[BC127_AT_DATE_YEAR],
+            dt[BC127_AT_DATE_MONTH],
+            dt[BC127_AT_DATE_DAY],
             dt[BC127_AT_DATE_HOUR],
             dt[BC127_AT_DATE_MIN]
         );
-        IBusCommandIKESetDate(context->ibus, dt[BC127_AT_DATE_YEAR], dt[BC127_AT_DATE_MONTH], dt[BC127_AT_DATE_DAY]);
+        IBusCommandIKESetDate(
+            context->ibus,
+            dt[BC127_AT_DATE_YEAR],
+            dt[BC127_AT_DATE_MONTH],
+            dt[BC127_AT_DATE_DAY]
+        );
         IBusCommandIKESetTime(context->ibus, dt[BC127_AT_DATE_HOUR], dt[BC127_AT_DATE_MIN]);
-    } else {
+    } else if (dt[BC127_AT_DATE_SEC] < 60) {
         TimerRegisterScheduledTask(
             &HandlerTimerBTBC127RequestDateTime,
             ctx,
@@ -820,11 +830,14 @@ void HandlerTimerBTVolumeManagement(void *ctx)
     if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
         context->volumeMode != HANDLER_VOLUME_MODE_LOWERED &&
         context->bt->activeDevice.a2dpId != 0 &&
-        context->bt->type != BT_BTM_TYPE_BM83  &&
+        context->bt->type != BT_BTM_TYPE_BM83 &&
         context->bt->activeDevice.a2dpVolume != 0
     ) {
         if (context->bt->activeDevice.a2dpVolume < 127) {
-            LogWarning("BT: SET MAX VOLUME -- Currently %d", context->bt->activeDevice.a2dpVolume);
+            LogWarning(
+                "BT: Set Max Volume (%d)",
+                context->bt->activeDevice.a2dpVolume
+            );
             BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpId, "F");
             context->bt->activeDevice.a2dpVolume = 127;
         }
@@ -1084,6 +1097,24 @@ void HandlerTimerBTBM83AVRCPManager(void *ctx)
                 HANDLER_INT_BT_AVRCP_UPDATER
             );
         }
+    }
+}
+
+
+/**
+ * HandlerTimerBTBM83AVRCPPlaybackState()
+ *     Description:
+ *         Request the current playback status and ensure that autplay is run
+ *         correctly
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerBTBM83AVRCPPlaybackState(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->bt->activeDevice.avrcpId != 0) {
     }
 }
 

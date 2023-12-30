@@ -103,16 +103,16 @@ void BTCommandCallEnd(BT_t *bt)
  */
 void BTCommandDial(BT_t *bt, const char *number, const char *name)
 {
-    if (bt->activeDevice.hfpId>0) {
-        if (name != NULL && (strlen(name)>0)) {
+    if (bt->activeDevice.hfpId > 0) {
+        if (name != 0x00 && strlen(name) > 0) {
             UtilsStrncpy(bt->callerId,name,BT_CALLER_ID_FIELD_SIZE);
         } else {
             UtilsStrncpy(bt->callerId,number,BT_CALLER_ID_FIELD_SIZE);
         }
 
-        char *cleannum=bt->dialBuffer;
+        char *cleannum = bt->dialBuffer;
         uint8_t pos = 0;
-        while ((*number!=0)&&(pos<(BT_DIAL_BUFFER_FIELD_SIZE-2))) {
+        while (*number !=0 && pos < BT_DIAL_BUFFER_FIELD_SIZE - 2) {
             char c = *number;
             // ITU-T Recommendation V.250 dial command
             if ((c=='+')||(c==',')||(c=='#')||(c=='*')||(c>='0'&&c<='9')||(c>='A'&&c<='C')||(c>='a'&&c<='c')) {
@@ -122,6 +122,7 @@ void BTCommandDial(BT_t *bt, const char *number, const char *name)
         }
         cleannum[pos]=0;
         if (bt->type == BT_BTM_TYPE_BC127) {
+            // @FIX
             char command[32];
             snprintf(command, 32, "CALL %d OUTGOING %s", bt->activeDevice.hfpId, cleannum);
             BC127SendCommand(bt, command);

@@ -23,6 +23,21 @@ static const char UTILS_CHARS_LATIN[] =
 static int8_t BOARD_VERSION = -1;
 
 /**
+ * UtilsConvertCmToIn()
+ *     Description:
+ *         Convert Centimeters to the nearest whole inch
+ *     Params:
+ *         uint8_t cm - Centimeters
+ *     Returns:
+ *         uint8_t The converted and rounded value in inches
+ */
+uint8_t UtilsConvertCmToIn(uint8_t cm)
+{
+    float impVal = cm / 2.54;
+    return (int)(impVal < 0 ? (impVal - 0.5) : (impVal + 0.5));
+}
+
+/**
  * UtilsDisplayValueInit()
  *     Description:
  *         Get a blank display value struct
@@ -61,6 +76,28 @@ uint8_t UtilsGetBoardVersion()
         }
     }
     return BOARD_VERSION;
+}
+
+/**
+ * UtilsGetMinByte()
+ *     Description:
+ *         Return the smallest byte in the given pointer
+ *     Params:
+ *         uint8_t *bytes - The byte array
+ *         uint8_t length - The array length
+ *     Returns:
+ *         uint8_t The lowest value
+ */
+uint8_t UtilsGetMinByte(uint8_t *bytes, uint8_t length)
+{
+    uint8_t minValue = 255;
+    uint8_t i;
+    for (i = 0; i < length; i++) {
+        if (bytes[i] < minValue) {
+            minValue = bytes[i];
+        }
+    }
+    return minValue;
 }
 
 /**
@@ -242,7 +279,7 @@ void UtilsRemoveSubstring(char *string, const char *trash)
  */
 void UtilsReset()
 {
-    __asm__ volatile ("RESET");
+    __asm__ volatile("RESET");
 }
 
 /**

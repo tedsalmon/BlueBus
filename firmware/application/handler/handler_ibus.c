@@ -94,6 +94,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_PDC_SENSOR_UPDATE,
+        &HandlerIBusPDCSensorUpdate,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_PDC_STATUS,
         &HandlerIBusPDCStatus,
         context
@@ -119,13 +124,13 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE,
-        &HandlerIBusBlueBusTELStatusUpdate,
+        IBUS_EVENT_VM_IDENT_RESP,
+        &HandlerIBusVMDIAIdentityResponse,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_PDC_UPDATE,
-        &HandlerIBusPDCUpdate,
+        IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE,
+        &HandlerIBusBlueBusTELStatusUpdate,
         context
     );
     TimerRegisterScheduledTask(
@@ -175,19 +180,19 @@ static void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
     } else if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
         curStatus = IBUS_CDC_STAT_PLAYING;
     }
-    uint8_t discCount = IBUS_CDC_DISC_COUNT_6;
+    uint8_t discLoaded = IBUS_CDC_DISC_LOADED_ALL;
     // Report disc 7 loaded so any button press causes a CD Changer command
     // to be sent by the RAD (since there is no 7th disc)
     uint8_t discNumber = 0x07;
     if (context->uiMode == CONFIG_UI_BMBT) {
-        discCount = IBUS_CDC_DISC_COUNT_1;
+        discLoaded = IBUS_CDC_DISC_LOADED_1;
         discNumber = 0x01;
     }
     IBusCommandCDCStatus(
         context->ibus,
         curStatus,
         context->ibus->cdChangerFunction,
-        discCount,
+        discLoaded,
         discNumber
     );
     context->cdChangerLastStatus = TimerGetMillis();
@@ -251,7 +256,9 @@ static void HandlerIBusLMActivateBulbs(
             context->lmState.comfortParkingLampsStatus = HANDLER_LM_COMF_PARKING_ON;
             break;
     }
-    if (event == HANDLER_LM_EVENT_ALL_OFF){
+    if (blinkers == HANDLER_LM_COMF_BLINK_OFF &&
+        parkingLamps == HANDLER_LM_COMF_PARKING_OFF
+    ) {
         IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
     } else {
         IBusCommandLMActivateBulbs(context->ibus, blinkers, parkingLamps);
@@ -277,6 +284,10 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
         }
         if (newUi == CONFIG_UI_CD53 || newUi == CONFIG_UI_MIR) {
             CD53Init(context->bt, context->ibus);
+            // This will ensure that the UI is correctly set up
+            if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+                IBusCommandRADCDCRequest(context->ibus, IBUS_CDC_CMD_START_PLAYING);
+            }
         } else if (newUi == CONFIG_UI_BMBT) {
             BMBTInit(context->bt, context->ibus);
         } else if (newUi == CONFIG_UI_MID) {
@@ -466,19 +477,19 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
             curStatus = requestedCommand;
         }
     }
-    uint8_t discCount = IBUS_CDC_DISC_COUNT_6;
+    uint8_t discLoaded = IBUS_CDC_DISC_LOADED_ALL;
     // Report disc 7 loaded so any button press causes a CD Changer command
     // to be sent by the RAD (since there is no 7th disc)
     uint8_t discNumber = 0x07;
     if (context->uiMode == CONFIG_UI_BMBT) {
-        discCount = IBUS_CDC_DISC_COUNT_1;
+        discLoaded = IBUS_CDC_DISC_LOADED_1;
         discNumber = 0x01;
     }
     IBusCommandCDCStatus(
         context->ibus,
         curStatus,
         curFunction,
-        discCount,
+        discLoaded,
         discNumber
     );
     context->cdChangerLastPoll = TimerGetMillis();
@@ -678,7 +689,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
         // If the first bit is set, the key is in position 1 at least, otherwise
         // the ignition is off
         if (ignitionStatus == IBUS_IGNITION_OFF) {
-            // store last BT device if connected
+            // Store last BT device if connected
             if (context->bt->status == BT_STATUS_CONNECTED) {
                 ConfigSetBytes(
                     CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,
@@ -686,8 +697,9 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                     BT_MAC_ID_LEN
                 );
             }
-            // Disable Telephone On
+            // Disable Telephone On and Telephone Mute
             UtilsSetPinMode(UTILS_PIN_TEL_ON, 0);
+            UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 0);
             // Set the BT module not connectable/discoverable. Disconnect all devices
             BTCommandSetConnectable(context->bt, BT_STATE_OFF);
             if (context->bt->discoverable == BT_STATE_ON) {
@@ -1097,9 +1109,14 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
     // Engage ANGEL EYEZ
     if (parkingLamps == CONFIG_SETTING_ON) {
         uint8_t lightStatus = pkt[4];
-        if (CHECK_BIT(lightStatus, IBUS_LM_PARKING_SIG_BIT) == 0) {
-            HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_ON);
+        if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON ||
+            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
+            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
+            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
+        ) {
+            return;
         }
+        HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_ON);
     } else {
         if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON) {
             HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_OFF);
@@ -1272,6 +1289,106 @@ void HandlerIBusModuleStatusRequest(void *ctx, uint8_t *pkt)
 }
 
 /**
+ * HandlerIBusPDCSensorUpdate()
+ *     Description:
+ *         Handle PDC Distance Updates
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE) {
+        context->pdcLastStatus = TimerGetMillis();
+    }
+
+    uint8_t pdcConfig = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+    // Do nothing if the feature is disabled
+    if (pdcConfig == CONFIG_SETTING_OFF) {
+        return;
+    }
+
+    if (context->pdcActive == 0) {
+        if (pdcConfig == CONFIG_SETTING_PDC_CLUSTER ||
+            pdcConfig == CONFIG_SETTING_PDC_BOTH
+        ) {
+            if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
+                IBusCommandIKENumbericDisplayClear(context->ibus);
+            } else {
+                IBusCommandIKECheckControlDisplayClear(context->ibus);
+            }
+        }
+    } else {
+        uint8_t frontValues[4] = {
+            context->ibus->pdcSensors.frontLeft,
+            context->ibus->pdcSensors.frontCenterLeft,
+            context->ibus->pdcSensors.frontCenterRight,
+            context->ibus->pdcSensors.frontRight
+        };
+        uint8_t rearValues[4] = {
+            context->ibus->pdcSensors.rearLeft,
+            context->ibus->pdcSensors.rearCenterLeft,
+            context->ibus->pdcSensors.rearCenterRight,
+            context->ibus->pdcSensors.rearRight
+        };
+        uint8_t frontMin = UtilsGetMinByte(frontValues, 4);
+        uint8_t rearMin = UtilsGetMinByte(rearValues, 4);
+        uint8_t minimum = (rearMin > frontMin) ? frontMin : rearMin;
+        // Anything under 5cm should be considered 0
+        if (frontMin < 5) {
+            frontMin = 0;
+        }
+        if (rearMin < 5) {
+            rearMin = 0;
+        }
+
+        if (pdcConfig == CONFIG_SETTING_PDC_CLUSTER || pdcConfig == CONFIG_SETTING_PDC_BOTH) {
+            // Handle Imperial Units
+            uint8_t units = ConfigGetDistUnit();
+            if (units != 0) {
+                minimum = UtilsConvertCmToIn(minimum);
+                frontMin = UtilsConvertCmToIn(frontMin);
+                rearMin = UtilsConvertCmToIn(rearMin);
+                uint8_t i = 0;
+                for (i = 0; i < sizeof(frontValues); i++) {
+                    frontValues[i] = UtilsConvertCmToIn(frontValues[i]);
+                }
+                for (i = 0; i < sizeof(rearValues); i++) {
+                    rearValues[i] = UtilsConvertCmToIn(rearValues[i]);
+                }
+            }
+            if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
+                IBusCommandIKENumbericDisplayWrite(context->ibus, minimum);
+            } else {
+                char pdcValues[21] = {0};
+                if (frontMin >= rearMin) {
+                    snprintf(
+                        pdcValues,
+                        21,
+                        "F:%2.2d R:%2.2d %2.2d %2.2d %2.2d%s",
+                        frontMin, rearValues[0], rearValues[1], rearValues[2], rearValues[3],
+                        (units == 0) ? "cm" : "in"
+                    );
+                } else {
+                    snprintf(
+                        pdcValues,
+                        21,
+                        "F:%2.2d %2.2d %2.2d %2.2d R:%2.2d%s",
+                        rearMin, frontValues[0], frontValues[1], frontValues[2], frontValues[3],
+                        (units == 0) ? "cm" : "in"
+                    );
+                }
+                IBusCommandIKECheckControlDisplayClear(context->ibus);
+                IBusCommandIKECheckControlDisplayWrite(context->ibus, pdcValues);
+            }
+        }
+    }
+}
+
+/**
  * HandlerIBusPDCStatus()
  *     Description:
  *         Handle PDC Status Updates
@@ -1292,131 +1409,54 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
         context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
         context->bt->activeDevice.a2dpId != 0
     ) {
-        LogWarning(
-            "PDC START - LOWER VOLUME -- Currently %d",
+        LogInfo(
+            LOG_SOURCE_SYSTEM,
+            "PDC: LOWER VOLUME (%d)",
             context->bt->activeDevice.a2dpVolume
         );
         HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
     }
-    if ((context->pdcActive == 0) && (ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF)) {
+    if (context->pdcActive == 0 &&
+        ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF
+    ) {
         context->pdcActive = 1;
-        unsigned char msg[] = { IBUS_CMD_PDC_REQUEST };
-        IBusSendCommand(context->ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_PDC, msg, 1);
+        IBusCommandPDCGetSensorStatus(context->ibus);
         TimerRegisterScheduledTask(
-            &HandlerTimerIBusPDCdistance,
+            &HandlerTimerIBusPDCDistance,
             context,
             HANDLER_INT_PDC_DISTANCE
         );
-        LogInfo(LOG_SOURCE_SYSTEM, "Activating PDC timer on PDC STATUS");
+        LogInfo(LOG_SOURCE_SYSTEM, "PDC: Activate Distance Timer");
     }
 }
 
 /**
- * HandlerIBusPDCUpdate()
+ * HandlerIBusVMDIAIdentityResponse()
  *     Description:
- *         Handle PDC Distance Updates
+ *         Identify the video module hardware and software versions
  *     Params:
  *         void *ctx - The context provided at registration
- *         uint8_t *pkt - The IBus packet
+ *         uint8_t *type - The video module type
  *     Returns:
  *         void
  */
-void HandlerIBusPDCUpdate(void *ctx, uint8_t *pkt)
+void HandlerIBusVMDIAIdentityResponse(void *ctx, uint8_t *type)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    IBus_t *ibus = context->ibus;
-
-    if (ibus->gearPosition == IBUS_IKE_GEAR_REVERSE) {
-        context->pdcLastStatus = TimerGetMillis();
+    uint8_t gtType = *type;
+    if (ConfigGetNavType() != gtType) {
+        ConfigSetNavType(gtType);
     }
-
-    uint8_t pdc_config = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
-
-    if ((context->pdcActive == 0) /*|| ((ibus->pdc.front_left == 255) &&
-        (ibus->pdc.front_center_left == 255) &&
-        (ibus->pdc.front_center_right == 255) &&
-        (ibus->pdc.front_right == 255) &&
-        (ibus->pdc.rear_left == 255) &&
-        (ibus->pdc.rear_center_left == 255) &&
-        (ibus->pdc.rear_center_right == 255) &&
-        (ibus->pdc.rear_right == 255))*/ ) {
-// clear displays
-        LogInfo(LOG_SOURCE_SYSTEM, "Clearing PDC displays");
-        if (pdc_config == CONFIG_SETTING_PDC_CLUSTER || pdc_config == CONFIG_SETTING_PDC_BOTH) {
-            if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
-                unsigned char msg[] = { IBUS_CMD_IKE_WRITE_NUMERIC, 0x20, 0x00 };
-                IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
-            } else {
-// clear IKE HIGH
-                unsigned char msg[] = { IBUS_CMD_IKE_WRITE_TEXT, 0x30, 0x00 };
-                IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
-            }
-        };
-        if (pdc_config == CONFIG_SETTING_PDC_RADIO || pdc_config == CONFIG_SETTING_PDC_BOTH) {
-            // send to BMBT
+    if (context->ibus->moduleStatus.MID == 0) {
+        if (ConfigGetUIMode() != CONFIG_UI_BMBT) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Detected BMBT UI");
+            HandlerIBusSwitchUI(context, CONFIG_UI_BMBT);
         }
     } else {
-#define MIN(a,b) (((a)<(b))?(a):(b))
-        LogInfo(LOG_SOURCE_SYSTEM, "Writing PDC displays");
-        uint8_t unit = ConfigGetDistUnit();
-        float koef = (unit==0)?1:2.54;
-
-        uint8_t fm = 255;
-        uint8_t rm = 255;
-        uint8_t min_dist = 255;
-
-        fm = MIN(ibus->pdc.front_left, fm);
-        fm = MIN(ibus->pdc.front_center_left, fm);
-        fm = MIN(ibus->pdc.front_center_right, fm);
-        fm = MIN(ibus->pdc.front_right, fm);
-        rm = MIN(ibus->pdc.rear_left, rm);
-        rm = MIN(ibus->pdc.rear_center_left, rm);
-        rm = MIN(ibus->pdc.rear_center_right, rm);
-        rm = MIN(ibus->pdc.rear_right, rm);
-
-        LogInfo(LOG_SOURCE_SYSTEM, "Min PDC to display in cm: (F:%d,R:%d)", fm, rm);
-        if (fm < 5) {
-            fm = 0;
+        if (ConfigGetUIMode() != CONFIG_UI_MID_BMBT) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Detected MID / BMBT UI");
+            HandlerIBusSwitchUI(context, CONFIG_UI_MID_BMBT);
         }
-
-        if (rm < 5) {
-            rm = 0;
-        }
-
-        min_dist = MIN(fm,rm);
-
-        if (pdc_config == CONFIG_SETTING_PDC_CLUSTER || pdc_config == CONFIG_SETTING_PDC_BOTH) {
-        // send to cluster ( small or large )
-            if (unit != 0) {
-                // convert to inch for Imperial
-                min_dist = min_dist / 2.54;
-            }
-
-            if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
-// display on LOW IKE
-                min_dist = MIN(99, min_dist);
-                LogInfo(LOG_SOURCE_SYSTEM, "Min PDC to IKE LOW : %d", min_dist);
-
-                unsigned char msg[] = { IBUS_CMD_IKE_WRITE_NUMERIC, 0x23, (((int)(min_dist/10))<<4) + (min_dist%10) };
-                IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 3 );
-            } else {
-// display on HIGH IKE
-                char disp[21]={0};
-                if (fm>=rm) {
-                    snprintf(disp, 21, "F:%2.2d R:%2.2d %2.2d %2.2d %2.2d%s", MIN(99, (int) (fm / koef)), MIN(99, (int) (ibus->pdc.rear_left / koef)), MIN(99, (int) (ibus->pdc.rear_center_left / koef)), MIN(99, (int) (ibus->pdc.rear_center_right / koef)), MIN(99, (int) (ibus->pdc.rear_right / koef)), (unit==0)?"cm":"in");
-                } else {
-                    snprintf(disp, 21, "F:%2.2d %2.2d %2.2d %2.2d R:%2.2d%s", MIN(99, (int) (ibus->pdc.front_left / koef)), MIN(99, (int) (ibus->pdc.front_center_left / koef)), MIN(99, (int) (ibus->pdc.front_center_right / koef)), MIN(99, (int) (ibus->pdc.front_right / koef)), MIN(99, (int) (rm / koef)), (unit==0)?"cm":"in");
-                };
-                LogInfo(LOG_SOURCE_SYSTEM, "PDC to IKE HIGH : %s", disp);
-                unsigned char msg[24] = { IBUS_CMD_IKE_WRITE_TEXT, 0x30, 0x00 };
-                memcpy(msg+3, disp, 20);
-                IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, 23 );
-            }
-        }
-    };
-    if (pdc_config == CONFIG_SETTING_PDC_RADIO || pdc_config == CONFIG_SETTING_PDC_BOTH) {
-// send to BMBT
-
     }
 }
 
@@ -1469,41 +1509,25 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (*type == IBUS_SENSOR_VALUE_GEAR_POS) {
         context->gearLastStatus = TimerGetMillis();
-
-        if ((context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE) &&
-//            (context->ibus->moduleStatus.PDC == 1) &&
-            (context->pdcActive == 0) &&
-            (ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF))
-        {
+        if (context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE &&
+            context->pdcActive == 0 &&
+            ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF
+        ) {
             context->pdcActive = 1;
-            unsigned char msg[] = { IBUS_CMD_PDC_REQUEST };
-            IBusSendCommand(context->ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_PDC, msg, 1);
+            IBusCommandPDCGetSensorStatus(context->ibus);
             TimerRegisterScheduledTask(
-                &HandlerTimerIBusPDCdistance,
+                &HandlerTimerIBusPDCDistance,
                 context,
                 HANDLER_INT_PDC_DISTANCE
             );
-            LogInfo(LOG_SOURCE_SYSTEM, "Activating PDC timer, ON GEAR CHANGE");
         }
-
-        if ((context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE) &&
-//            (context->ibus->moduleStatus.PDC == 1) &&
-            (context->pdcActive == 1) &&
-            (ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF))
-        {
-            LogInfo(LOG_SOURCE_SYSTEM, "Disabling PDC timer ON GEAR CHANGE");
-            TimerUnregisterScheduledTask(&HandlerTimerIBusPDCdistance);
+        if (context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE &&
+            context->pdcActive == 1
+        ) {
+            TimerUnregisterScheduledTask(&HandlerTimerIBusPDCDistance);
             context->pdcActive = 0;
+            HandlerIBusPDCSensorUpdate(ctx, 0);
             context->pdcLastStatus = 0;
-            context->ibus->pdc.front_left=255;
-            context->ibus->pdc.front_center_left=255;
-            context->ibus->pdc.front_center_right=255;
-            context->ibus->pdc.front_right=255;
-            context->ibus->pdc.rear_left=255;
-            context->ibus->pdc.rear_center_left=255;
-            context->ibus->pdc.rear_center_right=255;
-            context->ibus->pdc.rear_right=255;
-            EventTriggerCallback(IBUS_EVENT_PDC_UPDATE, NULL);
         }
     }
 }
@@ -1522,15 +1546,18 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
  */
 void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
 {
+    if (ConfigGetValue(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
+        return;
+    }
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
     int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
 
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
-    if ((context->uiMode != CONFIG_UI_CD53 &&
-         context->uiMode != CONFIG_UI_MIR) &&
+    if ((context->uiMode != CONFIG_UI_CD53 && context->uiMode != CONFIG_UI_MIR) &&
         HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
+
     ) {
         uint8_t sourceSystem = IBUS_DEVICE_BMBT;
         if (context->ibus->moduleStatus.MID == 1) {
@@ -1601,7 +1628,11 @@ void HandlerIBusModuleStatusResponse(void *ctx, uint8_t *pkt)
             uiMode != CONFIG_UI_MIR
         ) {
             // Request the Graphics Terminal Identity
-            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+            if (module == IBUS_DEVICE_VM) {
+                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_VM);
+            } else {
+                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+            }
         }
     } else if (module == IBUS_DEVICE_MID) {
         uint8_t uiMode = ConfigGetUIMode();
@@ -1619,6 +1650,18 @@ void HandlerIBusModuleStatusResponse(void *ctx, uint8_t *pkt)
     } else if (module == IBUS_DEVICE_RAD) {
         // If the radio responds, announce that the CD Changer is present
         IBusCommandCDCAnnounce(context->ibus);
+    } else if (module == IBUS_DEVICE_DSP) {
+        if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+            return;
+        }
+        uint8_t dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
+        // Set the Input to S/PDIF once told to start playback, if enabled
+        if (dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF) {
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
+        } else if (dspInput == CONFIG_SETTING_DSP_INPUT_ANALOG) {
+            // Set the Input to the radio if we are overridden
+            IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
+        }
     }
 }
 
@@ -1726,6 +1769,34 @@ void HandlerTimerIBusLightingState(void *ctx)
 }
 
 /**
+ * HandlerTimerIBusPDCDistance()
+ *     Description:
+ *         While in reverse, request detailed distances from PDC
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerIBusPDCDistance(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->pdcActive != 1 ||
+        (
+            context->pdcLastStatus != 0 &&
+            context->pdcLastStatus + 2000 < TimerGetMillis()
+        )
+    ) {
+        TimerUnregisterScheduledTask(&HandlerTimerIBusPDCDistance);
+        if (context->pdcActive == 1) {
+            context->pdcActive = 0;
+            HandlerIBusPDCSensorUpdate(ctx, 0);
+        }
+    } else {
+        IBusCommandPDCGetSensorStatus(context->ibus);
+    }
+}
+
+/**
  * HandlerTimerIBusPings()
  *     Description:
  *         Request various pongs from different modules. Also send the TEL
@@ -1753,6 +1824,19 @@ void HandlerTimerIBusPings(void *ctx)
             break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_IKE: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_DSP;
+            if (context->ibus->moduleStatus.DSP == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_RAD,
+                    IBUS_DEVICE_DSP
+                );
+            } else {
+                HandlerTimerIBusPings(ctx);
+            }
+            break;
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_DSP: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_GT;
             if (context->ibus->moduleStatus.GT == 0) {
                 IBusCommandGetModuleStatus(
@@ -1766,12 +1850,38 @@ void HandlerTimerIBusPings(void *ctx)
             break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_GT: {
-            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_MID;
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_NAV;
+            if (context->ibus->moduleStatus.NAV == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_RAD,
+                    IBUS_DEVICE_NAVE
+                );
+            } else {
+                HandlerTimerIBusPings(ctx);
+            }
+            break;
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_NAV: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_VM;
             if (context->ibus->moduleStatus.MID == 0) {
                 IBusCommandGetModuleStatus(
                     context->ibus,
                     IBUS_DEVICE_RAD,
                     IBUS_DEVICE_MID
+                );
+            } else {
+                HandlerTimerIBusPings(ctx);
+            }
+            break;
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_VM: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_MID;
+            if (context->ibus->moduleStatus.VM == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_RAD,
+                    IBUS_DEVICE_VM
                 );
             } else {
                 HandlerTimerIBusPings(ctx);
@@ -1825,42 +1935,5 @@ void HandlerTimerIBusPings(void *ctx)
             TimerUnregisterScheduledTask(&HandlerTimerIBusPings);
             break;
         }
-    }
-}
-
-/**
- * HandlerTimerIBusPDCdistance()
- *     Description:
- *         While in reverse, request detailed distances from PDC
- *     Params:
- *         void *ctx - The context provided at registration
- *     Returns:
- *         void
- */
-
-void HandlerTimerIBusPDCdistance(void *ctx) {
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-
-    if ((context->pdcActive != 1) || (
-        (context->pdcLastStatus != 0) &&
-        ((context->pdcLastStatus + 2000)<TimerGetMillis()))) {
-// stop polling after 2 seconds of not being in Reverse
-        LogInfo(LOG_SOURCE_SYSTEM, "Disabling PDC timer");
-        TimerUnregisterScheduledTask(&HandlerTimerIBusPDCdistance);
-        context->pdcActive = 0;
-        context->pdcLastStatus = 0;
-        context->ibus->pdc.front_left=255;
-        context->ibus->pdc.front_center_left=255;
-        context->ibus->pdc.front_center_right=255;
-        context->ibus->pdc.front_right=255;
-        context->ibus->pdc.rear_left=255;
-        context->ibus->pdc.rear_center_left=255;
-        context->ibus->pdc.rear_center_right=255;
-        context->ibus->pdc.rear_right=255;
-        EventTriggerCallback(IBUS_EVENT_PDC_UPDATE, NULL);
-    } else {
-        LogInfo(LOG_SOURCE_SYSTEM, "Refreshing PDC distance");
-        unsigned char msg[] = { IBUS_CMD_PDC_REQUEST };
-        IBusSendCommand(context->ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_PDC, msg, 1);
     }
 }

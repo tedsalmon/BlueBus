@@ -63,6 +63,11 @@ void CD53Init(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_IKEIgnitionStatus,
+        &CD53IBusIgnitionStatus,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_MFLButton,
         &CD53IBusMFLButton,
         &Context
@@ -126,6 +131,10 @@ void CD53Destroy()
     EventUnregisterCallback(
         IBUS_EVENT_CDStatusRequest,
         &CD53IBusCDChangerStatus
+    );
+    EventUnregisterCallback(
+        IBUS_EVENT_IKEIgnitionStatus,
+        &CD53IBusIgnitionStatus
     );
     EventUnregisterCallback(
         IBUS_EVENT_MFLButton,
@@ -591,6 +600,30 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
         requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
     ) {
         CD53HandleUIButtons(context, pkt);
+    }
+}
+
+/**
+ * CD53IBusIgnitionStatus()
+ *     Description:
+ *         Sanity check to ensure that we do not display text once the
+ *         ignition is turned off. I had a philosophical debate about
+ *         adding an additional event handler versus just `return` in
+ *         CD53TimerDisplay(). It is just cleaner to update the state, if
+ *         required, in a bespoke handler.
+ *     Params:
+ *         void *ctx - A void pointer to the CD53Context_t struct
+ *         unsigned char *pkt - The update packet
+ *     Returns:
+ *         void
+ */
+void CD53IBusIgnitionStatus(void *ctx, unsigned char *pkt)
+{
+    CD53Context_t *context = (CD53Context_t *) ctx;
+    uint8_t ignitionStatus = pkt[0];
+    if (ignitionStatus == IBUS_IGNITION_OFF && context->mode != CD53_MODE_OFF) {
+        IBusCommandTELIKEDisplayClear(context->ibus);
+        context->mode = CD53_MODE_OFF;
     }
 }
 

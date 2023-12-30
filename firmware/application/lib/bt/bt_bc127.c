@@ -63,7 +63,7 @@ void BC127ClearPairingErrors(BT_t *bt)
  */
 void BC127CommandAT(BT_t *bt, char *cmd)
 {
-    uint8_t commandLength = 10 + strlen(cmd);
+    uint8_t commandLength = strlen(cmd) + 9;
     char command[commandLength];
     memset(command, 0, commandLength);
     snprintf(
@@ -1215,9 +1215,9 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         memset(cidDataBuf, 0, sizeof(cidDataBuf));
         char delimeter[] = ",";
         char *p = strtok(cidData, delimeter);
-        while (p != NULL) {
+        while (p !=  0x00) {
             cidDataBuf[cidDelimCounter++] = p;
-            p = strtok(NULL, delimeter);
+            p = strtok(0x00, delimeter);
         }
         // Set and clean up the variables to hold the new caller ID text
         uint16_t cidLen = strlen(cidDataBuf[0]);
@@ -1816,9 +1816,9 @@ void BC127Process(BT_t *bt)
         char delimeter[] = " ";
         char *p = strtok(tmpMsg, delimeter);
         i = 0;
-        while (p != NULL) {
+        while (p != 0x00) {
             msgBuf[i++] = p;
-            p = strtok(NULL, delimeter);
+            p = strtok(0x00, delimeter);
         }
         LogDebug(LOG_SOURCE_BT, "BT: R: '%s'", msg);
         if (strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {
