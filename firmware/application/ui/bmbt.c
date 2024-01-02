@@ -1266,6 +1266,9 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         case CONFIG_SETTING_LANGUAGE_SPANISH:
             strncpy(localeName, "ES", 2);
             break;
+        case CONFIG_SETTING_LANGUAGE_POLISH:
+            strncpy(localeName, "PL", 2);
+            break;
         case CONFIG_SETTING_LANGUAGE_FRENCH:
             strncpy(localeName, "FR", 2);
             break;
@@ -1723,6 +1726,8 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_RUSSIAN) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_SPANISH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_SPANISH) {
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_POLISH;
+        } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_POLISH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_FRENCH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_FRENCH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_DUTCH;
