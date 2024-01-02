@@ -1289,6 +1289,21 @@ uint8_t IBusGetConfigDistance(uint8_t *packet)
 }
 
 /**
+ * IBusGetConfigLanguage()
+ *     Description:
+ *        Get the configured Language
+ *     Params:
+ *         uint8_t *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - the language
+ */
+uint8_t IBusGetConfigLanguage(uint8_t *packet)
+{
+    uint8_t lang = packet[4] & 0x0F;
+    return lang;
+}
+
+/**
  * IBusCommandBlueBusSetStatus()
  *     Description:
  *        Sends a sub-status command and value to the local broadcast address
