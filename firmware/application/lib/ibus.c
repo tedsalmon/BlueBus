@@ -55,6 +55,10 @@ IBus_t IBusInit()
     memset(ibus.telematicsStreet, 0, sizeof(ibus.telematicsStreet));
     memset(ibus.telematicsLatitude, 0, sizeof(ibus.telematicsLatitude));
     memset(ibus.telematicsLongtitude, 0, sizeof(ibus.telematicsLongtitude));
+    // Instantiate all our sensors to a value of 255 / 0xFF by default
+    IBusPDCSensorStatus_t pdcSensors;
+    memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
+    ibus.pdcSensors = pdcSensors;
     ibus.rxBufferIdx = 0;
     ibus.rxLastStamp = 0;
     ibus.txBufferReadIdx = 0;
@@ -89,6 +93,10 @@ static void IBusHandleModuleStatus(IBus_t *ibus, uint8_t module)
         ibus->moduleStatus.GT = 1;
         LogInfo(LOG_SOURCE_IBUS, "GT Detected");
         detectedModule = IBUS_DEVICE_GT;
+    } else if (module == IBUS_DEVICE_NAVE && ibus->moduleStatus.NAV == 0) {
+        ibus->moduleStatus.NAV = 1;
+        LogInfo(LOG_SOURCE_IBUS, "NAV Detected");
+        detectedModule = IBUS_DEVICE_NAVE;
     } else if (module == IBUS_DEVICE_VM && ibus->moduleStatus.VM == 0) {
         ibus->moduleStatus.VM = 1;
         LogInfo(LOG_SOURCE_IBUS, "VM Detected");
@@ -316,10 +324,11 @@ static void IBusHandleGTMessage(IBus_t *ibus, uint8_t *pkt)
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_CHANGE_UI_REQ) {
         // Example Frame: 3B 05 FF 20 02 0C EF [Telephone Selected]
         EventTriggerCallback(IBUS_EVENT_GTChangeUIRequest, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MENU_BUFFER_STATUS) {
+        EventTriggerCallback(IBUS_EVENT_GT_MENU_BUFFER_UPDATE, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON1) {
         // The GT broadcasts an emulated version of the BMBT button press
         // command 0x48 that matches the "Phone" button on the BMBT
-        LogDebug(LOG_SOURCE_IBUS, "Emulated GT BTN Press: %02X", pkt[IBUS_PKT_DB1]);
         EventTriggerCallback(IBUS_EVENT_BMBTButton, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
         EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
@@ -523,6 +532,29 @@ static void IBusHandleMIDMessage(IBus_t *ibus, uint8_t *pkt)
     }
 }
 
+/**
+ * IBusHandleNAVMessage()
+ *     Description:
+ *         Handle any messages received from the non-Jap Navigation Computer
+ *     Params:
+ *         uint8_t *pkt - The frame received on the IBus
+ *     Returns:
+ *         None
+ */
+static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
+{
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
+    }
+    // It is imperative that we know if the NAV is on the bus
+    // so if we see any message from it, we must consider it "found"
+    if (ibus->moduleStatus.NAV == 0) {
+        ibus->moduleStatus.NAV = 1;
+        uint8_t detectedModule = pkt[IBUS_PKT_SRC];
+        EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
+    }
+}
+
 static void IBusHandlerPDCMessage(IBus_t *ibus, uint8_t *pkt)
 {
     // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
@@ -532,6 +564,36 @@ static void IBusHandlerPDCMessage(IBus_t *ibus, uint8_t *pkt)
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS) {
         EventTriggerCallback(IBUS_EVENT_PDC_STATUS, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_SENSOR_RESPONSE) {
+        // Reinstantiate all our sensors to a value of 255 / 0xFF by default
+        IBusPDCSensorStatus_t pdcSensors;
+        memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
+        ibus->pdcSensors = pdcSensors;
+        // Ensure PDC is active -- first bit of the tenth data byte of the packet
+        if ((pkt[13] & 0x1) == 1) {
+            ibus->pdcSensors.frontLeft = pkt[9];
+            ibus->pdcSensors.frontCenterLeft = pkt[11];
+            ibus->pdcSensors.frontCenterRight = pkt[12];
+            ibus->pdcSensors.frontRight = pkt[10];
+            ibus->pdcSensors.rearLeft = pkt[5];
+            ibus->pdcSensors.rearCenterLeft = pkt[7];
+            ibus->pdcSensors.rearCenterRight = pkt[8];
+            ibus->pdcSensors.rearRight = pkt[6];
+
+            LogDebug(
+                LOG_SOURCE_IBUS,
+                "PDC distances(cm): F: %i - %i - %i - %i, R: %i - %i - %i - %i",
+                ibus->pdcSensors.frontLeft,
+                ibus->pdcSensors.frontCenterLeft,
+                ibus->pdcSensors.frontCenterRight,
+                ibus->pdcSensors.frontRight,
+                ibus->pdcSensors.rearLeft,
+                ibus->pdcSensors.rearCenterLeft,
+                ibus->pdcSensors.rearCenterRight,
+                ibus->pdcSensors.rearRight
+            );
+            EventTriggerCallback(IBUS_EVENT_PDC_SENSOR_UPDATE, pkt);
+        }
     }
 }
 
@@ -587,7 +649,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_DISPLAY_RADIO_MENU) {
             EventTriggerCallback(IBUS_EVENT_RADDisplayMenu, pkt);
         }
-        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_INDEX &&
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_WITH_CURSOR &&
             pkt[IBUS_PKT_DB2] == 0x01 &&
             pkt[IBUS_PKT_DB3] == 0x00
         ) {
@@ -680,6 +742,25 @@ static void IBusHandleVMMessage(IBus_t *ibus, uint8_t *pkt)
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
         EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+        pkt[IBUS_PKT_LEN] >= 0x0F
+    ) {
+        LogRaw(
+            "\r\nIBus: VM P/N: %02X%02X%02X%02X HW: %02X SW: %02X Build: %02X/%02X\r\n",
+            pkt[4],
+            pkt[5],
+            pkt[6],
+            pkt[7],
+            pkt[9],
+            pkt[14],
+            pkt[12],
+            pkt[13]
+        );
+        if (ibus->moduleStatus.NAV == 0) {
+            ibus->gtVersion = IBUS_GT_MKII;
+        }
+        EventTriggerCallback(IBUS_EVENT_VM_IDENT_RESP, &ibus->gtVersion);
     }
 }
 
@@ -777,6 +858,9 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_MID) {
                         IBusHandleMIDMessage(ibus, pkt);
+                    }
+                    if (srcSystem == IBUS_DEVICE_NAVE) {
+                        IBusHandleNAVMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_MFL) {
                         IBusHandleMFLMessage(ibus, pkt);
@@ -1712,13 +1796,13 @@ static void IBusInternalCommandGTWriteIndex(
     if (length > maxLength) {
         length = maxLength;
     }
-    const size_t pktLenght = length + 5;
+    const size_t pktLenght = length + 4;
     uint8_t text[pktLenght];
-    memset(text, 0x06, pktLenght);
+    memset(text, 0x00, pktLenght);
     text[0] = IBUS_CMD_GT_WRITE_NO_CURSOR;
     text[1] = indexMode;
     text[2] = 0x00;
-    text[3] = 0x40 + index;
+    text[3] = index;
     memcpy(text + 4, message, length);
     IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
 }
@@ -1804,8 +1888,34 @@ void IBusCommandGTWriteIndexTMC(
  */
 void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     uint8_t length = strlen(message);
-    if (length > 15) {
-        length = 15;
+    if (length > 20) {
+        length = 20;
+    }
+    const size_t pktLenght = 20;
+    uint8_t text[pktLenght];
+    memset(text, 0x20, pktLenght);
+    text[0] = IBUS_CMD_GT_WRITE_WITH_CURSOR;
+    text[1] = IBUS_CMD_GT_WRITE_ZONE;
+    text[2] = 0x01; // Cursor at 0
+    text[3] = 0x49; // Write menu title index
+    memcpy(text + 4, message, length);
+    IBusSendCommand(ibus, IBUS_DEVICE_RAD, IBUS_DEVICE_GT, text, pktLenght);
+}
+
+/**
+ * IBusCommandGTWriteIndexTitleNGUI()
+ *     Description:
+ *        Write the TMC title "Strip"
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *message - The text
+ *     Returns:
+ *         void
+ */
+void IBusCommandGTWriteIndexTitleNGUI(IBus_t *ibus, char *message) {
+    uint8_t length = strlen(message);
+    if (length > 24) {
+        length = 24;
     }
     const size_t pktLenght = length + 6;
     uint8_t text[pktLenght];
@@ -2105,6 +2215,75 @@ void IBusCommandTELIKEDisplayClear(IBus_t *ibus)
 {
     IBusCommandTELIKEDisplayWrite(ibus, 0);
 }
+
+/**
+ * IBusCommandIKECheckControlDisplayWrite()
+ *     Description:
+ *        Send a check control message to the High OBC display
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *text - The text to display
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKECheckControlDisplayWrite(IBus_t *ibus, char *text)
+{
+    uint8_t len = strlen(text);
+    uint8_t msgLen = len + 3;
+    uint8_t msg[msgLen];
+    memset(&msg, 0, msgLen);
+    msg[0] = IBUS_CMD_IKE_CCM_WRITE_TEXT;
+    msg[1] = IBUS_DATA_IKE_CCM_WRITE_CLEAR_TEXT;
+    msg[2] = 0x00;
+    memcpy(msg + 3, text, len);
+    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, msgLen);
+}
+
+/**
+ * IBusCommandIKECheckControlDisplayClear()
+ *     Description:
+ *        Send an empty string to the High OBC display to clear it
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKECheckControlDisplayClear(IBus_t *ibus)
+{
+    IBusCommandIKECheckControlDisplayWrite(ibus, 0);
+}
+
+/**
+ * IBusCommandIKENumbericDisplayWrite()
+ *     Description:
+ *        Send a message to write the numeric display on the low OBC
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t number - The number to write to the screen
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKENumbericDisplayWrite(IBus_t *ibus, uint8_t number)
+{
+    uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, IBUS_DATA_IKE_NUMERIC_WRITE, number};
+    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
+}
+
+/**
+ * IBusCommandIKENumbericDisplayClear()
+ *     Description:
+ *     Send a message to clear the numeric display on the low OBC
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandIKENumbericDisplayClear(IBus_t *ibus)
+{
+    uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, IBUS_DATA_IKE_NUMERIC_CLEAR, 0x00};
+    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
+}
+
 
 /**
  * IBusCommandLMActivateBulbs()
@@ -2531,6 +2710,21 @@ void IBusCommandMIDSetMode(
         msg,
         sizeof(msg)
     );
+}
+
+/**
+ * IBusCommandPDCGetSensorStatus()
+ *     Description:
+ *        Ask the PDC module for the distance reported by each sensor
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandPDCGetSensorStatus(IBus_t *ibus)
+{
+    uint8_t msg[] = {IBUS_CMD_PDC_SENSOR_REQUEST};
+    IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_PDC, msg, 1);
 }
 
 /**

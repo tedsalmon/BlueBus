@@ -259,6 +259,18 @@ void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
         }
     } else if (UtilsStricmp(msgBuf[1], "LIST") == 0) {
         BM83CommandReadPairedDevices(cli.bt);
+    } else if (UtilsStricmp(msgBuf[1], "INFO") == 0) {
+        uint8_t database = UtilsStrToHex(msgBuf[3]);
+        if (UtilsStricmp(msgBuf[2], "NAME") == 0) {
+            uint8_t cmd[] = {0x16, database, 0x00};
+            BM83SendCommand(cli.bt, cmd, sizeof(cmd));
+        } else if (UtilsStricmp(msgBuf[2], "A2DP") == 0) {
+            uint8_t cmd[] = {0x16, database, 0x06};
+            BM83SendCommand(cli.bt, cmd, sizeof(cmd));
+        } else if (UtilsStricmp(msgBuf[2], "AVR") == 0) {
+            uint8_t cmd[] = {0x16, database, 0x03};
+            BM83SendCommand(cli.bt, cmd, sizeof(cmd));
+        }
     } else if (UtilsStricmp(msgBuf[1], "STATUS") == 0) {
         BM83CommandReadLinkStatus(cli.bt);
     } else if (UtilsStricmp(msgBuf[1], "PAIR") == 0) {
@@ -410,9 +422,9 @@ void CLIProcess()
             char *msgBuf[delimCount];
             char *p = strtok(tmpMsg, " ");
             i = 0;
-            while (p != NULL) {
+            while (p != 0x00) {
                 msgBuf[i++] = p;
-                p = strtok(NULL, " ");
+                p = strtok(0x00, " ");
             }
             if (UtilsStricmp(msgBuf[0], "BOOTLOADER") == 0) {
                 LogRaw("Rebooting into bootloader\r\n");

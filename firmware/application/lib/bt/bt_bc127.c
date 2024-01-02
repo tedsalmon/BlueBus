@@ -63,7 +63,7 @@ void BC127ClearPairingErrors(BT_t *bt)
  */
 void BC127CommandAT(BT_t *bt, char *cmd)
 {
-    uint8_t commandLength = 10 + strlen(cmd);
+    uint8_t commandLength = strlen(cmd) + 9;
     char command[commandLength];
     memset(command, 0, commandLength);
     snprintf(
@@ -1197,9 +1197,9 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         memset(cidDataBuf, 0, sizeof(cidDataBuf));
         char delimeter[] = ",";
         char *p = strtok(cidData, delimeter);
-        while (p != NULL) {
+        while (p !=  0x00) {
             cidDataBuf[cidDelimCounter++] = p;
-            p = strtok(NULL, delimeter);
+            p = strtok(0x00, delimeter);
         }
         // Set and clean up the variables to hold the new caller ID text
         uint16_t cidLen = strlen(cidDataBuf[0]);
@@ -1231,11 +1231,11 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         // NOTE: Only iOS responds to AT+CCLK?
         // AT 13 27 +CCLK: \2223/04/07, 15:58:28\22
         // Example 24h: \2222/10/19, 00:08:18\22
-        //         12h: \2223/01/13, 1:31:00 pm\22 
+        //         12h: \2223/01/13, 1:31:00 pm\22
 
         UtilsRemoveSubstring(msgBuf[4], "\\22");
         UtilsRemoveSubstring(msgBuf[5], "\\22");
-        
+
         uint8_t datetime[6] = {0};
         uint8_t sepCount = 0;
         uint8_t i = 0;
@@ -1251,10 +1251,10 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             i++;
         }
         // Convert the time to an integer and store it
-        i = 0;        
+        i = 0;
         while (i < strlen(time) && sepCount < 6) {
             if (time[i] >= '0' && time[i] <= '9') {
-                datetime[sepCount] = 10 * datetime[sepCount] + (time[i] - '0'); 
+                datetime[sepCount] = 10 * datetime[sepCount] + (time[i] - '0');
             } else {
                 sepCount++;
             }
@@ -1327,7 +1327,7 @@ void BC127ProcessEventAVRCPMedia(BT_t *bt, char **msgBuf, char *msg)
         }
         if (bt->metadataStatus == BT_METADATA_STATUS_UPD) {
             LogDebug(
-                LOG_SOURCE_BT, 
+                LOG_SOURCE_BT,
                 "BT: title=%s,artist=%s,album=%s",
                 bt->title,
                 bt->artist,
@@ -1764,9 +1764,9 @@ void BC127Process(BT_t *bt)
         char delimeter[] = " ";
         char *p = strtok(tmpMsg, delimeter);
         i = 0;
-        while (p != NULL) {
+        while (p != 0x00) {
             msgBuf[i++] = p;
-            p = strtok(NULL, delimeter);
+            p = strtok(0x00, delimeter);
         }
         LogDebug(LOG_SOURCE_BT, "BT: R: '%s'", msg);
         if (strcmp(msgBuf[0], "A2DP_STREAM_SUSPEND") == 0) {

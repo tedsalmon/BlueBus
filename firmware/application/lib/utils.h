@@ -185,8 +185,10 @@ typedef struct UtilsAbstractDisplayValue_t {
     uint8_t status;
     int8_t timeout;
 } UtilsAbstractDisplayValue_t;
+uint8_t UtilsConvertCmToIn(uint8_t);
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *, uint8_t);
 uint8_t UtilsGetBoardVersion();
+uint8_t UtilsGetMinByte(uint8_t *, uint8_t);
 uint8_t UtilsGetUnicodeByteLength(uint8_t);
 void UtilsNormalizeText(char *, const char *, uint16_t);
 void UtilsRemoveSubstring(char *, const char *);

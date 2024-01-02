@@ -77,6 +77,9 @@
 #define BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF 4
 #define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 5
 
+#define BMBT_MENU_BUFFER_OK 0
+#define BMBT_MENU_BUFFER_FLUSH 1
+
 #define BMBT_MAIN_AREA_LEN 9
 #define BMBT_MENU_IDX_PAIRING_MODE 0
 #define BMBT_MENU_IDX_CLEAR_PAIRING 1
@@ -84,8 +87,8 @@
 #define BMBT_MENU_WRITE_DELAY 300
 #define BMBT_MENU_TIMER_WRITE_INT 100
 #define BMBT_MENU_TIMER_WRITE_TIMEOUT 500
-#define BMBT_HEADER_TIMER_WRITE_INT 50
-#define BMBT_HEADER_TIMER_WRITE_TIMEOUT 100
+#define BMBT_HEADER_TIMER_WRITE_INT 100
+#define BMBT_HEADER_TIMER_WRITE_TIMEOUT 500
 #define BMBT_MENU_HEADER_TIMER_OFF 255
 /* 23 + 1 for null terminator */
 #define BMBT_MENU_STRING_MAX_SIZE 24
@@ -112,6 +115,7 @@ typedef struct BMBTStatus_t {
     uint8_t navState: 1;
     uint8_t radType: 4;
     uint8_t tvStatus: 1;
+    uint8_t menuBufferStatus: 1;
     uint8_t navIndexType;
 } BMBTStatus_t;
 
@@ -129,7 +133,7 @@ typedef struct BMBTContext_t {
     UtilsAbstractDisplayValue_t mainDisplay;
     uint8_t navZoom: 4;
     uint32_t navZoomTime;
-    
+
 } BMBTContext_t;
 
 void BMBTInit(BT_t *, IBus_t *);
@@ -143,6 +147,7 @@ void BMBTIBusBMBTButtonPress(void *, uint8_t *);
 void BMBTIBusCDChangerStatus(void *, uint8_t *);
 void BMBTIBusGTChangeUIRequest(void *, uint8_t *);
 void BMBTIKESpeedRPMUpdate(void *, uint8_t *);
+void BMBTIBusGTMenuBufferUpdate(void *, uint8_t *);
 void BMBTIBusMenuSelect(void *, uint8_t *);
 void BMBTIBusScreenBufferFlush(void *, uint8_t *);
 void BMBTIBusSensorValueUpdate(void *, uint8_t *);
