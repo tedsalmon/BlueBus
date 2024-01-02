@@ -565,6 +565,7 @@ uint8_t IBusGetNavType(uint8_t *);
 uint8_t IBusGetVehicleType(uint8_t *);
 uint8_t IBusGetConfigTemp(uint8_t *);
 uint8_t IBusGetConfigDistance(uint8_t *);
+uint8_t IBusGetConfigLanguage(uint8_t *packet);
 void IBusCommandBlueBusSetStatus(IBus_t *, uint8_t, uint8_t);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, uint8_t, uint8_t, uint8_t, uint8_t);

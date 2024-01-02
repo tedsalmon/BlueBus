@@ -1243,7 +1243,7 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         );
     }
     uint8_t selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-    char localeName[3] = {0};
+    char localeName[5] = {0};
     switch (selectedLanguage) {
         case CONFIG_SETTING_LANGUAGE_DUTCH:
             strncpy(localeName, "NL", 2);
@@ -1272,8 +1272,9 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         case CONFIG_SETTING_LANGUAGE_FRENCH:
             strncpy(localeName, "FR", 2);
             break;
+        case CONFIG_SETTING_LANGUAGE_AUTO:
         default:
-            strncpy(localeName, "EN", 2);
+            strncpy(localeName, "Auto", 4);
             break;
     }
     char langStr[BMBT_MENU_STRING_MAX_SIZE] = {0};
@@ -1713,7 +1714,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE) {
         uint8_t selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-        if (selectedLanguage == CONFIG_SETTING_LANGUAGE_DUTCH) {
+        if (selectedLanguage == CONFIG_SETTING_LANGUAGE_AUTO) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ESTONIAN;
@@ -1731,6 +1732,8 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             selectedLanguage = CONFIG_SETTING_LANGUAGE_FRENCH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_FRENCH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_DUTCH;
+        } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_DUTCH) {
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_AUTO;
         } else {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
         }
@@ -2558,9 +2561,45 @@ void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
         BMBTIBusSensorValueUpdate(ctx, &valueType);
     }
 
-    tempUnit = IBusGetConfigDistance(pkt);
-    if (tempUnit != ConfigGetDistUnit()) {
-        ConfigSetDistUnit(tempUnit);
+    uint8_t distUnit = IBusGetConfigDistance(pkt);
+    if (distUnit != ConfigGetDistUnit()) {
+        ConfigSetDistUnit(distUnit);
+    }
+
+// Update also the language if we support it
+// https://github.com/piersholt/wilhelm-docs/blob/master/ike/15.md
+
+    uint8_t langIbus = IBusGetConfigLanguage(pkt);;
+    uint8_t lang = 255;
+
+    switch (langIbus) {
+        case 0: // DE
+            lang = CONFIG_SETTING_LANGUAGE_GERMAN;
+            break;
+        case 3: // IT
+            lang = CONFIG_SETTING_LANGUAGE_ITALIAN;
+            break;
+        case 4: // ES
+            lang = CONFIG_SETTING_LANGUAGE_SPANISH;
+            break;
+        case 6: // FR
+            lang = CONFIG_SETTING_LANGUAGE_FRENCH;
+            break;
+        case 1: // GB
+        case 2: // US
+        case 5: // JP
+        case 7: // CA
+        case 8: // GOLF
+        default:
+            lang = CONFIG_SETTING_LANGUAGE_ENGLISH;
+            break;
+    }
+
+    uint8_t bbLang = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    
+    if (((bbLang == CONFIG_SETTING_LANGUAGE_AUTO) || (bbLang == 255) || (bbLang >= 0x80)) && (lang != (bbLang & 0x0F))) {
+// overwrite only when not flagged as user-forced
+        ConfigSetSetting(CONFIG_SETTING_LANGUAGE, (lang | 0x80));
     }
 }
 
