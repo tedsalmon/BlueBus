@@ -1278,11 +1278,11 @@ uint8_t IBusGetConfigTemp(uint8_t *packet)
  *     Description:
  *        Get the configured temperature unit from cluster type response
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - the KM or MILES configuration
  */
-uint8_t IBusGetConfigDistance(unsigned char *packet)
+uint8_t IBusGetConfigDistance(uint8_t *packet)
 {
     unsigned char distUnit = (packet[5] >> 6) & 0x1;
     return distUnit;
