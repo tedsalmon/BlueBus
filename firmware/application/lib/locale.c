@@ -732,6 +732,7 @@ static char *LOCALE_LANG_POLISH[] = {
     "Asystent glosowy",
     "Zadzwon",
     "Autozoom: %s",
+    "PDC: %s",
 };
 
 /**
