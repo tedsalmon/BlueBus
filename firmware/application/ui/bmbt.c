@@ -2598,7 +2598,7 @@ void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
     }
 
     uint8_t bbLang = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-    
+
     if (((bbLang == CONFIG_SETTING_LANGUAGE_AUTO) || (bbLang == 255) || (bbLang >= 0x80)) && (lang != (bbLang & 0x0F))) {
 // overwrite only when not flagged as user-forced
         ConfigSetSetting(CONFIG_SETTING_LANGUAGE, (lang | 0x80));
