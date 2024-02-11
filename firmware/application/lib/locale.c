@@ -884,7 +884,7 @@ char *LocaleGetText(uint16_t stringIndex)
     }
 
     char *text = 0;
-    unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    unsigned char language = ConfigGetSetting(CONFIG_SETTING_LANGUAGE) & 0x0F;
 
     switch (language) {
         case CONFIG_SETTING_LANGUAGE_DUTCH:

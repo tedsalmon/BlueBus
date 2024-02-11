@@ -97,6 +97,7 @@
 #define CONFIG_SETTING_COMFORT_LOCK_20KM 0x02
 #define CONFIG_SETTING_COMFORT_UNLOCK_POS_1 0x01
 #define CONFIG_SETTING_COMFORT_UNLOCK_POS_0 0x02
+#define CONFIG_SETTING_LANGUAGE_AUTO 0x00
 #define CONFIG_SETTING_LANGUAGE_DUTCH 0x01
 #define CONFIG_SETTING_LANGUAGE_ENGLISH 0x02
 #define CONFIG_SETTING_LANGUAGE_FINNISH 0x03
@@ -214,12 +215,10 @@ uint8_t ConfigGetTrapLast();
 uint8_t ConfigGetUIMode();
 uint8_t ConfigGetValue(uint8_t);
 uint8_t ConfigGetVehicleType();
-uint8_t ConfigGetLanguage();
 uint8_t ConfigGetTimeSource();
 uint8_t ConfigGetTimeDST();
 int16_t ConfigGetTimeOffset();
 uint8_t ConfigGetTimeOffsetIndex();
-
 void ConfigGetVehicleIdentity(uint8_t *);
 void ConfigGetString(uint8_t, char *, uint8_t);
 void ConfigSetBC127BootFailures(uint16_t);
@@ -229,7 +228,6 @@ void ConfigSetComfortLock(uint8_t);
 void ConfigSetComfortUnlock(uint8_t);
 void ConfigSetFirmwareVersion(uint8_t, uint8_t, uint8_t);
 void ConfigSetIKEType(uint8_t);
-void ConfigSetLanguage(uint8_t);
 void ConfigSetLMVariant(uint8_t);
 void ConfigSetLog(uint8_t, uint8_t);
 void ConfigSetSetting(uint8_t, uint8_t);
