@@ -806,7 +806,6 @@ static void BMBTMenuSettings(BMBTContext_t *context)
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
-    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS;
 }
 
@@ -1061,15 +1060,14 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         0
     );
 
-
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_COMFORT;
 }
 
 static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT_TIME));
     char text[BMBT_MENU_STRING_MAX_SIZE] = {0};
     uint8_t autotime = ConfigGetTimeSource();
     snprintf(
@@ -1166,13 +1164,13 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
     }
 
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT_TIME));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_COMFORT_TIME;
 }
 
 static void BMBTMenuSettingsComfortNavi(BMBTContext_t *context)
 {
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT_NAVI));
     uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
     if (autozoom >= IBUS_SES_ZOOM_LEVELS) {
         autozoom = CONFIG_SETTING_OFF;
@@ -1258,9 +1256,8 @@ static void BMBTMenuSettingsComfortNavi(BMBTContext_t *context)
         3
     );
 
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);
-    IBusCommandGTWriteIndexTitle(context->ibus, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT_NAVI));
-    IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 1);    
+    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_COMFORT_NAVI;
 }
 
@@ -1752,7 +1749,7 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
                     LogDebug(LOG_SOURCE_SYSTEM, "Calc DST & Zone offsets, DST=%d, OFFSET=%+d min", (time_dst==CONFIG_SETTING_TIME_DST), time_offset);
 
                     ConfigSetTimeOffset(time_offset);
-                    ConfigGetTimeDST(time_dst);
+                    ConfigSetTimeDST(time_dst);
                 }
             }
         }
@@ -1821,7 +1818,7 @@ static void BMBTSettingsUpdateComfortNavi(BMBTContext_t *context, uint8_t select
             autozoom = CONFIG_SETTING_OFF;
         }
         ConfigSetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM, autozoom);
-        char autoZoomText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+/*        char autoZoomText[BMBT_MENU_STRING_MAX_SIZE] = {0};
         if (autozoom == CONFIG_SETTING_OFF) {
             snprintf(
                 autoZoomText,
@@ -1847,6 +1844,7 @@ static void BMBTSettingsUpdateComfortNavi(BMBTContext_t *context, uint8_t select
             }
         }
         BMBTGTWriteIndex(context, selectedIdx, autoZoomText, 0);
+*/
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_MAP) {
         uint8_t navi_config = ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI);
         uint8_t map_config = navi_config & 0x0F;
@@ -1870,9 +1868,8 @@ static void BMBTSettingsUpdateComfortNavi(BMBTContext_t *context, uint8_t select
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettingsComfort(context);
     };
-
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
-        BMBTGTBufferFlush(context);
+        BMBTMenuSettingsComfortNavi(context);
     }
 }
 
