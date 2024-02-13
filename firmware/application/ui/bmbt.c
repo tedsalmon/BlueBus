@@ -836,7 +836,13 @@ static void BMBTMenuSettingsAbout(BMBTContext_t *context)
         context,
         BMBT_MENU_IDX_SETTINGS_ABOUT_SERIAL,
         serialNumberString,
-        4
+        0
+    );
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_ABOUT_URL,
+        "bluebus.dev",
+        3
     );
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
