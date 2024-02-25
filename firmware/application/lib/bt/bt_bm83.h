@@ -354,4 +354,10 @@ void BM83ProcessDataGetAllAttributes(BT_t *, uint8_t *, uint8_t, uint16_t);
 void BM83Process(BT_t *);
 void BM83SendCommand(BT_t *, uint8_t *, size_t);
 
+/* Phone book commands */
+void BM83CommandPBAPOpenSession(BT_t *);
+void BM83CommandPBAPCloseSession(BT_t *);
+void BM83CommandPullVcardListingReq(BT_t *, uint8_t);
+void BM83CommandPullVcardEntryReq(BT_t *, char*);
+
 #endif /* BM83_H */

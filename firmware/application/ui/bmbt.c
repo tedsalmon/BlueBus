@@ -1942,6 +1942,19 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                 BTCommandCallAccept(context->bt);
             } else if (context->bt->callStatus == BT_CALL_OUTGOING) {
                 BTCommandCallEnd(context->bt);
+            } else {
+                if (context->menu == BMBT_MENU_DIAL && 
+                    context->bt->dialBuffer[0] != 0 ) 
+                {
+                    // invoke dialing
+                    LogDebug(LOG_SOURCE_UI, "BMBT Telephone request to dial: %s", context->bt->dialBuffer);
+                    BTCommandDial(context->bt, context->bt->dialBuffer, NULL);
+                } else {
+                    // render phone screen
+                    LogDebug(LOG_SOURCE_UI, "BMBT Dial Button - switch to Dialer menu");
+                    IBusCommandTELSetGTDisplayMenu(context->ibus);
+                    context->menu = BMBT_MENU_DIAL;
+                }
             }
         } else if (context->bt->callStatus == BT_CALL_INACTIVE &&
                    pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Hold
@@ -2037,9 +2050,9 @@ void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
             IBusCommandTELSetGTDisplayMenu(context->ibus);
             IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
+            }
         }
     }
-}
 
 /**
  * BMBTIKESpeedRPMUpdate()
@@ -2223,6 +2236,32 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
             BMBTSettingsUpdateUI(context, selectedIdx);
         }
     }
+    else if (context->menu == BMBT_MENU_DIAL) {
+        BMBTDialScreenUI(context,selectedIdx,pkt);
+    }
+    else if (context->menu == BMBT_MENU_DIAL_EMERGENCY &&
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MENU_SELECT) {
+        // button presses on the Emergency / SOS screen
+        
+        if (pkt[4] == 0xF1 && pkt[6] == 0x10) {
+            // release the "back" button
+            LogDebug(LOG_SOURCE_UI, "Back button on Emergency screen");
+            IBusCommandTELSetGTDisplayMenu(context->ibus);
+            context->menu = BMBT_MENU_DIAL;
+        }
+        else if (pkt[4] == 0xF1 && pkt[6] == 0x11) {
+            // release the "left" button
+            LogDebug(LOG_SOURCE_UI, "Left button on Emergency screen");
+        }
+        else if (pkt[4] == 0xF1 && pkt[6] == 0x12) {
+            // release the "right" button
+            LogDebug(LOG_SOURCE_UI, "Right button on Emergency screen");
+        }
+        else if (pkt[4] == 0xF1 && pkt[6] == 0x13) {
+            // release the "middle" button
+            LogDebug(LOG_SOURCE_UI, "Middle button on Emergency screen");
+        }
+    }    
 }
 
 /**
@@ -2721,4 +2760,176 @@ void BMBTTimerScrollDisplay(void *ctx)
             }
         }
     }
+}
+
+/**
+ * BMBTEmergencyScreen()
+ *     Description:
+ *         Render Emergency Screen
+ *     Params:
+ *         void *ctx - The context
+ *     Returns:
+ *         void
+ */
+void BMBTEmergencyScreen(BMBTContext_t *context)
+{
+    uint8_t msg[50]={IBUS_CMD_GT_WRITE_NO_CURSOR,0xF1,0x00};
+    char *msg_body = (char *)(msg+4);
+
+    msg[3]=0x60;
+    UtilsStrncpy(msg_body, LocaleGetText(LOCALE_STRING_EMERGENCY_POSITION), 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+    msg[3]=0x41;
+    UtilsStrncpy(msg_body, context->ibus->telematicsLocale, 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+    msg[3]=0x42;
+    UtilsStrncpy(msg_body, context->ibus->telematicsStreet, 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+    msg[3]=0x44;
+    UtilsStrncpy(msg_body, context->ibus->telematicsLatitude, 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+    msg[3]=0x45;
+    UtilsStrncpy(msg_body, context->ibus->telematicsLongtitude, 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+
+    msg[2]=0x01; //back button
+    msg[3]=0x50;
+    msg[4]=0x01;
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, 5);
+
+    msg[0]=IBUS_CMD_GT_WRITE_WITH_CURSOR;
+    msg[2]=0x00;
+    msg[3]=0x00;
+    UtilsStrncpy(msg_body, LocaleGetText(LOCALE_STRING_EMERGENCY_HEADER), 50-4);
+    IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, strlen(msg_body)+5);
+    context->menu = BMBT_MENU_DIAL_EMERGENCY;
+}
+
+
+/**
+ * BMBTDialScreenUI()
+ *     Description:
+ *         Process UI interaction on Dial screen
+ *     Params:
+ *         void *ctx - The context
+ *         unsigned char - keypress
+ *         unsinged char * - full IBUS packet
+ *     Returns:
+ *         void
+ */
+//#define BMBT_LAYOUT_TEL_DIAL 0x42
+//#define BMBT_LAYOUT_TEL_DIRECTORY 0x43
+//#define BMBT_LAYOUT_TEL_TOP_8 0x80
+//#define BMBT_LAYOUT_TEL_LIST 0xf0    
+//#define BMBT_LAYOUT_TEL_DETAIL 0xf1
+
+#define BMBT_FUNCTION_TEL_NULL 0x00
+#define BMBT_FUNCTION_TEL_CONTACT 0x01
+#define BMBT_FUNCTION_TEL_DIGIT 0x02
+#define BMBT_FUNCTION_TEL_SOS 0x05
+#define BMBT_FUNCTION_TEL_NAVIGATION 0x07
+#define BMBT_FUNCTION_TEL_INFO 0x08
+
+//#define BMBT_MASK_INDEX 0x1f
+//#define BMBT_MASK_CLEAR 0x20
+//#define BMBT_MASK_BUFFER 0x40
+//#define BMBT_MASK_HIGHLIGHT 0x80
+
+void BMBTDialScreenUI(void *ctx, uint8_t cmd, uint8_t *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+
+    uint8_t size = strlen(context->bt->dialBuffer);
+    uint8_t changed = 0;
+
+    if (pkt[5] == BMBT_FUNCTION_TEL_DIGIT) {
+        if ((cmd>=0x40)&&(cmd<=0x49)) {
+            // number released
+            if (size<BT_DIAL_BUFFER_FIELD_SIZE-2) {
+                context->bt->dialBuffer[size++]=cmd+'0'-0x40;
+                context->bt->dialBuffer[size]=0;
+                changed = 1;
+            } 
+        } else if (cmd == 0x5A) {
+            // * released
+            if (size<BT_DIAL_BUFFER_FIELD_SIZE-2) {
+                context->bt->dialBuffer[size++]='*';
+                context->bt->dialBuffer[size]=0;
+                changed = 1;
+            }
+        } else if (cmd == 0x3A) {
+            // * hold = +
+            if (size<BT_DIAL_BUFFER_FIELD_SIZE-2) {
+                context->bt->dialBuffer[size++]='+';
+                context->bt->dialBuffer[size]=0;
+                changed = 1;
+            }
+        } else if (cmd == 0x5B) {
+            // # released
+            if (size<BT_DIAL_BUFFER_FIELD_SIZE-2) {
+                context->bt->dialBuffer[size++]='#';
+                context->bt->dialBuffer[size]=0;
+                changed = 1;
+            }
+        } else if (cmd == 0x4A) {
+            // <- released = delete one char
+            if (size > 0) {
+                context->bt->dialBuffer[--size] = 0;
+                changed = 1;
+            }
+        } else if (cmd == 0x2A) {
+            // -< held = delete all
+            if (size > 0) {
+                size = 0;
+                context->bt->dialBuffer[0] = 0;
+                changed = 1;
+            }
+        }
+    } else if ((pkt[5] == BMBT_FUNCTION_TEL_SOS) && (cmd == 0x08)) {
+        // SOS - set buffer to SOS number ( 112, 911, eventually configurable )
+        // eventually render full screen with coordinates and button to confirm
+        // and send also SMS with details
+        LogDebug(LOG_SOURCE_UI, "Navigate from [BMBT_MENU_DIAL] to [BMBT_DIAL_EMERGENCY]");
+        BMBTEmergencyScreen(context);
+
+    } else if ((pkt[5] == BMBT_FUNCTION_TEL_NAVIGATION) && (cmd == 0x1d)) {
+        // messaging selected         
+        LogDebug(LOG_SOURCE_UI, "Navigate from [BMBT_MENU_DIAL] to [SMS]");
+
+    } else if ((pkt[5] == BMBT_FUNCTION_TEL_NAVIGATION) && (cmd == 0x1f)) {
+        // Directory Selected
+        LogDebug(LOG_SOURCE_UI, "Navigate from [BMBT_MENU_DIAL] to [BMBT_MENU_DIAL_DIRECTORY]");
+
+    } else if ((pkt[5] == BMBT_FUNCTION_TEL_INFO) && (cmd == 0x0a)) {
+        // Info Selected
+        LogDebug(LOG_SOURCE_UI, "Navigate from [BMBT_MENU_DIAL] to [TEL Info]");
+        
+        // Sample messages
+        // C8 11 3B 24 91 b3 5a 5a 5a 5a 5a 5a <CS> # Strength
+        // C8 06 3B 24 96 "47" <CS> # call minutes
+        // C8 06 3B 24 97 "02" <CS> # call seconds
+    } else {
+        LogDebug(LOG_SOURCE_UI, "Dial screen command not handled. act=%02x cmd=%02x **", pkt[5], cmd);
+    }
+
+    // show updated number
+    if (changed == 1) {
+        if (size>0) {
+            char msg[BT_DIAL_BUFFER_FIELD_SIZE+4] = {IBUS_TEL_CMD_NUMBER, 0x63, 0x00};
+            snprintf(msg+3,BT_DIAL_BUFFER_FIELD_SIZE-1,"%s",context->bt->dialBuffer);
+            size+=5;
+            if (size>BT_DIAL_BUFFER_FIELD_SIZE+4) {
+                size = BT_DIAL_BUFFER_FIELD_SIZE+4;
+            }
+            IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, (unsigned char *)msg, size);
+        } else {
+            const unsigned char msg2[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};
+            IBusSendCommand(context->ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg2, sizeof(msg2));
+        }
+    }
+    
 }
