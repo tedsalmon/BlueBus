@@ -102,8 +102,6 @@ struct PBAPC_EVENT_HEADER {
     };
 };
 
-
-
 /*
  * Buffer management functions
  */
@@ -123,7 +121,6 @@ static int appendBuffer(uint8_t *data, size_t size)
     
     return 0;
 }
-
 
 /**
  * debugEntries
