@@ -5,8 +5,10 @@
  *     Implement a CLI to pass commands to the device
  */
 #include "cli.h"
+#include "../lib/bt/bt_bm83_pbap.h"
 
 static CLI_t cli;
+static uint16_t phonebook_offset = 0;
 
 /**
  * CLIInit()
@@ -315,7 +317,21 @@ void CLICommandBTBM83(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
         BM83CommandMusicControl(cli.bt, BM83_CMD_ACTION_PAUSE);
     } else if (UtilsStricmp(msgBuf[1], "RESTORE") == 0) {
         BM83CommandRestore(cli.bt);
-    } else {
+        
+    // adding some testing for recent calls and phone book
+    } else if (UtilsStricmp(msgBuf[1], "PB") == 0) {
+        phonebook_offset = 0;
+        BM83CommandPBAPPullPhoneBook(cli.bt, PBAP_TYPE_PHONEBOOK, phonebook_offset);    
+    } else if (UtilsStricmp(msgBuf[1], "PBNEXT") == 0) {
+        phonebook_offset += 8;
+        BM83CommandPBAPPullPhoneBook(cli.bt, PBAP_TYPE_PHONEBOOK, phonebook_offset);
+    } else if (UtilsStricmp(msgBuf[1], "CH") == 0) {
+        BM83CommandPBAPPullPhoneBook(cli.bt, PBAP_TYPE_COMBINED_CALL_HISTORY, 0);
+    } else if (UtilsStricmp(msgBuf[1], "FAV") == 0) {
+        BM83CommandPBAPPullPhoneBook(cli.bt, PBAP_TYPE_FAVORITE_CONTACTS, 0);
+    }
+
+    else {
         *cmdSuccess = 0;
     }
 }
@@ -874,6 +890,10 @@ void CLIProcess()
                     LogRaw("    BT PLAY - Send the AVRCP Play Command\r\n");
                     LogRaw("    BT PAUSE - Send the AVRCP Pause Command\r\n");
                     LogRaw("    BT RESTORE - Reset the BM83\r\n");
+                    LogRaw("    BT PB - Get first 8 Phone Book entries (PBAC)\r\n");
+                    LogRaw("    BT PBNEXT - Get next 8 Phone Book entries (PBAC)\r\n");
+                    LogRaw("    BT CH - Get Call History / Recent Calls (PBAC)\r\n");
+                    LogRaw("    BT FAV - Get Favorites / Top-8 (PBAC)\r\n");
                 }
                 LogRaw("    BT AT command> - Send raw AT command\r\n");
                 LogRaw("    BT DIAL <number> <name> - Dial a number and display name\r\n");

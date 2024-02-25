@@ -3,8 +3,11 @@
  * Author: Ted Salmon <tass2001@gmail.com>
  * Description:
  *     Implementation of the Microchip BM83 Bluetooth UART API
+ * Revision History:
+ *      Feb 2024 (Matt C) - Forward PBAP events to handler in bt_phonebook.c 
  */
 #include "bt_bm83.h"
+#include "bt_bm83_pbap.h"
 #include "../locale.h"
 
 int8_t BTBM83MicGainTable[] = {
@@ -1330,6 +1333,10 @@ void BM83Process(BT_t *bt)
             }
             if (event == BM83_EVT_REPORT_TYPE_CODEC) {
                 BM83ProcessEventReportTypeCodec(bt, eventData, dataLength);
+            }
+            /* Phone Book events */
+            if (event == BM83_EVT_PBAPC_EVENT) {
+                BM83ProcessEventPhoneBook(bt, eventData, dataLength);
             }
         }
     }

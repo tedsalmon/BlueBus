@@ -85,6 +85,8 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Call",
     "Autozoom: %s",
     "PDC: %s",
+    "Your current location is:",
+    "Emergency - call 112",
 };
 
 static char *LOCALE_LANG_FRENCH[] = {
