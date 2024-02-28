@@ -280,57 +280,59 @@ void MIDBTDeviceDisconnected(void *ctx, unsigned char *tmp)
 void MIDBTMetadataUpdate(void *ctx, unsigned char *tmp)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
-    if (context->mode == MID_MODE_ACTIVE &&
-        strlen(context->bt->title) > 0 &&
-        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MID_SETTING_METADATA_MODE_OFF
+    if (context->mode != MID_MODE_ACTIVE ||
+        strlen(context->bt->title) == 0 ||
+        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == MID_SETTING_METADATA_MODE_OFF
     ) {
-        char text[UTILS_DISPLAY_TEXT_SIZE] = {0};
-        if (strlen(context->bt->artist) > 0 && strlen(context->bt->album) > 0) {
-            snprintf(
-                text,
-                UTILS_DISPLAY_TEXT_SIZE,
-                "%s - %s on %s",
-                context->bt->title,
-                context->bt->artist,
-                context->bt->album
-            );
-        } else if (strlen(context->bt->artist) > 0) {
-            snprintf(
-                text,
-                UTILS_DISPLAY_TEXT_SIZE,
-                "%s - %s",
-                context->bt->title,
-                context->bt->artist
-            );
-        } else if (strlen(context->bt->album) > 0) {
-            snprintf(
-                text,
-                UTILS_DISPLAY_TEXT_SIZE ,
-                "%s on %s",
-                context->bt->title,
-                context->bt->album
-            );
-        } else {
-            snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
-        }
-        MIDSetMainDisplayText(context, text, 3000 / MID_DISPLAY_SCROLL_SPEED);
-        TimerTriggerScheduledTask(context->displayUpdateTaskId);
+        return;
     }
+    char text[UTILS_DISPLAY_TEXT_SIZE] = {0};
+    if (strlen(context->bt->artist) > 0 && strlen(context->bt->album) > 0) {
+        snprintf(
+            text,
+            UTILS_DISPLAY_TEXT_SIZE,
+            "%s - %s on %s",
+            context->bt->title,
+            context->bt->artist,
+            context->bt->album
+        );
+    } else if (strlen(context->bt->artist) > 0) {
+        snprintf(
+            text,
+            UTILS_DISPLAY_TEXT_SIZE,
+            "%s - %s",
+            context->bt->title,
+            context->bt->artist
+        );
+    } else if (strlen(context->bt->album) > 0) {
+        snprintf(
+            text,
+            UTILS_DISPLAY_TEXT_SIZE ,
+            "%s on %s",
+            context->bt->title,
+            context->bt->album
+        );
+    } else {
+        snprintf(text, UTILS_DISPLAY_TEXT_SIZE, "%s", context->bt->title);
+    }
+    MIDSetMainDisplayText(context, text, 3000 / MID_DISPLAY_SCROLL_SPEED);
+    TimerTriggerScheduledTask(context->displayUpdateTaskId);
 }
 
 void MIDBTPlaybackStatus(void *ctx, unsigned char *tmp)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
-    if (context->mode == MID_MODE_ACTIVE) {
-        if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
-            IBusCommandMIDMenuWriteSingle(context->ibus, 0, " >");
-            BTCommandGetMetadata(context->bt);
-        } else {
-            if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MID_SETTING_METADATA_MODE_OFF) {
-                MIDSetMainDisplayText(context, "Paused", 0);
-            }
-            IBusCommandMIDMenuWriteSingle(context->ibus, 0, "|| ");
+    if (context->mode != MID_MODE_ACTIVE) {
+        return;
+    }
+    if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
+        IBusCommandMIDMenuWriteSingle(context->ibus, 0, " >");
+        BTCommandGetMetadata(context->bt);
+    } else {
+        if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MID_SETTING_METADATA_MODE_OFF) {
+            MIDSetMainDisplayText(context, "Paused", 0);
         }
+        IBusCommandMIDMenuWriteSingle(context->ibus, 0, "|| ");
     }
 }
 
@@ -446,7 +448,7 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
                     // Trigger device selection event
                     EventTriggerCallback(
                         UIEvent_InitiateConnection,
-                        (unsigned char *)&context->btDeviceIndex
+                        (uint8_t *)&context->btDeviceIndex
                     );
                 }
             }
@@ -478,7 +480,7 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
     }
     // Hijack the "TAPE/CD/MD" button
     if (ConfigGetSetting(CONFIG_SETTING_SELF_PLAY) == CONFIG_SETTING_ON) {
-        if (btnPressed == MID_BUTTON_MODE) {
+        if (btnPressed == MID_BUTTON_BT || btnPressed == MID_BUTTON_MODE) {
             IBusCommandRADCDCRequest(context->ibus, IBUS_CDC_CMD_START_PLAYING);
         }
     }
@@ -521,7 +523,7 @@ void MIDIIBusRADMIDDisplayUpdate(void *ctx, unsigned char *pkt)
 void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
-    if (pkt[IBUS_PKT_DB2] == 0x8E) {
+    if (pkt[IBUS_PKT_DB2] == IBUS_MID_UI_TEL_OPEN) {
         if (pkt[IBUS_PKT_DB1] == IBUS_MID_MODE_REQUEST_TYPE_PHYSICAL) {
             if (ConfigGetSetting(CONFIG_SETTING_SELF_PLAY) == CONFIG_SETTING_ON) {
                 IBusCommandRADCDCRequest(context->ibus, IBUS_CDC_CMD_START_PLAYING);
@@ -529,7 +531,7 @@ void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
         } else {
             context->mode = MID_MODE_ACTIVE_NEW;
         }
-    } else if (pkt[IBUS_PKT_DB2] != 0x8F) {
+    } else if (pkt[IBUS_PKT_DB2] != IBUS_MID_UI_TEL_CLOSE) {
         if (pkt[IBUS_PKT_DB2] == 0x00) {
             if (context->mode != MID_MODE_DISPLAY_OFF &&
                 context->mode != MID_MODE_OFF
@@ -539,11 +541,17 @@ void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
         } else if (context->mode != MID_MODE_OFF) {
             context->mode = MID_MODE_DISPLAY_OFF;
         }
-        if (pkt[IBUS_PKT_DB2] == 0xB0 &&
+        if (pkt[IBUS_PKT_DB2] == IBUS_MID_UI_RADIO_OPEN &&
             context->modeChangeStatus == MID_MODE_CHANGE_PRESS
         ) {
             IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE_PRESS);
             context->modeChangeStatus = MID_MODE_CHANGE_RELEASE;
+        }
+        if (pkt[IBUS_PKT_DB2] == IBUS_MID_UI_RADIO_OPEN &&
+            context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
+            ConfigGetSetting(CONFIG_SETTING_SELF_PLAY) == CONFIG_SETTING_ON
+        ) {
+            IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_BT, "BT");
         }
     } else {
         // This should be 0x8F, which is "close TEL UI"

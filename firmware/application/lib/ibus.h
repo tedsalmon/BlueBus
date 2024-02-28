@@ -334,6 +334,10 @@
 #define IBus_MID_BTN_TEL_RIGHT_RELEASE 0x4D
 #define IBus_MID_BTN_TEL_LEFT_RELEASE 0x4C
 
+#define IBUS_MID_UI_TEL_OPEN 0x8E
+#define IBUS_MID_UI_TEL_CLOSE 0x8F
+#define IBUS_MID_UI_RADIO_OPEN 0xB0
+
 #define IBUS_PDC_DEFAULT_SENSOR_VALUE 0xFF
 
 #define IBUS_TEL_CMD_LED_STATUS 0x2B
@@ -601,6 +605,7 @@ void IBusCommandIKEOBCControl(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKESetIgnitionStatus(IBus_t *, uint8_t);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKESetDate(IBus_t *, uint8_t, uint8_t, uint8_t);
+void IBusCommandIRISDisplayWrite(IBus_t *, char *);
 void IBusCommandTELIKEDisplayWrite(IBus_t *, char *);
 void IBusCommandTELIKEDisplayClear(IBus_t *);
 void IBusCommandIKECheckControlDisplayWrite(IBus_t *, char *);
