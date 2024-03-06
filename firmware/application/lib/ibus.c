@@ -534,7 +534,7 @@ static void IBusHandleMIDMessage(IBus_t *ibus, uint8_t *pkt)
     }
 }
 
-static void IBusHandlerPDCMessage(IBus_t *ibus, uint8_t *pkt)
+static void IBusHandlePDCMessage(IBus_t *ibus, uint8_t *pkt)
 {
     // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
     // any time we see 0x5A from the PDC. Keep this above all other code to
@@ -922,7 +922,7 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleVMMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_PDC) {
-                        IBusHandlerPDCMessage(ibus, pkt);
+                        IBusHandlePDCMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_NAVE) {
                         IBusHandleNAVMessage(ibus, pkt);
@@ -2351,6 +2351,35 @@ void IBusCommandIKENumbericDisplayClear(IBus_t *ibus)
     IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
 }
 
+/**
+ * IBusCommandIRISDisplayWrite()
+ *     Description:
+ *        Write the IRIS display
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *text - The text to write
+ *     Returns:
+ *         void
+ */
+void IBusCommandIRISDisplayWrite(IBus_t *ibus, char *text)
+{
+    uint8_t len = strlen(text);
+    uint8_t frameSize = len + 3;
+    uint8_t displayText[frameSize];
+    memset(&displayText, 0, frameSize);
+    displayText[0] = IBUS_CMD_RAD_UPDATE_MAIN_AREA;
+    displayText[1] = 0x00;
+    displayText[2] = 0x30;
+    memcpy(displayText + 3, text, len);
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_IRIS,
+        displayText,
+        frameSize
+    );
+
+}
 
 /**
  * IBusCommandLMActivateBulbs()

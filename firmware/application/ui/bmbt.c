@@ -1270,7 +1270,7 @@ static void BMBTMenuSettingsComfortNavi(BMBTContext_t *context)
 static void BMBTMenuSettingsCalling(BMBTContext_t *context)
 {
     BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_CALLING));
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == 0x00) {
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_CALLING_HFP,
@@ -1884,20 +1884,20 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
     if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_HFP) {
         uint8_t value = ConfigGetSetting(CONFIG_SETTING_HFP);
         if (context->bt->type == BT_BTM_TYPE_BC127) {
-            if (value == 0x00) {
-                ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
+            if (value == CONFIG_SETTING_OFF) {
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 BC127CommandSetProfiles(context->bt, 1, 1, 1, 1);
-                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
                 BC127CommandProfileOpen(context->bt, "HFP");
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
             } else {
-                ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
-                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
                 BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             }
         } else {
-            if (value == 0x01) {
+            if (value == CONFIG_SETTING_ON) {
                 BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
-                ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             } else {
                 BTPairedDevice_t *device = 0;
@@ -1915,7 +1915,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                         BM83_DATA_LINK_BACK_PROFILES_HF
                     );
                 }
-                ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
             }
         }
