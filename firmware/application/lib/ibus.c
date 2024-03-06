@@ -923,7 +923,6 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_PDC) {
                         IBusHandlePDCMessage(ibus, pkt);
-                    }
                     if (srcSystem == IBUS_DEVICE_NAVE) {
                         IBusHandleNAVMessage(ibus, pkt);
                     }
