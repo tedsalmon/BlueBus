@@ -130,6 +130,7 @@ void BTPairedDeviceInit(
             EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
             LogDebug(LOG_SOURCE_BT, "BT: Rewrite Pairing Profile");
         } else if (bt->pairedDevicesCount+1 < BT_MAX_DEVICE_PAIRED) {
+            pairedDevice.number = bt->pairedDevicesCount+1;
             bt->pairedDevices[bt->pairedDevicesCount++] = pairedDevice;
             EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
             LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile");
