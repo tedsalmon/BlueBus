@@ -17,7 +17,7 @@
  */
 CharQueue_t CharQueueInit()
 {
-    volatile CharQueue_t queue;
+    CharQueue_t queue;
     // Initialize size and cursors
     CharQueueReset(&queue);
     return queue;

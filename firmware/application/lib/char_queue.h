@@ -27,7 +27,7 @@ typedef volatile struct CharQueue_t {
     volatile uint8_t data[CHAR_QUEUE_SIZE];
 } CharQueue_t;
 
-CharQueue_t CharQueueInit();
+volatile struct CharQueue_t CharQueueInit();
 void CharQueueAdd(volatile CharQueue_t *, const uint8_t);
 uint8_t CharQueueGet(volatile CharQueue_t *, uint16_t);
 uint16_t CharQueueGetSize(volatile CharQueue_t *);
