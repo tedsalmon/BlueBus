@@ -186,7 +186,7 @@ static void MIDShowNextDevice(MIDContext_t *context, uint8_t direction)
             }
             text[startIdx++] = 0x20;
             text[startIdx++] = 0x2A;
-            text[startIdx] = 0;
+            text[startIdx++] = 0;
         }
         MIDSetMainDisplayText(context, text, 0);
     }
