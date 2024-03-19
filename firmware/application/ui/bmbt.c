@@ -464,7 +464,7 @@ static void BMBTGTWriteIndex(
         index = index + 0x40;
     }
     context->status.navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
-    char newText[newTextLength];
+    char newText[newTextLength + 1];
     memset(&newText, 0x20, newTextLength);
     strncpy(newText, text, stringLength);
     stringLength = newTextLength - (clearIdxs + 1);
@@ -472,7 +472,7 @@ static void BMBTGTWriteIndex(
         newText[stringLength] = 0x06;
         stringLength++;
     }
-    newText[newTextLength - 1] = '\0';
+    newText[newTextLength] = '\0';
     IBusCommandGTWriteIndexTMC(context->ibus, index, newText);
 }
 
@@ -582,7 +582,10 @@ static void BMBTMenuMain(BMBTContext_t *context)
 static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
 {
     if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS) == CONFIG_SETTING_OFF) {
-        return;
+        if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
+           IBusCommandGTWriteIndexStatic(context->ibus, 0x45, "\x06");
+        };
+       return;
     }
     char tempUnit = 'C';
     char ambtempstr[8] = {0};
