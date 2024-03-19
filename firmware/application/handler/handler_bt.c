@@ -5,6 +5,7 @@
  *     Implement the logic around the BT events
  */
 #include "handler_bt.h"
+#include "handler_common.h"
 static char *PROFILES[] = {
     "A2DP",
     "AVRCP",
@@ -217,7 +218,9 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
         if (context->ibus->moduleStatus.MID == 1) {
             sourceSystem = IBUS_DEVICE_MID;
         }
-        if (context->uiMode == CONFIG_UI_CD53) {
+        if (context->uiMode == CONFIG_UI_CD53 ||
+            context->ibus->vehicleType == IBUS_VEHICLE_TYPE_R50
+        ) {
             sourceSystem = IBUS_DEVICE_MFL;
             volStepMax = 0x01;
         }
@@ -823,7 +826,7 @@ void HandlerTimerBTVolumeManagement(void *ctx)
         context->bt->activeDevice.a2dpId != 0
     ) {
         uint32_t timeSinceUpdate = now - context->pdcLastStatus;
-        if (context->volumeMode == HANDLER_WAIT_REV_VOL &&
+        if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
             timeSinceUpdate >= HANDLER_WAIT_REV_VOL
         ) {
             LogWarning(
