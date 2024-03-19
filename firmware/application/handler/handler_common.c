@@ -59,8 +59,11 @@ uint8_t HandlerSetIBusTELStatus(
             // Do not set the active call flag for these UIs to allow
             // the radio volume controls to remain active
             if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE &&
-                (context->uiMode == CONFIG_UI_CD53 ||
-                 context->uiMode == CONFIG_UI_MIR) &&
+                (
+                    context->uiMode == CONFIG_UI_CD53 ||
+                    context->uiMode == CONFIG_UI_MIR ||
+                    context->ibus->vehicleType == IBUS_VEHICLE_TYPE_R50
+                ) &&
                 context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
             ) {
                 return 1;

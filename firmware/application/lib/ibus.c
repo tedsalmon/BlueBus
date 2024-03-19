@@ -464,7 +464,8 @@ static void IBusHandleLCMMessage(IBus_t *ibus, uint8_t *pkt)
         ibus->lmLoadRearVoltage = pkt[IBUS_LM_IO_LOAD_REAR_OFFSET];
         // Photosensor voltage (LSZ)
         ibus->lmPhotoVoltage = pkt[IBUS_LM_IO_PHOTO_OFFSET];
-        if (ibus->vehicleType != IBUS_VEHICLE_TYPE_E46_Z4 &&
+        if (ibus->vehicleType != IBUS_VEHICLE_TYPE_E46 &&
+            ibus->vehicleType != IBUS_VEHICLE_TYPE_E8X &&
             pkt[23] != 0x00
         ) {
             // Oil Temp calculation
@@ -555,7 +556,7 @@ static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
     }
 }
 
-static void IBusHandlerPDCMessage(IBus_t *ibus, uint8_t *pkt)
+static void IBusHandlePDCMessage(IBus_t *ibus, uint8_t *pkt)
 {
     // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
     // any time we see 0x5A from the PDC. Keep this above all other code to
@@ -878,7 +879,7 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleVMMessage(ibus, pkt);
                     }
                     if (srcSystem == IBUS_DEVICE_PDC) {
-                        IBusHandlerPDCMessage(ibus, pkt);
+                        IBusHandlePDCMessage(ibus, pkt);
                     }
                     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
                         IBusHandleTELMessage(ibus, pkt);
@@ -1249,11 +1250,15 @@ uint8_t IBusGetVehicleType(uint8_t *packet)
 {
     uint8_t vehicleType = (packet[4] >> 4) & 0xF;
     uint8_t detectedVehicleType = 0xFF;
-    if (vehicleType == 0x0F || vehicleType == 0x0A) {
-        detectedVehicleType = IBUS_VEHICLE_TYPE_E46_Z4;
+    if (vehicleType == 0x06 || vehicleType == 0x06 || vehicleType == 0x0F) {
+        detectedVehicleType = IBUS_VEHICLE_TYPE_E46;
+    } else if (vehicleType == 0x0B) {
+        detectedVehicleType = IBUS_VEHICLE_TYPE_R50;
+    } else if (vehicleType == 0x0A) {
+        detectedVehicleType = IBUS_VEHICLE_TYPE_E8X;
     } else {
         // 0x00 and 0x02 are possibilities here
-        detectedVehicleType = IBUS_VEHICLE_TYPE_E38_E39_E53;
+        detectedVehicleType = IBUS_VEHICLE_TYPE_E38_E39_E52_E53;
     }
     return detectedVehicleType;
 }
@@ -1278,14 +1283,29 @@ uint8_t IBusGetConfigTemp(uint8_t *packet)
  *     Description:
  *        Get the configured temperature unit from cluster type response
  *     Params:
- *         unsigned char *packet - The diagnostics packet
+ *         uint8_t *packet - The diagnostics packet
  *     Returns:
  *         uint8_t - the KM or MILES configuration
  */
-uint8_t IBusGetConfigDistance(unsigned char *packet)
+uint8_t IBusGetConfigDistance(uint8_t *packet)
 {
     unsigned char distUnit = (packet[5] >> 6) & 0x1;
     return distUnit;
+}
+
+/**
+ * IBusGetConfigLanguage()
+ *     Description:
+ *        Get the configured Language
+ *     Params:
+ *         uint8_t *packet - The diagnostics packet
+ *     Returns:
+ *         uint8_t - the language
+ */
+uint8_t IBusGetConfigLanguage(uint8_t *packet)
+{
+    uint8_t lang = packet[4] & 0x0F;
+    return lang;
 }
 
 /**
@@ -1561,14 +1581,14 @@ void IBusCommandSetModuleStatus(
  */
 void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -1590,14 +1610,14 @@ void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
  */
 void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -1619,14 +1639,14 @@ void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
  */
 void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_UNLOCK_LOW, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -1648,14 +1668,14 @@ void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
  */
 void IBusCommandGMDoorLockHigh(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -1677,14 +1697,14 @@ void IBusCommandGMDoorLockHigh(IBus_t *ibus)
  */
 void IBusCommandGMDoorLockLow(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -1706,14 +1726,16 @@ void IBusCommandGMDoorLockLow(IBus_t *ibus)
  */
 void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+        ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+    ) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         // Central unlock unlocks all doors on the ZKE3
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
@@ -1736,14 +1758,16 @@ void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
  */
 void IBusCommandGMDoorLockAll(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+        ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+    ) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -1891,7 +1915,7 @@ void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     if (length > 20) {
         length = 20;
     }
-    const size_t pktLenght = 20;
+    const size_t pktLenght = length + 6;
     uint8_t text[pktLenght];
     memset(text, 0x20, pktLenght);
     text[0] = IBUS_CMD_GT_WRITE_WITH_CURSOR;
@@ -2284,6 +2308,35 @@ void IBusCommandIKENumbericDisplayClear(IBus_t *ibus)
     IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
 }
 
+/**
+ * IBusCommandIRISDisplayWrite()
+ *     Description:
+ *        Write the IRIS display
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         char *text - The text to write
+ *     Returns:
+ *         void
+ */
+void IBusCommandIRISDisplayWrite(IBus_t *ibus, char *text)
+{
+    uint8_t len = strlen(text);
+    uint8_t frameSize = len + 3;
+    uint8_t displayText[frameSize];
+    memset(&displayText, 0, frameSize);
+    displayText[0] = IBUS_CMD_RAD_UPDATE_MAIN_AREA;
+    displayText[1] = 0x00;
+    displayText[2] = 0x30;
+    memcpy(displayText + 3, text, len);
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_RAD,
+        IBUS_DEVICE_IRIS,
+        displayText,
+        frameSize
+    );
+
+}
 
 /**
  * IBusCommandLMActivateBulbs()

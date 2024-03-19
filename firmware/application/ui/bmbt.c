@@ -472,7 +472,7 @@ static void BMBTGTWriteIndex(
         newText[stringLength] = 0x06;
         stringLength++;
     }
-    newText[newTextLength] = '\0';
+    newText[newTextLength - 1] = '\0';
     IBusCommandGTWriteIndexTMC(context->ibus, index, newText);
 }
 
@@ -1048,7 +1048,7 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
 static void BMBTMenuSettingsCalling(BMBTContext_t *context)
 {
     BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_CALLING));
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == 0x00) {
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_CALLING_HFP,
@@ -1244,7 +1244,7 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         );
     }
     uint8_t selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-    char localeName[3] = {0};
+    char localeName[5] = {0};
     switch (selectedLanguage) {
         case CONFIG_SETTING_LANGUAGE_DUTCH:
             strncpy(localeName, "NL", 2);
@@ -1273,8 +1273,9 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         case CONFIG_SETTING_LANGUAGE_FRENCH:
             strncpy(localeName, "FR", 2);
             break;
+        case CONFIG_SETTING_LANGUAGE_AUTO:
         default:
-            strncpy(localeName, "EN", 2);
+            strncpy(localeName, "Auto", 4);
             break;
     }
     char langStr[BMBT_MENU_STRING_MAX_SIZE] = {0};
@@ -1473,11 +1474,11 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
         uint8_t value = ConfigGetSetting(CONFIG_SETTING_HFP);
         if (context->bt->type == BT_BTM_TYPE_BC127) {
             if (value == 0x00) {
-                ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
                 BC127CommandProfileOpen(context->bt, "HFP");
             } else {
-                ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
                 BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             }
@@ -1656,8 +1657,9 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             BMBTIBusSensorValueUpdate((void *)context, &valueType);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT), 0);
         } else if (
-                tempMode == CONFIG_SETTING_TEMP_AMBIENT &&
-                context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E46_Z4
+            tempMode == CONFIG_SETTING_TEMP_AMBIENT &&
+            context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E46 &&
+            context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E8X
         ) {
             ConfigSetTempDisplay(CONFIG_SETTING_TEMP_OIL);
             uint8_t valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
@@ -1714,7 +1716,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE) {
         uint8_t selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-        if (selectedLanguage == CONFIG_SETTING_LANGUAGE_DUTCH) {
+        if (selectedLanguage == CONFIG_SETTING_LANGUAGE_AUTO) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_ENGLISH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ESTONIAN;
@@ -1732,6 +1734,8 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             selectedLanguage = CONFIG_SETTING_LANGUAGE_FRENCH;
         } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_FRENCH) {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_DUTCH;
+        } else if (selectedLanguage == CONFIG_SETTING_LANGUAGE_DUTCH) {
+            selectedLanguage = CONFIG_SETTING_LANGUAGE_AUTO;
         } else {
             selectedLanguage = CONFIG_SETTING_LANGUAGE_ENGLISH;
         }
@@ -2006,20 +2010,26 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         context->status.displayMode = BMBT_DISPLAY_ON;
         BMBTTriggerWriteHeader(context);
         BMBTTriggerWriteMenu(context);
-    } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE &&
-               context->status.displayMode == BMBT_DISPLAY_OFF
-    ) {
-        // This adds support for GTs that run without a radio overlay
-        context->status.displayMode = BMBT_DISPLAY_ON;
-        if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
-            context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
-        ) {
-            BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+    } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE) {
+        if (context->status.displayMode == BMBT_DISPLAY_OFF) {
+            // This adds support for GTs that run without a radio overlay
+            context->status.displayMode = BMBT_DISPLAY_ON;
+            if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
+                context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
+            ) {
+                BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+            } else {
+                BMBTMainAreaRefresh(context);
+            }
+            BMBTTriggerWriteHeader(context);
+            BMBTTriggerWriteMenu(context);
         } else {
-            BMBTMainAreaRefresh(context);
+            IBusCommandRADClearMenu(context->ibus);
+            context->menu = BMBT_MENU_NONE;
+            context->status.playerMode = BMBT_MODE_INACTIVE;
+            context->status.displayMode = BMBT_DISPLAY_OFF;
+            BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 0);
         }
-        BMBTTriggerWriteHeader(context);
-        BMBTTriggerWriteMenu(context);
     }
 }
 
@@ -2413,10 +2423,13 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
         textIsOurs == 0
     ) {
         uint8_t pktLen = (uint8_t) pkt[1] + 2;
-        uint8_t textLen = pktLen - 7;
-        char text[textLen];
-        memset(&text, 0, textLen);
-        uint8_t idx = 0;
+        uint8_t textLen = 0;
+        if (pktLen > 7) {
+            textLen = pktLen - 7;
+        }
+        char text[textLen + 1];
+        memset(&text, 0, textLen + 1);
+        int8_t idx = 0;
         uint8_t strIdx = 0;
         // Copy the text from the packet but avoid any preceding spaces
         while (strIdx < textLen) {
@@ -2428,11 +2441,11 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             strIdx++;
         }
         idx--;
-        while (text[idx] == 0x20 || text[idx] == 0x00) {
+        while (idx > 0 && (text[idx] == 0x20 || text[idx] == 0x00)) {
             text[idx] = '\0';
             idx--;
         }
-        text[textLen - 1] = '\0';
+        text[textLen] = '\0';
         if (UtilsStricmp("NO TAPE", text) == 0 ||
             UtilsStricmp("NO CD", text) == 0
         ) {
@@ -2563,9 +2576,45 @@ void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
         BMBTIBusSensorValueUpdate(ctx, &valueType);
     }
 
-    tempUnit = IBusGetConfigDistance(pkt);
-    if (tempUnit != ConfigGetDistUnit()) {
-        ConfigSetDistUnit(tempUnit);
+    uint8_t distUnit = IBusGetConfigDistance(pkt);
+    if (distUnit != ConfigGetDistUnit()) {
+        ConfigSetDistUnit(distUnit);
+    }
+
+// Update also the language if we support it
+// https://github.com/piersholt/wilhelm-docs/blob/master/ike/15.md
+
+    uint8_t langIbus = IBusGetConfigLanguage(pkt);;
+    uint8_t lang = 255;
+
+    switch (langIbus) {
+        case 0: // DE
+            lang = CONFIG_SETTING_LANGUAGE_GERMAN;
+            break;
+        case 3: // IT
+            lang = CONFIG_SETTING_LANGUAGE_ITALIAN;
+            break;
+        case 4: // ES
+            lang = CONFIG_SETTING_LANGUAGE_SPANISH;
+            break;
+        case 6: // FR
+            lang = CONFIG_SETTING_LANGUAGE_FRENCH;
+            break;
+        case 1: // GB
+        case 2: // US
+        case 5: // JP
+        case 7: // CA
+        case 8: // GOLF
+        default:
+            lang = CONFIG_SETTING_LANGUAGE_ENGLISH;
+            break;
+    }
+
+    uint8_t bbLang = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+
+    if (((bbLang == CONFIG_SETTING_LANGUAGE_AUTO) || (bbLang == 255) || (bbLang >= 0x80)) && (lang != (bbLang & 0x0F))) {
+// overwrite only when not flagged as user-forced
+        ConfigSetSetting(CONFIG_SETTING_LANGUAGE, (lang | 0x80));
     }
 }
 

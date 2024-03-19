@@ -37,7 +37,6 @@ void HandlerBTBC127BootStatus(void *, uint8_t *);
 void HandlerBTBM83AVRCPUpdates(void *, uint8_t *);
 void HandlerBTBM83Boot(void *, uint8_t *);
 void HandlerBTBM83BootStatus(void *, uint8_t *);
-void HandlerBTBM83LinkBackStatus(void *, uint8_t *);
 void HandlerBTBM83DSPStatus(void *, uint8_t *);
 
 void HandlerTimerBTTCUStateChange(void *);

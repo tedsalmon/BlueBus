@@ -334,6 +334,10 @@
 #define IBus_MID_BTN_TEL_RIGHT_RELEASE 0x4D
 #define IBus_MID_BTN_TEL_LEFT_RELEASE 0x4C
 
+#define IBUS_MID_UI_TEL_OPEN 0x8E
+#define IBUS_MID_UI_TEL_CLOSE 0x8F
+#define IBUS_MID_UI_RADIO_OPEN 0xB0
+
 #define IBUS_PDC_DEFAULT_SENSOR_VALUE 0xFF
 
 #define IBUS_TEL_CMD_LED_STATUS 0x2B
@@ -388,8 +392,10 @@
 #define IBUS_MFL_BTN_VOL_UP 0x11
 #define IBUS_MFL_BTN_VOL_DOWN 0x10
 
-#define IBUS_VEHICLE_TYPE_E38_E39_E53 0x01
-#define IBUS_VEHICLE_TYPE_E46_Z4 0x02
+#define IBUS_VEHICLE_TYPE_E38_E39_E52_E53 0x01
+#define IBUS_VEHICLE_TYPE_E46 0x02
+#define IBUS_VEHICLE_TYPE_E8X 0x03
+#define IBUS_VEHICLE_TYPE_R50 0x04
 #define IBUS_IKE_TYPE_LOW 0x00
 #define IBUS_IKE_TYPE_HIGH 0x0F
 #define IBUS_IKE_GEAR_NONE 0x00
@@ -565,6 +571,7 @@ uint8_t IBusGetNavType(uint8_t *);
 uint8_t IBusGetVehicleType(uint8_t *);
 uint8_t IBusGetConfigTemp(uint8_t *);
 uint8_t IBusGetConfigDistance(uint8_t *);
+uint8_t IBusGetConfigLanguage(uint8_t *);
 void IBusCommandBlueBusSetStatus(IBus_t *, uint8_t, uint8_t);
 void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, uint8_t, uint8_t, uint8_t, uint8_t);
@@ -601,6 +608,7 @@ void IBusCommandIKEOBCControl(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKESetIgnitionStatus(IBus_t *, uint8_t);
 void IBusCommandIKESetTime(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKESetDate(IBus_t *, uint8_t, uint8_t, uint8_t);
+void IBusCommandIRISDisplayWrite(IBus_t *, char *);
 void IBusCommandTELIKEDisplayWrite(IBus_t *, char *);
 void IBusCommandTELIKEDisplayClear(IBus_t *);
 void IBusCommandIKECheckControlDisplayWrite(IBus_t *, char *);

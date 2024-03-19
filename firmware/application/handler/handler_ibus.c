@@ -398,7 +398,9 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         if (ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC) == CONFIG_SETTING_DSP_INPUT_SPDIF) {
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
         }
-        if (context->ibus->ignitionStatus == IBUS_IGNITION_KL99) {
+        if (context->ibus->ignitionStatus == IBUS_IGNITION_KL99 ||
+            ConfigGetSetting(CONFIG_SETTING_IGN_ALWAYS_ON) == CONFIG_SETTING_ON
+        ) {
             IBusSetInternalIgnitionStatus(context->ibus, IBUS_IGNITION_OFF);
         }
     } else if (requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
@@ -711,9 +713,12 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_0 &&
                 context->gmState.doorsLocked == 1
             ) {
-                if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+                if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
                     IBusCommandGMDoorCenterLockButton(context->ibus);
-                } else if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+                } else if (
+                    context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+                    context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+                ) {
                     if (context->gmState.lowSideDoors == 1) {
                         IBusCommandGMDoorUnlockAll(context->ibus);
                     } else {
@@ -731,9 +736,12 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_1 &&
                 context->gmState.doorsLocked == 1
             ) {
-                if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+                if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
                     IBusCommandGMDoorCenterLockButton(context->ibus);
-                } else if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46_Z4) {
+                } else if (
+                    context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+                    context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+                ) {
                     if (context->gmState.lowSideDoors == 1) {
                         IBusCommandGMDoorUnlockAll(context->ibus);
                     } else {
@@ -840,7 +848,7 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
         if ((comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM && speed >= 10) ||
             (comfortLock == CONFIG_SETTING_COMFORT_LOCK_20KM && speed >= 20)
         ) {
-            if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E53) {
+            if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
                 IBusCommandGMDoorCenterLockButton(context->ibus);
             } else {
                 IBusCommandGMDoorLockAll(context->ibus);
@@ -1546,18 +1554,19 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
  */
 void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
 {
-    if (ConfigGetValue(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
         return;
     }
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
     int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
-
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
-    if ((context->uiMode != CONFIG_UI_CD53 && context->uiMode != CONFIG_UI_MIR) &&
+    if (
+        context->uiMode != CONFIG_UI_CD53 &&
+        context->uiMode != CONFIG_UI_MIR &&
+        context->ibus->vehicleType != IBUS_VEHICLE_TYPE_R50 &&
         HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
-
     ) {
         uint8_t sourceSystem = IBUS_DEVICE_BMBT;
         if (context->ibus->moduleStatus.MID == 1) {
@@ -1682,7 +1691,6 @@ void HandlerTimerIBusCDCAnnounce(void *ctx)
     uint32_t now = TimerGetMillis();
     uint32_t timeDiff = now - context->cdChangerLastPoll;
     if (timeDiff >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
-        context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
         HandlerIBusGetIsIgnitionStatusOn(context) == 1
     ) {
         IBusCommandSetModuleStatus(
