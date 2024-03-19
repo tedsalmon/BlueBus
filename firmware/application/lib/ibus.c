@@ -1906,7 +1906,7 @@ void IBusCommandGTWriteIndexTitle(IBus_t *ibus, char *message) {
     if (length > 20) {
         length = 20;
     }
-    const size_t pktLenght = 20;
+    const size_t pktLenght = length + 6;
     uint8_t text[pktLenght];
     memset(text, 0x20, pktLenght);
     text[0] = IBUS_CMD_GT_WRITE_WITH_CURSOR;

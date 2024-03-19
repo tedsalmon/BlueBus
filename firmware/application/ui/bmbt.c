@@ -472,7 +472,7 @@ static void BMBTGTWriteIndex(
         newText[stringLength] = 0x06;
         stringLength++;
     }
-    newText[newTextLength] = '\0';
+    newText[newTextLength-1] = '\0';
     IBusCommandGTWriteIndexTMC(context->ibus, index, newText);
 }
 
@@ -2413,10 +2413,10 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
         textIsOurs == 0
     ) {
         uint8_t pktLen = (uint8_t) pkt[1] + 2;
-        uint8_t textLen = pktLen - 7;
-        char text[textLen];
-        memset(&text, 0, textLen);
-        uint8_t idx = 0;
+        uint8_t textLen = (pktLen > 7)?(pktLen - 7):0;
+        char text[textLen+1];
+        memset(&text, 0, textLen+1);
+        int8_t idx = 0;
         uint8_t strIdx = 0;
         // Copy the text from the packet but avoid any preceding spaces
         while (strIdx < textLen) {
@@ -2428,11 +2428,11 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             strIdx++;
         }
         idx--;
-        while (text[idx] == 0x20 || text[idx] == 0x00) {
+        while ((idx > 0) && (text[idx] == 0x20 || text[idx] == 0x00)) {
             text[idx] = '\0';
             idx--;
         }
-        text[textLen - 1] = '\0';
+        text[textLen] = '\0';
         if (UtilsStricmp("NO TAPE", text) == 0 ||
             UtilsStricmp("NO CD", text) == 0
         ) {
