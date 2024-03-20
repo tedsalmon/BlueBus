@@ -46,6 +46,7 @@ void LogRaw(const char *format, ...)
         va_list args;
         va_start(args, format);
         vsnprintf(buffer, LOG_MESSAGE_SIZE - 1, format, args);
+        va_end(args);
         UARTSendString(debugger, buffer);
     }
 }
@@ -70,6 +71,7 @@ void LogRawDebug(uint8_t source, const char *format, ...)
         va_list args;
         va_start(args, format);
         vsnprintf(buffer, LOG_MESSAGE_SIZE - 1, format, args);
+        va_end(args);
         UARTSendString(debugger, buffer);
     }
 }

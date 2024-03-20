@@ -472,7 +472,7 @@ static void BMBTGTWriteIndex(
         newText[stringLength] = 0x06;
         stringLength++;
     }
-    newText[newTextLength-1] = '\0';
+    newText[newTextLength - 1] = '\0';
     IBusCommandGTWriteIndexTMC(context->ibus, index, newText);
 }
 
@@ -1654,8 +1654,9 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             BMBTIBusSensorValueUpdate((void *)context, &valueType);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_AMBIENT), 0);
         } else if (
-                tempMode == CONFIG_SETTING_TEMP_AMBIENT &&
-                context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E46_Z4
+            tempMode == CONFIG_SETTING_TEMP_AMBIENT &&
+            context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E46 &&
+            context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E8X
         ) {
             ConfigSetTempDisplay(CONFIG_SETTING_TEMP_OIL);
             uint8_t valueType = IBUS_SENSOR_VALUE_OIL_TEMP;
@@ -2006,20 +2007,26 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         context->status.displayMode = BMBT_DISPLAY_ON;
         BMBTTriggerWriteHeader(context);
         BMBTTriggerWriteMenu(context);
-    } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE &&
-               context->status.displayMode == BMBT_DISPLAY_OFF
-    ) {
-        // This adds support for GTs that run without a radio overlay
-        context->status.displayMode = BMBT_DISPLAY_ON;
-        if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
-            context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
-        ) {
-            BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+    } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE) {
+        if (context->status.displayMode == BMBT_DISPLAY_OFF) {
+            // This adds support for GTs that run without a radio overlay
+            context->status.displayMode = BMBT_DISPLAY_ON;
+            if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
+                context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
+            ) {
+                BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+            } else {
+                BMBTMainAreaRefresh(context);
+            }
+            BMBTTriggerWriteHeader(context);
+            BMBTTriggerWriteMenu(context);
         } else {
-            BMBTMainAreaRefresh(context);
+            IBusCommandRADClearMenu(context->ibus);
+            context->menu = BMBT_MENU_NONE;
+            context->status.playerMode = BMBT_MODE_INACTIVE;
+            context->status.displayMode = BMBT_DISPLAY_OFF;
+            BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 0);
         }
-        BMBTTriggerWriteHeader(context);
-        BMBTTriggerWriteMenu(context);
     }
 }
 
@@ -2413,9 +2420,12 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
         textIsOurs == 0
     ) {
         uint8_t pktLen = (uint8_t) pkt[1] + 2;
-        uint8_t textLen = (pktLen > 7)?(pktLen - 7):0;
-        char text[textLen+1];
-        memset(&text, 0, textLen+1);
+        uint8_t textLen = 0;
+        if (pktLen > 7) {
+            textLen = pktLen - 7;
+        }
+        char text[textLen + 1];
+        memset(&text, 0, textLen + 1);
         int8_t idx = 0;
         uint8_t strIdx = 0;
         // Copy the text from the packet but avoid any preceding spaces
@@ -2428,7 +2438,7 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             strIdx++;
         }
         idx--;
-        while ((idx > 0) && (text[idx] == 0x20 || text[idx] == 0x00)) {
+        while (idx > 0 && (text[idx] == 0x20 || text[idx] == 0x00)) {
             text[idx] = '\0';
             idx--;
         }
