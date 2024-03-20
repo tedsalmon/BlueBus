@@ -1581,7 +1581,9 @@ void IBusCommandSetModuleStatus(
  */
 void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+        ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+    ) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK, // Job
@@ -1610,7 +1612,9 @@ void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
  */
 void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+        ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+    ) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_UNLOCK_ALL, // Job
@@ -1639,7 +1643,9 @@ void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
  */
 void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+        ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+    ) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_UNLOCK_LOW, // Job
@@ -1668,7 +1674,9 @@ void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
  */
 void IBusCommandGMDoorLockHigh(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+        ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+    ) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
@@ -1697,7 +1705,9 @@ void IBusCommandGMDoorLockHigh(IBus_t *ibus)
  */
 void IBusCommandGMDoorLockLow(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 || ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
+    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+        ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+    ) {
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             IBUS_CMD_ZKE5_JOB_LOCK_ALL, // Job
