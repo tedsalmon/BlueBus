@@ -2247,7 +2247,7 @@ void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
  */
 void IBusCommandTELIKEDisplayClear(IBus_t *ibus)
 {
-    IBusCommandTELIKEDisplayWrite(ibus, 0);
+    IBusCommandTELIKEDisplayWrite(ibus, "");
 }
 
 /**
@@ -2284,7 +2284,7 @@ void IBusCommandIKECheckControlDisplayWrite(IBus_t *ibus, char *text)
  */
 void IBusCommandIKECheckControlDisplayClear(IBus_t *ibus)
 {
-    IBusCommandIKECheckControlDisplayWrite(ibus, 0);
+    IBusCommandIKECheckControlDisplayWrite(ibus, "");
 }
 
 /**
