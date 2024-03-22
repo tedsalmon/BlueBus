@@ -1482,6 +1482,12 @@ void HandlerIBusVMDIAIdentityResponse(void *ctx, uint8_t *type)
 void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // Since we cannot consistently monitor the volume in non-Nav & Non-MID cars
+    // then we should not track the volume changes via the MFL as it will cause
+    // issues for the end user who may not know this
+    if (context->uiMode == CONFIG_UI_CD53 || context->uiMode == CONFIG_UI_MIR) {
+        return;
+    }
     // Only watch for changes when not on a call and not reverting volume after call ended
     if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE) {
         uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
@@ -1561,16 +1567,17 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
-    if (
-        context->uiMode != CONFIG_UI_CD53 &&
+    if (context->uiMode != CONFIG_UI_CD53 &&
         context->uiMode != CONFIG_UI_MIR &&
-        context->ibus->vehicleType != IBUS_VEHICLE_TYPE_R50 &&
         HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
     ) {
         int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
         uint8_t sourceSystem = IBUS_DEVICE_BMBT;
         if (context->ibus->moduleStatus.MID == 1) {
             sourceSystem = IBUS_DEVICE_MID;
+        }
+        if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_R50) {
+            sourceSystem = IBUS_DEVICE_MFL;
         }
         IBusCommandSetVolume(
             context->ibus,
