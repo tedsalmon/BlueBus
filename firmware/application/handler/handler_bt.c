@@ -966,8 +966,7 @@ void HandlerTimerBTBC127OpenProfileErrors(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (BTHasActiveMacId(context->bt) != 0) {
-        uint8_t idx;
-        for (idx = 0; idx < BC127_PROFILE_COUNT; idx++) {
+        for (uint8_t idx = 0; idx < BC127_PROFILE_COUNT; idx++) {
             if (context->bt->pairingErrors[idx] == 1 && PROFILES[idx] != 0) {
                 LogDebug(LOG_SOURCE_SYSTEM, "Handler: Attempting to resolve pairing error");
                 BC127CommandProfileOpen(

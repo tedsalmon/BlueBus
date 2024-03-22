@@ -840,7 +840,7 @@ void IBusProcess(IBus_t *ibus)
     if (CharQueueGetSize(&ibus->uart.rxQueue) > 0) {
         ibus->rxBuffer[ibus->rxBufferIdx++] = CharQueueNext(&ibus->uart.rxQueue);
         if (ibus->rxBufferIdx > 1) {
-            uint8_t msgLength = (uint8_t) ibus->rxBuffer[1] + 2;
+            uint8_t msgLength = ibus->rxBuffer[1] + 2;
             // Make sure we do not read more than the maximum packet length
             if (msgLength > IBUS_MAX_MSG_LENGTH) {
                 long long unsigned int ts = (long long unsigned int) TimerGetMillis();
@@ -937,7 +937,7 @@ void IBusProcess(IBus_t *ibus)
                         pkt[IBUS_PKT_SRC],
                         pkt[IBUS_PKT_DST],
                         msgLength,
-                        (uint8_t) pkt[IBUS_PKT_LEN]
+                        pkt[IBUS_PKT_LEN]
                     );
                 }
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
@@ -957,7 +957,7 @@ void IBusProcess(IBus_t *ibus)
         ) {
             uint32_t now = TimerGetMillis();
             if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
-                uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
+                uint8_t msgLen = ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
                 uint8_t idx;
                 /*
                  * Make sure that the STATUS pin on the TH3122 is low, indicating no
@@ -1044,7 +1044,7 @@ void IBusSendCommand(
     for (idx = 0; idx < maxIdx; idx++) {
         crc ^= msg[idx];
     }
-    msg[msgSize - 1] = (unsigned char) crc;
+    msg[msgSize - 1] = crc;
     // Store the data into a buffer, so we can spread out their transmission
     memcpy(ibus->txBuffer[ibus->txBufferWriteIdx], msg, msgSize);
     if (ibus->txBufferWriteIdx + 1 == IBUS_TX_BUFFER_SIZE) {
@@ -1071,7 +1071,7 @@ void IBusSetInternalIgnitionStatus(IBus_t *ibus, uint8_t ignitionStatus)
     }
     EventTriggerCallback(
         IBUS_EVENT_IKEIgnitionStatus,
-        (uint8_t *)&ignitionStatus
+        &ignitionStatus
     );
     ibus->ignitionStatus = ignitionStatus;
 }
@@ -1297,7 +1297,7 @@ uint8_t IBusGetVehicleType(uint8_t *packet)
 {
     uint8_t vehicleType = (packet[4] >> 4) & 0xF;
     uint8_t detectedVehicleType = 0xFF;
-    if (vehicleType == 0x06 || vehicleType == 0x06 || vehicleType == 0x0F) {
+    if (vehicleType == 0x04 || vehicleType == 0x06 || vehicleType == 0x0F) {
         detectedVehicleType = IBUS_VEHICLE_TYPE_E46;
     } else if (vehicleType == 0x0B) {
         detectedVehicleType = IBUS_VEHICLE_TYPE_R50;
@@ -2299,7 +2299,7 @@ void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
  */
 void IBusCommandTELIKEDisplayClear(IBus_t *ibus)
 {
-    IBusCommandTELIKEDisplayWrite(ibus, 0);
+    IBusCommandTELIKEDisplayWrite(ibus, "");
 }
 
 /**
@@ -2336,7 +2336,7 @@ void IBusCommandIKECheckControlDisplayWrite(IBus_t *ibus, char *text)
  */
 void IBusCommandIKECheckControlDisplayClear(IBus_t *ibus)
 {
-    IBusCommandIKECheckControlDisplayWrite(ibus, 0);
+    IBusCommandIKECheckControlDisplayWrite(ibus, "");
 }
 
 /**

@@ -1566,12 +1566,12 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
-    int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
     if (context->uiMode != CONFIG_UI_CD53 &&
         context->uiMode != CONFIG_UI_MIR &&
         HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
     ) {
+        int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
         uint8_t sourceSystem = IBUS_DEVICE_BMBT;
         if (context->ibus->moduleStatus.MID == 1) {
             sourceSystem = IBUS_DEVICE_MID;

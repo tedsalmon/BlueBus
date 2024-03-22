@@ -592,7 +592,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
     if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS) == CONFIG_SETTING_OFF) {
         if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
            IBusCommandGTWriteIndexStatic(context->ibus, 0x45, "\x06");
-        };
+        }
        return;
     }
     char tempUnit = 'C';
