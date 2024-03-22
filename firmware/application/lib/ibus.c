@@ -1250,7 +1250,7 @@ uint8_t IBusGetVehicleType(uint8_t *packet)
 {
     uint8_t vehicleType = (packet[4] >> 4) & 0xF;
     uint8_t detectedVehicleType = 0xFF;
-    if (vehicleType == 0x06 || vehicleType == 0x06 || vehicleType == 0x0F) {
+    if (vehicleType == 0x04 || vehicleType == 0x06 || vehicleType == 0x0F) {
         detectedVehicleType = IBUS_VEHICLE_TYPE_E46;
     } else if (vehicleType == 0x0B) {
         detectedVehicleType = IBUS_VEHICLE_TYPE_R50;
