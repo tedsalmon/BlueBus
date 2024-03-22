@@ -796,7 +796,7 @@ void IBusProcess(IBus_t *ibus)
     if (CharQueueGetSize(&ibus->uart.rxQueue) > 0) {
         ibus->rxBuffer[ibus->rxBufferIdx++] = CharQueueNext(&ibus->uart.rxQueue);
         if (ibus->rxBufferIdx > 1) {
-            uint8_t msgLength = (uint8_t) ibus->rxBuffer[1] + 2;
+            uint8_t msgLength = ibus->rxBuffer[1] + 2;
             // Make sure we do not read more than the maximum packet length
             if (msgLength > IBUS_MAX_MSG_LENGTH) {
                 long long unsigned int ts = (long long unsigned int) TimerGetMillis();
@@ -890,7 +890,7 @@ void IBusProcess(IBus_t *ibus)
                         pkt[IBUS_PKT_SRC],
                         pkt[IBUS_PKT_DST],
                         msgLength,
-                        (uint8_t) pkt[IBUS_PKT_LEN]
+                        pkt[IBUS_PKT_LEN]
                     );
                 }
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
@@ -910,7 +910,7 @@ void IBusProcess(IBus_t *ibus)
         ) {
             uint32_t now = TimerGetMillis();
             if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
-                uint8_t msgLen = (uint8_t) ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
+                uint8_t msgLen = ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
                 uint8_t idx;
                 /*
                  * Make sure that the STATUS pin on the TH3122 is low, indicating no
@@ -997,7 +997,7 @@ void IBusSendCommand(
     for (idx = 0; idx < maxIdx; idx++) {
         crc ^= msg[idx];
     }
-    msg[msgSize - 1] = (unsigned char) crc;
+    msg[msgSize - 1] = crc;
     // Store the data into a buffer, so we can spread out their transmission
     memcpy(ibus->txBuffer[ibus->txBufferWriteIdx], msg, msgSize);
     if (ibus->txBufferWriteIdx + 1 == IBUS_TX_BUFFER_SIZE) {
@@ -1024,7 +1024,7 @@ void IBusSetInternalIgnitionStatus(IBus_t *ibus, uint8_t ignitionStatus)
     }
     EventTriggerCallback(
         IBUS_EVENT_IKEIgnitionStatus,
-        (uint8_t *)&ignitionStatus
+        &ignitionStatus
     );
     ibus->ignitionStatus = ignitionStatus;
 }
