@@ -180,7 +180,7 @@ int8_t I2CRead(
     unsigned char *buffer
 ) {
     unsigned char slaveAddress;
-    unsigned char retval;
+    int16_t retval;
     if (I2CStatus == I2C_STATUS_ERR) {
         return I2C_ERR_BusDirty;
     }
@@ -221,8 +221,8 @@ int8_t I2CRead(
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
     }
-    retval = (unsigned char) I2CReadByte(I2C_NACK);
-    if (retval >= 0) {
+    retval = I2CReadByte(I2C_NACK);
+    if ((retval >= 0) && (retval <=255)) {
         *buffer = retval;
     } else {
         // Error while reading byte.  Close connection and set error flag.
