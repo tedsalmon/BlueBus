@@ -682,6 +682,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
             EventTriggerCallback(IBUS_EVENT_RADMIDDisplayMenu, pkt);
         }
     }
+    EventTriggerCallback(IBUS_EVENT_RAD_MESSAGE_RCV, pkt);
 }
 
 static void IBusHandleTELMessage(IBus_t *ibus, uint8_t *pkt)

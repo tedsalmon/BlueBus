@@ -114,6 +114,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_RAD_MESSAGE_RCV,
+        &HandlerIBusRADMessageReceived,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_SENSOR_VALUE_UPDATE,
         &HandlerIBusSensorValueUpdate,
         context
@@ -1509,6 +1514,22 @@ void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
 }
 
 /**
+ * HandlerIBusRADMessageReceived()
+ *     Description:
+ *         Track the last organic message from the radio
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *type - The update type
+ *     Returns:
+ *         void
+ */
+void HandlerIBusRADMessageReceived(void *ctx, uint8_t *type)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    context->radLastMessage = TimerGetMillis();
+}
+
+/**
  * HandlerIBusSensorValueUpdate()
  *     Description:
  *         Parse Sensor Status
@@ -1696,8 +1717,10 @@ void HandlerTimerIBusCDCAnnounce(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint32_t now = TimerGetMillis();
-    uint32_t timeDiff = now - context->cdChangerLastPoll;
-    if (timeDiff >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
+    uint32_t pollTimeDiff = now - context->cdChangerLastPoll;
+    uint32_t radRxTimeDiff = now - context->radLastMessage;
+    if (pollTimeDiff >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
+        radRxTimeDiff < 61000 &&
         HandlerIBusGetIsIgnitionStatusOn(context) == 1
     ) {
         IBusCommandSetModuleStatus(

@@ -17,6 +17,7 @@
 #include "../ui/bmbt.h"
 #include "../ui/cd53.h"
 #include "../ui/mid.h"
+#include <stdint.h>
 
 void HandlerIBusInit(HandlerContext_t *);
 void HandlerIBusBlueBusTELStatusUpdate(void *, uint8_t *);
@@ -39,6 +40,7 @@ void HandlerIBusModuleStatusResponse(void *, uint8_t *);
 void HandlerIBusModuleStatusRequest(void *, uint8_t *);
 void HandlerIBusPDCSensorUpdate(void *, uint8_t *);
 void HandlerIBusPDCStatus(void *, uint8_t *);
+void HandlerIBusRADMessageReceived(void *, uint8_t *);
 void HandlerIBusVMDIAIdentityResponse(void *, uint8_t *);
 void HandlerIBusVolumeChange(void *, uint8_t *);
 void HandlerIBusSensorValueUpdate(void *, uint8_t *);

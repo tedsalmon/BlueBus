@@ -44,6 +44,7 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     Context.cdChangerLastStatus = now;
     Context.pdcLastStatus = 0;
     Context.lmLastStatusSet = 0;
+    Context.radLastMessage = TimerGetMillis();
     EventRegisterCallback(
         UIEvent_CloseConnection,
         &HandlerUICloseConnection,
