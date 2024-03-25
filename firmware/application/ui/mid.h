@@ -111,6 +111,7 @@ void MIDBTDeviceDisconnected(void *, uint8_t *);
 void MIDBTMetadataUpdate(void *, uint8_t *);
 void MIDBTPlaybackStatus(void *, uint8_t *);
 void MIDIBusCDChangerStatus(void *, uint8_t *);
+void MIDIBusIgnitionStatus(void *, uint8_t *);
 void MIDIBusMIDButtonPress(void *, uint8_t *);
 void MIDIIBusRADMIDDisplayUpdate(void *, uint8_t *);
 void MIDIIBusRADMIDMenuUpdate(void *, uint8_t *);
