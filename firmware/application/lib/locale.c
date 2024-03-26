@@ -778,6 +778,9 @@ char *LocaleGetText(uint16_t stringIndex)
         case CONFIG_SETTING_LANGUAGE_FRENCH:
             text = LOCALE_LANG_FRENCH[stringIndex];
             break;
+        case CONFIG_SETTING_LANGUAGE_ENGLISH:
+        default:
+            text = LOCALE_LANG_ENGLISH[stringIndex];
     }
 
     if (text == 0) {

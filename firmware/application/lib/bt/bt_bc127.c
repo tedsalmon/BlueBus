@@ -1276,9 +1276,9 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         if (datetime[BC127_AT_DATE_YEAR] > 20 &&
             datetime[BC127_AT_DATE_MONTH] >= 1 && datetime[BC127_AT_DATE_MONTH] <= 12 &&
             datetime[BC127_AT_DATE_DAY] >= 1 && datetime[BC127_AT_DATE_DAY] <= 31 &&
-            datetime[BC127_AT_DATE_HOUR] >= 0 && datetime[BC127_AT_DATE_HOUR] <= 23 &&
-            datetime[BC127_AT_DATE_MIN] >= 0 && datetime[BC127_AT_DATE_MIN] <= 59 &&
-            datetime[BC127_AT_DATE_SEC] >= 0 && datetime[BC127_AT_DATE_SEC] <= 59
+            datetime[BC127_AT_DATE_HOUR] <= 23 &&
+            datetime[BC127_AT_DATE_MIN] <= 59 &&
+            datetime[BC127_AT_DATE_SEC] <= 59
         ) {
             EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
         }
