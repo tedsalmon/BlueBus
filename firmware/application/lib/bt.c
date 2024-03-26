@@ -3,9 +3,12 @@
  * Author: Ted Salmon <tass2001@gmail.com>
  * Description:
  *     Implementation of the abstract Bluetooth Module API
+ * History:
+ *    Feb 2024 (Matt C) - Added phone book access (currently for BM83 only)
  */
 #include "bt.h"
 #include "locale.h"
+#include "bt/bt_bm83_pbap.h"
 
 /**
  * BTInit()
@@ -457,6 +460,63 @@ void BTCommandToggleVoiceRecognition(BT_t *bt)
             BM83CommandVoiceRecognitionOpen(bt);
         }
     }
+}
+
+/**
+ * BTGetCommandReqPhonebookFrom
+ * @param bt - pointer to the bluetooth module
+ * @param offset - index to start 
+ * 
+ * Requests a phone book entries starting from the provided offset
+ */
+void BTCommandReqPhonebookFrom(BT_t *bt, uint8_t offset) {
+    if (bt->type == BT_BTM_TYPE_BM83) {
+        // TODO: Manage paging in the menu
+        BM83CommandPBAPPullPhoneBook(bt, PBAP_TYPE_PHONEBOOK, offset);
+    } else {
+        LogDebug(LOG_SOURCE_BT, "Get Phonebook - not implemented for BC127");
+    }    
+}
+
+/**
+ * BTCommandReqPhonebook()
+ * @param bt - pointer to the module object
+ * 
+ * Requests the first entries from the phone book.
+ * A convenience function for BTCommandReqPhonebookFrom with 0 offset
+ */
+void BTCommandReqPhonebook(BT_t *bt) 
+{
+    BTCommandReqPhonebookFrom(bt, 0);
+}
+/**
+ * BTCommandReqFavorites()
+ * @param bt - A pointer to the bluetooth module object
+ * 
+ * Requests the "Top-8" from phone favorites.
+ */
+void BTCommandReqFavorites(BT_t *bt)
+{
+    if (bt->type == BT_BTM_TYPE_BM83) {
+        // TODO: Manage paging in the menu
+        BM83CommandPBAPPullPhoneBook(bt, PBAP_TYPE_FAVORITE_CONTACTS, 0);
+    } else {
+        LogDebug(LOG_SOURCE_BT, "Get Favorites - not implemented for BC127");
+    }    
+}
+/**
+ * BTCommandReqRecent()
+ * @param bt - A pointer to the bluetooth module object
+ * 
+ * Requests the combined call history from phone
+ */
+void BTCommandReqRecent(BT_t *bt)
+{
+    if (bt->type == BT_BTM_TYPE_BM83) {
+        BM83CommandPBAPPullPhoneBook(bt, PBAP_TYPE_COMBINED_CALL_HISTORY, 0);
+    } else {
+        LogDebug(LOG_SOURCE_BT, "Get Call History - not implemented for BC127");
+    } 
 }
 
 /**
