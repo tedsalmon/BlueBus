@@ -222,7 +222,7 @@ int8_t I2CRead(
         return I2C_ERR_CommFail;
     }
     retval = I2CReadByte(I2C_NACK);
-    if ((retval >= 0) && (retval <=255)) {
+    if ((retval >= 0) && (retval <= 255)) {
         *buffer = retval;
     } else {
         // Error while reading byte.  Close connection and set error flag.
