@@ -143,6 +143,7 @@ typedef struct HandlerContext_t {
     uint32_t lmLastStatusSet;
     uint32_t pdcLastStatus;
     uint8_t pdcActive: 1;
+    uint32_t radLastMessage;
 } HandlerContext_t;
 
 uint8_t HandlerGetTelMode(HandlerContext_t *);

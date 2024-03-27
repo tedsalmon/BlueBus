@@ -114,6 +114,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_RAD_MESSAGE_RCV,
+        &HandlerIBusRADMessageReceived,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_SENSOR_VALUE_UPDATE,
         &HandlerIBusSensorValueUpdate,
         context
@@ -1509,6 +1514,22 @@ void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
 }
 
 /**
+ * HandlerIBusRADMessageReceived()
+ *     Description:
+ *         Track the last organic message from the radio
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *type - The update type
+ *     Returns:
+ *         void
+ */
+void HandlerIBusRADMessageReceived(void *ctx, uint8_t *type)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    context->radLastMessage = TimerGetMillis();
+}
+
+/**
  * HandlerIBusSensorValueUpdate()
  *     Description:
  *         Parse Sensor Status
@@ -1572,6 +1593,10 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
         HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
     ) {
         int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
+        if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
+            // Drop Telephony mode so the radio acknowledges the volume changes
+            IBusCommandTELStatus(context->ibus, IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE);
+        }
         uint8_t sourceSystem = IBUS_DEVICE_BMBT;
         if (context->ibus->moduleStatus.MID == 1) {
             sourceSystem = IBUS_DEVICE_MID;
@@ -1597,6 +1622,11 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
             }
         }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
+        if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
+            // Re-enable telephony mode
+            IBusCommandTELStatus(context->ibus, IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE);
+            IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
+        }
     } else {
         uint8_t volume = ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL);
         // PCM51XX volume gets lower as you raise the value in the register
@@ -1696,8 +1726,10 @@ void HandlerTimerIBusCDCAnnounce(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint32_t now = TimerGetMillis();
-    uint32_t timeDiff = now - context->cdChangerLastPoll;
-    if (timeDiff >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
+    uint32_t pollTimeDiff = now - context->cdChangerLastPoll;
+    uint32_t radRxTimeDiff = now - context->radLastMessage;
+    if (pollTimeDiff >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
+        radRxTimeDiff < 61000 &&
         HandlerIBusGetIsIgnitionStatusOn(context) == 1
     ) {
         IBusCommandSetModuleStatus(

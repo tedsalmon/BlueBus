@@ -72,7 +72,10 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     Context.status.navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
     Context.timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     Context.timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;
-    Context.mainDisplay = UtilsDisplayValueInit(LocaleGetText(LOCALE_STRING_BLUETOOTH), BMBT_DISPLAY_OFF);
+    Context.mainDisplay = UtilsDisplayValueInit(
+        LocaleGetText(LOCALE_STRING_BLUETOOTH),
+        BMBT_DISPLAY_OFF
+    );
     Context.navZoom = -1;
     Context.navZoomTime = 0;
     Context.mapShown = 0;
@@ -2887,10 +2890,14 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
         context->status.radType = IBUS_RADIO_TYPE_C43;
     }
     uint8_t textIsOurs = 0;
-    if (pkt[5] == 0x30) {
+    if (pkt[IBUS_PKT_DB2] == 0x30) {
         // The BM24 uses this layout to write out multiple headers
         // at the same time. Ensure the text is ours
-        if (pkt[6] != 0x20 && pkt[7] != 0x20 && pkt[8] != 0x07) {
+        if (pkt[IBUS_PKT_DB1] != IBUS_C43_TITLE_MODE &&
+            pkt[6] != 0x20 &&
+            pkt[7] != 0x20 &&
+            pkt[8] != 0x07
+        ) {
             textIsOurs = 1;
         } else {
             context->status.radType = IBUS_RADIO_TYPE_BM24;

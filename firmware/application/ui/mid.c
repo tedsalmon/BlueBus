@@ -40,6 +40,11 @@ void MIDInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_IKEIgnitionStatus,
+        &MIDIBusIgnitionStatus,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_MIDButtonPress,
         &MIDIBusMIDButtonPress,
         &Context
@@ -92,6 +97,10 @@ void MIDDestroy()
     EventUnregisterCallback(
         IBUS_EVENT_CDStatusRequest,
         &MIDIBusCDChangerStatus
+    );
+    EventUnregisterCallback(
+        IBUS_EVENT_IKEIgnitionStatus,
+        &MIDIBusIgnitionStatus
     );
     EventUnregisterCallback(
         IBUS_EVENT_MIDButtonPress,
@@ -372,6 +381,30 @@ void MIDIBusCDChangerStatus(void *ctx, unsigned char *pkt)
     }
 }
 
+/**
+ * MIDIBusIgnitionStatus()
+ *     Description:
+ *         Ensure we drop the TEL UI when the igintion is turned off
+ *         if the display is still active
+ *     Params:
+ *         void *ctx - A void pointer to the MIDContext_t struct
+ *         uint8_t *pkt - A pointer to the ignition status
+ *     Returns:
+ *         void
+ */
+void MIDIBusIgnitionStatus(void *ctx, uint8_t *pkt)
+{
+    MIDContext_t *context = (MIDContext_t *) ctx;
+    if (pkt[0] == IBUS_IGNITION_OFF &&
+        context->mode != MID_MODE_DISPLAY_OFF &&
+        context->mode != MID_MODE_OFF
+    ) {
+        IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x00);
+        context->mode = MID_MODE_OFF;
+        context->modeChangeStatus = MID_MODE_CHANGE_OFF;
+    }
+}
+
 void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
@@ -581,80 +614,84 @@ void MIDTimerMenuWrite(void *ctx)
 void MIDTimerDisplay(void *ctx)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
-    if (context->mode != MID_MODE_OFF && context->mode != MID_MODE_DISPLAY_OFF) {
-        // Display the temp text, if there is any
-        if (context->tempDisplay.status > MID_DISPLAY_STATUS_OFF) {
-            if (context->tempDisplay.timeout == 0) {
-                context->tempDisplay.status = MID_DISPLAY_STATUS_OFF;
-            } else if (context->tempDisplay.timeout > 0) {
-                context->tempDisplay.timeout--;
-            } else if (context->tempDisplay.timeout < -1) {
-                context->tempDisplay.status = MID_DISPLAY_STATUS_OFF;
-            }
-            if (context->tempDisplay.status == MID_DISPLAY_STATUS_NEW) {
-                IBusCommandMIDDisplayText(
-                    context->ibus,
-                    context->tempDisplay.text
-                );
-                context->tempDisplay.status = MID_DISPLAY_STATUS_ON;
-            }
-            if (context->mainDisplay.length <= IBus_MID_MAX_CHARS) {
-                context->mainDisplay.index = 0;
-            }
+    if (context->mode == MID_MODE_OFF ||
+        context->mode == MID_MODE_DISPLAY_OFF ||
+        context->ibus->ignitionStatus == IBUS_IGNITION_OFF
+    ) {
+        return;
+    }
+    // Display the temp text, if there is any
+    if (context->tempDisplay.status > MID_DISPLAY_STATUS_OFF) {
+        if (context->tempDisplay.timeout == 0) {
+            context->tempDisplay.status = MID_DISPLAY_STATUS_OFF;
+        } else if (context->tempDisplay.timeout > 0) {
+            context->tempDisplay.timeout--;
+        } else if (context->tempDisplay.timeout < -1) {
+            context->tempDisplay.status = MID_DISPLAY_STATUS_OFF;
+        }
+        if (context->tempDisplay.status == MID_DISPLAY_STATUS_NEW) {
+            IBusCommandMIDDisplayText(
+                context->ibus,
+                context->tempDisplay.text
+            );
+            context->tempDisplay.status = MID_DISPLAY_STATUS_ON;
+        }
+        if (context->mainDisplay.length <= IBus_MID_MAX_CHARS) {
+            context->mainDisplay.index = 0;
+        }
+    } else {
+        // Display the main text if there isn't a timeout set
+        if (context->mainDisplay.timeout > 0) {
+            context->mainDisplay.timeout--;
         } else {
-            // Display the main text if there isn't a timeout set
-            if (context->mainDisplay.timeout > 0) {
-                context->mainDisplay.timeout--;
-            } else {
-                if (context->mainDisplay.length > IBus_MID_MAX_CHARS) {
-                    char text[IBus_MID_MAX_CHARS + 1] = {0};
-                    uint8_t textLength = IBus_MID_MAX_CHARS;
-                    // If we start with a space, it will be ignored by the display
-                    // Skipping the space allows us to have "smooth" scrolling
-                    if (context->mainDisplay.text[context->mainDisplay.index] == 0x20 &&
-                        context->mainDisplay.index < context->mainDisplay.length
+            if (context->mainDisplay.length > IBus_MID_MAX_CHARS) {
+                char text[IBus_MID_MAX_CHARS + 1] = {0};
+                uint8_t textLength = IBus_MID_MAX_CHARS;
+                // If we start with a space, it will be ignored by the display
+                // Skipping the space allows us to have "smooth" scrolling
+                if (context->mainDisplay.text[context->mainDisplay.index] == 0x20 &&
+                    context->mainDisplay.index < context->mainDisplay.length
+                ) {
+                    context->mainDisplay.index++;
+                }
+                uint8_t idxEnd = context->mainDisplay.index + textLength;
+                // Prevent strncpy() from going out of bounds
+                if (idxEnd >= context->mainDisplay.length) {
+                    textLength = context->mainDisplay.length - context->mainDisplay.index;
+                    idxEnd = context->mainDisplay.index + textLength;
+                }
+                UtilsStrncpy(
+                    text,
+                    &context->mainDisplay.text[context->mainDisplay.index],
+                    textLength + 1
+                );
+                IBusCommandMIDDisplayText(context->ibus, text);
+                // Pause at the beginning of the text
+                if (context->mainDisplay.index == 0) {
+                    context->mainDisplay.timeout = 5;
+                }
+                if (idxEnd >= context->mainDisplay.length) {
+                    // Pause at the end of the text
+                    context->mainDisplay.timeout = 2;
+                    context->mainDisplay.index = 0;
+                } else {
+                    if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) ==
+                        MID_SETTING_METADATA_MODE_CHUNK
                     ) {
+                        context->mainDisplay.timeout = 2;
+                        context->mainDisplay.index += IBus_MID_MAX_CHARS;
+                    } else {
                         context->mainDisplay.index++;
                     }
-                    uint8_t idxEnd = context->mainDisplay.index + textLength;
-                    // Prevent strncpy() from going out of bounds
-                    if (idxEnd >= context->mainDisplay.length) {
-                        textLength = context->mainDisplay.length - context->mainDisplay.index;
-                        idxEnd = context->mainDisplay.index + textLength;
-                    }
-                    UtilsStrncpy(
-                        text,
-                        &context->mainDisplay.text[context->mainDisplay.index],
-                        textLength + 1
-                    );
-                    IBusCommandMIDDisplayText(context->ibus, text);
-                    // Pause at the beginning of the text
-                    if (context->mainDisplay.index == 0) {
-                        context->mainDisplay.timeout = 5;
-                    }
-                    if (idxEnd >= context->mainDisplay.length) {
-                        // Pause at the end of the text
-                        context->mainDisplay.timeout = 2;
-                        context->mainDisplay.index = 0;
-                    } else {
-                        if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) ==
-                            MID_SETTING_METADATA_MODE_CHUNK
-                        ) {
-                            context->mainDisplay.timeout = 2;
-                            context->mainDisplay.index += IBus_MID_MAX_CHARS;
-                        } else {
-                            context->mainDisplay.index++;
-                        }
-                    }
-                } else {
-                    if (context->mainDisplay.index == 0) {
-                        IBusCommandMIDDisplayText(
-                            context->ibus,
-                            context->mainDisplay.text
-                        );
-                    }
-                    context->mainDisplay.index = 1;
                 }
+            } else {
+                if (context->mainDisplay.index == 0) {
+                    IBusCommandMIDDisplayText(
+                        context->ibus,
+                        context->mainDisplay.text
+                    );
+                }
+                context->mainDisplay.index = 1;
             }
         }
     }

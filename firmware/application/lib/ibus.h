@@ -477,6 +477,7 @@
 #define IBUS_EVENT_GT_MENU_BUFFER_UPDATE 76
 #define IBUS_EVENT_TIME_UPDATE 77
 #define IBUS_EVENT_RANGE_UPDATE 78
+#define IBUS_EVENT_RAD_MESSAGE_RCV 79
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
