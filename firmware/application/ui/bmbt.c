@@ -584,11 +584,11 @@ static void BMBTMenuMain(BMBTContext_t *context)
 
 static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
 {
-    if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS) == CONFIG_SETTING_OFF) {
+    if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC) == CONFIG_SETTING_OFF) {
         if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
            IBusCommandGTWriteIndexStatic(context->ibus, 0x45, "\x06");
         }
-       return;
+        return;
     }
     char tempUnit = 'C';
     char ambtempstr[8] = {0};
@@ -1676,7 +1676,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OFF), 0);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC) {
-        if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS) == CONFIG_SETTING_ON) {
+        if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC) == CONFIG_SETTING_ON) {
             BMBTGTWriteIndex(
                 context,
                 BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
@@ -1684,7 +1684,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 0
             );
             ConfigSetSetting(
-                CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS,
+                CONFIG_SETTING_BMBT_DASHBOARD_OBC,
                 CONFIG_SETTING_OFF
             );
         } else {
@@ -1695,7 +1695,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 0
             );
             ConfigSetSetting(
-                CONFIG_SETTING_BMBT_DASHBOARD_OBC_ADDRESS,
+                CONFIG_SETTING_BMBT_DASHBOARD_OBC,
                 CONFIG_SETTING_ON
             );
         }
