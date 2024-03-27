@@ -3077,6 +3077,12 @@ void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
         case 6: // FR
             lang = CONFIG_SETTING_LANGUAGE_FRENCH;
             break;
+        case 9: // NL
+            lang = CONFIG_SETTING_LANGUAGE_DUTCH;
+            break;
+        case 10: // RU
+            lang = CONFIG_SETTING_LANGUAGE_RUSSIAN;
+            break;
         case 1: // GB
         case 2: // US
         case 5: // JP
