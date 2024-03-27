@@ -1,13 +1,48 @@
 /*
  * File:   config.h
  * Author: Ted Salmon <tass2001@gmail.com>
- * Description: 
+ * Description:
  *     Get & Set Configuration items on the EEPROM
  */
 #include "config.h"
 
 uint8_t CONFIG_SETTING_CACHE[CONFIG_SETTING_CACHE_SIZE] = {0};
 uint8_t CONFIG_VALUE_CACHE[CONFIG_VALUE_CACHE_SIZE] = {0};
+
+static int8_t tz_offsets[32] = {
+/* no val */    0,
+/* -12:00 */    -1*(12*60+00)/15,
+/* -11:00 */    -1*(11*60+00)/15,
+/* -10:00 */    -1*(10*60+00)/15,
+/* -09:00 */    -1*( 9*60+00)/15,
+/* -08:00 */    -1*( 8*60+00)/15,
+/* -07:00 */    -1*( 7*60+00)/15,
+/* -06:00 */    -1*( 6*60+00)/15,
+/* -05:00 */    -1*( 5*60+00)/15,
+/* -04:00 */    -1*( 4*60+00)/15,
+/* -03:30 */    -1*( 3*60+30)/15,
+/* -03:00 */    -1*( 3*60+00)/15,
+/* -02:00 */    -1*( 2*60+00)/15,
+/* -01:00 */    -1*( 1*60+00)/15,
+/*  00:00 */     0*( 0*60+00)/15,
+/* +01:00 */    +1*( 1*60+00)/15,
+/* +02:00 */    +1*( 2*60+00)/15,
+/* +03:00 */    +1*( 3*60+00)/15,
+/* +03:30 */    +1*( 3*60+30)/15,
+/* +04:00 */    +1*( 4*60+00)/15,
+/* +04:30 */    +1*( 4*60+30)/15,
+/* +05:00 */    +1*( 5*60+00)/15,
+/* +05:30 */    +1*( 5*60+30)/15,
+/* +06:00 */    +1*( 6*60+00)/15,
+/* +07:00 */    +1*( 7*60+00)/15,
+/* +08:00 */    +1*( 8*60+00)/15,
+/* +09:00 */    +1*( 9*60+00)/15,
+/* +09:30 */    +1*( 9*60+30)/15,
+/* +10:00 */    +1*(10*60+00)/15,
+/* +10:30 */    +1*(10*60+30)/15,
+/* +11:00 */    +1*(11*60+00)/15,
+/* +12:00 */    +1*(12*60+00)/15,
+};
 
 /**
  * ConfigGetByte()
@@ -537,6 +572,51 @@ void ConfigGetVehicleIdentity(uint8_t *vin)
 }
 
 /**
+ * ConfigGetTimeSource()
+ *     Description:
+ *         Return the configured source of time
+ *     Returns:
+ *         uint8_t - CONFIG_SETTING_TIME_PHONE | CONFIG_SETTING_TIME_GPS | CONFIG_SETTING_OFF
+ */
+uint8_t ConfigGetTimeSource() {
+    return ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & ( CONFIG_SETTING_TIME_PHONE | CONFIG_SETTING_TIME_GPS );
+};
+
+
+/**
+ * ConfigGetTimeDST()
+ *     Description:
+ *         Return the configured DST state
+ *     Returns:
+ *         uint8_t - CONFIG_SETTING_TIME_DST | CONFIG_SETTING_OFF
+ */
+uint8_t ConfigGetTimeDST() {
+    return ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & CONFIG_SETTING_TIME_DST;
+};
+
+/**
+ * ConfigGetTimeOffset()
+ *     Description:
+ *         Return the configured time offset in minutes
+ *     Returns:
+ *         int16_t - time offset in minutes
+ */
+int16_t ConfigGetTimeOffset() {
+    return tz_offsets[(ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & CONFIG_SETTING_TIME_TZ) >> 3] * 15;
+}
+
+/**
+ * ConfigGetTimeOffsetIndex()
+ *     Description:
+ *         Return the configured time offset index
+ *     Returns:
+ *         int16_t - time offset as table index
+ */
+uint8_t ConfigGetTimeOffsetIndex() {
+    return (ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & CONFIG_SETTING_TIME_TZ) >> 3;
+}
+
+/**
  * ConfigSetBC127BootFailures()
  *     Description:
  *         Set count of BC127 boot failures
@@ -822,7 +902,7 @@ void ConfigSetDistUnit(uint8_t distUnit)
  *         Set the trap count for the given trap
  *     Params:
  *         uint8_t trap - The trap triggered
- *         uint8_t count - The number 
+ *         uint8_t count - The number
  *     Returns:
  *         void
  */
@@ -928,4 +1008,82 @@ void ConfigSetVehicleIdentity(uint8_t *vin)
     for (i = 0; i < 5; i++) {
         ConfigSetByte(vinAddress[i], vin[i]);
     }
+}
+
+/**
+ * ConfigSetTimeSource()
+ *     Description:
+ *         Set the time source
+ *     Params:
+ *         uint8_t source - CONFIG_SETTING_TIME_PHONE | CONFIG_SETTING_TIME_GPS | CONFIG_SETTING_OFF
+ *     Returns:
+ *         void
+ */
+void ConfigSetTimeSource(uint8_t source) {
+    if (source == CONFIG_SETTING_TIME_PHONE || source == CONFIG_SETTING_TIME_GPS || source == CONFIG_SETTING_OFF) {
+        uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b11111100 ) | source;
+        ConfigSetByte(CONFIG_SETTING_COMFORT_TIME, val);
+    }
+};
+
+/**
+ * ConfigSetTimeDST()
+ *     Description:
+ *         Set the DST state
+ *     Params:
+ *         uint8_t source - CONFIG_SETTING_TIME_DST | CONFIG_SETTING_OFF
+ *     Returns:
+ *         void
+ */
+void ConfigSetTimeDST(uint8_t dst) {
+    if (dst == 1) {
+        dst = CONFIG_SETTING_TIME_DST;
+    }
+    if (dst == CONFIG_SETTING_OFF || dst == CONFIG_SETTING_TIME_DST ) {
+        uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b11111011 ) | dst;
+        ConfigSetByte(CONFIG_SETTING_COMFORT_TIME, val);
+    }
+};
+
+/**
+ * ConfigSetTimeOffset()
+ *     Description:
+ *         Set the time offset (eg timezone)
+ *     Params:
+ *         int16_t offset - time offset in minutes
+ *     Returns:
+ *         void
+ */
+void ConfigSetTimeOffset(int16_t offset) {
+    uint8_t min_dif = 255;
+    int8_t off = offset / 15;
+    uint8_t min_idx = 13; // ( UTC )
+    uint8_t i;
+
+    for (i=1; i<32; i++) {
+        int8_t dif = abs(tz_offsets[i]-off);
+        if (dif<min_dif) {
+            min_dif = dif;
+            min_idx = i;
+        }
+    }
+
+    if (min_dif != 255) {
+        uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b00000111 ) | (min_idx << 3);
+        ConfigSetByte(CONFIG_SETTING_COMFORT_TIME, val);
+    }
+}
+
+/**
+ * ConfigSetTimeOffsetIndex()
+ *     Description:
+ *         Set the time offset (eg timezone)
+ *     Params:
+ *         uint8_t offset - time offset table index
+ *     Returns:
+ *         void
+ */
+void ConfigSetTimeOffsetIndex(uint8_t idx) {
+    uint8_t val = ( ConfigGetByte(CONFIG_SETTING_COMFORT_TIME) & 0b00000111 ) | (idx << 3);
+    ConfigSetByte(CONFIG_SETTING_COMFORT_TIME, val);
 }

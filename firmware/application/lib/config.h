@@ -1,7 +1,7 @@
 /*
  * File:   config.h
  * Author: Ted Salmon <tass2001@gmail.com>
- * Description: 
+ * Description:
  *     Get & Set Configuration items on the EEPROM
  */
 #ifndef CONFIG_H
@@ -50,6 +50,8 @@
 #define CONFIG_SETTING_COMFORT_DATE_TIME_ADDRESS 0x2B
 #define CONFIG_SETTING_COMFORT_AUTOZOOM_ADDRESS 0x2C
 #define CONFIG_SETTING_COMFORT_PDC_ADDRESS 0x2D
+#define CONFIG_SETTING_COMFORT_TIME_ADDRESS 0x2E
+#define CONFIG_SETTING_COMFORT_NAVI_ADDRESS 0x2F
 /* Config 0x36 - 0x3F: Telephony Settings */
 #define CONFIG_SETTING_HFP_ADDRESS 0x36
 #define CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL_ADDRESS 0x37
@@ -120,6 +122,18 @@
 #define CONFIG_SETTING_PDC_CLUSTER 0x01
 #define CONFIG_SETTING_PDC_RADIO 0x02
 #define CONFIG_SETTING_PDC_BOTH 0x03
+#define CONFIG_SETTING_TIME_PHONE   0b00000001
+#define CONFIG_SETTING_TIME_GPS     0b00000010
+#define CONFIG_SETTING_TIME_DST     0b00000100
+#define CONFIG_SETTING_TIME_TZ      0b11111000
+#define CONFIG_SETTING_NAVI_SILENT          0b10000000
+#define CONFIG_SETTING_NAVI_ROUTE_RANGE     0b01000000
+#define CONFIG_SETTING_NAVI_MAP_DEFAULT     0x01
+#define CONFIG_SETTING_NAVI_MAP_SPEED_20    0x02
+#define CONFIG_SETTING_NAVI_MAP_SPEED_30    0x03
+#define CONFIG_SETTING_NAVI_MAP_SPEED_50    0x04
+#define CONFIG_SETTING_NAVI_MAP_TIME_5      0x05
+#define CONFIG_SETTING_NAVI_MAP_TIME_10     0x06
 
 /* EEPROM 0x1A - 0x50: User Configurable Settings */
 /* Config 0x1A - 0x24: UI Settings */
@@ -140,6 +154,8 @@
 #define CONFIG_SETTING_COMFORT_DATE_TIME CONFIG_SETTING_COMFORT_DATE_TIME_ADDRESS
 #define CONFIG_SETTING_COMFORT_AUTOZOOM CONFIG_SETTING_COMFORT_AUTOZOOM_ADDRESS
 #define CONFIG_SETTING_COMFORT_PDC CONFIG_SETTING_COMFORT_PDC_ADDRESS
+#define CONFIG_SETTING_COMFORT_TIME CONFIG_SETTING_COMFORT_TIME_ADDRESS
+#define CONFIG_SETTING_COMFORT_NAVI CONFIG_SETTING_COMFORT_NAVI_ADDRESS
 /* Config 0x36 - 0x3E: Telephony Settings */
 #define CONFIG_SETTING_HFP CONFIG_SETTING_HFP_ADDRESS
 #define CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL_ADDRESS
@@ -200,6 +216,10 @@ uint8_t ConfigGetTrapLast();
 uint8_t ConfigGetUIMode();
 uint8_t ConfigGetValue(uint8_t);
 uint8_t ConfigGetVehicleType();
+uint8_t ConfigGetTimeSource();
+uint8_t ConfigGetTimeDST();
+int16_t ConfigGetTimeOffset();
+uint8_t ConfigGetTimeOffsetIndex();
 void ConfigGetVehicleIdentity(uint8_t *);
 void ConfigGetString(uint8_t, char *, uint8_t);
 void ConfigSetBC127BootFailures(uint16_t);
@@ -224,4 +244,8 @@ void ConfigSetUIMode(uint8_t);
 void ConfigSetValue(uint8_t, uint8_t);
 void ConfigSetVehicleType(uint8_t);
 void ConfigSetVehicleIdentity(uint8_t *);
+void ConfigSetTimeSource(uint8_t);
+void ConfigSetTimeDST(uint8_t);
+void ConfigSetTimeOffset(int16_t);
+void ConfigSetTimeOffsetIndex(uint8_t);
 #endif /* CONFIG_H */

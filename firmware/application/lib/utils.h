@@ -161,6 +161,13 @@
 #define UTILS_PIN_TEL_MUTE 0
 #define UTILS_PIN_TEL_ON 1
 
+#define DATETIME_YEAR 0
+#define DATETIME_MON 1
+#define DATETIME_DAY 2
+#define DATETIME_HOUR 3
+#define DATETIME_MIN 4
+#define DATETIME_SEC 5
+
 /* Check if a bit is set in a byte */
 #define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
 /* Clear a set bit in a byte */

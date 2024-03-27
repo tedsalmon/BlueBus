@@ -402,11 +402,10 @@ void HandlerBTCallerID(void *ctx, uint8_t *data)
 void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint8_t linkType = *data;
+    uint8_t hfpConfigStatus = ConfigGetSetting(CONFIG_SETTING_HFP);
 
     if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF) {
-        uint8_t linkType = *data;
-        uint8_t hfpConfigStatus = ConfigGetSetting(CONFIG_SETTING_HFP);
-
         // Once A2DP and AVRCP are connected, we can disable connectability
         // If HFP is enabled, do not disable connectability until the
         // profile opens
@@ -430,7 +429,11 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                 }
             }
         }
-        if (linkType == BT_LINK_TYPE_AVRCP || linkType == BT_LINK_TYPE_A2DP) {
+        if ((linkType == BT_LINK_TYPE_AVRCP ||
+             linkType == BT_LINK_TYPE_A2DP) &&
+            context->bt->activeDevice.a2dpId != 0 &&
+            context->bt->activeDevice.avrcpId != 0
+        ) {
             if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
                 context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
             ) {
@@ -466,9 +469,11 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                     BC127CommandATSet(context->bt, "CSCS", "\"UTF-8\"");
                     // Explicitly enable Calling Line Identification (Caller ID)
                     BC127CommandATSet(context->bt, "CLIP", "1");
-                    // Request the date and time
-                    // NOTE: This is only compatible with iOS at this time
-                    BC127CommandAT(context->bt, "+CCLK?");
+                    if (ConfigGetTimeSource() == CONFIG_SETTING_TIME_PHONE) {
+                        // Request the date and time
+                        // NOTE: This is only compatible with iOS at this time
+                        BC127CommandAT(context->bt, "+CCLK?");
+                    };
                     if (context->bt->activeDevice.hfpId != 0 &&
                         context->bt->activeDevice.pbapId == 0
                     ) {
@@ -598,10 +603,9 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
         TimerRegisterScheduledTask(
             &HandlerTimerBTBC127RequestDateTime,
             ctx,
-            (60 - dt[5]) * 1000
+            (60 - dt[BC127_AT_DATE_SEC]) * 1000
         );
     }
-
 }
 
 /* BC127 Specific Handlers */
