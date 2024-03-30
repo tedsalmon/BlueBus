@@ -33,6 +33,7 @@ void HandlerUIInitiateConnection(void *, uint8_t *);
 
 void HandlerBTBC127Boot(void *, uint8_t *);
 void HandlerBTBC127BootStatus(void *, uint8_t *);
+void HandlerBTBC127MetadataUpdate(void *, uint8_t *);
 
 void HandlerBTBM83AVRCPUpdates(void *, uint8_t *);
 void HandlerBTBM83Boot(void *, uint8_t *);

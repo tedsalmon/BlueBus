@@ -416,6 +416,16 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         // Do not go backwards/forwards if the UI is CD53 because
         // those actions can be used to use the UI
         if (context->uiMode != CONFIG_UI_CD53 && context->uiMode != CONFIG_UI_MIR) {
+            if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
+                context->bt->type == BT_BTM_TYPE_BC127
+            ) {
+                // Silence the volume to workaround for buffered audio
+                BC127CommandVolume(
+                    context->bt,
+                    context->bt->activeDevice.a2dpId,
+                    "0"
+                );
+            }
             if (pkt[5] == 0x00) {
                 BTCommandPlaybackTrackNext(context->bt);
             } else {
@@ -582,7 +592,7 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, uint8_t *pkt)
         }
     }
     // The 5th bit in the first data byte contains the lock status
-    if (CHECK_BIT(pkt[4], 5) != 0) {
+    if (UTILS_CHECK_BIT(pkt[4], 5) != 0) {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks locked");
         context->gmState.doorsLocked = 1;
     } else {
@@ -949,9 +959,9 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
         uint8_t lightStatus = pkt[4];
         uint8_t lightStatus2 = pkt[6];
         // Left blinker
-        if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
-            CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
-            CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
+        if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
+            UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
         ) {
             // If quickly switching blinker direction the LM will activate the
             // opposing blinker immediately, bypassing the "off" message.
@@ -1000,14 +1010,14 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
                     LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Unknown State");
                     break;
             }
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
-                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
-                   CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
         ) {
             LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Unrelated activity");
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                  CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
-                  CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                  UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
+                  UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
         ) {
             if (context->lmState.blinkStatus == HANDLER_LM_BLINK_LEFT) {
                 LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Quick Switch > Reset");
@@ -1051,13 +1061,13 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
                     LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unknown State");
                     break;
             }
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
-                   CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
+                   UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
         ) {
             LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unrelated activity");
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
         ) {
             // OFF blinker (or anything non-blinker)
             // Only activate comfort blinkers after a single blink.
@@ -1123,9 +1133,9 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
     if (parkingLamps == CONFIG_SETTING_ON) {
         uint8_t lightStatus = pkt[4];
         if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON ||
-            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
-            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
-            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
         ) {
             return;
         }

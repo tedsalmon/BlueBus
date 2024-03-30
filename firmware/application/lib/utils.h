@@ -161,21 +161,24 @@
 #define UTILS_PIN_TEL_MUTE 0
 #define UTILS_PIN_TEL_ON 1
 
-#define DATETIME_YEAR 0
-#define DATETIME_MON 1
-#define DATETIME_DAY 2
-#define DATETIME_HOUR 3
-#define DATETIME_MIN 4
-#define DATETIME_SEC 5
+#define UTILS_DATETIME_YEAR 0
+#define UTILS_DATETIME_MON 1
+#define UTILS_DATETIME_DAY 2
+#define UTILS_DATETIME_HOUR 3
+#define UTILS_DATETIME_MIN 4
+#define UTILS_DATETIME_SEC 5
 
 /* Check if a bit is set in a byte */
-#define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
+#define UTILS_CHECK_BIT(var, pos) (var & (1 << pos))
 /* Clear a set bit in a byte */
-#define CLEAR_BIT(var, pos) ((var) & ~(1 << pos))
+#define UTILS_CLEAR_BIT(var, pos) (var & ~(1 << pos))
 /* Set a bit in a byte */
-#define SET_BIT(var, pos) ((var) | (1 << pos))
+#define UTILS_SET_BIT(var, pos) (var | (1 << pos))
 /* Return a programmable output port register */
-#define GET_RPOR(num) (((uint16_t *) &RPOR0) + num)
+#define UTILS_GET_RPOR(num) (((uint16_t *) &RPOR0) + num)
+/* Unpack an 8-bit Binary coded decimal */
+#define UTILS_UNPACK_8BCD(bcd) ((bcd & 0x0F) + (10 * (bcd >> 4)))
+
 /*
  * UtilsAbstractDisplayValue_t
  *  This is a struct to hold text values to be displayed

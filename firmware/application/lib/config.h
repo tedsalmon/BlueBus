@@ -122,18 +122,20 @@
 #define CONFIG_SETTING_PDC_CLUSTER 0x01
 #define CONFIG_SETTING_PDC_RADIO 0x02
 #define CONFIG_SETTING_PDC_BOTH 0x03
-#define CONFIG_SETTING_TIME_PHONE   0b00000001
-#define CONFIG_SETTING_TIME_GPS     0b00000010
-#define CONFIG_SETTING_TIME_DST     0b00000100
-#define CONFIG_SETTING_TIME_TZ      0b11111000
-#define CONFIG_SETTING_NAVI_SILENT          0b10000000
-#define CONFIG_SETTING_NAVI_ROUTE_RANGE     0b01000000
-#define CONFIG_SETTING_NAVI_MAP_DEFAULT     0x01
-#define CONFIG_SETTING_NAVI_MAP_SPEED_20    0x02
-#define CONFIG_SETTING_NAVI_MAP_SPEED_30    0x03
-#define CONFIG_SETTING_NAVI_MAP_SPEED_50    0x04
-#define CONFIG_SETTING_NAVI_MAP_TIME_5      0x05
-#define CONFIG_SETTING_NAVI_MAP_TIME_10     0x06
+#define CONFIG_SETTING_TIME_PHONE 0b00000001
+#define CONFIG_SETTING_TIME_GPS 0b00000010
+#define CONFIG_SETTING_TIME_DST 0b00000100
+#define CONFIG_SETTING_TIME_TZ 0b11111000
+#define CONFIG_SETTING_NAVI_SILENT 0b10000000
+#define CONFIG_SETTING_NAVI_ROUTE_RANGE 0b01000000
+#define CONFIG_SETTING_NAVI_MAP_DEFAULT 0x01
+#define CONFIG_SETTING_NAVI_MAP_SPEED_20 0x02
+#define CONFIG_SETTING_NAVI_MAP_SPEED_30 0x03
+#define CONFIG_SETTING_NAVI_MAP_SPEED_50 0x04
+#define CONFIG_SETTING_NAVI_MAP_TIME_5 0x05
+#define CONFIG_SETTING_NAVI_MAP_TIME_10 0x06
+
+#define CONFIG_TIMEZONE_COUNT 32
 
 /* EEPROM 0x1A - 0x50: User Configurable Settings */
 /* Config 0x1A - 0x24: UI Settings */
@@ -147,6 +149,7 @@
 /* Config 0x25 - 0x35: Comfort Settings */
 #define CONFIG_SETTING_COMFORT_BLINKERS CONFIG_SETTING_COMFORT_BLINKERS_ADDRESS
 #define CONFIG_SETTING_COMFORT_LOCKS CONFIG_SETTING_COMFORT_LOCKS_ADDRESS
+#define CONFIG_SETTING_COMFORT_UNLOCK CONFIG_SETTING_COMFORT_LOCKS_ADDRESS
 #define CONFIG_SETTING_COMFORT_MIRRORS CONFIG_SETTING_COMFORT_MIRRORS_ADDRESS
 #define CONFIG_SETTING_COMFORT_WELCOME_LIGHTS CONFIG_SETTING_COMFORT_WELCOME_LIGHTS_ADDRESS
 #define CONFIG_SETTING_COMFORT_HOME_LIGHTS CONFIG_SETTING_COMFORT_HOME_LIGHTS_ADDRESS
@@ -196,6 +199,7 @@ uint8_t ConfigGetBuildYear();
 void ConfigGetBytes(uint8_t, uint8_t *, uint8_t);
 uint8_t ConfigGetComfortLock();
 uint8_t ConfigGetComfortUnlock();
+uint8_t ConfigGetDistUnit();
 uint8_t ConfigGetFirmwareVersionMajor();
 uint8_t ConfigGetFirmwareVersionMinor();
 uint8_t ConfigGetFirmwareVersionPatch();
@@ -210,16 +214,15 @@ uint8_t ConfigGetSetting(uint8_t);
 uint8_t ConfigGetTelephonyFeaturesActive();
 uint8_t ConfigGetTempDisplay();
 uint8_t ConfigGetTempUnit();
-uint8_t ConfigGetDistUnit();
+uint8_t ConfigGetTimeDST();
+int16_t ConfigGetTimeOffset();
+uint8_t ConfigGetTimeOffsetIndex();
+uint8_t ConfigGetTimeSource();
 uint8_t ConfigGetTrapCount(uint8_t);
 uint8_t ConfigGetTrapLast();
 uint8_t ConfigGetUIMode();
 uint8_t ConfigGetValue(uint8_t);
 uint8_t ConfigGetVehicleType();
-uint8_t ConfigGetTimeSource();
-uint8_t ConfigGetTimeDST();
-int16_t ConfigGetTimeOffset();
-uint8_t ConfigGetTimeOffsetIndex();
 void ConfigGetVehicleIdentity(uint8_t *);
 void ConfigGetString(uint8_t, char *, uint8_t);
 void ConfigSetBC127BootFailures(uint16_t);
@@ -227,6 +230,7 @@ void ConfigSetBootloaderMode(uint8_t);
 void ConfigSetBytes(uint8_t, const uint8_t *, uint8_t);
 void ConfigSetComfortLock(uint8_t);
 void ConfigSetComfortUnlock(uint8_t);
+void ConfigSetDistUnit(uint8_t);
 void ConfigSetFirmwareVersion(uint8_t, uint8_t, uint8_t);
 void ConfigSetIKEType(uint8_t);
 void ConfigSetLMVariant(uint8_t);
@@ -236,7 +240,10 @@ void ConfigSetString(uint8_t, char *, uint8_t);
 void ConfigSetNavType(uint8_t);
 void ConfigSetTempDisplay(uint8_t);
 void ConfigSetTempUnit(uint8_t);
-void ConfigSetDistUnit(uint8_t);
+void ConfigSetTimeDST(uint8_t);
+void ConfigSetTimeOffset(int16_t);
+void ConfigSetTimeOffsetIndex(uint8_t);
+void ConfigSetTimeSource(uint8_t);
 void ConfigSetTrapCount(uint8_t, uint8_t);
 void ConfigSetTrapIncrement(uint8_t);
 void ConfigSetTrapLast(uint8_t);
@@ -244,8 +251,4 @@ void ConfigSetUIMode(uint8_t);
 void ConfigSetValue(uint8_t, uint8_t);
 void ConfigSetVehicleType(uint8_t);
 void ConfigSetVehicleIdentity(uint8_t *);
-void ConfigSetTimeSource(uint8_t);
-void ConfigSetTimeDST(uint8_t);
-void ConfigSetTimeOffset(int16_t);
-void ConfigSetTimeOffsetIndex(uint8_t);
 #endif /* CONFIG_H */

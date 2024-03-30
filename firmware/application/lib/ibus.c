@@ -674,7 +674,6 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
  *         None
  */
 
-#define unpack_8bcd(a) ((a & 0x0f)+(10 * (a >> 4)))
 static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
@@ -925,9 +924,6 @@ void IBusProcess(IBus_t *ibus)
                     }
                     if (srcSystem == IBUS_DEVICE_PDC) {
                         IBusHandlePDCMessage(ibus, pkt);
-                    }
-                    if (srcSystem == IBUS_DEVICE_NAVE) {
-                        IBusHandleNAVMessage(ibus, pkt);
                     }
                     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
                         IBusHandleTELMessage(ibus, pkt);
@@ -2268,16 +2264,19 @@ void IBusCommandIKESetDate(IBus_t *ibus, uint8_t year, uint8_t mon, uint8_t day)
  */
 void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
 {
-    uint8_t len = (message != NULL)?strlen(message):0;
-    if (len > 16) {
-        len = 16;
-    };
+    uint8_t len = 0;
+    if (message != 0) {
+        len = strlen(message);
+        if (len > 16) {
+            len = 16;
+        }
+    }
     uint8_t displayText[len + 3];
     memset(&displayText, 0, sizeof(displayText));
     displayText[0] = 0x23;
     displayText[1] = 0x42;
     displayText[2] = 0x32;
-    if (len>0 && message != NULL) {
+    if (len > 0) {
         memcpy(displayText + 3, message, len);
     }
     IBusSendCommand(
@@ -2991,39 +2990,9 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
 void IBusCommandSESSetMapZoom(IBus_t *ibus, uint8_t zoomLevel)
 {
     uint8_t msg[] = {
-        0xAA,
-        0x10,
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_SETZOOM,
         IBUS_SES_NAV_ZOOM_CONSTANT[zoomLevel]
-    };
-    IBusSendCommand(
-        ibus,
-        IBUS_DEVICE_SES,
-        IBUS_DEVICE_NAVE,
-        msg,
-        3
-    );
-}
-
-/**
- * IBusCommandSESShowMap()
- *     Description:
- *        Display Map via SES command
- *     Params:
- *         IBus_t *ibus - The pointer to the IBus_t object
- *     Returns:
- *         void
- */
-void IBusCommandSESShowMap(IBus_t *ibus)
-{
-    LogDebug(
-        LOG_SOURCE_SYSTEM,
-        "SES: Show Map"
-    );
-
-    uint8_t msg[] = {
-        0xAA,
-        0x04,
-        0x00
     };
     IBusSendCommand(
         ibus,
@@ -3045,13 +3014,9 @@ void IBusCommandSESShowMap(IBus_t *ibus)
  */
 void IBusCommandSESRouteFuel(IBus_t *ibus)
 {
-    LogDebug(
-        LOG_SOURCE_SYSTEM,
-        "SES: Route to Fuel Station"
-    );
     uint8_t msg[] = {
-        0xAA,
-        0x20,
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_ROUTEFUEL,
         0x03
     };
     IBusSendCommand(
@@ -3074,14 +3039,34 @@ void IBusCommandSESRouteFuel(IBus_t *ibus)
  */
 void IBusCommandSESSilentNavigation(IBus_t *ibus)
 {
-    LogDebug(
-        LOG_SOURCE_SYSTEM,
-        "SES: Set Silent Navigation"
-    );
-
     uint8_t msg[] = {
-        0xAA,
-        0x06,
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_SILENCE,
+        0x00
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESShowMap()
+ *     Description:
+ *        Display Map via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESShowMap(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_SHOWMAP,
         0x00
     };
     IBusSendCommand(

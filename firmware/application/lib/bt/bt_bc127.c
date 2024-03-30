@@ -113,15 +113,6 @@ void BC127CommandATSet(BT_t *bt, char *param, char *value)
 void BC127CommandBackward(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        if ((ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON) &&
-             bt->activeDevice.a2dpId != 0
-        ) {
-            // silence the volume to workaround for buffered audio
-            LogWarning("BT: Music Backward, mute for a while");
-            BC127CommandVolume(bt, bt->activeDevice.a2dpId, "0");
-            bt->activeDevice.a2dpVolume = 0;
-        }
-
         char command[18];
         snprintf(command, 18, "MUSIC %d BACKWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
@@ -330,8 +321,8 @@ void BC127CommandBtState(BT_t *bt, uint8_t connectable, uint8_t discoverable)
 {
     bt->connectable = connectable;
     bt->discoverable = discoverable;
-    char connectMode[4];
-    char discoverMode[4];
+    char connectMode[4] = {0};
+    char discoverMode[4] = {0};
     if (connectable == 1) {
         UtilsStrncpy(connectMode, "ON", 4);
     } else if (connectable == 0) {
@@ -359,16 +350,7 @@ void BC127CommandBtState(BT_t *bt, uint8_t connectable, uint8_t discoverable)
 void BC127CommandForward(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        if ((ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON) &&
-             bt->activeDevice.a2dpId != 0
-        ) {
-            // silence the volume to workaround for buffered audio
-            LogWarning("BT: Music Forward, mute for a while");
-            BC127CommandVolume(bt, bt->activeDevice.a2dpId, "0");
-            bt->activeDevice.a2dpVolume = 0;
-        }
-
-        char command[17];
+        char command[17] = {0};
         snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
         bt->metadataTimestamp = 0;
@@ -389,7 +371,7 @@ void BC127CommandForward(BT_t *bt)
 void BC127CommandForwardSeekPress(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[18];
+        char command[18] = {0};
         snprintf(command, 18, "MUSIC %d FF_PRESS", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -1101,7 +1083,11 @@ void BC127CommandVolume(BT_t *bt, uint8_t linkId, char *volume)
         char command[7] = "VOLUME";
         BC127SendCommand(bt, command);
     } else {
-        char command[15];
+        char command[15] = {0};
+        // Set the volume to int zero if we are setting it to string zero
+        if (volume[0] == '0' && volume[1] == 0x00) {
+            bt->activeDevice.a2dpVolume = 1;
+        }
         snprintf(command, 15, "VOLUME %d %s", linkId, volume);
         BC127SendCommand(bt, command);
     }
@@ -1244,9 +1230,7 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             UtilsStrncpy(bt->callerId, callerId, BT_CALLER_ID_FIELD_SIZE);
             EventTriggerCallback(BT_EVENT_CALLER_ID_UPDATE, 0);
         }
-    } else if ((strcmp(msgBuf[3], "+CCLK:") == 0) &&
-               (ConfigGetTimeSource() == CONFIG_SETTING_TIME_PHONE)
-    ) {
+    } else if (strcmp(msgBuf[3], "+CCLK:") == 0) {
         // Parse the returned date and time so we can update the vehicle
         // NOTE: Only iOS responds to AT+CCLK?
         // AT 13 27 +CCLK: \2223/04/07, 15:58:28\22
@@ -1259,10 +1243,8 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         uint8_t datetime[6] = {0};
         uint8_t sepCount = 0;
         uint8_t i = 0;
-        uint8_t ampm12 = 0; // 0 = 24h, 'a' = 12h am, 'p' = 12h pm
         char *date = msgBuf[4];
         char *time = msgBuf[5];
-        char *ampm = 0;
         // Convert the date to an integer and store it
         while (i < strlen(date) && sepCount < 3) {
             if (date[i] >= '0' && date[i] <= '9') {
@@ -1272,18 +1254,6 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             }
             i++;
         }
-
-        if ((date[i]!=0) && (sepCount==3)) {
-            time=date+i;
-            if (delimCount > 5) {
-                ampm=msgBuf[5];
-            };
-        } else {
-            time=msgBuf[5];
-            if (delimCount > 6) {
-                ampm=msgBuf[6];
-            };
-        };
 
         // Convert the time to an integer and store it
         i = 0;
@@ -1297,30 +1267,24 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         }
 
         // Handle AM / PM
-        if ((ampm12 == 0) && (ampm != 0)) {
-            if ((ampm[0] == 'a') || (ampm[0] == 'A')) {
-                ampm12 = 'a';
-            } else if ((ampm[0] == 'p') || (ampm[0] == 'P')) {
-                ampm12 = 'p';
-            }
-        }
-
-        if (ampm12 == 'a') {
-            if (datetime[BC127_AT_DATE_HOUR] == 12) {
-                datetime[BC127_AT_DATE_HOUR] = 0;
-            }
-        } else if (ampm12 == 'p') {
-            if (datetime[BC127_AT_DATE_HOUR] < 12) {
-                datetime[BC127_AT_DATE_HOUR] += 12;
+        if (delimCount > 6) {
+            if (UtilsStricmp(msgBuf[6], "AM") == 0) {
+                if (datetime[UTILS_DATETIME_HOUR] == 12) {
+                    datetime[UTILS_DATETIME_HOUR] = 0;
+                }
+            } else {
+                if (datetime[UTILS_DATETIME_HOUR] < 12) {
+                    datetime[UTILS_DATETIME_HOUR] += 12;
+                }
             }
         }
         // Validate the date and time
-        if (datetime[BC127_AT_DATE_YEAR] > 20 &&
-            datetime[BC127_AT_DATE_MONTH] >= 1 && datetime[BC127_AT_DATE_MONTH] <= 12 &&
-            datetime[BC127_AT_DATE_DAY] >= 1 && datetime[BC127_AT_DATE_DAY] <= 31 &&
-            datetime[BC127_AT_DATE_HOUR] <= 23 &&
-            datetime[BC127_AT_DATE_MIN] <= 59 &&
-            datetime[BC127_AT_DATE_SEC] <= 59
+        if (datetime[UTILS_DATETIME_YEAR] > 20 &&
+            datetime[UTILS_DATETIME_MON] >= 1 && datetime[UTILS_DATETIME_MON] <= 12 &&
+            datetime[UTILS_DATETIME_DAY] >= 1 && datetime[UTILS_DATETIME_DAY] <= 31 &&
+            datetime[UTILS_DATETIME_HOUR] <= 23 &&
+            datetime[UTILS_DATETIME_MIN] <= 59 &&
+            datetime[UTILS_DATETIME_SEC] <= 59
         ) {
             EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
         }
@@ -1378,16 +1342,6 @@ void BC127ProcessEventAVRCPMedia(BT_t *bt, char **msgBuf, char *msg)
             EventTriggerCallback(BT_EVENT_METADATA_UPDATE, 0);
         }
         bt->metadataStatus = BT_METADATA_STATUS_CUR;
-    }
-    if ((ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON) &&
-        bt->activeDevice.a2dpId != 0 &&
-        bt->activeDevice.a2dpVolume == 0
-    ) {
-        // return the volume back after FWD/BACK workaround, on next interval volume management timer
-        // BC127 set to just 1 - because it actually still may have some old data in buffer
-        LogWarning("BT: Music is back, unmute soon");
-        BC127CommandVolume(bt, bt->activeDevice.a2dpId, "1");
-        bt->activeDevice.a2dpVolume = 1;
     }
     bt->metadataTimestamp = TimerGetMillis();
 }

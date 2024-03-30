@@ -302,7 +302,7 @@ void UtilsSetRPORMode(uint8_t pin, uint16_t mode)
     if (pin > 1) {
         regNum = pin / 2;
     }
-    volatile uint16_t *PROG_PIN = GET_RPOR(regNum);
+    volatile uint16_t *PROG_PIN = UTILS_GET_RPOR(regNum);
     if ((pin % 2) == 0) {
         uint16_t msb = *PROG_PIN >> 8;
         // Set the least significant bits for the even pin number

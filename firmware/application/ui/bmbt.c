@@ -1879,7 +1879,7 @@ static void BMBTSettingsUpdateComfortNavi(BMBTContext_t *context, uint8_t select
         context->rangeNavi = 0;
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettingsComfort(context);
-    };
+    }
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
         BMBTMenuSettingsComfortNavi(context);
     }
@@ -1892,7 +1892,6 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
         if (context->bt->type == BT_BTM_TYPE_BC127) {
             if (value == CONFIG_SETTING_OFF) {
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
-                BC127CommandSetProfiles(context->bt, 1, 1, 1, 1);
                 BC127CommandProfileOpen(context->bt, "HFP");
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
             } else {
@@ -2525,7 +2524,7 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
                 IBusCommandSESSetMapZoom(context->ibus, zoomLevel);
             }
         }
-    };
+    }
 
     uint8_t automap = ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI);
 

@@ -35,8 +35,8 @@ static uint8_t SETTINGS_TO_CONFIG_MAP[] = {
     CONFIG_SETTING_TEL_MODE,
     CONFIG_SETTING_COMFORT_BLINKERS,
     CONFIG_SETTING_COMFORT_PARKING_LAMPS,
-    CONFIG_SETTING_COMFORT_LOCKS, // not used
-    CONFIG_SETTING_COMFORT_LOCKS, // not used
+    CONFIG_SETTING_COMFORT_LOCKS,
+    CONFIG_SETTING_COMFORT_UNLOCK,
     CONFIG_SETTING_COMFORT_PDC,
 };
 
@@ -640,14 +640,12 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
         if (context->settingValue == CONFIG_SETTING_OFF) {
             MenuSingleLineSetMainDisplayText(context, "Cluster", 0);
             context->settingValue = CONFIG_SETTING_PDC_CLUSTER;
-/*
         } else if (context->settingValue == CONFIG_SETTING_PDC_CLUSTER) {
             MenuSingleLineSetMainDisplayText(context, "Radio", 0);
             context->settingValue = CONFIG_SETTING_PDC_RADIO;
         } else if (context->settingValue == CONFIG_SETTING_PDC_RADIO) {
             MenuSingleLineSetMainDisplayText(context, "Both", 0);
-            context->settingValue = CONFIG_SETTING_PDC_Both;
-*/
+            context->settingValue = CONFIG_SETTING_PDC_BOTH;
         } else {
             MenuSingleLineSetMainDisplayText(context, "Off", 0);
             context->settingValue = CONFIG_SETTING_OFF;
