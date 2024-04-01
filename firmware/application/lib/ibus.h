@@ -564,8 +564,7 @@ typedef struct IBus_t {
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
     IBusPDCSensorStatus_t pdcSensors;
-    time_t gpsTime;
-    time_t localTime;
+    time_t gpsDatetime;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];

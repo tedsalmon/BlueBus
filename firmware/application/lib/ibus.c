@@ -5,6 +5,7 @@
  *     This implements the I-Bus
  */
 #include "ibus.h"
+#include "event.h"
 
 static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
     0x01, // 125 - special case when stationary
@@ -55,8 +56,7 @@ IBus_t IBusInit()
     memset(ibus.telematicsStreet, 0, sizeof(ibus.telematicsStreet));
     memset(ibus.telematicsLatitude, 0, sizeof(ibus.telematicsLatitude));
     memset(ibus.telematicsLongtitude, 0, sizeof(ibus.telematicsLongtitude));
-    ibus.gpsTime = 0;
-    ibus.localTime = 0;
+    ibus.gpsDatetime = 0;
     // Instantiate all our sensors to a value of 255 / 0xFF by default
     IBusPDCSensorStatus_t pdcSensors;
     memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
@@ -689,42 +689,23 @@ static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
 
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_GPSTIME) {
         struct tm gps_time = {0};
-        gps_time.tm_hour = unpack_8bcd(pkt[5]);
-        gps_time.tm_min = unpack_8bcd(pkt[6]);
+        gps_time.tm_hour = UTILS_UNPACK_8BCD(pkt[3]);
+        gps_time.tm_min = UTILS_UNPACK_8BCD(pkt[6]);
         gps_time.tm_sec = 0;
-        gps_time.tm_mday = unpack_8bcd(pkt[7]);
-        gps_time.tm_mon = unpack_8bcd(pkt[9]) - 1;
-        gps_time.tm_year = unpack_8bcd(pkt[10])*100 + unpack_8bcd(pkt[11]) - 1900;
+        gps_time.tm_mday = UTILS_UNPACK_8BCD(pkt[7]);
+        gps_time.tm_mon = UTILS_UNPACK_8BCD(pkt[9]) - 1;
+        gps_time.tm_year = (
+            UTILS_UNPACK_8BCD(pkt[10]) * 100 + UTILS_UNPACK_8BCD(pkt[11]) - 1900
+        );
+        // Account for the GPS epoch problem
+        gps_time.tm_mday += 1024 * 7;
 
-        // adjust GPS epoch problem
-        gps_time.tm_mday += 1024*7;
+        ibus->gpsDatetime = mktime(&gps_time);
 
-        ibus->gpsTime = mktime(&gps_time);
-
-        if (ConfigGetTimeSource() == CONFIG_SETTING_TIME_GPS) {
-            gps_time.tm_min += ConfigGetTimeOffset() + ((ConfigGetTimeDST()!=0)?60:0);
-            mktime(&gps_time);
-
-            uint8_t dt[6]={0};
-            dt[DATETIME_YEAR] = gps_time.tm_year + 1900 - 2000;
-            dt[DATETIME_MON] = gps_time.tm_mon + 1;
-            dt[DATETIME_DAY] = gps_time.tm_mday;
-            dt[DATETIME_HOUR] = gps_time.tm_hour;
-            dt[DATETIME_MIN] = gps_time.tm_min;
-            dt[DATETIME_SEC] = gps_time.tm_sec;
-
-            // Validate the date and time and set
-            if (dt[DATETIME_YEAR] > 20 &&
-                dt[DATETIME_MON] >= 1 && dt[DATETIME_MON] <= 12 &&
-                dt[DATETIME_DAY] >= 1 && dt[DATETIME_DAY] <= 31 &&
-                dt[DATETIME_HOUR] >= 0 && dt[DATETIME_HOUR] <= 23 &&
-                dt[DATETIME_MIN] >= 0 && dt[DATETIME_MIN] <= 59 &&
-                dt[DATETIME_SEC] >= 0 && dt[DATETIME_SEC] <= 59
-            ) {
-                IBusCommandIKESetDate(ibus, dt[DATETIME_YEAR], dt[DATETIME_MON], dt[DATETIME_DAY]);
-                IBusCommandIKESetTime(ibus, dt[DATETIME_HOUR], dt[DATETIME_MIN]);
-            }
-        }
+        EventTriggerCallback(
+            IBUS_EVENT_NAV_DATETIME_UPDATE,
+            pkt
+        );
     }
 }
 

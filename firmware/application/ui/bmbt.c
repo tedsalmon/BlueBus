@@ -1034,9 +1034,9 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
     );
 
     uint8_t autotime = ConfigGetTimeSource();
-    char autotime_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    char autotext[BMBT_MENU_STRING_MAX_SIZE] = {0};
     snprintf(
-        autotime_text,
+        autotext,
         BMBT_MENU_STRING_MAX_SIZE,
         LocaleGetText(LOCALE_STRING_AUTOTIME),
         (
@@ -1048,7 +1048,7 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_COMFORT_TIME,
-        autotime_text,
+        autotext,
         0
     );
 
@@ -1131,9 +1131,9 @@ static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
             1
         );
 
-        if (context->ibus->gpsTime != 0) {
+        if (context->ibus->gpsDatetime != 0) {
             struct tm *ptm;
-            ptm = gmtime(&context->ibus->gpsTime);
+            ptm = gmtime(&context->ibus->gpsDatetime);
 
             snprintf(
                 text,
@@ -1268,7 +1268,7 @@ static void BMBTMenuSettingsComfortNavi(BMBTContext_t *context)
         3
     );
 
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);    
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_COMFORT_NAVI;
 }
@@ -1545,9 +1545,9 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
             uint8_t gain = (currentVolume - 0x30) / 2;
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
         } else if (currentVolume == 0) {
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, "%s", LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
         } else if (currentVolume == 0x30) {
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, "%s", LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
         } else {
             uint8_t gain = (0x30 - currentVolume) / 2;
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
@@ -1703,76 +1703,33 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
 
 static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t selectedIdx)
 {
-    uint8_t time_source = ConfigGetTimeSource();
+    uint8_t timeSource = ConfigGetTimeSource();
     if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE) {
-        switch (time_source) {
+        switch (timeSource) {
             case CONFIG_SETTING_OFF:
                 if (context->bt->type == BT_BTM_TYPE_BC127) {
-                    time_source = CONFIG_SETTING_TIME_PHONE;
+                    timeSource = CONFIG_SETTING_TIME_PHONE;
                     BC127CommandAT(context->bt, "+CCLK?");
                 } else {
-                    time_source = CONFIG_SETTING_TIME_GPS;
-                };
+                    timeSource = CONFIG_SETTING_TIME_GPS;
+                }
                 break;
             case CONFIG_SETTING_TIME_PHONE:
-                time_source = CONFIG_SETTING_TIME_GPS;
+                timeSource = CONFIG_SETTING_TIME_GPS;
                 break;
             case CONFIG_SETTING_TIME_GPS:
             default:
-                time_source = CONFIG_SETTING_OFF;
-        };
-        ConfigSetTimeSource(time_source);
-        if (time_source == CONFIG_SETTING_TIME_GPS) {
-// calculate the default offset if not previously set and reasonable GPS & IKE times are available
-            uint8_t time_dst = ConfigGetTimeDST();
-            int16_t time_offset = ConfigGetTimeOffsetIndex();
-
-            if ((time_dst == 0) && (time_offset == 0) && (context->ibus->gpsTime != 0) && (context->ibus->localTime != 0)) {
-                LogDebug(LOG_SOURCE_SYSTEM, "Calc DST & Zone offsets, GPS: %s", ctime(&context->ibus->gpsTime));
-                LogDebug(LOG_SOURCE_SYSTEM, "Calc DST & Zone offsets, LOCAL: %s", ctime(&context->ibus->localTime));
-
-                struct tm *local_time = gmtime(&context->ibus->localTime);
-
-                if ((local_time->tm_hour!=0)||(local_time->tm_min!=0)) {
-
-                    uint8_t hour = local_time->tm_hour;
-                    uint8_t min = local_time->tm_min;
-
-                    local_time = gmtime(&context->ibus->gpsTime);
-
-                    local_time->tm_hour = hour;
-                    local_time->tm_min = min;
-
-                    if ((local_time->tm_mon>=3)&&(local_time->tm_mon<=9)) {
-                        // assume Apr to Oct is summer time for sake of preset of DST
-                        time_dst = CONFIG_SETTING_TIME_DST;
-                        local_time->tm_hour -= 1;
-                    }
-
-                    time_t localTime = mktime(local_time);
-
-                    time_offset = (difftime(localTime,context->ibus->gpsTime) / 60);
-
-                    if (time_offset > 12*60) {
-                        time_offset -= 24*60;
-                    } else if (time_offset < -12*60) {
-                        time_offset += 24*60;
-                    }
-                    LogDebug(LOG_SOURCE_SYSTEM, "Calc DST & Zone offsets, DST=%d, OFFSET=%+d min", (time_dst==CONFIG_SETTING_TIME_DST), time_offset);
-
-                    ConfigSetTimeOffset(time_offset);
-                    ConfigSetTimeDST(time_dst);
-                }
-            }
+                timeSource = CONFIG_SETTING_OFF;
         }
+        ConfigSetTimeSource(timeSource);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) {
-        uint8_t time_dst = ConfigGetTimeDST();
-        if (time_dst == CONFIG_SETTING_OFF) {
-            time_dst = CONFIG_SETTING_TIME_DST;
+        uint8_t dst = ConfigGetTimeDST();
+        if (dst == CONFIG_SETTING_OFF) {
+            dst = CONFIG_SETTING_TIME_DST;
         } else {
-            time_dst = CONFIG_SETTING_OFF;
+            dst = CONFIG_SETTING_OFF;
         }
-        ConfigSetTimeDST(time_dst);
+        ConfigSetTimeDST(dst);
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) {
         uint8_t offset = ConfigGetTimeOffsetIndex();
         if (offset<31) {
@@ -1783,37 +1740,6 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
         ConfigSetTimeOffsetIndex(offset);
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettingsComfort(context);
-    };
-
-    if (((selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) ||
-        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) ||
-        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE)) &&
-        (time_source == CONFIG_SETTING_TIME_GPS) &&
-        (context->ibus->gpsTime != 0)) {
-
-        uint8_t dt[6]={0};
-        struct tm *gps_time = gmtime(&context->ibus->gpsTime);
-
-        gps_time->tm_min += ConfigGetTimeOffset() + ((ConfigGetTimeDST()!=0)?60:0);
-        mktime(gps_time);
-
-        dt[DATETIME_YEAR] = gps_time->tm_year + 1900 - 2000;
-        dt[DATETIME_MON] = gps_time->tm_mon + 1;
-        dt[DATETIME_DAY] = gps_time->tm_mday;
-        dt[DATETIME_HOUR] = gps_time->tm_hour;
-        dt[DATETIME_MIN] = gps_time->tm_min;
-        dt[DATETIME_SEC] = gps_time->tm_sec;
-
-        if (dt[DATETIME_YEAR] > 20 &&
-            dt[DATETIME_MON] >= 1 && dt[DATETIME_MON] <= 12 &&
-            dt[DATETIME_DAY] >= 1 && dt[DATETIME_DAY] <= 31 &&
-            dt[DATETIME_HOUR] >= 0 && dt[DATETIME_HOUR] <= 23 &&
-            dt[DATETIME_MIN] >= 0 && dt[DATETIME_MIN] <= 59 &&
-            dt[DATETIME_SEC] >= 0 && dt[DATETIME_SEC] <= 59
-        ) {
-            IBusCommandIKESetDate(context->ibus, dt[DATETIME_YEAR], dt[DATETIME_MON], dt[DATETIME_DAY]);
-            IBusCommandIKESetTime(context->ibus, dt[DATETIME_HOUR], dt[DATETIME_MIN]);
-        }
     }
 
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
@@ -1830,7 +1756,7 @@ static void BMBTSettingsUpdateComfortNavi(BMBTContext_t *context, uint8_t select
             autozoom = CONFIG_SETTING_OFF;
         }
         ConfigSetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM, autozoom);
-/*        char autoZoomText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+        char autoZoomText[BMBT_MENU_STRING_MAX_SIZE] = {0};
         if (autozoom == CONFIG_SETTING_OFF) {
             snprintf(
                 autoZoomText,
@@ -1856,7 +1782,6 @@ static void BMBTSettingsUpdateComfortNavi(BMBTContext_t *context, uint8_t select
             }
         }
         BMBTGTWriteIndex(context, selectedIdx, autoZoomText, 0);
-*/
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_MAP) {
         uint8_t navi_config = ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI);
         uint8_t map_config = navi_config & 0x0F;

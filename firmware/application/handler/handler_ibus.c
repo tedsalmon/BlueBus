@@ -94,6 +94,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_NAV_DATETIME_UPDATE,
+        &HandlerIBusNavDatetimeUpdate,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_PDC_SENSOR_UPDATE,
         &HandlerIBusPDCSensorUpdate,
         context
@@ -1307,6 +1312,62 @@ void HandlerIBusModuleStatusRequest(void *ctx, uint8_t *pkt)
             IBUS_DEVICE_TEL,
             pkt[IBUS_PKT_SRC],
             IBUS_TEL_SIG_EVEREST
+        );
+    }
+}
+
+/**
+ * HandlerIBusNavDatetimeUpdate()
+ *     Description:
+ *         Handle Updates to the GPS Time
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+
+void HandlerIBusNavDatetimeUpdate(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (ConfigGetTimeSource() != CONFIG_SETTING_TIME_GPS) {
+        return;
+    }
+    struct tm datetime;
+    memcpy(&datetime, &context->ibus->gpsDatetime, sizeof(datetime));
+    datetime.tm_min += ConfigGetTimeOffset();
+    if (ConfigGetTimeDST() != 0) {
+        datetime.tm_min += 60;
+    }
+    mktime(&datetime);
+
+    uint8_t dt[6] = {
+        (datetime.tm_year + 1900) - 2000,
+        datetime.tm_mon + 1,
+        datetime.tm_mday,
+        datetime.tm_hour,
+        datetime.tm_min,
+        datetime.tm_sec
+    };
+
+    // Validate the date and time
+    if (dt[UTILS_DATETIME_YEAR] > 20 &&
+        dt[UTILS_DATETIME_MON] >= 1 && dt[UTILS_DATETIME_MON] <= 12 &&
+        dt[UTILS_DATETIME_DAY] >= 1 && dt[UTILS_DATETIME_DAY] <= 31 &&
+        dt[UTILS_DATETIME_HOUR] >= 0 && dt[UTILS_DATETIME_HOUR] <= 23 &&
+        dt[UTILS_DATETIME_MIN] >= 0 && dt[UTILS_DATETIME_MIN] <= 59 &&
+        dt[UTILS_DATETIME_SEC] >= 0 && dt[UTILS_DATETIME_SEC] <= 59
+    ) {
+        IBusCommandIKESetDate(
+            context->ibus,
+            dt[UTILS_DATETIME_YEAR],
+            dt[UTILS_DATETIME_MON],
+            dt[UTILS_DATETIME_DAY]
+        );
+        IBusCommandIKESetTime(
+            context->ibus,
+            dt[UTILS_DATETIME_HOUR],
+            dt[UTILS_DATETIME_MIN]
         );
     }
 }
