@@ -1239,12 +1239,13 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
 
         UtilsRemoveSubstring(msgBuf[4], "\\22");
         UtilsRemoveSubstring(msgBuf[5], "\\22");
-
         uint8_t datetime[6] = {0};
         uint8_t sepCount = 0;
         uint8_t i = 0;
         char *date = msgBuf[4];
         char *time = msgBuf[5];
+        char timeType[3] = {0};
+
         // Convert the date to an integer and store it
         while (i < strlen(date) && sepCount < 3) {
             if (date[i] >= '0' && date[i] <= '9') {
@@ -1257,27 +1258,43 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
 
         // Convert the time to an integer and store it
         i = 0;
-        while (i < strlen(time) && sepCount < 6) {
-            if (time[i] >= '0' && time[i] <= '9') {
-                datetime[sepCount] = 10 * datetime[sepCount] + (time[i] - '0');
-            } else {
-                sepCount++;
+        uint8_t timeTypeIdx = 0;
+        while (i < strlen(time)) {
+            if (sepCount < 6) {
+                if (time[i] >= '0' && time[i] <= '9') {
+                    datetime[sepCount] = 10 * datetime[sepCount] + (time[i] - '0');
+                } else {
+                    sepCount++;
+                }
+            }
+            // Per the spec, the time-type does not need to be space separated from the time
+            if (sepCount >= 6 && timeTypeIdx < 3) {
+                timeType[timeTypeIdx] = time[i];
+                timeTypeIdx++;
             }
             i++;
         }
-
         // Handle AM / PM
-        if (delimCount > 6) {
-            if (UtilsStricmp(msgBuf[6], "AM") == 0) {
+        // If we have a sixth index in the msgBuf, this is probably AM / PM
+        if (delimCount > 6 && msgBuf[6] != 0) {
+            if (strlen(msgBuf[6]) == 2) {
+                timeType[0] = msgBuf[6][0];
+                timeType[1] = msgBuf[6][1];
+            }
+        }
+        if (timeType[0] != 0) {
+            if (UtilsStricmp(timeType, "AM") == 0) {
                 if (datetime[UTILS_DATETIME_HOUR] == 12) {
                     datetime[UTILS_DATETIME_HOUR] = 0;
                 }
-            } else {
+            }
+            if (UtilsStricmp(timeType, "PM") == 0) {
                 if (datetime[UTILS_DATETIME_HOUR] < 12) {
                     datetime[UTILS_DATETIME_HOUR] += 12;
                 }
             }
         }
+
         // Validate the date and time
         if (datetime[UTILS_DATETIME_YEAR] > 20 &&
             datetime[UTILS_DATETIME_MON] >= 1 && datetime[UTILS_DATETIME_MON] <= 12 &&
