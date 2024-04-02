@@ -5,6 +5,7 @@
  *     This implements the I-Bus
  */
 #include "ibus.h"
+#include "event.h"
 
 static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
     0x01, // 125 - special case when stationary
@@ -55,6 +56,7 @@ IBus_t IBusInit()
     memset(ibus.telematicsStreet, 0, sizeof(ibus.telematicsStreet));
     memset(ibus.telematicsLatitude, 0, sizeof(ibus.telematicsLatitude));
     memset(ibus.telematicsLongtitude, 0, sizeof(ibus.telematicsLongtitude));
+    ibus.gpsDatetime = 0;
     // Instantiate all our sensors to a value of 255 / 0xFF by default
     IBusPDCSensorStatus_t pdcSensors;
     memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
@@ -533,29 +535,6 @@ static void IBusHandleMIDMessage(IBus_t *ibus, uint8_t *pkt)
     }
 }
 
-/**
- * IBusHandleNAVMessage()
- *     Description:
- *         Handle any messages received from the non-Jap Navigation Computer
- *     Params:
- *         uint8_t *pkt - The frame received on the IBus
- *     Returns:
- *         None
- */
-static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
-{
-    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
-        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
-    }
-    // It is imperative that we know if the NAV is on the bus
-    // so if we see any message from it, we must consider it "found"
-    if (ibus->moduleStatus.NAV == 0) {
-        ibus->moduleStatus.NAV = 1;
-        uint8_t detectedModule = pkt[IBUS_PKT_SRC];
-        EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
-    }
-}
-
 static void IBusHandlePDCMessage(IBus_t *ibus, uint8_t *pkt)
 {
     // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
@@ -685,7 +664,52 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
     EventTriggerCallback(IBUS_EVENT_RAD_MESSAGE_RCV, pkt);
 }
 
-static void IBusHandleTELMessage(IBus_t *ibus, uint8_t *pkt)
+/**
+ * IBusHandleNAVMessage()
+ *     Description:
+ *         Handle any messages received from the non-Jap Navigation Computer
+ *     Params:
+ *         uint8_t *pkt - The frame received on the IBus
+ *     Returns:
+ *         None
+ */
+
+static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
+{
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
+    }
+    // It is imperative that we know if the NAV is on the bus
+    // so if we see any message from it, we must consider it "found"
+    if (ibus->moduleStatus.NAV == 0) {
+        ibus->moduleStatus.NAV = 1;
+        uint8_t detectedModule = pkt[IBUS_PKT_SRC];
+        EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
+    }
+
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_GPSTIME) {
+        struct tm gps_time = {0};
+        gps_time.tm_hour = UTILS_UNPACK_8BCD(pkt[3]);
+        gps_time.tm_min = UTILS_UNPACK_8BCD(pkt[6]);
+        gps_time.tm_sec = 0;
+        gps_time.tm_mday = UTILS_UNPACK_8BCD(pkt[7]);
+        gps_time.tm_mon = UTILS_UNPACK_8BCD(pkt[9]) - 1;
+        gps_time.tm_year = (
+            UTILS_UNPACK_8BCD(pkt[10]) * 100 + UTILS_UNPACK_8BCD(pkt[11]) - 1900
+        );
+        // Account for the GPS epoch problem
+        gps_time.tm_mday += 1024 * 7;
+
+        ibus->gpsDatetime = mktime(&gps_time);
+
+        EventTriggerCallback(
+            IBUS_EVENT_NAV_DATETIME_UPDATE,
+            pkt
+        );
+    }
+}
+
+static void IBusHandleTELMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
         EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
@@ -2221,13 +2245,21 @@ void IBusCommandIKESetDate(IBus_t *ibus, uint8_t year, uint8_t mon, uint8_t day)
  */
 void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
 {
-    uint8_t len = strlen(message);
+    uint8_t len = 0;
+    if (message != 0) {
+        len = strlen(message);
+        if (len > 16) {
+            len = 16;
+        }
+    }
     uint8_t displayText[len + 3];
     memset(&displayText, 0, sizeof(displayText));
     displayText[0] = 0x23;
     displayText[1] = 0x42;
     displayText[2] = 0x32;
-    memcpy(displayText + 3, message, len);
+    if (len > 0) {
+        memcpy(displayText + 3, message, len);
+    }
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_TEL,
@@ -2929,7 +2961,7 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
 /**
  * IBusCommandSESSetMapZoom()
  *     Description:
- *        Set the Navigation Zoom level via SES commands
+ *        Set the Navigation Zoom level via SES command
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         uint8_t zoomLevel - The requested zoom level
@@ -2939,9 +2971,84 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
 void IBusCommandSESSetMapZoom(IBus_t *ibus, uint8_t zoomLevel)
 {
     uint8_t msg[] = {
-        0xAA,
-        0x10,
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_SETZOOM,
         IBUS_SES_NAV_ZOOM_CONSTANT[zoomLevel]
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESRouteFuel()
+ *     Description:
+ *        Find nearby Fuel Stations via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESRouteFuel(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_ROUTEFUEL,
+        0x03
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESSilentNavigation()
+ *     Description:
+ *        Disable Voice Guidance via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESSilentNavigation(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_SILENCE,
+        0x00
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESShowMap()
+ *     Description:
+ *        Display Map via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESShowMap(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_SHOWMAP,
+        0x00
     };
     IBusSendCommand(
         ibus,
