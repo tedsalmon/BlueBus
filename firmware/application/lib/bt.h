@@ -36,4 +36,8 @@ void BTCommandSetDiscoverable(BT_t *, unsigned char);
 void BTCommandToggleVoiceRecognition(BT_t *);
 uint8_t BTHasActiveMacId(BT_t *);
 void BTProcess(BT_t *);
+void BTCommandReqPhonebookFrom(BT_t *, uint8_t);
+void BTCommandReqPhonebook(BT_t *); 
+void BTCommandReqFavorites(BT_t *);
+void BTCommandReqRecent(BT_t *);
 #endif /* BT_H */
