@@ -179,8 +179,6 @@ int8_t I2CRead(
     unsigned char registerAddress,
     unsigned char *buffer
 ) {
-    unsigned char slaveAddress;
-    int16_t retval;
     if (I2CStatus == I2C_STATUS_ERR) {
         return I2C_ERR_BusDirty;
     }
@@ -190,8 +188,8 @@ int8_t I2CRead(
         return I2C_ERR_CommFail;
     }
     // Device Address + Read bit
-    slaveAddress = (deviceAdress << 1);
-    retval = I2CWriteByte((char)slaveAddress);
+    uint8_t slaveAddress = deviceAdress << 1;
+    int16_t retval = I2CWriteByte(slaveAddress);
     if (retval == I2C_ERR_NAK) {
         // Bad Slave Address or I2C slave device stopped responding
         I2CStop();
@@ -216,13 +214,13 @@ int8_t I2CRead(
     }
     // Device Address + Read bit
     slaveAddress = (deviceAdress << 1) | 0x01;
-    if (I2CWriteByte((char)slaveAddress) != I2C_STATUS_OK) {
+    if (I2CWriteByte(slaveAddress) != I2C_STATUS_OK) {
         I2CStop();
         I2CStatus = I2C_STATUS_ERR;
         return I2C_ERR_CommFail;
     }
     retval = I2CReadByte(I2C_NACK);
-    if ((retval >= 0) && (retval <= 255)) {
+    if (retval >= 0 && retval <= 255) {
         *buffer = retval;
     } else {
         // Error while reading byte.  Close connection and set error flag.
