@@ -18,6 +18,7 @@
 #include "../ui/cd53.h"
 #include "../ui/mid.h"
 #include <stdint.h>
+#include <time.h>
 
 void HandlerIBusInit(HandlerContext_t *);
 void HandlerIBusBlueBusTELStatusUpdate(void *, uint8_t *);
@@ -38,6 +39,7 @@ void HandlerIBusLMRedundantData(void *, uint8_t *);
 void HandlerIBusMFLButton(void *, uint8_t *);
 void HandlerIBusModuleStatusResponse(void *, uint8_t *);
 void HandlerIBusModuleStatusRequest(void *, uint8_t *);
+void HandlerIBusNavDatetimeUpdate(void *, uint8_t *);
 void HandlerIBusPDCSensorUpdate(void *, uint8_t *);
 void HandlerIBusPDCStatus(void *, uint8_t *);
 void HandlerIBusRADMessageReceived(void *, uint8_t *);

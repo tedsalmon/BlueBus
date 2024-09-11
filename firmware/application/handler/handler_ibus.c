@@ -94,6 +94,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_NAV_DATETIME_UPDATE,
+        &HandlerIBusNavDatetimeUpdate,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_PDC_SENSOR_UPDATE,
         &HandlerIBusPDCSensorUpdate,
         context
@@ -416,6 +421,16 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         // Do not go backwards/forwards if the UI is CD53 because
         // those actions can be used to use the UI
         if (context->uiMode != CONFIG_UI_CD53 && context->uiMode != CONFIG_UI_MIR) {
+            if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
+                context->bt->type == BT_BTM_TYPE_BC127
+            ) {
+                // Silence the volume to workaround for buffered audio
+                BC127CommandVolume(
+                    context->bt,
+                    context->bt->activeDevice.a2dpId,
+                    "0"
+                );
+            }
             if (pkt[5] == 0x00) {
                 BTCommandPlaybackTrackNext(context->bt);
             } else {
@@ -582,7 +597,7 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, uint8_t *pkt)
         }
     }
     // The 5th bit in the first data byte contains the lock status
-    if (CHECK_BIT(pkt[4], 5) != 0) {
+    if (UTILS_CHECK_BIT(pkt[4], 5) != 0) {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks locked");
         context->gmState.doorsLocked = 1;
     } else {
@@ -949,9 +964,9 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
         uint8_t lightStatus = pkt[4];
         uint8_t lightStatus2 = pkt[6];
         // Left blinker
-        if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
-            CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
-            CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
+        if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
+            UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
         ) {
             // If quickly switching blinker direction the LM will activate the
             // opposing blinker immediately, bypassing the "off" message.
@@ -1000,14 +1015,14 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
                     LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Unknown State");
                     break;
             }
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
-                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
-                   CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
         ) {
             LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Unrelated activity");
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                  CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
-                  CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                  UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
+                  UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
         ) {
             if (context->lmState.blinkStatus == HANDLER_LM_BLINK_LEFT) {
                 LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Quick Switch > Reset");
@@ -1051,13 +1066,13 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
                     LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unknown State");
                     break;
             }
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
-                   CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
+                   UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
         ) {
             LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unrelated activity");
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
         ) {
             // OFF blinker (or anything non-blinker)
             // Only activate comfort blinkers after a single blink.
@@ -1123,9 +1138,9 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
     if (parkingLamps == CONFIG_SETTING_ON) {
         uint8_t lightStatus = pkt[4];
         if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON ||
-            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
-            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
-            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
         ) {
             return;
         }
@@ -1297,6 +1312,62 @@ void HandlerIBusModuleStatusRequest(void *ctx, uint8_t *pkt)
             IBUS_DEVICE_TEL,
             pkt[IBUS_PKT_SRC],
             IBUS_TEL_SIG_EVEREST
+        );
+    }
+}
+
+/**
+ * HandlerIBusNavDatetimeUpdate()
+ *     Description:
+ *         Handle Updates to the GPS Time
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+
+void HandlerIBusNavDatetimeUpdate(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (ConfigGetTimeSource() != CONFIG_SETTING_TIME_GPS) {
+        return;
+    }
+    struct tm datetime;
+    memcpy(&datetime, &context->ibus->gpsDatetime, sizeof(datetime));
+    datetime.tm_min += ConfigGetTimeOffset();
+    if (ConfigGetTimeDST() != 0) {
+        datetime.tm_min += 60;
+    }
+    mktime(&datetime);
+
+    uint8_t dt[6] = {
+        (datetime.tm_year + 1900) - 2000,
+        datetime.tm_mon + 1,
+        datetime.tm_mday,
+        datetime.tm_hour,
+        datetime.tm_min,
+        datetime.tm_sec
+    };
+
+    // Validate the date and time
+    if (dt[UTILS_DATETIME_YEAR] > 20 &&
+        dt[UTILS_DATETIME_MON] >= 1 && dt[UTILS_DATETIME_MON] <= 12 &&
+        dt[UTILS_DATETIME_DAY] >= 1 && dt[UTILS_DATETIME_DAY] <= 31 &&
+        dt[UTILS_DATETIME_HOUR] >= 0 && dt[UTILS_DATETIME_HOUR] <= 23 &&
+        dt[UTILS_DATETIME_MIN] >= 0 && dt[UTILS_DATETIME_MIN] <= 59 &&
+        dt[UTILS_DATETIME_SEC] >= 0 && dt[UTILS_DATETIME_SEC] <= 59
+    ) {
+        IBusCommandIKESetDate(
+            context->ibus,
+            dt[UTILS_DATETIME_YEAR],
+            dt[UTILS_DATETIME_MON],
+            dt[UTILS_DATETIME_DAY]
+        );
+        IBusCommandIKESetTime(
+            context->ibus,
+            dt[UTILS_DATETIME_HOUR],
+            dt[UTILS_DATETIME_MIN]
         );
     }
 }
