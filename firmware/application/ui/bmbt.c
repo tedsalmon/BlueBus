@@ -381,8 +381,8 @@ static void BMBTSetMainDisplayText(
 static void BMBTTriggerWriteHeader(BMBTContext_t *context)
 {
     if (context->timerHeaderIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
-        TimerResetScheduledTask(context->headerWriteTaskId);
         context->timerHeaderIntervals = 0;
+        TimerResetScheduledTask(context->headerWriteTaskId);
     }
 }
 
@@ -407,8 +407,8 @@ static void BMBTTriggerWriteMenu(BMBTContext_t *context)
         context->ibus->moduleStatus.NAV == 0
     ) {
         if (context->timerMenuIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
-            TimerResetScheduledTask(context->menuWriteTaskId);
             context->timerMenuIntervals = 0;
+            TimerResetScheduledTask(context->menuWriteTaskId);
         }
     } else {
         BMBTMenuRefresh(context);
@@ -2265,6 +2265,14 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                     if (context->ibus->moduleStatus.NAV == 1) {
                         IBusCommandRADDisableMenu(context->ibus);
                     }
+                    if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
+                        context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
+                    ) {
+                        BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+                    } else {
+                        BMBTMainAreaRefresh(context);
+                    }
+                    BMBTTriggerWriteHeader(context);
                 } else {
                     context->status.displayMode = BMBT_DISPLAY_OFF;
                 }
@@ -3079,7 +3087,7 @@ void BMBTTimerMenuWrite(void *ctx)
     ) {
         if (context->timerMenuIntervals != BMBT_MENU_HEADER_TIMER_OFF) {
             uint16_t time = context->timerMenuIntervals * BMBT_MENU_TIMER_WRITE_INT;
-            if (time == BMBT_MENU_TIMER_WRITE_TIMEOUT) {
+            if (time >= BMBT_MENU_TIMER_WRITE_TIMEOUT) {
                 switch (context->menu) {
                     case BMBT_MENU_MAIN:
                         BMBTMenuMain(context);
