@@ -20,8 +20,8 @@
 #include "../lib/utils.h"
 #include "../lib/wm88xx.h"
 #define BMBT_DISPLAY_OFF 0x00
-#define BMBT_DISPLAY_TONE_SEL 0x01
-#define BMBT_DISPLAY_INFO 0x02
+#define BMBT_DISPLAY_TONE_SEL_INFO 0x01
+#define BMBT_DISPLAY_REVERSE_CAM 0x02
 #define BMBT_DISPLAY_ON 0x03
 #define BMBT_DISPLAY_TEXT_LEN 9
 #define BMBT_HEADER_BT 1
@@ -147,6 +147,7 @@ void BMBTIBusBMBTButtonPress(void *, uint8_t *);
 void BMBTIBusCDChangerStatus(void *, uint8_t *);
 void BMBTIBusGTChangeUIRequest(void *, uint8_t *);
 void BMBTIKESpeedRPMUpdate(void *, uint8_t *);
+void BMBTIBusMonitorStatus(void *, uint8_t *);
 void BMBTIBusGTMenuBufferUpdate(void *, uint8_t *);
 void BMBTIBusMenuSelect(void *, uint8_t *);
 void BMBTIBusScreenBufferFlush(void *, uint8_t *);

@@ -1,7 +1,7 @@
 /*
  * File:   config.h
  * Author: Ted Salmon <tass2001@gmail.com>
- * Description: 
+ * Description:
  *     Get & Set Configuration items on the EEPROM
  */
 #ifndef CONFIG_H
@@ -86,6 +86,7 @@
 #define CONFIG_UI_MID 3
 #define CONFIG_UI_MID_BMBT 4
 #define CONFIG_UI_MIR 5
+#define CONFIG_UI_IRIS 6
 
 #define CONFIG_SETTING_OFF 0x00
 #define CONFIG_SETTING_ON 0x01

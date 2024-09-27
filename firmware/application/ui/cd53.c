@@ -691,6 +691,11 @@ void CD53TimerDisplay(void *ctx)
                     context->ibus,
                     context->tempDisplay.text
                 );
+            } else if (context->radioType == CONFIG_UI_IRIS) {
+                IBusCommandIRISDisplayWrite(
+                    context->ibus,
+                    context->tempDisplay.text
+                );
             }
             context->tempDisplay.status = CD53_DISPLAY_STATUS_ON;
         }
@@ -727,6 +732,8 @@ void CD53TimerDisplay(void *ctx)
                     IBusCommandTELIKEDisplayWrite(context->ibus, text);
                 } else if (context->radioType == CONFIG_UI_MIR) {
                     IBusCommandGTWriteBusinessNavTitle(context->ibus, text);
+                } else if (context->radioType == CONFIG_UI_IRIS) {
+                    IBusCommandIRISDisplayWrite(context->ibus, text);
                 }
                 uint8_t metaMode = ConfigGetSetting(CONFIG_SETTING_METADATA_MODE);
                 // Pause at the beginning of the text
@@ -767,7 +774,7 @@ void CD53TimerDisplay(void *ctx)
                 if (context->mainDisplay.index == 0) {
                     if (context->radioType == CONFIG_UI_CD53) {
                         IBusCommandTELIKEDisplayWrite(
-                            context->ibus, 
+                            context->ibus,
                             context->mainDisplay.text
                         );
                     } else if (context->radioType == CONFIG_UI_MIR) {

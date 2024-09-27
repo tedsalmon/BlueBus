@@ -113,6 +113,10 @@ static void IBusHandleModuleStatus(IBus_t *ibus, uint8_t module)
         ibus->moduleStatus.PDC = 1;
         LogInfo(LOG_SOURCE_IBUS, "PDC Detected");
         detectedModule = IBUS_DEVICE_PDC;
+    } else if (module == IBUS_DEVICE_IRIS && ibus->moduleStatus.IRIS == 0) {
+        ibus->moduleStatus.IRIS = 1;
+        LogInfo(LOG_SOURCE_IBUS, "IRIS Detected");
+        detectedModule = IBUS_DEVICE_IRIS;
     } else if (module == IBUS_DEVICE_RAD && ibus->moduleStatus.RAD == 0) {
         ibus->moduleStatus.RAD = 1;
         LogInfo(LOG_SOURCE_IBUS, "RAD Detected");
@@ -332,6 +336,8 @@ static void IBusHandleGTMessage(IBus_t *ibus, uint8_t *pkt)
         EventTriggerCallback(IBUS_EVENT_BMBTButton, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
         EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
+        EventTriggerCallback(IBUS_EVENT_MONITOR_STATUS, pkt);
     }
 }
 

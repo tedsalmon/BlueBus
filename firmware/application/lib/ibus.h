@@ -39,6 +39,7 @@
 #define IBUS_DEVICE_NAVE 0x7F /* Navigation (Europe) */
 #define IBUS_DEVICE_IKE 0x80 /* Instrument cluster electronics */
 #define IBUS_DEVICE_SES 0xB0 /* Speach recognition system */
+#define IBUS_DEVICE_JNAV 0xBB /* Japanese Navigation */
 #define IBUS_DEVICE_GLO 0xBF /* Global, broadcast address */
 #define IBUS_DEVICE_MID 0xC0 /* Multi-info display */
 #define IBUS_DEVICE_TEL 0xC8 /* Telephone */
@@ -274,7 +275,7 @@
 // LCM, LCM_A
 // Different bytes! Update the blinker msg if alternating.
 // Byte 0 (S2_BLK_L switch No.2 left turn / S2_BLK_R switch No.2 right turn)
-// #define IBUS_LCM_BLINKER_LEFT 0x80 
+// #define IBUS_LCM_BLINKER_LEFT 0x80
 // #define IBUS_LCM_BLINKER_RIGHT 0x40
 // Byte 1 (S2_BLK_L switch No.1 left turn / S2_BLK_R switch No.1 right turn)
 #define IBUS_LCM_BLINKER_OFF 0x00
@@ -471,6 +472,7 @@
 #define IBUS_EVENT_VM_IDENT_RESP 75
 #define IBUS_EVENT_GT_MENU_BUFFER_UPDATE 76
 #define IBUS_EVENT_RAD_MESSAGE_RCV 77
+#define IBUS_EVENT_MONITOR_STATUS 78
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -499,6 +501,7 @@ typedef struct IBusModuleStatus_t {
     uint8_t MID: 1;
     uint8_t NAV: 1;
     uint8_t RAD: 1;
+    uint8_t IRIS: 1;
     uint8_t VM: 1;
     uint8_t PDC: 1;
 } IBusModuleStatus_t;
