@@ -92,9 +92,11 @@ void HandlerSetVolume(HandlerContext_t *context, uint8_t direction)
         newVolume = context->bt->activeDevice.a2dpVolume / 2;
         context->volumeMode = HANDLER_VOLUME_MODE_LOWERED;
     } else {
-        newVolume = context->bt->activeDevice.a2dpVolume * 2;
+        newVolume = context->bt->activeDevice.a2dpVolume * 2 + 1;
         context->volumeMode = HANDLER_VOLUME_MODE_NORMAL;
     }
+    LogDebug(LOG_SOURCE_BT, "BT: Vol Set ON_HANDLER from %i -> ", context->bt->activeDevice.a2dpVolume, newVolume);
+    
     char hexVolString[3] = {0};
     snprintf(hexVolString, 3, "%X", newVolume / 8);
     BC127CommandVolume(

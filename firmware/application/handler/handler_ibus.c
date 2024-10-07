@@ -430,6 +430,7 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
                     context->bt->activeDevice.a2dpId,
                     "0"
                 );
+                context->bt->activeDevice.a2dpVolume = 1;
             }
             if (pkt[5] == 0x00) {
                 BTCommandPlaybackTrackNext(context->bt);

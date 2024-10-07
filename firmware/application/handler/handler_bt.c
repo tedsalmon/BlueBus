@@ -625,11 +625,13 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
 void HandlerBTBC127MetadataUpdate(void *ctx, uint8_t *tmp)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    LogDebug(LOG_SOURCE_BT, "BT: Vol Restore ON_METADATA from %i", context->bt->activeDevice.a2dpVolume);
     if (context->bt->playbackStatus && context->bt->type == BT_BTM_TYPE_BC127 &&
         ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
-        context->bt->activeDevice.a2dpVolume == 0
+        context->bt->activeDevice.a2dpVolume == 1
     ) {
         BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpId, "F");
+        context->bt->activeDevice.a2dpVolume = 127;
     }
 }
 
@@ -830,11 +832,12 @@ void HandlerTimerBTTCUStateChange(void *ctx)
 void HandlerTimerBTVolumeManagement(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    LogDebug(LOG_SOURCE_BT, "BT: Vol Restore ON_TIMER from %i", context->bt->activeDevice.a2dpVolume);
     if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
         context->volumeMode != HANDLER_VOLUME_MODE_LOWERED &&
         context->bt->activeDevice.a2dpId != 0 &&
         context->bt->type != BT_BTM_TYPE_BM83 &&
-        context->bt->activeDevice.a2dpVolume != 0
+        context->bt->activeDevice.a2dpVolume != 1
     ) {
         if (context->bt->activeDevice.a2dpVolume < 127) {
             LogWarning(

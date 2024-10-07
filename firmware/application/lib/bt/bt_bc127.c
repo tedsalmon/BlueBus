@@ -1084,10 +1084,6 @@ void BC127CommandVolume(BT_t *bt, uint8_t linkId, char *volume)
         BC127SendCommand(bt, command);
     } else {
         char command[15] = {0};
-        // Set the volume to int zero if we are setting it to string zero
-        if (volume[0] == '0' && volume[1] == 0x00) {
-            bt->activeDevice.a2dpVolume = 1;
-        }
         snprintf(command, 15, "VOLUME %d %s", linkId, volume);
         BC127SendCommand(bt, command);
     }
@@ -1155,6 +1151,7 @@ void BC127ProcessEventA2DPStreamSuspend(BT_t *bt, char **msgBuf)
  */
 void BC127ProcessEventAbsVol(BT_t *bt, char **msgBuf)
 {
+    LogDebug(LOG_SOURCE_BT, "BT: Vol ABS_VOL from %i to %s", bt->activeDevice.a2dpVolume, msgBuf[2]);
     bt->activeDevice.a2dpVolume = UtilsStrToInt(msgBuf[2]);
     EventTriggerCallback(BT_EVENT_VOLUME_UPDATE, 0);
 }
@@ -1532,7 +1529,14 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
         // Set the playback status
         if (strcmp(msgBuf[3], "AVRCP") == 0) {
             if (strcmp(msgBuf[5], "PLAYING") == 0) {
-               bt->playbackStatus = BT_AVRCP_STATUS_PLAYING;
+                bt->playbackStatus = BT_AVRCP_STATUS_PLAYING;
+                LogDebug(LOG_SOURCE_BT, "BT: Vol Restore ON_STATUS from %i", bt->activeDevice.a2dpVolume);
+                if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
+                    bt->activeDevice.a2dpVolume == 1
+                ) {
+                    BC127CommandVolume(bt, bt->activeDevice.a2dpId, "F");
+                    bt->activeDevice.a2dpVolume = 127;
+                }
             } else {
                 bt->playbackStatus = BT_AVRCP_STATUS_PAUSED;
             }

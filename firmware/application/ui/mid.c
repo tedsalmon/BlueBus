@@ -515,6 +515,7 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
                 context->bt->activeDevice.a2dpId,
                 "0"
             );
+            context->bt->activeDevice.a2dpVolume = 1;
         }
         if (btnPressed == IBus_MID_BTN_TEL_RIGHT_RELEASE) {
             BTCommandPlaybackTrackNext(context->bt);

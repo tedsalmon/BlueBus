@@ -250,6 +250,7 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
                 context->bt->activeDevice.a2dpId,
                 "0"
             );
+            context->bt->activeDevice.a2dpVolume = 1;
         }
         if (direction == 0x00) {
             BTCommandPlaybackTrackNext(context->bt);
