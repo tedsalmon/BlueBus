@@ -501,6 +501,8 @@ void CLIProcess()
                         LogRaw("UI Mode: MID / Navigation\r\n");
                     } else if (uiMode == CONFIG_UI_MIR) {
                         LogRaw("UI Mode: Business Navigation (MIR)\r\n");
+                    } else if (uiMode == CONFIG_UI_IRIS) {
+                        LogRaw("UI Mode: IRIS (Integrated Radio Information System)\r\n");
                     } else {
                         LogRaw("UI Mode: Not set or Invalid\r\n");
                     }
@@ -682,6 +684,8 @@ void CLIProcess()
                         // Force static GT UI mode
                         ConfigSetUIMode(CONFIG_UI_BMBT);
                         ConfigSetNavType(IBUS_GT_MKIV_STATIC);
+                    } else if (UtilsStricmp(msgBuf[2], "7") == 0) {
+                        ConfigSetUIMode(CONFIG_UI_IRIS);
                     } else {
                         LogRaw("Invalid UI Mode specified\r\n");
                     }

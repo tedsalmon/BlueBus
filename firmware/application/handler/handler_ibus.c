@@ -281,7 +281,8 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
     if (context->uiMode != newUi) {
         // Unregister the previous UI
         if (context->uiMode == CONFIG_UI_CD53 ||
-            context->uiMode == CONFIG_UI_MIR
+            context->uiMode == CONFIG_UI_MIR ||
+            context->uiMode == CONFIG_UI_IRIS
         ) {
             CD53Destroy();
         } else if (context->uiMode == CONFIG_UI_BMBT) {
@@ -292,7 +293,10 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
             MIDDestroy();
             BMBTDestroy();
         }
-        if (newUi == CONFIG_UI_CD53 || newUi == CONFIG_UI_MIR) {
+        if (newUi == CONFIG_UI_CD53 ||
+            newUi == CONFIG_UI_MIR ||
+            newUi == CONFIG_UI_IRIS
+        ) {
             CD53Init(context->bt, context->ibus);
             // This will ensure that the UI is correctly set up
             if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
@@ -420,7 +424,10 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         curStatus = IBUS_CDC_STAT_PLAYING;
         // Do not go backwards/forwards if the UI is CD53 because
         // those actions can be used to use the UI
-        if (context->uiMode != CONFIG_UI_CD53 && context->uiMode != CONFIG_UI_MIR) {
+        if (context->uiMode != CONFIG_UI_CD53 &&
+            context->uiMode != CONFIG_UI_MIR &&
+            context->uiMode != CONFIG_UI_IRIS
+        ) {
             if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
                 context->bt->type == BT_BTM_TYPE_BC127
             ) {
@@ -1562,7 +1569,10 @@ void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
     // Since we cannot consistently monitor the volume in non-Nav & Non-MID cars
     // then we should not track the volume changes via the MFL as it will cause
     // issues for the end user who may not know this
-    if (context->uiMode == CONFIG_UI_CD53 || context->uiMode == CONFIG_UI_MIR) {
+    if (context->uiMode == CONFIG_UI_CD53 ||
+        context->uiMode == CONFIG_UI_MIR ||
+        context->uiMode == CONFIG_UI_IRIS
+    ) {
         return;
     }
     // Only watch for changes when not on a call and not reverting volume after call ended
@@ -1661,6 +1671,7 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
     if (context->uiMode != CONFIG_UI_CD53 &&
+        context->uiMode != CONFIG_UI_MIR &&
         context->uiMode != CONFIG_UI_MIR &&
         HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
     ) {
@@ -1764,6 +1775,12 @@ void HandlerIBusModuleStatusResponse(void *ctx, uint8_t *pkt)
                 LogInfo(LOG_SOURCE_SYSTEM, "Detected MID UI");
                 HandlerIBusSwitchUI(context, CONFIG_UI_MID);
             }
+        }
+    } else if (module == IBUS_DEVICE_IRIS) {
+        uint8_t uiMode = ConfigGetUIMode();
+        if (uiMode != CONFIG_UI_IRIS) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Detected IRIS UI");
+            HandlerIBusSwitchUI(context, CONFIG_UI_IRIS);
         }
     } else if (module == IBUS_DEVICE_RAD) {
         // If the radio responds, announce that the CD Changer is present

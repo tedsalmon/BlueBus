@@ -14,11 +14,11 @@ void MIDInit(BT_t *bt, IBus_t *ibus)
     Context.btDeviceIndex = 0;
     Context.mode = MID_MODE_OFF;
     Context.displayUpdate = MID_DISPLAY_NONE;
-    Context.mainDisplay = UtilsDisplayValueInit("", MID_DISPLAY_STATUS_OFF);
+    Context.mainDisplay = UtilsDisplayValueInit("Bluetooth", MID_DISPLAY_STATUS_OFF);
     Context.tempDisplay = UtilsDisplayValueInit("", MID_DISPLAY_STATUS_OFF);
     Context.modeChangeStatus = MID_MODE_CHANGE_OFF;
     Context.menuContext = MenuSingleLineInit(ibus, bt, &MIDDisplayUpdateText, &Context);
-    strncpy(Context.mainText, "Bluetooth", 10);
+    memset(Context.mainText, 0x00, 16);
     EventRegisterCallback(
         BT_EVENT_DEVICE_LINK_DISCONNECTED,
         &MIDBTDeviceDisconnected,
@@ -125,13 +125,22 @@ static void MIDSetMainDisplayText(
     int8_t timeout
 ) {
     char text[UTILS_DISPLAY_TEXT_SIZE] = {0};
-    snprintf(
-        text,
-        UTILS_DISPLAY_TEXT_SIZE,
-        "%s %s",
-        context->mainText,
-        str
-    );
+    if (strlen(context->mainText) != 0) {
+        snprintf(
+            text,
+            UTILS_DISPLAY_TEXT_SIZE,
+            "%s %s",
+            context->mainText,
+            str
+        );
+    } else {
+        snprintf(
+            text,
+            UTILS_DISPLAY_TEXT_SIZE,
+            "%s",
+            str
+        );
+    }
     memset(context->mainDisplay.text, 0, UTILS_DISPLAY_TEXT_SIZE);
     UtilsStrncpy(context->mainDisplay.text, text, UTILS_DISPLAY_TEXT_SIZE);
     context->mainDisplay.length = strlen(context->mainDisplay.text);
@@ -146,13 +155,22 @@ static void MIDSetTempDisplayText(
     int8_t timeout
 ) {
     char text[UTILS_DISPLAY_TEXT_SIZE] = {0};
-    snprintf(
-        text,
-        UTILS_DISPLAY_TEXT_SIZE,
-        "%s %s",
-        context->mainText,
-        str
-    );
+    if (strlen(context->mainText) != 0) {
+        snprintf(
+            text,
+            UTILS_DISPLAY_TEXT_SIZE,
+            "%s %s",
+            context->mainText,
+            str
+        );
+    } else {
+        snprintf(
+            text,
+            UTILS_DISPLAY_TEXT_SIZE,
+            "%s",
+            str
+        );
+    }
     UtilsStrncpy(context->tempDisplay.text, text, UTILS_DISPLAY_TEXT_SIZE);
     context->tempDisplay.length = strlen(context->tempDisplay.text);
     context->tempDisplay.index = 0;
@@ -219,8 +237,8 @@ static void MIDMenuDevices(MIDContext_t *context)
 static void MIDMenuMain(MIDContext_t *context)
 {
     context->mode = MID_MODE_ACTIVE;
-    strncpy(context->mainText, "Bluetooth", 10);
-    MIDSetMainDisplayText(context, "", 0);
+    memset(context->mainText, 0x00, 16);
+    MIDSetMainDisplayText(context, "Bluetooth", 0);
     MIDBTMetadataUpdate((void *) context, 0x00);
     // This sucks
     unsigned char mainMenuText[] = {
@@ -235,9 +253,9 @@ static void MIDMenuMain(MIDContext_t *context)
     };
     IBusCommandMIDMenuWriteMany(context->ibus, 0x61, mainMenuText, sizeof(mainMenuText));
     if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
-        IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PLAYBACK, ">  ");
+        IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PLAYBACK, "||");
     } else {
-        IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PLAYBACK, "|| ");
+        IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PLAYBACK, "> ");
     }
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PAIR, "Pair");
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_MODE, "MODE");
@@ -336,13 +354,13 @@ void MIDBTPlaybackStatus(void *ctx, unsigned char *tmp)
         return;
     }
     if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
-        IBusCommandMIDMenuWriteSingle(context->ibus, 0, " >");
+        IBusCommandMIDMenuWriteSingle(context->ibus, 0, "||");
         BTCommandGetMetadata(context->bt);
     } else {
         if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MID_SETTING_METADATA_MODE_OFF) {
             MIDSetMainDisplayText(context, "Paused", 0);
         }
-        IBusCommandMIDMenuWriteSingle(context->ibus, 0, "|| ");
+        IBusCommandMIDMenuWriteSingle(context->ibus, 0, "> ");
     }
 }
 
@@ -413,10 +431,10 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
         if (btnPressed == MID_BUTTON_PLAYBACK) {
             if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
                 BTCommandPause(context->bt);
-                IBusCommandMIDMenuWriteSingle(context->ibus, 0, "|| ");
+                IBusCommandMIDMenuWriteSingle(context->ibus, 0, "> ");
             } else {
                 BTCommandPlay(context->bt);
-                IBusCommandMIDMenuWriteSingle(context->ibus, 0, ">  ");
+                IBusCommandMIDMenuWriteSingle(context->ibus, 0, "||");
             }
         } else if (btnPressed == MID_BUTTON_META) {
             if (context->mode == MID_MODE_ACTIVE) {

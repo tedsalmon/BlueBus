@@ -178,6 +178,11 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_MONITOR_STATUS,
+        &BMBTIBusMonitorStatus,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_RANGE_UPDATE,
         &BMBTRangeUpdate,
         &Context
@@ -2284,9 +2289,9 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
         // Handle the SEL and Info buttons gracefully
         if (pkt[3] == IBUS_CMD_BMBT_BUTTON0 && pkt[1] == 0x05) {
             if (pkt[5] == IBUS_DEVICE_BMBT_Button_Info) {
-                context->status.displayMode = BMBT_DISPLAY_INFO;
+                context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
             } else if (pkt[5] == IBUS_DEVICE_BMBT_Button_SEL) {
-                context->status.displayMode = BMBT_DISPLAY_TONE_SEL;
+                context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
             }
         }
     }
@@ -2361,8 +2366,9 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         BMBTTriggerWriteHeader(context);
         BMBTTriggerWriteMenu(context);
     } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE) {
-        if (context->status.displayMode == BMBT_DISPLAY_OFF) {
-            // This adds support for GTs that run without a radio overlay
+        // Enable & Disable the UI based on the "Random" playback mode setting
+        // This adds support for GTs that run without radio, like the R51/R52/R53
+        if (pkt[IBUS_PKT_DB2] == 0x01) {
             context->status.displayMode = BMBT_DISPLAY_ON;
             if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
                 context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
@@ -2516,6 +2522,34 @@ void BMBTRangeUpdate(void *ctx, uint8_t *p_range)
     ) {
         context->rangeNavi = 1;
         IBusCommandSESRouteFuel(context->ibus);
+    }
+}
+
+/**
+ * BMBTIBusMonitorStatus()
+ *     Description:
+ *         Look for updates from the GT in order to ensure that we do not
+ *         respond to input while the VM (GT) is in "Reverse Camera" mode
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         uint8_t *pkt - A pointer to the data packet
+ *     Returns:
+ *         void
+ */
+void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    if (pkt[IBUS_PKT_LEN] != 0x04) {
+        return;
+    }
+    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_JNAV &&
+        (pkt[IBUS_PKT_DB1] & 0xF) != 0
+    ) {
+        // Sent after pin 17 is left floating again
+        context->status.displayMode = BMBT_DISPLAY_ON;
+    } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 0) {
+        // Entering Reverse Camera mode
+        context->status.displayMode = BMBT_DISPLAY_REVERSE_CAM;
     }
 }
 
@@ -2794,7 +2828,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
 void BMBTRADDisplayMenu(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    context->status.displayMode = BMBT_DISPLAY_TONE_SEL;
+    context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
 }
 
 /**
@@ -2923,7 +2957,7 @@ void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
         }
         if (pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
             (context->status.displayMode == BMBT_DISPLAY_ON ||
-             context->status.displayMode == BMBT_DISPLAY_INFO)
+             context->status.displayMode == BMBT_DISPLAY_TONE_SEL_INFO)
         ) {
             BMBTTriggerWriteMenu(context);
         } else if (pkt[IBUS_PKT_DB1] == IBUS_GT_TONE_MENU_OFF ||

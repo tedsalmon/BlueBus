@@ -194,7 +194,9 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
         uint8_t boardVersion = UtilsGetBoardVersion();
         if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
             LogDebug(LOG_SOURCE_SYSTEM, "Call > TCU > Begin");
-            if (boardVersion == BOARD_VERSION_TWO) {
+            if (boardVersion == BOARD_VERSION_TWO &&
+                context->ibus->vehicleType != IBUS_VEHICLE_TYPE_E8X
+            ) {
                 SPDIF_RST = 0;
                 TimerSetTaskInterval(
                     context->tcuStateChangeTimerId,
@@ -740,7 +742,9 @@ void HandlerBTBM83DSPStatus(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t sampleRate = pkt[0];
-    if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
+    if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF ||
+        context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+    ) {
         return;
     }
     if (sampleRate != BM83_DATA_DSP_REPORTED_SR_44_1kHz) {

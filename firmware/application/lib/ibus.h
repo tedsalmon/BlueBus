@@ -40,6 +40,7 @@
 #define IBUS_DEVICE_NAVE 0x7F /* Navigation (Europe) */
 #define IBUS_DEVICE_IKE 0x80 /* Instrument cluster electronics */
 #define IBUS_DEVICE_SES 0xB0 /* Speach recognition system */
+#define IBUS_DEVICE_JNAV 0xBB /* Japanese Navigation */
 #define IBUS_DEVICE_GLO 0xBF /* Global, broadcast address */
 #define IBUS_DEVICE_MID 0xC0 /* Multi-info display */
 #define IBUS_DEVICE_TEL 0xC8 /* Telephone */
@@ -481,9 +482,10 @@
 #define IBUS_EVENT_BLUEBUS_TEL_STATUS_UPDATE 74
 #define IBUS_EVENT_VM_IDENT_RESP 75
 #define IBUS_EVENT_GT_MENU_BUFFER_UPDATE 76
-#define IBUS_EVENT_NAV_DATETIME_UPDATE 77
-#define IBUS_EVENT_RANGE_UPDATE 78
-#define IBUS_EVENT_RAD_MESSAGE_RCV 79
+#define IBUS_EVENT_RAD_MESSAGE_RCV 77
+#define IBUS_EVENT_MONITOR_STATUS 78
+#define IBUS_EVENT_NAV_DATETIME_UPDATE 79
+#define IBUS_EVENT_RANGE_UPDATE 80
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -512,6 +514,7 @@ typedef struct IBusModuleStatus_t {
     uint8_t MID: 1;
     uint8_t NAV: 1;
     uint8_t RAD: 1;
+    uint8_t IRIS: 1;
     uint8_t VM: 1;
     uint8_t PDC: 1;
 } IBusModuleStatus_t;

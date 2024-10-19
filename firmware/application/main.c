@@ -106,7 +106,6 @@ int main(void)
         UART_BAUD_115200,
         UART_PARITY_NONE
     );
-
     // Grab the hardware version
     uint8_t boardVersion = UtilsGetBoardVersion();
 

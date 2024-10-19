@@ -62,6 +62,7 @@ uint8_t HandlerSetIBusTELStatus(
                 (
                     context->uiMode == CONFIG_UI_CD53 ||
                     context->uiMode == CONFIG_UI_MIR ||
+                    context->uiMode == CONFIG_UI_IRIS ||
                     context->ibus->vehicleType == IBUS_VEHICLE_TYPE_R50
                 ) &&
                 context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING

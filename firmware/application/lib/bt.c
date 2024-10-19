@@ -6,6 +6,7 @@
  */
 #include "bt.h"
 #include "locale.h"
+#include "uart.h"
 
 /**
  * BTInit()
