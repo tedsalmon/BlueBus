@@ -199,6 +199,7 @@ typedef struct BT_t {
     uint8_t pairingErrors[BT_PROFILE_COUNT];
     uint32_t metadataTimestamp;
     uint32_t rxQueueAge;
+    uint8_t carPlay: 1;
     char title[BT_METADATA_FIELD_SIZE];
     char artist[BT_METADATA_FIELD_SIZE];
     char album[BT_METADATA_FIELD_SIZE];

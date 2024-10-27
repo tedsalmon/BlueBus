@@ -771,6 +771,8 @@ static void IBusHandleVMMessage(IBus_t *ibus, uint8_t *pkt)
             ibus->gtVersion = IBUS_GT_MKII;
         }
         EventTriggerCallback(IBUS_EVENT_VM_IDENT_RESP, &ibus->gtVersion);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
+        EventTriggerCallback(IBUS_EVENT_MONITOR_CONTROL, pkt);        
     }
 }
 
@@ -3112,4 +3114,20 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, uint8_t index)
     statusText[2] = 0x20;
     memcpy(statusText + 3, text, textLength);
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
+}
+
+/**
+ * IBusCommandCarplayDisplay()
+ *     Description:
+ *        Send telephone status text
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t enable - 0 / 1 - on / off
+ *     Returns:
+ *         void
+ */
+void IBusCommandCarplayDisplay(IBus_t *ibus, uint8_t enable)
+{
+    uint8_t pkt[] = { IBUS_BLUEBUS_CMD_CARPLAY_MODE, 0xBB, enable };
+    IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_VM, pkt, sizeof(pkt));
 }

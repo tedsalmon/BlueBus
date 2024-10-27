@@ -356,6 +356,7 @@
 #define IBUS_TEL_SIG_EVEREST 0x38
 
 #define IBUS_BLUEBUS_CMD_SET_STATUS 0xBB
+#define IBUS_BLUEBUS_CMD_CARPLAY_MODE 0xBC
 
 #define IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL 0x01
 
@@ -476,6 +477,9 @@
 #define IBUS_EVENT_RAD_MESSAGE_RCV 77
 #define IBUS_EVENT_MONITOR_STATUS 78
 #define IBUS_EVENT_GM_IDENT_RESP 79
+#define IBUS_EVENT_NAV_DATETIME_UPDATE 80
+#define IBUS_EVENT_RANGE_UPDATE 81
+#define IBUS_EVENT_MONITOR_CONTROL 82
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -645,4 +649,5 @@ void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);
 void IBusCommandTELSetLED(IBus_t *, uint8_t);
 void IBusCommandTELStatus(IBus_t *, uint8_t);
 void IBusCommandTELStatusText(IBus_t *, char *, uint8_t);
+void IBusCommandCarplayDisplay(IBus_t *ibus, uint8_t enable);
 #endif /* IBUS_H */
