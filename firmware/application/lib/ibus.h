@@ -486,6 +486,7 @@
 #define IBUS_EVENT_MONITOR_STATUS 78
 #define IBUS_EVENT_NAV_DATETIME_UPDATE 79
 #define IBUS_EVENT_RANGE_UPDATE 80
+#define IBUS_EVENT_MONITOR_CONTROL 81
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
