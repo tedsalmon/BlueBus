@@ -2248,13 +2248,10 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     
-    // LogDebug(LOG_SOURCE_UI, "BMBT button: pm=%02x, dm=%02x, cmd=%02x, src=%02x, dst=%02x", context->status.playerMode, context->status.displayMode, pkt[IBUS_PKT_DB1], pkt[IBUS_PKT_SRC], pkt[IBUS_PKT_DST]);
-    
     if (context->status.playerMode == BMBT_MODE_ACTIVE) {
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_PlayPause ||
             pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Num1
         ) {
-
             if (context->bt->carPlay != 1) {
                 if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
                     BTCommandPause(context->bt);
@@ -3027,7 +3024,8 @@ void BMBTTVStatusUpdate(void *ctx, uint8_t *pkt)
 /**
  * BMBTMonitorControl()
  *     Description:
- *         Listen for the GT -> RAD Television status message
+ *         Listen for the GT/VM -> BMBT Television status messages
+ *         to return from CarPlay / Reverse mode
  *     Params:
  *         void *ctx - The context
  *         uint8_t *pkt - The IBus Message received
