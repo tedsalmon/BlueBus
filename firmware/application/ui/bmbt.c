@@ -2613,7 +2613,8 @@ void BMBTTVStatusUpdate(void *ctx, uint8_t *pkt)
 /**
  * BMBTMonitorControl()
  *     Description:
- *         Listen for the GT -> RAD Television status message
+ *         Listen for the GT/VM -> BMBT Television status messages
+ *         to return from CarPlay / Reverse mode
  *     Params:
  *         void *ctx - The context
  *         uint8_t *pkt - The IBus Message received
