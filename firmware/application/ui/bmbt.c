@@ -2559,13 +2559,13 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
         (pkt[IBUS_PKT_DB1] & 0xF) != 0
     ) {
         // Sent after pin 17 is left floating again
-        LogDebug(LOG_SOURCE_UI,"Leaving CarPlay");
+        LogDebug(LOG_SOURCE_UI,"MonStatus Leaving CarPlay");
         context->status.displayMode = BMBT_DISPLAY_ON;
         context->bt->carPlay = 0;
 
     } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 0) {
         // Entering Reverse Camera mode
-        LogDebug(LOG_SOURCE_UI,"Entering CarPlay");
+        LogDebug(LOG_SOURCE_UI,"MonStatus Entering CarPlay");
         context->status.displayMode = BMBT_DISPLAY_REVERSE_CAM_INIT;
         context->bt->carPlay = 1;
     }
@@ -3037,7 +3037,6 @@ void BMBTTVStatusUpdate(void *ctx, uint8_t *pkt)
 void BMBTMonitorControl(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    LogDebug(LOG_SOURCE_UI,"src=%02X, dst=%02X, db1=%02X, db2=%02X", pkt[IBUS_PKT_SRC], pkt[IBUS_PKT_DST], pkt[IBUS_PKT_DB1], pkt[IBUS_PKT_DB2]);
     if (pkt[IBUS_PKT_DB1] == 0x12 && pkt[IBUS_PKT_DB2] == 0x11) {
         if (context->status.displayMode == BMBT_DISPLAY_REVERSE_CAM) {
             LogDebug(LOG_SOURCE_UI,"MonControl Leaving CarPlay");
@@ -3062,10 +3061,6 @@ void BMBTMonitorControl(void *ctx, uint8_t *pkt)
             context->status.displayMode = BMBT_DISPLAY_REVERSE_CAM;
             context->bt->carPlay = 1;
         }
-    } else if (pkt[IBUS_PKT_DB1] == 0x11 && pkt[IBUS_PKT_DB2] == 0x11) {
-        LogDebug(LOG_SOURCE_UI,"MonControl Entering CarPlay");
-        context->status.displayMode = BMBT_DISPLAY_REVERSE_CAM;
-        context->bt->carPlay = 1;
     }
 }
 
