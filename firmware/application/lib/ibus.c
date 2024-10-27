@@ -769,6 +769,8 @@ static void IBusHandleVMMessage(IBus_t *ibus, uint8_t *pkt)
             ibus->gtVersion = IBUS_GT_MKII;
         }
         EventTriggerCallback(IBUS_EVENT_VM_IDENT_RESP, &ibus->gtVersion);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
+        EventTriggerCallback(IBUS_EVENT_MONITOR_CONTROL, pkt);        
     }
 }
 
