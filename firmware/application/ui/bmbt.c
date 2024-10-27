@@ -2296,6 +2296,10 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
         }
     }
     // Handle calls at any time
+    if ((pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release)&&(context->status.displayMode == BMBT_DISPLAY_REVERSE_CAM)) {
+        context->status.displayMode = BMBT_DISPLAY_ON;
+        context->bt->carPlay = 0;
+    }
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
             if (context->bt->callStatus == BT_CALL_ACTIVE) {
@@ -2550,6 +2554,7 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
     } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 0) {
         // Entering Reverse Camera mode
         context->status.displayMode = BMBT_DISPLAY_REVERSE_CAM;
+        context->bt->carPlay = 1;
     }
 }
 
