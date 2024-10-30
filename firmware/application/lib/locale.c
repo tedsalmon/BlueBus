@@ -567,7 +567,7 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Mode: Default",
     "Mode: TCU",
     "Mode: No Mute",
-    "Voice Assistant",
+    "Sprachassistent",
     "Anruf",
     "Autozoom: %s",
     "PDC: %s",
