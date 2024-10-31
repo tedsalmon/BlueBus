@@ -1037,8 +1037,8 @@ void BM83ProcessEventReadLinkedDeviceInformation(BT_t *bt, uint8_t *data, uint16
                 if (dev != 0) {
                     if (memcmp(dev->macId, bt->activeDevice.macId, BT_MAC_ID_LEN) == 0) {
                         UtilsStrncpy(
-                            dev->deviceName, 
-                            deviceName, 
+                            dev->deviceName,
+                            deviceName,
                             BT_DEVICE_NAME_LEN
                         );
                     }

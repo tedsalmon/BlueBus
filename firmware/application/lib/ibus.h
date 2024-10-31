@@ -9,6 +9,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include "../mappings.h"
 #include "char_queue.h"
 #include "log.h"
@@ -180,6 +181,7 @@
 #define IBUS_CMD_IKE_SET_REQUEST_DATE 0x02
 #define IBUS_CMD_IKE_WRITE_NUMERIC 0x44
 #define IBUS_CMD_IKE_CCM_WRITE_TEXT 0x1A
+#define IBUS_CMD_IKE_GPSTIME 0x1F
 
 #define IBUS_DATA_IKE_CCM_WRITE_CLEAR_TEXT 0x30
 #define IBUS_DATA_IKE_NUMERIC_CLEAR 0x20
@@ -241,7 +243,10 @@
 
 #define IBUS_CMD_OBC_CONTROL 0x41
 
+#define IBUS_IKE_OBC_PROPERTY_TIME 0x01
+#define IBUS_IKE_OBC_PROPERTY_DATE 0x02
 #define IBUS_IKE_OBC_PROPERTY_TEMPERATURE 0x03
+#define IBUS_IKE_OBC_PROPERTY_RANGE 0x06
 #define IBUS_IKE_OBC_PROPERTY_REQUEST_TEXT 0x01
 
 #define IBUS_LCM_LIGHT_STATUS_REQ 0x5A
@@ -379,6 +384,12 @@
 #define IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED 0x06
 
 #define IBUS_SES_ZOOM_LEVELS 8
+#define IBUS_SES_CMD_NAV_CTRL 0xAA
+#define IBUS_SES_DATA_NAV_CTRL_SHOWMAP 0x04
+#define IBUS_SES_DATA_NAV_CTRL_SILENCE 0x06
+#define IBUS_SES_DATA_NAV_CTRL_SETZOOM 0x10
+#define IBUS_SES_DATA_NAV_CTRL_ROUTEFUEL 0x20
+
 
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
 #define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
@@ -473,6 +484,9 @@
 #define IBUS_EVENT_GT_MENU_BUFFER_UPDATE 76
 #define IBUS_EVENT_RAD_MESSAGE_RCV 77
 #define IBUS_EVENT_MONITOR_STATUS 78
+#define IBUS_EVENT_NAV_DATETIME_UPDATE 79
+#define IBUS_EVENT_RANGE_UPDATE 80
+#define IBUS_EVENT_MONITOR_CONTROL 81
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -554,6 +568,8 @@ typedef struct IBus_t {
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
     IBusPDCSensorStatus_t pdcSensors;
+    time_t gpsDatetime;
+    time_t localTime;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];
@@ -636,6 +652,9 @@ void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
 void IBusCommandSESSetMapZoom(IBus_t *, uint8_t);
+void IBusCommandSESShowMap(IBus_t *);
+void IBusCommandSESRouteFuel(IBus_t *);
+void IBusCommandSESSilentNavigation(IBus_t *);
 void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);
