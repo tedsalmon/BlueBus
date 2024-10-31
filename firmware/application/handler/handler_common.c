@@ -70,6 +70,18 @@ uint8_t HandlerSetIBusTELStatus(
                 return 1;
             }
             IBusCommandTELStatus(context->ibus, currentTelStatus);
+            
+            if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+                if (context->bt->carPlay != 1) {
+                    uint8_t pkt[] = { 0x48, 0x08 };
+                    IBusSendCommand(context->ibus, IBUS_DEVICE_BMBT, IBUS_DEVICE_LOC, pkt, sizeof(pkt));
+                    IBusCommandCarplayDisplay(context->ibus, 1);
+                }
+            }
+            if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE) {
+                IBusCommandCarplayDisplay(context->ibus, 0);
+            }    
+
             return 1;
         }
     }
