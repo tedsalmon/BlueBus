@@ -695,7 +695,7 @@ static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
 
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_GPSTIME) {
         struct tm gps_time = {0};
-        gps_time.tm_hour = UTILS_UNPACK_8BCD(pkt[3]);
+        gps_time.tm_hour = UTILS_UNPACK_8BCD(pkt[5]);
         gps_time.tm_min = UTILS_UNPACK_8BCD(pkt[6]);
         gps_time.tm_sec = 0;
         gps_time.tm_mday = UTILS_UNPACK_8BCD(pkt[7]);

@@ -1343,7 +1343,8 @@ void HandlerIBusNavDatetimeUpdate(void *ctx, uint8_t *pkt)
         return;
     }
     struct tm datetime;
-    memcpy(&datetime, &context->ibus->gpsDatetime, sizeof(datetime));
+    gmtime_r(&context->ibus->gpsDatetime, &datetime);
+
     datetime.tm_min += ConfigGetTimeOffset();
     if (ConfigGetTimeDST() != 0) {
         datetime.tm_min += 60;
