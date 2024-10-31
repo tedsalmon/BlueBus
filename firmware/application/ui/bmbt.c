@@ -1732,6 +1732,50 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
                 timeSource = CONFIG_SETTING_OFF;
         }
         ConfigSetTimeSource(timeSource);
+
+        if (timeSource == CONFIG_SETTING_TIME_GPS) {
+            // calculate the default offset if not previously set and reasonable GPS & IKE times are available
+            uint8_t time_dst = ConfigGetTimeDST();
+            int16_t time_offset = ConfigGetTimeOffsetIndex();
+
+            if ((time_dst == 0) && (time_offset == 0) && (context->ibus->gpsDatetime != 0) && (context->ibus->localTime != 0)) {
+                LogDebug(LOG_SOURCE_UI, "Calc DST & Zone offsets, GPS: %s", ctime(&context->ibus->gpsDatetime));
+                LogDebug(LOG_SOURCE_UI, "Calc DST & Zone offsets, LOCAL: %s", ctime(&context->ibus->localTime));
+
+                struct tm *local_time = gmtime(&context->ibus->localTime);
+
+                if ((local_time->tm_hour!=0)||(local_time->tm_min!=0)) {
+
+                    uint8_t hour = local_time->tm_hour;
+                    uint8_t min = local_time->tm_min;
+
+                    local_time = gmtime(&context->ibus->gpsDatetime);
+
+                    local_time->tm_hour = hour;
+                    local_time->tm_min = min;
+
+                    if ((local_time->tm_mon>=3)&&(local_time->tm_mon<=9)) {
+                        // assume Apr to Oct is summer time for sake of preset of DST
+                        time_dst = CONFIG_SETTING_TIME_DST;
+                        local_time->tm_hour -= 1;
+                    }
+
+                    time_t localTime = mktime(local_time);
+
+                    time_offset = (difftime(localTime,context->ibus->gpsDatetime) / 60);
+
+                    if (time_offset > 12*60) {
+                        time_offset -= 24*60;
+                    } else if (time_offset < -12*60) {
+                        time_offset += 24*60;
+                    }
+                    LogDebug(LOG_SOURCE_UI, "Calc DST & Zone offsets, DST=%d, OFFSET=%+d min", (time_dst==CONFIG_SETTING_TIME_DST), time_offset);
+
+                    ConfigSetTimeOffset(time_offset);
+                    ConfigSetTimeDST(time_dst);
+                }
+            }
+        }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) {
         uint8_t dst = ConfigGetTimeDST();
         if (dst == CONFIG_SETTING_OFF) {
@@ -1754,6 +1798,18 @@ static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t select
 
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
         BMBTMenuSettingsComfortTime(context);
+    }
+
+     if (((selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) ||
+        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) ||
+        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE)) &&
+        (timeSource == CONFIG_SETTING_TIME_GPS) &&
+        (context->ibus->gpsDatetime != 0)) {
+
+        EventTriggerCallback(
+            IBUS_EVENT_NAV_DATETIME_UPDATE,
+            NULL
+        );
     }
 }
 

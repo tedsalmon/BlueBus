@@ -423,6 +423,46 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
 
             uint8_t valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+        } else if (property == IBUS_IKE_OBC_PROPERTY_TIME) {
+            // 15:31,  3:31PM,
+            struct tm *local_time = gmtime(&ibus->localTime);
+
+            local_time->tm_hour = ((pkt[6]>='0' && pkt[6]<='9')?(pkt[6]-'0'):0) * 10 + ((pkt[7]>='0' && pkt[7]<='9')?(pkt[7]-'0'):0);
+            local_time->tm_min = ((pkt[9]>='0' && pkt[9]<='9')?(pkt[9]-'0'):0) * 10 + ((pkt[10]>='0' && pkt[10]<='9')?(pkt[10]-'0'):0);
+
+            if ((pkt[11] == 'P' || pkt[11] == 'p') && (local_time->tm_hour < 12)) {
+                local_time->tm_hour += 12;
+            }
+            if ((pkt[11] == 'A' || pkt[11] == 'a') && (local_time->tm_hour == 12)) {
+                local_time->tm_hour -= 12;
+            }
+
+            ibus->localTime = mktime(local_time);
+        } else if (property == IBUS_IKE_OBC_PROPERTY_DATE) {
+            // 17.01.2020, 01/17/2020, 02.01.2023
+            struct tm *local_time = gmtime(&ibus->localTime);
+            uint8_t v1 = (pkt[6]-'0') * 10 + (pkt[7]-'0');
+            uint8_t v2 = (pkt[9]-'0') * 10 + (pkt[10]-'0');
+            local_time->tm_year = (pkt[12]-'0') * 1000 + (pkt[13]-'0') * 100 + (pkt[14]-'0') * 10 + (pkt[15]-'0') - 1900;
+
+            if (pkt[8] == '/') {
+                local_time->tm_mon = v1 - 1;
+                local_time->tm_mday = v2;
+            } else {
+                local_time->tm_mon = v2 - 1;
+                local_time->tm_mday = v1;
+            }
+
+            if (
+                (local_time->tm_year >= 123) &&
+                (local_time->tm_year < 223) &&
+                (local_time->tm_mon >= 0) &&
+                (local_time->tm_mon <= 11) &&
+                (local_time->tm_mday >= 1) &&
+                (local_time->tm_mday <= 31)
+            ) {
+                ibus->localTime = mktime(local_time);
+            }
         }
     }
 }
