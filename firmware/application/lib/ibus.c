@@ -57,6 +57,7 @@ IBus_t IBusInit()
     memset(ibus.telematicsLatitude, 0, sizeof(ibus.telematicsLatitude));
     memset(ibus.telematicsLongtitude, 0, sizeof(ibus.telematicsLongtitude));
     ibus.gpsDatetime = 0;
+    ibus.localTime = 0;
     // Instantiate all our sensors to a value of 255 / 0xFF by default
     IBusPDCSensorStatus_t pdcSensors;
     memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
