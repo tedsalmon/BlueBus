@@ -325,21 +325,23 @@ void HandlerBTDeviceFound(void *ctx, uint8_t *data)
     ) {
         LogDebug(LOG_SOURCE_SYSTEM, "Handler: No Device -- Attempt connection");
         if (context->bt->type == BT_BTM_TYPE_BC127) {
-            uint8_t preferredDevice[BT_MAC_ID_LEN] = {0};
-            ConfigGetBytes(
-                CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,
-                preferredDevice,
-                BT_MAC_ID_LEN
-            );
-            if (preferredDevice[0] == 0 || memcmp(data, preferredDevice, BT_MAC_ID_LEN) == 0) {
-                LogDebug(LOG_SOURCE_SYSTEM, "Connecting to preferred device");
-                memcpy(context->bt->activeDevice.macId, data, BT_MAC_ID_LEN);
-                BC127CommandProfileOpen(context->bt, "A2DP");
-            } else {
-                // Retry in a few seconds if the preferred does not connect,
-                // then the user would need to use the device selection menu
-                LogDebug(LOG_SOURCE_SYSTEM, "Delaying connection, waiting for preferred to connect");
-            }
+            memcpy(context->bt->activeDevice.macId, data, BT_MAC_ID_LEN);
+            BC127CommandProfileOpen(context->bt, "A2DP");
+            // uint8_t preferredDevice[BT_MAC_ID_LEN] = {0};
+            // ConfigGetBytes(
+            //     CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,
+            //     preferredDevice,
+            //     BT_MAC_ID_LEN
+            // );
+            // if (preferredDevice[0] == 0 || memcmp(data, preferredDevice, BT_MAC_ID_LEN) == 0) {
+            //     LogDebug(LOG_SOURCE_SYSTEM, "Connecting to preferred device");
+            //     memcpy(context->bt->activeDevice.macId, data, BT_MAC_ID_LEN);
+            //     BC127CommandProfileOpen(context->bt, "A2DP");
+            // } else {
+            //     // Retry in a few seconds if the preferred does not connect,
+            //     // then the user would need to use the device selection menu
+            //     LogDebug(LOG_SOURCE_SYSTEM, "Delaying connection, waiting for preferred to connect");
+            // }
         } else {
             if (context->bt->pairedDevicesCount > 0) {
                 if (context->btSelectedDevice == HANDLER_BT_SELECTED_DEVICE_NONE ||

@@ -1497,9 +1497,9 @@ void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
     // Since we cannot consistently monitor the volume in non-Nav & Non-MID cars
     // then we should not track the volume changes via the MFL as it will cause
     // issues for the end user who may not know this
-    if (context->uiMode == CONFIG_UI_CD53 ||
-        context->uiMode == CONFIG_UI_MIR ||
-        context->uiMode == CONFIG_UI_IRIS
+    if (context->uiMode != CONFIG_UI_BMBT &&
+        context->uiMode != CONFIG_UI_MID_BMBT &&
+        context->uiMode != CONFIG_UI_MID
     ) {
         return;
     }
@@ -1591,18 +1591,21 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
  */
 void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
 {
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (
+        ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF ||
+        (
+            context->uiMode != CONFIG_UI_BMBT ||
+            context->uiMode != CONFIG_UI_MID ||
+            context->uiMode != CONFIG_UI_MID_BMBT
+        )
+    ) {
         return;
     }
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
-    if (context->uiMode != CONFIG_UI_CD53 &&
-        context->uiMode != CONFIG_UI_MIR &&
-        context->uiMode != CONFIG_UI_MIR &&
-        HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
-    ) {
+    if (HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO) {
         int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
         if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
             // Drop Telephony mode so the radio acknowledges the volume changes
