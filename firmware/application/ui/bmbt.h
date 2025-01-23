@@ -21,8 +21,9 @@
 #include "../lib/wm88xx.h"
 #define BMBT_DISPLAY_OFF 0x00
 #define BMBT_DISPLAY_TONE_SEL_INFO 0x01
-#define BMBT_DISPLAY_REVERSE_CAM 0x02
-#define BMBT_DISPLAY_ON 0x03
+#define BMBT_DISPLAY_REVERSE_CAM_INIT 0x02
+#define BMBT_DISPLAY_REVERSE_CAM 0x03
+#define BMBT_DISPLAY_ON 0x04
 #define BMBT_DISPLAY_TEXT_LEN 9
 #define BMBT_HEADER_BT 1
 #define BMBT_HEADER_PB_STAT 2
@@ -111,7 +112,7 @@
 
 typedef struct BMBTStatus_t {
     uint8_t playerMode: 1;
-    uint8_t displayMode: 2;
+    uint8_t displayMode: 3;
     uint8_t navState: 1;
     uint8_t radType: 4;
     uint8_t tvStatus: 1;
@@ -157,6 +158,7 @@ void BMBTRADUpdateMainArea(void *, uint8_t *);
 void BMBTRADScreenModeRequest(void *, uint8_t *);
 void BMBTGTScreenModeSet(void *, uint8_t *);
 void BMBTTVStatusUpdate(void *, uint8_t *);
+void BMBTMonitorControl(void *, uint8_t *);
 void BMBTIBusVehicleConfig(void *, uint8_t *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);
