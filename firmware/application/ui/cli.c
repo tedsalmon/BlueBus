@@ -855,6 +855,9 @@ void CLIProcess()
                 LogRaw("Serial Number: %u\r\n", ConfigGetSerialNumber());
                 LogRaw("Build Date: %d/%d\r\n", ConfigGetBuildWeek(), ConfigGetBuildYear());
                 LogRaw("Hardware Revision: %d\r\n", BOARD_VERSION_STATUS + 1);
+            } else if (UtilsStricmp(msgBuf[0], "STATUS") == 0) {
+                LogRaw("BlueBus Status and Context:\r\n");
+                EventTriggerCallback(LOG_EVENT_STATUS, NULL);
             } else if (UtilsStricmp(msgBuf[0], "HELP") == 0 || UtilsStricmp(msgBuf[0], "?") == 0) {
                 LogRaw("Available Commands:\r\n");
                 LogRaw("    BOOTLOADER - Reboot into the bootloader immediately\r\n");
@@ -907,6 +910,7 @@ void CLIProcess()
                 LogRaw("        x = 5. Business Navigation (MIR)\r\n");
                 LogRaw("    RESTORE - Fully Reset the BlueBus and BC127 to factory defaults\r\n");
                 LogRaw("    VERSION - Get the BlueBus Hardware/Software Versions\r\n");
+                LogRaw("    STATUS - Get the Status of various modules and contexts\r\n");
             } else {
                 cmdSuccess = 0;
             }

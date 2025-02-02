@@ -55,6 +55,11 @@ void HandlerBTInit(HandlerContext_t *context)
         &HandlerBTPlaybackStatus,
         context
     );
+    EventRegisterCallback(
+        LOG_EVENT_STATUS,
+        &HandlerBTLogStatus,
+        context
+    );
     context->tcuStateChangeTimerId = TimerRegisterScheduledTask(
         &HandlerTimerBTTCUStateChange,
         context,
@@ -1209,3 +1214,47 @@ void HandlerTimerBTBM83ScanDevices(void *ctx)
         }
     }
 }
+
+/**
+ * HandlerBTLogStatus()
+ *     Description:
+ *         Log current Context Status
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerBTLogStatus(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    BT_t *bt = context->bt;
+
+    LogRaw("BT:\r\n");
+    LogRaw("  Status:       %s (%i, 0x%02X)\r\n",
+                (bt->status==BT_STATUS_OFF)?"BT_STATUS_OFF":
+                (bt->status==BT_STATUS_DISCONNECTED)?"BT_STATUS_DISCONNECTED":
+                (bt->status==BT_STATUS_CONNECTED)?"BT_STATUS_CONNECTED":
+                (bt->status==BT_STATUS_CONNECTING)?"BT_STATUS_CONNECTING":
+                "invalid",
+                bt->status,bt->status);
+    LogRaw("  Call Status:  %s (%i, 0x%02X)\r\n",
+                (bt->callStatus==BT_CALL_INACTIVE)?"BT_CALL_INACTIVE":
+                (bt->callStatus==BT_CALL_ACTIVE)?"BT_CALL_ACTIVE":
+                (bt->callStatus==BT_CALL_VR)?"BT_CALL_VR":
+                (bt->callStatus==BT_CALL_INCOMING)?"BT_CALL_INCOMING":
+                (bt->callStatus==BT_CALL_OUTGOING)?"BT_CALL_OUTGOING":
+                "invalid",
+                bt->callStatus,bt->callStatus);
+    LogRaw("  SCO Status:   %s (%i, 0x%02X)\r\n",
+                (bt->scoStatus==BT_CALL_SCO_CLOSE)?"BT_CALL_SCO_CLOSE":
+                (bt->scoStatus==BT_CALL_SCO_OPEN)?"BT_CALL_SCO_OPEN":
+                "invalid",
+                bt->scoStatus,bt->scoStatus);
+    LogRaw("  Playback:     %s (%i, 0x%02X)\r\n", bt->playbackStatus?"BT_AVRCP_STATUS_PLAYING":"BT_AVRCP_STATUS_PAUSED", bt->playbackStatus, bt->playbackStatus);
+    LogRaw("  Type:         %s (%i, 0x%02X)\r\n", bt->type?"BM83":"BC127", bt->type, bt->type);
+    LogRaw("  VR status:    %s (%i, 0x%02X)\r\n", bt->vrStatus?"on":"off", bt->vrStatus, bt->vrStatus);
+    LogRaw("  Discoverable: %s (%i, 0x%02X)\r\n", bt->discoverable?"on":"off", bt->discoverable, bt->discoverable);
+    LogRaw("  Connectable:  %s (%i, 0x%02X)\r\n", bt->connectable?"on":"off", bt->connectable, bt->connectable);
+    LogRaw("  Paired devs:  %i\r\n", bt->pairedDevicesCount);
+}
+

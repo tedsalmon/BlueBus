@@ -192,6 +192,11 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &BMBTRangeUpdate,
         &Context
     );
+    EventRegisterCallback(
+        LOG_EVENT_STATUS,
+        &BMBTLogStatus,
+        &Context
+    );
     Context.headerWriteTaskId = TimerRegisterScheduledTask(
         &BMBTTimerHeaderWrite,
         &Context,
@@ -3345,3 +3350,48 @@ void BMBTTimerScrollDisplay(void *ctx)
         }
     }
 }
+
+/**
+ * BMBTLogStatus()
+ *     Description:
+ *         Log current Context Status
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *     Returns:
+ *         void
+ */
+void BMBTLogStatus(void *ctx)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+
+    LogRaw("BMBT:\r\n");
+    LogRaw("  Menu:         %s (%i, 0x%02X)\r\n",
+        (context->menu == BMBT_MENU_NONE)?"BMBT_MENU_NONE":
+        (context->menu == BMBT_MENU_MAIN)?"BMBT_MENU_MAIN":
+        (context->menu == BMBT_MENU_DASHBOARD)?"BMBT_MENU_DASHBOARD":
+        (context->menu == BMBT_MENU_DASHBOARD_FRESH)?"BMBT_MENU_DASHBOARD_FRESH":
+        (context->menu == BMBT_MENU_DEVICE_SELECTION)?"BMBT_MENU_DEVICE_SELECTION":
+        (context->menu == BMBT_MENU_SETTINGS)?"BMBT_MENU_SETTINGS":
+        (context->menu == BMBT_MENU_SETTINGS_ABOUT)?"BMBT_MENU_SETTINGS_ABOUT":
+        (context->menu == BMBT_MENU_SETTINGS_AUDIO)?"BMBT_MENU_SETTINGS_AUDIO":
+        (context->menu == BMBT_MENU_SETTINGS_COMFORT)?"BMBT_MENU_SETTINGS_COMFORT":
+        (context->menu == BMBT_MENU_SETTINGS_COMFORT_TIME)?"BMBT_MENU_SETTINGS_COMFORT_TIME":
+        (context->menu == BMBT_MENU_SETTINGS_COMFORT_NAVI)?"BMBT_MENU_SETTINGS_COMFORT_NAVI":
+        (context->menu == BMBT_MENU_SETTINGS_CALLING)?"BMBT_MENU_SETTINGS_CALLING":
+        (context->menu == BMBT_MENU_SETTINGS_UI)?"BMBT_MENU_SETTINGS_UI":
+        "invalid",
+        context->menu, context->menu);
+    LogRaw("  Player Mode:  %s (%i, 0x%02X)\r\n",
+        (context->status.playerMode == BMBT_MODE_ACTIVE)?"BMBT_MODE_ACTIVE":
+        "BMBT_MODE_INACTIVE",
+        context->status.playerMode, context->status.playerMode);
+    LogRaw("  Display Mode: %s (%i, 0x%02X)\r\n",
+        (context->status.displayMode == BMBT_DISPLAY_OFF)?"BMBT_DISPLAY_OFF":
+        (context->status.displayMode == BMBT_DISPLAY_TONE_SEL_INFO)?"BMBT_DISPLAY_TONE_SEL_INFO":
+        (context->status.displayMode == BMBT_DISPLAY_ON)?"BMBT_DISPLAY_ON":
+        "invalid",
+        context->status.displayMode, context->status.displayMode);
+    LogRaw("  Nav State:    %s (%i, 0x%02X)\r\n", context->status.navState?"on":"off", context->status.navState, context->status.navState);
+    LogRaw("  TV status:    %s (%i, 0x%02X)\r\n", context->status.tvStatus?"on":"off", context->status.tvStatus, context->status.tvStatus);
+}
+

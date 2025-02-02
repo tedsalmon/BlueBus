@@ -182,4 +182,5 @@ void BMBTIBusVehicleConfig(void *, uint8_t *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);
 void BMBTTimerScrollDisplay(void *);
+void BMBTLogStatus(void *);
 #endif /* BMBT_H */
