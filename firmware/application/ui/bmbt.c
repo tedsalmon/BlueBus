@@ -2624,7 +2624,7 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
     } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 0) {
         // Entering Reverse Camera mode
         LogDebug(LOG_SOURCE_UI,"MonStatus Entering CarPlay");
-        context->status.displayMode = BMBT_DISPLAY_REVERSE_CAM_INIT;
+        context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
         context->bt->carPlay = 1;
     }
 }
@@ -3097,7 +3097,7 @@ void BMBTMonitorControl(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == 0x12 && pkt[IBUS_PKT_DB2] == 0x11) {
-        if (context->status.displayMode == BMBT_DISPLAY_REVERSE_CAM) {
+        if (context->status.displayMode == BMBT_DISPLAY_EXTERNAL) {
             LogDebug(LOG_SOURCE_UI,"MonControl Leaving CarPlay");
             context->status.displayMode = BMBT_DISPLAY_ON;
             context->bt->carPlay = 0;
@@ -3115,9 +3115,9 @@ void BMBTMonitorControl(void *ctx, uint8_t *pkt)
                 BMBTMainAreaRefresh(context);
             }
             BMBTTriggerWriteHeader(context);
-        } else if (context->status.displayMode == BMBT_DISPLAY_REVERSE_CAM_INIT) {
+        } else if (context->status.displayMode == BMBT_DISPLAY_EXTERNAL_INIT) {
             LogDebug(LOG_SOURCE_UI,"MonControl Entering CarPlay");
-            context->status.displayMode = BMBT_DISPLAY_REVERSE_CAM;
+            context->status.displayMode = BMBT_DISPLAY_EXTERNAL;
             context->bt->carPlay = 1;
         }
     }
@@ -3388,6 +3388,8 @@ void BMBTLogStatus(void *ctx)
     LogRaw("  Display Mode: %s (%i, 0x%02X)\r\n",
         (context->status.displayMode == BMBT_DISPLAY_OFF)?"BMBT_DISPLAY_OFF":
         (context->status.displayMode == BMBT_DISPLAY_TONE_SEL_INFO)?"BMBT_DISPLAY_TONE_SEL_INFO":
+        (context->status.displayMode == BMBT_DISPLAY_EXTERNAL_INIT)?"BMBT_DISPLAY_EXTERNAL_INIT":
+        (context->status.displayMode == BMBT_DISPLAY_EXTERNAL)?"BMBT_DISPLAY_EXTERNAL":
         (context->status.displayMode == BMBT_DISPLAY_ON)?"BMBT_DISPLAY_ON":
         "invalid",
         context->status.displayMode, context->status.displayMode);
