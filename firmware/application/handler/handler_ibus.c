@@ -94,6 +94,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_NAV_DATETIME_UPDATE,
+        &HandlerIBusNavDatetimeUpdate,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_PDC_SENSOR_UPDATE,
         &HandlerIBusPDCSensorUpdate,
         context
@@ -138,6 +143,12 @@ void HandlerIBusInit(HandlerContext_t *context)
         &HandlerIBusBlueBusTELStatusUpdate,
         context
     );
+    EventRegisterCallback(
+        LOG_EVENT_STATUS,
+        &HandlerIBusLogStatus,
+        context
+    );
+
     TimerRegisterScheduledTask(
         &HandlerTimerIBusCDCAnnounce,
         context,
@@ -421,8 +432,20 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         // those actions can be used to use the UI
         if (context->uiMode != CONFIG_UI_CD53 &&
             context->uiMode != CONFIG_UI_MIR &&
-            context->uiMode != CONFIG_UI_IRIS
+            context->uiMode != CONFIG_UI_IRIS &&
+            context->bt->carPlay != 1
         ) {
+            if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
+                context->bt->type == BT_BTM_TYPE_BC127
+            ) {
+                // Silence the volume to workaround for buffered audio
+                BC127CommandVolume(
+                    context->bt,
+                    context->bt->activeDevice.a2dpId,
+                    "0"
+                );
+                context->bt->activeDevice.a2dpVolume = 1;
+            }
             if (pkt[5] == 0x00) {
                 BTCommandPlaybackTrackNext(context->bt);
             } else {
@@ -589,7 +612,7 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, uint8_t *pkt)
         }
     }
     // The 5th bit in the first data byte contains the lock status
-    if (CHECK_BIT(pkt[4], 5) != 0) {
+    if (UTILS_CHECK_BIT(pkt[4], 5) != 0) {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks locked");
         context->gmState.doorsLocked = 1;
     } else {
@@ -956,9 +979,9 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
         uint8_t lightStatus = pkt[4];
         uint8_t lightStatus2 = pkt[6];
         // Left blinker
-        if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
-            CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
-            CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
+        if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
+            UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
         ) {
             // If quickly switching blinker direction the LM will activate the
             // opposing blinker immediately, bypassing the "off" message.
@@ -1007,14 +1030,14 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
                     LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Unknown State");
                     break;
             }
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
-                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
-                   CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
         ) {
             LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "LEFT > Unrelated activity");
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                  CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
-                  CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                  UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
+                  UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
         ) {
             if (context->lmState.blinkStatus == HANDLER_LM_BLINK_LEFT) {
                 LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Quick Switch > Reset");
@@ -1058,13 +1081,13 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
                     LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unknown State");
                     break;
             }
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
-                   CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) != 0 &&
+                   UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
         ) {
             LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unrelated activity");
-        } else if (CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                   CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
+        } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
         ) {
             // OFF blinker (or anything non-blinker)
             // Only activate comfort blinkers after a single blink.
@@ -1130,9 +1153,9 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
     if (parkingLamps == CONFIG_SETTING_ON) {
         uint8_t lightStatus = pkt[4];
         if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON ||
-            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
-            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
-            CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
         ) {
             return;
         }
@@ -1304,6 +1327,63 @@ void HandlerIBusModuleStatusRequest(void *ctx, uint8_t *pkt)
             IBUS_DEVICE_TEL,
             pkt[IBUS_PKT_SRC],
             IBUS_TEL_SIG_EVEREST
+        );
+    }
+}
+
+/**
+ * HandlerIBusNavDatetimeUpdate()
+ *     Description:
+ *         Handle Updates to the GPS Time
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+
+void HandlerIBusNavDatetimeUpdate(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (ConfigGetTimeSource() != CONFIG_SETTING_TIME_GPS) {
+        return;
+    }
+    struct tm datetime;
+    gmtime_r(&context->ibus->gpsDatetime, &datetime);
+
+    datetime.tm_min += ConfigGetTimeOffset();
+    if (ConfigGetTimeDST() != 0) {
+        datetime.tm_min += 60;
+    }
+    mktime(&datetime);
+
+    uint8_t dt[6] = {
+        (datetime.tm_year + 1900) - 2000,
+        datetime.tm_mon + 1,
+        datetime.tm_mday,
+        datetime.tm_hour,
+        datetime.tm_min,
+        datetime.tm_sec
+    };
+
+    // Validate the date and time
+    if (dt[UTILS_DATETIME_YEAR] > 20 &&
+        dt[UTILS_DATETIME_MON] >= 1 && dt[UTILS_DATETIME_MON] <= 12 &&
+        dt[UTILS_DATETIME_DAY] >= 1 && dt[UTILS_DATETIME_DAY] <= 31 &&
+        dt[UTILS_DATETIME_HOUR] >= 0 && dt[UTILS_DATETIME_HOUR] <= 23 &&
+        dt[UTILS_DATETIME_MIN] >= 0 && dt[UTILS_DATETIME_MIN] <= 59 &&
+        dt[UTILS_DATETIME_SEC] >= 0 && dt[UTILS_DATETIME_SEC] <= 59
+    ) {
+        IBusCommandIKESetDate(
+            context->ibus,
+            dt[UTILS_DATETIME_YEAR],
+            dt[UTILS_DATETIME_MON],
+            dt[UTILS_DATETIME_DAY]
+        );
+        IBusCommandIKESetTime(
+            context->ibus,
+            dt[UTILS_DATETIME_HOUR],
+            dt[UTILS_DATETIME_MIN]
         );
     }
 }
@@ -2004,3 +2084,134 @@ void HandlerTimerIBusPings(void *ctx)
         }
     }
 }
+
+/**
+ * HandlerIBusLogStatus()
+ *     Description:
+ *         Log current Context Status
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerIBusLogStatus(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    IBus_t *ibus = context->ibus;
+
+    LogRaw("IBUS:\r\n");
+
+    LogRaw("  CD Charger:   %s (%i, 0x%02X)\r\n",
+                (ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING)?"IBUS_CDC_FUNC_NOT_PLAYING":
+                (ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING)?"IBUS_CDC_FUNC_PLAYING":
+                (ibus->cdChangerFunction == IBUS_CDC_FUNC_PAUSE)?"IBUS_CDC_FUNC_PAUSE":
+                (ibus->cdChangerFunction == IBUS_CDC_FUNC_SCAN_MODE)?"IBUS_CDC_FUNC_SCAN_MODE":
+                (ibus->cdChangerFunction == IBUS_CDC_FUNC_RANDOM_MODE)?"IBUS_CDC_FUNC_RANDOM_MODE":
+                "invalid",
+                ibus->vehicleType, ibus->vehicleType);
+    LogRaw("  VehicleType:  %s (%i, 0x%02X)\r\n",
+                (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53)?"IBUS_VEHICLE_TYPE_E38_E39_E52_E53":
+                (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46)?"IBUS_VEHICLE_TYPE_E46":
+                (ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X)?"IBUS_VEHICLE_TYPE_E8X":
+                (ibus->vehicleType == IBUS_VEHICLE_TYPE_R50)?"IBUS_VEHICLE_TYPE_R50":
+                "invalid",
+                ibus->vehicleType, ibus->vehicleType);
+    LogRaw("  lmVariant:    %s (%i, 0x%02X)\r\n",
+                (ibus->lmVariant == IBUS_LM_LME38)?"IBUS_LM_LME38":
+                (ibus->lmVariant == IBUS_LM_LCM)?"IBUS_LM_LCM":
+                (ibus->lmVariant == IBUS_LM_LCM_A)?"IBUS_LM_LCM_A":
+                (ibus->lmVariant == IBUS_LM_LCM_II)?"IBUS_LM_LCM_II":
+                (ibus->lmVariant == IBUS_LM_LCM_III)?"IBUS_LM_LCM_III":
+                (ibus->lmVariant == IBUS_LM_LCM_IV)?"IBUS_LM_LCM_IV":
+                (ibus->lmVariant == IBUS_LM_LSZ)?"IBUS_LM_LSZ":
+                (ibus->lmVariant == IBUS_LM_LSZ_2)?"IBUS_LM_LSZ_2":
+                "invalid",
+                ibus->lmVariant, ibus->lmVariant);
+    LogRaw("  GT version:   %s (%i, 0x%02X)\r\n",
+                (ibus->gtVersion == IBUS_GT_DETECT_ERROR)?"IBUS_GT_DETECT_ERROR":
+                (ibus->gtVersion == IBUS_GT_MKI)?"IBUS_GT_MKI":
+                (ibus->gtVersion == IBUS_GT_MKII)?"IBUS_GT_MKII":
+                (ibus->gtVersion == IBUS_GT_MKIII)?"IBUS_GT_MKIII":
+                (ibus->gtVersion == IBUS_GT_MKIII_NEW_UI)?"IBUS_GT_MKIII_NEW_UI":
+                (ibus->gtVersion == IBUS_GT_MKIV)?"IBUS_GT_MKIV":
+                (ibus->gtVersion == IBUS_GT_MKIV_STATIC)?"IBUS_GT_MKIV_STATIC":
+                "invalid",
+                ibus->gtVersion, ibus->gtVersion);
+    LogRaw("  Modules:\r\n    On:         ");
+    if (ibus->moduleStatus.BMBT) LogRaw("BMBT ");
+    if (ibus->moduleStatus.DSP) LogRaw("DSP ");
+    if (ibus->moduleStatus.GT) LogRaw("GT ");
+    if (ibus->moduleStatus.IKE) LogRaw("IKE ");
+    if (ibus->moduleStatus.LCM) LogRaw("LCM ");
+    if (ibus->moduleStatus.MID) LogRaw("MID ");
+    if (ibus->moduleStatus.NAV) LogRaw("NAV ");
+    if (ibus->moduleStatus.RAD) LogRaw("RAD ");
+    if (ibus->moduleStatus.IRIS) LogRaw("IRIS ");
+    if (ibus->moduleStatus.VM) LogRaw("VM ");
+    if (ibus->moduleStatus.PDC) LogRaw("PDC ");
+    LogRaw("\r\n    Off:        ");
+    if (!ibus->moduleStatus.BMBT) LogRaw("BMBT ");
+    if (!ibus->moduleStatus.DSP) LogRaw("DSP ");
+    if (!ibus->moduleStatus.GT) LogRaw("GT ");
+    if (!ibus->moduleStatus.IKE) LogRaw("IKE ");
+    if (!ibus->moduleStatus.LCM) LogRaw("LCM ");
+    if (!ibus->moduleStatus.MID) LogRaw("MID ");
+    if (!ibus->moduleStatus.NAV) LogRaw("NAV ");
+    if (!ibus->moduleStatus.RAD) LogRaw("RAD ");
+    if (!ibus->moduleStatus.IRIS) LogRaw("IRIS ");
+    if (!ibus->moduleStatus.VM) LogRaw("VM ");
+    if (!ibus->moduleStatus.PDC) LogRaw("PDC ");
+    LogRaw("\r\n");
+
+    LogRaw("  Gear Pos:     %s (%i, 0x%02X)\r\n",
+                (ibus->gearPosition == IBUS_IKE_GEAR_NONE)?"IBUS_IKE_GEAR_NONE":
+                (ibus->gearPosition == IBUS_IKE_GEAR_PARK)?"IBUS_IKE_GEAR_PARK":
+                (ibus->gearPosition == IBUS_IKE_GEAR_REVERSE)?"IBUS_IKE_GEAR_REVERSE":
+                (ibus->gearPosition == IBUS_IKE_GEAR_NEUTRAL)?"IBUS_IKE_GEAR_NEUTRAL":
+                (ibus->gearPosition == IBUS_IKE_GEAR_FIRST)?"IBUS_IKE_GEAR_FIRST":
+                (ibus->gearPosition == IBUS_IKE_GEAR_SECOND)?"IBUS_IKE_GEAR_SECOND":
+                (ibus->gearPosition == IBUS_IKE_GEAR_THIRD)?"IBUS_IKE_GEAR_THIRD":
+                (ibus->gearPosition == IBUS_IKE_GEAR_FOURTH)?"IBUS_IKE_GEAR_FOURTH":
+                (ibus->gearPosition == IBUS_IKE_GEAR_FIFTH)?"IBUS_IKE_GEAR_FIFTH":
+                (ibus->gearPosition == IBUS_IKE_GEAR_SIXTH)?"IBUS_IKE_GEAR_SIXTH":
+                "invalid",
+                ibus->gearPosition, ibus->gearPosition);
+    LogRaw("  Ignition:     %s (%i, 0x%02X)\r\n",
+                (ibus->ignitionStatus == IBUS_IGNITION_OFF)?"IBUS_IGNITION_OFF":
+                (ibus->ignitionStatus == IBUS_IGNITION_KLR)?"IBUS_IGNITION_KLR":
+                (ibus->ignitionStatus == IBUS_IGNITION_KL15)?"IBUS_IGNITION_KL15":
+                (ibus->ignitionStatus == IBUS_IGNITION_KL50)?"IBUS_IGNITION_KL50":
+                (ibus->ignitionStatus == IBUS_IGNITION_KL99)?"IBUS_IGNITION_KL99":
+                "invalid",
+                ibus->ignitionStatus, ibus->ignitionStatus);
+
+    LogRaw("Handler Context:\r\n");
+    LogRaw("  PDC active:   %s (%i, 0x%02X)\r\n", context->pdcActive?"on":"off", context->pdcActive, context->pdcActive);
+    LogRaw("  GT status:    %s (%i, 0x%02X)\r\n", context->gtStatus?"HANDLER_GT_STATUS_CHECKED":"HANDLER_GT_STATUS_UNCHECKED", context->gtStatus, context->gtStatus);
+    LogRaw("  volumeMode:   %s (%i, 0x%02X)\r\n", context->volumeMode?"HANDLER_VOLUME_MODE_NORMAL":"HANDLER_VOLUME_MODE_LOWERED", context->volumeMode, context->volumeMode);
+    LogRaw("  mflButtonSts: %s (%i, 0x%02X)\r\n", context->mflButtonStatus?"HANDLER_MFL_STATUS_SPEAK_HOLD":"HANDLER_MFL_STATUS_OFF", context->mflButtonStatus, context->mflButtonStatus);
+    LogRaw("  Monitor Sts:  %s (%i, 0x%02X)\r\n",
+                (context->monitorStatus == HANDLER_MONITOR_STATUS_UNSET)?"HANDLER_MONITOR_STATUS_UNSET":
+                (context->monitorStatus == HANDLER_MONITOR_STATUS_POWERED_OFF)?"HANDLER_MONITOR_STATUS_POWERED_OFF":
+                (context->monitorStatus == HANDLER_MONITOR_STATUS_POWERED_ON)?"HANDLER_MONITOR_STATUS_POWERED_ON":
+                "invalid",
+                context->monitorStatus, context->monitorStatus);
+    LogRaw("  UI mode:      %s (%i, 0x%02X)\r\n",
+                (context->uiMode == CONFIG_UI_CD53)?"CONFIG_UI_CD53":
+                (context->uiMode == CONFIG_UI_BMBT)?"CONFIG_UI_BMBT":
+                (context->uiMode == CONFIG_UI_MID)?"CONFIG_UI_MID":
+                (context->uiMode == CONFIG_UI_MID_BMBT)?"CONFIG_UI_MID_BMBT":
+                (context->uiMode == CONFIG_UI_MIR)?"CONFIG_UI_MIR":
+                (context->uiMode == CONFIG_UI_IRIS)?"CONFIG_UI_IRIS":
+                "invalid",
+                context->uiMode, context->uiMode);
+    LogRaw("  TEL status:   %s (%i, 0x%02X)\r\n",
+                (context->telStatus == IBUS_TEL_STATUS_NONE)?"IBUS_TEL_STATUS_NONE":
+                (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE)?"IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE":
+                (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE)?"IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE":
+                "invalid",
+                context->telStatus, context->telStatus);
+    LogRaw("  Doors Locked: %s (%i, 0x%02X)\r\n", context->gmState.doorsLocked?"on":"off", context->gmState.doorsLocked, context->gmState.doorsLocked);
+    LogRaw("  LowSideDoors: %s (%i, 0x%02X)\r\n", context->gmState.lowSideDoors?"on":"off", context->gmState.lowSideDoors, context->gmState.lowSideDoors);
+}
+

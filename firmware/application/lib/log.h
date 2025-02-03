@@ -21,6 +21,9 @@
 #define LOG_SOURCE_IBUS CONFIG_DEVICE_LOG_IBUS
 #define LOG_SOURCE_SYSTEM CONFIG_DEVICE_LOG_SYSTEM
 #define LOG_SOURCE_UI CONFIG_DEVICE_LOG_UI
+
+#define LOG_EVENT_STATUS 129
+
 void LogMessage(const char *, const char *);
 void LogRaw(const char *, ...);
 void LogRawDebug(uint8_t, const char *, ...);

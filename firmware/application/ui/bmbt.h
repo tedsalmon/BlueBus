@@ -21,8 +21,9 @@
 #include "../lib/wm88xx.h"
 #define BMBT_DISPLAY_OFF 0x00
 #define BMBT_DISPLAY_TONE_SEL_INFO 0x01
-#define BMBT_DISPLAY_REVERSE_CAM 0x02
-#define BMBT_DISPLAY_ON 0x03
+#define BMBT_DISPLAY_EXTERNAL_INIT 0x02
+#define BMBT_DISPLAY_EXTERNAL 0x03
+#define BMBT_DISPLAY_ON 0x04
 #define BMBT_DISPLAY_TEXT_LEN 9
 #define BMBT_HEADER_BT 1
 #define BMBT_HEADER_PB_STAT 2
@@ -37,8 +38,10 @@
 #define BMBT_MENU_SETTINGS_ABOUT 5
 #define BMBT_MENU_SETTINGS_AUDIO 6
 #define BMBT_MENU_SETTINGS_COMFORT 7
-#define BMBT_MENU_SETTINGS_CALLING 8
-#define BMBT_MENU_SETTINGS_UI 9
+#define BMBT_MENU_SETTINGS_COMFORT_TIME 8
+#define BMBT_MENU_SETTINGS_COMFORT_NAVI 9
+#define BMBT_MENU_SETTINGS_CALLING 10
+#define BMBT_MENU_SETTINGS_UI 11
 #define BMBT_MENU_IDX_BACK 7
 #define BMBT_MENU_IDX_DASHBOARD 0
 #define BMBT_MENU_IDX_DEVICE_SELECTION 1
@@ -52,6 +55,7 @@
 #define BMBT_MENU_IDX_SETTINGS_ABOUT_FW_VERSION 0
 #define BMBT_MENU_IDX_SETTINGS_ABOUT_BUILD_DATE 1
 #define BMBT_MENU_IDX_SETTINGS_ABOUT_SERIAL 2
+#define BMBT_MENU_IDX_SETTINGS_ABOUT_URL 3
 /* Audio Settings */
 #define BMBT_MENU_IDX_SETTINGS_AUDIO_AUTOPLAY 0
 #define BMBT_MENU_IDX_SETTINGS_AUDIO_DAC_GAIN 1
@@ -68,12 +72,25 @@
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_UNLOCK 1
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_BLINKERS 2
 #define BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS 3
-#define BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM 4
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI 4
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME 5
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_PDC 6
+/* Comfort Settings -> Navi */
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_AUTOZOOM 0
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_MAP 1
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_SILENT 2
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_RANGE 3
+/* Comfort Settings -> Time */
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE 0
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST 1
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET 2
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSDATE 4
+#define BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSTIME 5
 /* UI Settings */
 #define BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU 0
 #define BMBT_MENU_IDX_SETTINGS_UI_METADATA_MODE 1
 #define BMBT_MENU_IDX_SETTINGS_UI_TEMPS 2
-#define BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC 3
+#define BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC 3
 #define BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF 4
 #define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 5
 
@@ -111,7 +128,7 @@
 
 typedef struct BMBTStatus_t {
     uint8_t playerMode: 1;
-    uint8_t displayMode: 2;
+    uint8_t displayMode: 3;
     uint8_t navState: 1;
     uint8_t radType: 4;
     uint8_t tvStatus: 1;
@@ -133,7 +150,9 @@ typedef struct BMBTContext_t {
     UtilsAbstractDisplayValue_t mainDisplay;
     uint8_t navZoom: 4;
     uint32_t navZoomTime;
-
+    uint8_t mapShown: 1;
+    uint8_t naviSilenced: 1;
+    uint8_t rangeNavi: 1;
 } BMBTContext_t;
 
 void BMBTInit(BT_t *, IBus_t *);
@@ -148,6 +167,7 @@ void BMBTIBusCDChangerStatus(void *, uint8_t *);
 void BMBTIBusGTChangeUIRequest(void *, uint8_t *);
 void BMBTIKESpeedRPMUpdate(void *, uint8_t *);
 void BMBTIBusMonitorStatus(void *, uint8_t *);
+void BMBTRangeUpdate(void *, uint8_t *);
 void BMBTIBusGTMenuBufferUpdate(void *, uint8_t *);
 void BMBTIBusMenuSelect(void *, uint8_t *);
 void BMBTIBusScreenBufferFlush(void *, uint8_t *);
@@ -157,8 +177,10 @@ void BMBTRADUpdateMainArea(void *, uint8_t *);
 void BMBTRADScreenModeRequest(void *, uint8_t *);
 void BMBTGTScreenModeSet(void *, uint8_t *);
 void BMBTTVStatusUpdate(void *, uint8_t *);
+void BMBTMonitorControl(void *, uint8_t *);
 void BMBTIBusVehicleConfig(void *, uint8_t *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);
 void BMBTTimerScrollDisplay(void *);
+void BMBTLogStatus(void *);
 #endif /* BMBT_H */
