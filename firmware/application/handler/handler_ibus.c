@@ -1434,6 +1434,12 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
             context->ibus->pdcSensors.rearCenterRight,
             context->ibus->pdcSensors.rearRight
         };
+
+        for (uint8_t i=0; i<4; i++) {
+            if (frontValues[i] > 99) frontValues[i] = 99;
+            if (rearValues[i] > 99) rearValues[i] = 99;
+        }
+
         uint8_t frontMin = UtilsGetMinByte(frontValues, 4);
         uint8_t rearMin = UtilsGetMinByte(rearValues, 4);
         uint8_t minimum = (rearMin > frontMin) ? frontMin : rearMin;
@@ -1454,10 +1460,14 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
                 rearMin = UtilsConvertCmToIn(rearMin);
                 uint8_t i = 0;
                 for (i = 0; i < sizeof(frontValues); i++) {
-                    frontValues[i] = UtilsConvertCmToIn(frontValues[i]);
+                    if (frontValues[i] < 99) {
+                        frontValues[i] = UtilsConvertCmToIn(frontValues[i]);
+                    }
                 }
                 for (i = 0; i < sizeof(rearValues); i++) {
-                    rearValues[i] = UtilsConvertCmToIn(rearValues[i]);
+                    if (rearValues[i] < 99) {
+                        rearValues[i] = UtilsConvertCmToIn(rearValues[i]);
+                    }
                 }
             }
             if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
@@ -1477,11 +1487,18 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
                         pdcValues,
                         21,
                         "F:%2.2d %2.2d %2.2d %2.2d R:%2.2d%s",
-                        rearMin, frontValues[0], frontValues[1], frontValues[2], frontValues[3],
+                        frontValues[0], frontValues[1], frontValues[2], frontValues[3], rearMin,
                         (units == 0) ? "cm" : "in"
                     );
                 }
-                IBusCommandIKECheckControlDisplayClear(context->ibus);
+                for (uint8_t i=0; i<strlen(pdcValues)-1; i++) {
+                    if (pdcValues[i] == '9' && pdcValues[i+1] == '9') {
+                        pdcValues[i] = '-';
+                        pdcValues[i+1] = '-';
+                        i++;
+                    }
+                }
+//                IBusCommandIKECheckControlDisplayClear(context->ibus);
                 IBusCommandIKECheckControlDisplayWrite(context->ibus, pdcValues);
             }
         }
