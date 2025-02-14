@@ -4,8 +4,8 @@
  * Description:
  *     Implement the logic to have the BC127 and I/K-Bus communicate
  */
-#ifndef HANDLER_BC127_H
-#define HANDLER_BC127_H
+#ifndef HANDLER_BT_H
+#define HANDLER_BT_H
 #include <stdio.h>
 #include "../lib/bt/bt_bc127.h"
 #include "../lib/bt/bt_bm83.h"
@@ -33,6 +33,7 @@ void HandlerUIInitiateConnection(void *, uint8_t *);
 
 void HandlerBTBC127Boot(void *, uint8_t *);
 void HandlerBTBC127BootStatus(void *, uint8_t *);
+void HandlerBTBC127MetadataUpdate(void *, uint8_t *);
 
 void HandlerBTBM83AVRCPUpdates(void *, uint8_t *);
 void HandlerBTBM83Boot(void *, uint8_t *);
@@ -52,4 +53,6 @@ void HandlerTimerBTBC127Metadata(HandlerContext_t *);
 void HandlerTimerBTBM83AVRCPManager(void *);
 void HandlerTimerBTBM83ManagePowerState(void *);
 void HandlerTimerBTBM83ScanDevices(void *);
-#endif /* HANDLER_BC127_H */
+void HandlerBTLogStatus(void *);
+
+#endif /* HANDLER_BT_H */
