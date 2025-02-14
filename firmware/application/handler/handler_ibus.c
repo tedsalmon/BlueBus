@@ -29,6 +29,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_GM_IDENT_RESP,
+        &HandlerIBusGMIdentResponse,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_DoorsFlapsStatusResponse,
         &HandlerIBusGMDoorsFlapsStatusResponse,
         context
@@ -566,6 +571,23 @@ void HandlerIBusFirstMessageReceived(void *ctx, uint8_t *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->ibusModulePingState == HANDLER_IBUS_MODULE_PING_STATE_OFF) {
         context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_READY;
+    }
+}
+
+/**
+ * HandlerIBusGMDoorsFlapStatusResponse()
+ *     Description:
+ *         Track which doors have been opened while the ignition was on
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *type - The navigation type
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGMIdentResponse(void *ctx, uint8_t *pkt)
+{
+    if (ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS) != *pkt) {
+        ConfigSetSetting(CONFIG_GM_VARIANT_ADDRESS, *pkt);
     }
 }
 
@@ -1203,6 +1225,8 @@ void HandlerIBusLMRedundantData(void *ctx, uint8_t *pkt)
         );
         // Request light module ident
         IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+        // Request general module ident
+        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GM);
         // Save the new VIN
         ConfigSetVehicleIdentity(vehicleId);
         // Request the vehicle configuration
@@ -1217,9 +1241,15 @@ void HandlerIBusLMRedundantData(void *ctx, uint8_t *pkt)
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
             HandlerIBusSwitchUI(context, CONFIG_UI_CD53);
         }
-    } else if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
-        // Identify the LM if we do not have an ID for it
-        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+    } else {
+        if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
+            // Identify the LM if we do not have an ID for it
+            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+        }
+        if (ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS) == CONFIG_SETTING_OFF) {
+            // Identify the ZKE / GM if we do not have an ID for it
+            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GM);
+        }
     }
 }
 
