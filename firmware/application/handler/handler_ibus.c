@@ -530,7 +530,10 @@ void HandlerIBusDSPConfigSet(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
-    if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+    if (
+        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
+        context->bt->callStatus == BT_CALL_INACTIVE
+    ) {
         if (pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
             dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF
         ) {

@@ -18,11 +18,13 @@
  */
 uint8_t HandlerGetTelMode(HandlerContext_t *context)
 {
-    uint8_t dspMode = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
     uint8_t telMode = ConfigGetSetting(CONFIG_SETTING_TEL_MODE);
-    if ((context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING ||
-        (dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF && context->ibus->moduleStatus.DSP == 1)) &&
-        telMode == CONFIG_SETTING_TEL_MODE_DEFAULT
+    if (
+        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
+        (
+            telMode == CONFIG_SETTING_TEL_MODE_DEFAULT ||
+            telMode == CONFIG_SETTING_TEL_MODE_ANALOG
+        )
     ) {
         return HANDLER_TEL_MODE_AUDIO;
     } else {

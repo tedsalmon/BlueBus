@@ -6,6 +6,7 @@
  */
 #include "bt_bc127.h"
 #include "../locale.h"
+#include "bt_common.h"
 
 /** BC127CVCGainTable
  * C0 - D6 (22 Settings)
