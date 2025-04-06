@@ -99,8 +99,9 @@ void ProtocolBTMode()
 void ProtocolFlashErase()
 {
     uint32_t address = BOOTLOADER_APPLICATION_START;
-    while (address >= BOOTLOADER_APPLICATION_START &&
-           address <= BOOTLOADER_APPLICATION_END
+    while (
+        address >= BOOTLOADER_APPLICATION_START &&
+        address <= BOOTLOADER_APPLICATION_END
     ) {
         FlashErasePage(address);
         // Pages are erased in 1024 instruction blocks
@@ -137,13 +138,13 @@ uint8_t ProtocolFlashWrite(ProtocolPacket_t *packet)
             uint32_t data = (
                 ((uint32_t)0 << 24) + // "Phantom" Byte
                 ((uint32_t)packet->data[index] << 16) +
-                ((uint32_t)packet->data[index + 1] << 8) + 
+                ((uint32_t)packet->data[index + 1] << 8) +
                 ((uint32_t)packet->data[index + 2])
             );
             uint32_t data2 = (
                 ((uint32_t)0 << 24) + // "Phantom" Byte
                 ((uint32_t)packet->data[index + 3] << 16) +
-                ((uint32_t)packet->data[index + 4] << 8) + 
+                ((uint32_t)packet->data[index + 4] << 8) +
                 ((uint32_t)packet->data[index + 5])
             );
             // We write two WORDs at a time, so jump the necessary
@@ -286,20 +287,6 @@ uint8_t ProtocolProcessMessage(
             0,
             0
         );
-    } else {
-        uint16_t queueSize = CharQueueGetSize(&uart->rxQueue);
-        /* @TODO: Figure out why directly subtracting these variables causes issues */
-        uint32_t lastRx = uart->rxTimestamp;
-        uint32_t now = TimerGetMillis();
-        if ((now - lastRx) >= PROTOCOL_PACKET_TIMEOUT && queueSize > 0) {
-            UARTRXQueueReset(uart);
-            ProtocolSendPacket(
-                uart,
-                (uint8_t) PROTOCOL_ERR_PACKET_TIMEOUT,
-                0,
-                0
-            );
-        }
     }
     return packet.status;
 }
@@ -337,6 +324,32 @@ ProtocolPacket_t ProtocolProcessPacket(UART_t *uart)
 }
 
 /**
+ * ProtocolProcessQueue()
+ *     Description:
+ *         Ensure that the queue does not fill with trash. If it does, then we
+ *         reset the queue to wait for the next valid packet
+ *     Params:
+ *         UART_t *uart - The UART struct to use for communication
+ *     Returns:
+ *         ProtocolPacket_t
+ */
+void ProtocolProcessQueue(UART_t *uart)
+{
+    /* @TODO: Figure out why directly subtracting these variables causes issues */
+    uint32_t lastRx = uart->rxTimestamp;
+    uint32_t now = TimerGetMillis();
+    if ((now - lastRx) >= PROTOCOL_PACKET_TIMEOUT) {
+        UARTRXQueueReset(uart);
+        ProtocolSendPacket(
+            uart,
+            (uint8_t) PROTOCOL_ERR_PACKET_TIMEOUT,
+            0,
+            0
+        );
+    }
+}
+
+/**
  * ProtocolSendPacket()
  *     Description:
  *         Generated a packet and send if over UART
@@ -350,7 +363,7 @@ ProtocolPacket_t ProtocolProcessPacket(UART_t *uart)
  *         void
  */
 void ProtocolSendPacket(
-    UART_t *uart, 
+    UART_t *uart,
     uint8_t command,
     uint8_t *data,
     uint8_t dataSize
@@ -440,8 +453,8 @@ uint8_t ProtocolValidatePacket(ProtocolPacket_t *packet, uint8_t validation)
 void ProtocolWriteSerialNumber(UART_t *uart, ProtocolPacket_t *packet)
 {
     uint16_t serialNumber = (
-            (EEPROMReadByte(CONFIG_SN_ADDRESS_MSB) << 8) |
-            (EEPROMReadByte(CONFIG_SN_ADDRESS_LSB) & 0xFF)
+        (EEPROMReadByte(CONFIG_SN_ADDRESS_MSB) << 8) |
+        (EEPROMReadByte(CONFIG_SN_ADDRESS_LSB) & 0xFF)
     );
     if (serialNumber == 0xFFFF && packet->dataSize == 2) {
         EEPROMWriteByte(CONFIG_SN_ADDRESS_MSB, packet->data[0]);

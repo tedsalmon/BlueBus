@@ -85,6 +85,7 @@ void ProtocolFlashErase();
 uint8_t ProtocolFlashWrite(ProtocolPacket_t *);
 uint8_t ProtocolProcessMessage(UART_t *, uint8_t *);
 ProtocolPacket_t ProtocolProcessPacket(UART_t *);
+void ProtocolProcessQueue(UART_t *);
 void ProtocolSendPacket(UART_t *, unsigned char, unsigned char *, uint8_t);
 void ProtocolSendStringPacket(UART_t *, unsigned char, char *);
 uint8_t ProtocolValidatePacket(ProtocolPacket_t *, unsigned char);
