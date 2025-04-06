@@ -2858,7 +2858,7 @@ void IBusCommandRADC43ScreenModeSet(IBus_t *ibus, uint8_t mode)
  */
 void IBusCommandRADCDCRequest(IBus_t *ibus, uint8_t command)
 {
-    uint8_t msg[] = {IBUS_COMMAND_CDC_REQUEST, command};
+    uint8_t msg[] = {IBUS_COMMAND_CDC_REQUEST, command, 0x00};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_RAD,

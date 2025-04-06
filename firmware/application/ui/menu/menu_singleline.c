@@ -59,7 +59,7 @@ MenuSingleLineContext_t MenuSingleLineInit(
     Context.bt = bt;
     Context.uiUpdateFunc = uiUpdateFunc;
     Context.uiContext = uiContext;
-    Context.settingIdx = MENU_SINGLELINE_SETTING_IDX_METADATA_MODE; 
+    Context.settingIdx = MENU_SINGLELINE_SETTING_IDX_METADATA_MODE;
     Context.settingValue = 0;
     Context.settingMode = MENU_SINGLELINE_SETTING_MODE_SCROLL_SETTINGS;
     Context.uiMode = ConfigGetUIMode();
@@ -245,8 +245,8 @@ void MenuSingleLineSettingsEditSave(MenuSingleLineContext_t *context)
                         }
                         if (device != 0) {
                             BM83CommandConnect(
-                                context->bt, 
-                                device, 
+                                context->bt,
+                                device,
                                 BM83_DATA_LINK_BACK_PROFILES_HF
                             );
                         }

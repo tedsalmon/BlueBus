@@ -293,6 +293,8 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
             MIDDestroy();
             BMBTDestroy();
         }
+        ConfigSetUIMode(newUi);
+        context->uiMode = newUi;
         if (newUi == CONFIG_UI_CD53 ||
             newUi == CONFIG_UI_MIR ||
             newUi == CONFIG_UI_IRIS
@@ -310,9 +312,7 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
             MIDInit(context->bt, context->ibus);
             BMBTInit(context->bt, context->ibus);
         }
-        ConfigSetUIMode(newUi);
-        context->uiMode = newUi;
-     }
+    }
 }
 
 /**
@@ -381,26 +381,6 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
             curStatus = IBUS_CDC_STAT_PLAYING;
         } else if (curFunction == IBUS_CDC_FUNC_PAUSE) {
             curStatus = IBUS_CDC_STAT_PAUSE;
-        }
-        if (TimerGetMillis() > 30000) {
-            if (context->ibus->moduleStatus.MID == 0 &&
-                context->ibus->moduleStatus.GT == 0 &&
-                context->ibus->moduleStatus.BMBT == 0 &&
-                context->ibus->moduleStatus.VM == 0 &&
-                context->uiMode != CONFIG_UI_CD53
-            ) {
-                // Fallback for vehicle UI Identification
-                // If no UI has been detected and we have been
-                // running at least 30s, default to CD53 UI
-                LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
-                HandlerIBusSwitchUI(context, CONFIG_UI_CD53);
-            } else if (context->ibus->moduleStatus.GT == 1 &&
-                       context->gtStatus == HANDLER_GT_STATUS_UNCHECKED
-            ) {
-                // Request the Navigation Identity
-                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
-                context->gtStatus = HANDLER_GT_STATUS_CHECKED;
-            }
         }
     } else if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
         if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
@@ -511,8 +491,31 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         discLoaded,
         discNumber
     );
-    context->cdChangerLastPoll = TimerGetMillis();
-    context->cdChangerLastStatus = TimerGetMillis();
+    uint32_t now = TimerGetMillis();
+    context->cdChangerLastPoll = now;
+    context->cdChangerLastStatus = now;
+    if (now > 30000) {
+        if (context->ibus->moduleStatus.MID == 0 &&
+            context->ibus->moduleStatus.GT == 0 &&
+            context->ibus->moduleStatus.BMBT == 0 &&
+            context->ibus->moduleStatus.VM == 0 &&
+            context->uiMode != CONFIG_UI_CD53
+        ){
+            // Fallback for vehicle UI Identification
+            // If no UI has been detected and we have been
+            // running at least 30s, default to CD53 UI
+            LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
+            HandlerIBusSwitchUI(context, CONFIG_UI_CD53);
+        }
+        if (
+            context->ibus->moduleStatus.GT == 1 &&
+            context->gtStatus == HANDLER_GT_STATUS_UNCHECKED
+        ) {
+            // Request the Navigation Identity
+            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+            context->gtStatus = HANDLER_GT_STATUS_CHECKED;
+        }
+    }
 }
 
 /**
