@@ -1599,13 +1599,16 @@ void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else {
+        uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
+        if (gmVariant == 0x00) {
+            return;
+        }
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             0x00, // Job (stubbed)
             0x01 // On / Off
         };
-        uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
         if (gmVariant >= IBUS_GM_ZKE3_GM1 && gmVariant <= IBUS_GM_ZKE3_GM4 ) {
             msg[2] = IBUS_CMD_ZKE3_GM1_JOB_CENTRAL_LOCK;
         } else  if (gmVariant >= IBUS_GM_ZKE3_GM5) {
@@ -1764,13 +1767,16 @@ void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else {
+        uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
+        if (gmVariant == 0x00) {
+            return;
+        }
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             0x00, // Job (stubbed)
             0x01 // On / Off
         };
-        uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
         if (gmVariant >= IBUS_GM_ZKE3_GM1 && gmVariant <= IBUS_GM_ZKE3_GM4) {
             msg[2] = IBUS_CMD_ZKE3_GM1_JOB_CENTRAL_LOCK;
         } else  if (gmVariant >= IBUS_GM_ZKE3_GM5) {
@@ -1801,13 +1807,16 @@ void IBusCommandGMDoorLockAll(IBus_t *ibus)
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else {
+        uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
+        if (gmVariant == 0x00) {
+            return;
+        }
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             0x00, // Job (stubbed)
             0x01 // On / Off
         };
-        uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
         if (gmVariant >= IBUS_GM_ZKE3_GM1 && gmVariant <= IBUS_GM_ZKE3_GM4) {
             msg[2] = IBUS_CMD_ZKE3_GM1_JOB_LOCK_ALL;
         } else  if (gmVariant >= IBUS_GM_ZKE3_GM5) {
