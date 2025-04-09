@@ -1370,6 +1370,13 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
                 LocaleGetText(LOCALE_STRING_MODE_NO_MUTE),
                 3
             );
+        } else if (telMode == CONFIG_SETTING_TEL_MODE_ANALOG) {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_ANALOG),
+                3
+            );
         } else {
             BMBTGTWriteIndex(
                 context,
@@ -1997,6 +2004,14 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
                 LocaleGetText(LOCALE_STRING_MODE_NO_MUTE),
+                0
+            );
+        } else if (telMode == CONFIG_SETTING_TEL_MODE_NO_MUTE) {
+            ConfigSetSetting(CONFIG_SETTING_TEL_MODE, CONFIG_SETTING_TEL_MODE_ANALOG);
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_ANALOG),
                 0
             );
         } else {

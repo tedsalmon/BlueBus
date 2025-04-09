@@ -6,6 +6,7 @@
  */
 #include "bt_bc127.h"
 #include "../locale.h"
+#include "bt_common.h"
 
 /** BC127CVCGainTable
  * C0 - D6 (22 Settings)
@@ -1320,7 +1321,7 @@ void BC127ProcessEventAVRCPMedia(BT_t *bt, char **msgBuf, char *msg)
     if (strcmp(msgBuf[2], "TITLE:") == 0) {
         char title[BT_METADATA_MAX_SIZE] = {0};
         UtilsNormalizeText(title, &msg[BC127_METADATA_TITLE_OFFSET], BT_METADATA_MAX_SIZE);
-        if(strncmp(bt->title, title, BT_METADATA_FIELD_SIZE - 1) != 0) {
+        if(strncmp(bt->title, title, BT_METADATA_FIELD_SIZE) != 0) {
             bt->metadataStatus = BT_METADATA_STATUS_UPD;
             memset(bt->title, 0, BT_METADATA_FIELD_SIZE);
             memset(bt->artist, 0, BT_METADATA_FIELD_SIZE);
@@ -1330,7 +1331,7 @@ void BC127ProcessEventAVRCPMedia(BT_t *bt, char **msgBuf, char *msg)
     } else if (strcmp(msgBuf[2], "ARTIST:") == 0) {
         char artist[BT_METADATA_MAX_SIZE] = {0};
         UtilsNormalizeText(artist, &msg[BC127_METADATA_ARTIST_OFFSET], BT_METADATA_MAX_SIZE);
-        if(strncmp(bt->artist, artist, BT_METADATA_FIELD_SIZE - 1) != 0) {
+        if(strncmp(bt->artist, artist, BT_METADATA_FIELD_SIZE) != 0) {
             bt->metadataStatus = BT_METADATA_STATUS_UPD;
             memset(bt->artist, 0, BT_METADATA_FIELD_SIZE);
             UtilsStrncpy(bt->artist, artist, BT_METADATA_FIELD_SIZE);
@@ -1339,7 +1340,7 @@ void BC127ProcessEventAVRCPMedia(BT_t *bt, char **msgBuf, char *msg)
         if (strcmp(msgBuf[2], "ALBUM:") == 0) {
             char album[BT_METADATA_MAX_SIZE] = {0};
             UtilsNormalizeText(album, &msg[BC127_METADATA_ALBUM_OFFSET], BT_METADATA_MAX_SIZE);
-            if(strncmp(bt->album, album, BT_METADATA_FIELD_SIZE - 1) != 0) {
+            if(strncmp(bt->album, album, BT_METADATA_FIELD_SIZE) != 0) {
                 bt->metadataStatus = BT_METADATA_STATUS_UPD;
                 memset(bt->album, 0, BT_METADATA_FIELD_SIZE);
                 UtilsStrncpy(bt->album, album, BT_METADATA_FIELD_SIZE);
@@ -1354,8 +1355,8 @@ void BC127ProcessEventAVRCPMedia(BT_t *bt, char **msgBuf, char *msg)
                 bt->album
             );
             EventTriggerCallback(BT_EVENT_METADATA_UPDATE, 0);
+            bt->metadataStatus = BT_METADATA_STATUS_CUR;
         }
-        bt->metadataStatus = BT_METADATA_STATUS_CUR;
     }
     bt->metadataTimestamp = TimerGetMillis();
 }
@@ -1528,19 +1529,20 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
         BC127ConnectionOpenProfile(&bt->activeDevice, msgBuf[3], linkId);
         // Set the playback status
         if (strcmp(msgBuf[3], "AVRCP") == 0) {
-            if (strcmp(msgBuf[5], "PLAYING") == 0) {
+            if (
+                strcmp(msgBuf[5], "PLAYING") == 0 &&
+                bt->playbackStatus != BT_AVRCP_STATUS_PLAYING
+            ) {
                 bt->playbackStatus = BT_AVRCP_STATUS_PLAYING;
-                LogDebug(LOG_SOURCE_BT, "BT: Vol Restore ON_STATUS from %i", bt->activeDevice.a2dpVolume);
-                if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
-                    bt->activeDevice.a2dpVolume == 1
-                ) {
-                    BC127CommandVolume(bt, bt->activeDevice.a2dpId, "F");
-                    bt->activeDevice.a2dpVolume = 127;
-                }
-            } else {
-                bt->playbackStatus = BT_AVRCP_STATUS_PAUSED;
+                EventTriggerCallback(BT_EVENT_PLAYBACK_STATUS_CHANGE, 0);
             }
-            EventTriggerCallback(BT_EVENT_PLAYBACK_STATUS_CHANGE, 0);
+            if (
+                strcmp(msgBuf[5], "PAUSED") == 0 &&
+                bt->playbackStatus != BT_AVRCP_STATUS_PAUSED
+            ) {
+                bt->playbackStatus = BT_AVRCP_STATUS_PAUSED;
+                EventTriggerCallback(BT_EVENT_PLAYBACK_STATUS_CHANGE, 0);
+            }
         }
     }
     if (isNew == 1) {

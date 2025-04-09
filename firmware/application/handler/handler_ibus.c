@@ -29,6 +29,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_GM_IDENT_RESP,
+        &HandlerIBusGMIdentResponse,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_DoorsFlapsStatusResponse,
         &HandlerIBusGMDoorsFlapsStatusResponse,
         context
@@ -299,6 +304,8 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
             MIDDestroy();
             BMBTDestroy();
         }
+        ConfigSetUIMode(newUi);
+        context->uiMode = newUi;
         if (newUi == CONFIG_UI_CD53 ||
             newUi == CONFIG_UI_MIR ||
             newUi == CONFIG_UI_IRIS
@@ -316,9 +323,7 @@ static void HandlerIBusSwitchUI(HandlerContext_t *context, uint8_t newUi)
             MIDInit(context->bt, context->ibus);
             BMBTInit(context->bt, context->ibus);
         }
-        ConfigSetUIMode(newUi);
-        context->uiMode = newUi;
-     }
+    }
 }
 
 /**
@@ -387,26 +392,6 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
             curStatus = IBUS_CDC_STAT_PLAYING;
         } else if (curFunction == IBUS_CDC_FUNC_PAUSE) {
             curStatus = IBUS_CDC_STAT_PAUSE;
-        }
-        if (TimerGetMillis() > 30000) {
-            if (context->ibus->moduleStatus.MID == 0 &&
-                context->ibus->moduleStatus.GT == 0 &&
-                context->ibus->moduleStatus.BMBT == 0 &&
-                context->ibus->moduleStatus.VM == 0 &&
-                context->uiMode != CONFIG_UI_CD53
-            ) {
-                // Fallback for vehicle UI Identification
-                // If no UI has been detected and we have been
-                // running at least 30s, default to CD53 UI
-                LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
-                HandlerIBusSwitchUI(context, CONFIG_UI_CD53);
-            } else if (context->ibus->moduleStatus.GT == 1 &&
-                       context->gtStatus == HANDLER_GT_STATUS_UNCHECKED
-            ) {
-                // Request the Navigation Identity
-                IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
-                context->gtStatus = HANDLER_GT_STATUS_CHECKED;
-            }
         }
     } else if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
         if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
@@ -529,8 +514,31 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         discLoaded,
         discNumber
     );
-    context->cdChangerLastPoll = TimerGetMillis();
-    context->cdChangerLastStatus = TimerGetMillis();
+    uint32_t now = TimerGetMillis();
+    context->cdChangerLastPoll = now;
+    context->cdChangerLastStatus = now;
+    if (now > 30000) {
+        if (context->ibus->moduleStatus.MID == 0 &&
+            context->ibus->moduleStatus.GT == 0 &&
+            context->ibus->moduleStatus.BMBT == 0 &&
+            context->ibus->moduleStatus.VM == 0 &&
+            context->uiMode != CONFIG_UI_CD53
+        ){
+            // Fallback for vehicle UI Identification
+            // If no UI has been detected and we have been
+            // running at least 30s, default to CD53 UI
+            LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53 UI");
+            HandlerIBusSwitchUI(context, CONFIG_UI_CD53);
+        }
+        if (
+            context->ibus->moduleStatus.GT == 1 &&
+            context->gtStatus == HANDLER_GT_STATUS_UNCHECKED
+        ) {
+            // Request the Navigation Identity
+            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GT);
+            context->gtStatus = HANDLER_GT_STATUS_CHECKED;
+        }
+    }
 }
 
 /**
@@ -548,7 +556,10 @@ void HandlerIBusDSPConfigSet(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
-    if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+    if (
+        context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
+        context->bt->callStatus == BT_CALL_INACTIVE
+    ) {
         if (pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
             dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF
         ) {
@@ -589,6 +600,23 @@ void HandlerIBusFirstMessageReceived(void *ctx, uint8_t *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->ibusModulePingState == HANDLER_IBUS_MODULE_PING_STATE_OFF) {
         context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_READY;
+    }
+}
+
+/**
+ * HandlerIBusGMDoorsFlapStatusResponse()
+ *     Description:
+ *         Track which doors have been opened while the ignition was on
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *type - The navigation type
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGMIdentResponse(void *ctx, uint8_t *pkt)
+{
+    if (ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS) != *pkt) {
+        ConfigSetSetting(CONFIG_GM_VARIANT_ADDRESS, *pkt);
     }
 }
 
@@ -1226,6 +1254,8 @@ void HandlerIBusLMRedundantData(void *ctx, uint8_t *pkt)
         );
         // Request light module ident
         IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+        // Request general module ident
+        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GM);
         // Save the new VIN
         ConfigSetVehicleIdentity(vehicleId);
         // Request the vehicle configuration
@@ -1240,9 +1270,15 @@ void HandlerIBusLMRedundantData(void *ctx, uint8_t *pkt)
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
             HandlerIBusSwitchUI(context, CONFIG_UI_CD53);
         }
-    } else if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
-        // Identify the LM if we do not have an ID for it
-        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+    } else {
+        if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
+            // Identify the LM if we do not have an ID for it
+            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+        }
+        if (ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS) == CONFIG_SETTING_OFF) {
+            // Identify the ZKE / GM if we do not have an ID for it
+            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GM);
+        }
     }
 }
 
@@ -1594,9 +1630,9 @@ void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
     // Since we cannot consistently monitor the volume in non-Nav & Non-MID cars
     // then we should not track the volume changes via the MFL as it will cause
     // issues for the end user who may not know this
-    if (context->uiMode == CONFIG_UI_CD53 ||
-        context->uiMode == CONFIG_UI_MIR ||
-        context->uiMode == CONFIG_UI_IRIS
+    if (context->uiMode != CONFIG_UI_BMBT &&
+        context->uiMode != CONFIG_UI_MID_BMBT &&
+        context->uiMode != CONFIG_UI_MID
     ) {
         return;
     }
@@ -1688,18 +1724,21 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
  */
 void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
 {
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (
+        ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF ||
+        (
+            context->uiMode != CONFIG_UI_BMBT ||
+            context->uiMode != CONFIG_UI_MID ||
+            context->uiMode != CONFIG_UI_MID_BMBT
+        )
+    ) {
         return;
     }
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
     // Forward volume changes to the RAD / DSP when in Bluetooth mode
-    if (context->uiMode != CONFIG_UI_CD53 &&
-        context->uiMode != CONFIG_UI_MIR &&
-        context->uiMode != CONFIG_UI_MIR &&
-        HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO
-    ) {
+    if (HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO) {
         int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
         if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
             // Drop Telephony mode so the radio acknowledges the volume changes

@@ -27,6 +27,7 @@ void HandlerIBusCDCStatus(void *, uint8_t *);
 void HandlerIBusDSPConfigSet(void *, uint8_t *);
 void HandlerIBusFirstMessageReceived(void *, uint8_t *);
 void HandlerIBusGMDoorsFlapsStatusResponse(void *, uint8_t *);
+void HandlerIBusGMIdentResponse(void *, uint8_t *);
 void HandlerIBusGTDIAIdentityResponse(void *, uint8_t *);
 void HandlerIBusGTDIAOSIdentityResponse(void *, uint8_t *);
 void HandlerIBusIKEIgnitionStatus(void *, uint8_t *);

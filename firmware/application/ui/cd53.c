@@ -326,7 +326,7 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             }
             CD53RedisplayText(context);
         }
-    } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE && pkt[3] == 0x03) {
+    } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE && pkt[IBUS_PKT_DB2] == 0x03) {
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
             uint32_t now = TimerGetMillis();
             if (context->bt->callStatus == BT_CALL_ACTIVE) {
@@ -717,8 +717,9 @@ void CD53TimerDisplay(void *ctx)
         // Display the main text if there isn't a timeout set
         if (context->mainDisplay.timeout > 0) {
             context->mainDisplay.timeout--;
-        } else if (context->mainDisplay.timeout == 0 ||
-                   context->mainDisplay.timeout == CD53_TIMEOUT_SCROLL_STOP_NEXT_ITR
+        } else if (
+            context->mainDisplay.timeout == 0 ||
+            context->mainDisplay.timeout == CD53_TIMEOUT_SCROLL_STOP_NEXT_ITR
         ) {
             if (context->mainDisplay.length > CD53_DISPLAY_TEXT_LEN) {
                 char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};
