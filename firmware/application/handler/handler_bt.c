@@ -76,11 +76,6 @@ void HandlerBTInit(HandlerContext_t *context)
             &HandlerBTBC127BootStatus,
             context
         );
-        EventRegisterCallback(
-            BT_EVENT_METADATA_UPDATE,
-            &HandlerBTBC127MetadataUpdate,
-            context
-        );
         TimerRegisterScheduledTask(
             &HandlerTimerBTBC127State,
             context,
@@ -433,88 +428,86 @@ void HandlerBTCallerID(void *ctx, uint8_t *data)
 void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
-        // Do not allow devices to connect while ignition is off
-        BTCommandDisconnect(context->bt);
-        return;
-    }
-    uint8_t linkType = *data;
-    uint8_t hfpConfigStatus = ConfigGetSetting(CONFIG_SETTING_HFP);
 
-    // Once A2DP and AVRCP are connected, we can disable connectability
-    // If HFP is enabled, do not disable connectability until the
-    // profile opens
-    if (linkType == BT_LINK_TYPE_A2DP &&
-        context->bt->activeDevice.a2dpId != 0
-    ) {
-        // Raise the volume one step to trigger the absolute volume notification
-        if (context->bt->type == BT_BTM_TYPE_BC127) {
-            BC127CommandVolume(
-                context->bt,
-                context->bt->activeDevice.a2dpId,
-                "UP"
-            );
-            if (hfpConfigStatus == CONFIG_SETTING_ON &&
-                context->bt->activeDevice.hfpId == 0
-            ) {
-                BC127CommandProfileOpen(
-                    context->bt,
-                    "HFP"
-                );
-            }
-        }
-    }
-    if (linkType == BT_LINK_TYPE_AVRCP || linkType == BT_LINK_TYPE_A2DP) {
-        if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
-            context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
+    if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF) {
+        uint8_t linkType = *data;
+        uint8_t hfpConfigStatus = ConfigGetSetting(CONFIG_SETTING_HFP);
+
+        // Once A2DP and AVRCP are connected, we can disable connectability
+        // If HFP is enabled, do not disable connectability until the
+        // profile opens
+        if (linkType == BT_LINK_TYPE_A2DP &&
+            context->bt->activeDevice.a2dpId != 0
         ) {
-            BTCommandPlay(context->bt);
-        }
-        if (context->bt->type == BT_BTM_TYPE_BM83) {
-            // Request Device Name if it is empty
-            char tmp[BT_DEVICE_NAME_LEN] = {0};
-            if (memcmp(tmp, context->bt->activeDevice.deviceName, BT_DEVICE_NAME_LEN) == 0) {
-                ConfigSetSetting(
-                    CONFIG_SETTING_LAST_CONNECTED_DEVICE,
-                    context->btSelectedDevice
-                );
-                BM83CommandReadLinkedDeviceInformation(
-                    context->bt,
-                    BM83_LINKED_DEVICE_QUERY_NAME
-                );
-            }
-        }
-    }
-    if (linkType == BT_LINK_TYPE_HFP) {
-        HandlerSetIBusTELStatus(context, HANDLER_TEL_STATUS_FORCE);
-        if (hfpConfigStatus == CONFIG_SETTING_OFF) {
-            if (context->bt->type == BT_BTM_TYPE_BM83) {
-                BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
-            } else {
-                BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
-            }
-        } else {
-            IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
+            // Raise the volume one step to trigger the absolute volume notification
             if (context->bt->type == BT_BTM_TYPE_BC127) {
-                // Set the device character set to UTF-8
-                BC127CommandATSet(context->bt, "CSCS", "\"UTF-8\"");
-                // Explicitly enable Calling Line Identification (Caller ID)
-                BC127CommandATSet(context->bt, "CLIP", "1");
-                if (ConfigGetTimeSource() == CONFIG_SETTING_TIME_PHONE) {
-                    // Request the date and time
-                    // NOTE: This is only compatible with iOS at this time
-                    BC127CommandAT(context->bt, "+CCLK?");
-                };
-                if (context->bt->activeDevice.hfpId != 0 &&
-                    context->bt->activeDevice.pbapId == 0
+                BC127CommandVolume(
+                    context->bt,
+                    context->bt->activeDevice.a2dpId,
+                    "UP"
+                );
+                if (hfpConfigStatus == CONFIG_SETTING_ON &&
+                    context->bt->activeDevice.hfpId == 0
                 ) {
                     BC127CommandProfileOpen(
                         context->bt,
-                        "PBAP"
+                        "HFP"
                     );
                 }
             }
         }
+        if (linkType == BT_LINK_TYPE_AVRCP || linkType == BT_LINK_TYPE_A2DP) {
+            if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
+                context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
+            ) {
+                BTCommandPlay(context->bt);
+            }
+            if (context->bt->type == BT_BTM_TYPE_BM83) {
+                // Request Device Name if it is empty
+                char tmp[BT_DEVICE_NAME_LEN] = {0};
+                if (memcmp(tmp, context->bt->activeDevice.deviceName, BT_DEVICE_NAME_LEN) == 0) {
+                    ConfigSetSetting(
+                        CONFIG_SETTING_LAST_CONNECTED_DEVICE,
+                        context->btSelectedDevice
+                    );
+                    BM83CommandReadLinkedDeviceInformation(
+                        context->bt,
+                        BM83_LINKED_DEVICE_QUERY_NAME
+                    );
+                }
+            }
+        }
+        if (linkType == BT_LINK_TYPE_HFP) {
+            HandlerSetIBusTELStatus(context, HANDLER_TEL_STATUS_FORCE);
+            if (hfpConfigStatus == CONFIG_SETTING_OFF) {
+                if (context->bt->type == BT_BTM_TYPE_BM83) {
+                    BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
+                } else {
+                    BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
+                }
+            } else {
+                IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
+                if (context->bt->type == BT_BTM_TYPE_BC127) {
+                    // Set the device character set to UTF-8
+                    BC127CommandATSet(context->bt, "CSCS", "\"UTF-8\"");
+                    // Explicitly enable Calling Line Identification (Caller ID)
+                    BC127CommandATSet(context->bt, "CLIP", "1");
+                    // Request the date and time
+                    // NOTE: This is only compatible with iOS at this time
+                    BC127CommandAT(context->bt, "+CCLK?");
+                    if (context->bt->activeDevice.hfpId != 0 &&
+                        context->bt->activeDevice.pbapId == 0
+                    ) {
+                        BC127CommandProfileOpen(
+                            context->bt,
+                            "PBAP"
+                        );
+                    }
+                }
+            }
+        }
+    } else {
+        BTCommandDisconnect(context->bt);
     }
 }
 
@@ -864,12 +857,11 @@ void HandlerTimerBTTCUStateChange(void *ctx)
 void HandlerTimerBTVolumeManagement(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    LogDebug(LOG_SOURCE_BT, "BT: Vol Restore ON_TIMER from %i", context->bt->activeDevice.a2dpVolume);
     if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
         context->volumeMode != HANDLER_VOLUME_MODE_LOWERED &&
         context->bt->activeDevice.a2dpId != 0 &&
         context->bt->type != BT_BTM_TYPE_BM83 &&
-        context->bt->activeDevice.a2dpVolume != 1
+        context->bt->activeDevice.a2dpVolume != 0
     ) {
         if (context->bt->activeDevice.a2dpVolume < 127) {
             LogWarning(

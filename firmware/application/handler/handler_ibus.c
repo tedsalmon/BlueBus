@@ -420,17 +420,6 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
             context->uiMode != CONFIG_UI_IRIS &&
             context->bt->carPlay != 1
         ) {
-            if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
-                context->bt->type == BT_BTM_TYPE_BC127
-            ) {
-                // Silence the volume to workaround for buffered audio
-                BC127CommandVolume(
-                    context->bt,
-                    context->bt->activeDevice.a2dpId,
-                    "0"
-                );
-                context->bt->activeDevice.a2dpVolume = 1;
-            }
             if (pkt[5] == 0x00) {
                 BTCommandPlaybackTrackNext(context->bt);
             } else {

@@ -241,17 +241,6 @@ static void CD53ShowNextAvailableDevice(CD53Context_t *context, uint8_t directio
 static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char direction)
 {
     if (context->mode == CD53_MODE_ACTIVE) {
-        if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
-            context->bt->type == BT_BTM_TYPE_BC127
-        ) {
-            // Silence the volume to workaround for buffered audio
-            BC127CommandVolume(
-                context->bt,
-                context->bt->activeDevice.a2dpId,
-                "0"
-            );
-            context->bt->activeDevice.a2dpVolume = 1;
-        }
         if (direction == 0x00) {
             BTCommandPlaybackTrackNext(context->bt);
         } else {

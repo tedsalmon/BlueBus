@@ -114,10 +114,10 @@ void BC127CommandATSet(BT_t *bt, char *param, char *value)
 void BC127CommandBackward(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[18];
+        bt->metadataTimestamp = 0;
+        char command[18] = {0};
         snprintf(command, 18, "MUSIC %d BACKWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
-        bt->metadataTimestamp = 0;
     } else {
         LogWarning("BT: Unable to BACKWARD - AVRCP link unopened");
     }
@@ -135,7 +135,7 @@ void BC127CommandBackward(BT_t *bt)
 void BC127CommandBackwardSeekPress(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[19];
+        char command[19] = {0};
         snprintf(command, 19, "MUSIC %d REW_PRESS", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -155,7 +155,7 @@ void BC127CommandBackwardSeekPress(BT_t *bt)
 void BC127CommandBackwardSeekRelease(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[21];
+        char command[21] = {0};
         snprintf(command, 21, "MUSIC %d REW_RELEASE", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -174,7 +174,7 @@ void BC127CommandBackwardSeekRelease(BT_t *bt)
  */
 void BC127CommandCallAnswer(BT_t *bt)
 {
-    char command[15];
+    char command[15] = {0};
     snprintf(command, 15, "CALL %d ANSWER", bt->activeDevice.hfpId);
     BC127SendCommand(bt, command);
 }
@@ -351,10 +351,10 @@ void BC127CommandBtState(BT_t *bt, uint8_t connectable, uint8_t discoverable)
 void BC127CommandForward(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
+        bt->metadataTimestamp = 0;
         char command[17] = {0};
         snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
-        bt->metadataTimestamp = 0;
     } else {
         LogWarning("BT: Unable to FORWARD - AVRCP link unopened");
     }
