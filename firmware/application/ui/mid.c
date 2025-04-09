@@ -524,17 +524,6 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
     }
     // Handle Next and Previous
     if (context->ibus->cdChangerFunction != IBUS_CDC_FUNC_NOT_PLAYING) {
-        if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
-            context->bt->type == BT_BTM_TYPE_BC127
-        ) {
-            // Silence the volume to workaround for the radio
-            BC127CommandVolume(
-                context->bt,
-                context->bt->activeDevice.a2dpId,
-                "0"
-            );
-            context->bt->activeDevice.a2dpVolume = 1;
-        }
         if (btnPressed == IBus_MID_BTN_TEL_RIGHT_RELEASE) {
             BTCommandPlaybackTrackNext(context->bt);
         } else if (btnPressed == IBus_MID_BTN_TEL_LEFT_RELEASE) {

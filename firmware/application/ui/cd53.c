@@ -241,17 +241,6 @@ static void CD53ShowNextAvailableDevice(CD53Context_t *context, uint8_t directio
 static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char direction)
 {
     if (context->mode == CD53_MODE_ACTIVE) {
-        if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
-            context->bt->type == BT_BTM_TYPE_BC127
-        ) {
-            // Silence the volume to workaround for buffered audio
-            BC127CommandVolume(
-                context->bt,
-                context->bt->activeDevice.a2dpId,
-                "0"
-            );
-            context->bt->activeDevice.a2dpVolume = 1;
-        }
         if (direction == 0x00) {
             BTCommandPlaybackTrackNext(context->bt);
         } else {
@@ -326,7 +315,7 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             }
             CD53RedisplayText(context);
         }
-    } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE && pkt[3] == 0x03) {
+    } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE && pkt[IBUS_PKT_DB2] == 0x03) {
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
             uint32_t now = TimerGetMillis();
             if (context->bt->callStatus == BT_CALL_ACTIVE) {
@@ -717,8 +706,9 @@ void CD53TimerDisplay(void *ctx)
         // Display the main text if there isn't a timeout set
         if (context->mainDisplay.timeout > 0) {
             context->mainDisplay.timeout--;
-        } else if (context->mainDisplay.timeout == 0 ||
-                   context->mainDisplay.timeout == CD53_TIMEOUT_SCROLL_STOP_NEXT_ITR
+        } else if (
+            context->mainDisplay.timeout == 0 ||
+            context->mainDisplay.timeout == CD53_TIMEOUT_SCROLL_STOP_NEXT_ITR
         ) {
             if (context->mainDisplay.length > CD53_DISPLAY_TEXT_LEN) {
                 char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};

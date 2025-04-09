@@ -111,8 +111,9 @@ int main(void)
         STATUS_FLAG = BOOTLOADER_STATUS_LED_ON;
     }
 
-    while ((BOOT_MODE == BOOT_MODE_BOOTLOADER && BOOT_MODE != BOOT_MODE_NOW) ||
-           TimerGetMillis() <= BOOTLOADER_TIMEOUT
+    while (
+        (BOOT_MODE == BOOT_MODE_BOOTLOADER && BOOT_MODE != BOOT_MODE_NOW) ||
+        TimerGetMillis() <= BOOTLOADER_TIMEOUT
     ) {
         uint16_t queueSize = CharQueueGetSize(&systemUart.rxQueue);
         if (queueSize >= PROTOCOL_PACKET_MIN_SIZE) {
@@ -121,6 +122,8 @@ int main(void)
                 TimerEnableLED();
                 STATUS_FLAG = BOOTLOADER_STATUS_LED_ON;
             }
+        } else if (queueSize > 0) {
+            ProtocolProcessQueue(&systemUart);
         }
     }
 

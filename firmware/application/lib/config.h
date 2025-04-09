@@ -31,6 +31,7 @@
 #define CONFIG_VEHICLE_TYPE_ADDRESS 0x11
 #define CONFIG_VEHICLE_VIN_ADDRESS {0x12, 0x13, 0x14, 0x15, 0x16}
 #define CONFIG_LM_VARIANT_ADDRESS 0x17
+#define CONFIG_GM_VARIANT_ADDRESS 0x18
 /* EEPROM 0x1A - 0x50: User Configurable Settings */
 /* Config 0x1A - 0x24: UI Settings */
 #define CONFIG_SETTING_METADATA_MODE_ADDRESS 0x1D
@@ -120,6 +121,7 @@
 #define CONFIG_SETTING_TEL_MODE_DEFAULT 0x00
 #define CONFIG_SETTING_TEL_MODE_TCU 0x01
 #define CONFIG_SETTING_TEL_MODE_NO_MUTE 0x02
+#define CONFIG_SETTING_TEL_MODE_ANALOG 0x03
 #define CONFIG_SETTING_PDC_CLUSTER 0x01
 #define CONFIG_SETTING_PDC_RADIO 0x02
 #define CONFIG_SETTING_PDC_BOTH 0x03
@@ -200,7 +202,6 @@ uint8_t ConfigGetBuildYear();
 void ConfigGetBytes(uint8_t, uint8_t *, uint8_t);
 uint8_t ConfigGetComfortLock();
 uint8_t ConfigGetComfortUnlock();
-uint8_t ConfigGetDistUnit();
 uint8_t ConfigGetFirmwareVersionMajor();
 uint8_t ConfigGetFirmwareVersionMinor();
 uint8_t ConfigGetFirmwareVersionPatch();
@@ -215,6 +216,7 @@ uint8_t ConfigGetSetting(uint8_t);
 uint8_t ConfigGetTelephonyFeaturesActive();
 uint8_t ConfigGetTempDisplay();
 uint8_t ConfigGetTempUnit();
+uint8_t ConfigGetDistUnit();
 uint8_t ConfigGetTimeDST();
 int16_t ConfigGetTimeOffset();
 uint8_t ConfigGetTimeOffsetIndex();
@@ -231,7 +233,6 @@ void ConfigSetBootloaderMode(uint8_t);
 void ConfigSetBytes(uint8_t, const uint8_t *, uint8_t);
 void ConfigSetComfortLock(uint8_t);
 void ConfigSetComfortUnlock(uint8_t);
-void ConfigSetDistUnit(uint8_t);
 void ConfigSetFirmwareVersion(uint8_t, uint8_t, uint8_t);
 void ConfigSetIKEType(uint8_t);
 void ConfigSetLMVariant(uint8_t);
@@ -241,6 +242,7 @@ void ConfigSetString(uint8_t, char *, uint8_t);
 void ConfigSetNavType(uint8_t);
 void ConfigSetTempDisplay(uint8_t);
 void ConfigSetTempUnit(uint8_t);
+void ConfigSetDistUnit(uint8_t);
 void ConfigSetTimeDST(uint8_t);
 void ConfigSetTimeOffset(int16_t);
 void ConfigSetTimeOffsetIndex(uint8_t);

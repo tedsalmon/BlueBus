@@ -409,6 +409,8 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
             MenuSingleLineSetMainDisplayText(context, "Call Mode: TCU", 0);
         } else if (context->settingValue == CONFIG_SETTING_TEL_MODE_NO_MUTE) {
             MenuSingleLineSetMainDisplayText(context, "Call Mode: No Mute", 0);
+        } else if (context->settingValue == CONFIG_SETTING_TEL_MODE_ANALOG) {
+            MenuSingleLineSetMainDisplayText(context, "Call Mode: Analog", 0);
         } else {
             MenuSingleLineSetMainDisplayText(context, "Call Mode: Default (Rec.)", 0);
         }
@@ -594,6 +596,9 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
         } else if (context->settingValue == CONFIG_SETTING_TEL_MODE_TCU) {
             MenuSingleLineSetMainDisplayText(context, "No Mute", 0);
             context->settingValue = CONFIG_SETTING_TEL_MODE_NO_MUTE;
+        } else if (context->settingValue == CONFIG_SETTING_TEL_MODE_NO_MUTE) {
+            MenuSingleLineSetMainDisplayText(context, "Analog", 0);
+            context->settingValue = CONFIG_SETTING_TEL_MODE_ANALOG;
         } else {
             MenuSingleLineSetMainDisplayText(context, "Default (Recommended)", 0);
             context->settingValue = CONFIG_SETTING_TEL_MODE_DEFAULT;

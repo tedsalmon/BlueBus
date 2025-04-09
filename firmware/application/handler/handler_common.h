@@ -125,6 +125,7 @@ typedef struct HandlerContext_t {
     uint8_t volumeMode: 1;
     uint8_t gtStatus: 1;
     uint8_t monitorStatus: 2;
+    uint8_t pdcActive: 1;
     uint8_t uiMode;
     uint8_t lmDimmerChecksum;
     uint8_t telStatus;
@@ -142,7 +143,6 @@ typedef struct HandlerContext_t {
     uint32_t lmLastIOStatus;
     uint32_t lmLastStatusSet;
     uint32_t pdcLastStatus;
-    uint8_t pdcActive: 1;
     uint32_t radLastMessage;
 } HandlerContext_t;
 

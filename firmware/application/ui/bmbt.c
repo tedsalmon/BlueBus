@@ -1370,6 +1370,13 @@ static void BMBTMenuSettingsCalling(BMBTContext_t *context)
                 LocaleGetText(LOCALE_STRING_MODE_NO_MUTE),
                 3
             );
+        } else if (telMode == CONFIG_SETTING_TEL_MODE_ANALOG) {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_ANALOG),
+                3
+            );
         } else {
             BMBTGTWriteIndex(
                 context,
@@ -1560,9 +1567,9 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
             uint8_t gain = (currentVolume - 0x30) / 2;
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
         } else if (currentVolume == 0) {
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, "%s", LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
         } else if (currentVolume == 0x30) {
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, "%s", LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
         } else {
             uint8_t gain = (0x30 - currentVolume) / 2;
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
@@ -1997,6 +2004,14 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                 context,
                 BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
                 LocaleGetText(LOCALE_STRING_MODE_NO_MUTE),
+                0
+            );
+        } else if (telMode == CONFIG_SETTING_TEL_MODE_NO_MUTE) {
+            ConfigSetSetting(CONFIG_SETTING_TEL_MODE, CONFIG_SETTING_TEL_MODE_ANALOG);
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_CALLING_MODE,
+                LocaleGetText(LOCALE_STRING_MODE_ANALOG),
                 0
             );
         } else {
