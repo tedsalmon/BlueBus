@@ -2372,7 +2372,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
         }
         // Handle the SEL and Info buttons gracefully
         if (pkt[3] == IBUS_CMD_BMBT_BUTTON0 && pkt[1] == 0x05) {
-            if (pkt[5] == IBUS_DEVICE_BMBT_Button_Info) {
+            if (pkt[IBUS_PKT_DB2] == IBUS_DEVICE_BMBT_Button_Info) {
                 context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
             } else if (pkt[5] == IBUS_DEVICE_BMBT_Button_SEL) {
                 context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
@@ -2486,7 +2486,7 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
 void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[5] == 0x0C) {
+    if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[IBUS_PKT_DB2] == 0x0C) {
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
             IBusCommandTELSetGTDisplayMenu(context->ibus);
             IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
@@ -2666,7 +2666,7 @@ void BMBTIBusGTMenuBufferUpdate(void *ctx, uint8_t *pkt)
 void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    uint8_t selectedIdx = (uint8_t) pkt[6];
+    uint8_t selectedIdx = (uint8_t) pkt[IBUS_PKT_DB3];
     if (context->status.radType == IBUS_RADIO_TYPE_BM24) {
         if (selectedIdx < 10) {
             selectedIdx = 0xFF;
