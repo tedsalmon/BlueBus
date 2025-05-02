@@ -359,7 +359,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_IGN_STATUS_RESP) {
-        uint8_t ignitionStatus = pkt[4];
+        uint8_t ignitionStatus = pkt[IBUS_PKT_DB1];
         if (ibus->ignitionStatus != IBUS_IGNITION_KL99) {
             // The order of the items below should not be changed,
             // otherwise listeners will not know if the ignition status
@@ -633,11 +633,11 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
             EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
         } else if (pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_REQUEST) {
-            if (pkt[4] == IBUS_CDC_CMD_STOP_PLAYING) {
+            if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_STOP_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
-            } else if (pkt[4] == IBUS_CDC_CMD_PAUSE_PLAYING) {
+            } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_PAUSE_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_PAUSE;
-            } else if (pkt[4] == IBUS_CDC_CMD_START_PLAYING) {
+            } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_START_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
             }
             EventTriggerCallback(IBUS_EVENT_CDStatusRequest, pkt);
@@ -702,7 +702,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_MID) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_WRITE_MID_DISPLAY) {
-            if (pkt[4] == 0xC0) {
+            if (pkt[IBUS_PKT_DB1] == 0xC0) {
                 EventTriggerCallback(IBUS_EVENT_RADMIDDisplayText, pkt);
             }
         } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_WRITE_MID_MENU) {
@@ -1060,6 +1060,17 @@ void IBusSendCommand(
 ) {
     uint8_t idx, msgSize;
     msgSize = dataSize + 4;
+
+    if (msgSize > IBUS_MAX_MSG_LENGTH) {
+        long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+        LogRawDebug(
+            LOG_SOURCE_IBUS,
+            "[%llu] ERROR: IBus: MSG too long.\r\n",
+            ts
+        );
+        return;
+    }
+
     uint8_t msg[msgSize];
     msg[0] = src;
     msg[1] = dataSize + 2;
@@ -1073,12 +1084,22 @@ void IBusSendCommand(
         crc ^= msg[idx];
     }
     msg[msgSize - 1] = crc;
+
     // Store the data into a buffer, so we can spread out their transmission
     memcpy(ibus->txBuffer[ibus->txBufferWriteIdx], msg, msgSize);
     if (ibus->txBufferWriteIdx + 1 == IBUS_TX_BUFFER_SIZE) {
         ibus->txBufferWriteIdx = 0;
     } else {
         ibus->txBufferWriteIdx++;
+    }
+
+    if (ibus->txBufferWriteIdx == ibus->txBufferReadIdx) {
+        long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+        LogRawDebug(
+            LOG_SOURCE_IBUS,
+            "[%llu] ERROR: IBus: TX Buffer Overflow.\r\n",
+            ts
+        );
     }
 }
 
