@@ -762,7 +762,7 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Mode: Sin Silencio",
     "Mode: Anal\xf3""gico",
     "Voice Assistant",
-    "Llamada",
+    "Llamar",
     "Navigation",
     "Autozoom: %s",
     "PDC: %s",

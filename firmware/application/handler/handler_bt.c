@@ -1267,6 +1267,7 @@ void HandlerBTLogStatus(void *ctx)
                 bt->scoStatus,bt->scoStatus);
     LogRaw("  Playback:     %s (%i, 0x%02X)\r\n", bt->playbackStatus?"BT_AVRCP_STATUS_PLAYING":"BT_AVRCP_STATUS_PAUSED", bt->playbackStatus, bt->playbackStatus);
     LogRaw("  Type:         %s (%i, 0x%02X)\r\n", bt->type?"BM83":"BC127", bt->type, bt->type);
+    LogRaw("  CarPlay:      %s (%i, 0x%02X)\r\n", bt->carPlay?"on":"off", bt->carPlay, bt->carPlay);
     LogRaw("  VR status:    %s (%i, 0x%02X)\r\n", bt->vrStatus?"on":"off", bt->vrStatus, bt->vrStatus);
     LogRaw("  Discoverable: %s (%i, 0x%02X)\r\n", bt->discoverable?"on":"off", bt->discoverable, bt->discoverable);
     LogRaw("  Connectable:  %s (%i, 0x%02X)\r\n", bt->connectable?"on":"off", bt->connectable, bt->connectable);
