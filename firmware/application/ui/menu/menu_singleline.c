@@ -11,6 +11,7 @@ static uint8_t SETTINGS_MENU[] = {
     MENU_SINGLELINE_SETTING_IDX_AUTOPLAY,
     MENU_SINGLELINE_SETTING_IDX_AUDIO_DSP,
     MENU_SINGLELINE_SETTING_IDX_LOWER_VOL_REV,
+    MENU_SINGLELINE_SETTING_IDX_AUDIO_DAC_GAIN,
     MENU_SINGLELINE_SETTING_IDX_TEL_HFP,
     MENU_SINGLELINE_SETTING_IDX_TEL_MIC_GAIN,
     MENU_SINGLELINE_SETTING_IDX_TEL_VOL_OFFSET,
@@ -29,6 +30,7 @@ static uint8_t SETTINGS_TO_CONFIG_MAP[] = {
     CONFIG_SETTING_AUTOPLAY,
     CONFIG_SETTING_DSP_INPUT_SRC,
     CONFIG_SETTING_VOLUME_LOWER_ON_REV,
+    CONFIG_SETTING_DAC_AUDIO_VOL,
     CONFIG_SETTING_HFP,
     CONFIG_SETTING_MIC_GAIN,
     CONFIG_SETTING_TEL_VOL,
@@ -196,6 +198,15 @@ void MenuSingleLineSettingsEditSave(MenuSingleLineContext_t *context)
             } else if (context->settingValue == CONFIG_SETTING_DSP_INPUT_ANALOG) {
                 IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
             }
+        } else if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_AUDIO_DAC_GAIN) {
+            // Limit to minimum of 24 (+12dB)
+            if (context->settingValue < 24) {
+                context->settingValue = 24;
+            }
+            ConfigSetSetting(CONFIG_SETTING_DAC_AUDIO_VOL, context->settingValue);
+            // Apply the volume setting to the PCM51XX DAC
+            PCM51XXSetVolume(context->settingValue);
+            MenuSingleLineSetTempDisplayText(context, "Saved", 1);
         } else if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_TEL_MIC_GAIN) {
             MenuSingleLineSetTempDisplayText(context, "Saved", 1);
             uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
@@ -362,6 +373,25 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
             MenuSingleLineSetMainDisplayText(context, "Lower Vol. On Reverse: On", 0);
             context->settingValue = CONFIG_SETTING_ON;
         }
+    }
+    if (nextMenu == MENU_SINGLELINE_SETTING_IDX_AUDIO_DAC_GAIN) {
+        uint8_t currentVolume = ConfigGetSetting(CONFIG_SETTING_DAC_AUDIO_VOL);
+        // Limit to minimum of 24 (+12dB)
+        if (currentVolume < 24) {
+            currentVolume = 24;
+        }
+        context->settingValue = currentVolume;
+        char volText[18] = {0};
+        if (currentVolume > 0x30) {
+            uint8_t gain = (currentVolume - 0x30) / 2;
+            snprintf(volText, 17, "DAC Volume: -%ddB", gain);
+        } else if (currentVolume == 0x30) {
+            snprintf(volText, 17, "DAC Volume: 0dB");
+        } else {
+            uint8_t gain = (0x30 - currentVolume) / 2;
+            snprintf(volText, 17, "DAC Volume: +%ddB", gain);
+        }
+        MenuSingleLineSetMainDisplayText(context, volText, 0);
     }
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_TEL_HFP) {
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == 0x00) {
@@ -588,6 +618,37 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
         char telephoneVolumeText[3] = {0};
         snprintf(telephoneVolumeText, 3, "%d", context->settingValue);
         MenuSingleLineSetMainDisplayText(context, telephoneVolumeText, 0);
+    }
+    if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_AUDIO_DAC_GAIN) {
+        uint8_t currentVolume = context->settingValue;
+        if (direction == MENU_SINGLELINE_DIRECTION_BACK) {
+            if (currentVolume >= 2) {
+                currentVolume = currentVolume - 2;
+            } else {
+                currentVolume = 96;
+            }
+            // Limit to minimum of 24 (+12dB)
+            if (currentVolume < 24) {
+                currentVolume = 24;
+            }
+        } else {
+            currentVolume = currentVolume + 2;
+            if (currentVolume > 96) {
+                currentVolume = 24;  // Wrap around to +12dB instead of 0
+            }
+        }
+        context->settingValue = currentVolume;
+        char volText[18] = {0};
+        if (currentVolume > 0x30) {
+            uint8_t gain = (currentVolume - 0x30) / 2;
+            snprintf(volText, 17, "DAC Volume: -%ddB", gain);
+        } else if (currentVolume == 0x30) {
+            snprintf(volText, 17, "DAC Volume: 0dB");
+        } else {
+            uint8_t gain = (0x30 - currentVolume) / 2;
+            snprintf(volText, 17, "DAC Volume: +%ddB", gain);
+        }
+        MenuSingleLineSetMainDisplayText(context, volText, 0);
     }
     if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_TEL_TCU_MODE) {
         if (context->settingValue == CONFIG_SETTING_TEL_MODE_DEFAULT) {
