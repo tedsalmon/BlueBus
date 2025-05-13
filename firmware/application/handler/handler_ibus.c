@@ -1492,9 +1492,9 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
             // Handle Imperial Units
             uint8_t units = ConfigGetDistUnit();
             if (units != 0) {
-                minimum = UtilsConvertCmToIn(minimum);
-                frontMin = UtilsConvertCmToIn(frontMin);
-                rearMin = UtilsConvertCmToIn(rearMin);
+                minimum = (minimum == 99)?99:UtilsConvertCmToIn(minimum);
+                frontMin = (frontMin == 99)?99:UtilsConvertCmToIn(frontMin);
+                rearMin = (rearMin == 99)?99:UtilsConvertCmToIn(rearMin);
                 uint8_t i = 0;
                 for (i = 0; i < sizeof(frontValues); i++) {
                     if (frontValues[i] < 99) {
