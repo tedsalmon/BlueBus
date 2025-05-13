@@ -3283,3 +3283,19 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, uint8_t index)
     memcpy(statusText + 3, text, textLength);
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
 }
+
+/**
+ * IBusCommandCarplayDisplay()
+ *     Description:
+ *        Send command to Carphonics CarPlay module
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t enable - 0 = CP off, 1 = CP on, 0xFF = CP don't handle display switch
+ *     Returns:
+ *         void
+ */
+void IBusCommandCarplayDisplay(IBus_t *ibus, uint8_t enable)
+{
+    uint8_t pkt[] = { IBUS_BLUEBUS_CMD_CARPLAY_COMMAND, IBUS_BLUEBUS_CMD_SET_STATUS, enable };
+    IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_VM, pkt, sizeof(pkt));
+ }

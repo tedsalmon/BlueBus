@@ -212,6 +212,9 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context,
         BMBT_SCROLL_TEXT_TIMER
     );
+
+    Context.bt->carPlay = 0;
+    IBusCommandCarplayDisplay(Context.ibus, 0);
 }
 
 /**
@@ -1401,6 +1404,13 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             LocaleGetText(LOCALE_STRING_MENU_MAIN),
             0
         );
+    } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02 ) {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU,
+            "Menu: CarPlay",
+            0
+        );
     } else {
         BMBTGTWriteIndex(
             context,
@@ -2068,6 +2078,9 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x00) {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x01);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_DASHBOARD), 0);
+        } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x01){
+            ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x02);
+            BMBTGTWriteIndex(context, selectedIdx, "Menu: CarPlay", 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x00);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_MAIN), 0);
@@ -2395,6 +2408,20 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
             BTCommandToggleVoiceRecognition(context->bt);
         }
     }
+*/
+
+    if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
+        if (context->bt->carPlay == 1) {
+            context->bt->carPlay = 0;
+            IBusCommandCarplayDisplay(context->ibus, 0);
+        } else {
+            context->bt->carPlay = 1;
+            context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
+            IBusCommandCarplayDisplay(context->ibus, 1);
+        }
+    }
+
+
 }
 
 /**
@@ -3287,7 +3314,7 @@ void BMBTTimerMenuWrite(void *ctx)
                         BMBTMenuSettingsUI(context);
                         break;
                     case BMBT_MENU_NONE:
-                        if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x01) {
+                        if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) != 0x00) {
                             BMBTMenuDashboard(context);
                         } else {
                             BMBTMenuMain(context);

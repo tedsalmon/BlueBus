@@ -852,6 +852,15 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             // Ask the LCM for the redundant data
             LogDebug(LOG_SOURCE_SYSTEM, "Handler: Request LCM Redundant Data");
             IBusCommandLMGetRedundantData(context->ibus);
+
+            if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02) {
+                context->bt->carPlay = 1;
+                context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
+                IBusCommandCarplayDisplay(context->ibus, 1);
+            } else {
+                context->bt->carPlay = 0;
+                IBusCommandCarplayDisplay(context->ibus, 0);
+            }
         }
     } else if (ignitionStatus > IBUS_IGNITION_OFF) {
         // Send the CDC Status only if we are not on a call
