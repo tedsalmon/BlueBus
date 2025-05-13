@@ -377,15 +377,15 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
             currentVolume = 24;
         }
         context->settingValue = currentVolume;
-        char volText[23] = {0};
+        char volText[18] = {0};
         if (currentVolume > 0x30) {
             uint8_t gain = (currentVolume - 0x30) / 2;
-            snprintf(volText, 23, "Volume: -%ddB", gain);
+            snprintf(volText, 17, "DAC Volume: -%ddB", gain);
         } else if (currentVolume == 0x30) {
-            snprintf(volText, 23, "Volume: 0dB");
+            snprintf(volText, 17, "DAC Volume: 0dB");
         } else {
             uint8_t gain = (0x30 - currentVolume) / 2;
-            snprintf(volText, 23, "Volume: +%ddB", gain);
+            snprintf(volText, 17, "DAC Volume: +%ddB", gain);
         }
         MenuSingleLineSetMainDisplayText(context, volText, 0);
     }
@@ -605,32 +605,32 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
     }
     if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_AUDIO_DAC_GAIN) {
         uint8_t currentVolume = context->settingValue;
-        if (direction == 0x01) {  // < button (backwards)
+        if (direction == MENU_SINGLELINE_DIRECTION_BACK) {
             if (currentVolume >= 2) {
-                currentVolume = currentVolume - 2;  // Decrease by 2 (1dB)
+                currentVolume = currentVolume - 2;
             } else {
-                currentVolume = 96;  // Wrap around to maximum value
+                currentVolume = 96;
             }
             // Limit to minimum of 24 (+12dB)
             if (currentVolume < 24) {
                 currentVolume = 24;
             }
-        } else {  // > button (forwards)
-            currentVolume = currentVolume + 2;  // Increase by 2 (1dB)
+        } else {
+            currentVolume = currentVolume + 2;
             if (currentVolume > 96) {
                 currentVolume = 24;  // Wrap around to +12dB instead of 0
             }
         }
         context->settingValue = currentVolume;
-        char volText[23] = {0};
+        char volText[18] = {0};
         if (currentVolume > 0x30) {
             uint8_t gain = (currentVolume - 0x30) / 2;
-            snprintf(volText, 23, "Volume: -%ddB", gain);
+            snprintf(volText, 17, "DAC Volume: -%ddB", gain);
         } else if (currentVolume == 0x30) {
-            snprintf(volText, 23, "Volume: 0dB");
+            snprintf(volText, 17, "DAC Volume: 0dB");
         } else {
             uint8_t gain = (0x30 - currentVolume) / 2;
-            snprintf(volText, 23, "Volume: +%ddB", gain);
+            snprintf(volText, 17, "DAC Volume: +%ddB", gain);
         }
         MenuSingleLineSetMainDisplayText(context, volText, 0);
     }
