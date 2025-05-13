@@ -94,8 +94,8 @@
  *  screenUpdated: The screen has been updated by the radio
  */
 typedef struct MIDContext_t {
-    IBus_t *ibus;
     BT_t *bt;
+    IBus_t *ibus;
     int8_t btDeviceIndex;
     uint8_t mode;
     uint8_t displayUpdate;

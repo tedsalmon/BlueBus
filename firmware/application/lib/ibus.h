@@ -9,6 +9,7 @@
 #include <math.h>
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
 #include "../mappings.h"
 #include "char_queue.h"
 #include "log.h"
@@ -111,6 +112,7 @@
 #define IBUS_DEVICE_BMBT_Button_Display 0x30
 #define IBUS_DEVICE_BMBT_Button_Info 0x38
 #define IBUS_DEVICE_BMBT_Button_SEL 0x0F
+#define IBUS_DEVICE_BMBT_Button_TONE 0x04
 #define IBUS_DEVICE_BMBT_Button_Num1 0x11
 #define IBUS_DEVICE_BMBT_Button_Num2 0x01
 #define IBUS_DEVICE_BMBT_Button_Num3 0x12
@@ -182,6 +184,7 @@
 #define IBUS_CMD_IKE_SET_REQUEST_DATE 0x02
 #define IBUS_CMD_IKE_WRITE_NUMERIC 0x44
 #define IBUS_CMD_IKE_CCM_WRITE_TEXT 0x1A
+#define IBUS_CMD_IKE_GPSTIME 0x1F
 
 #define IBUS_DATA_IKE_CCM_WRITE_CLEAR_TEXT 0x30
 #define IBUS_DATA_IKE_NUMERIC_CLEAR 0x20
@@ -243,7 +246,10 @@
 
 #define IBUS_CMD_OBC_CONTROL 0x41
 
+#define IBUS_IKE_OBC_PROPERTY_TIME 0x01
+#define IBUS_IKE_OBC_PROPERTY_DATE 0x02
 #define IBUS_IKE_OBC_PROPERTY_TEMPERATURE 0x03
+#define IBUS_IKE_OBC_PROPERTY_RANGE 0x06
 #define IBUS_IKE_OBC_PROPERTY_REQUEST_TEXT 0x01
 
 #define IBUS_LCM_LIGHT_STATUS_REQ 0x5A
@@ -356,6 +362,7 @@
 #define IBUS_TEL_SIG_EVEREST 0x38
 
 #define IBUS_BLUEBUS_CMD_SET_STATUS 0xBB
+#define IBUS_BLUEBUS_CMD_CARPLAY_COMMAND 0xBC
 
 #define IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL 0x01
 
@@ -381,6 +388,12 @@
 #define IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED 0x06
 
 #define IBUS_SES_ZOOM_LEVELS 8
+#define IBUS_SES_CMD_NAV_CTRL 0xAA
+#define IBUS_SES_DATA_NAV_CTRL_SHOWMAP 0x04
+#define IBUS_SES_DATA_NAV_CTRL_SILENCE 0x06
+#define IBUS_SES_DATA_NAV_CTRL_SETZOOM 0x10
+#define IBUS_SES_DATA_NAV_CTRL_ROUTEFUEL 0x20
+
 
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
 #define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
@@ -476,12 +489,15 @@
 #define IBUS_EVENT_RAD_MESSAGE_RCV 77
 #define IBUS_EVENT_MONITOR_STATUS 78
 #define IBUS_EVENT_GM_IDENT_RESP 79
+#define IBUS_EVENT_NAV_DATETIME_UPDATE 80
+#define IBUS_EVENT_RANGE_UPDATE 81
+#define IBUS_EVENT_MONITOR_CONTROL 82
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
 #define IBUS_RX_BUFFER_SIZE 255 // 8-bit Max
-#define IBUS_TX_BUFFER_SIZE 16
+#define IBUS_TX_BUFFER_SIZE 20
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
 #define IBUS_TX_BUFFER_WAIT 7 // If we transmit faster, other modules may not hear us
 #define IBUS_TX_TIMEOUT_OFF 0
@@ -557,6 +573,8 @@ typedef struct IBus_t {
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
     IBusPDCSensorStatus_t pdcSensors;
+    time_t gpsDatetime;
+    time_t localTime;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];
@@ -639,10 +657,14 @@ void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
 void IBusCommandSESSetMapZoom(IBus_t *, uint8_t);
+void IBusCommandSESShowMap(IBus_t *);
+void IBusCommandSESRouteFuel(IBus_t *);
+void IBusCommandSESSilentNavigation(IBus_t *);
 void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);
 void IBusCommandTELSetLED(IBus_t *, uint8_t);
 void IBusCommandTELStatus(IBus_t *, uint8_t);
 void IBusCommandTELStatusText(IBus_t *, char *, uint8_t);
+void IBusCommandCarplayDisplay(IBus_t *ibus, uint8_t enable);
 #endif /* IBUS_H */

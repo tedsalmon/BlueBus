@@ -78,6 +78,19 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     );
     Context.navZoom = -1;
     Context.navZoomTime = 0;
+    Context.mapShown = 0;
+    Context.naviSilenced = 0;
+    Context.rangeNavi = 0;
+
+    if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02) {
+        Context.bt->carPlay = 1;
+        IBusCommandCarplayDisplay(Context.ibus, 1);
+    } else {
+        Context.bt->carPlay = 0;
+        uint8_t pkt[] = { 0x48, 0x08 };
+        IBusSendCommand(Context.ibus, IBUS_DEVICE_BMBT, IBUS_DEVICE_LOC, pkt, sizeof(pkt));
+        IBusCommandCarplayDisplay(Context.ibus, 0);
+    }
 
     EventRegisterCallback(
         BT_EVENT_DEVICE_CONNECTED,
@@ -165,6 +178,11 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
+        IBUS_EVENT_MONITOR_CONTROL,
+        &BMBTMonitorControl,
+        &Context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_IKE_VEHICLE_CONFIG,
         &BMBTIBusVehicleConfig,
         &Context
@@ -177,6 +195,16 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBUS_EVENT_MONITOR_STATUS,
         &BMBTIBusMonitorStatus,
+        &Context
+    );
+    EventRegisterCallback(
+        IBUS_EVENT_RANGE_UPDATE,
+        &BMBTRangeUpdate,
+        &Context
+    );
+    EventRegisterCallback(
+        LOG_EVENT_STATUS,
+        &BMBTLogStatus,
         &Context
     );
     Context.headerWriteTaskId = TimerRegisterScheduledTask(
@@ -194,6 +222,9 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context,
         BMBT_SCROLL_TEXT_TIMER
     );
+
+    Context.bt->carPlay = 0;
+    IBusCommandCarplayDisplay(Context.ibus, 0);
 }
 
 /**
@@ -273,6 +304,10 @@ void BMBTDestroy()
     );
     EventUnregisterCallback(
         IBUS_EVENT_TV_STATUS,
+        &BMBTTVStatusUpdate
+    );
+    EventUnregisterCallback(
+        IBUS_EVENT_MONITOR_STATUS,
         &BMBTTVStatusUpdate
     );
     EventUnregisterCallback(
@@ -378,8 +413,8 @@ static void BMBTSetMainDisplayText(
 static void BMBTTriggerWriteHeader(BMBTContext_t *context)
 {
     if (context->timerHeaderIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
-        TimerResetScheduledTask(context->headerWriteTaskId);
         context->timerHeaderIntervals = 0;
+        TimerResetScheduledTask(context->headerWriteTaskId);
     }
 }
 
@@ -404,8 +439,8 @@ static void BMBTTriggerWriteMenu(BMBTContext_t *context)
         context->ibus->moduleStatus.NAV == 0
     ) {
         if (context->timerMenuIntervals == BMBT_MENU_HEADER_TIMER_OFF) {
-            TimerResetScheduledTask(context->menuWriteTaskId);
             context->timerMenuIntervals = 0;
+            TimerResetScheduledTask(context->menuWriteTaskId);
         }
     } else {
         BMBTMenuRefresh(context);
@@ -809,7 +844,6 @@ static void BMBTMenuSettings(BMBTContext_t *context)
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
-    BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS;
 }
 
@@ -840,7 +874,13 @@ static void BMBTMenuSettingsAbout(BMBTContext_t *context)
         context,
         BMBT_MENU_IDX_SETTINGS_ABOUT_SERIAL,
         serialNumberString,
-        4
+        0
+    );
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_ABOUT_URL,
+        "bluebus.dev",
+        3
     );
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
@@ -1018,39 +1058,251 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
             0
         );
     }
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI,
+        LocaleGetText(LOCALE_STRING_NAVI),
+        0
+    );
+
+    uint8_t autotime = ConfigGetTimeSource();
+    char autotext[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(
+        autotext,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_AUTOTIME),
+        (
+            (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone":
+            (autotime == CONFIG_SETTING_TIME_GPS) ? "GPS":
+            LocaleGetText(LOCALE_STRING_AUTOTIME_MANUAL)
+        )
+    );
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_TIME,
+        autotext,
+        0
+    );
+
+    uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+    char pdc_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(
+        pdc_text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_PDC),
+        (
+            (pdc == CONFIG_SETTING_PDC_CLUSTER)? "Cluster":
+            (pdc == CONFIG_SETTING_PDC_RADIO)? "Screen":
+            (pdc == CONFIG_SETTING_PDC_BOTH)? "Dual":
+            LocaleGetText(LOCALE_STRING_OFF)
+        )
+    );
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_PDC,
+        pdc_text,
+        0
+    );
+
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
+    context->menu = BMBT_MENU_SETTINGS_COMFORT;
+}
+
+static void BMBTMenuSettingsComfortTime(BMBTContext_t *context)
+{
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT_TIME));
+    char text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    uint8_t autotime = ConfigGetTimeSource();
+    snprintf(
+        text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_AUTOTIME),
+        (
+            (autotime == CONFIG_SETTING_TIME_PHONE) ? "iPhone":
+            (autotime == CONFIG_SETTING_TIME_GPS) ? "GPS":
+            LocaleGetText(LOCALE_STRING_AUTOTIME_MANUAL)
+        )
+    );
+
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE,
+        text,
+        (autotime == CONFIG_SETTING_TIME_GPS)? 0:6
+    );
+
+    if (autotime == CONFIG_SETTING_TIME_GPS) {
+        uint8_t dst = ConfigGetTimeDST();
+        int16_t off = ConfigGetTimeOffset();
+
+        snprintf(
+            text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_AUTOTIME_DST),
+            (dst == 0) ? LocaleGetText(LOCALE_STRING_OFF):"+01:00"
+        );
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST,
+            text,
+            0
+        );
+
+        snprintf(
+            text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_AUTOTIME_OFFSET),
+            off / 60,
+            abs(off) % 60
+        );
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET,
+            text,
+            1
+        );
+
+        if (context->ibus->gpsDatetime != 0) {
+            struct tm *ptm;
+            ptm = gmtime(&context->ibus->gpsDatetime);
+
+            snprintf(
+                text,
+                BMBT_MENU_STRING_MAX_SIZE,
+                "GPSD: %2d.%2d.%4d",
+                ptm->tm_mday,
+                ptm->tm_mon+1,
+                ptm->tm_year+1900
+            );
+
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSDATE,
+                text,
+                0
+            );
+
+            snprintf(
+                text,
+                BMBT_MENU_STRING_MAX_SIZE,
+                "GPST: %02d:%02d",
+                ptm->tm_hour,
+                ptm->tm_min
+            );
+
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSTIME,
+                    text,
+                    1
+                );
+        } else {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_GPSDATE,
+                LocaleGetText(LOCALE_STRING_AUTOTIME_NOSIGNAL),
+                2
+            );
+        }
+    }
+
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
+    context->menu = BMBT_MENU_SETTINGS_COMFORT_TIME;
+}
+
+static void BMBTMenuSettingsComfortNavi(BMBTContext_t *context)
+{
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_COMFORT_NAVI));
     uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
     if (autozoom >= IBUS_SES_ZOOM_LEVELS) {
         autozoom = CONFIG_SETTING_OFF;
     }
-    char autoZoomText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    char text[BMBT_MENU_STRING_MAX_SIZE] = {0};
     if (autozoom == CONFIG_SETTING_OFF) {
         snprintf(
-            autoZoomText,
+            text,
             BMBT_MENU_STRING_MAX_SIZE,
             LocaleGetText(LOCALE_STRING_AUTOZOOM),
-            "Off"
+            LocaleGetText(LOCALE_STRING_OFF)
         );
     } else {
         if (ConfigGetDistUnit() == 0) {
             snprintf(
-                autoZoomText,
+                text,
                 BMBT_MENU_STRING_MAX_SIZE,
                 LocaleGetText(LOCALE_STRING_AUTOZOOM),
                 navZoomScaleMetric[autozoom]
             );
         } else {
             snprintf(
-                autoZoomText,
+                text,
                 BMBT_MENU_STRING_MAX_SIZE,
                 LocaleGetText(LOCALE_STRING_AUTOZOOM),
                 navZoomScaleImperial[autozoom]
             );
         }
     }
-    BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM, autoZoomText, 1);
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_AUTOZOOM,
+        text,
+        0
+    );
+
+    uint8_t automap = ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI) & 0x0F;
+    snprintf(
+        text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_NAVI_MAP),
+        (automap == CONFIG_SETTING_NAVI_MAP_DEFAULT)?LocaleGetText(LOCALE_STRING_DEFAULT):
+        (automap == CONFIG_SETTING_NAVI_MAP_SPEED_20)?"20km/h":
+        (automap == CONFIG_SETTING_NAVI_MAP_SPEED_30)?"30km/h":
+        (automap == CONFIG_SETTING_NAVI_MAP_SPEED_50)?"50km/h":
+        (automap == CONFIG_SETTING_NAVI_MAP_TIME_5)?"5min":
+        (automap == CONFIG_SETTING_NAVI_MAP_TIME_10)?"10min":
+        LocaleGetText(LOCALE_STRING_OFF)
+    );
+
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_MAP,
+        text,
+        0
+    );
+
+    snprintf(
+        text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_NAVI_SILENT),
+        ((ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI) & CONFIG_SETTING_NAVI_SILENT) == CONFIG_SETTING_NAVI_SILENT)?LocaleGetText(LOCALE_STRING_ON):LocaleGetText(LOCALE_STRING_OFF)
+    );
+
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_SILENT,
+        text,
+        0
+    );
+
+    snprintf(
+        text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_NAVI_RANGE),
+        ((ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI) & CONFIG_SETTING_NAVI_ROUTE_RANGE) == CONFIG_SETTING_NAVI_ROUTE_RANGE)?LocaleGetText(LOCALE_STRING_ON):LocaleGetText(LOCALE_STRING_OFF)
+    );
+
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_RANGE,
+        text,
+        3
+    );
+
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
-    context->menu = BMBT_MENU_SETTINGS_COMFORT;
+    context->menu = BMBT_MENU_SETTINGS_COMFORT_NAVI;
 }
 
 static void BMBTMenuSettingsCalling(BMBTContext_t *context)
@@ -1166,6 +1418,13 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             LocaleGetText(LOCALE_STRING_MENU_MAIN),
             0
         );
+    } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02 ) {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU,
+            "Menu: CarPlay",
+            0
+        );
     } else {
         BMBTGTWriteIndex(
             context,
@@ -1231,14 +1490,14 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
     if (dashboardOBC == CONFIG_SETTING_ON) {
         BMBTGTWriteIndex(
             context,
-            BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
+            BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC,
             LocaleGetText(LOCALE_STRING_DASH_OBC_ON),
             0
         );
     } else if (dashboardOBC == CONFIG_SETTING_OFF) {
         BMBTGTWriteIndex(
             context,
-            BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
+            BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC,
             LocaleGetText(LOCALE_STRING_DASH_OBC_OFF),
             0
         );
@@ -1442,7 +1701,157 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             ConfigSetComfortUnlock(CONFIG_SETTING_OFF);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_UNLOCK_OFF), 0);
         }
-    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM) {
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI) {
+        BMBTMenuSettingsComfortNavi(context);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME) {
+        BMBTMenuSettingsComfortTime(context);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_PDC) {
+        uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+        if (pdc == CONFIG_SETTING_OFF) {
+            pdc=CONFIG_SETTING_PDC_CLUSTER;
+        } else if (pdc == CONFIG_SETTING_PDC_CLUSTER) {
+//            pdc=CONFIG_SETTING_PDC_RADIO;
+            pdc=CONFIG_SETTING_OFF;
+        } else if (pdc == CONFIG_SETTING_PDC_RADIO) {
+            pdc=CONFIG_SETTING_PDC_BOTH;
+        } else {
+            pdc=CONFIG_SETTING_OFF;
+        }
+
+        ConfigSetSetting(CONFIG_SETTING_COMFORT_PDC, pdc);
+
+        char pdc_text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+        snprintf(
+            pdc_text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_PDC),
+            (
+                (pdc == CONFIG_SETTING_OFF) ? LocaleGetText(LOCALE_STRING_OFF):
+                (pdc == CONFIG_SETTING_PDC_CLUSTER)? "Cluster":
+                (pdc == CONFIG_SETTING_PDC_RADIO)? "Screen":
+                "Dual"
+            )
+        );
+
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_PDC,
+            pdc_text,
+            0
+        );
+    } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
+        BMBTMenuSettings(context);
+    }
+    if (selectedIdx != BMBT_MENU_IDX_BACK) {
+        IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    }
+}
+
+static void BMBTSettingsUpdateComfortTime(BMBTContext_t *context, uint8_t selectedIdx)
+{
+    uint8_t timeSource = ConfigGetTimeSource();
+    if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE) {
+        switch (timeSource) {
+            case CONFIG_SETTING_OFF:
+                if (context->bt->type == BT_BTM_TYPE_BC127) {
+                    timeSource = CONFIG_SETTING_TIME_PHONE;
+                    BC127CommandAT(context->bt, "+CCLK?");
+                } else {
+                    timeSource = CONFIG_SETTING_TIME_GPS;
+                }
+                break;
+            case CONFIG_SETTING_TIME_PHONE:
+                timeSource = CONFIG_SETTING_TIME_GPS;
+                break;
+            case CONFIG_SETTING_TIME_GPS:
+            default:
+                timeSource = CONFIG_SETTING_OFF;
+        }
+        ConfigSetTimeSource(timeSource);
+
+        if (timeSource == CONFIG_SETTING_TIME_GPS) {
+            // calculate the default offset if not previously set and reasonable GPS & IKE times are available
+            uint8_t time_dst = ConfigGetTimeDST();
+            int16_t time_offset = ConfigGetTimeOffsetIndex();
+
+            if ((time_dst == 0) && (time_offset == 0) && (context->ibus->gpsDatetime != 0) && (context->ibus->localTime != 0)) {
+                LogDebug(LOG_SOURCE_UI, "Calc DST & Zone offsets, GPS: %s", ctime(&context->ibus->gpsDatetime));
+                LogDebug(LOG_SOURCE_UI, "Calc DST & Zone offsets, LOCAL: %s", ctime(&context->ibus->localTime));
+
+                struct tm *local_time = gmtime(&context->ibus->localTime);
+
+                if ((local_time->tm_hour!=0)||(local_time->tm_min!=0)) {
+
+                    uint8_t hour = local_time->tm_hour;
+                    uint8_t min = local_time->tm_min;
+
+                    local_time = gmtime(&context->ibus->gpsDatetime);
+
+                    local_time->tm_hour = hour;
+                    local_time->tm_min = min;
+
+                    if ((local_time->tm_mon>=3)&&(local_time->tm_mon<=9)) {
+                        // assume Apr to Oct is summer time for sake of preset of DST
+                        time_dst = CONFIG_SETTING_TIME_DST;
+                        local_time->tm_hour -= 1;
+                    }
+
+                    time_t localTime = mktime(local_time);
+
+                    time_offset = (difftime(localTime,context->ibus->gpsDatetime) / 60);
+
+                    if (time_offset > 12*60) {
+                        time_offset -= 24*60;
+                    } else if (time_offset < -12*60) {
+                        time_offset += 24*60;
+                    }
+                    LogDebug(LOG_SOURCE_UI, "Calc DST & Zone offsets, DST=%d, OFFSET=%+d min", (time_dst==CONFIG_SETTING_TIME_DST), time_offset);
+
+                    ConfigSetTimeOffset(time_offset);
+                    ConfigSetTimeDST(time_dst);
+                }
+            }
+        }
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) {
+        uint8_t dst = ConfigGetTimeDST();
+        if (dst == CONFIG_SETTING_OFF) {
+            dst = CONFIG_SETTING_TIME_DST;
+        } else {
+            dst = CONFIG_SETTING_OFF;
+        }
+        ConfigSetTimeDST(dst);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) {
+        uint8_t offset = ConfigGetTimeOffsetIndex();
+        if (offset<31) {
+            offset++;
+        } else {
+            offset = 1;
+        }
+        ConfigSetTimeOffsetIndex(offset);
+    } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
+        BMBTMenuSettingsComfort(context);
+    }
+
+    if (selectedIdx != BMBT_MENU_IDX_BACK) {
+        BMBTMenuSettingsComfortTime(context);
+    }
+
+     if (((selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_OFFSET) ||
+        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_DST) ||
+        (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_TIME_SOURCE)) &&
+        (timeSource == CONFIG_SETTING_TIME_GPS) &&
+        (context->ibus->gpsDatetime != 0)) {
+
+        EventTriggerCallback(
+            IBUS_EVENT_NAV_DATETIME_UPDATE,
+            NULL
+        );
+    }
+}
+
+static void BMBTSettingsUpdateComfortNavi(BMBTContext_t *context, uint8_t selectedIdx)
+{
+    if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_AUTOZOOM) {
         uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
         autozoom++;
         if (autozoom >= IBUS_SES_ZOOM_LEVELS) {
@@ -1455,7 +1864,7 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
                 autoZoomText,
                 BMBT_MENU_STRING_MAX_SIZE,
                 LocaleGetText(LOCALE_STRING_AUTOZOOM),
-                "Off"
+                LocaleGetText(LOCALE_STRING_OFF)
             );
         } else {
             if (ConfigGetDistUnit() == 0) {
@@ -1475,11 +1884,31 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             }
         }
         BMBTGTWriteIndex(context, selectedIdx, autoZoomText, 0);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_MAP) {
+        uint8_t navi_config = ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI);
+        uint8_t map_config = navi_config & 0x0F;
+        map_config++;
+        if ((map_config>CONFIG_SETTING_NAVI_MAP_TIME_10) || (map_config>0x0F)) {
+            map_config = 0;
+        }
+        ConfigSetSetting(CONFIG_SETTING_COMFORT_NAVI, ((navi_config & 0xF0) | map_config));
+        context->mapShown = 0;
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_SILENT) {
+        uint8_t navi_config = ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI) ^ CONFIG_SETTING_NAVI_SILENT;
+        ConfigSetSetting(CONFIG_SETTING_COMFORT_NAVI, navi_config );
+        if ((navi_config & CONFIG_SETTING_NAVI_SILENT) == CONFIG_SETTING_NAVI_SILENT) {
+            context->naviSilenced = 1;
+            IBusCommandSESSilentNavigation(context->ibus);
+        }
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_NAVI_RANGE) {
+        uint8_t navi_config = ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI);
+        ConfigSetSetting(CONFIG_SETTING_COMFORT_NAVI, (navi_config ^ CONFIG_SETTING_NAVI_ROUTE_RANGE));
+        context->rangeNavi = 0;
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
-        BMBTMenuSettings(context);
+        BMBTMenuSettingsComfort(context);
     }
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
-        BMBTGTBufferFlush(context);
+        BMBTMenuSettingsComfortNavi(context);
     }
 }
 
@@ -1488,19 +1917,19 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
     if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING_HFP) {
         uint8_t value = ConfigGetSetting(CONFIG_SETTING_HFP);
         if (context->bt->type == BT_BTM_TYPE_BC127) {
-            if (value == 0x00) {
+            if (value == CONFIG_SETTING_OFF) {
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
-                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
                 BC127CommandProfileOpen(context->bt, "HFP");
+                BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
             } else {
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
                 BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             }
         } else {
-            if (value == 0x01) {
+            if (value == CONFIG_SETTING_ON) {
                 BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
-                ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             } else {
                 BTPairedDevice_t *device = 0;
@@ -1518,7 +1947,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                         BM83_DATA_LINK_BACK_PROFILES_HF
                     );
                 }
-                ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
+                ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
             }
         }
@@ -1663,6 +2092,9 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x00) {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x01);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_DASHBOARD), 0);
+        } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x01){
+            ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x02);
+            BMBTGTWriteIndex(context, selectedIdx, "Menu: CarPlay", 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x00);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_MAIN), 0);
@@ -1695,11 +2127,11 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             ConfigSetTempDisplay(CONFIG_SETTING_OFF);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OFF), 0);
         }
-    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC) {
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC) {
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC) == CONFIG_SETTING_ON) {
             BMBTGTWriteIndex(
                 context,
-                BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
+                BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC,
                 LocaleGetText(LOCALE_STRING_DASH_OBC_OFF),
                 0
             );
@@ -1710,7 +2142,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         } else {
             BMBTGTWriteIndex(
                 context,
-                BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC,
+                BMBT_MENU_IDX_SETTINGS_UI_DASH_OBC,
                 LocaleGetText(LOCALE_STRING_DASH_OBC_ON),
                 0
             );
@@ -1918,14 +2350,17 @@ void BMBTBTReady(void *ctx, uint8_t *tmp)
 void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
+    
     if (context->status.playerMode == BMBT_MODE_ACTIVE) {
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_PlayPause ||
             pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Num1
         ) {
-            if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
-                BTCommandPause(context->bt);
-            } else {
-                BTCommandPlay(context->bt);
+            if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Num1 || context->bt->carPlay != 1) {
+                if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
+                    BTCommandPause(context->bt);
+                } else {
+                    BTCommandPlay(context->bt);
+                }
             }
         }
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Knob) {
@@ -1946,6 +2381,15 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                     if (context->ibus->moduleStatus.NAV == 1) {
                         IBusCommandRADDisableMenu(context->ibus);
                     }
+                    if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
+                        context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
+                    ) {
+                        BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+                    } else {
+                        BMBTMainAreaRefresh(context);
+                    }
+                    BMBTTriggerWriteHeader(context);
+                    BMBTTriggerWriteMenu(context);
                 } else {
                     context->status.displayMode = BMBT_DISPLAY_OFF;
                 }
@@ -1956,14 +2400,24 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
         }
         // Handle the SEL and Info buttons gracefully
         if (pkt[3] == IBUS_CMD_BMBT_BUTTON0 && pkt[1] == 0x05) {
-            if (pkt[5] == IBUS_DEVICE_BMBT_Button_Info) {
+            if (pkt[IBUS_PKT_DB2] == IBUS_DEVICE_BMBT_Button_Info) {
                 context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
-            } else if (pkt[5] == IBUS_DEVICE_BMBT_Button_SEL) {
+                context->bt->carPlay = 0;
+                IBusCommandCarplayDisplay(context->ibus,0);
+            } else if (pkt[IBUS_PKT_DB2] == IBUS_DEVICE_BMBT_Button_SEL) {
+                if (context->status.displayMode != BMBT_DISPLAY_EXTERNAL) {
+                    context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
+                }
+            }
+        } else if (pkt[3] == IBUS_CMD_BMBT_BUTTON1 && pkt[1] == 0x04) {
+            if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TONE) {
                 context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
+                IBusCommandCarplayDisplay(context->ibus,0);
             }
         }
     }
     // Handle calls at any time
+/*
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
             if (context->bt->callStatus == BT_CALL_ACTIVE) {
@@ -1979,6 +2433,20 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
             BTCommandToggleVoiceRecognition(context->bt);
         }
     }
+*/
+
+    if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
+        if (context->bt->carPlay == 1) {
+            context->bt->carPlay = 0;
+            IBusCommandCarplayDisplay(context->ibus, 0);
+        } else {
+            context->bt->carPlay = 1;
+            context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
+            IBusCommandCarplayDisplay(context->ibus, 1);
+        }
+    }
+
+
 }
 
 /**
@@ -2070,7 +2538,7 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
 void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[5] == 0x0C) {
+    if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[IBUS_PKT_DB2] == 0x0C) {
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
             IBusCommandTELSetGTDisplayMenu(context->ibus);
             IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
@@ -2081,7 +2549,7 @@ void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
 /**
  * BMBTIKESpeedRPMUpdate()
  *     Description:
- *         Handle Map Auto Zoom as the speed changes
+ *         Handle Map Auto Zoom and Auto-Map as the speed changes
  *     Params:
  *         void *context - A void pointer to the BMBTContext_t struct
  *         uint8_t *pkt - A pointer to the data packet
@@ -2091,47 +2559,105 @@ void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
 void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
+    uint16_t speed = pkt[IBUS_PKT_DB1] * 2;
+    uint32_t now = TimerGetMillis();
 
     uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
-    if (autozoom == CONFIG_SETTING_OFF) {
-        return;
-    }
-    uint16_t speed = pkt[IBUS_PKT_DB1] * 2;
-    uint8_t zoomLevel;
+    if (autozoom != CONFIG_SETTING_OFF) {
+        uint8_t zoomLevel;
 
-    if (autozoom == 1) {
-        zoomLevel = 0;
-    } else if (autozoom >= IBUS_SES_ZOOM_LEVELS - 1) {
-        zoomLevel = IBUS_SES_ZOOM_LEVELS - 1;
-    } else {
-        zoomLevel = autozoom;
-    }
-
-    while (zoomLevel < IBUS_SES_ZOOM_LEVELS - 1 &&
-           speed > navZoomSpeeds[zoomLevel]
-    ) {
-        zoomLevel++;
-    }
-
-    if (context->navZoom > zoomLevel &&
-        (speed + BMBT_AUTOZOOM_TOLERANCE) > navZoomSpeeds[context->navZoom - 1]
-    ) {
-        zoomLevel = context->navZoom;
-    } else if (context->navZoom != zoomLevel) {
-        uint32_t now = TimerGetMillis();
-        LogDebug(
-            LOG_SOURCE_UI,
-            "Autozoom: kmh=%i, currentZoom=%i, wishedZoom=%i, timeDiff=%lu",
-            speed,
-            context->navZoom,
-            zoomLevel,
-            now - context->navZoomTime
-        );
-        if (context->navZoomTime + BMBT_AUTOZOOM_DELAY < now) {
-            context->navZoom = zoomLevel;
-            context->navZoomTime = now;
-            IBusCommandSESSetMapZoom(context->ibus, zoomLevel);
+        if (autozoom == 1) {
+            zoomLevel = 0;
+        } else if (autozoom >= IBUS_SES_ZOOM_LEVELS - 1) {
+            zoomLevel = IBUS_SES_ZOOM_LEVELS - 1;
+        } else {
+            zoomLevel = autozoom;
         }
+
+        while (zoomLevel < IBUS_SES_ZOOM_LEVELS - 1 &&
+               speed > navZoomSpeeds[zoomLevel]
+        ) {
+            zoomLevel++;
+        }
+
+        if (context->navZoom > zoomLevel &&
+            (speed + BMBT_AUTOZOOM_TOLERANCE) > navZoomSpeeds[context->navZoom - 1]
+        ) {
+            zoomLevel = context->navZoom;
+        } else if (context->navZoom != zoomLevel) {
+            LogDebug(
+                LOG_SOURCE_UI,
+                "Autozoom: kmh=%i, currentZoom=%i, wishedZoom=%i, timeDiff=%lu",
+                speed,
+                context->navZoom,
+                zoomLevel,
+                now - context->navZoomTime
+            );
+            if (context->navZoomTime + BMBT_AUTOZOOM_DELAY < now) {
+                context->navZoom = zoomLevel;
+                context->navZoomTime = now;
+                IBusCommandSESSetMapZoom(context->ibus, zoomLevel);
+            }
+        }
+    }
+
+    uint8_t automap = ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI);
+
+    if (((automap & CONFIG_SETTING_NAVI_SILENT) == CONFIG_SETTING_NAVI_SILENT) &&
+        (context->naviSilenced == 0)
+    ) {
+        context->naviSilenced = 1;
+        IBusCommandSESSilentNavigation(context->ibus);
+    }
+
+    automap = automap & 0x0F;
+    if ((automap != CONFIG_SETTING_OFF) &&
+        (context->mapShown == 0) &&
+        ((context->menu == BMBT_MENU_MAIN) ||
+            (context->menu == BMBT_MENU_DASHBOARD) ||
+            (context->menu == BMBT_MENU_DASHBOARD_FRESH)
+        )) {
+        if (automap == CONFIG_SETTING_NAVI_MAP_DEFAULT ||
+            ((automap == CONFIG_SETTING_NAVI_MAP_SPEED_20) && (speed >= 20)) ||
+            ((automap == CONFIG_SETTING_NAVI_MAP_SPEED_30) && (speed >= 30)) ||
+            ((automap == CONFIG_SETTING_NAVI_MAP_SPEED_50) && (speed >= 50)) ||
+            ((automap == CONFIG_SETTING_NAVI_MAP_TIME_5) && (now >= (uint32_t) 5*60*1000)) ||
+            ((automap == CONFIG_SETTING_NAVI_MAP_TIME_10) && (now >= (uint32_t) 10*60*1000))
+        ) {
+            context->mapShown = 1;
+            IBusCommandSESShowMap(context->ibus);
+        }
+    }
+}
+
+/**
+ * BMBTRangeUpdate()
+ *     Description:
+ *         Handle Display of Routing to Fuel Station on low range
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         uint16_t *range - A pointer to the range value
+ *     Returns:
+ *         void
+ */
+void BMBTRangeUpdate(void *ctx, uint8_t *p_range)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    uint8_t range = *p_range;
+
+    LogDebug(
+        LOG_SOURCE_SYSTEM,
+        "Range info: %i km",
+        range
+    );
+
+    uint8_t navi_config = ConfigGetSetting(CONFIG_SETTING_COMFORT_NAVI) & CONFIG_SETTING_NAVI_ROUTE_RANGE;
+    if ((navi_config == CONFIG_SETTING_NAVI_ROUTE_RANGE) &&
+        (range < 15) &&
+        (context->rangeNavi == 0)
+    ) {
+        context->rangeNavi = 1;
+        IBusCommandSESRouteFuel(context->ibus);
     }
 }
 
@@ -2148,7 +2674,9 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
  */
 void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
 {
+    
     BMBTContext_t *context = (BMBTContext_t *) ctx;
+    LogDebug(LOG_SOURCE_UI, "Monitor Status: src=%02X len=%02X dst=%02X cmd=%02X db1=%02X, dm=%02x", pkt[IBUS_PKT_SRC], pkt[IBUS_PKT_DST], pkt[IBUS_PKT_CMD], pkt[IBUS_PKT_DB1], context->status.displayMode);
     if (pkt[IBUS_PKT_LEN] != 0x04) {
         return;
     }
@@ -2156,10 +2684,15 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
         (pkt[IBUS_PKT_DB1] & 0xF) != 0
     ) {
         // Sent after pin 17 is left floating again
+        LogDebug(LOG_SOURCE_UI,"MonStatus Leaving CarPlay");
         context->status.displayMode = BMBT_DISPLAY_ON;
-    } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 0) {
+        context->bt->carPlay = 0;
+
+    } else if ((pkt[IBUS_PKT_DB1] & 0x0F) != 0) {
         // Entering Reverse Camera mode
-        context->status.displayMode = BMBT_DISPLAY_REVERSE_CAM;
+        LogDebug(LOG_SOURCE_UI,"MonStatus Entering CarPlay");
+        context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
+        context->bt->carPlay = 1;
     }
 }
 
@@ -2185,7 +2718,7 @@ void BMBTIBusGTMenuBufferUpdate(void *ctx, uint8_t *pkt)
 void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    uint8_t selectedIdx = (uint8_t) pkt[6];
+    uint8_t selectedIdx = (uint8_t) pkt[IBUS_PKT_DB3];
     if (context->status.radType == IBUS_RADIO_TYPE_BM24) {
         if (selectedIdx < 10) {
             selectedIdx = 0xFF;
@@ -2282,6 +2815,10 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
             BMBTSettingsUpdateAudio(context, selectedIdx);
         } else if (context->menu == BMBT_MENU_SETTINGS_COMFORT) {
             BMBTSettingsUpdateComfort(context, selectedIdx);
+        } else if (context->menu == BMBT_MENU_SETTINGS_COMFORT_TIME) {
+            BMBTSettingsUpdateComfortTime(context, selectedIdx);
+        } else if (context->menu == BMBT_MENU_SETTINGS_COMFORT_NAVI) {
+            BMBTSettingsUpdateComfortNavi(context, selectedIdx);
         } else if (context->menu == BMBT_MENU_SETTINGS_CALLING) {
             BMBTSettingsUpdateCalling(context, selectedIdx);
         } else if (context->menu == BMBT_MENU_SETTINGS_UI) {
@@ -2435,6 +2972,7 @@ void BMBTRADDisplayMenu(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
+    IBusCommandCarplayDisplay(context->ibus, 0);
 }
 
 /**
@@ -2502,7 +3040,20 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             idx--;
         }
         text[textLen] = '\0';
-        if (UtilsStricmp("NO TAPE", text) == 0 ||
+        if (context->bt->carPlay == 1) {
+
+            LogDebug(LOG_SOURCE_UI,"rewrite cp header?");
+            context->status.displayMode = BMBT_DISPLAY_EXTERNAL;
+            if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
+                context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
+            ) {
+                BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+            } else {
+                BMBTMainAreaRefresh(context);
+            }
+            BMBTTriggerWriteHeader(context);
+            BMBTTriggerWriteMenu(context);
+        } else if (UtilsStricmp("NO TAPE", text) == 0 ||
             UtilsStricmp("NO CD", text) == 0
         ) {
             context->status.displayMode = BMBT_DISPLAY_OFF;
@@ -2551,7 +3102,23 @@ void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
             } else {
                 context->menu = BMBT_MENU_NONE;
             }
-            context->status.displayMode = BMBT_DISPLAY_OFF;
+
+            if (context->status.displayMode != BMBT_DISPLAY_EXTERNAL) {
+                context->status.displayMode = BMBT_DISPLAY_OFF;
+                LogDebug(LOG_SOURCE_UI,"Display OFF in BMBTRADScreenModeRequest");
+
+/*
+                if ((context->bt->callStatus != BT_CALL_INACTIVE)||(context->bt->scoStatus == BT_CALL_SCO_OPEN)) {
+                    LogDebug(LOG_SOURCE_UI,"Display to CP - voice/call in BMBTRADScreenModeRequest");
+                    context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
+                    context->bt->carPlay = 1;
+                    IBusCommandCarplayDisplay(context->ibus,1);
+                } else {
+                    context->bt->carPlay = 0;
+                    IBusCommandCarplayDisplay(context->ibus,0);
+                }
+*/
+            }
         }
         if (pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
             context->status.navState == BMBT_NAV_STATE_BOOT
@@ -2569,7 +3136,13 @@ void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
         } else if (pkt[IBUS_PKT_DB1] == IBUS_GT_TONE_MENU_OFF ||
              pkt[IBUS_PKT_DB1] == IBUS_GT_SEL_MENU_OFF
         ) {
-            context->status.displayMode = BMBT_DISPLAY_ON;
+            if (context->bt->carPlay != 1) {
+                context->status.displayMode = BMBT_DISPLAY_ON;
+            } else {
+                context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
+                context->bt->carPlay = 1;
+                IBusCommandCarplayDisplay(context->ibus,1);
+            }
         }
     }
 }
@@ -2610,6 +3183,49 @@ void BMBTTVStatusUpdate(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     context->status.tvStatus = pkt[IBUS_PKT_DB1];
+}
+
+/**
+ * BMBTMonitorControl()
+ *     Description:
+ *         Listen for the GT/VM -> BMBT Television status messages
+ *         to return from CarPlay / Reverse mode
+ *     Params:
+ *         void *ctx - The context
+ *         uint8_t *pkt - The IBus Message received
+ *     Returns:
+ *         void
+ */
+void BMBTMonitorControl(void *ctx, uint8_t *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    if (pkt[IBUS_PKT_DB1] == 0x12 && pkt[IBUS_PKT_DB2] == 0x11) {
+        if (context->status.displayMode == BMBT_DISPLAY_EXTERNAL)
+        {
+            LogDebug(LOG_SOURCE_UI,"MonControl Leaving CarPlay");
+            context->status.displayMode = BMBT_DISPLAY_ON;
+            context->bt->carPlay = 0;
+            if (context->menu != BMBT_MENU_DASHBOARD_FRESH) {
+                context->menu = BMBT_MENU_NONE;
+            }
+            if (context->ibus->moduleStatus.NAV == 1) {
+                IBusCommandRADDisableMenu(context->ibus);
+            }
+            if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
+                context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
+            ) {
+                BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+            } else {
+                BMBTMainAreaRefresh(context);
+            }
+            BMBTTriggerWriteHeader(context);
+            BMBTTriggerWriteMenu(context);
+        } else if (context->status.displayMode == BMBT_DISPLAY_EXTERNAL_INIT) {
+            LogDebug(LOG_SOURCE_UI,"MonControl Entering CarPlay");
+            context->status.displayMode = BMBT_DISPLAY_EXTERNAL;
+            context->bt->carPlay = 1;
+        }
+    }
 }
 
 /**
@@ -2655,6 +3271,12 @@ void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
             break;
         case 6: // FR
             lang = CONFIG_SETTING_LANGUAGE_FRENCH;
+            break;
+        case 9: // NL
+            lang = CONFIG_SETTING_LANGUAGE_DUTCH;
+            break;
+        case 10: // RU
+            lang = CONFIG_SETTING_LANGUAGE_RUSSIAN;
             break;
         case 1: // GB
         case 2: // US
@@ -2721,7 +3343,7 @@ void BMBTTimerMenuWrite(void *ctx)
     ) {
         if (context->timerMenuIntervals != BMBT_MENU_HEADER_TIMER_OFF) {
             uint16_t time = context->timerMenuIntervals * BMBT_MENU_TIMER_WRITE_INT;
-            if (time == BMBT_MENU_TIMER_WRITE_TIMEOUT) {
+            if (time >= BMBT_MENU_TIMER_WRITE_TIMEOUT) {
                 switch (context->menu) {
                     case BMBT_MENU_MAIN:
                         BMBTMenuMain(context);
@@ -2745,6 +3367,9 @@ void BMBTTimerMenuWrite(void *ctx)
                     case BMBT_MENU_SETTINGS_COMFORT:
                         BMBTMenuSettingsComfort(context);
                         break;
+                    case BMBT_MENU_SETTINGS_COMFORT_TIME:
+                        BMBTMenuSettingsComfortTime(context);
+                        break;
                     case BMBT_MENU_SETTINGS_CALLING:
                         BMBTMenuSettingsCalling(context);
                         break;
@@ -2752,7 +3377,7 @@ void BMBTTimerMenuWrite(void *ctx)
                         BMBTMenuSettingsUI(context);
                         break;
                     case BMBT_MENU_NONE:
-                        if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x01) {
+                        if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) != 0x00) {
                             BMBTMenuDashboard(context);
                         } else {
                             BMBTMenuMain(context);
@@ -2830,3 +3455,50 @@ void BMBTTimerScrollDisplay(void *ctx)
         }
     }
 }
+
+/**
+ * BMBTLogStatus()
+ *     Description:
+ *         Log current Context Status
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *     Returns:
+ *         void
+ */
+void BMBTLogStatus(void *ctx)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+
+    LogRaw("BMBT:\r\n");
+    LogRaw("  Menu:         %s (%i, 0x%02X)\r\n",
+        (context->menu == BMBT_MENU_NONE)?"BMBT_MENU_NONE":
+        (context->menu == BMBT_MENU_MAIN)?"BMBT_MENU_MAIN":
+        (context->menu == BMBT_MENU_DASHBOARD)?"BMBT_MENU_DASHBOARD":
+        (context->menu == BMBT_MENU_DASHBOARD_FRESH)?"BMBT_MENU_DASHBOARD_FRESH":
+        (context->menu == BMBT_MENU_DEVICE_SELECTION)?"BMBT_MENU_DEVICE_SELECTION":
+        (context->menu == BMBT_MENU_SETTINGS)?"BMBT_MENU_SETTINGS":
+        (context->menu == BMBT_MENU_SETTINGS_ABOUT)?"BMBT_MENU_SETTINGS_ABOUT":
+        (context->menu == BMBT_MENU_SETTINGS_AUDIO)?"BMBT_MENU_SETTINGS_AUDIO":
+        (context->menu == BMBT_MENU_SETTINGS_COMFORT)?"BMBT_MENU_SETTINGS_COMFORT":
+        (context->menu == BMBT_MENU_SETTINGS_COMFORT_TIME)?"BMBT_MENU_SETTINGS_COMFORT_TIME":
+        (context->menu == BMBT_MENU_SETTINGS_COMFORT_NAVI)?"BMBT_MENU_SETTINGS_COMFORT_NAVI":
+        (context->menu == BMBT_MENU_SETTINGS_CALLING)?"BMBT_MENU_SETTINGS_CALLING":
+        (context->menu == BMBT_MENU_SETTINGS_UI)?"BMBT_MENU_SETTINGS_UI":
+        "invalid",
+        context->menu, context->menu);
+    LogRaw("  Player Mode:  %s (%i, 0x%02X)\r\n",
+        (context->status.playerMode == BMBT_MODE_ACTIVE)?"BMBT_MODE_ACTIVE":
+        "BMBT_MODE_INACTIVE",
+        context->status.playerMode, context->status.playerMode);
+    LogRaw("  Display Mode: %s (%i, 0x%02X)\r\n",
+        (context->status.displayMode == BMBT_DISPLAY_OFF)?"BMBT_DISPLAY_OFF":
+        (context->status.displayMode == BMBT_DISPLAY_TONE_SEL_INFO)?"BMBT_DISPLAY_TONE_SEL_INFO":
+        (context->status.displayMode == BMBT_DISPLAY_EXTERNAL_INIT)?"BMBT_DISPLAY_EXTERNAL_INIT":
+        (context->status.displayMode == BMBT_DISPLAY_EXTERNAL)?"BMBT_DISPLAY_EXTERNAL":
+        (context->status.displayMode == BMBT_DISPLAY_ON)?"BMBT_DISPLAY_ON":
+        "invalid",
+        context->status.displayMode, context->status.displayMode);
+    LogRaw("  Nav State:    %s (%i, 0x%02X)\r\n", context->status.navState?"on":"off", context->status.navState, context->status.navState);
+    LogRaw("  TV status:    %s (%i, 0x%02X)\r\n", context->status.tvStatus?"on":"off", context->status.tvStatus, context->status.tvStatus);
+}
+

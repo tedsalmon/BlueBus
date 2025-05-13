@@ -26,8 +26,9 @@
 #define MENU_SINGLELINE_SETTING_IDX_PARK_LIGHTS 10
 #define MENU_SINGLELINE_SETTING_IDX_COMFORT_LOCKS 11
 #define MENU_SINGLELINE_SETTING_IDX_COMFORT_UNLOCK 12
-#define MENU_SINGLELINE_SETTING_IDX_ABOUT 13
-#define MENU_SINGLELINE_SETTING_IDX_PAIRINGS 14
+#define MENU_SINGLELINE_SETTING_IDX_COMFORT_PDC 13
+#define MENU_SINGLELINE_SETTING_IDX_ABOUT 14
+#define MENU_SINGLELINE_SETTING_IDX_PAIRINGS 15
 
 #define MENU_SINGLELINE_SETTING_MODE_SCROLL_SETTINGS 1
 #define MENU_SINGLELINE_SETTING_MODE_SCROLL_VALUES 2
@@ -48,8 +49,8 @@
  * MenuSingleLineContext_t
  */
 typedef struct MenuSingleLineContext_t {
-    IBus_t *ibus;
     BT_t *bt;
+    IBus_t *ibus;
     void (*uiUpdateFunc)(void *, const char *, int8_t, uint8_t);
     void *uiContext;
     uint8_t settingIdx;

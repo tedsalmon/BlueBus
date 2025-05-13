@@ -5,6 +5,7 @@
  *     This implements the I-Bus
  */
 #include "ibus.h"
+#include "event.h"
 #include "config.h"
 
 static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
@@ -56,6 +57,8 @@ IBus_t IBusInit()
     memset(ibus.telematicsStreet, 0, sizeof(ibus.telematicsStreet));
     memset(ibus.telematicsLatitude, 0, sizeof(ibus.telematicsLatitude));
     memset(ibus.telematicsLongtitude, 0, sizeof(ibus.telematicsLongtitude));
+    ibus.gpsDatetime = 0;
+    ibus.localTime = 0;
     // Instantiate all our sensors to a value of 255 / 0xFF by default
     IBusPDCSensorStatus_t pdcSensors;
     memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
@@ -357,7 +360,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_IGN_STATUS_RESP) {
-        uint8_t ignitionStatus = pkt[4];
+        uint8_t ignitionStatus = pkt[IBUS_PKT_DB1];
         if (ibus->ignitionStatus != IBUS_IGNITION_KL99) {
             // The order of the items below should not be changed,
             // otherwise listeners will not know if the ignition status
@@ -423,6 +426,46 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
 
             uint8_t valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+        } else if (property == IBUS_IKE_OBC_PROPERTY_TIME) {
+            // 15:31,  3:31PM,
+            struct tm *local_time = gmtime(&ibus->localTime);
+
+            local_time->tm_hour = ((pkt[6]>='0' && pkt[6]<='9')?(pkt[6]-'0'):0) * 10 + ((pkt[7]>='0' && pkt[7]<='9')?(pkt[7]-'0'):0);
+            local_time->tm_min = ((pkt[9]>='0' && pkt[9]<='9')?(pkt[9]-'0'):0) * 10 + ((pkt[10]>='0' && pkt[10]<='9')?(pkt[10]-'0'):0);
+
+            if ((pkt[11] == 'P' || pkt[11] == 'p') && (local_time->tm_hour < 12)) {
+                local_time->tm_hour += 12;
+            }
+            if ((pkt[11] == 'A' || pkt[11] == 'a') && (local_time->tm_hour == 12)) {
+                local_time->tm_hour -= 12;
+            }
+
+            ibus->localTime = mktime(local_time);
+        } else if (property == IBUS_IKE_OBC_PROPERTY_DATE) {
+            // 17.01.2020, 01/17/2020, 02.01.2023
+            struct tm *local_time = gmtime(&ibus->localTime);
+            uint8_t v1 = (pkt[6]-'0') * 10 + (pkt[7]-'0');
+            uint8_t v2 = (pkt[9]-'0') * 10 + (pkt[10]-'0');
+            local_time->tm_year = (pkt[12]-'0') * 1000 + (pkt[13]-'0') * 100 + (pkt[14]-'0') * 10 + (pkt[15]-'0') - 1900;
+
+            if (pkt[8] == '/') {
+                local_time->tm_mon = v1 - 1;
+                local_time->tm_mday = v2;
+            } else {
+                local_time->tm_mon = v2 - 1;
+                local_time->tm_mday = v1;
+            }
+
+            if (
+                (local_time->tm_year >= 123) &&
+                (local_time->tm_year < 223) &&
+                (local_time->tm_mon >= 0) &&
+                (local_time->tm_mon <= 11) &&
+                (local_time->tm_mday >= 1) &&
+                (local_time->tm_mday <= 31)
+            ) {
+                ibus->localTime = mktime(local_time);
+            }
         }
     }
 }
@@ -541,29 +584,6 @@ static void IBusHandleMIDMessage(IBus_t *ibus, uint8_t *pkt)
     }
 }
 
-/**
- * IBusHandleNAVMessage()
- *     Description:
- *         Handle any messages received from the non-Jap Navigation Computer
- *     Params:
- *         uint8_t *pkt - The frame received on the IBus
- *     Returns:
- *         None
- */
-static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
-{
-    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
-        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
-    }
-    // It is imperative that we know if the NAV is on the bus
-    // so if we see any message from it, we must consider it "found"
-    if (ibus->moduleStatus.NAV == 0) {
-        ibus->moduleStatus.NAV = 1;
-        uint8_t detectedModule = pkt[IBUS_PKT_SRC];
-        EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
-    }
-}
-
 static void IBusHandlePDCMessage(IBus_t *ibus, uint8_t *pkt)
 {
     // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
@@ -614,11 +634,11 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
             EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
         } else if (pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_REQUEST) {
-            if (pkt[4] == IBUS_CDC_CMD_STOP_PLAYING) {
+            if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_STOP_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
-            } else if (pkt[4] == IBUS_CDC_CMD_PAUSE_PLAYING) {
+            } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_PAUSE_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_PAUSE;
-            } else if (pkt[4] == IBUS_CDC_CMD_START_PLAYING) {
+            } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_START_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
             }
             EventTriggerCallback(IBUS_EVENT_CDStatusRequest, pkt);
@@ -683,7 +703,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_MID) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_WRITE_MID_DISPLAY) {
-            if (pkt[4] == 0xC0) {
+            if (pkt[IBUS_PKT_DB1] == 0xC0) {
                 EventTriggerCallback(IBUS_EVENT_RADMIDDisplayText, pkt);
             }
         } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_WRITE_MID_MENU) {
@@ -693,7 +713,52 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
     EventTriggerCallback(IBUS_EVENT_RAD_MESSAGE_RCV, pkt);
 }
 
-static void IBusHandleTELMessage(IBus_t *ibus, uint8_t *pkt)
+/**
+ * IBusHandleNAVMessage()
+ *     Description:
+ *         Handle any messages received from the non-Jap Navigation Computer
+ *     Params:
+ *         uint8_t *pkt - The frame received on the IBus
+ *     Returns:
+ *         None
+ */
+
+static void IBusHandleNAVMessage(IBus_t *ibus, unsigned char *pkt)
+{
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
+    }
+    // It is imperative that we know if the NAV is on the bus
+    // so if we see any message from it, we must consider it "found"
+    if (ibus->moduleStatus.NAV == 0) {
+        ibus->moduleStatus.NAV = 1;
+        uint8_t detectedModule = pkt[IBUS_PKT_SRC];
+        EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
+    }
+
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_GPSTIME) {
+        struct tm gps_time = {0};
+        gps_time.tm_hour = UTILS_UNPACK_8BCD(pkt[5]);
+        gps_time.tm_min = UTILS_UNPACK_8BCD(pkt[6]);
+        gps_time.tm_sec = 0;
+        gps_time.tm_mday = UTILS_UNPACK_8BCD(pkt[7]);
+        gps_time.tm_mon = UTILS_UNPACK_8BCD(pkt[9]) - 1;
+        gps_time.tm_year = (
+            UTILS_UNPACK_8BCD(pkt[10]) * 100 + UTILS_UNPACK_8BCD(pkt[11]) - 1900
+        );
+        // Account for the GPS epoch problem
+        gps_time.tm_mday += 1024 * 7;
+
+        ibus->gpsDatetime = mktime(&gps_time);
+
+        EventTriggerCallback(
+            IBUS_EVENT_NAV_DATETIME_UPDATE,
+            pkt
+        );
+    }
+}
+
+static void IBusHandleTELMessage(IBus_t *ibus, unsigned char *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
         EventTriggerCallback(IBUS_EVENT_ModuleStatusRequest, pkt);
@@ -771,6 +836,8 @@ static void IBusHandleVMMessage(IBus_t *ibus, uint8_t *pkt)
             ibus->gtVersion = IBUS_GT_MKII;
         }
         EventTriggerCallback(IBUS_EVENT_VM_IDENT_RESP, &ibus->gtVersion);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
+        EventTriggerCallback(IBUS_EVENT_MONITOR_CONTROL, pkt);        
     }
 }
 
@@ -994,6 +1061,17 @@ void IBusSendCommand(
 ) {
     uint8_t idx, msgSize;
     msgSize = dataSize + 4;
+
+    if (msgSize > IBUS_MAX_MSG_LENGTH) {
+        long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+        LogRawDebug(
+            LOG_SOURCE_IBUS,
+            "[%llu] ERROR: IBus: MSG too long.\r\n",
+            ts
+        );
+        return;
+    }
+
     uint8_t msg[msgSize];
     msg[0] = src;
     msg[1] = dataSize + 2;
@@ -1007,12 +1085,22 @@ void IBusSendCommand(
         crc ^= msg[idx];
     }
     msg[msgSize - 1] = crc;
+
     // Store the data into a buffer, so we can spread out their transmission
     memcpy(ibus->txBuffer[ibus->txBufferWriteIdx], msg, msgSize);
     if (ibus->txBufferWriteIdx + 1 == IBUS_TX_BUFFER_SIZE) {
         ibus->txBufferWriteIdx = 0;
     } else {
         ibus->txBufferWriteIdx++;
+    }
+
+    if (ibus->txBufferWriteIdx == ibus->txBufferReadIdx) {
+        long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+        LogRawDebug(
+            LOG_SOURCE_IBUS,
+            "[%llu] ERROR: IBus: TX Buffer Overflow.\r\n",
+            ts
+        );
     }
 }
 
@@ -2259,13 +2347,21 @@ void IBusCommandIKESetDate(IBus_t *ibus, uint8_t year, uint8_t mon, uint8_t day)
  */
 void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
 {
-    uint8_t len = strlen(message);
+    uint8_t len = 0;
+    if (message != 0) {
+        len = strlen(message);
+        if (len > 16) {
+            len = 16;
+        }
+    }
     uint8_t displayText[len + 3];
     memset(&displayText, 0, sizeof(displayText));
     displayText[0] = 0x23;
     displayText[1] = 0x42;
     displayText[2] = 0x32;
-    memcpy(displayText + 3, message, len);
+    if (len > 0) {
+        memcpy(displayText + 3, message, len);
+    }
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_TEL,
@@ -2967,7 +3063,7 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
 /**
  * IBusCommandSESSetMapZoom()
  *     Description:
- *        Set the Navigation Zoom level via SES commands
+ *        Set the Navigation Zoom level via SES command
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         uint8_t zoomLevel - The requested zoom level
@@ -2977,9 +3073,84 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
 void IBusCommandSESSetMapZoom(IBus_t *ibus, uint8_t zoomLevel)
 {
     uint8_t msg[] = {
-        0xAA,
-        0x10,
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_SETZOOM,
         IBUS_SES_NAV_ZOOM_CONSTANT[zoomLevel]
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESRouteFuel()
+ *     Description:
+ *        Find nearby Fuel Stations via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESRouteFuel(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_ROUTEFUEL,
+        0x03
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESSilentNavigation()
+ *     Description:
+ *        Disable Voice Guidance via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESSilentNavigation(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_SILENCE,
+        0x00
+    };
+    IBusSendCommand(
+        ibus,
+        IBUS_DEVICE_SES,
+        IBUS_DEVICE_NAVE,
+        msg,
+        3
+    );
+}
+
+/**
+ * IBusCommandSESShowMap()
+ *     Description:
+ *        Display Map via SES command
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSESShowMap(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_SES_CMD_NAV_CTRL,
+        IBUS_SES_DATA_NAV_CTRL_SHOWMAP,
+        0x00
     };
     IBusSendCommand(
         ibus,
@@ -3113,3 +3284,19 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, uint8_t index)
     memcpy(statusText + 3, text, textLength);
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
 }
+
+/**
+ * IBusCommandCarplayDisplay()
+ *     Description:
+ *        Send command to Carphonics CarPlay module
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t enable - 0 = CP off, 1 = CP on, 0xFF = CP don't handle display switch
+ *     Returns:
+ *         void
+ */
+void IBusCommandCarplayDisplay(IBus_t *ibus, uint8_t enable)
+{
+    uint8_t pkt[] = { IBUS_BLUEBUS_CMD_CARPLAY_COMMAND, IBUS_BLUEBUS_CMD_SET_STATUS, enable };
+    IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_VM, pkt, sizeof(pkt));
+ }
