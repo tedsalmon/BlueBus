@@ -82,6 +82,16 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     Context.naviSilenced = 0;
     Context.rangeNavi = 0;
 
+    if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02) {
+        Context.bt->carPlay = 1;
+        IBusCommandCarplayDisplay(Context.ibus, 1);
+    } else {
+        Context.bt->carPlay = 0;
+        uint8_t pkt[] = { 0x48, 0x08 };
+        IBusSendCommand(Context.ibus, IBUS_DEVICE_BMBT, IBUS_DEVICE_LOC, pkt, sizeof(pkt));
+        IBusCommandCarplayDisplay(Context.ibus, 0);
+    }
+
     EventRegisterCallback(
         BT_EVENT_DEVICE_CONNECTED,
         &BMBTBTDeviceConnected,
@@ -2678,7 +2688,7 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
         context->status.displayMode = BMBT_DISPLAY_ON;
         context->bt->carPlay = 0;
 
-    } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 0) {
+    } else if ((pkt[IBUS_PKT_DB1] & 0x0F) != 0) {
         // Entering Reverse Camera mode
         LogDebug(LOG_SOURCE_UI,"MonStatus Entering CarPlay");
         context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
