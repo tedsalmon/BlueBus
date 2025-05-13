@@ -211,10 +211,11 @@ static void IBusHandleGMMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
-    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
-               pkt[IBUS_PKT_LEN] == 0x0F
+    } else if (
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+        pkt[IBUS_PKT_LEN] == 0x0F
     ) {
-        uint8_t diagnosticIdx = pkt[9];
+        uint8_t diagnosticIdx = pkt[10];
         uint8_t moduleVariant = 0x00;
         LogRaw("\r\nIBus: GM DI: %02X\r\n", diagnosticIdx);
         if (diagnosticIdx < 0x20) {

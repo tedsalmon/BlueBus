@@ -389,16 +389,21 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         curStatus = IBUS_CDC_STAT_STOP;
         curFunction = IBUS_CDC_FUNC_NOT_PLAYING;
         // Return to non-S/PDIF input once told to stop playback, if enabled
-        if (ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC) == CONFIG_SETTING_DSP_INPUT_SPDIF) {
+        if (
+            ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC) == CONFIG_SETTING_DSP_INPUT_SPDIF &&
+            context->ibus->moduleStatus.DSP == 1
+        ) {
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
         }
-        if (context->ibus->ignitionStatus == IBUS_IGNITION_KL99 ||
+        if (
+            context->ibus->ignitionStatus == IBUS_IGNITION_KL99 ||
             ConfigGetSetting(CONFIG_SETTING_IGN_ALWAYS_ON) == CONFIG_SETTING_ON
         ) {
             IBusSetInternalIgnitionStatus(context->ibus, IBUS_IGNITION_OFF);
         }
-    } else if (requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
-               requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
+    } else if (
+        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
+        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
     ) {
         curFunction = context->ibus->cdChangerFunction;
         curStatus = IBUS_CDC_STAT_PLAYING;
@@ -537,13 +542,15 @@ void HandlerIBusDSPConfigSet(void *ctx, uint8_t *pkt)
         context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
         context->bt->callStatus == BT_CALL_INACTIVE
     ) {
-        if (pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
+        if (
+            pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_RADIO &&
             dspInput == CONFIG_SETTING_DSP_INPUT_SPDIF
         ) {
             // Set the Input to S/PDIF if we are overridden
             IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
         }
-        if (pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF &&
+        if (
+            pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF &&
             dspInput == CONFIG_SETTING_DSP_INPUT_ANALOG
         ) {
             // Set the Input to the radio if we are overridden
@@ -551,7 +558,8 @@ void HandlerIBusDSPConfigSet(void *ctx, uint8_t *pkt)
         }
     }
     // Identify the vehicle using S/PDIF so we can use additional features
-    if (pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF &&
+    if (
+        pkt[IBUS_PKT_DB1] == IBUS_DSP_CONFIG_SET_INPUT_SPDIF &&
         dspInput == CONFIG_SETTING_OFF
     ) {
         ConfigSetSetting(
@@ -750,9 +758,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             BTCommandDisconnect(context->bt);
             BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
             // Unlock the vehicle
-            if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_0 &&
-                context->gmState.doorsLocked == 1
-            ) {
+            if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_0) {
                 if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
                     IBusCommandGMDoorCenterLockButton(context->ibus);
                 } else if (
@@ -773,9 +779,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                    ignitionStatus == IBUS_IGNITION_KLR
         ) {
             // Unlock the vehicle
-            if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_1 &&
-                context->gmState.doorsLocked == 1
-            ) {
+            if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
                 if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
                     IBusCommandGMDoorCenterLockButton(context->ibus);
                 } else if (
@@ -882,10 +886,9 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t comfortLock = ConfigGetComfortLock();
     uint16_t speed = pkt[4] * 2;
-    if (comfortLock != CONFIG_SETTING_OFF &&
-        context->gmState.doorsLocked == 0x00
-    ) {
-        if ((comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM && speed >= 10) ||
+    if (comfortLock != CONFIG_SETTING_OFF) {
+        if (
+            (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM && speed >= 10) ||
             (comfortLock == CONFIG_SETTING_COMFORT_LOCK_20KM && speed >= 20)
         ) {
             if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
@@ -896,7 +899,8 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
         }
     }
     // Turn off the BMBT when the vehicle sets off
-    if (ConfigGetSetting(CONFIG_SETTING_MONITOR_OFF) == CONFIG_SETTING_ON &&
+    if (
+        ConfigGetSetting(CONFIG_SETTING_MONITOR_OFF) == CONFIG_SETTING_ON &&
         context->monitorStatus == HANDLER_MONITOR_STATUS_UNSET &&
         speed > 5
     ) {
@@ -1631,8 +1635,8 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
     if (
         ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF ||
         (
-            context->uiMode != CONFIG_UI_BMBT ||
-            context->uiMode != CONFIG_UI_MID ||
+            context->uiMode != CONFIG_UI_BMBT &&
+            context->uiMode != CONFIG_UI_MID &&
             context->uiMode != CONFIG_UI_MID_BMBT
         )
     ) {
@@ -1753,7 +1757,7 @@ void HandlerIBusModuleStatusResponse(void *ctx, uint8_t *pkt)
         // If the radio responds, announce that the CD Changer is present
         IBusCommandCDCAnnounce(context->ibus);
     } else if (module == IBUS_DEVICE_DSP) {
-        if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
+        if (context->ibus->cdChangerFunction != IBUS_CDC_FUNC_PLAYING) {
             return;
         }
         uint8_t dspInput = ConfigGetSetting(CONFIG_SETTING_DSP_INPUT_SRC);
