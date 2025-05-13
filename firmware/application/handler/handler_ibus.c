@@ -855,7 +855,6 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
 
             if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02) {
                 context->bt->carPlay = 1;
-                context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
                 IBusCommandCarplayDisplay(context->ibus, 1);
             } else {
                 context->bt->carPlay = 0;

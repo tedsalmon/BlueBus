@@ -112,6 +112,7 @@
 #define IBUS_DEVICE_BMBT_Button_Display 0x30
 #define IBUS_DEVICE_BMBT_Button_Info 0x38
 #define IBUS_DEVICE_BMBT_Button_SEL 0x0F
+#define IBUS_DEVICE_BMBT_Button_TONE 0x04
 #define IBUS_DEVICE_BMBT_Button_Num1 0x11
 #define IBUS_DEVICE_BMBT_Button_Num2 0x01
 #define IBUS_DEVICE_BMBT_Button_Num3 0x12
