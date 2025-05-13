@@ -73,10 +73,13 @@ uint8_t HandlerSetIBusTELStatus(
             }
             IBusCommandTELStatus(context->ibus, currentTelStatus);
 
-            if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+            if ((currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) &&
+                ((context->uiMode == CONFIG_UI_BMBT) ||
+                 (context->uiMode == CONFIG_UI_MID_BMBT)) &&
+                (ConfigGetSetting(CONFIG_SETTING_CARPLAY) == CONFIG_SETTING_CARPLAY_CARPHONICS))
+            {
                 context->bt->carPlay = 1;
                 IBusCommandCarplayDisplay(context->ibus, 1);
-
             }
             return 1;
         }

@@ -101,6 +101,9 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Off",
     "Default",
     "Auto",
+    "CarPlay: No",
+    "CarPlay: Carphonics",
+    "Menu: CarPlay",
 };
 
 static char *LOCALE_LANG_FRENCH[] = {
@@ -198,6 +201,9 @@ static char *LOCALE_LANG_FRENCH[] = {
     "Non",
     "Default",
     "Auto",
+    "CarPlay: No",
+    "CarPlay: Carphonics",
+    "Menu: CarPlay",
 };
 
 static char *LOCALE_LANG_ITALIAN[] = {
@@ -295,6 +301,9 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Off",
     "Default",
     "Auto",
+    "CarPlay: No",
+    "CarPlay: Carphonics",
+    "Menu: CarPlay",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -392,6 +401,9 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Off",
     "Default",
     "Auto",
+    "CarPlay: No",
+    "CarPlay: Carphonics",
+    "Menu: CarPlay",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -489,6 +501,9 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Off",
     "Default",
     "Auto",
+    "CarPlay: No",
+    "CarPlay: Carphonics",
+    "Menu: CarPlay",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -586,6 +601,9 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Off",
     "Default",
     "Auto",
+    "CarPlay: No",
+    "CarPlay: Carphonics",
+    "Menu: CarPlay",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -683,6 +701,9 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Off",
     "Default",
     "Auto",
+    "CarPlay: No",
+    "CarPlay: Carphonics",
+    "Menu: CarPlay",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -780,6 +801,9 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Off",
     "Default",
     "Auto",
+    "CarPlay: No",
+    "CarPlay: Carphonics",
+    "Menu: CarPlay",
 };
 
 static char *LOCALE_LANG_POLISH[] = {
@@ -877,6 +901,9 @@ static char *LOCALE_LANG_POLISH[] = {
     "Off",
     "Default",
     "Auto",
+    "CarPlay: No",
+    "CarPlay: Carphonics",
+    "Menu: CarPlay",
 };
 
 /**

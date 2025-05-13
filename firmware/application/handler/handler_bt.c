@@ -632,29 +632,6 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
 /* BC127 Specific Handlers */
 
 /**
- * HandlerBTBC127MetadataUpdate()
- *     Description:
- *         If we lowered the volume before a track change, raise the volume again
- *     Params:
- *         void *ctx - The context provided at registration
- *         uint8_t *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerBTBC127MetadataUpdate(void *ctx, uint8_t *tmp)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    LogDebug(LOG_SOURCE_BT, "BT: Vol Restore ON_METADATA from %i", context->bt->activeDevice.a2dpVolume);
-    if (context->bt->playbackStatus && context->bt->type == BT_BTM_TYPE_BC127 &&
-        ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
-        context->bt->activeDevice.a2dpVolume == 1
-    ) {
-        BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpId, "F");
-        context->bt->activeDevice.a2dpVolume = 127;
-    }
-}
-
-/**
  * HandlerBTBC127Boot()
  *     Description:
  *         If the BC127 module restarts, reset our internal state

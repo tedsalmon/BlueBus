@@ -81,16 +81,9 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     Context.mapShown = 0;
     Context.naviSilenced = 0;
     Context.rangeNavi = 0;
-
-    if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02) {
-        Context.bt->carPlay = 1;
-        IBusCommandCarplayDisplay(Context.ibus, 1);
-    } else {
-        Context.bt->carPlay = 0;
-        uint8_t pkt[] = { 0x48, 0x08 };
-        IBusSendCommand(Context.ibus, IBUS_DEVICE_BMBT, IBUS_DEVICE_LOC, pkt, sizeof(pkt));
-        IBusCommandCarplayDisplay(Context.ibus, 0);
-    }
+    Context.bt->carPlay = 0;
+    // even if the Carphonics CarPlay module is not configured in BB, make sure we do our best to disable it from screen if present
+    IBusCommandCarplayDisplay(Context.ibus, 0);
 
     EventRegisterCallback(
         BT_EVENT_DEVICE_CONNECTED,
@@ -222,9 +215,6 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context,
         BMBT_SCROLL_TEXT_TIMER
     );
-
-    Context.bt->carPlay = 0;
-    IBusCommandCarplayDisplay(Context.ibus, 0);
 }
 
 /**
@@ -773,7 +763,25 @@ static void BMBTMenuDeviceSelection(BMBTContext_t *context)
 {
     BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_DEVICES));
     uint8_t idx;
-    uint8_t screenIdx = 2;
+    uint8_t screenIdx = BMBT_MENU_IDX_FIRST_DEVICE;
+
+    uint8_t cp = ConfigGetSetting(CONFIG_SETTING_CARPLAY);
+    if (cp == CONFIG_SETTING_CARPLAY_CARPHONICS) {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_CARPLAY,
+            LocaleGetText(LOCALE_STRING_CARPLAY_SETTING_CARPHONICS),
+            0
+        );
+    } else {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_CARPLAY,
+            LocaleGetText(LOCALE_STRING_CARPLAY_SETTING_OFF),
+            0
+        );
+    }
+
     if (context->bt->discoverable == BT_STATE_ON) {
         BMBTGTWriteIndex(context, BMBT_MENU_IDX_PAIRING_MODE, LocaleGetText(LOCALE_STRING_PAIRING_ON), 0);
     } else {
@@ -1418,11 +1426,13 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
             LocaleGetText(LOCALE_STRING_MENU_MAIN),
             0
         );
-    } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02 ) {
+    } else if ((ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02) &&
+            (ConfigGetSetting(CONFIG_SETTING_CARPLAY) != CONFIG_SETTING_CARPLAY_OFF))
+    {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU,
-            "Menu: CarPlay",
+            LocaleGetText(LOCALE_STRING_MENU_CARPLAY),
             0
         );
     } else {
@@ -2092,9 +2102,11 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x00) {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x01);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_DASHBOARD), 0);
-        } else if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x01){
+        } else if ((ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x01) &&
+                   (ConfigGetSetting(CONFIG_SETTING_CARPLAY) != CONFIG_SETTING_CARPLAY_OFF))
+        {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x02);
-            BMBTGTWriteIndex(context, selectedIdx, "Menu: CarPlay", 0);
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_CARPLAY), 0);
         } else {
             ConfigSetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU, 0x00);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MENU_MAIN), 0);
@@ -2416,37 +2428,38 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
             }
         }
     }
-    // Handle calls at any time
-/*
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
-            if (context->bt->callStatus == BT_CALL_ACTIVE) {
-                BTCommandCallEnd(context->bt);
-            } else if (context->bt->callStatus == BT_CALL_INCOMING) {
-                BTCommandCallAccept(context->bt);
-            } else if (context->bt->callStatus == BT_CALL_OUTGOING) {
-                BTCommandCallEnd(context->bt);
+
+    if (ConfigGetSetting(CONFIG_SETTING_CARPLAY) != CONFIG_SETTING_CARPLAY_CARPHONICS) {
+        // Handle calls at any time
+        if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+            if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
+                if (context->bt->callStatus == BT_CALL_ACTIVE) {
+                    BTCommandCallEnd(context->bt);
+                } else if (context->bt->callStatus == BT_CALL_INCOMING) {
+                    BTCommandCallAccept(context->bt);
+                } else if (context->bt->callStatus == BT_CALL_OUTGOING) {
+                    BTCommandCallEnd(context->bt);
+                }
+            } else if (context->bt->callStatus == BT_CALL_INACTIVE &&
+                       pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Hold
+            ) {
+                BTCommandToggleVoiceRecognition(context->bt);
             }
-        } else if (context->bt->callStatus == BT_CALL_INACTIVE &&
-                   pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Hold
-        ) {
-            BTCommandToggleVoiceRecognition(context->bt);
+        }
+    };
+
+    if (ConfigGetSetting(CONFIG_SETTING_CARPLAY) == CONFIG_SETTING_CARPLAY_CARPHONICS) {
+        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
+            if (context->bt->carPlay == 1) {
+                context->bt->carPlay = 0;
+                IBusCommandCarplayDisplay(context->ibus, 0);
+            } else {
+                context->bt->carPlay = 1;
+                context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
+                IBusCommandCarplayDisplay(context->ibus, 1);
+            }
         }
     }
-*/
-
-    if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
-        if (context->bt->carPlay == 1) {
-            context->bt->carPlay = 0;
-            IBusCommandCarplayDisplay(context->ibus, 0);
-        } else {
-            context->bt->carPlay = 1;
-            context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
-            IBusCommandCarplayDisplay(context->ibus, 1);
-        }
-    }
-
-
 }
 
 /**
@@ -2684,15 +2697,17 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
         (pkt[IBUS_PKT_DB1] & 0xF) != 0
     ) {
         // Sent after pin 17 is left floating again
-        LogDebug(LOG_SOURCE_UI,"MonStatus Leaving CarPlay");
         context->status.displayMode = BMBT_DISPLAY_ON;
-        context->bt->carPlay = 0;
-
+        if (ConfigGetSetting(CONFIG_SETTING_CARPLAY) != CONFIG_SETTING_CARPLAY_OFF) {
+            LogDebug(LOG_SOURCE_UI,"MonStatus Leaving CarPlay");
+            context->bt->carPlay = 0;
+        }
     } else if ((pkt[IBUS_PKT_DB1] & 0x0F) != 0) {
-        // Entering Reverse Camera mode
-        LogDebug(LOG_SOURCE_UI,"MonStatus Entering CarPlay");
         context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
-        context->bt->carPlay = 1;
+        if (ConfigGetSetting(CONFIG_SETTING_CARPLAY) != CONFIG_SETTING_CARPLAY_OFF) {
+            LogDebug(LOG_SOURCE_UI,"MonStatus Entering CarPlay");
+            context->bt->carPlay = 1;
+        }
     }
 }
 
@@ -2764,6 +2779,27 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                 BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
                 ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
                 BMBTMenuDeviceSelection(context);
+            } else if (selectedIdx == BMBT_MENU_IDX_CARPLAY) {
+                uint8_t cp = ConfigGetSetting(CONFIG_SETTING_CARPLAY);
+                if (cp == CONFIG_SETTING_CARPLAY_CARPHONICS) {
+                    ConfigSetSetting(CONFIG_SETTING_CARPLAY, CONFIG_SETTING_CARPLAY_OFF);
+                    BMBTGTWriteIndex(
+                        context,
+                        BMBT_MENU_IDX_CARPLAY,
+                        LocaleGetText(LOCALE_STRING_CARPLAY_SETTING_OFF),
+                        0
+                    );
+                    context->bt->carPlay = 0;
+                } else {
+                    ConfigSetSetting(CONFIG_SETTING_CARPLAY, CONFIG_SETTING_CARPLAY_CARPHONICS);
+                    BMBTGTWriteIndex(
+                        context,
+                        BMBT_MENU_IDX_CARPLAY,
+                        LocaleGetText(LOCALE_STRING_CARPLAY_SETTING_CARPHONICS),
+                        0
+                    );
+                }
+                BMBTGTBufferFlush(context);
             } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
                 // Back Button
                 BMBTMenuMain(context);
@@ -2972,7 +3008,9 @@ void BMBTRADDisplayMenu(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
-    IBusCommandCarplayDisplay(context->ibus, 0);
+    if (ConfigGetSetting(CONFIG_SETTING_CARPLAY) == CONFIG_SETTING_CARPLAY_CARPHONICS) {
+        IBusCommandCarplayDisplay(context->ibus, 0);
+    }
 }
 
 /**
@@ -3106,18 +3144,6 @@ void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
             if (context->status.displayMode != BMBT_DISPLAY_EXTERNAL) {
                 context->status.displayMode = BMBT_DISPLAY_OFF;
                 LogDebug(LOG_SOURCE_UI,"Display OFF in BMBTRADScreenModeRequest");
-
-/*
-                if ((context->bt->callStatus != BT_CALL_INACTIVE)||(context->bt->scoStatus == BT_CALL_SCO_OPEN)) {
-                    LogDebug(LOG_SOURCE_UI,"Display to CP - voice/call in BMBTRADScreenModeRequest");
-                    context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
-                    context->bt->carPlay = 1;
-                    IBusCommandCarplayDisplay(context->ibus,1);
-                } else {
-                    context->bt->carPlay = 0;
-                    IBusCommandCarplayDisplay(context->ibus,0);
-                }
-*/
             }
         }
         if (pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
@@ -3136,12 +3162,14 @@ void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
         } else if (pkt[IBUS_PKT_DB1] == IBUS_GT_TONE_MENU_OFF ||
              pkt[IBUS_PKT_DB1] == IBUS_GT_SEL_MENU_OFF
         ) {
-            if (context->bt->carPlay != 1) {
-                context->status.displayMode = BMBT_DISPLAY_ON;
-            } else {
-                context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
-                context->bt->carPlay = 1;
-                IBusCommandCarplayDisplay(context->ibus,1);
+            if (ConfigGetSetting(CONFIG_SETTING_CARPLAY) == CONFIG_SETTING_CARPLAY_CARPHONICS) {
+                if (context->bt->carPlay != 1) {
+                    context->status.displayMode = BMBT_DISPLAY_ON;
+                } else {
+                    context->status.displayMode = BMBT_DISPLAY_EXTERNAL_INIT;
+                    context->bt->carPlay = 1;
+                    IBusCommandCarplayDisplay(context->ibus,1);
+                }
             }
         }
     }
@@ -3221,9 +3249,11 @@ void BMBTMonitorControl(void *ctx, uint8_t *pkt)
             BMBTTriggerWriteHeader(context);
             BMBTTriggerWriteMenu(context);
         } else if (context->status.displayMode == BMBT_DISPLAY_EXTERNAL_INIT) {
-            LogDebug(LOG_SOURCE_UI,"MonControl Entering CarPlay");
             context->status.displayMode = BMBT_DISPLAY_EXTERNAL;
-            context->bt->carPlay = 1;
+            if (ConfigGetSetting(CONFIG_SETTING_CARPLAY) != CONFIG_SETTING_CARPLAY_OFF) {
+                LogDebug(LOG_SOURCE_UI,"MonControl Entering CarPlay");
+                context->bt->carPlay = 1;
+            }
         }
     }
 }

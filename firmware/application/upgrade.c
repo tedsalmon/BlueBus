@@ -134,6 +134,7 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
         ConfigSetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM, CONFIG_SETTING_OFF);
         ConfigSetSetting(CONFIG_SETTING_COMFORT_TIME, CONFIG_SETTING_OFF);
         ConfigSetSetting(CONFIG_SETTING_COMFORT_PDC, CONFIG_SETTING_OFF);
+        ConfigSetSetting(CONFIG_SETTING_CARPLAY, CONFIG_SETTING_CARPLAY_OFF);
         LogRaw("Ran Upgrade 1.4.0\r\n");
     }
     ConfigSetFirmwareVersion(

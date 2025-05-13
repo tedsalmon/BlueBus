@@ -857,12 +857,19 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             LogDebug(LOG_SOURCE_SYSTEM, "Handler: Request LCM Redundant Data");
             IBusCommandLMGetRedundantData(context->ibus);
 
-            if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02) {
-                context->bt->carPlay = 1;
-                IBusCommandCarplayDisplay(context->ibus, 1);
-            } else {
-                context->bt->carPlay = 0;
-                IBusCommandCarplayDisplay(context->ibus, 0);
+            if (context->uiMode == CONFIG_UI_BMBT ||
+                context->uiMode == CONFIG_UI_MID_BMBT) {
+                if ((ConfigGetSetting(CONFIG_SETTING_CARPLAY) != CONFIG_SETTING_CARPLAY_OFF) &&
+                    (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x02)) {
+                    if (ConfigGetSetting(CONFIG_SETTING_CARPLAY) == CONFIG_SETTING_CARPLAY_CARPHONICS) {
+                        context->bt->carPlay = 1;
+                        IBusCommandCarplayDisplay(context->ibus, 1);
+                    }
+                } else {
+                    // even if the Carphonics CarPlay module is not configured in BB, make sure we do our best to disable it from screen if present
+                    context->bt->carPlay = 0;
+                    IBusCommandCarplayDisplay(context->ibus, 0);
+                }
             }
         }
     } else if (ignitionStatus > IBUS_IGNITION_OFF) {

@@ -488,10 +488,6 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
         context->settingValue = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
         if (context->settingValue == CONFIG_SETTING_PDC_CLUSTER) {
             MenuSingleLineSetMainDisplayText(context, "PDC: Cluster", 0);
-        } else if (context->settingValue == CONFIG_SETTING_PDC_RADIO) {
-            MenuSingleLineSetMainDisplayText(context, "PDC: Radio", 0);
-        } else if (context->settingValue == CONFIG_SETTING_PDC_BOTH) {
-            MenuSingleLineSetMainDisplayText(context, "PDC: Both", 0);
         } else {
             MenuSingleLineSetMainDisplayText(context, "PDC: Off", 0);
         }
@@ -706,12 +702,6 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
         if (context->settingValue == CONFIG_SETTING_OFF) {
             MenuSingleLineSetMainDisplayText(context, "Cluster", 0);
             context->settingValue = CONFIG_SETTING_PDC_CLUSTER;
-        } else if (context->settingValue == CONFIG_SETTING_PDC_CLUSTER) {
-            MenuSingleLineSetMainDisplayText(context, "Radio", 0);
-            context->settingValue = CONFIG_SETTING_PDC_RADIO;
-        } else if (context->settingValue == CONFIG_SETTING_PDC_RADIO) {
-            MenuSingleLineSetMainDisplayText(context, "Both", 0);
-            context->settingValue = CONFIG_SETTING_PDC_BOTH;
         } else {
             MenuSingleLineSetMainDisplayText(context, "Off", 0);
             context->settingValue = CONFIG_SETTING_OFF;
