@@ -100,15 +100,28 @@ void TimerProcessScheduledTasks()
  */
 uint8_t TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
 {
-    if (TimerRegisteredTasksCount == TIMER_TASKS_MAX) {
-        LogError("FAILED TO REGISTER TIMER -- Allocations Full");
-        return 0;
-    }
+    uint8_t idx;
     TimerScheduledTask_t scheduledTask;
     scheduledTask.task = task;
     scheduledTask.context = ctx;
     scheduledTask.ticks = 0;
     scheduledTask.interval = interval;
+
+    for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
+        volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
+        if (t->task == 0) {
+            // reuse deleted task slot
+            LogDebug(LOG_SOURCE_SYSTEM,"Reusing Timer Task Slot %i/%i", idx, TimerRegisteredTasksCount);
+            TimerRegisteredTasks[idx] = scheduledTask;
+            return idx;
+        }
+    }
+
+    if (TimerRegisteredTasksCount == TIMER_TASKS_MAX) {
+        LogError("FAILED TO REGISTER TIMER -- Allocations Full");
+        return 0;
+    }
+
     TimerRegisteredTasks[TimerRegisteredTasksCount++] = scheduledTask;
     return TimerRegisteredTasksCount - 1;
 }
@@ -129,6 +142,10 @@ uint8_t TimerUnregisterScheduledTask(void *task)
         volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[idx];
         if (t->task == task) {
             memset((void *)t, 0, sizeof(TimerScheduledTask_t));
+            if (idx == TimerRegisteredTasksCount-1) {
+                LogDebug(LOG_SOURCE_SYSTEM,"Freeing last Timer Task Slot %i/%i", idx, TimerRegisteredTasksCount);
+                TimerRegisteredTasksCount--;
+            }
             return 0;
         }
     }
@@ -148,6 +165,10 @@ void TimerUnregisterScheduledTaskById(uint8_t taskId)
 {
     volatile TimerScheduledTask_t *t = &TimerRegisteredTasks[taskId];
     memset((void *)t, 0, sizeof(TimerScheduledTask_t));
+    if (taskId == TimerRegisteredTasksCount-1) {
+        LogDebug(LOG_SOURCE_SYSTEM,"Freeing last Timer Task Slot %i/%i", taskId, TimerRegisteredTasksCount);
+        TimerRegisteredTasksCount--;
+    };
 }
 
 /**
