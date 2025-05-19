@@ -37,9 +37,9 @@
  *         uint16_t lastChar - The last character
  */
 typedef struct CLI_t {
-    UART_t *uart;
     BT_t *bt;
     IBus_t *ibus;
+    UART_t *uart;
     uint8_t terminalReadyTaskId;
     uint16_t lastChar;
     uint32_t lastRxTimestamp;

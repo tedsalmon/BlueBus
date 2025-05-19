@@ -72,6 +72,15 @@ uint8_t HandlerSetIBusTELStatus(
                 return 1;
             }
             IBusCommandTELStatus(context->ibus, currentTelStatus);
+
+            if ((currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) &&
+                ((context->uiMode == CONFIG_UI_BMBT) ||
+                 (context->uiMode == CONFIG_UI_MID_BMBT)) &&
+                (ConfigGetSetting(CONFIG_SETTING_CARPLAY) == CONFIG_SETTING_CARPLAY_CARPHONICS))
+            {
+                context->bt->carPlay = 1;
+                IBusCommandCarplayDisplay(context->ibus, 1);
+            }
             return 1;
         }
     }
@@ -95,9 +104,11 @@ void HandlerSetVolume(HandlerContext_t *context, uint8_t direction)
         newVolume = context->bt->activeDevice.a2dpVolume / 2;
         context->volumeMode = HANDLER_VOLUME_MODE_LOWERED;
     } else {
-        newVolume = context->bt->activeDevice.a2dpVolume * 2;
+        newVolume = context->bt->activeDevice.a2dpVolume * 2 + 1;
         context->volumeMode = HANDLER_VOLUME_MODE_NORMAL;
     }
+    LogDebug(LOG_SOURCE_BT, "BT: Vol Set ON_HANDLER from %i -> ", context->bt->activeDevice.a2dpVolume, newVolume);
+    
     char hexVolString[3] = {0};
     snprintf(hexVolString, 3, "%X", newVolume / 8);
     BC127CommandVolume(

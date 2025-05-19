@@ -20,6 +20,7 @@ static uint8_t SETTINGS_MENU[] = {
     MENU_SINGLELINE_SETTING_IDX_PARK_LIGHTS,
     MENU_SINGLELINE_SETTING_IDX_COMFORT_LOCKS,
     MENU_SINGLELINE_SETTING_IDX_COMFORT_UNLOCK,
+    MENU_SINGLELINE_SETTING_IDX_COMFORT_PDC,
     MENU_SINGLELINE_SETTING_IDX_ABOUT,
     MENU_SINGLELINE_SETTING_IDX_PAIRINGS
 };
@@ -35,7 +36,10 @@ static uint8_t SETTINGS_TO_CONFIG_MAP[] = {
     CONFIG_SETTING_TEL_VOL,
     CONFIG_SETTING_TEL_MODE,
     CONFIG_SETTING_COMFORT_BLINKERS,
-    CONFIG_SETTING_COMFORT_PARKING_LAMPS
+    CONFIG_SETTING_COMFORT_PARKING_LAMPS,
+    CONFIG_SETTING_COMFORT_LOCKS,
+    CONFIG_SETTING_COMFORT_UNLOCK,
+    CONFIG_SETTING_COMFORT_PDC,
 };
 
 /**
@@ -480,6 +484,14 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
             MenuSingleLineSetMainDisplayText(context, "Comfort Unlock: Off", 0);
         }
     }
+    if (nextMenu == MENU_SINGLELINE_SETTING_IDX_COMFORT_PDC) {
+        context->settingValue = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+        if (context->settingValue == CONFIG_SETTING_PDC_CLUSTER) {
+            MenuSingleLineSetMainDisplayText(context, "PDC: Cluster", 0);
+        } else {
+            MenuSingleLineSetMainDisplayText(context, "PDC: Off", 0);
+        }
+    }
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_ABOUT) {
         char firmwareVersion[6] = {0};
         ConfigGetFirmwareVersionString(firmwareVersion);
@@ -681,6 +693,15 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
         } else if (context->settingValue == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
             MenuSingleLineSetMainDisplayText(context, "Pos 0", 0);
             context->settingValue = CONFIG_SETTING_COMFORT_UNLOCK_POS_0;
+        } else {
+            MenuSingleLineSetMainDisplayText(context, "Off", 0);
+            context->settingValue = CONFIG_SETTING_OFF;
+        }
+    }
+    if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_COMFORT_PDC) {
+        if (context->settingValue == CONFIG_SETTING_OFF) {
+            MenuSingleLineSetMainDisplayText(context, "Cluster", 0);
+            context->settingValue = CONFIG_SETTING_PDC_CLUSTER;
         } else {
             MenuSingleLineSetMainDisplayText(context, "Off", 0);
             context->settingValue = CONFIG_SETTING_OFF;
