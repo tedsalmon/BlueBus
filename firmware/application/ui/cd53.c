@@ -270,10 +270,8 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                     // Set the display to paused so it doesn't flash back to the
                     // Now playing data
                     CD53SetMainDisplayText(context, "Paused", 0);
-                    BTCommandPause(context->bt);
-                } else {
-                    BTCommandPlay(context->bt);
                 }
+                BTCommandPlaybackToggle(context->bt);
             } else {
                 CD53SetTempDisplayText(context, "No Device", 4);
                 CD53SetMainDisplayText(context, "Bluetooth", 0);

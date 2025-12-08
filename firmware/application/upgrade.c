@@ -5,6 +5,7 @@
  *     Implement Upgrade Tasks
  */
 #include "upgrade.h"
+#include "lib/config.h"
 
 /**
  * UpgradeProcess()
@@ -127,6 +128,11 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 3, 2) == 1) {
         ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
         LogRaw("Ran Upgrade 1.3.2\r\n");
+    }
+    // Changes in version 1.3.5
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 3, 5) == 1) {
+        ConfigSetSetting(CONFIG_SETTING_LM_IO_POLL_ENABLED, CONFIG_SETTING_ON);
+        LogRaw("Ran Upgrade 1.3.5\r\n");
     }
     // Changes in version 1.4.0
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 4, 0) == 1) {

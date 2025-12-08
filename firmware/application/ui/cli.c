@@ -719,6 +719,20 @@ void CLIProcess()
                     } else {
                         cmdSuccess = 0;
                     }
+                } else if (UtilsStricmp(msgBuf[1], "LMPOLL") == 0) {
+                    if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                        ConfigSetSetting(
+                            CONFIG_SETTING_LM_IO_POLL_ENABLED,
+                            CONFIG_SETTING_OFF
+                        );
+                    } else if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                        ConfigSetSetting(
+                            CONFIG_SETTING_LM_IO_POLL_ENABLED,
+                            CONFIG_SETTING_ON
+                        );
+                    } else {
+                        cmdSuccess = 0;
+                    }
                 } else if (UtilsStricmp(msgBuf[1], "LOG") == 0) {
                     uint8_t system = 0xFF;
                     uint8_t value = 0xFF;

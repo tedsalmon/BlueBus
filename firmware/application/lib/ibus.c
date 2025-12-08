@@ -122,6 +122,10 @@ static void IBusHandleModuleStatus(IBus_t *ibus, uint8_t module)
         ibus->moduleStatus.RAD = 1;
         LogInfo(LOG_SOURCE_IBUS, "RAD Detected");
         detectedModule = IBUS_DEVICE_RAD;
+    } else if (module == IBUS_DEVICE_GM && ibus->moduleStatus.GM == 0) {
+        ibus->moduleStatus.GM = 1;
+        LogInfo(LOG_SOURCE_IBUS, "GM Detected");
+        detectedModule = IBUS_DEVICE_GM;
     }
     if (detectedModule != IBUS_DEVICE_LOC) {
         EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
@@ -211,6 +215,9 @@ static void IBusHandleGMMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DoorsFlapsStatusResponse, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == 0xB0) {
+        uint8_t err = IBUS_GM_IDENT_ERR;
+        EventTriggerCallback(IBUS_EVENT_GM_IDENT_RESP, &err);
     } else if (
         pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
         pkt[IBUS_PKT_LEN] == 0x0F
@@ -268,6 +275,10 @@ static void IBusHandleGMMessage(IBus_t *ibus, uint8_t *pkt)
                 break;
         }
         EventTriggerCallback(IBUS_EVENT_GM_IDENT_RESP, &moduleVariant);
+    }
+    // Any GM (ZKE) Traffic should trigger the module status update
+    if (ibus->moduleStatus.GM == 0) {
+        IBusHandleModuleStatus(ibus, IBUS_DEVICE_GM);
     }
 }
 
@@ -526,8 +537,9 @@ static void IBusHandleMIDMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD ||
-               pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL
+    } else if (
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_RAD ||
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL
     ) {
         if (pkt[IBUS_PKT_CMD] == IBus_MID_Button_Press) {
             EventTriggerCallback(IBUS_EVENT_MIDButtonPress, pkt);
@@ -538,6 +550,9 @@ static void IBusHandleMIDMessage(IBus_t *ibus, uint8_t *pkt)
         }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_VOL_CTRL) {
         EventTriggerCallback(IBUS_EVENT_RADVolumeChange, pkt);
+    }
+    if (ibus->moduleStatus.MID == 0) {
+        IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     }
 }
 
@@ -1440,7 +1455,7 @@ void IBusCommandDIAGetCodingData(
  *     Description:
  *        Request the given systems identity info
  *        Raw: 3F LEN DST 00 CHK
- *        3F 00 3B 11 00
+ *        3F 00 D0 00 00
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         uint8_t system - The system to target
@@ -1451,6 +1466,25 @@ void IBusCommandDIAGetIdentity(IBus_t *ibus, uint8_t system)
 {
     uint8_t msg[] = {0x00};
     IBusSendCommand(ibus, IBUS_DEVICE_DIA, system, msg, 1);
+}
+
+/**
+ * IBusCommandDIAGetIdentityPage()
+ *     Description:
+ *        Request the given systems identity info
+ *        Raw: 3F LEN DST 00 PG CHK
+ *        3F 00 3B 11 00
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t system - The system to target
+ *         uint8_t page - The Identity Page to request
+ *     Returns:
+ *         void
+ */
+void IBusCommandDIAGetIdentityPage(IBus_t *ibus, uint8_t system, uint8_t page)
+{
+    uint8_t msg[] = {0x00, page};
+    IBusSendCommand(ibus, IBUS_DEVICE_DIA, system, msg, 2);
 }
 
 /**
@@ -1590,7 +1624,8 @@ void IBusCommandSetModuleStatus(
  */
 void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
 {
-    if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+    if (
+        ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
         ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
     ) {
         uint8_t msg[] = {
@@ -1601,21 +1636,25 @@ void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else {
         uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
-        if (gmVariant == 0x00) {
-            return;
-        }
-        uint8_t msg[4] = {
+        uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
             0x00, // Job (stubbed)
             0x01 // On / Off
         };
-        if (gmVariant >= IBUS_GM_ZKE3_GM1 && gmVariant <= IBUS_GM_ZKE3_GM4 ) {
-            msg[2] = IBUS_CMD_ZKE3_GM1_JOB_CENTRAL_LOCK;
-        } else  if (gmVariant >= IBUS_GM_ZKE3_GM5) {
-            msg[2] = IBUS_CMD_ZKE3_GM5_JOB_CENTRAL_LOCK;
+        switch (gmVariant) {
+            case IBUS_GM_ZKE3_GM1:
+            case IBUS_GM_ZKE3_GM4:
+                msg[2] = IBUS_CMD_ZKE3_GM1_JOB_CENTRAL_LOCK;
+                break;
+            case IBUS_GM_ZKE3_GM5:
+            case IBUS_GM_ZKE3_GM6:
+                msg[2] =  IBUS_CMD_ZKE3_GM5_JOB_CENTRAL_LOCK;
+                break;
         }
-        IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
+        if (msg[2] != 0x00) {
+            IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
+        }
     }
 }
 
@@ -2445,8 +2484,9 @@ void IBusCommandLMActivateBulbs(
             msg,
             sizeof(msg)
         );
-    } else if (ibus->lmVariant == IBUS_LM_LCM ||
-               ibus->lmVariant == IBUS_LM_LCM_A
+    } else if (
+        ibus->lmVariant == IBUS_LM_LCM ||
+        ibus->lmVariant == IBUS_LM_LCM_A
     ) {
         switch (blinkerSide) {
             case IBUS_LM_BLINKER_LEFT:
@@ -2487,9 +2527,10 @@ void IBusCommandLMActivateBulbs(
             msg,
             sizeof(msg)
         );
-    } else if (ibus->lmVariant == IBUS_LM_LCM_II ||
-               ibus->lmVariant == IBUS_LM_LCM_III ||
-               ibus->lmVariant == IBUS_LM_LCM_IV
+    } else if (
+        ibus->lmVariant == IBUS_LM_LCM_II ||
+        ibus->lmVariant == IBUS_LM_LCM_III ||
+        ibus->lmVariant == IBUS_LM_LCM_IV
     ) {
         switch (blinkerSide) {
             case IBUS_LM_BLINKER_LEFT:
@@ -2528,9 +2569,9 @@ void IBusCommandLMActivateBulbs(
             msg,
             sizeof(msg)
         );
-    }
-    else if (ibus->lmVariant == IBUS_LM_LSZ ||
-             ibus->lmVariant == IBUS_LM_LSZ_2
+    } else if (
+        ibus->lmVariant == IBUS_LM_LSZ ||
+        ibus->lmVariant == IBUS_LM_LSZ_2
     ) {
         switch (blinkerSide) {
           case IBUS_LM_BLINKER_LEFT:

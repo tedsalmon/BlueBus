@@ -430,12 +430,11 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
     if (context->mode == MID_MODE_ACTIVE) {
         if (btnPressed == MID_BUTTON_PLAYBACK) {
             if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
-                BTCommandPause(context->bt);
                 IBusCommandMIDMenuWriteSingle(context->ibus, 0, "> ");
             } else {
-                BTCommandPlay(context->bt);
                 IBusCommandMIDMenuWriteSingle(context->ibus, 0, "||");
             }
+            BTCommandPlaybackToggle(context->bt);
         } else if (btnPressed == MID_BUTTON_META) {
             if (context->mode == MID_MODE_ACTIVE) {
                 context->mode = MID_MODE_DISPLAY_OFF;

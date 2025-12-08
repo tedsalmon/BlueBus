@@ -423,6 +423,7 @@
 #define IBUS_GM_ZKE5_S12 7
 #define IBUS_GM_ZKEBC1 8
 #define IBUS_GM_ZKEBC1RD 9
+#define IBUS_GM_IDENT_ERR 10
 
 #define IBUS_TCU_SINGLE_LINE_UI_MAX_LEN 11
 #define IBUS_TELEMATICS_COORDS_LEN 18
@@ -507,6 +508,7 @@ typedef struct IBusModuleStatus_t {
     uint8_t IRIS: 1;
     uint8_t VM: 1;
     uint8_t PDC: 1;
+    uint8_t GM: 1;
 } IBusModuleStatus_t;
 
 /**
@@ -584,6 +586,7 @@ void IBusCommandCDCAnnounce(IBus_t *);
 void IBusCommandCDCStatus(IBus_t *, uint8_t, uint8_t, uint8_t, uint8_t);
 void IBusCommandDIAGetCodingData(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandDIAGetIdentity(IBus_t *, uint8_t);
+void IBusCommandDIAGetIdentityPage(IBus_t *, uint8_t, uint8_t);
 void IBusCommandDIAGetIOStatus(IBus_t *, uint8_t);
 void IBusCommandDIAGetOSIdentity(IBus_t *, uint8_t);
 void IBusCommandDIATerminateDiag(IBus_t *, uint8_t);

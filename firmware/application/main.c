@@ -4,8 +4,6 @@
  * Description:
  *     The main loop for our PIC24FJ
  */
-#include <stdlib.h>
-#include <stdio.h>
 #include <xc.h>
 #include "sysconfig.h"
 #include "handler.h"

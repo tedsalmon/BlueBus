@@ -5,6 +5,8 @@
  *     Implementation of the abstract Bluetooth Module API
  */
 #include "bt.h"
+#include "bt/bt_bm83.h"
+#include "bt/bt_common.h"
 #include "locale.h"
 #include "uart.h"
 
@@ -263,6 +265,28 @@ void BTCommandPlay(BT_t *bt)
         BC127CommandPlay(bt);
     } else {
         BM83CommandMusicControl(bt, BM83_CMD_ACTION_PLAY);
+    }
+}
+
+/**
+ * BTCommandPlaybackToggle()
+ *     Description:
+ *         Toggle Playback
+ *     Params:
+ *         BT_t *bt - The Bluetooth context
+ *     Returns:
+ *         void
+ */
+void BTCommandPlaybackToggle(BT_t *bt)
+{
+    if (bt->type == BT_BTM_TYPE_BC127) {
+        if (bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
+            BTCommandPause(bt);
+        } else {
+            BTCommandPlay(bt);
+        }
+    } else {
+        BM83CommandMusicControl(bt, BM83_CMD_ACTION_PLAYBACK_TOGGLE);
     }
 }
 

@@ -24,6 +24,7 @@ void BTCommandGetMetadata(BT_t *);
 void BTCommandList(BT_t *);
 void BTCommandPause(BT_t *);
 void BTCommandPlay(BT_t *);
+void BTCommandPlaybackToggle(BT_t *);
 void BTCommandPlaybackTrackFastforwardStart(BT_t *);
 void BTCommandPlaybackTrackFastforwardStop(BT_t *);
 void BTCommandPlaybackTrackRewindStart(BT_t *);

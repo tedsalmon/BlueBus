@@ -49,6 +49,7 @@ void HandlerIBusTELVolumeChange(void *, uint8_t *);
 void HandlerTimerIBusCDCAnnounce(void *);
 void HandlerTimerIBusCDCSendStatus(void *);
 void HandlerTimerIBusLCMIOStatus(void *);
+void HandlerTimerIBusIdent(void *);
 void HandlerTimerIBusLightingState(void *);
 void HandlerTimerIBusPDCDistance(void *);
 void HandlerTimerIBusPings(void *);

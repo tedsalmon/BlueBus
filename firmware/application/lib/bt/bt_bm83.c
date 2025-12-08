@@ -1037,8 +1037,8 @@ void BM83ProcessEventReadLinkedDeviceInformation(BT_t *bt, uint8_t *data, uint16
                 if (dev != 0) {
                     if (memcmp(dev->macId, bt->activeDevice.macId, BT_MAC_ID_LEN) == 0) {
                         UtilsStrncpy(
-                            dev->deviceName, 
-                            deviceName, 
+                            dev->deviceName,
+                            deviceName,
                             BT_DEVICE_NAME_LEN
                         );
                     }
@@ -1155,6 +1155,9 @@ void BM83ProcessDataGetAllAttributes(
                 }
                 char text[BT_METADATA_MAX_SIZE] = {0};
                 UtilsNormalizeText(text, tempString, BT_METADATA_MAX_SIZE);
+                if (strlen(text) == 0) {
+                    dataDiffers = 1;
+                }
                 if (memcmp(text, bt->title, BT_METADATA_FIELD_SIZE) != 0) {
                     dataDiffers = 1;
                     memset(bt->title, 0, BT_METADATA_FIELD_SIZE);
@@ -1170,6 +1173,9 @@ void BM83ProcessDataGetAllAttributes(
                 }
                 char text[BT_METADATA_MAX_SIZE] = {0};
                 UtilsNormalizeText(text, tempString, BT_METADATA_MAX_SIZE);
+                if (strlen(text) == 0) {
+                    dataDiffers = 1;
+                }
                 if (memcmp(text, bt->artist, BT_METADATA_FIELD_SIZE) != 0) {
                     dataDiffers = 1;
                     memset(bt->artist, 0, BT_METADATA_FIELD_SIZE);
@@ -1185,6 +1191,9 @@ void BM83ProcessDataGetAllAttributes(
                 }
                 char text[BT_METADATA_MAX_SIZE] = {0};
                 UtilsNormalizeText(text, tempString, BT_METADATA_MAX_SIZE);
+                if (strlen(text) == 0) {
+                    dataDiffers = 1;
+                }
                 if (memcmp(text, bt->album, BT_METADATA_FIELD_SIZE) != 0) {
                     dataDiffers = 1;
                     memset(bt->album, 0, BT_METADATA_FIELD_SIZE);

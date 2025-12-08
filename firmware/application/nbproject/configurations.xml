@@ -45,6 +45,11 @@
       <itemPath>sysconfig.h</itemPath>
       <itemPath>upgrade.h</itemPath>
     </logicalFolder>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="true">
+      <itemPath>Makefile</itemPath>
+    </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
                    projectFiles="true">
@@ -94,11 +99,6 @@
       <itemPath>main.c</itemPath>
       <itemPath>handler.c</itemPath>
       <itemPath>upgrade.c</itemPath>
-    </logicalFolder>
-    <logicalFolder name="ExternalFiles"
-                   displayName="Important Files"
-                   projectFiles="false">
-      <itemPath>Makefile</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
@@ -278,31 +278,6 @@
         <property key="relaxed-math" value="false"/>
         <property key="save-temps" value="false"/>
       </C30Global>
-      <PKOBSKDEPlatformTool>
-        <property key="AutoSelectMemRanges" value="auto"/>
-        <property key="SecureSegment.SegmentProgramming" value="FullChipProgramming"/>
-        <property key="ToolFirmwareFilePath"
-                  value="Press to browse for a specific firmware version"/>
-        <property key="ToolFirmwareOption.UseLatestFirmware" value="true"/>
-        <property key="firmware.download.all" value="false"/>
-        <property key="memories.configurationmemory" value="true"/>
-        <property key="memories.dataflash" value="true"/>
-        <property key="memories.eeprom" value="true"/>
-        <property key="memories.id" value="true"/>
-        <property key="memories.programmemory" value="true"/>
-        <property key="memories.programmemory.ranges" value="0-ffffffffffffffff"/>
-        <property key="memories.userotp" value="true"/>
-        <property key="programoptions.donoteraseauxmem" value="false"/>
-        <property key="programoptions.eraseb4program" value="true"/>
-        <property key="programoptions.preservedataflash" value="false"/>
-        <property key="programoptions.preservedataflash.ranges" value=""/>
-        <property key="programoptions.preserveeeprom" value="false"/>
-        <property key="programoptions.preserveeeprom.ranges" value=""/>
-        <property key="programoptions.preserveprogram.ranges" value=""/>
-        <property key="programoptions.preserveprogramrange" value="false"/>
-        <property key="programoptions.usehighvoltageonmclr" value="false"/>
-        <property key="programoptions.uselvpprogramming" value="true"/>
-      </PKOBSKDEPlatformTool>
       <Simulator>
         <property key="codecoverage.enabled" value="Disable"/>
         <property key="codecoverage.enableoutputtofile" value="false"/>

@@ -1,7 +1,7 @@
 /*
  * File:   config.h
  * Author: Ted Salmon <tass2001@gmail.com>
- * Description: 
+ * Description:
  *     Get & Set Configuration items on the EEPROM
  */
 #include "config.h"
@@ -44,7 +44,7 @@ static inline uint8_t ConfigGetByte(uint8_t address)
  *         uint8_t address - The address to read from
  *         uint8_t value - Value to set
  */
-static inline void ConfigSetByte(uint8_t address, uint8_t value)
+void ConfigSetByte(uint8_t address, uint8_t value)
 {
     if (address < CONFIG_SETTING_CACHE_SIZE) {
         CONFIG_SETTING_CACHE[address] = value;
@@ -822,7 +822,7 @@ void ConfigSetDistUnit(uint8_t distUnit)
  *         Set the trap count for the given trap
  *     Params:
  *         uint8_t trap - The trap triggered
- *         uint8_t count - The number 
+ *         uint8_t count - The number
  *     Returns:
  *         void
  */

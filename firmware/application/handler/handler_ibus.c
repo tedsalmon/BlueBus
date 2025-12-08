@@ -5,6 +5,7 @@
  *     Implement the logic around I/K-Bus events
  */
 #include "handler_ibus.h"
+#include <stdint.h>
 
 void HandlerIBusInit(HandlerContext_t *context)
 {
@@ -152,6 +153,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         &HandlerTimerIBusCDCSendStatus,
         context,
         HANDLER_INT_CDC_STATUS
+    );
+    TimerRegisterScheduledTask(
+        &HandlerTimerIBusIdent,
+        context,
+        HANDLER_INT_IBUS_IDENT
     );
     TimerRegisterScheduledTask(
         &HandlerTimerIBusPings,
@@ -589,17 +595,22 @@ void HandlerIBusFirstMessageReceived(void *ctx, uint8_t *pkt)
 }
 
 /**
- * HandlerIBusGMDoorsFlapStatusResponse()
+ * HandlerIBusGMIdentResponse()
  *     Description:
- *         Track which doors have been opened while the ignition was on
+ *         Handle the response from the GM Variant Lookup
  *     Params:
  *         void *ctx - The context provided at registration
- *         uint8_t *type - The navigation type
+ *         uint8_t *type - The variant type
  *     Returns:
  *         void
  */
 void HandlerIBusGMIdentResponse(void *ctx, uint8_t *pkt)
 {
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // ZKE5's responsd with 0xB0 when queried with a data byte (page for ZKE3)
+    if (*pkt == IBUS_GM_IDENT_ERR) {
+        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GM);
+    }
     if (ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS) != *pkt) {
         ConfigSetSetting(CONFIG_GM_VARIANT_ADDRESS, *pkt);
     }
@@ -773,6 +784,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                 }
             }
             context->monitorStatus = HANDLER_MONITOR_STATUS_UNSET;
+            context->gmState.doorsLocked = 0;
             context->gmState.lowSideDoors = 0;
         // If the engine was on, but now it's in position 1
         } else if (context->ibus->ignitionStatus >= IBUS_IGNITION_KL15 &&
@@ -886,7 +898,7 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t comfortLock = ConfigGetComfortLock();
     uint16_t speed = pkt[4] * 2;
-    if (comfortLock != CONFIG_SETTING_OFF) {
+    if (comfortLock != CONFIG_SETTING_OFF && context->gmState.doorsLocked == 0) {
         if (
             (comfortLock == CONFIG_SETTING_COMFORT_LOCK_10KM && speed >= 10) ||
             (comfortLock == CONFIG_SETTING_COMFORT_LOCK_20KM && speed >= 20)
@@ -896,6 +908,7 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
             } else {
                 IBusCommandGMDoorLockAll(context->ibus);
             }
+            context->gmState.doorsLocked = 1;
         }
     }
     // Turn off the BMBT when the vehicle sets off
@@ -1190,7 +1203,10 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
 void HandlerIBusLMDimmerStatus(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
+    if (
+        ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON &&
+        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_ENABLED) == CONFIG_SETTING_ON
+    ) {
         uint8_t checksum = IBusGetLMDimmerChecksum(pkt);
         if (checksum != context->lmDimmerChecksum) {
             IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
@@ -1233,10 +1249,12 @@ void HandlerIBusLMRedundantData(void *ctx, uint8_t *pkt)
             vehicleId[3],
             vehicleId[4]
         );
-        // Request light module ident
-        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
-        // Request general module ident
-        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GM);
+        // Reset what we know about the car
+        ConfigSetByte(CONFIG_UI_MODE, 0x00);
+        ConfigSetByte(CONFIG_NAV_TYPE, 0x00);
+        ConfigSetByte(CONFIG_VEHICLE_TYPE, 0x00);
+        ConfigSetByte(CONFIG_LM_VARIANT, 0x00);
+        ConfigSetByte(CONFIG_GM_VARIANT, 0x00);
         // Save the new VIN
         ConfigSetVehicleIdentity(vehicleId);
         // Request the vehicle configuration
@@ -1250,15 +1268,6 @@ void HandlerIBusLMRedundantData(void *ctx, uint8_t *pkt)
         ) {
             LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
             HandlerIBusSwitchUI(context, CONFIG_UI_CD53);
-        }
-    } else {
-        if (ConfigGetLMVariant() == CONFIG_SETTING_OFF) {
-            // Identify the LM if we do not have an ID for it
-            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
-        }
-        if (ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS) == CONFIG_SETTING_OFF) {
-            // Identify the ZKE / GM if we do not have an ID for it
-            IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_GM);
         }
     }
 }
@@ -1291,11 +1300,7 @@ void HandlerIBusMFLButton(void *ctx, uint8_t *pkt)
             } else if (context->bt->callStatus == BT_CALL_OUTGOING) {
                 BTCommandCallEnd(context->bt);
             } else if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
-                if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
-                    BTCommandPause(context->bt);
-                } else {
-                    BTCommandPlay(context->bt);
-                }
+                BTCommandPlaybackToggle(context->bt);
             }
         } else if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_HOLD) {
             context->mflButtonStatus = HANDLER_MFL_STATUS_SPEAK_HOLD;
@@ -1304,11 +1309,7 @@ void HandlerIBusMFLButton(void *ctx, uint8_t *pkt)
     } else {
         if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_REL) {
             if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING) {
-                if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
-                    BTCommandPause(context->bt);
-                } else {
-                    BTCommandPlay(context->bt);
-                }
+                BTCommandPlaybackToggle(context->bt);
             }
         }
     }
@@ -1555,8 +1556,8 @@ void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
             }
         } else if (direction == IBUS_RAD_VOLUME_UP) {
             volume -= steps;
-            if (volume < -CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
-                volume = -CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
+            if (volume <= 0) {
+                volume = 0;
             }
         }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
@@ -1671,8 +1672,8 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
             }
         } else if (direction == IBUS_RAD_VOLUME_DOWN) {
             volume -= steps;
-            if (volume < -CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
-                volume = -CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
+            if (volume < 0) {
+                volume = 0;
             }
         }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
@@ -1839,7 +1840,10 @@ void HandlerTimerIBusCDCSendStatus(void *ctx)
 void HandlerTimerIBusLCMIOStatus(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
+    if (
+        ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON &&
+        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_ENABLED) == CONFIG_SETTING_ON
+    ) {
         uint32_t now = TimerGetMillis();
         uint32_t timeDiff = now - context->lmLastIOStatus;
         if (timeDiff >= 30000 && HandlerIBusGetIsIgnitionStatusOn(context) == 1) {
@@ -1900,6 +1904,36 @@ void HandlerTimerIBusPDCDistance(void *ctx)
         }
     } else {
         IBusCommandPDCGetSensorStatus(context->ibus);
+    }
+}
+
+/**
+ * HandlerTimerIBusIdent()
+ *     Description:
+ *         Request the identity of different modules until we get a response
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+
+void HandlerTimerIBusIdent(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (
+        context->ibus->moduleStatus.LCM == 1 &&
+        ConfigGetLMVariant() == CONFIG_SETTING_OFF
+    ) {
+        // Identify the LM if we do not have an ID for it
+        IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
+    }
+    if (
+        context->ibus->moduleStatus.GM == 1 &&
+        context->ibus->ignitionStatus == IBUS_IGNITION_KL15 &&
+        ConfigGetSetting(CONFIG_GM_VARIANT) == CONFIG_SETTING_OFF
+    ) {
+        // Identify the ZKE / GM if we do not have an ID for it
+        IBusCommandDIAGetIdentityPage(context->ibus, IBUS_DEVICE_GM, 0x00);
     }
 }
 

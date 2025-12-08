@@ -907,34 +907,19 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
             0
         );
     }
-    if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON) {
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_AUDIO_MANAGE_VOL,
-            LocaleGetText(LOCALE_STRING_MANAGE_VOL_ON),
-            0
-        );
-    } else {
-        BMBTGTWriteIndex(
-            context,
-            BMBT_MENU_IDX_SETTINGS_AUDIO_MANAGE_VOL,
-            LocaleGetText(LOCALE_STRING_MANAGE_VOL_OFF),
-            0
-        );
-    }
     if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL,
             LocaleGetText(LOCALE_STRING_REV_VOL_LOW_ON),
-            2
+            3
         );
     } else {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL,
             LocaleGetText(LOCALE_STRING_REV_VOL_LOW_OFF),
-            2
+            3
         );
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
@@ -1363,14 +1348,6 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
             ConfigSetSetting(CONFIG_SETTING_AUTOPLAY, CONFIG_SETTING_OFF);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_AUTOPLAY_OFF), 0);
         }
-    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_MANAGE_VOL) {
-        if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_OFF) {
-            ConfigSetSetting(CONFIG_SETTING_MANAGE_VOLUME, CONFIG_SETTING_ON);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MANAGE_VOL_ON), 0);
-        } else {
-            ConfigSetSetting(CONFIG_SETTING_MANAGE_VOLUME, CONFIG_SETTING_OFF);
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_MANAGE_VOL_OFF), 0);
-        }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_AUDIO_REV_VOL) {
         if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_OFF) {
             ConfigSetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV, CONFIG_SETTING_ON);
@@ -1567,7 +1544,7 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
         int8_t volumeOffset = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
         volumeOffset = volumeOffset + 1;
         char volOffsetText[BMBT_MENU_STRING_MAX_SIZE] = {0};
-        if (volumeOffset > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
+        if (volumeOffset > CONFIG_SETTING_TEL_VOL_OFFSET_MAX || volumeOffset < 0) {
             volumeOffset = 0;
         }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volumeOffset);
@@ -1838,7 +1815,8 @@ void BMBTBTDeviceDisconnected(void *ctx, uint8_t *data)
 void BMBTBTMetadata(void *ctx, uint8_t *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->status.playerMode == BMBT_MODE_ACTIVE &&
+    if (
+        context->status.playerMode == BMBT_MODE_ACTIVE &&
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
         if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != CONFIG_SETTING_OFF) {
@@ -1853,7 +1831,8 @@ void BMBTBTMetadata(void *ctx, uint8_t *data)
             );
             BMBTSetMainDisplayText(context, text, 0, 1);
         }
-        if (context->menu == BMBT_MENU_DASHBOARD ||
+        if (
+            context->menu == BMBT_MENU_DASHBOARD ||
             context->menu == BMBT_MENU_DASHBOARD_FRESH
         ) {
             BMBTMenuDashboard(context);
@@ -1919,14 +1898,11 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE) {
-        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_PlayPause ||
+        if (
+            pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_PlayPause ||
             pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Num1
         ) {
-            if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
-                BTCommandPause(context->bt);
-            } else {
-                BTCommandPlay(context->bt);
-            }
+            BTCommandPlaybackToggle(context->bt);
         }
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Knob) {
             if (context->status.displayMode == BMBT_DISPLAY_ON &&

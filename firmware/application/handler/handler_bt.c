@@ -252,13 +252,11 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             if (volume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
                 volume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
                 ConfigSetSetting(CONFIG_SETTING_TEL_VOL, CONFIG_SETTING_TEL_VOL_OFFSET_MAX);
+            } else if (volume < 0) {
+                volume = 0;
+                ConfigSetValue(CONFIG_SETTING_TEL_VOL, 0);
             }
-            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %+d", volume);
-            uint8_t direction = 1;
-            if (volume < 0) {
-                direction = 0;
-                volume = -volume;
-            }
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %d", volume);
             while (volume > 0) {
                 uint8_t volStep = volume;
                 if (volStep > volStepMax) {
@@ -268,7 +266,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                     context->ibus,
                     sourceSystem,
                     IBUS_DEVICE_RAD,
-                    (volStep << 4) | direction
+                    (volStep << 4) | 1
                 );
                 volume = volume - volStep;
             }
@@ -283,12 +281,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             // Temporarily set the call status flag to volume change
             // so we do not alter the volume that we are lowering ourselves
             context->telStatus = HANDLER_TEL_STATUS_VOL_CHANGE;
-            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %+d", -volume);
-            uint8_t direction = 0;
-            if (volume < 0) {
-                direction = 1;
-                volume = -volume;
-            }
+            LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %d", -volume);
             while (volume > 0) {
                 uint8_t volStep = volume;
                 if (volStep > volStepMax) {
@@ -298,7 +291,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                     context->ibus,
                     sourceSystem,
                     IBUS_DEVICE_RAD,
-                    (volStep << 4) | direction
+                    (volStep << 4)
                 );
                 volume = volume - volStep;
             }
