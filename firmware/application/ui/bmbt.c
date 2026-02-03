@@ -816,7 +816,7 @@ static void BMBTMenuSettings(BMBTContext_t *context)
 static void BMBTMenuSettingsAbout(BMBTContext_t *context)
 {
     BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_ABOUT));
-    char version[9];
+    char version[9] = {0};
     ConfigGetFirmwareVersionString(version);
     char versionString[BMBT_MENU_STRING_MAX_SIZE] = {0};
     snprintf(versionString, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_FW), version);
@@ -1931,10 +1931,10 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
             context->status.playerMode = BMBT_MODE_INACTIVE;
         }
         // Handle the SEL and Info buttons gracefully
-        if (pkt[3] == IBUS_CMD_BMBT_BUTTON0 && pkt[1] == 0x05) {
-            if (pkt[5] == IBUS_DEVICE_BMBT_BUTTON_INFO) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON0 && pkt[IBUS_PKT_LEN] == 0x05) {
+            if (pkt[IBUS_PKT_DB2] == IBUS_DEVICE_BMBT_BUTTON_INFO) {
                 context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
-            } else if (pkt[5] == IBUS_DEVICE_BMBT_BUTTON_SEL) {
+            } else if (pkt[IBUS_PKT_DB2] == IBUS_DEVICE_BMBT_BUTTON_SEL) {
                 context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
             }
         }
@@ -2046,7 +2046,7 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
 void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[5] == 0x0C) {
+    if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[IBUS_PKT_DB2] == 0x0C) {
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
             IBusCommandTELSetGTDisplayMenu(context->ibus);
             IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
@@ -2161,7 +2161,7 @@ void BMBTIBusGTMenuBufferUpdate(void *ctx, uint8_t *pkt)
 void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    uint8_t selectedIdx = (uint8_t) pkt[6];
+    uint8_t selectedIdx = (uint8_t) pkt[IBUS_PKT_DB3];
     if (context->status.radType == IBUS_RADIO_TYPE_BM24) {
         if (selectedIdx < 10) {
             selectedIdx = 0xFF;
@@ -2443,9 +2443,9 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
         // The BM24 uses this layout to write out multiple headers
         // at the same time. Ensure the text is ours
         if (pkt[IBUS_PKT_DB1] != IBUS_C43_TITLE_MODE &&
-            pkt[6] != 0x20 &&
-            pkt[7] != 0x20 &&
-            pkt[8] != 0x07
+            pkt[IBUS_PKT_DB3] != 0x20 &&
+            pkt[IBUS_PKT_DB4] != 0x20 &&
+            pkt[IBUS_PKT_DB5] != 0x07
         ) {
             textIsOurs = 1;
         } else {
@@ -2455,7 +2455,7 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
     if (context->status.playerMode == BMBT_MODE_ACTIVE &&
         textIsOurs == 0
     ) {
-        uint8_t pktLen = (uint8_t) pkt[1] + 2;
+        uint8_t pktLen = (uint8_t) pkt[IBUS_PKT_LEN] + 2;
         uint8_t textLen = 0;
         if (pktLen > 7) {
             textLen = pktLen - 7;

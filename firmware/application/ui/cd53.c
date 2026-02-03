@@ -557,7 +557,7 @@ void CD53GTScreenModeSet(void *ctx, uint8_t *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
     // Check the screen priority (bit 0 of 0x45). RAD = 0, GT = 1
-    if (CHECK_BIT(pkt[IBUS_PKT_DB1], 0) == 1) {
+    if (UTILS_CHECK_BIT(pkt[IBUS_PKT_DB1], 0) == 1) {
         context->mode = CD53_MODE_ACTIVE_DISPLAY_OFF;
     } else {
         context->mode = CD53_MODE_ACTIVE;

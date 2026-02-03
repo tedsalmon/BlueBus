@@ -126,7 +126,7 @@ void BTCommandDial(BT_t *bt, const char *number, const char *name)
         cleannum[pos]=0;
         if (bt->type == BT_BTM_TYPE_BC127) {
             // @FIX
-            char command[32];
+            char command[32] = {0};
             snprintf(command, 32, "CALL %d OUTGOING %s", bt->activeDevice.hfpId, cleannum);
             BC127SendCommand(bt, command);
         } else {

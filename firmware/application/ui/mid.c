@@ -201,7 +201,7 @@ static void MIDShowNextDevice(MIDContext_t *context, uint8_t direction)
             }
         }
         BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
-        char text[16];
+        char text[16] = {0};
         strncpy(text, dev->deviceName, 15);
         text[15] = '\0';
         // Add a space and asterisks to the end of the device name
@@ -367,7 +367,7 @@ void MIDBTPlaybackStatus(void *ctx, unsigned char *tmp)
 void MIDIBusCDChangerStatus(void *ctx, unsigned char *pkt)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
-    unsigned char requestedCommand = pkt[4];
+    unsigned char requestedCommand = pkt[IBUS_PKT_DB1];
     if (requestedCommand == IBUS_CDC_CMD_STOP_PLAYING) {
         if (context->mode != MID_MODE_DISPLAY_OFF &&
             context->mode != MID_MODE_OFF
@@ -426,7 +426,7 @@ void MIDIBusIgnitionStatus(void *ctx, uint8_t *pkt)
 void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
-    unsigned char btnPressed = pkt[6];
+    unsigned char btnPressed = pkt[IBUS_PKT_DB3];
     if (context->mode == MID_MODE_ACTIVE) {
         if (btnPressed == MID_BUTTON_PLAYBACK) {
             if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {

@@ -115,7 +115,7 @@ void BC127CommandBackward(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
         bt->metadataTimestamp = 0;
-        char command[18];
+        char command[18] = {0};
         snprintf(command, 18, "MUSIC %d BACKWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -135,7 +135,7 @@ void BC127CommandBackward(BT_t *bt)
 void BC127CommandBackwardSeekPress(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[19];
+        char command[19] = {0};
         snprintf(command, 19, "MUSIC %d REW_PRESS", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -155,7 +155,7 @@ void BC127CommandBackwardSeekPress(BT_t *bt)
 void BC127CommandBackwardSeekRelease(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[21];
+        char command[21] = {0};
         snprintf(command, 21, "MUSIC %d REW_RELEASE", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -174,7 +174,7 @@ void BC127CommandBackwardSeekRelease(BT_t *bt)
  */
 void BC127CommandCallAnswer(BT_t *bt)
 {
-    char command[15];
+    char command[15] = {0};
     snprintf(command, 15, "CALL %d ANSWER", bt->activeDevice.hfpId);
     BC127SendCommand(bt, command);
 }
@@ -190,7 +190,7 @@ void BC127CommandCallAnswer(BT_t *bt)
  */
 void BC127CommandCallEnd(BT_t *bt)
 {
-    char command[12];
+    char command[12] = {0};
     snprintf(command, 12, "CALL %d END", bt->activeDevice.hfpId);
     BC127SendCommand(bt, command);
 }
@@ -206,7 +206,7 @@ void BC127CommandCallEnd(BT_t *bt)
  */
 void BC127CommandCallReject(BT_t *bt)
 {
-    char command[15];
+    char command[15] = {0};
     snprintf(command, 15, "CALL %d REJECT", bt->activeDevice.hfpId);
     BC127SendCommand(bt, command);
 }
@@ -227,7 +227,7 @@ void BC127CommandClose(BT_t *bt, uint8_t id)
         char command[10] = "CLOSE ALL";
         BC127SendCommand(bt, command);
     } else {
-        char command[9];
+        char command[9] = {0};
         snprintf(command, 9, "CLOSE %d", id);
         BC127SendCommand(bt, command);
     }
@@ -248,7 +248,7 @@ void BC127CommandClose(BT_t *bt, uint8_t id)
  */
 void BC127CommandCVC(BT_t *bt, char *band, uint8_t index, uint8_t length)
 {
-    char command[16];
+    char command[16] = {0};
     if (length == 0) {
         snprintf(command, 16, "CVC_CFG %s", band);
     } else {
@@ -302,7 +302,7 @@ void BC127CommandCVC(BT_t *bt, char *band, uint8_t index, uint8_t length)
  */
 void BC127CommandCVCParams(BT_t *bt, char *params)
 {
-    char command[255];
+    char command[255] = {0};
     snprintf(command, 255, "%s", params);
     BC127SendCommand(bt, command);
 }
@@ -322,8 +322,8 @@ void BC127CommandBtState(BT_t *bt, uint8_t connectable, uint8_t discoverable)
 {
     bt->connectable = connectable;
     bt->discoverable = discoverable;
-    char connectMode[4];
-    char discoverMode[4];
+    char connectMode[4] = {0};
+    char discoverMode[4] = {0};
     if (connectable == 1) {
         UtilsStrncpy(connectMode, "ON", 4);
     } else if (connectable == 0) {
@@ -352,7 +352,7 @@ void BC127CommandForward(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
         bt->metadataTimestamp = 0;
-        char command[17];
+        char command[17] = {0};
         snprintf(command, 17, "MUSIC %d FORWARD", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -372,7 +372,7 @@ void BC127CommandForward(BT_t *bt)
 void BC127CommandForwardSeekPress(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[18];
+        char command[18] = {0};
         snprintf(command, 18, "MUSIC %d FF_PRESS", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -392,7 +392,7 @@ void BC127CommandForwardSeekPress(BT_t *bt)
 void BC127CommandForwardSeekRelease(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[20];
+        char command[20] = {0};
         snprintf(command, 20, "MUSIC %d FF_RELEASE", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -412,7 +412,7 @@ void BC127CommandForwardSeekRelease(BT_t *bt)
  */
 void BC127CommandGetDeviceName(BT_t *bt, char *macId)
 {
-    char command[18];
+    char command[18] = {0};
     snprintf(command, 18, "NAME %s", macId);
     BC127SendCommand(bt, command);
 }
@@ -429,7 +429,7 @@ void BC127CommandGetDeviceName(BT_t *bt, char *macId)
 void BC127CommandGetMetadata(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[19];
+        char command[19] = {0};
         snprintf(command, 19, "AVRCP_META_DATA %d", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
         bt->metadataTimestamp = TimerGetMillis();
@@ -456,19 +456,19 @@ void BC127CommandLicense(
 ) {
     // Get both license keys
     if (licenseType == 0 && licenseKey == 0) {
-        char command[9];
+        char command[9] = {0};
         snprintf(command, 8, "LICENSE");
         BC127SendCommand(bt, command);
     }
     // Get a single license key
     if (licenseType != 0 && licenseKey == 0) {
-        char command[14];
+        char command[14] = {0};
         snprintf(command, 13, "LICENSE %s", licenseType);
         BC127SendCommand(bt, command);
     }
     // Set a single license key
     if (licenseType != 0 && licenseKey != 0) {
-        char command[40];
+        char command[40] = {0};
         snprintf(command, 39, "LICENSE %s=%s", licenseType, licenseKey);
         BC127SendCommand(bt, command);
     }
@@ -485,7 +485,7 @@ void BC127CommandLicense(
  */
 void BC127CommandList(BT_t *bt)
 {
-    char command[5];
+    char command[5] = {0};
     snprintf(command, 5, "LIST");
     BC127SendCommand(bt, command);
 }
@@ -502,7 +502,7 @@ void BC127CommandList(BT_t *bt)
 void BC127CommandPause(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[16];
+        char command[16] = {0};
         snprintf(command, 16, "MUSIC %d PAUSE", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -522,7 +522,7 @@ void BC127CommandPause(BT_t *bt)
 void BC127CommandPlay(BT_t *bt)
 {
     if (bt->activeDevice.avrcpId != 0) {
-        char command[15];
+        char command[15] = {0};
         snprintf(command, 15, "MUSIC %d PLAY", bt->activeDevice.avrcpId);
         BC127SendCommand(bt, command);
     } else {
@@ -542,7 +542,7 @@ void BC127CommandPlay(BT_t *bt)
  */
 void BC127CommandProfileClose(BT_t *bt, uint8_t linkId)
 {
-    char command[10];
+    char command[10] = {0};
     snprintf(command, 10, "CLOSE %d", linkId);
     BC127SendCommand(bt, command);
 }
@@ -560,7 +560,7 @@ void BC127CommandProfileClose(BT_t *bt, uint8_t linkId)
  */
 void BC127CommandProfileOpen(BT_t *bt, char *profile)
 {
-     char command[24];
+    char command[24] = {0};
     char macId[13] = {0};
     snprintf(
         macId,
@@ -605,7 +605,7 @@ void BC127CommandReset(BT_t *bt)
  *         void
  */
 void BC127CommandSetAudio(BT_t *bt, uint8_t input, uint8_t output) {
-    char command[14];
+    char command[14] = {0};
     snprintf(command, 14, "SET AUDIO=%d %d", input, output);
     BC127SendCommand(bt, command);
     BC127CommandWrite(bt);
@@ -631,7 +631,7 @@ void BC127CommandSetAudioAnalog(
     uint8_t micBias,
     char *enablePreamp
 ) {
-    char command[29];
+    char command[29] = {0};
     snprintf(
         command,
         29,
@@ -665,7 +665,7 @@ void BC127CommandSetAudioDigital(
     char *p1,
     char *p2
 ) {
-    char command[40];
+    char command[40] = {0};
     snprintf(command, 40, "SET AUDIO_DIGITAL=%s %s %s %s OFF", format, rate, p1, p2);
     BC127SendCommand(bt, command);
     BC127CommandWrite(bt);
@@ -683,7 +683,7 @@ void BC127CommandSetAudioDigital(
  */
 void BC127CommandSetAutoConnect(BT_t *bt, uint8_t autoConnect)
 {
-    char command[15];
+    char command[15] = {0};
     snprintf(command, 15, "SET AUTOCONN=%d", autoConnect);
     BC127SendCommand(bt, command);
     BC127CommandWrite(bt);
@@ -709,7 +709,7 @@ void BC127CommandSetBtState(
     uint8_t connectMode,
     uint8_t discoverMode
 ) {
-    char command[24];
+    char command[24] = {0};
     snprintf(command, 24, "SET BT_STATE_CONFIG=%d %d", connectMode, discoverMode);
     BC127SendCommand(bt, command);
     BC127CommandWrite(bt);
@@ -922,7 +922,7 @@ void BC127CommandSetProfiles(
     uint8_t ble,
     uint8_t hfp
 ) {
-    char command[37];
+    char command[37] = {0};
     snprintf(
         command,
         37,
@@ -1010,7 +1010,7 @@ void BC127CommandStatusAVRCP(BT_t *bt)
 void BC127CommandToggleVR(BT_t *bt)
 {
     if (bt->activeDevice.hfpId != 0) {
-        char command[16];
+        char command[16] = {0};
         snprintf(command, 16, "TOGGLE_VR %d", bt->activeDevice.hfpId);
         BC127SendCommand(bt, command);
     } else {
@@ -1030,7 +1030,7 @@ void BC127CommandToggleVR(BT_t *bt)
  */
 void BC127CommandTone(BT_t *bt, char *params)
 {
-    char command[128];
+    char command[128] = {0};
     snprintf(command, 128, "TONE %s", params);
     BC127SendCommand(bt, command);
 }
@@ -1084,7 +1084,7 @@ void BC127CommandVolume(BT_t *bt, uint8_t linkId, char *volume)
         char command[7] = "VOLUME";
         BC127SendCommand(bt, command);
     } else {
-        char command[15];
+        char command[15] = {0};
         snprintf(command, 15, "VOLUME %d %s", linkId, volume);
         BC127SendCommand(bt, command);
     }
@@ -1264,22 +1264,22 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         // Handle AM / PM
         if (delimCount > 6) {
             if (UtilsStricmp(msgBuf[6], "AM") == 0) {
-                if (datetime[BC127_AT_DATE_HOUR] == 12) {
-                    datetime[BC127_AT_DATE_HOUR] = 0;
+                if (datetime[UTILS_DATETIME_HOUR] == 12) {
+                    datetime[UTILS_DATETIME_HOUR] = 0;
                 }
             } else {
-                if (datetime[BC127_AT_DATE_HOUR] < 12) {
-                    datetime[BC127_AT_DATE_HOUR] += 12;
+                if (datetime[UTILS_DATETIME_HOUR] < 12) {
+                    datetime[UTILS_DATETIME_HOUR] += 12;
                 }
             }
         }
         // Validate the date and time
-        if (datetime[BC127_AT_DATE_YEAR] > 20 &&
-            datetime[BC127_AT_DATE_MONTH] >= 1 && datetime[BC127_AT_DATE_MONTH] <= 12 &&
-            datetime[BC127_AT_DATE_DAY] >= 1 && datetime[BC127_AT_DATE_DAY] <= 31 &&
-            datetime[BC127_AT_DATE_HOUR] <= 23 &&
-            datetime[BC127_AT_DATE_MIN] <= 59 &&
-            datetime[BC127_AT_DATE_SEC] <= 59
+        if (datetime[UTILS_DATETIME_YEAR] > 20 &&
+            datetime[UTILS_DATETIME_MONTH] >= 1 && datetime[UTILS_DATETIME_MONTH] <= 12 &&
+            datetime[UTILS_DATETIME_DAY] >= 1 && datetime[UTILS_DATETIME_DAY] <= 31 &&
+            datetime[UTILS_DATETIME_HOUR] <= 23 &&
+            datetime[UTILS_DATETIME_MIN] <= 59 &&
+            datetime[UTILS_DATETIME_SEC] <= 59
         ) {
             EventTriggerCallback(BT_EVENT_TIME_UPDATE, datetime);
         }

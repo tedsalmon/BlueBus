@@ -538,11 +538,11 @@ void HandlerBTPlaybackStatus(void *ctx, uint8_t *data)
                 BTCommandGetMetadata(context->bt);
             }
         } else {
-            context->bt->avrcpUpdates = SET_BIT(
+            context->bt->avrcpUpdates = UTILS_SET_BIT(
                 context->bt->avrcpUpdates,
                 BT_AVRCP_ACTION_GET_METADATA
             );
-            context->bt->avrcpUpdates = SET_BIT(
+            context->bt->avrcpUpdates = UTILS_SET_BIT(
                 context->bt->avrcpUpdates,
                 BT_AVRCP_ACTION_SET_TRACK_CHANGE_NOTIF
             );
@@ -573,24 +573,24 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // If it's the first second of the minute, use the time update
     // Otherwise, request the time again at the top of the next minute
-    if (dt[BC127_AT_DATE_SEC] < 2) {
+    if (dt[UTILS_DATETIME_SEC] < 2) {
         LogDebug(
             LOG_SOURCE_BT,
             "Setting time from BT: 20%d-%.2d-%.2d %.2d:%.2d",
-            dt[BC127_AT_DATE_YEAR],
-            dt[BC127_AT_DATE_MONTH],
-            dt[BC127_AT_DATE_DAY],
-            dt[BC127_AT_DATE_HOUR],
-            dt[BC127_AT_DATE_MIN]
+            dt[UTILS_DATETIME_YEAR],
+            dt[UTILS_DATETIME_MONTH],
+            dt[UTILS_DATETIME_DAY],
+            dt[UTILS_DATETIME_HOUR],
+            dt[UTILS_DATETIME_MIN]
         );
         IBusCommandIKESetDate(
             context->ibus,
-            dt[BC127_AT_DATE_YEAR],
-            dt[BC127_AT_DATE_MONTH],
-            dt[BC127_AT_DATE_DAY]
+            dt[UTILS_DATETIME_YEAR],
+            dt[UTILS_DATETIME_MONTH],
+            dt[UTILS_DATETIME_DAY]
         );
-        IBusCommandIKESetTime(context->ibus, dt[BC127_AT_DATE_HOUR], dt[BC127_AT_DATE_MIN]);
-    } else if (dt[BC127_AT_DATE_SEC] < 60) {
+        IBusCommandIKESetTime(context->ibus, dt[UTILS_DATETIME_HOUR], dt[UTILS_DATETIME_MIN]);
+    } else if (dt[UTILS_DATETIME_SEC] < 60) {
         TimerRegisterScheduledTask(
             &HandlerTimerBTBC127RequestDateTime,
             ctx,
@@ -665,12 +665,12 @@ void HandlerBTBM83AVRCPUpdates(void *ctx, uint8_t *data)
         status == BM83_AVRCP_DATA_PLAYBACK_STATUS_PLAYING) ||
         type == BM83_AVRCP_EVT_ADDRESSED_PLAYER_CHANGED
     ) {
-        context->bt->avrcpUpdates = SET_BIT(
+        context->bt->avrcpUpdates = UTILS_SET_BIT(
             context->bt->avrcpUpdates,
             BT_AVRCP_ACTION_SET_TRACK_CHANGE_NOTIF
         );
         if (status == BM83_AVRCP_DATA_PLAYBACK_STATUS_PLAYING) {
-            context->bt->avrcpUpdates = SET_BIT(
+            context->bt->avrcpUpdates = UTILS_SET_BIT(
                 context->bt->avrcpUpdates,
                 BT_AVRCP_ACTION_GET_METADATA
             );
@@ -679,11 +679,11 @@ void HandlerBTBM83AVRCPUpdates(void *ctx, uint8_t *data)
     } else if (type == BM83_AVRCP_EVT_PLAYBACK_TRACK_CHANGED) {
         // On AVRCP "Change"
         if (status != BM83_DATA_AVC_RSP_INTERIM) {
-            context->bt->avrcpUpdates = SET_BIT(
+            context->bt->avrcpUpdates = UTILS_SET_BIT(
                 context->bt->avrcpUpdates,
                 BT_AVRCP_ACTION_SET_TRACK_CHANGE_NOTIF
             );
-            context->bt->avrcpUpdates = SET_BIT(
+            context->bt->avrcpUpdates = UTILS_SET_BIT(
                 context->bt->avrcpUpdates,
                 BT_AVRCP_ACTION_GET_METADATA
             );
@@ -1038,8 +1038,8 @@ void HandlerTimerBTBM83AVRCPManager(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->bt->avrcpUpdates != 0x00) {
-        if (CHECK_BIT(context->bt->avrcpUpdates, BT_AVRCP_ACTION_SET_TRACK_CHANGE_NOTIF) > 0) {
-            context->bt->avrcpUpdates = CLEAR_BIT(
+        if (UTILS_CHECK_BIT(context->bt->avrcpUpdates, BT_AVRCP_ACTION_SET_TRACK_CHANGE_NOTIF) > 0) {
+            context->bt->avrcpUpdates = UTILS_CLEAR_BIT(
                 context->bt->avrcpUpdates,
                 BT_AVRCP_ACTION_SET_TRACK_CHANGE_NOTIF
             );
@@ -1047,15 +1047,15 @@ void HandlerTimerBTBM83AVRCPManager(void *ctx)
                 context->bt,
                 BM83_AVRCP_EVT_PLAYBACK_TRACK_CHANGED
             );
-        } else if (CHECK_BIT(context->bt->avrcpUpdates, BT_AVRCP_ACTION_GET_METADATA) > 0) {
-            context->bt->avrcpUpdates = CLEAR_BIT(
+        } else if (UTILS_CHECK_BIT(context->bt->avrcpUpdates, BT_AVRCP_ACTION_GET_METADATA) > 0) {
+            context->bt->avrcpUpdates = UTILS_CLEAR_BIT(
                 context->bt->avrcpUpdates,
                 BT_AVRCP_ACTION_GET_METADATA
             );
             BM83CommandAVRCPGetElementAttributesAll(context->bt);
         }
         // Set the timeout to 250ms from now if we still need to get metadata
-        if (CHECK_BIT(context->bt->avrcpUpdates, BT_AVRCP_ACTION_GET_METADATA) > 0) {
+        if (UTILS_CHECK_BIT(context->bt->avrcpUpdates, BT_AVRCP_ACTION_GET_METADATA) > 0) {
             TimerSetTaskInterval(
                 context->avrcpRegisterStatusNotifierTimerId,
                 HANDLER_INT_BT_AVRCP_UPDATER_METADATA

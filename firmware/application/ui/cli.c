@@ -866,7 +866,7 @@ void CLIProcess()
                 }
                 BM83CommandReadLocalBDAddress(cli.bt);
             } else if (UtilsStricmp(msgBuf[0], "VERSION") == 0) {
-                char version[9];
+                char version[9] = {0};
                 ConfigGetFirmwareVersionString(version);
                 LogRaw("BlueBus Firmware: %s\r\n", version);
                 LogRaw("Serial Number: %u\r\n", ConfigGetSerialNumber());
@@ -936,7 +936,7 @@ void CLIProcess()
             if (((TimerGetMillis() - cli.lastRxTimestamp) / 1000) > CLI_BANNER_TIMEOUT ||
                 cli.lastRxTimestamp == 0
             ) {
-                char version[9];
+                char version[9] = {0};
                 ConfigGetFirmwareVersionString(version);
                 LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
                 LogRaw("BlueBus Firmware: %s\r\n", version);
@@ -962,7 +962,7 @@ void CLITimerTerminalReady(void *ctx)
 {
     if (cli.terminalReady == 1) {
         cli.terminalReady = 2;
-        char version[9];
+        char version[9] = {0};
         ConfigGetFirmwareVersionString(version);
         LogRaw("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
         LogRaw("BlueBus Firmware: %s\r\n", version);

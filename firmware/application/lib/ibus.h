@@ -61,6 +61,9 @@
 #define IBUS_PKT_DB1 4
 #define IBUS_PKT_DB2 5
 #define IBUS_PKT_DB3 6
+#define IBUS_PKT_DB4 7
+#define IBUS_PKT_DB5 8
+#define IBUS_PKT_DB6 9
 
 // IBus Message Priorities
 #define IBUS_MSG_PRIORITY_NORMAL 0
