@@ -162,7 +162,7 @@ static uint8_t UARTRXInterruptHandler(uint8_t moduleIndex)
         // No frame or parity errors
         if ((uart->registers->uxsta & 0xC) == 0) {
             // Clear the buffer overflow error, if it exists
-            if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
+            if (UTILS_CHECK_BIT(uart->registers->uxsta, 1) != 0) {
                 uart->rxError ^= UART_ERR_OERR;
                 uart->registers->uxsta ^= 0x2;
             }
@@ -171,14 +171,14 @@ static uint8_t UARTRXInterruptHandler(uint8_t moduleIndex)
             // Set a "General" Error
             uart->rxError ^= UART_ERR_GERR;
             // Clear the buffer overflow error, if it is set
-            if (CHECK_BIT(uart->registers->uxsta, 1) != 0) {
+            if (UTILS_CHECK_BIT(uart->registers->uxsta, 1) != 0) {
                 uart->rxError ^= UART_ERR_OERR;
                 uart->registers->uxsta ^= 0x2;
             }
-            if (CHECK_BIT(uart->registers->uxsta, 2) != 0) {
+            if (UTILS_CHECK_BIT(uart->registers->uxsta, 2) != 0) {
                 uart->rxError ^= UART_ERR_FERR;
             }
-            if (CHECK_BIT(uart->registers->uxsta, 3) != 0) {
+            if (UTILS_CHECK_BIT(uart->registers->uxsta, 3) != 0) {
                 uart->rxError ^= UART_ERR_PERR;
             }
             // Clear the byte in the RX buffer

@@ -307,12 +307,12 @@ static void IBusHandleGTMessage(IBus_t *ibus, uint8_t *pkt)
         if (gtVersion != IBUS_GT_DETECT_ERROR) {
             LogRaw(
                 "\r\nIBus: GT P/N: %c%c%c%c%c%c%c DI: %d HW: %d SW: %d Build: %c%c/%c%c\r\n",
-                pkt[4],
-                pkt[5],
-                pkt[6],
-                pkt[7],
-                pkt[8],
-                pkt[9],
+                pkt[IBUS_PKT_DB1],
+                pkt[IBUS_PKT_DB2],
+                pkt[IBUS_PKT_DB3],
+                pkt[IBUS_PKT_DB4],
+                pkt[IBUS_PKT_DB5],
+                pkt[IBUS_PKT_DB6],
                 pkt[10],
                 diagnosticIndex,
                 hardwareVersion,
@@ -368,7 +368,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_IGN_STATUS_RESP) {
-        uint8_t ignitionStatus = pkt[4];
+        uint8_t ignitionStatus = pkt[IBUS_PKT_DB1];
         if (ibus->ignitionStatus != IBUS_IGNITION_KL99) {
             // The order of the items below should not be changed,
             // otherwise listeners will not know if the ignition status
@@ -595,14 +595,14 @@ static void IBusHandlePDCMessage(IBus_t *ibus, uint8_t *pkt)
         ibus->pdcSensors = pdcSensors;
         // Ensure PDC is active -- first bit of the tenth data byte of the packet
         if ((pkt[13] & 0x1) == 1) {
-            ibus->pdcSensors.frontLeft = pkt[9];
+            ibus->pdcSensors.frontLeft = pkt[IBUS_PKT_DB6];
             ibus->pdcSensors.frontCenterLeft = pkt[11];
             ibus->pdcSensors.frontCenterRight = pkt[12];
             ibus->pdcSensors.frontRight = pkt[10];
-            ibus->pdcSensors.rearLeft = pkt[5];
-            ibus->pdcSensors.rearCenterLeft = pkt[7];
-            ibus->pdcSensors.rearCenterRight = pkt[8];
-            ibus->pdcSensors.rearRight = pkt[6];
+            ibus->pdcSensors.rearLeft = pkt[IBUS_PKT_DB2];
+            ibus->pdcSensors.rearCenterLeft = pkt[IBUS_PKT_DB4];
+            ibus->pdcSensors.rearCenterRight = pkt[IBUS_PKT_DB5];
+            ibus->pdcSensors.rearRight = pkt[IBUS_PKT_DB3];
 
             LogDebug(
                 LOG_SOURCE_IBUS,
@@ -629,11 +629,11 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
             EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_REQUEST, pkt);
         } else if (pkt[IBUS_PKT_CMD] == IBUS_COMMAND_CDC_REQUEST) {
-            if (pkt[4] == IBUS_CDC_CMD_STOP_PLAYING) {
+            if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_STOP_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_NOT_PLAYING;
-            } else if (pkt[4] == IBUS_CDC_CMD_PAUSE_PLAYING) {
+            } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_PAUSE_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_PAUSE;
-            } else if (pkt[4] == IBUS_CDC_CMD_START_PLAYING) {
+            } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_START_PLAYING) {
                 ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
             }
             EventTriggerCallback(IBUS_EVENT_CD_STATUS_REQUEST, pkt);
@@ -644,14 +644,14 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
     ) {
         LogRaw(
             "\r\nIBus: RAD P/N: %d%d%d%d%d%d%d HW: %02d SW: %d%d Build: %d%d/%d%d\r\n",
-            pkt[4] & 0x0F,
-            (pkt[5] & 0xF0) >> 4,
-            pkt[5] & 0x0F,
-            (pkt[6] & 0xF0) >> 4,
-            pkt[6] & 0x0F,
-            (pkt[7] & 0xF0) >> 4,
-            pkt[7] & 0x0F,
-            pkt[8],
+            pkt[IBUS_PKT_DB1] & 0x0F,
+            (pkt[IBUS_PKT_DB2] & 0xF0) >> 4,
+            pkt[IBUS_PKT_DB2] & 0x0F,
+            (pkt[IBUS_PKT_DB3] & 0xF0) >> 4,
+            pkt[IBUS_PKT_DB3] & 0x0F,
+            (pkt[IBUS_PKT_DB4] & 0xF0) >> 4,
+            pkt[IBUS_PKT_DB4] & 0x0F,
+            pkt[IBUS_PKT_DB5],
             (pkt[15] & 0xF0) >> 4,
             pkt[15] & 0x0F,
             (pkt[12] & 0xF0) >> 4,
@@ -698,7 +698,7 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_MID) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_WRITE_MID_DISPLAY) {
-            if (pkt[4] == 0xC0) {
+            if (pkt[IBUS_PKT_DB1] == 0xC0) {
                 EventTriggerCallback(IBUS_EVENT_RAD_MID_DISPLAY_TEXT, pkt);
             }
         } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_WRITE_MID_MENU) {
@@ -720,11 +720,11 @@ static void IBusHandleTELMessage(IBus_t *ibus, uint8_t *pkt)
             ibus->telematicsLatitude,
             IBUS_TELEMATICS_COORDS_LEN,
             "%i\xB0%02X'%02X.%01X\" %c",
-            (pkt[5] & 0x0F) * 100 + (pkt[6] >> 4) * 10 + (pkt[6] & 0x0F),
-            pkt[7],
-            pkt[8],
-            pkt[9] >> 4,
-            ((pkt[9] & 0x01) == 0) ? 'N' : 'S'
+            (pkt[IBUS_PKT_DB2] & 0x0F) * 100 + (pkt[IBUS_PKT_DB3] >> 4) * 10 + (pkt[IBUS_PKT_DB3] & 0x0F),
+            pkt[IBUS_PKT_DB4],
+            pkt[IBUS_PKT_DB5],
+            pkt[IBUS_PKT_DB6] >> 4,
+            ((pkt[IBUS_PKT_DB6] & 0x01) == 0) ? 'N' : 'S'
         );
         snprintf(
             ibus->telematicsLongtitude,
@@ -1156,7 +1156,7 @@ uint8_t IBusGetLMDiagnosticIndex(uint8_t *packet)
 uint8_t IBusGetLMDimmerChecksum(uint8_t *packet)
 {
     // Do not use the XOR
-    uint8_t frameLength = packet[1] - 3;
+    uint8_t frameLength = packet[IBUS_PKT_LEN] - 3;
     uint8_t index = 4;
     uint8_t checksum = 0x00;
     while (frameLength > 0) {
@@ -1329,7 +1329,7 @@ uint8_t IBusGetNavType(uint8_t *packet)
  */
 uint8_t IBusGetVehicleType(uint8_t *packet)
 {
-    uint8_t vehicleType = (packet[4] >> 4) & 0xF;
+    uint8_t vehicleType = (packet[IBUS_PKT_DB1] >> 4) & 0xF;
     uint8_t detectedVehicleType = 0xFF;
     if (vehicleType == 0x04 || vehicleType == 0x06 || vehicleType == 0x0F) {
         detectedVehicleType = IBUS_VEHICLE_TYPE_E46;
@@ -1355,7 +1355,7 @@ uint8_t IBusGetVehicleType(uint8_t *packet)
  */
 uint8_t IBusGetConfigTemp(uint8_t *packet)
 {
-    uint8_t tempUnit = (packet[5] >> 1) & 0x1;
+    uint8_t tempUnit = (packet[IBUS_PKT_DB2] >> 1) & 0x1;
     return tempUnit;
 }
 
@@ -1370,7 +1370,7 @@ uint8_t IBusGetConfigTemp(uint8_t *packet)
  */
 uint8_t IBusGetConfigDistance(uint8_t *packet)
 {
-    unsigned char distUnit = (packet[5] >> 6) & 0x1;
+    unsigned char distUnit = (packet[IBUS_PKT_DB2] >> 6) & 0x1;
     return distUnit;
 }
 
@@ -1385,7 +1385,7 @@ uint8_t IBusGetConfigDistance(uint8_t *packet)
  */
 uint8_t IBusGetConfigLanguage(uint8_t *packet)
 {
-    uint8_t lang = packet[4] & 0x0F;
+    uint8_t lang = packet[IBUS_PKT_DB1] & 0x0F;
     return lang;
 }
 
