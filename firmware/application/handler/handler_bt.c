@@ -712,7 +712,7 @@ void HandlerBTBM83DSPStatus(void *ctx, uint8_t *pkt)
     ) {
         return;
     }
-    if (sampleRate != BM83_DATA_DSP_REPORTED_SR_44_1kHz) {
+    if (sampleRate != BM83_DATA_DSP_REPORTED_SR_44_1KHZ) {
         LogDebug(LOG_SOURCE_BT, "Disable S/PDIF");
         SPDIF_RST = 0;
     } else {

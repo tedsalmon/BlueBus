@@ -53,22 +53,22 @@ void CD53Init(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_BMBTButton,
+        IBUS_EVENT_BMBT_BUTTON,
         &CD53IBusBMBTButtonPress,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_CDStatusRequest,
+        IBUS_EVENT_CD_STATUS_REQUEST,
         &CD53IBusCDChangerStatus,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_IKEIgnitionStatus,
+        IBUS_EVENT_IKE_IGNITION_STATUS,
         &CD53IBusIgnitionStatus,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_MFLButton,
+        IBUS_EVENT_MFL_BUTTON,
         &CD53IBusMFLButton,
         &Context
     );
@@ -78,7 +78,7 @@ void CD53Init(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_ScreenModeSet,
+        IBUS_EVENT_SCREEN_MODE_SET,
         &CD53GTScreenModeSet,
         &Context
     );
@@ -125,19 +125,19 @@ void CD53Destroy()
         &CD53BTPlaybackStatus
     );
     EventUnregisterCallback(
-        IBUS_EVENT_BMBTButton,
+        IBUS_EVENT_BMBT_BUTTON,
         &CD53IBusBMBTButtonPress
     );
     EventUnregisterCallback(
-        IBUS_EVENT_CDStatusRequest,
+        IBUS_EVENT_CD_STATUS_REQUEST,
         &CD53IBusCDChangerStatus
     );
     EventUnregisterCallback(
-        IBUS_EVENT_IKEIgnitionStatus,
+        IBUS_EVENT_IKE_IGNITION_STATUS,
         &CD53IBusIgnitionStatus
     );
     EventUnregisterCallback(
-        IBUS_EVENT_MFLButton,
+        IBUS_EVENT_MFL_BUTTON,
         &CD53IBusMFLButton
     );
     EventUnregisterCallback(
@@ -145,7 +145,7 @@ void CD53Destroy()
         &CD53IBusRADWriteDisplay
     );
     EventUnregisterCallback(
-        IBUS_EVENT_ScreenModeSet,
+        IBUS_EVENT_SCREEN_MODE_SET,
         &CD53GTScreenModeSet
     );
     TimerUnregisterScheduledTask(&CD53TimerDisplay);
@@ -308,7 +308,7 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0) {
                 // Trigger device selection event
                 EventTriggerCallback(
-                    UIEvent_InitiateConnection,
+                    UI_EVENT_INITIATE_CONNECTION,
                     (unsigned char *)&context->btDeviceIndex
                 );
                 CD53SetTempDisplayText(context, "Connecting", 2);
@@ -388,7 +388,7 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
             CD53SetTempDisplayText(context, "Pairing On", timeout);
             state = BT_STATE_ON;
             // To pair a new device, we must disconnect the active one
-            EventTriggerCallback(UIEvent_CloseConnection, 0x00);
+            EventTriggerCallback(UI_EVENT_CLOSE_CONNECTION, 0x00);
         }
         BTCommandSetDiscoverable(context->bt, state);
     } else {
@@ -537,7 +537,7 @@ void CD53IBusBMBTButtonPress(void *ctx, unsigned char *pkt)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
     if (context->mode != CD53_MODE_OFF) {
-        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_PlayPause) {
+        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_PLAY_PAUSE) {
             if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
                 BTCommandPause(context->bt);
             } else {

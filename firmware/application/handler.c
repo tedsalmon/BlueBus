@@ -49,12 +49,12 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     Context.lmLastStatusSet = 0;
     Context.radLastMessage = TimerGetMillis();
     EventRegisterCallback(
-        UIEvent_CloseConnection,
+        UI_EVENT_CLOSE_CONNECTION,
         &HandlerUICloseConnection,
         &Context
     );
     EventRegisterCallback(
-        UIEvent_InitiateConnection,
+        UI_EVENT_INITIATE_CONNECTION,
         &HandlerUIInitiateConnection,
         &Context
     );

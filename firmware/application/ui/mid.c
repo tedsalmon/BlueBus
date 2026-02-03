@@ -35,27 +35,27 @@ void MIDInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_CDStatusRequest,
+        IBUS_EVENT_CD_STATUS_REQUEST,
         &MIDIBusCDChangerStatus,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_IKEIgnitionStatus,
+        IBUS_EVENT_IKE_IGNITION_STATUS,
         &MIDIBusIgnitionStatus,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_MIDButtonPress,
+        IBUS_EVENT_MID_BUTTON_PRESS,
         &MIDIBusMIDButtonPress,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_RADMIDDisplayText,
+        IBUS_EVENT_RAD_MID_DISPLAY_TEXT,
         &MIDIIBusRADMIDDisplayUpdate,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_MIDModeChange,
+        IBUS_EVENT_MID_MODE_CHANGE,
         &MIDIBusMIDModeChange,
         &Context
     );
@@ -95,23 +95,23 @@ void MIDDestroy()
         &MIDBTPlaybackStatus
     );
     EventUnregisterCallback(
-        IBUS_EVENT_CDStatusRequest,
+        IBUS_EVENT_CD_STATUS_REQUEST,
         &MIDIBusCDChangerStatus
     );
     EventUnregisterCallback(
-        IBUS_EVENT_IKEIgnitionStatus,
+        IBUS_EVENT_IKE_IGNITION_STATUS,
         &MIDIBusIgnitionStatus
     );
     EventUnregisterCallback(
-        IBUS_EVENT_MIDButtonPress,
+        IBUS_EVENT_MID_BUTTON_PRESS,
         &MIDIBusMIDButtonPress
     );
     EventUnregisterCallback(
-        IBUS_EVENT_RADMIDDisplayText,
+        IBUS_EVENT_RAD_MID_DISPLAY_TEXT,
         &MIDIIBusRADMIDDisplayUpdate
     );
     EventUnregisterCallback(
-        IBUS_EVENT_MIDModeChange,
+        IBUS_EVENT_MID_MODE_CHANGE,
         &MIDIBusMIDModeChange
     );
     TimerUnregisterScheduledTask(&MIDTimerMenuWrite);
@@ -461,7 +461,7 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
                 state = BT_STATE_ON;
                 if (context->bt->activeDevice.deviceId != 0) {
                     // To pair a new device, we must disconnect the active one
-                    EventTriggerCallback(UIEvent_CloseConnection, 0x00);
+                    EventTriggerCallback(UI_EVENT_CLOSE_CONNECTION, 0x00);
                 }
             }
             BTCommandSetDiscoverable(context->bt, state);
@@ -499,7 +499,7 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
                 ) {
                     // Trigger device selection event
                     EventTriggerCallback(
-                        UIEvent_InitiateConnection,
+                        UI_EVENT_INITIATE_CONNECTION,
                         (uint8_t *)&context->btDeviceIndex
                     );
                 }
@@ -524,9 +524,9 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
     }
     // Handle Next and Previous
     if (context->ibus->cdChangerFunction != IBUS_CDC_FUNC_NOT_PLAYING) {
-        if (btnPressed == IBus_MID_BTN_TEL_RIGHT_RELEASE) {
+        if (btnPressed == IBUS_MID_BTN_TEL_RIGHT_RELEASE) {
             BTCommandPlaybackTrackNext(context->bt);
-        } else if (btnPressed == IBus_MID_BTN_TEL_LEFT_RELEASE) {
+        } else if (btnPressed == IBUS_MID_BTN_TEL_LEFT_RELEASE) {
             BTCommandPlaybackTrackPrevious(context->bt);
         }
     }
@@ -654,7 +654,7 @@ void MIDTimerDisplay(void *ctx)
             );
             context->tempDisplay.status = MID_DISPLAY_STATUS_ON;
         }
-        if (context->mainDisplay.length <= IBus_MID_MAX_CHARS) {
+        if (context->mainDisplay.length <= IBUS_MID_MAX_CHARS) {
             context->mainDisplay.index = 0;
         }
     } else {
@@ -662,9 +662,9 @@ void MIDTimerDisplay(void *ctx)
         if (context->mainDisplay.timeout > 0) {
             context->mainDisplay.timeout--;
         } else {
-            if (context->mainDisplay.length > IBus_MID_MAX_CHARS) {
-                char text[IBus_MID_MAX_CHARS + 1] = {0};
-                uint8_t textLength = IBus_MID_MAX_CHARS;
+            if (context->mainDisplay.length > IBUS_MID_MAX_CHARS) {
+                char text[IBUS_MID_MAX_CHARS + 1] = {0};
+                uint8_t textLength = IBUS_MID_MAX_CHARS;
                 // If we start with a space, it will be ignored by the display
                 // Skipping the space allows us to have "smooth" scrolling
                 if (context->mainDisplay.text[context->mainDisplay.index] == 0x20 &&
@@ -697,7 +697,7 @@ void MIDTimerDisplay(void *ctx)
                         MID_SETTING_METADATA_MODE_CHUNK
                     ) {
                         context->mainDisplay.timeout = 2;
-                        context->mainDisplay.index += IBus_MID_MAX_CHARS;
+                        context->mainDisplay.index += IBUS_MID_MAX_CHARS;
                     } else {
                         context->mainDisplay.index++;
                     }

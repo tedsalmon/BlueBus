@@ -105,17 +105,17 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_BMBTButton,
+        IBUS_EVENT_BMBT_BUTTON,
         &BMBTIBusBMBTButtonPress,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_CDStatusRequest,
+        IBUS_EVENT_CD_STATUS_REQUEST,
         &BMBTIBusCDChangerStatus,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_GTChangeUIRequest,
+        IBUS_EVENT_GT_CHANGE_UI_REQUEST,
         &BMBTIBusGTChangeUIRequest,
         &Context
     );
@@ -125,7 +125,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_GTMenuSelect,
+        IBUS_EVENT_GT_MENU_SELECT,
         &BMBTIBusMenuSelect,
         &Context
     );
@@ -140,7 +140,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_RADDisplayMenu,
+        IBUS_EVENT_RAD_DISPLAY_MENU,
         &BMBTRADDisplayMenu,
         &Context
     );
@@ -150,12 +150,12 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_ScreenModeSet,
+        IBUS_EVENT_SCREEN_MODE_SET,
         &BMBTGTScreenModeSet,
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_ScreenModeUpdate,
+        IBUS_EVENT_SCREEN_MODE_UPDATE,
         &BMBTRADScreenModeRequest,
         &Context
     );
@@ -170,7 +170,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_IKESpeedRPMUpdate,
+        IBUS_EVENT_IKE_SPEED_RPM_UPDATE,
         &BMBTIKESpeedRPMUpdate,
         &Context
     );
@@ -228,11 +228,11 @@ void BMBTDestroy()
         &BMBTBTPlaybackStatus
     );
     EventUnregisterCallback(
-        IBUS_EVENT_BMBTButton,
+        IBUS_EVENT_BMBT_BUTTON,
         &BMBTIBusBMBTButtonPress
     );
     EventUnregisterCallback(
-        IBUS_EVENT_CDStatusRequest,
+        IBUS_EVENT_CD_STATUS_REQUEST,
         &BMBTIBusCDChangerStatus
     );
     EventUnregisterCallback(
@@ -244,7 +244,7 @@ void BMBTDestroy()
         &BMBTIBusSensorValueUpdate
     );
     EventUnregisterCallback(
-        IBUS_EVENT_GTChangeUIRequest,
+        IBUS_EVENT_GT_CHANGE_UI_REQUEST,
         &BMBTIBusGTChangeUIRequest
     );
     EventUnregisterCallback(
@@ -252,11 +252,11 @@ void BMBTDestroy()
         &BMBTIBusGTMenuBufferUpdate
     );
     EventUnregisterCallback(
-        IBUS_EVENT_GTMenuSelect,
+        IBUS_EVENT_GT_MENU_SELECT,
         &BMBTIBusMenuSelect
     );
     EventUnregisterCallback(
-        IBUS_EVENT_RADDisplayMenu,
+        IBUS_EVENT_RAD_DISPLAY_MENU,
         &BMBTRADDisplayMenu
     );
     EventUnregisterCallback(
@@ -264,11 +264,11 @@ void BMBTDestroy()
         &BMBTRADUpdateMainArea
     );
     EventUnregisterCallback(
-        IBUS_EVENT_ScreenModeSet,
+        IBUS_EVENT_SCREEN_MODE_SET,
         &BMBTGTScreenModeSet
     );
     EventUnregisterCallback(
-        IBUS_EVENT_ScreenModeUpdate,
+        IBUS_EVENT_SCREEN_MODE_UPDATE,
         &BMBTRADScreenModeRequest
     );
     EventUnregisterCallback(
@@ -1899,12 +1899,12 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE) {
         if (
-            pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_PlayPause ||
-            pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Num1
+            pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_PLAY_PAUSE ||
+            pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_NUM1
         ) {
             BTCommandPlaybackToggle(context->bt);
         }
-        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Knob) {
+        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_KNOB) {
             if (context->status.displayMode == BMBT_DISPLAY_ON &&
                 context->menu == BMBT_MENU_DASHBOARD &&
                 context->ibus->gtVersion == IBUS_GT_MKIV_STATIC
@@ -1912,7 +1912,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                 BMBTMenuMain(context);
             }
         }
-        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Display) {
+        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_DISPLAY) {
             if (context->status.playerMode == BMBT_MODE_ACTIVE) {
                 if (context->status.displayMode == BMBT_DISPLAY_OFF) {
                     context->status.displayMode = BMBT_DISPLAY_ON;
@@ -1927,21 +1927,21 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                 }
             }
         }
-        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_Mode) {
+        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_MODE) {
             context->status.playerMode = BMBT_MODE_INACTIVE;
         }
         // Handle the SEL and Info buttons gracefully
         if (pkt[3] == IBUS_CMD_BMBT_BUTTON0 && pkt[1] == 0x05) {
-            if (pkt[5] == IBUS_DEVICE_BMBT_Button_Info) {
+            if (pkt[5] == IBUS_DEVICE_BMBT_BUTTON_INFO) {
                 context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
-            } else if (pkt[5] == IBUS_DEVICE_BMBT_Button_SEL) {
+            } else if (pkt[5] == IBUS_DEVICE_BMBT_BUTTON_SEL) {
                 context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
             }
         }
     }
     // Handle calls at any time
     if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Release) {
+        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_TEL_RELEASE) {
             if (context->bt->callStatus == BT_CALL_ACTIVE) {
                 BTCommandCallEnd(context->bt);
             } else if (context->bt->callStatus == BT_CALL_INCOMING) {
@@ -1950,7 +1950,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                 BTCommandCallEnd(context->bt);
             }
         } else if (context->bt->callStatus == BT_CALL_INACTIVE &&
-                   pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_Button_TEL_Hold
+                   pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_TEL_HOLD
         ) {
             BTCommandToggleVoiceRecognition(context->bt);
         }
@@ -2191,7 +2191,7 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                     state = BT_STATE_ON;
                     if (context->bt->activeDevice.deviceId != 0) {
                         // To pair a new device, we must disconnect the active one
-                        EventTriggerCallback(UIEvent_CloseConnection, 0x00);
+                        EventTriggerCallback(UI_EVENT_CLOSE_CONNECTION, 0x00);
                     }
                 }
                 BMBTGTBufferFlush(context);
@@ -2234,7 +2234,7 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                 ) {
                     // Trigger device selection event
                     EventTriggerCallback(
-                        UIEvent_InitiateConnection,
+                        UI_EVENT_INITIATE_CONNECTION,
                         (uint8_t *)&deviceId
                     );
                 }

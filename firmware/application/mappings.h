@@ -109,8 +109,8 @@
 #define TEL_MUTE_V2 LATFbits.LATF4
 
 // UI Events
-#define UIEvent_InitiateConnection 96
-#define UIEvent_CloseConnection 97
+#define UI_EVENT_INITIATE_CONNECTION 96
+#define UI_EVENT_CLOSE_CONNECTION 97
 
 #define FIRMWARE_VERSION_MAJOR 1
 #define FIRMWARE_VERSION_MINOR 3

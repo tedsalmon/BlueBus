@@ -10,22 +10,22 @@
 void HandlerIBusInit(HandlerContext_t *context)
 {
     EventRegisterCallback(
-        IBUS_EVENT_BMBTButton,
+        IBUS_EVENT_BMBT_BUTTON,
         &HandlerIBusBMBTButtonPress,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_CDStatusRequest,
+        IBUS_EVENT_CD_STATUS_REQUEST,
         &HandlerIBusCDCStatus,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_DSPConfigSet,
+        IBUS_EVENT_DSP_CONFIG_SET,
         &HandlerIBusDSPConfigSet,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_FirstMessageReceived,
+        IBUS_EVENT_FIRST_MESSAGE_RECEIVED,
         &HandlerIBusFirstMessageReceived,
         context
     );
@@ -35,27 +35,27 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_DoorsFlapsStatusResponse,
+        IBUS_EVENT_DOORS_FLAPS_STATUS_RESPONSE,
         &HandlerIBusGMDoorsFlapsStatusResponse,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_GTDIAIdentityResponse,
+        IBUS_EVENT_GT_DIA_IDENTITY_RESPONSE,
         &HandlerIBusGTDIAIdentityResponse,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_GTDIAOSIdentityResponse,
+        IBUS_EVENT_GT_DIA_OS_IDENTITY_RESPONSE,
         &HandlerIBusGTDIAOSIdentityResponse,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_IKEIgnitionStatus,
+        IBUS_EVENT_IKE_IGNITION_STATUS,
         &HandlerIBusIKEIgnitionStatus,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_IKESpeedRPMUpdate,
+        IBUS_EVENT_IKE_SPEED_RPM_UPDATE,
         &HandlerIBusIKESpeedRPMUpdate,
         context
     );
@@ -65,32 +65,32 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_LCMLightStatus,
+        IBUS_EVENT_LCM_LIGHT_STATUS,
         &HandlerIBusLMLightStatus,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_LCMDimmerStatus,
+        IBUS_EVENT_LCM_DIMMER_STATUS,
         &HandlerIBusLMDimmerStatus,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_LCMRedundantData,
+        IBUS_EVENT_LCM_REDUNDANT_DATA,
         &HandlerIBusLMRedundantData,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_LMIdentResponse,
+        IBUS_EVENT_LM_IDENT_RESPONSE,
         &HandlerIBusLMIdentResponse,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_MFLButton,
+        IBUS_EVENT_MFL_BUTTON,
         &HandlerIBusMFLButton,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_ModuleStatusRequest,
+        IBUS_EVENT_MODULE_STATUS_REQUEST,
         &HandlerIBusModuleStatusRequest,
         context
     );
@@ -110,12 +110,12 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_MFLVolumeChange,
+        IBUS_EVENT_MFL_VOLUME_CHANGE,
         &HandlerIBusVolumeChange,
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_RADVolumeChange,
+        IBUS_EVENT_RAD_VOLUME_CHANGE,
         &HandlerIBusVolumeChange,
         context
     );
@@ -130,7 +130,7 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_TELVolumeChange,
+        IBUS_EVENT_TEL_VOLUME_CHANGE,
         &HandlerIBusTELVolumeChange,
         context
     );
