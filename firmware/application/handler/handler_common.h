@@ -18,7 +18,9 @@
 #define HANDLER_BT_BOOT_MFB_L 1
 #define HANDLER_BT_BOOT_MFB_H 2
 
-#define HANDLER_BT_SELECTED_DEVICE_NONE -1
+#define HANDLER_BT_SELECTED_DEVICE_NONE 0xF
+#define HANDLER_BT_STATUS_NONE 0
+#define HANDLER_BT_STATUS_CONNECTING 1
 #define HANDLER_BT_METADATA_TIMEOUT 2000
 #define HANDLER_BT_AUTOPLAY_NOT_RUN 0
 #define HANDLER_BT_AUTOPLAY_RUN 1
@@ -27,7 +29,7 @@
 #define HANDLER_CDC_SEEK_MODE_FWD 1
 #define HANDLER_CDC_SEEK_MODE_REV 2
 #define HANDLER_CDC_STATUS_TIMEOUT 20000
-#define HANDLER_DEVICE_MAX_RECONN 15
+#define HANDLER_DEVICE_MAX_RECONN 5
 #define HANDLER_IBUS_MODULE_PING_STATE_OFF 0
 #define HANDLER_IBUS_MODULE_PING_STATE_READY 1
 #define HANDLER_IBUS_MODULE_PING_STATE_IKE 2
@@ -39,6 +41,7 @@
 #define HANDLER_IBUS_MODULE_PING_STATE_RAD 8
 #define HANDLER_IBUS_MODULE_PING_STATE_LM 9
 #define HANDLER_IBUS_MODULE_PING_STATE_TEL 10
+#define HANDLER_IBUS_MODULE_PING_STATE_GM 11
 #define HANDLER_GT_STATUS_UNCHECKED 0
 #define HANDLER_GT_STATUS_CHECKED 1
 #define HANDLER_INT_BC127_STATE 1000
@@ -90,6 +93,8 @@
 #define HANDLER_TEL_STATUS_SET 0
 #define HANDLER_TEL_STATUS_FORCE 1
 #define HANDLER_TEL_STATUS_VOL_CHANGE 0xFF
+#define HANDLER_TEL_OFF 0
+#define HANDLER_TEL_ON 1
 #define HANDLER_WAIT_REV_VOL 1000
 #define HANDLER_MONITOR_STATUS_UNSET 0
 #define HANDLER_MONITOR_STATUS_POWERED_OFF 1
@@ -116,7 +121,8 @@ typedef struct HandlerContext_t {
     BT_t *bt;
     IBus_t *ibus;
     uint8_t btDeviceConnRetries;
-    int8_t btSelectedDevice: 4;
+    uint8_t btSelectedDevice: 4;
+    uint8_t btStatus: 1;
     uint8_t btStartupIsRun: 1;
     uint8_t btBootState: 2;
     uint8_t btAutoplay: 1;
@@ -127,6 +133,7 @@ typedef struct HandlerContext_t {
     uint8_t gtStatus: 1;
     uint8_t monitorStatus: 2;
     uint8_t pdcActive: 1;
+    uint8_t telOnStatus: 1;
     uint8_t uiMode;
     uint8_t lmDimmerChecksum;
     uint8_t telStatus;
@@ -134,6 +141,7 @@ typedef struct HandlerContext_t {
     HandlerLightControlStatus_t lmState;
     uint8_t powerStatus;
     uint8_t scanIntervals;
+    uint8_t deviceScanTimerId;
     uint8_t tcuStateChangeTimerId;
     uint8_t lightingStateTimerId;
     uint8_t avrcpRegisterStatusNotifierTimerId;

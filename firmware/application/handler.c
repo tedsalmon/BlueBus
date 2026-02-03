@@ -5,6 +5,8 @@
  *     Implement the logic to have the BC127 and IBus communicate
  */
 #include "handler.h"
+#include "handler/handler_common.h"
+#include "lib/bt/bt_common.h"
 static HandlerContext_t Context;
 
 /**
@@ -34,6 +36,7 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     Context.lmDimmerChecksum = 0x00;
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
     Context.telStatus = IBUS_TEL_STATUS_NONE;
+    Context.telOnStatus = HANDLER_TEL_OFF;
     Context.btBootState = HANDLER_BT_BOOT_OK;
     memset(&Context.gmState, 0, sizeof(HandlerBodyModuleStatus_t));
     memset(&Context.lmState, 0, sizeof(HandlerLightControlStatus_t));
@@ -102,6 +105,8 @@ void HandlerUICloseConnection(void *ctx, unsigned char *data)
  * HandlerUIInitiateConnection()
  *     Description:
  *         Handle the connection when a new device is selected in the UI
+ *         Rather than doing any connecting here, we instead set the correct
+ *         states so that the disconnection or scan event will
  *     Params:
  *         void *ctx - The context provided at registration
  *         unsigned char *tmp - Any event data
@@ -111,16 +116,9 @@ void HandlerUICloseConnection(void *ctx, unsigned char *data)
 void HandlerUIInitiateConnection(void *ctx, unsigned char *deviceId)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->bt->activeDevice.deviceId != 0) {
-        BTCommandDisconnect(context->bt);
-    }
-    context->btSelectedDevice = (int8_t) *deviceId;
-    ConfigSetBytes(
-        CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,
-        context->bt->pairedDevices[context->btSelectedDevice].macId,
-        BT_MAC_ID_LEN
-    );
-    BTCommandSetConnectable(context->bt, BT_STATE_ON);
+    context->btStatus = HANDLER_BT_STATUS_CONNECTING;
+    context->btSelectedDevice = (uint8_t) *deviceId;
+    HandlerUICloseConnection(ctx, 0x00);
 }
 
 /**

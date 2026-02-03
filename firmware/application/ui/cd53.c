@@ -209,6 +209,10 @@ void CD53DisplayUpdateText(void *ctx, char *text, int8_t timeout, uint8_t update
 
 static void CD53ShowNextAvailableDevice(CD53Context_t *context, uint8_t direction)
 {
+    if (context->bt->pairedDevicesCount == 0) {
+        CD53SetMainDisplayText(context, "No Devices", 0);
+        return;
+    }
     if (direction == 0x00) {
         if (context->btDeviceIndex < context->bt->pairedDevicesCount - 1) {
             context->btDeviceIndex++;

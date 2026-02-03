@@ -1496,12 +1496,7 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
         LogDebug(LOG_SOURCE_BT, "BT: New Active Device");
         bt->activeDevice.deviceId = deviceId;
         BC127ConvertMACIDToHex(msgBuf[4], bt->activeDevice.macId);
-        char *deviceName = BTPairedDeviceGetName(bt, bt->activeDevice.macId);
-        if (deviceName != 0) {
-            UtilsStrncpy(bt->activeDevice.deviceName, deviceName, BT_DEVICE_NAME_LEN);
-        } else {
-            BC127CommandGetDeviceName(bt, msgBuf[4]);
-        }
+        BC127CommandGetDeviceName(bt, msgBuf[4]);
         isNew = 1;
     }
     if (bt->activeDevice.deviceId == deviceId) {
@@ -1543,10 +1538,10 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
  */
 void BC127ProcessEventList(BT_t *bt, char **msgBuf)
 {
-    // Request the device name. Note that the name will only be returned
-    // if the device is in range
     LogDebug(LOG_SOURCE_BT, "BT: Paired Device %s", msgBuf[1]);
-    BC127CommandGetDeviceName(bt, msgBuf[1]);
+    unsigned char macId[BT_DEVICE_MAC_ID_LEN] = {0};
+    BC127ConvertMACIDToHex(msgBuf[1], macId);
+    BTPairedDeviceInit(bt, macId, 0);
 }
 
 /**
@@ -1578,9 +1573,9 @@ void BC127ProcessEventName(BT_t *bt, char **msgBuf, char *msg)
         char name[BT_DEVICE_NAME_LEN] = {0};
         UtilsNormalizeText(name, deviceName, BT_DEVICE_NAME_LEN);
         LogDebug(LOG_SOURCE_BT, "Process Name");
-        unsigned char macId[BT_MAC_ID_LEN] = {0};
+        unsigned char macId[BT_DEVICE_MAC_ID_LEN] = {0};
         BC127ConvertMACIDToHex(msgBuf[1], macId);
-        if (memcmp(macId, bt->activeDevice.macId, BT_MAC_ID_LEN) == 0 &&
+        if (memcmp(macId, bt->activeDevice.macId, BT_DEVICE_MAC_ID_LEN) == 0 &&
             bt->status != BT_STATUS_CONNECTED
         ) {
             // Clean the device name up
@@ -1589,7 +1584,6 @@ void BC127ProcessEventName(BT_t *bt, char **msgBuf, char *msg)
             bt->status = BT_STATUS_CONNECTED;
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
         }
-        BTPairedDeviceInit(bt, macId, name, 0);
     } else {
         LogError("BT: Bad NAME Packet");
     }
@@ -1643,12 +1637,7 @@ void BC127ProcessEventOpenOk(BT_t *bt, char **msgBuf)
     ) {
         bt->activeDevice.deviceId = deviceId;
         BC127ConvertMACIDToHex(msgBuf[3], bt->activeDevice.macId);
-        char *deviceName = BTPairedDeviceGetName(bt, bt->activeDevice.macId);
-        if (deviceName != 0) {
-            UtilsStrncpy(bt->activeDevice.deviceName, deviceName, BT_DEVICE_NAME_LEN);
-        } else {
-            BC127CommandGetDeviceName(bt, msgBuf[3]);
-        }
+        BC127CommandGetDeviceName(bt, msgBuf[3]);
         bt->status = BT_STATUS_CONNECTED;
         EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
     }

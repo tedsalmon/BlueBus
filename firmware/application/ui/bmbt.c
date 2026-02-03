@@ -1482,9 +1482,9 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
             } else {
                 BTPairedDevice_t *device = 0;
                 uint8_t i = 0;
-                for (i = 0; i < BT_MAC_ID_LEN; i++) {
+                for (i = 0; i < BT_DEVICE_MAC_ID_LEN; i++) {
                     BTPairedDevice_t *tmpDev = &context->bt->pairedDevices[i];
-                    if (memcmp(context->bt->activeDevice.macId, tmpDev->macId, BT_MAC_ID_LEN) == 0) {
+                    if (memcmp(context->bt->activeDevice.macId, tmpDev->macId, BT_DEVICE_MAC_ID_LEN) == 0) {
                         device = tmpDev;
                     }
                 }
@@ -2201,11 +2201,11 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                     BC127CommandUnpair(context->bt);
                 } else {
                     BM83CommandRestore(context->bt);
+                    BTPairedDeviceClearRecords();
                     ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
                     ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
                 }
                 BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
-                ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
                 BMBTMenuDeviceSelection(context);
             } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
                 // Back Button
@@ -2228,8 +2228,9 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                     }
                 }
 
-                if ((dev != 0) &&
-                    (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 )
+                if (
+                    dev != 0 &&
+                    memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0
                 ) {
                     // Trigger device selection event
                     EventTriggerCallback(

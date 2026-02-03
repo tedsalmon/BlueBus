@@ -53,6 +53,8 @@ extern int8_t BTBM83MicGainTable[];
 
 #define BM83_FRAME_SIZE_MIN 0x05
 #define BM83_FRAME_CTRL_BYTE_COUNT 0x04
+#define BM83_FRAME_DATA_MAX 636
+#define BM83_FRAME_TX_MAX 32
 
 #define BM83_OFFSET_EVENT_CODE 0x03
 #define BM83_OFFSET_EVENT_DATA 0x04
@@ -350,7 +352,7 @@ void BM83ProcessEventReadLinkedDeviceInformation(BT_t *, uint8_t *, uint16_t);
 void BM83ProcessEventReadPairedDeviceRecord(BT_t *, uint8_t *, uint16_t);
 void BM83ProcessEventReportLinkBackStatus(BT_t *, uint8_t *, uint16_t);
 void BM83ProcessEventReportTypeCodec(BT_t *, uint8_t *, uint16_t );
-void BM83ProcessDataGetAllAttributes(BT_t *, uint8_t *, uint8_t, uint16_t);
+void BM83ProcessDataGetAllAttributes(BT_t *, uint8_t *, uint16_t, uint8_t, uint16_t);
 /* RX / TX */
 void BM83Process(BT_t *);
 void BM83SendCommand(BT_t *, uint8_t *, size_t);

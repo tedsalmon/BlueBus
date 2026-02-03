@@ -162,7 +162,7 @@
 #define UTILS_PIN_TEL_ON 1
 
 /* Check if a bit is set in a byte */
-#define CHECK_BIT(var, pos) ((var) & (1 <<(pos)))
+#define CHECK_BIT(var, pos) (var & (1 << pos))
 /* Clear a set bit in a byte */
 #define CLEAR_BIT(var, pos) ((var) & ~(1 << pos))
 /* Set a bit in a byte */

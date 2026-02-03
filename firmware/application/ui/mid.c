@@ -493,7 +493,8 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
             if (context->bt->pairedDevicesCount > 0) {
                 // Connect to device
                 BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
-                if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 &&
+                if (
+                    memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 &&
                     dev != 0
                 ) {
                     // Trigger device selection event

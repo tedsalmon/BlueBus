@@ -183,7 +183,7 @@ static void IBusHandleBMBTMessage(IBus_t *ibus, uint8_t *pkt)
  */
 static void IBusHandleDSPMessage(IBus_t *ibus, uint8_t *pkt)
 {
-    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
+    if (ibus->moduleStatus.DSP == 0) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     }
 }
@@ -817,7 +817,10 @@ void IBusProcess(IBus_t *ibus)
 {
     // Read messages from the IBus and if none are available, attempt to
     // transmit whatever is sitting in the transmit buffer
-    if (CharQueueGetSize(&ibus->uart.rxQueue) > 0) {
+    if (
+        CharQueueGetSize(&ibus->uart.rxQueue) > 0 &&
+        ibus->rxBufferIdx < IBUS_RX_BUFFER_SIZE
+    ) {
         ibus->rxBuffer[ibus->rxBufferIdx++] = CharQueueNext(&ibus->uart.rxQueue);
         if (ibus->rxBufferIdx > 1) {
             uint8_t msgLength = ibus->rxBuffer[1] + 2;
@@ -1007,6 +1010,10 @@ void IBusSendCommand(
     const uint8_t *data,
     const size_t dataSize
 ) {
+    if (dataSize + 4 >= IBUS_MAX_MSG_LENGTH) {
+        LogWarning("IBus: Refuse to transmit frame of length %d", dataSize + 4);
+        return;
+    }
     uint8_t idx, msgSize;
     msgSize = dataSize + 4;
     uint8_t msg[msgSize];
@@ -1417,9 +1424,9 @@ void IBusCommandCDCStatus(
         discNumber,
         0x01, // Song Number
         0x00,
-        0x01,
-        0x01, // Track Number
-        0x01  // Song Number
+        0x01, // MP3 / Audio Text bit
+        0x01, // Folder Number
+        0x01  // File Number
     };
     IBusSendCommand(
         ibus,
@@ -1952,9 +1959,9 @@ void IBusCommandGTWriteBusinessNavTitle(IBus_t *ibus, char *message) {
     if (length > IBUS_TCU_SINGLE_LINE_UI_MAX_LEN) {
         length = IBUS_TCU_SINGLE_LINE_UI_MAX_LEN;
     }
-    const size_t packetLength = length + 3;
+    const uint8_t packetLength = length + 3;
     uint8_t text[packetLength];
-    memset(text, 0x00, packetLength);
+    memset(text, 0, packetLength);
     text[0] = IBUS_CMD_GT_WRITE_TITLE;
     text[1] = 0x40;
     text[2] = 0x30;
@@ -3093,7 +3100,7 @@ void IBusCommandTELSetGTDisplayNumber(IBus_t *ibus, char *dialBuffer)
         msg[0] = IBUS_TEL_CMD_NUMBER;
         msg[1] = 0x63;
         msg[2] = 0x00;
-        snprintf((char *) msg + 3, bufferLength - 1, "%s", dialBuffer);
+        snprintf((char *) msg + 3, bufferLength + 1, "%s", dialBuffer);
         IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, frameLength);
     } else {
         const uint8_t msg[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};

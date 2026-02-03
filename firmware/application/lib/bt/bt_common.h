@@ -7,6 +7,8 @@
 #ifndef BT_COMMON_H
 #define BT_COMMON_H
 #include "../../mappings.h"
+#include "../config.h"
+#include "../eeprom.h"
 #include "../log.h"
 #include "../event.h"
 #include "../uart.h"
@@ -60,7 +62,7 @@
 #define BT_LEN_MAC_ID 6
 
 #define BT_LINK_ID_BLE 4
-#define BT_MAX_DEVICE_PAIRED 8
+#define BT_MAX_PAIRINGS 8
 #define BT_MAX_DEVICE_PROFILES 5
 #define BT_DEVICE_NAME_LEN 32
 #define BT_METADATA_MAX_SIZE 384
@@ -84,7 +86,9 @@
 #define BT_LINK_TYPE_BLE 5
 #define BT_LINK_TYPE_MAP 6
 
-#define BT_MAC_ID_LEN 6
+#define BT_DEVICE_MAC_ID_LEN 6
+#define BT_DEVICE_NAME_LEN 32
+#define BT_DEVICE_RECORD_LEN (BT_DEVICE_MAC_ID_LEN + BT_DEVICE_NAME_LEN)
 
 #define BT_VOICE_RECOG_OFF 0
 #define BT_VOICE_RECOG_ON 1
@@ -98,7 +102,7 @@
  *         deviceName - The friendly name of the device
  */
 typedef struct BTPairedDevice_t {
-    uint8_t macId[BT_MAC_ID_LEN];
+    uint8_t macId[BT_DEVICE_MAC_ID_LEN];
     char deviceName[BT_DEVICE_NAME_LEN];
     uint8_t number;
 } BTPairedDevice_t;
@@ -138,7 +142,7 @@ typedef struct BTConnectionAVRCPCapabilities_t {
  *         avrcpCaps - Available AVRCP Events
  */
 typedef struct BTConnection_t {
-    uint8_t macId[BT_MAC_ID_LEN];
+    uint8_t macId[BT_DEVICE_MAC_ID_LEN];
     char deviceName[BT_DEVICE_NAME_LEN];
     uint8_t deviceId;
     uint8_t avrcpId: 4;
@@ -183,7 +187,7 @@ typedef struct BTConnection_t {
  */
 typedef struct BT_t {
     BTConnection_t activeDevice;
-    BTPairedDevice_t pairedDevices[BT_MAX_DEVICE_PAIRED];
+    BTPairedDevice_t pairedDevices[BT_MAX_PAIRINGS];
     uint8_t status: 2;
     uint8_t type: 1;
     uint8_t connectable: 1;
@@ -212,6 +216,8 @@ void BTClearActiveDevice(BT_t *);
 void BTClearMetadata(BT_t *);
 void BTClearPairedDevices(BT_t *, uint8_t);
 BTConnection_t BTConnectionInit();
-void BTPairedDeviceInit(BT_t *, uint8_t *, char *, uint8_t);
-char *BTPairedDeviceGetName(BT_t *, uint8_t *);
+void BTPairedDeviceInit(BT_t *, uint8_t *, uint8_t);
+void BTPairedDeviceSave(uint8_t *, char *, uint8_t);
+void BTPairedDeviceLoadRecord(BTPairedDevice_t *, uint8_t);
+void BTPairedDeviceClearRecords(void);
 #endif /* BT_COMMON_H */

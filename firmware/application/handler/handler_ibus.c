@@ -214,11 +214,24 @@ static void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
     context->cdChangerLastStatus = TimerGetMillis();
 }
 
+/**
+ * HandlerIBusGetIsIgnitionStatusOn()
+ *     Description:
+ *         Returns true if the Ignition should be considered "on", either
+ *         because it is or because the radio has told us to "play"
+ *     Params:
+ *         HandlerContext_t *context - The handler context
+ *     Returns:
+ *         uint8_t - True / False
+ */
 static uint8_t HandlerIBusGetIsIgnitionStatusOn(HandlerContext_t *context)
 {
-    if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
-        (context->ibus->ignitionStatus != IBUS_IGNITION_KL99 ||
-         context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING)
+    if (
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
+        (
+            context->ibus->ignitionStatus != IBUS_IGNITION_KL99 ||
+            context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
+        )
     ) {
         return 1;
     }
@@ -272,7 +285,8 @@ static void HandlerIBusLMActivateBulbs(
             context->lmState.comfortParkingLampsStatus = HANDLER_LM_COMF_PARKING_ON;
             break;
     }
-    if (blinkers == HANDLER_LM_COMF_BLINK_OFF &&
+    if (
+        blinkers == HANDLER_LM_COMF_BLINK_OFF &&
         parkingLamps == HANDLER_LM_COMF_PARKING_OFF
     ) {
         IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
@@ -437,23 +451,20 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
     } else if (requestedCommand == IBUS_CDC_CMD_CD_CHANGE) {
         curStatus = IBUS_CDC_STAT_PLAYING;
         curFunction = IBUS_CDC_FUNC_PLAYING;
-    } else if (requestedCommand == IBUS_CDC_CMD_SCAN) {
-        curStatus = 0x00;
+    } else if (
+        requestedCommand == IBUS_CDC_CMD_SCAN ||
+        requestedCommand == IBUS_CDC_CMD_RANDOM_MODE
+    ) {
+        curStatus = IBUS_CDC_STAT_STOP;
+        curFunction = context->ibus->cdChangerFunction;
         // The 5th octet in the packet tells the CDC if we should
         // enable or disable the given mode
         if (pkt[5] == 0x01) {
-            curFunction = IBUS_CDC_FUNC_SCAN_MODE;
-        } else {
-            curFunction = IBUS_CDC_FUNC_PLAYING;
-        }
-    } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE) {
-        curStatus = 0x00;
-        // The 5th octet in the packet tells the CDC if we should
-        // enable or disable the given mode
-        if (pkt[5] == 0x01) {
-            curFunction = IBUS_CDC_FUNC_RANDOM_MODE;
-        } else {
-            curFunction = IBUS_CDC_FUNC_PLAYING;
+            if (requestedCommand == IBUS_CDC_CMD_SCAN) {
+                curFunction = IBUS_CDC_FUNC_SCAN_MODE;
+            } else {
+                curFunction = IBUS_CDC_FUNC_RANDOM_MODE;
+            }
         }
     } else {
         if (requestedCommand == IBUS_CDC_CMD_PAUSE_PLAYING) {
@@ -719,7 +730,7 @@ void HandlerIBusGTDIAOSIdentityResponse(void *ctx, uint8_t *pkt)
         }
     } else if (UtilsStricmp(navigationOS, "BMWM01S") == 0) {
         if (ConfigGetUIMode() != CONFIG_UI_MIR) {
-            LogInfo(LOG_SOURCE_SYSTEM, "Detected Business Nav UI");
+            LogInfo(LOG_SOURCE_SYSTEM, "Detected MIR UI");
             HandlerIBusSwitchUI(context, CONFIG_UI_MIR);
         }
     } else {
@@ -750,17 +761,10 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
         // If the first bit is set, the key is in position 1 at least, otherwise
         // the ignition is off
         if (ignitionStatus == IBUS_IGNITION_OFF) {
-            // Store last BT device if connected
-            if (context->bt->status == BT_STATUS_CONNECTED) {
-                ConfigSetBytes(
-                    CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,
-                    context->bt->activeDevice.macId,
-                    BT_MAC_ID_LEN
-                );
-            }
             // Disable Telephone On and Telephone Mute
             UtilsSetPinMode(UTILS_PIN_TEL_ON, 0);
             UtilsSetPinMode(UTILS_PIN_TEL_MUTE, 0);
+            context->telOnStatus = HANDLER_TEL_OFF;
             // Set the BT module not connectable/discoverable. Disconnect all devices
             BTCommandSetConnectable(context->bt, BT_STATE_OFF);
             if (context->bt->discoverable == BT_STATE_ON) {
@@ -769,7 +773,10 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             BTCommandDisconnect(context->bt);
             BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
             // Unlock the vehicle
-            if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_0) {
+            if (
+                ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_0 &&
+                context->gmState.doorsLocked == 1
+            ) {
                 if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
                     IBusCommandGMDoorCenterLockButton(context->ibus);
                 } else if (
@@ -787,8 +794,9 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             context->gmState.doorsLocked = 0;
             context->gmState.lowSideDoors = 0;
         // If the engine was on, but now it's in position 1
-        } else if (context->ibus->ignitionStatus >= IBUS_IGNITION_KL15 &&
-                   ignitionStatus == IBUS_IGNITION_KLR
+        } else if (
+            context->ibus->ignitionStatus >= IBUS_IGNITION_KL15 &&
+            ignitionStatus == IBUS_IGNITION_KLR
         ) {
             // Unlock the vehicle
             if (ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_1) {
@@ -810,15 +818,15 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             ) {
                 HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_ALL_OFF);
             }
-        // If the ignition WAS off, but now it's not, then run these actions.
-        // I realize the second condition is frivolous, but it helps with
-        // readability.
-        } else if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF &&
-                   ignitionStatus != IBUS_IGNITION_OFF
+        // If the ignition WAS off, but now it's not, then run these actions
+        } else if (
+            context->ibus->ignitionStatus == IBUS_IGNITION_OFF &&
+            ignitionStatus != IBUS_IGNITION_OFF
         ) {
             // Enable Telephone on
             UtilsSetPinMode(UTILS_PIN_TEL_ON, 1);
-            LogDebug(LOG_SOURCE_SYSTEM, "Handler: Ignition On");
+            context->telOnStatus = HANDLER_TEL_ON;
+            LogDebug(LOG_SOURCE_SYSTEM, "Ign On");
             // Reset the metadata so we don't display the wrong data
             BTClearMetadata(context->bt);
             // Set the BT module connectable
@@ -847,10 +855,10 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                 }
             }
             IBusCommandSetModuleStatus(
-                context->ibus,
-                IBUS_DEVICE_CDC,
-                IBUS_DEVICE_LOC,
-                0x01
+                 context->ibus,
+                 IBUS_DEVICE_CDC,
+                 IBUS_DEVICE_LOC,
+                 0x01
             );
             context->cdChangerLastPoll = TimerGetMillis();
             // Ask the LCM for the redundant data
@@ -1174,7 +1182,8 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
     // Engage ANGEL EYEZ
     if (parkingLamps == CONFIG_SETTING_ON) {
         uint8_t lightStatus = pkt[4];
-        if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON ||
+        if (
+            context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON ||
             CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
             CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
             CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
@@ -1920,20 +1929,26 @@ void HandlerTimerIBusPDCDistance(void *ctx)
 void HandlerTimerIBusIdent(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint8_t lmVariant = ConfigGetLMVariant();
+    uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT);
     if (
         context->ibus->moduleStatus.LCM == 1 &&
-        ConfigGetLMVariant() == CONFIG_SETTING_OFF
+        lmVariant == CONFIG_SETTING_OFF
     ) {
         // Identify the LM if we do not have an ID for it
         IBusCommandDIAGetIdentity(context->ibus, IBUS_DEVICE_LCM);
     }
     if (
         context->ibus->moduleStatus.GM == 1 &&
-        context->ibus->ignitionStatus == IBUS_IGNITION_KL15 &&
-        ConfigGetSetting(CONFIG_GM_VARIANT) == CONFIG_SETTING_OFF
+        context->ibus->ignitionStatus >= IBUS_IGNITION_KL15 &&
+        gmVariant == CONFIG_SETTING_OFF
     ) {
         // Identify the ZKE / GM if we do not have an ID for it
         IBusCommandDIAGetIdentityPage(context->ibus, IBUS_DEVICE_GM, 0x00);
+    }
+    // Unregister the timer once we have identified all modules
+    if (lmVariant != CONFIG_SETTING_OFF && gmVariant != CONFIG_SETTING_OFF) {
+        TimerUnregisterScheduledTask(&HandlerTimerIBusIdent);
     }
 }
 
@@ -2070,6 +2085,19 @@ void HandlerTimerIBusPings(void *ctx)
             break;
         }
         case HANDLER_IBUS_MODULE_PING_STATE_TEL: {
+            context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_GM;
+            if (context->ibus->moduleStatus.GM == 0) {
+                IBusCommandGetModuleStatus(
+                    context->ibus,
+                    IBUS_DEVICE_IKE,
+                    IBUS_DEVICE_GM
+                );
+            } else {
+                HandlerTimerIBusPings(ctx);
+            }
+            break;
+        }
+        case HANDLER_IBUS_MODULE_PING_STATE_GM: {
             context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_OFF;
             IBusCommandIKEGetIgnitionStatus(context->ibus);
             // Unregister this timer so we do not waste resources on it

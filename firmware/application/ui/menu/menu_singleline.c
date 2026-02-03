@@ -175,6 +175,7 @@ void MenuSingleLineSettingsEditSave(MenuSingleLineContext_t *context)
                     BC127CommandUnpair(context->bt);
                 } else {
                     BM83CommandRestore(context->bt);
+                    BTPairedDeviceClearRecords();
                     ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
                     ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
                 }
@@ -248,9 +249,9 @@ void MenuSingleLineSettingsEditSave(MenuSingleLineContext_t *context)
                     } else {
                         BTPairedDevice_t *device = 0;
                         uint8_t i = 0;
-                        for (i = 0; i < BT_MAC_ID_LEN; i++) {
+                        for (i = 0; i < BT_MAX_PAIRINGS; i++) {
                             BTPairedDevice_t *tmpDev = &context->bt->pairedDevices[i];
-                            if (memcmp(context->bt->activeDevice.macId, tmpDev->macId, BT_MAC_ID_LEN) == 0) {
+                            if (memcmp(context->bt->activeDevice.macId, tmpDev->macId, BT_DEVICE_MAC_ID_LEN) == 0) {
                                 device = tmpDev;
                             }
                         }

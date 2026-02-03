@@ -38,7 +38,7 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
         ConfigSetVehicleIdentity(vin);
         // Reset all settings
         uint8_t idx = CONFIG_SETTING_START_ADDRESS;
-        while (idx <= 0x50) {
+        while (idx <= CONFIG_SETTING_END_ADDRESS) {
             ConfigSetSetting(idx, 0x00);
             idx++;
         }
@@ -126,7 +126,6 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
     }
     // Changes in version 1.3.2
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 3, 2) == 1) {
-        ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE_MAC,0x00);
         LogRaw("Ran Upgrade 1.3.2\r\n");
     }
     // Changes in version 1.3.5

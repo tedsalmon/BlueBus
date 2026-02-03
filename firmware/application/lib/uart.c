@@ -95,6 +95,9 @@ void UARTAddModuleHandler(UART_t *uart)
  */
 void UARTDestroy(uint8_t uartModule) {
     UART_t *uart = UARTGetModuleHandler(uartModule);
+    if (uart == 0) {
+        return;
+    }
     // Unlock the reprogrammable pin register and set the pins to zero
     __builtin_write_OSCCONL(OSCCON & 0xBF);
     switch (uartModule) {
