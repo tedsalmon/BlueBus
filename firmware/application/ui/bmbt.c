@@ -1033,6 +1033,25 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         }
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_SETTINGS_COMFORT_AUTOZOOM, autoZoomText, 1);
+    uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_VISUAL_PDC);
+    char pdcText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    snprintf(
+        pdcText,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_PDC),
+        (
+            (pdc == CONFIG_SETTING_PDC_CLUSTER) ? "Cluster":
+            (pdc == CONFIG_SETTING_PDC_RADIO) ? "Screen":
+            (pdc == CONFIG_SETTING_PDC_BOTH) ? "Dual":
+            "Off"
+        )
+    );
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_COMFORT_VISUAL_PDC,
+        pdcText,
+        0
+    );
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_COMFORT;
@@ -1452,6 +1471,37 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
             }
         }
         BMBTGTWriteIndex(context, selectedIdx, autoZoomText, 0);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_VISUAL_PDC) {
+        uint8_t pdc = ConfigGetSetting(CONFIG_SETTING_VISUAL_PDC);
+        if (pdc == CONFIG_SETTING_OFF) {
+            pdc = CONFIG_SETTING_PDC_CLUSTER;
+        } else if (pdc == CONFIG_SETTING_PDC_CLUSTER) {
+            pdc = CONFIG_SETTING_PDC_RADIO;
+        } else if (pdc == CONFIG_SETTING_PDC_RADIO) {
+            pdc = CONFIG_SETTING_PDC_BOTH;
+        } else {
+            pdc = CONFIG_SETTING_OFF;
+        }
+        ConfigSetSetting(CONFIG_SETTING_VISUAL_PDC, pdc);
+        char pdcText[BMBT_MENU_STRING_MAX_SIZE] = {0};
+        snprintf(
+            pdcText,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_PDC),
+            (
+                (pdc == CONFIG_SETTING_OFF) ? "Off" :
+                (pdc == CONFIG_SETTING_PDC_CLUSTER) ? "Cluster" :
+                (pdc == CONFIG_SETTING_PDC_RADIO) ? "Screen" :
+                "Dual"
+            )
+        );
+
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_VISUAL_PDC,
+            pdcText,
+            0
+        );
     } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
         BMBTMenuSettings(context);
     }
