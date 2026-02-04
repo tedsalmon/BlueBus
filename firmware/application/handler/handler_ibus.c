@@ -1375,7 +1375,7 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
         context->pdcLastStatus = TimerGetMillis();
     }
 
-    uint8_t pdcConfig = ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC);
+    uint8_t pdcConfig = ConfigGetSetting(CONFIG_SETTING_VISUAL_PDC);
     // Do nothing if the feature is disabled
     if (pdcConfig == CONFIG_SETTING_OFF) {
         return;
@@ -1487,7 +1487,7 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
         HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
     }
     if (context->pdcActive == 0 &&
-        ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF
+        ConfigGetSetting(CONFIG_SETTING_VISUAL_PDC) != CONFIG_SETTING_OFF
     ) {
         context->pdcActive = 1;
         IBusCommandPDCGetSensorStatus(context->ibus);
@@ -1606,7 +1606,7 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
         context->gearLastStatus = TimerGetMillis();
         if (context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE &&
             context->pdcActive == 0 &&
-            ConfigGetSetting(CONFIG_SETTING_COMFORT_PDC) != CONFIG_SETTING_OFF
+            ConfigGetSetting(CONFIG_SETTING_VISUAL_PDC) != CONFIG_SETTING_OFF
         ) {
             context->pdcActive = 1;
             IBusCommandPDCGetSensorStatus(context->ibus);
