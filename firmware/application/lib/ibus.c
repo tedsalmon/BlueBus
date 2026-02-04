@@ -991,6 +991,80 @@ void IBusProcess(IBus_t *ibus)
 }
 
 /**
+ * IBusSendCommandInternal()
+ *     Description:
+ *         This function exists to implement message priority without changing
+ *         every existing call to IBusSendCommand()
+ *
+ *         Priority high shoves the message into the front of the ring buffer
+ *         Priortiy normal queues it to the end of the buffer
+ *     Params:
+ *         IBus_t *ibus
+ *         const uint8_t src
+ *         const uint8_t dst
+ *         const uint8_t *data
+ *     Returns:
+ *         void
+ */
+static void IBusSendCommandInternal(
+    IBus_t *ibus,
+    const uint8_t src,
+    const uint8_t dst,
+    const uint8_t *data,
+    const size_t dataSize,
+    const uint8_t priority
+) {
+    if (dataSize + 4 >= IBUS_MAX_MSG_LENGTH) {
+        LogWarning("IBus: Refuse to transmit frame of length %d", dataSize + 4);
+        return;
+    }
+    if (ibus->txBufferWriteIdx == ibus->txBufferReadIdx) {
+        long long unsigned int ts = (long long unsigned int) TimerGetMillis();
+        LogRawDebug(
+            LOG_SOURCE_IBUS,
+            "[%llu] ERROR: IBus: TX Buffer Overflow.\r\n",
+            ts
+        );
+        return;
+    }
+    uint8_t idx, msgSize;
+    msgSize = dataSize + 4;
+    uint8_t msg[msgSize];
+    msg[0] = src;
+    msg[1] = dataSize + 2;
+    msg[2] = dst;
+    // Add the Data to the packet
+    memcpy(msg + 3, data, dataSize);
+    // Calculate the CRC
+    uint8_t crc = 0;
+    uint8_t maxIdx = msgSize - 1;
+    for (idx = 0; idx < maxIdx; idx++) {
+        crc ^= msg[idx];
+    }
+    msg[msgSize - 1] = crc;
+    uint8_t bufferIdx = 0;
+    if (priority == IBUS_MSG_PRIORITY_NORMAL) {
+        bufferIdx = ibus->txBufferWriteIdx;
+        if (ibus->txBufferWriteIdx + 1 == IBUS_TX_BUFFER_SIZE) {
+            ibus->txBufferWriteIdx = 0;
+        } else {
+            ibus->txBufferWriteIdx++;
+        }
+    } else {
+        // Priority message, so queue it first
+        // Calculate new read index (decrement with wrap-around)
+        if (ibus->txBufferReadIdx == 0) {
+            bufferIdx = IBUS_TX_BUFFER_SIZE - 1;
+        } else {
+            bufferIdx = ibus->txBufferReadIdx - 1;
+        }
+        ibus->txBufferReadIdx = bufferIdx;
+        ibus->txBufferReadbackIdx = bufferIdx;
+    }
+    memcpy(ibus->txBuffer[bufferIdx], msg, msgSize);
+}
+
+/**
  * IBusSendCommand()
  *     Description:
  *         Take a Destination, source and message and add it to the transmit
@@ -1010,33 +1084,9 @@ void IBusSendCommand(
     const uint8_t *data,
     const size_t dataSize
 ) {
-    if (dataSize + 4 >= IBUS_MAX_MSG_LENGTH) {
-        LogWarning("IBus: Refuse to transmit frame of length %d", dataSize + 4);
-        return;
-    }
-    uint8_t idx, msgSize;
-    msgSize = dataSize + 4;
-    uint8_t msg[msgSize];
-    msg[0] = src;
-    msg[1] = dataSize + 2;
-    msg[2] = dst;
-    // Add the Data to the packet
-    memcpy(msg + 3, data, dataSize);
-    // Calculate the CRC
-    uint8_t crc = 0;
-    uint8_t maxIdx = msgSize - 1;
-    for (idx = 0; idx < maxIdx; idx++) {
-        crc ^= msg[idx];
-    }
-    msg[msgSize - 1] = crc;
-    // Store the data into a buffer, so we can spread out their transmission
-    memcpy(ibus->txBuffer[ibus->txBufferWriteIdx], msg, msgSize);
-    if (ibus->txBufferWriteIdx + 1 == IBUS_TX_BUFFER_SIZE) {
-        ibus->txBufferWriteIdx = 0;
-    } else {
-        ibus->txBufferWriteIdx++;
-    }
+    IBusSendCommandInternal(ibus, src, dst, data, dataSize, IBUS_MSG_PRIORITY_NORMAL);
 }
+
 
 /***
  * IBusSetInternalIgnitionStatus()
@@ -1388,7 +1438,17 @@ void IBusCommandCDCAnnounce(IBus_t *ibus)
 void IBusCommandCDCPollResponse(IBus_t *ibus)
 {
     const uint8_t cdcPing[] = {0x02, 0x00};
-    IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_RAD, cdcPing, sizeof(cdcPing));
+    // The RAD may AWOL the CDC if it sees another message addressed to it
+    // arrive prior to the response from the CDC, so we need to send it ahead
+    // of all other messages in the queue
+    IBusSendCommandInternal(
+        ibus,
+        IBUS_DEVICE_CDC,
+        IBUS_DEVICE_RAD,
+        cdcPing,
+        sizeof(cdcPing),
+        IBUS_MSG_PRIORITY_HIGH
+    );
 }
 
 /**
@@ -1428,12 +1488,16 @@ void IBusCommandCDCStatus(
         0x01, // Folder Number
         0x01  // File Number
     };
-    IBusSendCommand(
+    // The RAD may AWOL the CDC if it sees another message addressed to it
+    // arrive prior to the response from the CDC, so we need to send it ahead
+    // of all other messages in the queue
+    IBusSendCommandInternal(
         ibus,
         IBUS_DEVICE_CDC,
         IBUS_DEVICE_RAD,
         cdcStatus,
-        sizeof(cdcStatus)
+        sizeof(cdcStatus),
+        IBUS_MSG_PRIORITY_HIGH
     );
 }
 
