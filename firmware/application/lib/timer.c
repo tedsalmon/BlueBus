@@ -100,17 +100,30 @@ void TimerProcessScheduledTasks()
  */
 uint8_t TimerRegisterScheduledTask(void *task, void *ctx, uint16_t interval)
 {
-    if (TimerRegisteredTasksCount == TIMER_TASKS_MAX) {
-        LogError("FAILED TO REGISTER TIMER -- Allocations Full");
-        return 0;
+    uint8_t idx;
+    uint8_t slotIdx = TIMER_TASKS_MAX;
+    // Look for emptys slots to reuse
+    for (idx = 0; idx < TimerRegisteredTasksCount; idx++) {
+        if (TimerRegisteredTasks[idx].task == 0) {
+            slotIdx = idx;
+            break;
+        }
+    }
+    // No empty slot found, use a new one if available
+    if (slotIdx == TIMER_TASKS_MAX) {
+        if (TimerRegisteredTasksCount == TIMER_TASKS_MAX) {
+            LogError("FAILED TO REGISTER TIMER -- Allocations Full");
+            return 0;
+        }
+        slotIdx = TimerRegisteredTasksCount++;
     }
     TimerScheduledTask_t scheduledTask;
     scheduledTask.task = task;
     scheduledTask.context = ctx;
     scheduledTask.ticks = 0;
     scheduledTask.interval = interval;
-    TimerRegisteredTasks[TimerRegisteredTasksCount++] = scheduledTask;
-    return TimerRegisteredTasksCount - 1;
+    TimerRegisteredTasks[slotIdx] = scheduledTask;
+    return slotIdx;
 }
 
 /**
