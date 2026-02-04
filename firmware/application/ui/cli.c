@@ -553,16 +553,6 @@ void CLIProcess()
                         currentVehicleId[3] & 0xF,
                         currentVehicleId[4]
                     );
-                } else if (UtilsStricmp(msgBuf[1], "ZKE") == 0) {
-                    if (UtilsStricmp(msgBuf[2], "1") == 0) {
-                        IBusCommandDIAGetIdentity(cli.ibus, IBUS_DEVICE_GM);
-                    } else if (UtilsStricmp(msgBuf[2], "2") == 0) {
-                        IBusCommandDIAGetIdentityPage(cli.ibus, IBUS_DEVICE_GM, 0x00);
-                    } else if (UtilsStricmp(msgBuf[2], "3") == 0) {
-                        IBusCommandDIAGetIdentityPage(cli.ibus, IBUS_DEVICE_GM, 0x01);
-                    } else {
-                        cmdSuccess = 0;
-                    }
                 } else {
                     cmdSuccess = 0;
                 }
