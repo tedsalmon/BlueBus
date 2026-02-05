@@ -388,6 +388,11 @@
 #define IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED 0x06
 
 #define IBUS_SES_ZOOM_LEVELS 8
+#define IBUS_SES_CMD_NAV_CTRL 0xAA
+#define IBUS_SES_DATA_NAV_CTRL_SHOWMAP 0x04
+#define IBUS_SES_DATA_NAV_CTRL_SILENCE 0x06
+#define IBUS_SES_DATA_NAV_CTRL_SETZOOM 0x10
+#define IBUS_SES_DATA_NAV_CTRL_ROUTEFUEL 0x20
 
 #define IBUS_MFL_CMD_BTN_PRESS 0x3B
 #define IBUS_MFL_BTN_EVENT_NEXT_REL 0x21
@@ -649,6 +654,9 @@ void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
 void IBusCommandSESSetMapZoom(IBus_t *, uint8_t);
+void IBusCommandSESShowMap(IBus_t *);
+void IBusCommandSESRouteFuel(IBus_t *);
+void IBusCommandSESSilentNavigation(IBus_t *);
 void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandTELSetGTDisplayMenu(IBus_t *);
 void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);
