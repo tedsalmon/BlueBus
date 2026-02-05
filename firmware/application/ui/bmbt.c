@@ -1177,8 +1177,8 @@ static void BMBTMenuSettingsNav(BMBTContext_t *context)
         (automap == CONFIG_SETTING_NAV_MAP_SPEED_20) ? "20km/h":
         (automap == CONFIG_SETTING_NAV_MAP_SPEED_30) ? "30km/h":
         (automap == CONFIG_SETTING_NAV_MAP_SPEED_50) ? "50km/h":
-        (automap == CONFIG_SETTING_NAV_MAP_TIME_5) ? "5min":
-        (automap == CONFIG_SETTING_NAV_MAP_TIME_10) ? "10min":
+        (automap == CONFIG_SETTING_NAV_MAP_TIME_5) ? "5 min":
+        (automap == CONFIG_SETTING_NAV_MAP_TIME_10) ? "10 min":
         LocaleGetText(LOCALE_STRING_OFF)
     );
 
@@ -1192,8 +1192,8 @@ static void BMBTMenuSettingsNav(BMBTContext_t *context)
         text,
         BMBT_MENU_STRING_MAX_SIZE,
         LocaleGetText(LOCALE_STRING_NAV_SILENT),
-        ((ConfigGetSetting(CONFIG_SETTING_NAV) & CONFIG_SETTING_NAV_SILENT) == CONFIG_SETTING_NAV_SILENT) ?
-        LocaleGetText(LOCALE_STRING_ON) : LocaleGetText(LOCALE_STRING_OFF)
+        (ConfigGetSetting(CONFIG_SETTING_NAV) & CONFIG_SETTING_NAV_SILENT) == CONFIG_SETTING_NAV_SILENT ?
+            LocaleGetText(LOCALE_STRING_ON) : LocaleGetText(LOCALE_STRING_OFF)
     );
 
     BMBTGTWriteIndex(
@@ -1207,7 +1207,7 @@ static void BMBTMenuSettingsNav(BMBTContext_t *context)
         text,
         BMBT_MENU_STRING_MAX_SIZE,
         LocaleGetText(LOCALE_STRING_NAV_RANGE),
-        ((ConfigGetSetting(CONFIG_SETTING_NAV) & CONFIG_SETTING_NAV_ROUTE_RANGE) == CONFIG_SETTING_NAV_ROUTE_RANGE) ?
+        (ConfigGetSetting(CONFIG_SETTING_NAV) & CONFIG_SETTING_NAV_ROUTE_RANGE) == CONFIG_SETTING_NAV_ROUTE_RANGE ?
             LocaleGetText(LOCALE_STRING_ON) : LocaleGetText(LOCALE_STRING_OFF)
     );
 
@@ -2224,8 +2224,9 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
             zoomLevel = autozoom;
         }
 
-        while (zoomLevel < IBUS_SES_ZOOM_LEVELS - 1 &&
-               speed > navZoomSpeeds[zoomLevel]
+        while (
+            zoomLevel < IBUS_SES_ZOOM_LEVELS - 1 &&
+            speed > navZoomSpeeds[zoomLevel]
         ) {
             zoomLevel++;
         }
@@ -2274,9 +2275,9 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
         if (automap == CONFIG_SETTING_NAV_MAP_DEFAULT ||
             (automap == CONFIG_SETTING_NAV_MAP_SPEED_20 && speed >= 20) ||
             (automap == CONFIG_SETTING_NAV_MAP_SPEED_30 && speed >= 30) ||
-            (automap == CONFIG_SETTING_NAV_MAP_SPEED_50 && (speed >= 50)) ||
-            (automap == CONFIG_SETTING_NAV_MAP_TIME_5 && now >= (uint32_t) 5*60*1000) ||
-            (automap == CONFIG_SETTING_NAV_MAP_TIME_10 && now >= (uint32_t) 10*60*1000)
+            (automap == CONFIG_SETTING_NAV_MAP_SPEED_50 && speed >= 50) ||
+            (automap == CONFIG_SETTING_NAV_MAP_TIME_5 && now >= (uint32_t) 30000) ||
+            (automap == CONFIG_SETTING_NAV_MAP_TIME_10 && now >= (uint32_t) 60000)
         ) {
             context->navMapShown = 1;
             IBusCommandSESShowMap(context->ibus);
