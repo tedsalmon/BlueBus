@@ -220,6 +220,29 @@ static void HandlerIBusBroadcastCDCStatus(HandlerContext_t *context)
 }
 
 /**
+ * HandlerIBusFormatPDCValue()
+ *     Description:
+ *         Format a PDC distance value as a 2-digit string.
+ *         Values over 99 are displayed as "--".
+ *     Params:
+ *         char *valueStr - Destination buffer (must be at least 3 bytes)
+ *         uint8_t value - The PDC distance value
+ *     Returns:
+ *         void
+ */
+static void HandlerIBusFormatPDCValue(char *valueStr, uint8_t value)
+{
+    if (value > 99) {
+        valueStr[0] = '-';
+        valueStr[1] = '-';
+    } else {
+        valueStr[0] = '0' + (value / 10);
+        valueStr[1] = '0' + (value % 10);
+    }
+    valueStr[2] = '\0';
+}
+
+/**
  * HandlerIBusGetIsIgnitionStatusOn()
  *     Description:
  *         Returns true if the Ignition should be considered "on", either
@@ -1504,24 +1527,46 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
                 IBusCommandIKENumbericDisplayWrite(context->ibus, minimum);
             } else {
                 char pdcValues[21] = {0};
+                char minStr[3] = {0};
+                char valStrLL[3] = {0};
+                char valStrCL[3] = {0};
+                char valStrCR[3] = {0};
+                char valStrRR[3] = {0};
                 if (frontMin >= rearMin) {
+                    HandlerIBusFormatPDCValue(minStr, frontMin);
+                    HandlerIBusFormatPDCValue(valStrLL, rearValues[0]);
+                    HandlerIBusFormatPDCValue(valStrCL, rearValues[1]);
+                    HandlerIBusFormatPDCValue(valStrCR, rearValues[2]);
+                    HandlerIBusFormatPDCValue(valStrRR, rearValues[3]);
                     snprintf(
                         pdcValues,
                         21,
-                        "F:%2.2d R:%2.2d %2.2d %2.2d %2.2d%s",
-                        frontMin, rearValues[0], rearValues[1], rearValues[2], rearValues[3],
+                        "F:%s R:%s %s %s %s%s",
+                        minStr,
+                        valStrLL,
+                        valStrCL,
+                        valStrCR,
+                        valStrRR,
                         (units == 0) ? "cm" : "in"
                     );
                 } else {
+                    HandlerIBusFormatPDCValue(minStr, rearMin);
+                    HandlerIBusFormatPDCValue(valStrLL, frontValues[0]);
+                    HandlerIBusFormatPDCValue(valStrCL, frontValues[1]);
+                    HandlerIBusFormatPDCValue(valStrCR, frontValues[2]);
+                    HandlerIBusFormatPDCValue(valStrRR, frontValues[3]);
                     snprintf(
                         pdcValues,
                         21,
-                        "F:%2.2d %2.2d %2.2d %2.2d R:%2.2d%s",
-                        rearMin, frontValues[0], frontValues[1], frontValues[2], frontValues[3],
+                        "F:%s %s %s %s R:%s%s",
+                        valStrLL,
+                        valStrCL,
+                        valStrCR,
+                        valStrRR,
+                        minStr,
                         (units == 0) ? "cm" : "in"
                     );
                 }
-                IBusCommandIKECheckControlDisplayClear(context->ibus);
                 IBusCommandIKECheckControlDisplayWrite(context->ibus, pdcValues);
             }
         }
