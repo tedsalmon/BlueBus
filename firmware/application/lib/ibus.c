@@ -48,13 +48,9 @@ IBus_t IBusInit()
     ibus.gtVersion = ConfigGetNavType();
     ibus.vehicleType = ConfigGetVehicleType();
     ibus.lmVariant = ConfigGetLMVariant();
-    ibus.lmLoadFrontVoltage = 0x00; // Front load sensor voltage (LWR)
     ibus.lmDimmerVoltage = 0xFF;
-    ibus.lmLoadRearVoltage = 0x00; // Rear load sensor voltage (LWR)
     ibus.lmPhotoVoltage = 0xFF; // Photosensor voltage (LSZ)
     ibus.oilTemperature = 0x00;
-    ibus.coolantTemperature = 0x00;
-    ibus.ambientTemperature = 0x00;
     memset(ibus.ambientTemperatureCalculated, 0, 7);
     memset(ibus.telematicsLocale, 0, sizeof(ibus.telematicsLocale));
     memset(ibus.telematicsStreet, 0, sizeof(ibus.telematicsStreet));
@@ -64,11 +60,6 @@ IBus_t IBusInit()
     IBusPDCSensorStatus_t pdcSensors;
     memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
     ibus.pdcSensors = pdcSensors;
-    ibus.rxBufferIdx = 0;
-    ibus.rxLastStamp = 0;
-    ibus.txBufferReadIdx = 0;
-    ibus.txBufferReadbackIdx = 0;
-    ibus.txBufferWriteIdx = 0;
     ibus.txLastStamp = TimerGetMillis();
     return ibus;
 }

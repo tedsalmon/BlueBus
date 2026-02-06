@@ -594,7 +594,7 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
         TimerRegisterScheduledTask(
             &HandlerTimerBTBC127RequestDateTime,
             ctx,
-            (60 - dt[5]) * 1000
+            (60 - dt[UTILS_DATETIME_SEC]) * 1000
         );
     }
 

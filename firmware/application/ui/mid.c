@@ -9,6 +9,7 @@ static MIDContext_t Context;
 
 void MIDInit(BT_t *bt, IBus_t *ibus)
 {
+    memset(&Context, 0, sizeof(MIDContext_t));
     Context.bt = bt;
     Context.ibus = ibus;
     Context.btDeviceIndex = 0;

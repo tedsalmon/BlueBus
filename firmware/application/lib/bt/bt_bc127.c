@@ -1242,6 +1242,7 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         uint8_t i = 0;
         char *date = msgBuf[4];
         char *time = msgBuf[5];
+        char meridiem[3] = {0};
         // Convert the date to an integer and store it
         while (i < strlen(date) && sepCount < 3) {
             if (date[i] >= '0' && date[i] <= '9') {
@@ -1253,16 +1254,31 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         }
         // Convert the time to an integer and store it
         i = 0;
-        while (i < strlen(time) && sepCount < 6) {
-            if (time[i] >= '0' && time[i] <= '9') {
-                datetime[sepCount] = 10 * datetime[sepCount] + (time[i] - '0');
-            } else {
-                sepCount++;
+        uint8_t meridiemIdx = 0;
+        while (i < strlen(time)) {
+            if (sepCount < 6) {
+                if (time[i] >= '0' && time[i] <= '9') {
+                    datetime[sepCount] = 10 * datetime[sepCount] + (time[i] - '0');
+                } else {
+                    sepCount++;
+                }
+            }
+            // Per the spec, the time-type does not need to be space separated from the time
+            if (sepCount >= 6 && meridiemIdx < 3) {
+                meridiem[meridiemIdx] = time[i];
+                meridiemIdx++;
             }
             i++;
         }
         // Handle AM / PM
-        if (delimCount > 6) {
+        // If we have a sixth index in the msgBuf, this is probably AM / PM
+        if (delimCount > 6 && msgBuf[6] != 0) {
+            if (strlen(msgBuf[6]) == 2) {
+                meridiem[0] = msgBuf[6][0];
+                meridiem[1] = msgBuf[6][1];
+            }
+        }
+        if (meridiem[0] != 0) {
             if (UtilsStricmp(msgBuf[6], "AM") == 0) {
                 if (datetime[UTILS_DATETIME_HOUR] == 12) {
                     datetime[UTILS_DATETIME_HOUR] = 0;

@@ -9,6 +9,7 @@ static CD53Context_t Context;
 
 void CD53Init(BT_t *bt, IBus_t *ibus)
 {
+    memset(&Context, 0, sizeof(CD53Context_t));
     Context.bt = bt;
     Context.ibus = ibus;
     Context.mode = CD53_MODE_OFF;
