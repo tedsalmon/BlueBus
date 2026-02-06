@@ -112,6 +112,10 @@
 #define IBUS_CDC_DISC_LOADED_7 0x40
 #define IBUS_CDC_DISC_LOADED_ALL 0x3F
 
+// BMBT status
+#define IBUS_GT_INPUT_SRC_GT 0
+#define IBUS_GT_INPUT_SRC_EXTERNAL 1
+
 // DSP
 #define IBUS_DSP_CMD_CONFIG_SET 0x36
 #define IBUS_DSP_CONFIG_SET_INPUT_RADIO 0xA1
@@ -373,7 +377,12 @@
 #define IBUS_TEL_LED_STATUS_GREEN 0x10
 #define IBUS_TEL_SIG_EVEREST 0x38
 
+#define IBUS_BLUEBUS_CMD_CONTROL_CARPHONICS 0xBC
 #define IBUS_BLUEBUS_CMD_SET_STATUS 0xBB
+
+#define IBUS_BLUEBUS_CARPHONICS_DISABLE 0
+#define IBUS_BLUEBUS_CARPHONICS_ENABLE 1
+#define IBUS_BLUEBUS_CARPHONICS_EXTERNAL_CONTROL 0xFF
 
 #define IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL 0x01
 
@@ -504,6 +513,7 @@
 #define IBUS_EVENT_GM_IDENT_RESP 79
 #define IBUS_EVENT_NAV_GPSDATETIME_UPDATE 80
 #define IBUS_EVENT_RANGE_UPDATE 81
+#define IBUS_EVENT_GT_SCREEN_MODE_SET 82
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -593,6 +603,7 @@ typedef struct IBus_t {
     uint8_t lmVariant;
     uint8_t oilTemperature;
     uint8_t vehicleType;
+    uint8_t gtInputSrc: 1;
     IBusModuleStatus_t moduleStatus;
     IBusPDCSensorStatus_t pdcSensors;
     IBusDateTime_t obcDateTime;
@@ -691,4 +702,5 @@ void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);
 void IBusCommandTELSetLED(IBus_t *, uint8_t);
 void IBusCommandTELStatus(IBus_t *, uint8_t);
 void IBusCommandTELStatusText(IBus_t *, char *, uint8_t);
+void IBusCommandVMModeSet(IBus_t *, uint8_t);
 #endif /* IBUS_H */
