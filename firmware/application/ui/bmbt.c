@@ -12,6 +12,8 @@ static const uint8_t menuSettings[] = {
     BMBT_MENU_IDX_SETTINGS_AUDIO,
     BMBT_MENU_IDX_SETTINGS_CALLING,
     BMBT_MENU_IDX_SETTINGS_COMFORT,
+    BMBT_MENU_IDX_SETTINGS_NAV,
+    BMBT_MENU_IDX_SETTINGS_TIME,
     BMBT_MENU_IDX_SETTINGS_UI
 };
 
@@ -20,6 +22,8 @@ static const uint16_t menuSettingsLabelIndices[] = {
     LOCALE_STRING_AUDIO,
     LOCALE_STRING_CALLING,
     LOCALE_STRING_COMFORT,
+    LOCALE_STRING_NAV,
+    LOCALE_STRING_TIME,
     LOCALE_STRING_UI
 };
 
@@ -1019,7 +1023,7 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         context,
         BMBT_MENU_IDX_SETTINGS_COMFORT_VISUAL_PDC,
         pdcText,
-        1
+        2
     );
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
@@ -1220,6 +1224,106 @@ static void BMBTMenuSettingsNav(BMBTContext_t *context)
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_NAV;
+}
+
+static void BMBTMenuSettingsTime(BMBTContext_t *context)
+{
+    BMBTGTWriteTitleIndex(context, LocaleGetText(LOCALE_STRING_SETTINGS_TIME));
+    char text[BMBT_MENU_STRING_MAX_SIZE] = {0};
+    uint8_t autotime = ConfigGetTimeSource();
+    snprintf(
+        text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_AUTOTIME),
+        (
+            (autotime == CONFIG_SETTING_AUTO_TIME_PHONE) ? "iPhone" :
+            (autotime == CONFIG_SETTING_AUTO_TIME_GPS) ? "GPS" :
+            LocaleGetText(LOCALE_STRING_AUTOTIME_MANUAL)
+        )
+    );
+
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_TIME_SOURCE,
+        text,
+        (autotime == CONFIG_SETTING_AUTO_TIME_GPS) ? 0 : 6
+    );
+
+    if (autotime == CONFIG_SETTING_AUTO_TIME_GPS) {
+        uint8_t dst = ConfigGetTimeDST();
+        int16_t off = ConfigGetTimeOffset();
+
+        snprintf(
+            text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_AUTOTIME_DST),
+            (dst == 0) ? LocaleGetText(LOCALE_STRING_OFF):"+01:00"
+        );
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_TIME_DST,
+            text,
+            0
+        );
+
+        snprintf(
+            text,
+            BMBT_MENU_STRING_MAX_SIZE,
+            LocaleGetText(LOCALE_STRING_AUTOTIME_OFFSET),
+            off / 60,
+            abs(off) % 60
+        );
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_TIME_OFFSET,
+            text,
+            1
+        );
+
+        if (context->ibus->gpsDateTime.year > 0) {
+            snprintf(
+                text,
+                BMBT_MENU_STRING_MAX_SIZE,
+                "%4d-%02d-%02d",
+                context->ibus->gpsDateTime.year,
+                context->ibus->gpsDateTime.month,
+                context->ibus->gpsDateTime.day
+            );
+
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_TIME_GPSDATE,
+                text,
+                0
+            );
+
+            snprintf(
+                text,
+                BMBT_MENU_STRING_MAX_SIZE,
+                "%02d:%02d",
+                context->ibus->gpsDateTime.hour,
+                context->ibus->gpsDateTime.min
+            );
+
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_TIME_GPSTIME,
+                    text,
+                    1
+                );
+        } else {
+            BMBTGTWriteIndex(
+                context,
+                BMBT_MENU_IDX_SETTINGS_TIME_GPSDATE,
+                LocaleGetText(LOCALE_STRING_AUTOTIME_NOSIGNAL),
+                2
+            );
+        }
+    }
+
+    BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
+    BMBTGTBufferFlush(context);
+    context->menu = BMBT_MENU_SETTINGS_TIME;
 }
 
 static void BMBTMenuSettingsUI(BMBTContext_t *context)
@@ -1742,6 +1846,57 @@ static void BMBTSettingsUpdateNav(BMBTContext_t *context, uint8_t selectedIdx)
     }
     if (selectedIdx != BMBT_MENU_IDX_BACK) {
         BMBTMenuSettingsNav(context);
+    }
+}
+
+static void BMBTSettingsUpdateTime(BMBTContext_t *context, uint8_t selectedIdx)
+{
+    uint8_t timeSource = ConfigGetTimeSource();
+    if (selectedIdx == BMBT_MENU_IDX_SETTINGS_TIME_SOURCE) {
+        switch (timeSource) {
+            case CONFIG_SETTING_OFF:
+                if (context->bt->type == BT_BTM_TYPE_BC127) {
+                    timeSource = CONFIG_SETTING_AUTO_TIME_PHONE;
+                    BC127CommandAT(context->bt, "+CCLK?");
+                } else {
+                    timeSource = CONFIG_SETTING_AUTO_TIME_GPS;
+                }
+                break;
+            case CONFIG_SETTING_AUTO_TIME_PHONE:
+                timeSource = CONFIG_SETTING_AUTO_TIME_GPS;
+                break;
+            case CONFIG_SETTING_AUTO_TIME_GPS:
+            default:
+                timeSource = CONFIG_SETTING_OFF;
+        }
+        ConfigSetTimeSource(timeSource);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_TIME_DST) {
+        uint8_t dst = ConfigGetTimeDST();
+        if (dst == CONFIG_SETTING_OFF) {
+            dst = CONFIG_SETTING_AUTO_TIME_DST;
+        } else {
+            dst = CONFIG_SETTING_OFF;
+        }
+        ConfigSetTimeDST(dst);
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_TIME_OFFSET) {
+        uint8_t offset = ConfigGetTimeOffsetIndex();
+        if (offset < 31) {
+            offset++;
+        } else {
+            offset = 1;
+        }
+        ConfigSetTimeOffsetIndex(offset);
+    }
+    if (selectedIdx != BMBT_MENU_IDX_BACK) {
+        BMBTMenuSettingsTime(context);
+    } else {
+        BMBTMenuSettings(context);
+        if (timeSource == CONFIG_SETTING_AUTO_TIME_GPS) {
+            EventTriggerCallback(
+                IBUS_EVENT_NAV_GPSDATETIME_UPDATE,
+                NULL
+            );
+        }
     }
 }
 
@@ -2448,6 +2603,10 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                 BMBTMenuSettingsComfort(context);
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_CALLING) {
                 BMBTMenuSettingsCalling(context);
+            } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_NAV) {
+                BMBTMenuSettingsNav(context);
+            } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_TIME) {
+                BMBTMenuSettingsTime(context);
             } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI) {
                 BMBTMenuSettingsUI(context);
             } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
@@ -2463,6 +2622,8 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
             BMBTSettingsUpdateCalling(context, selectedIdx);
         } else if (context->menu == BMBT_MENU_SETTINGS_NAV) {
             BMBTSettingsUpdateNav(context, selectedIdx);
+        } else if (context->menu == BMBT_MENU_SETTINGS_TIME) {
+            BMBTSettingsUpdateTime(context, selectedIdx);
         } else if (context->menu == BMBT_MENU_SETTINGS_UI) {
             BMBTSettingsUpdateUI(context, selectedIdx);
         }

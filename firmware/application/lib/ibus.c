@@ -6,6 +6,7 @@
  */
 #include "ibus.h"
 #include "config.h"
+#include <ctype.h>
 
 static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
     0x01, // 125 - special case when stationary
@@ -17,6 +18,8 @@ static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
     0x12, // 2.5 mi 5km
     0x13  // 5 mi 10km
 };
+
+static const uint8_t IBUS_DAYS_IN_MONTH[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 /**
  * IBusInit()
@@ -30,6 +33,7 @@ static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
 IBus_t IBusInit()
 {
     IBus_t ibus;
+    memset(&ibus, 0, sizeof(IBus_t));
     ibus.uart = UARTInit(
         IBUS_UART_MODULE,
         IBUS_UART_RX_RPIN,
@@ -403,25 +407,26 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
         }
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_IKE_OBC_TEXT) {
         char property = pkt[IBUS_PKT_DB1];
-        // @todo: Refactor this
-        if (property == IBUS_IKE_TEXT_TEMPERATURE &&
+        // @TODO: Refactor this
+        if (
+            property == IBUS_IKE_TEXT_TEMPERATURE &&
             pkt[IBUS_PKT_LEN] >= 7 &&
             pkt[IBUS_PKT_LEN] <= 11
         ) {
 
-            uint8_t *temp = pkt+6;
+            uint8_t *temp = pkt + 6;
             uint8_t size = pkt[IBUS_PKT_LEN] - 5;
 
-            while ((size > 0) && (temp[0] == ' ')) {
+            while (size > 0 && temp[0] == ' ') {
                 temp++;
                 size--;
             }
 
-            if (size>6) {
-                size=6;
+            if (size > 6) {
+                size = 6;
             }
 
-            while ((size > 0) && ((temp[size-1] == 0x00) || (temp[size-1] == ' ') || (temp[size-1] == '.'))) {
+            while (size > 0 && (temp[size-1] == 0x00 || temp[size-1] == ' ' || temp[size - 1] == '.')) {
                 size--;
             }
 
@@ -434,6 +439,53 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
 
             uint8_t valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+        } else if (property == IBUS_IKE_OBC_PROPERTY_TIME) {
+            // 15:31,  3:31PM,
+
+            uint8_t hourTens = isdigit(pkt[IBUS_PKT_DB3]) ? pkt[IBUS_PKT_DB3] - '0' : 0;
+            uint8_t hourOnes = isdigit(pkt[IBUS_PKT_DB4]) ? pkt[IBUS_PKT_DB4] - '0' : 0;
+            uint8_t minTens = isdigit(pkt[IBUS_PKT_DB6]) ? pkt[IBUS_PKT_DB6] - '0' : 0;
+            uint8_t minOnes = isdigit(pkt[IBUS_PKT_DB7]) ? pkt[IBUS_PKT_DB7] - '0' : 0;
+
+            ibus->obcDateTime.hour = hourTens * 10 + hourOnes;
+            ibus->obcDateTime.min = minTens * 10 + minOnes;
+            if (
+                (pkt[IBUS_PKT_DB8] == 'P' || pkt[IBUS_PKT_DB8] == 'p') &&
+                ibus->obcDateTime.hour < 12
+            ) {
+                ibus->obcDateTime.hour += 12;
+            }
+            if (
+                (pkt[IBUS_PKT_DB8] == 'A' || pkt[IBUS_PKT_DB8] == 'a') &&
+                ibus->obcDateTime.hour == 12
+            ) {
+                ibus->obcDateTime.hour = 0;
+            }
+        } else if (property == IBUS_IKE_OBC_PROPERTY_DATE) {
+            // 17.01.2020, 01/17/2020, 02.01.2023, --.--.2026
+            if (isdigit(pkt[IBUS_PKT_DB9])) {
+                ibus->obcDateTime.year = (
+                    ((pkt[IBUS_PKT_DB9] - '0') * 1000) +
+                    ((pkt[IBUS_PKT_DB10] - '0') * 100) +
+                    ((pkt[IBUS_PKT_DB11] - '0') * 10) +
+                    (pkt[IBUS_PKT_DB12] - '0')
+                );
+            }
+            uint8_t value1 = 1;
+            uint8_t value2 = 1;
+            if (isdigit(pkt[IBUS_PKT_DB3]) || isdigit(pkt[IBUS_PKT_DB4])) {
+                value1 = (pkt[IBUS_PKT_DB3] - '0' * 10) + pkt[IBUS_PKT_DB4] - '0';
+            }
+            if (isdigit(pkt[IBUS_PKT_DB6]) || isdigit(pkt[IBUS_PKT_DB7])) {
+                value2 = (pkt[IBUS_PKT_DB6] - '0' * 10) + pkt[IBUS_PKT_DB7] - '0';
+            }
+            if (pkt[IBUS_PKT_DB5] == '/') {
+                ibus->obcDateTime.month = value1;
+                ibus->obcDateTime.day = value2;
+            } else {
+                ibus->obcDateTime.month = value2;
+                ibus->obcDateTime.day = value1;
+            }
         }
     }
 }
@@ -576,6 +628,25 @@ static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
         ibus->moduleStatus.NAV = 1;
         uint8_t detectedModule = pkt[IBUS_PKT_SRC];
         EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
+    }
+
+    if (pkt[IBUS_PKT_CMD] == IBUS_NAV_CMD_GPSTIME) {
+        IBusDateTime_t gpsDateTime;
+        gpsDateTime.hour = UTILS_UNPACK_8BCD(pkt[IBUS_PKT_DB2]);
+        gpsDateTime.min = UTILS_UNPACK_8BCD(pkt[IBUS_PKT_DB3]);
+        gpsDateTime.sec = 0;
+        gpsDateTime.day = UTILS_UNPACK_8BCD(pkt[IBUS_PKT_DB4]);
+        gpsDateTime.month = UTILS_UNPACK_8BCD(pkt[IBUS_PKT_DB6]);
+        gpsDateTime.year = (
+            UTILS_UNPACK_8BCD(pkt[IBUS_PKT_DB7]) * 100 + UTILS_UNPACK_8BCD(pkt[IBUS_PKT_DB8])
+        );
+        // Account for GPS rollover issue by adding 1024 weeks worth of seconds
+        uint32_t epoch = IBusGetDateTimeAsEpoch(&gpsDateTime) + (1024 * 604800);
+        ibus->gpsDateTime = IBusGetEpochAsDateTime(epoch);
+        EventTriggerCallback(
+            IBUS_EVENT_NAV_GPSDATETIME_UPDATE,
+            pkt
+        );
     }
 }
 
@@ -1018,7 +1089,15 @@ static void IBusSendCommandInternal(
         LogWarning("IBus: Refuse to transmit frame of length %d", dataSize + 4);
         return;
     }
-    if (ibus->txBufferWriteIdx == ibus->txBufferReadIdx) {
+    // Calculate number of used slots in the ring buffer
+    uint8_t usedSlots;
+    if (ibus->txBufferWriteIdx >= ibus->txBufferReadIdx) {
+        usedSlots = ibus->txBufferWriteIdx - ibus->txBufferReadIdx;
+    } else {
+        usedSlots = IBUS_TX_BUFFER_SIZE - ibus->txBufferReadIdx + ibus->txBufferWriteIdx;
+    }
+    // Check if buffer is full (one slot must remain empty to distinguish full from empty)
+    if (usedSlots >= IBUS_TX_BUFFER_SIZE - 1) {
         long long unsigned int ts = (long long unsigned int) TimerGetMillis();
         LogRawDebug(
             LOG_SOURCE_IBUS,
@@ -1108,6 +1187,99 @@ void IBusSetInternalIgnitionStatus(IBus_t *ibus, uint8_t ignitionStatus)
         &ignitionStatus
     );
     ibus->ignitionStatus = ignitionStatus;
+}
+
+/***
+ * IBusGetDateTimeAsEpoch()
+ *     Description:
+ *        Convert an IBusDateTime_t to an epoch
+ *     Params:
+ *         IBusDateTime_t *dt
+ *     Returns:
+ *         uint32 - The 32-bit unsigned number of seconds since 1970
+ */
+uint32_t IBusGetDateTimeAsEpoch(IBusDateTime_t *dt)
+{
+    uint32_t days = 0;
+
+    // Add days for complete years since 1970
+    for (uint16_t y = 1970; y < dt->year; y++) {
+        days += 365;
+        if ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0) {
+            days++;
+        }
+    }
+
+    // Add days for complete months in current year
+    for (uint8_t m = 1; m < dt->month; m++) {
+        days += IBUS_DAYS_IN_MONTH[m - 1];
+        if (
+            m == 2 &&
+            (
+                (dt->year % 4 == 0 && dt->year % 100 != 0) ||
+                dt->year % 400 == 0
+            )
+        ) {
+            days++;
+        }
+    }
+    // Add days in current month
+    days += dt->day - 1;
+    return (
+        days * 86400UL + dt->hour * 3600UL + dt->min * 60UL + dt->sec
+    );
+}
+
+/**
+* IBusGetEpochAsDateTime()
+*     Description:
+*        Convert an epoch to an IBusDateTime_t
+*     Params:
+*         uint32_t epoch - The 32-bit unsigned number of seconds since 1970
+*     Returns:
+*         IBusDateTime_t - The date time structure
+*/
+IBusDateTime_t IBusGetEpochAsDateTime(uint32_t epoch)
+{
+    IBusDateTime_t dt;
+    dt.sec = epoch % 60;
+    epoch /= 60;
+    dt.min = epoch % 60;
+    epoch /= 60;
+    dt.hour = epoch % 24;
+    uint32_t days = epoch / 24;
+
+    // Determine year
+    dt.year = 1970;
+    while (1) {
+        uint16_t daysInYear = 365;
+        if ((dt.year % 4 == 0 && dt.year % 100 != 0) || dt.year % 400 == 0) {
+            daysInYear = 366;
+        }
+        if (days < daysInYear) {
+            break;
+        }
+        days -= daysInYear;
+        dt.year++;
+    }
+
+    // Determine month
+    uint8_t isLeapYear = (dt.year % 4 == 0 && dt.year % 100 != 0) || dt.year % 400 == 0;
+    dt.month = 1;
+    for (uint8_t m = 0; m < 12; m++) {
+        uint8_t daysThisMonth = IBUS_DAYS_IN_MONTH[m];
+        if (m == 1 && isLeapYear) {
+            daysThisMonth++;
+        }
+        if (days < daysThisMonth) {
+            break;
+        }
+        days -= daysThisMonth;
+        dt.month++;
+    }
+    dt.day = days + 1;
+
+    return dt;
 }
 
 /***
