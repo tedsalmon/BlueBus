@@ -21,8 +21,7 @@
 #include "../lib/wm88xx.h"
 #define BMBT_DISPLAY_OFF 0x00
 #define BMBT_DISPLAY_TONE_SEL_INFO 0x01
-#define BMBT_DISPLAY_REVERSE_CAM 0x02
-#define BMBT_DISPLAY_ON 0x03
+#define BMBT_DISPLAY_ON 0x02
 #define BMBT_DISPLAY_TEXT_LEN 9
 #define BMBT_HEADER_BT 1
 #define BMBT_HEADER_PB_STAT 2
@@ -111,6 +110,8 @@
 #define BMBT_METADATA_MODE_CHUNK 0x02
 #define BMBT_MODE_INACTIVE 0
 #define BMBT_MODE_ACTIVE 1
+#define BMBT_RAD_DISPLAY_STATUS_OFF 0
+#define BMBT_RAD_DISPLAY_STATUS_ON 1
 #define BMBT_NAV_BOOT 0x10
 #define BMBT_NAV_STATE_BOOT 0x00
 #define BMBT_NAV_STATE_ON 0x01
@@ -130,6 +131,7 @@ typedef struct BMBTStatus_t {
     uint8_t radType: 4;
     uint8_t tvStatus: 1;
     uint8_t menuBufferStatus: 1;
+    uint8_t radioDisplayStatus: 1;
     uint8_t navIndexType;
 } BMBTStatus_t;
 
@@ -166,6 +168,7 @@ void BMBTIKESpeedRPMUpdate(void *, uint8_t *);
 void BMBTIBusMonitorStatus(void *, uint8_t *);
 void BMBTIBusGTMenuBufferUpdate(void *, uint8_t *);
 void BMBTIBusMenuSelect(void *, uint8_t *);
+void BMBTIBusScreenModeSet(void *, uint8_t *);
 void BMBTIBusScreenBufferFlush(void *, uint8_t *);
 void BMBTIBusSensorValueUpdate(void *, uint8_t *);
 void BMBTRADDisplayMenu(void *, uint8_t *);

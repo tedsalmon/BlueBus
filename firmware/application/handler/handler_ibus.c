@@ -459,7 +459,8 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         // those actions can be used to use the UI
         if (context->uiMode != CONFIG_UI_CD53 &&
             context->uiMode != CONFIG_UI_MIR &&
-            context->uiMode != CONFIG_UI_IRIS
+            context->uiMode != CONFIG_UI_IRIS &&
+            context->ibus->gtInputSrc != IBUS_GT_INPUT_SRC_EXTERNAL
         ) {
             if (pkt[IBUS_PKT_DB2] == 0x00) {
                 BTCommandPlaybackTrackNext(context->bt);

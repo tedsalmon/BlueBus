@@ -345,6 +345,19 @@ static void IBusHandleGTMessage(IBus_t *ibus, uint8_t *pkt)
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
         EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
+        if (
+            pkt[IBUS_PKT_DST] == IBUS_DEVICE_JNAV &&
+            (pkt[IBUS_PKT_DB1] & 0xF) != 0
+        ) {
+            // Sent after pin 17 is left floating again
+            ibus->gtInputSrc = IBUS_GT_INPUT_SRC_GT;
+        } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 0) {
+            if (ibus->gtInputSrc == IBUS_GT_INPUT_SRC_GT) {
+                ibus->gtInputSrc = IBUS_GT_INPUT_SRC_EXTERNAL;
+            } else {
+                ibus->gtInputSrc = IBUS_GT_INPUT_SRC_EXTERNAL;
+            }
+        }
         EventTriggerCallback(IBUS_EVENT_MONITOR_STATUS, pkt);
     }
 }
@@ -612,16 +625,7 @@ static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
-    }
-    // It is imperative that we know if the NAV is on the bus
-    // so if we see any message from it, we must consider it "found"
-    if (ibus->moduleStatus.NAV == 0) {
-        ibus->moduleStatus.NAV = 1;
-        uint8_t detectedModule = pkt[IBUS_PKT_SRC];
-        EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
-    }
-
-    if (pkt[IBUS_PKT_CMD] == IBUS_NAV_CMD_GPSTIME) {
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_NAV_CMD_GPSTIME) {
         IBusDateTime_t gpsDateTime;
         gpsDateTime.hour = UTILS_UNPACK_8BCD(pkt[IBUS_PKT_DB2]);
         gpsDateTime.min = UTILS_UNPACK_8BCD(pkt[IBUS_PKT_DB3]);
@@ -638,6 +642,18 @@ static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
             IBUS_EVENT_NAV_GPSDATETIME_UPDATE,
             pkt
         );
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_SCREEN_MODE_SET) {
+        EventTriggerCallback(
+            IBUS_EVENT_GT_SCREEN_MODE_SET,
+            pkt
+        );
+    }
+    // It is imperative that we know if the NAV is on the bus
+    // so if we see any message from it, we must consider it "found"
+    if (ibus->moduleStatus.NAV == 0) {
+        ibus->moduleStatus.NAV = 1;
+        uint8_t detectedModule = pkt[IBUS_PKT_SRC];
+        EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_RESP, &detectedModule);
     }
 }
 
@@ -829,6 +845,22 @@ static void IBusHandleVMMessage(IBus_t *ibus, uint8_t *pkt)
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
         EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
+        if (
+            pkt[IBUS_PKT_DST] == IBUS_DEVICE_JNAV &&
+            (pkt[IBUS_PKT_DB1] & 0x3) != 0
+        ) {
+            // Sent after pin 17 is left floating again
+            ibus->gtInputSrc = IBUS_GT_INPUT_SRC_GT;
+        } else if ((pkt[IBUS_PKT_DB1] & 0x3) != 0) {
+            if (ibus->gtInputSrc == IBUS_GT_INPUT_SRC_GT) {
+                ibus->gtInputSrc = IBUS_GT_INPUT_SRC_EXTERNAL;
+            } else {
+                ibus->gtInputSrc = IBUS_GT_INPUT_SRC_GT;
+            }
+        }
+        EventTriggerCallback(IBUS_EVENT_MONITOR_STATUS, pkt);
+
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
         pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
         pkt[IBUS_PKT_LEN] >= 0x0F
@@ -3194,6 +3226,10 @@ void IBusCommandRADClearMenu(IBus_t *ibus)
 void IBusCommandRADDisableMenu(IBus_t *ibus)
 {
     uint8_t msg[] = {0x45, 0x02};
+    // VMs handle Audio + OBC differently. Failing to handle this will crash the VM
+    if (ibus->moduleStatus.NAV == 0) {
+        msg[1] = 0x03;
+    }
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_GT,
@@ -3215,6 +3251,10 @@ void IBusCommandRADDisableMenu(IBus_t *ibus)
 void IBusCommandRADEnableMenu(IBus_t *ibus)
 {
     uint8_t msg[] = {0x45, 0x00};
+    // VMs handle Audio + OBC differently. Failing to handle this will crash the VM
+    if (ibus->moduleStatus.NAV == 0) {
+        msg[1] = 0x01;
+    }
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_GT,
@@ -3468,4 +3508,26 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, uint8_t index)
     statusText[2] = 0x20;
     memcpy(statusText + 3, text, textLength);
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
+}
+
+/**
+ * IBusCommandVMModeSet()
+ *     Description:
+ *        Send command to Carphonics module
+ *        NOTE: Though the VM is targeted, this does not do any interacting
+ *        with the factory VM.
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t enable - 0 = CP off, 1 = CP on, 0xFF = CP don't handle display switch
+ *     Returns:
+ *         void
+ */
+void IBusCommandVMModeSet(IBus_t *ibus, uint8_t enable)
+{
+    uint8_t pkt[] = {
+        IBUS_BLUEBUS_CARPHONICS_EXTERNAL_CONTROL,
+        IBUS_BLUEBUS_CMD_SET_STATUS,
+        enable
+    };
+    IBusSendCommand(ibus, IBUS_DEVICE_CDC, IBUS_DEVICE_VM, pkt, sizeof(pkt));
 }
