@@ -1905,7 +1905,7 @@ void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
-            0x00, // Job (stubbed)
+            IBUS_CMD_ZKE3_GM1_JOB_CENTRAL_LOCK, // Job
             0x01 // On / Off
         };
         switch (gmVariant) {
@@ -1945,7 +1945,7 @@ void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (gmVariant == IBUS_GM_ZKE3_GM5 || gmVariant == IBUS_GM_ZKE3_GM6) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -1977,7 +1977,7 @@ void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (gmVariant == IBUS_GM_ZKE3_GM5 || gmVariant == IBUS_GM_ZKE3_GM6) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -2009,7 +2009,7 @@ void IBusCommandGMDoorLockHigh(IBus_t *ibus)
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (gmVariant == IBUS_GM_ZKE3_GM5 || gmVariant == IBUS_GM_ZKE3_GM6) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -2041,7 +2041,7 @@ void IBusCommandGMDoorLockLow(IBus_t *ibus)
             0x01 // On / Off
         };
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
-    } else if (gmVariant == IBUS_GM_ZKE3_GM5 || gmVariant == IBUS_GM_ZKE3_GM6) {
+    } else if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E38_E39_E52_E53) {
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -2080,12 +2080,12 @@ void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
-            0x00, // Job (stubbed)
+            IBUS_CMD_ZKE3_GM1_JOB_CENTRAL_LOCK, // Job
             0x01 // On / Off
         };
         if (gmVariant >= IBUS_GM_ZKE3_GM1 && gmVariant <= IBUS_GM_ZKE3_GM4) {
             msg[2] = IBUS_CMD_ZKE3_GM1_JOB_CENTRAL_LOCK;
-        } else  if (gmVariant >= IBUS_GM_ZKE3_GM5) {
+        } else if (gmVariant >= IBUS_GM_ZKE3_GM5) {
             msg[2] = IBUS_CMD_ZKE3_GM5_JOB_CENTRAL_LOCK;
         }
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
@@ -2120,12 +2120,12 @@ void IBusCommandGMDoorLockAll(IBus_t *ibus)
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
-            0x00, // Job (stubbed)
+            IBUS_CMD_ZKE3_GM1_JOB_LOCK_ALL, // Job
             0x01 // On / Off
         };
         if (gmVariant >= IBUS_GM_ZKE3_GM1 && gmVariant <= IBUS_GM_ZKE3_GM4) {
             msg[2] = IBUS_CMD_ZKE3_GM1_JOB_LOCK_ALL;
-        } else  if (gmVariant >= IBUS_GM_ZKE3_GM5) {
+        } else if (gmVariant >= IBUS_GM_ZKE3_GM5) {
             msg[2] = IBUS_CMD_ZKE3_GM5_JOB_LOCK_ALL;
         }
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
