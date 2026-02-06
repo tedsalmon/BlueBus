@@ -1935,7 +1935,6 @@ void IBusCommandGMDoorCenterLockButton(IBus_t *ibus)
  */
 void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
 {
-    uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
         ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
     ) {
@@ -1967,7 +1966,6 @@ void IBusCommandGMDoorUnlockHigh(IBus_t *ibus)
  */
 void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
 {
-    uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
         ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
     ) {
@@ -1999,7 +1997,6 @@ void IBusCommandGMDoorUnlockLow(IBus_t *ibus)
  */
 void IBusCommandGMDoorLockHigh(IBus_t *ibus)
 {
-    uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
         ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
     ) {
@@ -2031,7 +2028,6 @@ void IBusCommandGMDoorLockHigh(IBus_t *ibus)
  */
 void IBusCommandGMDoorLockLow(IBus_t *ibus)
 {
-    uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
     if (ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
         ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
     ) {
@@ -2074,9 +2070,6 @@ void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else {
         uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
-        if (gmVariant == 0x00) {
-            return;
-        }
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
@@ -2114,9 +2107,6 @@ void IBusCommandGMDoorLockAll(IBus_t *ibus)
         IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
     } else {
         uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS);
-        if (gmVariant == 0x00) {
-            return;
-        }
         uint8_t msg[4] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00, // Sub-Module
