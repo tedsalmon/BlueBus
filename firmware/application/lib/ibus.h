@@ -64,6 +64,14 @@
 #define IBUS_PKT_DB4 7
 #define IBUS_PKT_DB5 8
 #define IBUS_PKT_DB6 9
+#define IBUS_PKT_DB7 10
+#define IBUS_PKT_DB8 11
+#define IBUS_PKT_DB9 12
+#define IBUS_PKT_DB10 13
+#define IBUS_PKT_DB11 14
+#define IBUS_PKT_DB12 15
+#define IBUS_PKT_DB13 16
+#define IBUS_PKT_DB14 17
 
 // IBus Message Priorities
 #define IBUS_MSG_PRIORITY_NORMAL 0
@@ -250,7 +258,10 @@
 
 #define IBUS_CMD_OBC_CONTROL 0x41
 
+#define IBUS_IKE_OBC_PROPERTY_TIME 0x01
+#define IBUS_IKE_OBC_PROPERTY_DATE 0x02
 #define IBUS_IKE_OBC_PROPERTY_TEMPERATURE 0x03
+#define IBUS_IKE_OBC_PROPERTY_RANGE 0x06
 #define IBUS_IKE_OBC_PROPERTY_REQUEST_TEXT 0x01
 
 #define IBUS_LCM_LIGHT_STATUS_REQ 0x5A
@@ -407,6 +418,8 @@
 #define IBUS_MFL_BTN_VOL_UP 0x11
 #define IBUS_MFL_BTN_VOL_DOWN 0x10
 
+#define IBUS_NAV_CMD_GPSTIME 0x1F
+
 #define IBUS_VEHICLE_TYPE_E38_E39_E52_E53 0x01
 #define IBUS_VEHICLE_TYPE_E46 0x02
 #define IBUS_VEHICLE_TYPE_E8X 0x03
@@ -489,6 +502,8 @@
 #define IBUS_EVENT_RAD_MESSAGE_RCV 77
 #define IBUS_EVENT_MONITOR_STATUS 78
 #define IBUS_EVENT_GM_IDENT_RESP 79
+#define IBUS_EVENT_NAV_GPSDATETIME_UPDATE 80
+#define IBUS_EVENT_RANGE_UPDATE 81
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -539,6 +554,15 @@ typedef struct IBusPDCSensorStatus_t {
     uint8_t rearRight;
 } IBusPDCSensorStatus_t;
 
+typedef struct IBusDateTime_t {
+    uint16_t year;
+    uint8_t month;
+    uint8_t day;
+    uint8_t hour;
+    uint8_t min;
+    uint8_t sec;
+} IBusDateTime_t;
+
 /**
  * IBus_t
  *     Description:
@@ -571,6 +595,8 @@ typedef struct IBus_t {
     uint8_t vehicleType;
     IBusModuleStatus_t moduleStatus;
     IBusPDCSensorStatus_t pdcSensors;
+    IBusDateTime_t obcDateTime;
+    IBusDateTime_t gpsDateTime;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsStreet[IBUS_TELEMATICS_LOCATION_LEN];
     char telematicsLatitude[IBUS_TELEMATICS_COORDS_LEN];
@@ -581,6 +607,8 @@ IBus_t IBusInit();
 void IBusProcess(IBus_t *);
 void IBusSendCommand(IBus_t *, const uint8_t, const uint8_t, const uint8_t *, const size_t);
 void IBusSetInternalIgnitionStatus(IBus_t *, uint8_t);
+uint32_t IBusGetDateTimeAsEpoch(IBusDateTime_t *);
+IBusDateTime_t IBusGetEpochAsDateTime(uint32_t);
 uint8_t IBusGetLMCodingIndex(uint8_t *);
 uint8_t IBusGetLMDiagnosticIndex(uint8_t *);
 uint8_t IBusGetLMDimmerChecksum(uint8_t *);

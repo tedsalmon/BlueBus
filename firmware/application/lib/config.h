@@ -53,6 +53,7 @@
 #define CONFIG_SETTING_COMFORT_AUTOZOOM_ADDRESS 0x2C
 #define CONFIG_SETTING_VISUAL_PDC_ADDRESS 0x2D
 #define CONFIG_SETTING_NAV_ADDRESS 0x2E
+#define CONFIG_SETTING_AUTO_TIME_ADDRESS 0x2F
 /* Config 0x36 - 0x3F: Telephony Settings */
 #define CONFIG_SETTING_HFP_ADDRESS 0x36
 #define CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL_ADDRESS 0x37
@@ -93,6 +94,8 @@
 #define CONFIG_UI_MID_BMBT 4
 #define CONFIG_UI_MIR 5
 #define CONFIG_UI_IRIS 6
+
+#define CONFIG_TIMEZONE_COUNT 32
 
 #define CONFIG_SETTING_OFF 0x00
 #define CONFIG_SETTING_ON 0x01
@@ -136,6 +139,10 @@
 #define CONFIG_SETTING_NAV_MAP_SPEED_50 0x04
 #define CONFIG_SETTING_NAV_MAP_TIME_5 0x05
 #define CONFIG_SETTING_NAV_MAP_TIME_10 0x06
+#define CONFIG_SETTING_AUTO_TIME_PHONE 0b00000001
+#define CONFIG_SETTING_AUTO_TIME_GPS 0b00000010
+#define CONFIG_SETTING_AUTO_TIME_DST 0b00000100
+#define CONFIG_SETTING_AUTO_TIME_TZ 0b11111000
 
 /* EEPROM 0x0F - 0x19: I-Bus / Vehicle Data */
 #define CONFIG_UI_MODE CONFIG_UI_MODE_ADDRESS
@@ -165,6 +172,7 @@
 #define CONFIG_SETTING_COMFORT_AUTOZOOM CONFIG_SETTING_COMFORT_AUTOZOOM_ADDRESS
 #define CONFIG_SETTING_VISUAL_PDC CONFIG_SETTING_VISUAL_PDC_ADDRESS
 #define CONFIG_SETTING_NAV CONFIG_SETTING_NAV_ADDRESS
+#define CONFIG_SETTING_AUTO_TIME CONFIG_SETTING_AUTO_TIME_ADDRESS
 /* Config 0x36 - 0x3E: Telephony Settings */
 #define CONFIG_SETTING_HFP CONFIG_SETTING_HFP_ADDRESS
 #define CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL_ADDRESS
@@ -205,6 +213,7 @@ uint8_t ConfigGetBuildYear();
 void ConfigGetBytes(uint8_t, uint8_t *, uint8_t);
 uint8_t ConfigGetComfortLock();
 uint8_t ConfigGetComfortUnlock();
+uint8_t ConfigGetDistUnit();
 uint8_t ConfigGetFirmwareVersionMajor();
 uint8_t ConfigGetFirmwareVersionMinor();
 uint8_t ConfigGetFirmwareVersionPatch();
@@ -219,7 +228,10 @@ uint8_t ConfigGetSetting(uint8_t);
 uint8_t ConfigGetTelephonyFeaturesActive();
 uint8_t ConfigGetTempDisplay();
 uint8_t ConfigGetTempUnit();
-uint8_t ConfigGetDistUnit();
+uint8_t ConfigGetTimeDST();
+int16_t ConfigGetTimeOffset();
+uint8_t ConfigGetTimeOffsetIndex();
+uint8_t ConfigGetTimeSource();
 uint8_t ConfigGetTrapCount(uint8_t);
 uint8_t ConfigGetTrapLast();
 uint8_t ConfigGetUIMode();
@@ -233,6 +245,7 @@ void ConfigSetByte(uint8_t, uint8_t);
 void ConfigSetBytes(uint8_t, const uint8_t *, uint8_t);
 void ConfigSetComfortLock(uint8_t);
 void ConfigSetComfortUnlock(uint8_t);
+void ConfigSetDistUnit(uint8_t);
 void ConfigSetFirmwareVersion(uint8_t, uint8_t, uint8_t);
 void ConfigSetIKEType(uint8_t);
 void ConfigSetLMVariant(uint8_t);
@@ -242,7 +255,10 @@ void ConfigSetString(uint8_t, char *, uint8_t);
 void ConfigSetNavType(uint8_t);
 void ConfigSetTempDisplay(uint8_t);
 void ConfigSetTempUnit(uint8_t);
-void ConfigSetDistUnit(uint8_t);
+void ConfigSetTimeDST(uint8_t);
+void ConfigSetTimeOffset(int16_t);
+void ConfigSetTimeOffsetIndex(uint8_t);
+void ConfigSetTimeSource(uint8_t);
 void ConfigSetTrapCount(uint8_t, uint8_t);
 void ConfigSetTrapIncrement(uint8_t);
 void ConfigSetTrapLast(uint8_t);

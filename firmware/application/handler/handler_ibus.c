@@ -100,6 +100,11 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        IBUS_EVENT_NAV_GPSDATETIME_UPDATE,
+        HandlerIBusNavGPSDateTimeUpdate,
+        context
+    );
+    EventRegisterCallback(
         IBUS_EVENT_PDC_SENSOR_UPDATE,
         &HandlerIBusPDCSensorUpdate,
         context
@@ -1354,6 +1359,71 @@ void HandlerIBusModuleStatusRequest(void *ctx, uint8_t *pkt)
             IBUS_DEVICE_TEL,
             pkt[IBUS_PKT_SRC],
             IBUS_TEL_SIG_EVEREST
+        );
+    }
+}
+
+/**
+ * HandlerIBusNavGPSDatetimeUpdate()
+ *     Description:
+ *         Handle Updates to the GPS Time
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - The IBus packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusNavGPSDateTimeUpdate(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // If timezone is unset, attempt to derive it from the OBC's date & time
+    if (
+        ConfigGetTimeOffsetIndex() == 0 &&
+        context->ibus->obcDateTime.year >= 2020
+    ) {
+        uint32_t obcEpoch = IBusGetDateTimeAsEpoch(&context->ibus->obcDateTime);
+        uint32_t gpsEpoch = IBusGetDateTimeAsEpoch(&context->ibus->gpsDateTime);
+        int16_t offsetMinutes = (int32_t)(obcEpoch - gpsEpoch) / 60;
+        ConfigSetTimeOffset(offsetMinutes);
+        if (
+            ConfigGetTimeDST() == CONFIG_SETTING_OFF &&
+            context->ibus->gpsDateTime.month >= 4 &&
+            context->ibus->gpsDateTime.month <= 10
+        ) {
+            // Assume DST
+            ConfigSetTimeDST(CONFIG_SETTING_AUTO_TIME_DST);
+        }
+    }
+    if (ConfigGetTimeSource() != CONFIG_SETTING_AUTO_TIME_GPS) {
+        return;
+    }
+    uint32_t epoch = IBusGetDateTimeAsEpoch(&context->ibus->gpsDateTime);
+    // Apply timezone offset (ConfigGetTimeOffset returns minutes)
+    epoch += (int32_t) ConfigGetTimeOffset() * 60;
+    // Apply DST offset if enabled (60 minutes)
+    if (ConfigGetTimeDST() != 0) {
+        epoch += 3600;
+    }
+    IBusDateTime_t datetime = IBusGetEpochAsDateTime(epoch);
+
+    // Validate the date and time
+    if (datetime.year >= 2020 &&
+        datetime.month >= 1 && datetime.month <= 12 &&
+        datetime.day >= 1 && datetime.day <= 31 &&
+        datetime.hour <= 23 &&
+        datetime.min <= 59 &&
+        datetime.sec <= 59
+    ) {
+        IBusCommandIKESetDate(
+            context->ibus,
+            datetime.year - 2000,
+            datetime.month,
+            datetime.day
+        );
+        IBusCommandIKESetTime(
+            context->ibus,
+            datetime.hour,
+            datetime.min
         );
     }
 }
