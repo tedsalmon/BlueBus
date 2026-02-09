@@ -13,7 +13,6 @@ void MIDInit(BT_t *bt, IBus_t *ibus)
     memset(&Context, 0, sizeof(MIDContext_t));
     Context.bt = bt;
     Context.ibus = ibus;
-    Context.btDeviceIndex = 0;
     Context.mode = MID_MODE_OFF;
     Context.displayUpdate = MID_DISPLAY_NONE;
     Context.mainDisplay = UtilsDisplayValueInit("Bluetooth", MID_DISPLAY_STATUS_OFF);
@@ -118,6 +117,7 @@ void MIDDestroy()
     );
     TimerUnregisterScheduledTask(&MIDTimerMenuWrite);
     TimerUnregisterScheduledTask(&MIDTimerDisplay);
+    MenuSingleLineDestory();
     memset(&Context, 0, sizeof(MIDContext_t));
 }
 
@@ -183,51 +183,11 @@ static void MIDSetTempDisplayText(
     TimerTriggerScheduledTask(context->displayUpdateTaskId);
 }
 
-// Menu Creation
-static void MIDShowNextDevice(MIDContext_t *context, uint8_t direction)
-{
-    if (context->bt->pairedDevicesCount == 0) {
-        MIDSetMainDisplayText(context, "No Devices Available", 0);
-    } else {
-        if (direction == MID_BUTTON_NEXT_VAL) {
-            if (context->btDeviceIndex < context->bt->pairedDevicesCount - 1) {
-                context->btDeviceIndex++;
-            } else {
-                context->btDeviceIndex = 0;
-            }
-        } else {
-            if (context->btDeviceIndex == 0) {
-                context->btDeviceIndex = context->bt->pairedDevicesCount - 1;
-            } else {
-                context->btDeviceIndex--;
-            }
-        }
-        BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
-        char text[16] = {0};
-        strncpy(text, dev->deviceName, 15);
-        text[15] = '\0';
-        // Add a space and asterisks to the end of the device name
-        // if it's the currently selected device
-        if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) == 0) {
-            uint8_t startIdx = strlen(text);
-            if (startIdx > 13) {
-                startIdx = 13;
-            }
-            text[startIdx++] = 0x20;
-            text[startIdx++] = 0x2A;
-            text[startIdx++] = 0;
-        }
-        MIDSetMainDisplayText(context, text, 0);
-    }
-}
-
-
 static void MIDMenuDevices(MIDContext_t *context)
 {
     context->mode = MID_MODE_DEVICES;
     strncpy(context->mainText, "Devices", 8);
-    context->btDeviceIndex = MID_PAIRING_DEVICE_NONE;
-    MIDShowNextDevice(context, 0);
+    MenuSingleLineDevices(&context->menuContext, 0);
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_BACK, "Back");
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_EDIT_SAVE, " Con");
     IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_PREV_VAL, "<   ");
@@ -438,17 +398,27 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
             }
             BTCommandPlaybackToggle(context->bt);
         } else if (btnPressed == MID_BUTTON_META) {
+            // Toggle: Metadata ON -> OFF -> OBC -> ON
             if (context->mode == MID_MODE_ACTIVE) {
                 context->mode = MID_MODE_DISPLAY_OFF;
+                MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_METADATA);
+            } else if (context->mode == MID_MODE_DISPLAY_OFF) {
+                context->mode = MID_MODE_OBC_NEW;
+                MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_OBC);
+            } else if (context->mode == MID_MODE_OBC) {
+                MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_METADATA);
+                context->mode = MID_MODE_ACTIVE_NEW;
             } else {
                 context->mode = MID_MODE_ACTIVE_NEW;
             }
-        } else if (btnPressed == MID_BUTTON_SETTINGS_L ||
-                   btnPressed == MID_BUTTON_SETTINGS_R
+        } else if (
+            btnPressed == MID_BUTTON_SETTINGS_L ||
+            btnPressed == MID_BUTTON_SETTINGS_R
         ) {
             context->mode = MID_MODE_SETTINGS_NEW;
-        }  else if (btnPressed == MID_BUTTON_DEVICES_L ||
-                    btnPressed == MID_BUTTON_DEVICES_R
+        }  else if (
+            btnPressed == MID_BUTTON_DEVICES_L ||
+            btnPressed == MID_BUTTON_DEVICES_R
         ) {
             context->mode = MID_MODE_DEVICES_NEW;
         } else if (btnPressed == MID_BUTTON_PAIR) {
@@ -492,24 +462,17 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
         if (btnPressed == MID_BUTTON_BACK) {
             context->mode = MID_MODE_ACTIVE_NEW;
         } else if (btnPressed == MID_BUTTON_EDIT_SAVE) {
-            if (context->bt->pairedDevicesCount > 0) {
-                // Connect to device
-                BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
-                if (
-                    memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 &&
-                    dev != 0
-                ) {
-                    // Trigger device selection event
-                    EventTriggerCallback(
-                        UI_EVENT_INITIATE_CONNECTION,
-                        (uint8_t *)&context->btDeviceIndex
-                    );
-                }
-            }
-        } else if (btnPressed == MID_BUTTON_PREV_VAL ||
-                   btnPressed == MID_BUTTON_NEXT_VAL
+            MenuSingleLineDevicesConnect(&context->menuContext);
+        } else if (
+            btnPressed == MID_BUTTON_PREV_VAL ||
+            btnPressed == MID_BUTTON_NEXT_VAL
         ) {
-            MIDShowNextDevice(context, btnPressed);
+            MenuSingleLineDevices(&context->menuContext, btnPressed);
+        }
+    } else if (context->mode == MID_MODE_OBC) {
+        if (btnPressed == MID_BUTTON_BACK) {
+            MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_METADATA);
+            context->mode = MID_MODE_ACTIVE_NEW;
         }
     }
     if (btnPressed == MID_BUTTON_MODE && pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
@@ -554,13 +517,14 @@ void MIDIIBusRADMIDDisplayUpdate(void *ctx, unsigned char *pkt)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
     unsigned char watermark = pkt[pkt[IBUS_PKT_LEN]];
-    if (watermark != IBUS_RAD_MAIN_AREA_WATERMARK) {
-        if ((context->mode == MID_MODE_ACTIVE ||
-             context->mode == MID_MODE_DISPLAY_OFF) &&
-            context->modeChangeStatus == MID_MODE_CHANGE_OFF
-        ) {
-            IBusCommandMIDDisplayRADTitleText(context->ibus, "Bluetooth");
-        }
+    if (watermark == IBUS_RAD_MAIN_AREA_WATERMARK) {
+        return;
+    }
+    if (
+        (context->mode == MID_MODE_ACTIVE || context->mode == MID_MODE_DISPLAY_OFF) &&
+        context->modeChangeStatus == MID_MODE_CHANGE_OFF
+    ) {
+        IBusCommandMIDDisplayRADTitleText(context->ibus, "Bluetooth");
     }
 }
 
@@ -616,6 +580,13 @@ void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
     }
 }
 
+static void MIDDisplayOBC(MIDContext_t *context)
+{
+    context->mode = MID_MODE_OBC;
+    MenuSingleLineOBC(&context->menuContext);
+    IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_OBC, "OBC");
+}
+
 void MIDTimerMenuWrite(void *ctx)
 {
     MIDContext_t *context = (MIDContext_t *) ctx;
@@ -628,6 +599,9 @@ void MIDTimerMenuWrite(void *ctx)
             break;
         case MID_MODE_DEVICES_NEW:
             MIDMenuDevices(context);
+            break;
+        case MID_MODE_OBC_NEW:
+            MIDDisplayOBC(context);
             break;
     }
 }

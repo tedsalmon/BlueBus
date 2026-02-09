@@ -5,6 +5,7 @@
  *     Implement the CD53 UI Mode handler
  */
 #include "cd53.h"
+#include "menu/menu_singleline.h"
 static CD53Context_t Context;
 
 void CD53Init(BT_t *bt, IBus_t *ibus)
@@ -15,7 +16,6 @@ void CD53Init(BT_t *bt, IBus_t *ibus)
     Context.mode = CD53_MODE_OFF;
     Context.mainDisplay = UtilsDisplayValueInit("Bluetooth", CD53_DISPLAY_STATUS_OFF);
     Context.tempDisplay = UtilsDisplayValueInit("", CD53_DISPLAY_STATUS_OFF);
-    Context.btDeviceIndex = CD53_PAIRING_DEVICE_NONE;
     Context.displayMetadata = CD53_DISPLAY_METADATA_ON;
     if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF) {
         Context.displayMetadata = CD53_DISPLAY_METADATA_OFF;
@@ -149,6 +149,7 @@ void CD53Destroy()
         IBUS_EVENT_SCREEN_MODE_SET,
         &CD53GTScreenModeSet
     );
+    MenuSingleLineDestory();
     TimerUnregisterScheduledTask(&CD53TimerDisplay);
     memset(&Context, 0, sizeof(CD53Context_t));
 }
@@ -208,37 +209,6 @@ void CD53DisplayUpdateText(void *ctx, char *text, int8_t timeout, uint8_t update
     }
 }
 
-static void CD53ShowNextAvailableDevice(CD53Context_t *context, uint8_t direction)
-{
-    if (direction == 0x00) {
-        if (context->btDeviceIndex < context->bt->pairedDevicesCount - 1) {
-            context->btDeviceIndex++;
-        } else {
-            context->btDeviceIndex = 0;
-        }
-    } else {
-        if (context->btDeviceIndex == 0) {
-            context->btDeviceIndex = context->bt->pairedDevicesCount - 1;
-        } else {
-            context->btDeviceIndex--;
-        }
-    }
-    BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
-    char text[CD53_DISPLAY_TEXT_LEN + 1] = {0};
-    UtilsStrncpy(text, dev->deviceName, CD53_DISPLAY_TEXT_LEN);
-    // Add a space and asterisks to the end of the device name
-    // if it's the currently selected device
-    if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) == 0) {
-        uint8_t startIdx = strlen(text);
-        if (startIdx > 9) {
-            startIdx = 9;
-        }
-        text[startIdx++] = 0x20;
-        text[startIdx++] = 0x2A;
-    }
-    CD53SetMainDisplayText(context, text, 0);
-}
-
 static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char direction)
 {
     if (context->mode == CD53_MODE_ACTIVE) {
@@ -250,7 +220,7 @@ static void CD53HandleUIButtonsNextPrev(CD53Context_t *context, unsigned char di
         TimerTriggerScheduledTask(context->displayUpdateTaskId);
         context->mediaChangeState = CD53_MEDIA_STATE_CHANGE;
     } else if (context->mode == CD53_MODE_DEVICE_SEL) {
-        CD53ShowNextAvailableDevice(context, direction);
+        MenuSingleLineDevices(&context->menuContext, direction);
     } else if (context->mode == CD53_MODE_SETTINGS) {
         MenuSingleLineSettingsScroll(&context->menuContext, direction);
     }
@@ -284,34 +254,24 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                pkt[IBUS_PKT_DB2] == 0x02
     ) {
         if (context->mode == CD53_MODE_ACTIVE) {
-            // Toggle Metadata scrolling
+            // Toggle: Metadata ON -> OFF -> OBC -> ON
             if (context->displayMetadata == CD53_DISPLAY_METADATA_ON) {
                 CD53SetMainDisplayText(context, "Bluetooth", 0);
                 context->displayMetadata = CD53_DISPLAY_METADATA_OFF;
+                MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_METADATA);
+            } else if (context->displayMetadata == CD53_DISPLAY_METADATA_OFF) {
+                context->displayMetadata = CD53_DISPLAY_OBC;
+                MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_OBC);
             } else {
+                // OBC Mode
+                MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_METADATA);
                 context->displayMetadata = CD53_DISPLAY_METADATA_ON;
-                // We are sending a null pointer because we do not need
-                // the second parameter
                 CD53BTMetadata(context, 0x00);
             }
         } else if (context->mode == CD53_MODE_SETTINGS) {
             // Use as "Okay" button
             MenuSingleLineSettingsEditSave(&context->menuContext);
         } else if (context->mode == CD53_MODE_DEVICE_SEL) {
-            BTPairedDevice_t *dev = &context->bt->pairedDevices[
-                context->btDeviceIndex
-            ];
-            // Do nothing if the user selected the active device
-            if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0) {
-                // Trigger device selection event
-                EventTriggerCallback(
-                    UI_EVENT_INITIATE_CONNECTION,
-                    (unsigned char *)&context->btDeviceIndex
-                );
-                CD53SetTempDisplayText(context, "Connecting", 2);
-            } else {
-                CD53SetTempDisplayText(context, "Connected", 2);
-            }
             CD53RedisplayText(context);
         }
     } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE && pkt[IBUS_PKT_DB2] == 0x03) {
@@ -344,8 +304,10 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         } else {
             context->mode = CD53_MODE_ACTIVE;
             CD53SetMainDisplayText(context, "Bluetooth", 0);
-            if (context->displayMetadata != CD53_DISPLAY_METADATA_OFF) {
+            if (context->displayMetadata == CD53_DISPLAY_METADATA_ON) {
                 CD53BTMetadata(context, 0x00);
+            } else if (context->displayMetadata == CD53_DISPLAY_OBC) {
+                MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_OBC);
             }
         }
     } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE && pkt[IBUS_PKT_DB2] == 0x05) {
@@ -355,19 +317,15 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         }
         // Device selection mode
         if (context->mode != CD53_MODE_DEVICE_SEL) {
-            if (context->bt->pairedDevicesCount == 0) {
-                CD53SetTempDisplayText(context, "No Devices", 4);
-            } else {
-                CD53SetTempDisplayText(context, "Devices", 2);
-                context->btDeviceIndex = CD53_PAIRING_DEVICE_NONE;
-                CD53ShowNextAvailableDevice(context, 0);
-            }
+            MenuSingleLineDevices(&context->menuContext, MENU_SINGLELINE_DIRECTION_FORWARD);
             context->mode = CD53_MODE_DEVICE_SEL;
         } else {
             context->mode = CD53_MODE_ACTIVE;
             CD53SetMainDisplayText(context, "Bluetooth", 0);
-            if (context->displayMetadata != CD53_DISPLAY_METADATA_OFF) {
+            if (context->displayMetadata == CD53_DISPLAY_METADATA_ON) {
                 CD53BTMetadata(context, 0x00);
+            } else if (context->displayMetadata == CD53_DISPLAY_OBC) {
+                MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_OBC);
             }
         }
     } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE && pkt[IBUS_PKT_DB2] == 0x06) {

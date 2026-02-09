@@ -20,6 +20,7 @@
 #define MID_BUTTON_BACK 0x40
 #define MID_BUTTON_META 0x41
 #define MID_BUTTON_EDIT_SAVE 0x41
+#define MID_BUTTON_OBC 0x41
 #define MID_BUTTON_PREV_VAL 0x42
 #define MID_BUTTON_SETTINGS_L 0x42
 #define MID_BUTTON_NEXT_VAL 0x43
@@ -55,13 +56,12 @@
 #define MID_MODE_ACTIVE_NEW 5
 #define MID_MODE_SETTINGS_NEW 6
 #define MID_MODE_DEVICES_NEW 7
+#define MID_MODE_OBC 8
+#define MID_MODE_OBC_NEW 9
 
 #define MID_MODE_CHANGE_OFF 0
 #define MID_MODE_CHANGE_PRESS 1
 #define MID_MODE_CHANGE_RELEASE 2
-
-#define MID_PAIRING_DEVICE_NONE -1
-
 
 /*
  * MIDContext_t
@@ -74,7 +74,6 @@
 typedef struct MIDContext_t {
     BT_t *bt;
     IBus_t *ibus;
-    int8_t btDeviceIndex;
     uint8_t mode;
     uint8_t displayUpdate;
     uint8_t modeChangeStatus;

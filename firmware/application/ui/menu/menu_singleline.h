@@ -13,6 +13,12 @@
 #include "../../lib/pcm51xx.h"
 #include "../../lib/utils.h"
 
+#define MENU_SINGLELINE_VIEW_OFF 0
+#define MENU_SINGLELINE_VIEW_METADATA 1
+#define MENU_SINGLELINE_VIEW_OBC 2
+#define MENU_SINGLELINE_VIEW_SETTINGS 3
+#define MENU_SINGLELINE_VIEW_DEVICES 4
+
 #define MENU_SINGLELINE_SETTING_IDX_METADATA_MODE 0
 #define MENU_SINGLELINE_SETTING_IDX_AUTOPLAY 1
 #define MENU_SINGLELINE_SETTING_IDX_AUDIO_DSP 2
@@ -53,18 +59,29 @@ typedef struct MenuSingleLineContext_t {
     BT_t *bt;
     void (*uiUpdateFunc)(void *, const char *, int8_t, uint8_t);
     void *uiContext;
+    uint8_t uiMode;
+    uint8_t activeView;
     uint8_t settingIdx;
     uint8_t settingValue;
     uint8_t settingMode;
-    uint8_t uiMode;
+    uint8_t btDeviceIndex;
+    uint16_t vehicleSpeed;
+    uint8_t obcDisplayActive;
 } MenuSingleLineContext_t;
 
 MenuSingleLineContext_t MenuSingleLineInit(IBus_t *, BT_t*, void *, void *);
+void MenuSingleLineDestory();
 void MenuSingleLineMainDisplayText(MenuSingleLineContext_t *, const char *, int8_t);
 void MenuSingleLineSetTempDisplayText(MenuSingleLineContext_t *, const char *, int8_t);
+void MenuSingleLineIBusSensorValueUpdate(void *, uint8_t *);
+void MenuSingleLineIBusSpeedUpdate(void *, uint8_t *);
+void MenuSingleLineOBC(MenuSingleLineContext_t *);
+void MenuSingleLineSetUIView(MenuSingleLineContext_t *, uint8_t);
 void MenuSingleLineSettings(MenuSingleLineContext_t *);
 void MenuSingleLineSettingsEditSave(MenuSingleLineContext_t *);
 void MenuSingleLineSettingsScroll(MenuSingleLineContext_t *, uint8_t);
 void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *, uint8_t);
 void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *, uint8_t);
+void MenuSingleLineDevices(MenuSingleLineContext_t *, uint8_t);
+void MenuSingleLineDevicesConnect(MenuSingleLineContext_t *);
 #endif /* MENU_SINGLELINE_H */

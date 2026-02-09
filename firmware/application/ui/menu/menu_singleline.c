@@ -63,13 +63,49 @@ MenuSingleLineContext_t MenuSingleLineInit(
     MenuSingleLineContext_t Context;
     Context.ibus = ibus;
     Context.bt = bt;
+    Context.activeView = MENU_SINGLELINE_VIEW_METADATA;
     Context.uiUpdateFunc = uiUpdateFunc;
     Context.uiContext = uiContext;
     Context.settingIdx = MENU_SINGLELINE_SETTING_IDX_METADATA_MODE;
     Context.settingValue = 0;
+    Context.btDeviceIndex = 0;
     Context.settingMode = MENU_SINGLELINE_SETTING_MODE_SCROLL_SETTINGS;
     Context.uiMode = ConfigGetUIMode();
+    Context.vehicleSpeed = 0;
+    // Event Registrations
+    EventRegisterCallback(
+        IBUS_EVENT_SENSOR_VALUE_UPDATE,
+        &MenuSingleLineIBusSensorValueUpdate,
+        &Context
+    );
+    EventRegisterCallback(
+        IBUS_EVENT_IKE_SPEED_RPM_UPDATE,
+        &MenuSingleLineIBusSpeedUpdate,
+        &Context
+    );
+
     return Context;
+}
+
+/**
+ * MenuSingleLineDestroy()
+ *     Description:
+ *         Unregister all event handlers, scheduled tasks and clear the context
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+void MenuSingleLineDestory()
+{
+    EventUnregisterCallback(
+        IBUS_EVENT_SENSOR_VALUE_UPDATE,
+        &MenuSingleLineIBusSensorValueUpdate
+    );
+    EventUnregisterCallback(
+        IBUS_EVENT_IKE_SPEED_RPM_UPDATE,
+        &MenuSingleLineIBusSpeedUpdate
+    );
 }
 
 /**
@@ -120,6 +156,134 @@ void MenuSingleLineSetTempDisplayText(
     );
 }
 
+/**
+ * MenuSingleLineIBusSensorValueUpdate()
+ *     Description:
+ *         Handle sensor value update events for OBC display
+ *     Params:
+ *         void *ctx - Pointer to the context
+ *         uint8_t *type - Pointer to the sensor value type
+ *     Returns:
+ *         void
+ */
+void MenuSingleLineIBusSensorValueUpdate(void *ctx, uint8_t *type)
+{
+    MenuSingleLineContext_t *context = (MenuSingleLineContext_t *) ctx;
+    uint8_t updateType = *type;
+    if (context->activeView != MENU_SINGLELINE_VIEW_OBC) {
+        return;
+    }
+    if (
+        updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP ||
+        updateType == IBUS_SENSOR_VALUE_OIL_TEMP
+    ) {
+        MenuSingleLineOBC(context);
+    }
+}
+
+/**
+ * MenuSingleLineIBusSpeedUpdate()
+ *     Description:
+ *         Handle speed update events for OBC display
+ *     Params:
+ *         void *ctx - Pointer to the context
+ *         uint8_t *pkt - Pointer to the IBus packet
+ *     Returns:
+ *         void
+ */
+void MenuSingleLineIBusSpeedUpdate(void *ctx, uint8_t *pkt)
+{
+    MenuSingleLineContext_t *context = (MenuSingleLineContext_t *) ctx;
+    if (context->activeView != MENU_SINGLELINE_VIEW_OBC) {
+        return;
+    }
+    uint16_t speed = pkt[IBUS_PKT_DB1] * 2;
+    if (context->vehicleSpeed != speed) {
+        context->vehicleSpeed = speed;
+        MenuSingleLineOBC(context);
+    }
+}
+
+/**
+ * MenuSingleLineOBC()
+ *     Description:
+ *         Update the OBC display with current sensor values
+ *     Params:
+ *         MenuSingleLineContext_t *context - Pointer to the context
+ *     Returns:
+ *         void
+ */
+void MenuSingleLineOBC(MenuSingleLineContext_t *context)
+{
+    if (context->activeView != MENU_SINGLELINE_VIEW_OBC) {
+        return;
+    }
+
+    int16_t coolant = context->ibus->coolantTemperature;
+    int16_t oil = context->ibus->oilTemperature;
+    uint16_t speed = context->vehicleSpeed;
+
+    // Check for no data
+    if (coolant == 0 && oil == 0) {
+        MenuSingleLineSetTempDisplayText(context, "No OBC Data", 4);
+        context->obcDisplayActive = 0;
+        return;
+    }
+
+    // Convert to Fahrenheit if configured
+    if (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) {
+        coolant = (coolant * 9 / 5) + 32;
+        if (oil != 0) {
+            oil = (oil * 9 / 5) + 32;
+        }
+    }
+
+    char text[25] = {0};
+    if (context->uiMode == CONFIG_UI_MID) {
+        // MID: 24 chars max
+        if (oil != 0) {
+            snprintf(text, 24, "C:%d O:%d S:%d", coolant, oil, speed);
+        } else {
+            snprintf(text, 24, "Coolant:%d Speed:%d", coolant, speed);
+        }
+    } else {
+        // CD53/MIR: 11 chars max
+        if (oil != 0) {
+            snprintf(text, 12, "C:%d O:%d %d", coolant, oil, speed);
+        } else {
+            snprintf(text, 12, "C:%d S:%d", coolant, speed);
+        }
+    }
+
+    MenuSingleLineSetMainDisplayText(context, text, 0);
+}
+
+/**
+ * MenuSingleLineSetUIView()
+ *     Description:
+ *         Set the active UI view / mode
+ *     Params:
+ *         MenuSingleLineContext_t *context - Pointer to the context
+ *         uint8_t view - The UI mode
+ *     Returns:
+ *         void
+ */
+void MenuSingleLineSetUIView(MenuSingleLineContext_t *context, uint8_t view)
+{
+    context->activeView = view;
+
+    switch (context->activeView) {
+        case MENU_SINGLELINE_VIEW_SETTINGS:
+            MenuSingleLineSettings(context);
+            break;
+        case MENU_SINGLELINE_VIEW_OBC:
+            MenuSingleLineOBC(context);
+            break;
+        case MENU_SINGLELINE_VIEW_DEVICES:
+            MenuSingleLineDevices(context, 0);
+
+    }
+}
 /**
  * MenuSingleLineSettings()
  *     Description:
@@ -728,3 +892,58 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
         }
     }
 }
+
+void MenuSingleLineDevices(
+    MenuSingleLineContext_t *context,
+    uint8_t direction
+) {
+    if (context->bt->pairedDevicesCount == 0) {
+        MenuSingleLineSetMainDisplayText(context, "No Paired Devices", 0);
+    }
+    if (direction == MENU_SINGLELINE_DIRECTION_FORWARD) {
+        if (context->btDeviceIndex >= context->bt->pairedDevicesCount) {
+            context->btDeviceIndex = 0;
+        } else {
+            context->btDeviceIndex++;
+        }
+    } else {
+        if (context->btDeviceIndex == 0) {
+            context->btDeviceIndex = context->bt->pairedDevicesCount - 1;
+        } else {
+            context->btDeviceIndex--;
+        }
+    }
+    BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
+    char text[BT_DEVICE_NAME_LEN + 3] = {0};
+    UtilsStrncpy(text, dev->deviceName, BT_DEVICE_NAME_LEN);
+    // Add a space and asterisks to the end of the device name
+    // if it's the currently selected device
+    if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) == 0) {
+        uint8_t startIdx = strlen(text);
+        text[startIdx++] = 0x20;
+        text[startIdx++] = 0x2A;
+    }
+    MenuSingleLineSetMainDisplayText(context, text, 0);
+}
+
+void MenuSingleLineDevicesConnect(MenuSingleLineContext_t *context) {
+    if (context->bt->pairedDevicesCount > 0) {
+        // Connect to device
+        BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
+        if (
+            memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 &&
+            dev != 0
+        ) {
+            // Trigger device selection event
+            EventTriggerCallback(
+                UI_EVENT_INITIATE_CONNECTION,
+                (uint8_t *)&context->btDeviceIndex
+            );
+            MenuSingleLineSetTempDisplayText(context, "Connecting", 4);
+        } else {
+            MenuSingleLineSetTempDisplayText(context, "Connected", 4);
+        }
+    }
+
+}
+
