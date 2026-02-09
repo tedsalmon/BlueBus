@@ -5,6 +5,7 @@
  *     Implement the MID UI Mode handler
  */
 #include "mid.h"
+#include "menu/menu_singleline.h"
 static MIDContext_t Context;
 
 void MIDInit(BT_t *bt, IBus_t *ibus)
@@ -311,7 +312,7 @@ void MIDBTMetadataUpdate(void *ctx, unsigned char *tmp)
     MIDContext_t *context = (MIDContext_t *) ctx;
     if (context->mode != MID_MODE_ACTIVE ||
         strlen(context->bt->title) == 0 ||
-        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == MID_SETTING_METADATA_MODE_OFF
+        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == MENU_SINGLELINE_SETTING_METADATA_MODE_OFF
     ) {
         return;
     }
@@ -358,7 +359,7 @@ void MIDBTPlaybackStatus(void *ctx, unsigned char *tmp)
         IBusCommandMIDMenuWriteSingle(context->ibus, 0, "||");
         BTCommandGetMetadata(context->bt);
     } else {
-        if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MID_SETTING_METADATA_MODE_OFF) {
+        if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MENU_SINGLELINE_SETTING_METADATA_MODE_OFF) {
             MIDSetMainDisplayText(context, "Paused", 0);
         }
         IBusCommandMIDMenuWriteSingle(context->ibus, 0, "> ");
@@ -694,8 +695,9 @@ void MIDTimerDisplay(void *ctx)
                     context->mainDisplay.timeout = 2;
                     context->mainDisplay.index = 0;
                 } else {
-                    if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) ==
-                        MID_SETTING_METADATA_MODE_CHUNK
+                    if (
+                        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) ==
+                        MENU_SINGLELINE_SETTING_METADATA_MODE_CHUNK
                     ) {
                         context->mainDisplay.timeout = 2;
                         context->mainDisplay.index += IBUS_MID_MAX_CHARS;

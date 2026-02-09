@@ -62,28 +62,6 @@
 
 #define MID_PAIRING_DEVICE_NONE -1
 
-#define MID_SETTING_IDX_METADATA_MODE 0
-#define MID_SETTING_IDX_AUTOPLAY 1
-#define MID_SETTING_IDX_AUDIO_DSP 2
-#define MID_SETTING_IDX_LOWER_VOL_REV 3
-#define MID_SETTING_IDX_AUDIO_DAC_GAIN 4
-#define MID_SETTING_IDX_TEL_HFP 5
-#define MID_SETTING_IDX_TEL_MIC_GAIN 6
-#define MID_SETTING_IDX_TEL_VOL_OFFSET 7
-#define MID_SETTING_IDX_TEL_TCU_MODE 8
-#define MID_SETTING_IDX_BLINKERS 9
-#define MID_SETTING_IDX_PARK_LIGHTS 10
-#define MID_SETTING_IDX_COMFORT_LOCKS 11
-#define MID_SETTING_IDX_COMFORT_UNLOCK 12
-#define MID_SETTING_IDX_ABOUT 13
-#define MID_SETTING_IDX_PAIRINGS 14
-
-#define MID_SETTING_MODE_SCROLL_SETTINGS 1
-#define MID_SETTING_MODE_SCROLL_VALUES 2
-#define MID_SETTING_METADATA_MODE_OFF 0x00
-#define MID_SETTING_METADATA_MODE_PARTY 0x01
-#define MID_SETTING_METADATA_MODE_CHUNK 0x02
-
 
 /*
  * MIDContext_t
@@ -116,7 +94,6 @@ void MIDIBusCDChangerStatus(void *, uint8_t *);
 void MIDIBusIgnitionStatus(void *, uint8_t *);
 void MIDIBusMIDButtonPress(void *, uint8_t *);
 void MIDIIBusRADMIDDisplayUpdate(void *, uint8_t *);
-void MIDIIBusRADMIDMenuUpdate(void *, uint8_t *);
 void MIDIBusMIDModeChange(void *, uint8_t *);
 void MIDTimerMenuWrite(void *);
 void MIDTimerDisplay(void *);

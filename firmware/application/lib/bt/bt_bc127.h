@@ -17,18 +17,13 @@
 #include "../utils.h"
 #include "bt_common.h"
 
-#define BC127_AUDIO_I2S "0"
 #define BC127_AUDIO_SPDIF "2"
 #define BC127_CLOSE_ALL 255
-#define BC127_DEVICE_NAME_LEN 64
 #define BC127_DEVICE_NAME_OFFSET 19
-#define BC127_MAX_DEVICE_PAIRED 8
-#define BC127_MAX_DEVICE_PROFILES 5
 #define BC127_METADATA_TITLE_OFFSET 22
 #define BC127_METADATA_ARTIST_OFFSET 23
 #define BC127_METADATA_ALBUM_OFFSET 22
 #define BC127_MSG_END_CHAR 0x0D
-#define BC127_MSG_LF_CHAR 0x0A
 #define BC127_MSG_DELIMETER 0x20
 #define BC127_SHORT_NAME_MAX_LEN 8
 #define BC127_PROFILE_COUNT 9
@@ -41,11 +36,8 @@
 
 extern int8_t BTBC127MicGainTable[];
 
-void BC127ClearActiveDevice(BT_t *);
-void BC127ClearConnections(BT_t *);
 void BTClearMetadata(BT_t *);
 void BC127ClearPairedDevices(BT_t *);
-void BC127ClearInactivePairedDevices(BT_t *);
 void BC127ClearPairingErrors(BT_t *);
 void BC127CommandAT(BT_t *, char *);
 void BC127CommandATSet(BT_t *, char *, char *);
@@ -93,7 +85,6 @@ void BC127CommandUnpair(BT_t *);
 void BC127CommandVersion(BT_t *);
 void BC127CommandVolume(BT_t *, uint8_t, char *);
 void BC127CommandWrite(BT_t *);
-uint8_t BC127GetConnectedDeviceCount(BT_t *);
 uint8_t BC127GetDeviceId(char *);
 void BC127ProcessEventA2DPStreamSuspend(BT_t *, char **);
 void BC127ProcessEventAbsVol(BT_t *, char **);

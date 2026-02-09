@@ -25,7 +25,6 @@
 #define I2C_ERR_NAK -6
 #define I2C_ERR_TBF -7
 #define I2C_ERR_OVERFLOW -9
-#define I2C_ERR_RCV_TIMEOUT -10
 #define I2C_ERR_BUS_DIRTY -100
 #define I2C_ERR_TIMEOUT_HW -101
 #define I2C_ERR_COMM_FAIL -102
