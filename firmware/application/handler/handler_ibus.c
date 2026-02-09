@@ -1146,7 +1146,8 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
         ) {
             LogDebug(CONFIG_DEVICE_LOG_SYSTEM, "RIGHT > Unrelated activity");
         } else if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) == 0 &&
-                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0
+                   UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
+                   UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) == 0
         ) {
             // OFF blinker (or anything non-blinker)
             // Only activate comfort blinkers after a single blink.

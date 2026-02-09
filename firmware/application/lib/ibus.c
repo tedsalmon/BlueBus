@@ -1026,8 +1026,9 @@ void IBusProcess(IBus_t *ibus)
         // Flush the transmit buffer out to the bus
         uint8_t txTimeout = IBUS_TX_TIMEOUT_OFF;
         uint8_t beginTxTimestamp = TimerGetMillis();
-        while (ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
-               txTimeout != IBUS_TX_TIMEOUT_ON
+        while (
+            ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
+            txTimeout != IBUS_TX_TIMEOUT_ON
         ) {
             uint32_t now = TimerGetMillis();
             if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {

@@ -595,7 +595,8 @@ void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
         } else if (context->mode != MID_MODE_OFF) {
             context->mode = MID_MODE_DISPLAY_OFF;
         }
-        if (pkt[IBUS_PKT_DB2] == IBUS_MID_UI_RADIO_OPEN &&
+        if (
+            pkt[IBUS_PKT_DB2] == IBUS_MID_UI_RADIO_OPEN &&
             context->modeChangeStatus == MID_MODE_CHANGE_PRESS
         ) {
             IBusCommandMIDButtonPress(context->ibus, IBUS_DEVICE_RAD, MID_BUTTON_MODE_PRESS);
