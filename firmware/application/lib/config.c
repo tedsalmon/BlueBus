@@ -613,7 +613,7 @@ uint8_t ConfigGetValue(uint8_t value)
  */
 void ConfigGetVehicleIdentity(uint8_t *vin)
 {
-    uint8_t vinAddress[] = CONFIG_VEHICLE_VIN_ADDRESS;
+    uint8_t vinAddress[] = CONFIG_VEHICLE_VIN;
     uint8_t i;
     for (i = 0; i < 5; i++) {
         vin[i] = ConfigGetByte(vinAddress[i]);
@@ -744,7 +744,7 @@ void ConfigSetComfortUnlock(uint8_t comfortUnlock)
  */
 void ConfigSetDistUnit(uint8_t distUnit)
 {
-    ConfigSetByteUpperNibble(CONFIG_SETTING_BMBT_DIST_UNIT_ADDRESS, distUnit);
+    ConfigSetByteUpperNibble(CONFIG_SETTING_BMBT_DIST_UNIT, distUnit);
 }
 
 /**
