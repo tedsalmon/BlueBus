@@ -66,7 +66,6 @@ typedef struct MenuSingleLineContext_t {
     uint8_t settingMode;
     uint8_t btDeviceIndex;
     uint16_t vehicleSpeed;
-    uint8_t obcDisplayActive;
 } MenuSingleLineContext_t;
 
 MenuSingleLineContext_t MenuSingleLineInit(IBus_t *, BT_t*, void *, void *);

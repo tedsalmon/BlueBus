@@ -226,7 +226,7 @@ void MenuSingleLineOBC(MenuSingleLineContext_t *context)
     // Check for no data
     if (coolant == 0 && oil == 0) {
         MenuSingleLineSetTempDisplayText(context, "No OBC Data", 4);
-        context->obcDisplayActive = 0;
+        context->activeView = MENU_SINGLELINE_VIEW_METADATA;
         return;
     }
 
