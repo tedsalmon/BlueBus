@@ -36,8 +36,8 @@ void HandlerBTInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        BT_EVENT_DEVICE_FOUND,
-        &HandlerBTDeviceFound,
+        BT_EVENT_DEVICE_DISCONNECTED,
+        &HandlerBTDeviceDisconnected,
         context
     );
     EventRegisterCallback(
@@ -46,14 +46,14 @@ void HandlerBTInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        BT_EVENT_DEVICE_LINK_DISCONNECTED,
-        &HandlerBTDeviceDisconnected,
-        context
-    );
-    EventRegisterCallback(
         BT_EVENT_PLAYBACK_STATUS_CHANGE,
         &HandlerBTPlaybackStatus,
         context
+    );
+    context->deviceScanTimerId = TimerRegisterScheduledTask(
+        &HandlerTimerBTScanDevices,
+        context,
+        HANDLER_INT_DEVICE_SCAN
     );
     context->tcuStateChangeTimerId = TimerRegisterScheduledTask(
         &HandlerTimerBTTCUStateChange,
@@ -77,26 +77,18 @@ void HandlerBTInit(HandlerContext_t *context)
             HANDLER_INT_BC127_STATE
         );
         TimerRegisterScheduledTask(
-            &HandlerTimerBTBC127DeviceConnection,
-            context,
-            HANDLER_INT_DEVICE_CONN
-        );
-        TimerRegisterScheduledTask(
-            &HandlerTimerBTBC127ScanDevices,
-            context,
-            HANDLER_INT_DEVICE_SCAN
-        );
-        TimerRegisterScheduledTask(
             &HandlerTimerBTBC127OpenProfileErrors,
             context,
             HANDLER_INT_PROFILE_ERROR
         );
         TimerRegisterScheduledTask(
-            &HandlerTimerBTBC127Metadata,
+            &HandlerTimerBTBC127AVRCPPoll,
             context,
             HANDLER_INT_BT_AVRCP_UPDATER
         );
         BC127CommandStatus(context->bt);
+        BC127CommandBtState(context->bt, BT_STATE_OFF, BT_STATE_OFF);
+        BC127CommandList(context->bt);
     } else {
         EventRegisterCallback(
             BT_EVENT_AVRCP_PDU_CHANGE,
@@ -117,11 +109,6 @@ void HandlerBTInit(HandlerContext_t *context)
             BT_EVENT_DSP_STATUS,
             &HandlerBTBM83DSPStatus,
             context
-        );
-        context->deviceScanTimerId = TimerRegisterScheduledTask(
-            &HandlerTimerBTBM83ScanDevices,
-            context,
-            HANDLER_INT_DEVICE_SCAN
         );
         context->avrcpRegisterStatusNotifierTimerId = TimerRegisterScheduledTask(
             &HandlerTimerBTBM83AVRCPManager,
@@ -318,41 +305,6 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
 }
 
 /**
- * HandlerBTDeviceFound()
- *     Description:
- *         If a device is found and we are not connected, connect to it
- *     Params:
- *         void *ctx - The context provided at registration
- *         uint8_t *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerBTDeviceFound(void *ctx, uint8_t *data)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->bt->status == BT_STATUS_DISCONNECTED &&
-        context->ibus->ignitionStatus > IBUS_IGNITION_OFF
-    ) {
-        LogDebug(LOG_SOURCE_SYSTEM, "Handler: No Device -- Attempt connection");
-        if (context->bt->type == BT_BTM_TYPE_BC127) {
-            memcpy(context->bt->activeDevice.macId, data, BT_DEVICE_MAC_ID_LEN);
-            BC127CommandProfileOpen(context->bt, "A2DP");
-        } else {
-            HandlerTimerBTBM83ScanDevices(ctx);
-        }
-    } else {
-        LogDebug(
-            LOG_SOURCE_SYSTEM,
-            "Handler: Not connecting to new device %d %d %d",
-            context->bt->activeDevice.deviceId,
-            context->bt->status,
-            context->ibus->ignitionStatus
-        );
-    }
-}
-
-
-/**
  * HandlerBTCallStatus()
  *     Description:
  *         Handle caller ID updates
@@ -374,6 +326,73 @@ void HandlerBTCallerID(void *ctx, uint8_t *data)
 /**
  * HandlerBTDeviceLinkConnected()
  *     Description:
+ *         When a device is "connected", reset the device scan timer to avoid
+ *         trying the connection
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *linkType - The connected link type
+ *     Returns:
+ *         void
+ */
+void HandlerBTDeviceConnected(void *ctx, uint8_t *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    TimerResetScheduledTask(context->deviceScanTimerId);
+}
+
+/**
+ * HandlerBTDeviceDisconnected()
+ *     Description:
+ *         If a device disconnects and our ignition is on,
+ *         attempt to reconnect to that device, otherwise try a new device
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBTDeviceDisconnected(void *ctx, uint8_t *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    // Reset the metadata so we do not display incorrect data
+    BTClearMetadata(context->bt);
+    if (context->bt->type == BT_BTM_TYPE_BC127) {
+        BC127ClearPairingErrors(context->bt);
+    }
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+        IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
+    }
+    if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
+        return;
+    }
+    if (context->btSelectedDevice != HANDLER_BT_SELECTED_DEVICE_NONE) {
+        if (context->btStatus == HANDLER_BT_STATUS_CONNECTING) {
+            return;
+        }
+        if (context->btSelectedDevice >= BT_MAX_PAIRINGS) {
+            return;
+        }
+        if (context->btDeviceConnRetries >= HANDLER_DEVICE_MAX_RECONN) {
+            if (context->bt->pairedDevicesCount > 1) {
+                context->btSelectedDevice++;
+                if (context->btSelectedDevice >= context->bt->pairedDevicesCount) {
+                    context->btSelectedDevice = 0;
+                }
+            }
+            context->btDeviceConnRetries = 0;
+        }
+        BTPairedDevice_t *dev = &context->bt->pairedDevices[
+            context->btSelectedDevice
+        ];
+        BTCommandConnect(context->bt, dev);
+        context->btDeviceConnRetries++;
+        TimerResetScheduledTask(context->deviceScanTimerId);
+    }
+}
+
+/**
+ * HandlerBTDeviceLinkConnected()
+ *     Description:
  *         If a device link is opened, disable connectability once all profiles
  *         are opened. Otherwise if the ignition is off, disconnect all devices
  *     Params:
@@ -387,6 +406,7 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
 
     if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF) {
+
         uint8_t linkType = *data;
         uint8_t hfpConfigStatus = ConfigGetSetting(CONFIG_SETTING_HFP);
 
@@ -397,8 +417,9 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
             linkType == BT_LINK_TYPE_A2DP &&
             context->bt->activeDevice.a2dpId != 0
         ) {
-            // Raise the volume one step to trigger the absolute volume notification
+            context->btStatus = HANDLER_BT_STATUS_NONE;
             if (context->bt->type == BT_BTM_TYPE_BC127) {
+                // Raise the volume one step to trigger the absolute volume notification
                 BC127CommandVolume(
                     context->bt,
                     context->bt->activeDevice.a2dpId,
@@ -409,32 +430,25 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                 ) {
                     BC127CommandProfileOpen(
                         context->bt,
+                        &context->bt->pairedDevices[context->bt->activeDevice.deviceIndex],
                         "HFP"
                     );
                 }
             }
         }
         if (linkType == BT_LINK_TYPE_AVRCP || linkType == BT_LINK_TYPE_A2DP) {
-            if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
+            if (
+                ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON &&
                 context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
             ) {
                 BTCommandPlay(context->bt);
             }
-            if (context->bt->type == BT_BTM_TYPE_BM83) {
-                // Request Device Name if it is empty
-                char tmp[BT_DEVICE_NAME_LEN] = {0};
-                if (memcmp(tmp, context->bt->activeDevice.deviceName, BT_DEVICE_NAME_LEN) == 0) {
-                    ConfigSetSetting(
-                        CONFIG_SETTING_LAST_CONNECTED_DEVICE,
-                        context->btSelectedDevice
-                    );
-                    BM83CommandReadLinkedDeviceInformation(
-                        context->bt,
-                        BM83_LINKED_DEVICE_QUERY_NAME
-                    );
-                    context->btDeviceConnRetries = 0;
-                }
-            }
+            ConfigSetSetting(
+                CONFIG_SETTING_LAST_CONNECTED_DEVICE,
+                context->btSelectedDevice
+            );
+            BTCommandGetConnectedDeviceName(context->bt);
+            context->btDeviceConnRetries = 0;
         }
         if (linkType == BT_LINK_TYPE_HFP) {
             HandlerSetIBusTELStatus(context, HANDLER_TEL_STATUS_FORCE);
@@ -453,12 +467,15 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                     BC127CommandATSet(context->bt, "CLIP", "1");
                     // Request the date and time
                     // NOTE: This is only compatible with iOS at this time
-                    BC127CommandAT(context->bt, "+CCLK?");
+                    if (ConfigGetSetting(CONFIG_SETTING_AUTO_TIME) == CONFIG_SETTING_AUTO_TIME_PHONE) {
+                        BC127CommandAT(context->bt, "+CCLK?");
+                    }
                     if (context->bt->activeDevice.hfpId != 0 &&
                         context->bt->activeDevice.pbapId == 0
                     ) {
                         BC127CommandProfileOpen(
                             context->bt,
+                            &context->bt->pairedDevices[context->bt->activeDevice.deviceIndex],
                             "PBAP"
                         );
                     }
@@ -467,51 +484,6 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
         }
     } else {
         BTCommandDisconnect(context->bt);
-    }
-}
-
-/**
- * HandlerBTDeviceDisconnected()
- *     Description:
- *         If a device disconnects and our ignition is on,
- *         make the module connectable again.
- *     Params:
- *         void *ctx - The context provided at registration
- *         uint8_t *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerBTDeviceDisconnected(void *ctx, uint8_t *data)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    // Reset the metadata so we do not display incorrect data
-    BTClearMetadata(context->bt);
-    if (context->bt->type == BT_BTM_TYPE_BC127) {
-        BC127ClearPairingErrors(context->bt);
-    }
-    if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
-        return;
-    }
-    if (context->btSelectedDevice != HANDLER_BT_SELECTED_DEVICE_NONE){
-        if (context->btStatus == HANDLER_BT_STATUS_CONNECTING) {
-            return;
-        }
-        if (context->btSelectedDevice >= BT_MAX_PAIRINGS) {
-            return;
-        }
-        BTPairedDevice_t *dev = &context->bt->pairedDevices[
-            context->btSelectedDevice
-        ];
-        BTCommandConnect(context->bt, dev);
-        context->btDeviceConnRetries++;
-        TimerResetScheduledTask(context->deviceScanTimerId);
-    } else {
-        if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-            IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
-        }
-        if (context->btStatus == HANDLER_BT_STATUS_NONE) {
-            BTCommandList(context->bt);
-        }
     }
 }
 
@@ -571,6 +543,9 @@ void HandlerBTPlaybackStatus(void *ctx, uint8_t *data)
 void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (ConfigGetSetting(CONFIG_SETTING_AUTO_TIME) != CONFIG_SETTING_AUTO_TIME_PHONE) {
+        return;
+    }
     // If it's the first second of the minute, use the time update
     // Otherwise, request the time again at the top of the next minute
     if (dt[UTILS_DATETIME_SEC] < 2) {
@@ -615,8 +590,9 @@ void HandlerBTTimeUpdate(void *ctx, uint8_t *dt)
 void HandlerBTBC127Boot(void *ctx, uint8_t *tmp)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
+    BTClearPairedDevices(context->bt);
     BC127CommandStatus(context->bt);
+    BC127CommandList(context->bt);
 }
 
 /**
@@ -633,14 +609,14 @@ void HandlerBTBC127Boot(void *ctx, uint8_t *tmp)
 void HandlerBTBC127BootStatus(void *ctx, uint8_t *tmp)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    BC127CommandList(context->bt);
     if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
         // Set the BT module not connectable or discoverable and disconnect all devices
         BC127CommandBtState(context->bt, BT_STATE_OFF, BT_STATE_OFF);
         BC127CommandClose(context->bt, BT_CLOSE_ALL);
     } else {
         // Set the connectable and discoverable states to what they were
-        BC127CommandBtState(context->bt, BT_STATE_ON, context->bt->discoverable);
+        BC127CommandBtState(context->bt, BT_STATE_ON, BT_STATE_OFF);
+        BC127CommandList(context->bt);
     }
 }
 
@@ -755,9 +731,46 @@ void HandlerBTBM83BootStatus(void *ctx, uint8_t *data)
     if (type == BM83_DATA_BOOT_STATUS_POWER_ON) {
         BM83CommandReadPairedDevices(context->bt);
     }
+    if (type == BM83_DATA_BTM_STATUS_STANDBY_ON) {
+        TimerTriggerScheduledTask(context->deviceScanTimerId);
+    }
 }
 
 /* Timers */
+/**
+ * HandlerTimerBTScanDevices()
+ *     Description:
+ *         Rescan for devices on the PDL periodically. Scan every 5 seconds if
+ *         there is no connected device, otherwise every 60 seconds
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *     Returns:
+ *         void
+ */
+void HandlerTimerBTScanDevices(void *ctx)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
+        return;
+    }
+    if (context->bt->status == BT_STATUS_DISCONNECTED &&
+        context->bt->discoverable == BT_STATE_OFF &&
+        context->bt->pairedDevicesCount > 0
+    ) {
+        if (context->bt->pairedDevicesCount == 1) {
+            BTPairedDevice_t *dev = &context->bt->pairedDevices[0];
+            BTCommandConnect(context->bt, dev);
+            context->btSelectedDevice = 0;
+        } else {
+            BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btSelectedDevice];
+            BTCommandConnect(context->bt, dev);
+            context->btSelectedDevice++;
+            if (context->btSelectedDevice >= context->bt->pairedDevicesCount) {
+                context->btSelectedDevice = 0;
+            }
+        }
+    }
+}
 
 /**
  * HandlerTimerBTTCUStateChange()
@@ -905,40 +918,6 @@ void HandlerTimerBTBC127State(void *ctx)
 }
 
 /**
- * HandlerTimerBTBC127DeviceConnection()
- *     Description:
- *         Monitor the BT connection and ensure it stays connected
- *     Params:
- *         void *ctx - The context provided at registration
- *     Returns:
- *         void
- */
-void HandlerTimerBTBC127DeviceConnection(void *ctx)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (BTHasActiveMacId(context->bt) != 0 && context->bt->activeDevice.a2dpId == 0) {
-        if (context->btDeviceConnRetries <= HANDLER_DEVICE_MAX_RECONN) {
-            LogDebug(
-                LOG_SOURCE_SYSTEM,
-                "Handler: A2DP link closed -- Attempting to connect"
-            );
-            BC127CommandProfileOpen(
-                context->bt,
-                "A2DP"
-            );
-            context->btDeviceConnRetries += 1;
-        } else {
-            LogError("Handler: Giving up on BT connection");
-            context->btDeviceConnRetries = 0;
-            BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
-            BTCommandDisconnect(context->bt);
-        }
-    } else if (context->btDeviceConnRetries > 0) {
-        context->btDeviceConnRetries = 0;
-    }
-}
-
-/**
  * HandlerTimerBTBC127RequestDateTime()
  *     Description:
  *         Request time from BT device
@@ -966,12 +945,13 @@ void HandlerTimerBTBC127RequestDateTime(void *ctx) {
 void HandlerTimerBTBC127OpenProfileErrors(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (BTHasActiveMacId(context->bt) != 0) {
+    if (context->bt->status == BT_STATUS_CONNECTED) {
         for (uint8_t idx = 0; idx < BC127_PROFILE_COUNT; idx++) {
             if (context->bt->pairingErrors[idx] == 1 && PROFILES[idx] != 0) {
                 LogDebug(LOG_SOURCE_SYSTEM, "Handler: Resolve pairing error");
                 BC127CommandProfileOpen(
                     context->bt,
+                    &context->bt->pairedDevices[context->bt->activeDevice.deviceIndex],
                     PROFILES[idx]
                 );
                 context->bt->pairingErrors[idx] = 0;
@@ -981,45 +961,33 @@ void HandlerTimerBTBC127OpenProfileErrors(void *ctx)
 }
 
 /**
- * HandlerTimerBTBC127ScanDevices()
+ * HandlerTimerBTBC127AVRCPPoll()
  *     Description:
- *         Rescan for devices on the PDL periodically. Scan every 5 seconds if
- *         there is no connected device, otherwise every 60 seconds
+ *         Request current playing song periodically as well as playback status
  *     Params:
  *         void *ctx - The context provided at registration
  *     Returns:
  *         void
  */
-void HandlerTimerBTBC127ScanDevices(void *ctx)
+void HandlerTimerBTBC127AVRCPPoll(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->bt->status != BT_STATUS_DISCONNECTED &&
-        context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
-        context->bt->activeDevice.avrcpId != 0
-    ) {
-        // Sync the playback state every 5 seconds
-        BC127CommandStatusAVRCP(context->bt);
-    }
-}
-
-/**
- * HandlerTimerBTBC127Metadata()
- *     Description:
- *         Request current playing song periodically
- *     Params:
- *         HandlerContext_t *context - The handler context
- *     Returns:
- *         void
- */
-void HandlerTimerBTBC127Metadata(HandlerContext_t *context)
-{
     uint32_t now = TimerGetMillis();
-    if (now - HANDLER_BT_METADATA_TIMEOUT >= context->bt->metadataTimestamp &&
-        context->bt->activeDevice.avrcpId != 0 &&
+    if (context->bt->activeDevice.avrcpId == 0) {
+        return;
+    }
+    if (
+        now - HANDLER_BT_METADATA_TIMEOUT >= context->bt->metadataTimestamp &&
         context->bt->callStatus == BT_CALL_INACTIVE &&
         context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING
     ) {
         BC127CommandGetMetadata(context->bt);
+    }
+    if (
+        context->bt->status != BT_STATUS_DISCONNECTED &&
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF
+    ) {
+        BC127CommandStatusAVRCP(context->bt);
     }
 }
 
@@ -1123,66 +1091,6 @@ void HandlerTimerBTBM83ManagePowerState(void *ctx)
                 context->btBootState = HANDLER_BT_BOOT_RESET;
                 TimerSetTaskInterval(context->bm83PowerStateTimerId, HANDLER_INT_BM83_POWER_RESET);
                 break;
-            }
-        }
-    }
-}
-
-/**
- * HandlerTimerBTBC127ScanDevices()
- *     Description:
- *         Rescan for devices on the PDL periodically. Scan every 5 seconds if
- *         there is no connected device, otherwise every 60 seconds
- *     Params:
- *         void *ctx - The context provided at registration
- *     Returns:
- *         void
- */
-void HandlerTimerBTBM83ScanDevices(void *ctx)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->ibus->ignitionStatus > IBUS_IGNITION_OFF) {
-        if (context->bt->pairedDevicesCount == 0 &&
-            context->bt->powerState == BT_STATE_STANDBY
-        ) {
-            BM83CommandReadPairedDevices(context->bt);
-        }
-        if (context->bt->status == BT_STATUS_DISCONNECTED &&
-            context->bt->discoverable == BT_STATE_OFF &&
-            context->bt->pairedDevicesCount > 0
-        ) {
-            if (context->btSelectedDevice == HANDLER_BT_SELECTED_DEVICE_NONE ||
-                context->bt->pairedDevicesCount == 1
-            ) {
-                BTPairedDevice_t *dev = &context->bt->pairedDevices[0];
-                BTCommandConnect(context->bt, dev);
-                context->btSelectedDevice = 0;
-            } else {
-                BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btSelectedDevice];
-                BTCommandConnect(context->bt, dev);
-                context->btSelectedDevice++;
-                if (context->btSelectedDevice >= context->bt->pairedDevicesCount) {
-                    context->btSelectedDevice = 0;
-                }
-            }
-        }
-        // Guard against half-connected devices
-        if (context->bt->status == BT_STATUS_CONNECTED) {
-            if (
-                context->bt->activeDevice.avrcpId == 0 &&
-                context->bt->activeDevice.a2dpId == 0
-            ) {
-                BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btSelectedDevice];
-                BTCommandConnect(context->bt, dev);
-                context->btDeviceConnRetries++;
-                if (context->btDeviceConnRetries == HANDLER_DEVICE_MAX_RECONN) {
-                    // Reset the metadata so we don't display the wrong data
-                    BTClearMetadata(context->bt);
-                    // Clear the actively paired device
-                    BTClearActiveDevice(context->bt);
-                    BTCommandDisconnect(context->bt);
-                    context->btDeviceConnRetries = 0;
-                }
             }
         }
     }

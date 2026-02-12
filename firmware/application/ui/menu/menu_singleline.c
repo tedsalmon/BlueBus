@@ -412,17 +412,12 @@ void MenuSingleLineSettingsEditSave(MenuSingleLineContext_t *context)
                         BM83CommandDisconnect(context->bt, BM83_CMD_DISCONNECT_PARAM_HF);
                     }
                 } else {
+                    BTPairedDevice_t *device = &context->bt->pairedDevices[
+                        context->bt->activeDevice.deviceIndex
+                    ];
                     if (context->bt->type == BT_BTM_TYPE_BC127) {
-                        BC127CommandProfileOpen(context->bt, "HFP");
+                        BC127CommandProfileOpen(context->bt, device, "HFP");
                     } else {
-                        BTPairedDevice_t *device = 0;
-                        uint8_t i = 0;
-                        for (i = 0; i < BT_MAX_PAIRINGS; i++) {
-                            BTPairedDevice_t *tmpDev = &context->bt->pairedDevices[i];
-                            if (memcmp(context->bt->activeDevice.macId, tmpDev->macId, BT_DEVICE_MAC_ID_LEN) == 0) {
-                                device = tmpDev;
-                            }
-                        }
                         if (device != 0) {
                             BM83CommandConnect(
                                 context->bt,
@@ -918,7 +913,7 @@ void MenuSingleLineDevices(
     UtilsStrncpy(text, dev->deviceName, BT_DEVICE_NAME_LEN);
     // Add a space and asterisks to the end of the device name
     // if it's the currently selected device
-    if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) == 0) {
+    if (context->btDeviceIndex == context->bt->activeDevice.deviceIndex) {
         uint8_t startIdx = strlen(text);
         text[startIdx++] = 0x20;
         text[startIdx++] = 0x2A;
@@ -931,7 +926,7 @@ void MenuSingleLineDevicesConnect(MenuSingleLineContext_t *context) {
         // Connect to device
         BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
         if (
-            memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0 &&
+            context->btDeviceIndex != context->bt->activeDevice.deviceIndex &&
             dev != 0
         ) {
             // Trigger device selection event

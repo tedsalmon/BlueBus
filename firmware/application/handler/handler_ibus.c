@@ -800,7 +800,6 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                 BTCommandSetDiscoverable(context->bt, BT_STATE_OFF);
             }
             BTCommandDisconnect(context->bt);
-            BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
             // Unlock the vehicle
             if (
                 ConfigGetComfortUnlock() == CONFIG_SETTING_COMFORT_UNLOCK_POS_0 &&
@@ -860,18 +859,16 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             BTClearMetadata(context->bt);
             // Set the BT module connectable
             BTCommandSetConnectable(context->bt, BT_STATE_ON);
-            BTCommandList(context->bt);
             if (context->bt->type == BT_BTM_TYPE_BC127) {
                 // Play a tone to wake up the WM8804 / PCM5122
                 BC127CommandTone(context->bt, "V 0 N C6 L 4");
                 // Request BC127 state
                 BC127CommandStatus(context->bt);
-            } else {
-                if (context->bt->pairedDevicesCount > 0) {
-                    uint8_t lastDevice = ConfigGetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE);
-                    BTPairedDevice_t *dev = &context->bt->pairedDevices[lastDevice];
-                    BTCommandConnect(context->bt, dev);
-                }
+            }
+            if (context->bt->pairedDevicesCount > 0) {
+                uint8_t lastDevice = ConfigGetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE);
+                BTPairedDevice_t *dev = &context->bt->pairedDevices[lastDevice];
+                BTCommandConnect(context->bt, dev);
             }
             // Enable the TEL LEDs
             if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {

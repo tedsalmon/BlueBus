@@ -189,7 +189,8 @@ void BM83CommandConnect(BT_t *bt, BTPairedDevice_t *dev, uint8_t profiles)
         dev->macId[0]
     };
     // Make this the active device
-    memcpy(bt->activeDevice.macId, dev->macId, BT_DEVICE_MAC_ID_LEN);
+    BTClearActiveDevice(bt);
+    bt->activeDevice.deviceIndex = dev->number;
     bt->status = BT_STATUS_CONNECTING;
     BM83SendCommand(bt, command, sizeof(command));
 }
@@ -737,6 +738,8 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             LogDebug(LOG_SOURCE_BT, "BT: Pairing Ok");
             bt->discoverable = BT_STATE_OFF;
             bt->status = BT_STATUS_CONNECTED;
+            // New Pairings don't provide any information on connect
+            BM83CommandReadPairedDevices(bt);
             break;
         }
         case BM83_DATA_BTM_STATUS_PAIRING_NOK: {
@@ -824,15 +827,16 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         }
         case BM83_DATA_BTM_STATUS_STANDBY_ON: {
             LogDebug(LOG_SOURCE_BT, "BT: Standby On");
-            if (bt->activeDevice.deviceId != 0) {
-                memset(&bt->activeDevice, 0, sizeof(BTConnection_t));
+            if (bt->activeDevice.status == BT_DEVICE_STATUS_CONNECTED) {
+                BTClearActiveDevice(bt);
                 LogDebug(LOG_SOURCE_BT, "BT: Device Disconnected [BTM Standby]");
                 EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
             }
             // We need to set this flag so we can attempt to connect
             bt->status = BT_STATUS_DISCONNECTED;
             bt->powerState = BT_STATE_STANDBY;
-            EventTriggerCallback(BT_EVENT_BOOT_STATUS, 0);
+            uint8_t state = BM83_DATA_BTM_STATUS_STANDBY_ON;
+            EventTriggerCallback(BT_EVENT_BOOT_STATUS, &state);
             break;
         }
         case BM83_DATA_BTM_STATUS_IAP_CONN: {
@@ -841,7 +845,7 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         }
         case BM83_DATA_BTM_STATUS_ACL_DISCO: {
             bt->status = BT_STATUS_DISCONNECTED;
-            memset(&bt->activeDevice, 0, sizeof(BTConnection_t));
+            BTClearActiveDevice(bt);
             LogDebug(LOG_SOURCE_BT, "BT: Device Disconnected");
             uint8_t linkType = BT_LINK_TYPE_ACL;
             EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
@@ -858,12 +862,8 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             break;
         }
         case BM83_DATA_BTM_STATUS_ACL_CONN: {
-            // Store the MAC ID for the new active device profile
-            uint8_t tempDeviceMacId[BT_DEVICE_MAC_ID_LEN] = {0};
-            memcpy(tempDeviceMacId, bt->activeDevice.macId, BT_DEVICE_MAC_ID_LEN);
-            bt->activeDevice = BTConnectionInit();
             bt->status = BT_STATUS_CONNECTED;
-            memcpy(bt->activeDevice.macId, tempDeviceMacId, BT_DEVICE_MAC_ID_LEN);
+            bt->activeDevice.status = BT_DEVICE_STATUS_CONNECTED;
             LogDebug(LOG_SOURCE_BT, "BT: Device Connected");
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
             break;
@@ -1003,9 +1003,14 @@ void BM83ProcessEventReadLinkStatus(BT_t *bt, uint8_t *data, uint16_t length)
             break;
         case BM83_DATA_LINK_STATE_STANDBY:
             LogDebug(LOG_SOURCE_BT, "BT: Standby On");
+            uint8_t currentStatus = bt->status;
             bt->status = BT_STATUS_DISCONNECTED;
             bt->powerState = BT_STATE_STANDBY;
-            EventTriggerCallback(BT_EVENT_BOOT_STATUS, 0);
+            if (currentStatus == BT_STATUS_CONNECTING) {
+                EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
+            } else {
+                EventTriggerCallback(BT_EVENT_BOOT_STATUS, 0);
+            }
             break;
         case BM83_DATA_LINK_STATE_HF_CONNECTED_ONLY:
         case BM83_DATA_LINK_STATE_A2DP_CONNECTED_ONLY:
@@ -1043,29 +1048,19 @@ void BM83ProcessEventReadLinkedDeviceInformation(BT_t *bt, uint8_t *data, uint16
             }
             UtilsNormalizeText(deviceName, nameData, BT_DEVICE_NAME_LEN + 1);
             LogDebug(LOG_SOURCE_BT, "Connected: %s", deviceName);
-            UtilsStrncpy(bt->activeDevice.deviceName, deviceName, BT_DEVICE_NAME_LEN);
-            // Copy the device name to its pairing record and save to EEPROM
-            BTPairedDevice_t *dev = 0;
-            for (i = 0; i < bt->pairedDevicesCount; i++) {
-                dev = &bt->pairedDevices[i];
-                if (dev != 0) {
-                    if (memcmp(dev->macId, bt->activeDevice.macId, BT_DEVICE_MAC_ID_LEN) == 0) {
-                        // Check if name has changed before saving
-                        if (strcmp(dev->deviceName, deviceName) != 0) {
-                            UtilsStrncpy(
-                                dev->deviceName,
-                                deviceName,
-                                BT_DEVICE_NAME_LEN
-                            );
-                            BTPairedDeviceSave(
-                                dev->macId,
-                                dev->deviceName,
-                                i
-                            );
-                        }
-                        break;
-                    }
-                }
+            // Update the device name in the pairing record if necessary
+            BTPairedDevice_t *dev = &bt->pairedDevices[bt->activeDevice.deviceIndex];
+            if (strcmp(dev->deviceName, deviceName) != 0) {
+                UtilsStrncpy(
+                    dev->deviceName,
+                    deviceName,
+                    BT_DEVICE_NAME_LEN
+                );
+                BTPairedDeviceSave(
+                    dev->macId,
+                    dev->deviceName,
+                    bt->activeDevice.deviceIndex
+                );
             }
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
             break;
@@ -1084,10 +1079,13 @@ void BM83ProcessEventReadLinkedDeviceInformation(BT_t *bt, uint8_t *data, uint16
  */
 void BM83ProcessEventReadPairedDeviceRecord(BT_t *bt, uint8_t *data, uint16_t length)
 {
+    // Always clear paired device records before moving forward
+    BTClearPairedDevices(bt);
     uint8_t pairedDevices = data[BM83_FRAME_DB0];
     if (pairedDevices > BT_MAX_PAIRINGS) {
         pairedDevices = BT_MAX_PAIRINGS;
     }
+    uint8_t itemsCount = data[BM83_FRAME_DB0];
     uint16_t dataPos = BM83_FRAME_DB1;
     while (pairedDevices > 0 && (dataPos + 7) <= length) {
         uint8_t macId[6] = {0};
@@ -1096,7 +1094,7 @@ void BM83ProcessEventReadPairedDeviceRecord(BT_t *bt, uint8_t *data, uint16_t le
         for (i = 6; i > 0; i--) {
             macId[i - 1] = data[dataPos++];
         }
-        BTPairedDeviceInit(bt, macId, number);
+        BTPairedDeviceInit(bt, macId, itemsCount - number);
         pairedDevices--;
     }
 }
@@ -1117,19 +1115,19 @@ void BM83ProcessEventReportLinkBackStatus(BT_t *bt, uint8_t *data, uint16_t leng
 {
     uint8_t linkType = data[BM83_FRAME_DB0];
     uint8_t linkStatus = data[BM83_FRAME_DB1];
-    if (linkType == BM83_DATA_LINK_BACK_ACL &&
-        linkStatus == BM83_DATA_LINK_BACK_ACL_FAILED
-    ) {
-        bt->status = BT_STATUS_DISCONNECTED;
-        EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
-    }
-    if ((linkType == BM83_DATA_LINK_BACK_HF || linkType == BM83_DATA_LINK_BACK_A2DP) &&
-        linkStatus == BM83_DATA_LINK_BACK_A2DP_HF_FAILED
-    ) {
-        bt->status = BT_STATUS_DISCONNECTED;
-        EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
-    }
     uint8_t eventData[2] = {linkType, linkStatus};
+    if (
+        linkType == BM83_DATA_LINK_BACK_ACL &&
+        linkStatus == BM83_DATA_LINK_BACK_RES_FAILED
+    ) {
+        bt->status = BT_STATUS_DISCONNECTED;
+    }
+    if (
+        (linkType == BM83_DATA_LINK_BACK_A2DP || linkType == BM83_DATA_LINK_BACK_HF) &&
+        linkStatus != BM83_DATA_LINK_BACK_RES_FAILED
+    ) {
+        bt->status = BT_STATUS_CONNECTED;
+    }
     EventTriggerCallback(BT_EVENT_LINK_BACK_STATUS, eventData);
 }
 

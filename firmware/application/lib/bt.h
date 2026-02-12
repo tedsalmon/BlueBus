@@ -20,6 +20,7 @@ void BTCommandDial(BT_t *, const char *, const char *);
 void BTCommandRedial(BT_t *);
 void BTCommandDisconnect(BT_t *);
 void BTCommandConnect(BT_t *, BTPairedDevice_t *);
+void BTCommandGetConnectedDeviceName(BT_t *);
 void BTCommandGetMetadata(BT_t *);
 void BTCommandList(BT_t *);
 void BTCommandPause(BT_t *);
@@ -35,6 +36,5 @@ void BTCommandProfileOpen(BT_t *);
 void BTCommandSetConnectable(BT_t *, unsigned char);
 void BTCommandSetDiscoverable(BT_t *, unsigned char);
 void BTCommandToggleVoiceRecognition(BT_t *);
-uint8_t BTHasActiveMacId(BT_t *);
 void BTProcess(BT_t *);
 #endif /* BT_H */

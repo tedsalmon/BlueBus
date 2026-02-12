@@ -5,10 +5,12 @@
  *     Implementation of the abstract Bluetooth Module API
  */
 #include "bt.h"
+#include "bt/bt_bc127.h"
 #include "bt/bt_bm83.h"
 #include "bt/bt_common.h"
 #include "locale.h"
 #include "uart.h"
+#include "utils.h"
 
 /**
  * BTInit()
@@ -31,7 +33,9 @@ BT_t BTInit()
     bt.scoStatus = BT_CALL_SCO_CLOSE;
     bt.metadataStatus = BT_METADATA_STATUS_CUR;
     bt.vrStatus = BT_VOICE_RECOG_OFF;
+    bt.pairedDevicesCheck = 0;
     bt.pairedDevicesCount = 0;
+    bt.pairedDevicesFound = 0;
     bt.playbackStatus = BT_AVRCP_STATUS_PAUSED;
     bt.rxQueueAge = 0;
     bt.powerState = BT_STATE_OFF;
@@ -146,7 +150,7 @@ void BTCommandDial(BT_t *bt, const char *number, const char *name)
  */
 void BTCommandRedial(BT_t *bt)
 {
-    if (bt->activeDevice.hfpId>0) {
+    if (bt->activeDevice.hfpId > 0) {
         if (bt->type == BT_BTM_TYPE_BC127) {
             BC127CommandAT(bt,"+BLDN");
         } else {
@@ -167,8 +171,8 @@ void BTCommandRedial(BT_t *bt)
 void BTCommandConnect(BT_t *bt, BTPairedDevice_t *dev)
 {
     if (bt->type == BT_BTM_TYPE_BC127) {
-        // Set the MAC ID?
-        BC127CommandProfileOpen(bt, "A2DP");
+        bt->status = BT_STATUS_CONNECTING;
+        BC127CommandProfileOpen(bt, dev, "A2DP");
     } else {
         uint8_t profiles = BM83_DATA_LINK_BACK_PROFILES_A2DP;
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
@@ -211,6 +215,28 @@ void BTCommandGetMetadata(BT_t *bt)
         BC127CommandGetMetadata(bt);
     } else {
         BM83CommandAVRCPGetElementAttributesAll(bt);
+    }
+}
+
+/**
+ * BTCommandGetConnectedDeviceName()
+ *     Description:
+ *         Get the device name
+ *     Params:
+ *         BT_t *bt - The Bluetooth context
+ *     Returns:
+ *         void
+ */
+void BTCommandGetConnectedDeviceName(BT_t *bt)
+{
+    if (bt->type == BT_BTM_TYPE_BC127) {
+        BTPairedDevice_t *dev = &bt->pairedDevices[bt->activeDevice.deviceIndex];
+        BC127CommandGetDeviceName(bt, dev);
+    } else {
+        BM83CommandReadLinkedDeviceInformation(
+            bt,
+            BM83_LINKED_DEVICE_QUERY_NAME
+        );
     }
 }
 
@@ -482,21 +508,6 @@ void BTCommandToggleVoiceRecognition(BT_t *bt)
             BM83CommandVoiceRecognitionOpen(bt);
         }
     }
-}
-
-/**
- * BTHasActiveMacId()
- *     Description:
- *        Check if the Active Device has a MAC ID set
- *     Params:
- *         BT_t *bt - A pointer to the module object
- *     Returns:
- *         void
- */
-uint8_t BTHasActiveMacId(BT_t *bt)
-{
-    uint8_t testMac[BT_LEN_MAC_ID] = {0};
-    return memcmp(bt->activeDevice.macId, testMac, BT_LEN_MAC_ID);
 }
 
 /**

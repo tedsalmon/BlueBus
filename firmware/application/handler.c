@@ -7,6 +7,7 @@
 #include "handler.h"
 #include "handler/handler_common.h"
 #include "lib/bt/bt_common.h"
+#include "lib/config.h"
 static HandlerContext_t Context;
 
 /**
@@ -27,7 +28,7 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     uint32_t now = TimerGetMillis();
     Context.btDeviceConnRetries = 0;
     Context.btStartupIsRun = 0;
-    Context.btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
+    Context.btSelectedDevice = ConfigGetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE);
     Context.volumeMode = HANDLER_VOLUME_MODE_NORMAL;
     Context.gtStatus = HANDLER_GT_STATUS_UNCHECKED;
     Context.monitorStatus = HANDLER_MONITOR_STATUS_UNSET;
@@ -78,6 +79,9 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     } else if (Context.uiMode == CONFIG_UI_MID_BMBT) {
         MIDInit(bt, ibus);
         BMBTInit(bt, ibus);
+    }
+    if (Context.btSelectedDevice >= BT_MAX_PAIRINGS) {
+        Context.btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
     }
 }
 

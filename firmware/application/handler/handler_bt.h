@@ -22,10 +22,9 @@
 
 void HandlerBTInit(HandlerContext_t *);
 void HandlerBTCallStatus(void *, uint8_t *);
-void HandlerBTDeviceFound(void *, uint8_t *);
 void HandlerBTCallerID(void *, uint8_t *);
-void HandlerBTDeviceLinkConnected(void *, uint8_t *);
 void HandlerBTDeviceDisconnected(void *, uint8_t *);
+void HandlerBTDeviceLinkConnected(void *, uint8_t *);
 void HandlerBTPlaybackStatus(void *, uint8_t *);
 void HandlerBTTimeUpdate(void *, uint8_t *);
 void HandlerUICloseConnection(void *, uint8_t *);
@@ -39,17 +38,15 @@ void HandlerBTBM83Boot(void *, uint8_t *);
 void HandlerBTBM83BootStatus(void *, uint8_t *);
 void HandlerBTBM83DSPStatus(void *, uint8_t *);
 
+void HandlerTimerBTScanDevices(void *);
 void HandlerTimerBTTCUStateChange(void *);
 void HandlerTimerBTVolumeManagement(void *);
 
-void HandlerTimerBTBC127State(void *);
-void HandlerTimerBTBC127DeviceConnection(void *);
-void HandlerTimerBTBC127RequestDateTime(void *);
+void HandlerTimerBTBC127AVRCPPoll(void *);
 void HandlerTimerBTBC127OpenProfileErrors(void *);
-void HandlerTimerBTBC127ScanDevices(void *);
-void HandlerTimerBTBC127Metadata(HandlerContext_t *);
+void HandlerTimerBTBC127RequestDateTime(void *);
+void HandlerTimerBTBC127State(void *);
 
 void HandlerTimerBTBM83AVRCPManager(void *);
 void HandlerTimerBTBM83ManagePowerState(void *);
-void HandlerTimerBTBM83ScanDevices(void *);
 #endif /* HANDLER_BT_H */

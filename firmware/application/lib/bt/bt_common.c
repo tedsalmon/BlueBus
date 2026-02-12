@@ -39,7 +39,7 @@ void BTClearMetadata(BT_t *bt)
 }
 
 /**
- * BC127ClearPairedDevices()
+ * BTClearPairedDevices()
  *     Description:
  *        Clear the paired devices list
  *     Params:
@@ -47,28 +47,33 @@ void BTClearMetadata(BT_t *bt)
  *     Returns:
  *         void
  */
-void BTClearPairedDevices(BT_t *bt, uint8_t clearType)
+void BTClearPairedDevices(BT_t *bt)
 {
     uint8_t idx;
-    uint8_t found = 0;
-    BTPairedDevice_t btActiveConn;
     for (idx = 0; idx < bt->pairedDevicesCount; idx++) {
-        BTPairedDevice_t *btConn = &bt->pairedDevices[idx];
-        // Found the active device
-        if (
-            clearType != BT_TYPE_CLEAR_ALL &&
-            memcmp(btConn->macId, bt->activeDevice.macId, 6) == 0
-        ) {
-            memcpy(&btActiveConn, btConn, sizeof(BTPairedDevice_t));
-            found = 1;
-        }
-        memset(btConn, 0, sizeof(bt->pairedDevices[idx]));
+        memset(&bt->pairedDevices[idx], 0, sizeof(bt->pairedDevices[idx]));
     }
     bt->pairedDevicesCount = 0;
-    memset(bt->pairingErrors, 0, sizeof(bt->pairingErrors));
-    if (clearType != BT_TYPE_CLEAR_ALL && found == 1) {
-        BTPairedDeviceInit(bt, btActiveConn.macId, btActiveConn.number);
+}
+
+/**
+ * BTPairedDevicesFind()
+ *     Description:
+ *        Clear the paired devices list
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+uint8_t BTPairedDevicesFind(BT_t *bt, uint8_t *macId)
+{
+    uint8_t idx;
+    for (idx = 0; idx < bt->pairedDevicesCount; idx++) {
+        if (memcmp(macId, &bt->pairedDevices[idx].macId, BT_DEVICE_MAC_ID_LEN ) == 0) {
+            return idx;
+        }
     }
+    return 0;
 }
 
 /**
@@ -85,10 +90,31 @@ BTConnection_t BTConnectionInit()
     BTConnection_t conn;
     memset(&conn, 0, sizeof(BTConnection_t));
     // Assume the volume is halfway
+    conn.status = BT_DEVICE_STATUS_DISCONNECTED;
     conn.a2dpVolume = 64;
     return conn;
 }
 
+
+/**
+ * BTPairedDeviceClearRecords()
+ *     Description:
+ *         Clear all paired device data from EEPROM
+ *     Params:
+ *         void
+ *     Returns:
+ *         void
+ */
+void BTPairedDeviceClearRecords(void)
+{
+    uint16_t currentAddr = CONFIG_BT_DEVICE_EEPROM_BASE;
+    uint16_t endAddr = currentAddr + (BT_DEVICE_RECORD_LEN * BT_MAX_PAIRINGS);
+    while (currentAddr < endAddr) {
+        EEPROMWriteByte(currentAddr, 0x00);
+        currentAddr++;
+    }
+    LogDebug(LOG_SOURCE_BT, "BT: Cleared Pairings from EEPROM");
+}
 
 /**
  * BTPairedDeviceInit()
@@ -112,7 +138,6 @@ void BTPairedDeviceInit(
         BTPairedDevice_t *btDevice = &bt->pairedDevices[idx];
         if (memcmp(macId, btDevice->macId, BT_DEVICE_MAC_ID_LEN) == 0) {
             deviceExists = 1;
-            EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
         }
     }
     // Create a connection for this device since one does not exist
@@ -120,54 +145,20 @@ void BTPairedDeviceInit(
         BTPairedDevice_t pairedDevice;
         memcpy(pairedDevice.macId, macId, BT_DEVICE_MAC_ID_LEN);
         memset(pairedDevice.deviceName, 0, BT_DEVICE_NAME_LEN);
-        if (deviceNumber > 0 && deviceNumber <= BT_MAX_PAIRINGS) {
+        if (deviceNumber <= BT_MAX_PAIRINGS) {
             pairedDevice.number = deviceNumber;
-        } else if (bt->pairedDevicesCount + 1 < BT_MAX_PAIRINGS) {
-            pairedDevice.number = bt->pairedDevicesCount + 1;
         }
         BTPairedDeviceLoadRecord(&pairedDevice, bt->pairedDevicesCount);
         bt->pairedDevices[bt->pairedDevicesCount] = pairedDevice;
         bt->pairedDevicesCount++;
-        EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
-        LogDebug(LOG_SOURCE_BT, "BT: New Pairing Profile");
+        LogDebug(
+            LOG_SOURCE_BT,
+            "BT: Pairing[%d]: %02X%02X%02X%02X%02X%02X",
+            deviceNumber,
+            macId[0], macId[1], macId[2], macId[3], macId[4], macId[5]
+        );
     }
-}
-
-/**
- * BTPairedDeviceSave()
- *     Description:
- *         Save a paired device MAC ID and name to EEPROM
- *     Params:
- *         uint8_t *macId - The MAC ID of the device (6 bytes)
- *         char *deviceName - The friendly name of the device
- *         uint8_t devIdx - The index of the device (0 for the first pairing)
- *     Returns:
- *         void
- */
-void BTPairedDeviceSave(uint8_t *macId, char *deviceName, uint8_t devIdx)
-{
-    if (devIdx >= BT_MAX_PAIRINGS) {
-        LogDebug(LOG_SOURCE_BT, "BT: Invalid device number %d", devIdx);
-        return;
-    }
-    uint32_t baseAddr = CONFIG_BT_DEVICE_EEPROM_BASE + (devIdx * BT_DEVICE_RECORD_LEN);
-    uint8_t subAddr = 0;
-    while (subAddr < BT_DEVICE_RECORD_LEN) {
-        EEPROMWriteByte(baseAddr + subAddr, 0x00);
-        subAddr++;
-    }
-    uint8_t i = 0;
-    for (i = 0; i < BT_DEVICE_MAC_ID_LEN; i++) {
-        EEPROMWriteByte(baseAddr + i, macId[i]);
-    }
-    for (i = 0; i < BT_DEVICE_NAME_LEN; i++) {
-        if (deviceName[i] == '\0') {
-            break;
-        }
-        EEPROMWriteByte(baseAddr + BT_DEVICE_MAC_ID_LEN + i, deviceName[i]);
-    }
-    EEPROMWriteByte(baseAddr + BT_DEVICE_MAC_ID_LEN + BT_DEVICE_NAME_LEN - 1, '\0');
-    LogDebug(LOG_SOURCE_BT, "BT: Saved device %d: %s", devIdx, deviceName);
+    EventTriggerCallback(BT_EVENT_DEVICE_FOUND, (uint8_t *) macId);
 }
 
 /**
@@ -207,8 +198,8 @@ void BTPairedDeviceLoadRecord(BTPairedDevice_t *btDevice, uint8_t devIdx)
             memset(btDevice->deviceName, 0x00, BT_DEVICE_NAME_LEN);
             snprintf(
                 btDevice->deviceName,
-                18,
-                "%02X:%02X:%02X:%02X:%02X:%02X",
+                13,
+                "%02X%02X%02X%02X%02X%02X",
                 storedMacId[0],
                 storedMacId[1],
                 storedMacId[2],
@@ -218,28 +209,54 @@ void BTPairedDeviceLoadRecord(BTPairedDevice_t *btDevice, uint8_t devIdx)
             );
         }
     } else {
-        LogWarning("BT: Device MAC ID Mismatch: %d", devIdx);
+        LogWarning(
+            "BT: Device Mismatch[%d]: %02X%02X%02X%02X%02X%02X",
+            devIdx,
+            storedMacId[0],
+            storedMacId[1],
+            storedMacId[2],
+            storedMacId[3],
+            storedMacId[4],
+            storedMacId[5]
+        );
         // Change Pairing Record
         BTPairedDeviceSave(btDevice->macId, "", devIdx);
     }
 }
 
 /**
- * BTPairedDeviceClearRecords()
+ * BTPairedDeviceSave()
  *     Description:
- *         Clear all paired device data from EEPROM
+ *         Save a paired device MAC ID and name to EEPROM
  *     Params:
- *         void
+ *         uint8_t *macId - The MAC ID of the device (6 bytes)
+ *         char *deviceName - The friendly name of the device
+ *         uint8_t devIdx - The index of the device (0 for the first pairing)
  *     Returns:
  *         void
  */
-void BTPairedDeviceClearRecords(void)
+void BTPairedDeviceSave(uint8_t *macId, char *deviceName, uint8_t devIdx)
 {
-    uint16_t currentAddr = CONFIG_BT_DEVICE_EEPROM_BASE;
-    uint16_t endAddr = currentAddr + (BT_DEVICE_RECORD_LEN * BT_MAX_PAIRINGS);
-    while (currentAddr < endAddr) {
-        EEPROMWriteByte(currentAddr, 0x00);
-        currentAddr++;
+    if (devIdx >= BT_MAX_PAIRINGS) {
+        LogDebug(LOG_SOURCE_BT, "BT: Invalid device number %d", devIdx);
+        return;
     }
-    LogDebug(LOG_SOURCE_BT, "BT: Cleared Pairings from EEPROM");
+    uint32_t baseAddr = CONFIG_BT_DEVICE_EEPROM_BASE + (devIdx * BT_DEVICE_RECORD_LEN);
+    uint8_t subAddr = 0;
+    while (subAddr < BT_DEVICE_RECORD_LEN) {
+        EEPROMWriteByte(baseAddr + subAddr, 0x00);
+        subAddr++;
+    }
+    uint8_t i = 0;
+    for (i = 0; i < BT_DEVICE_MAC_ID_LEN; i++) {
+        EEPROMWriteByte(baseAddr + i, macId[i]);
+    }
+    for (i = 0; i < BT_DEVICE_NAME_LEN; i++) {
+        if (deviceName[i] == '\0') {
+            break;
+        }
+        EEPROMWriteByte(baseAddr + BT_DEVICE_MAC_ID_LEN + i, deviceName[i]);
+    }
+    EEPROMWriteByte(baseAddr + BT_DEVICE_MAC_ID_LEN + BT_DEVICE_NAME_LEN - 1, '\0');
+    LogDebug(LOG_SOURCE_BT, "BT: Saved[%d]: %s", devIdx, deviceName);
 }

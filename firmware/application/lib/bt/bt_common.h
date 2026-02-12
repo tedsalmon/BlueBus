@@ -81,6 +81,12 @@
 #define BT_LINK_TYPE_BLE 5
 #define BT_LINK_TYPE_MAP 6
 
+#define BT_LIST_STATUS_OFF 0
+#define BT_LIST_STATUS_RUNNING 1
+#define BT_LIST_STATUS_RAN 2
+
+#define BT_DEVICE_STATUS_DISCONNECTED 0
+#define BT_DEVICE_STATUS_CONNECTED 1
 #define BT_DEVICE_MAC_ID_LEN 6
 #define BT_DEVICE_NAME_LEN 32
 #define BT_DEVICE_RECORD_LEN (BT_DEVICE_MAC_ID_LEN + BT_DEVICE_NAME_LEN)
@@ -124,9 +130,8 @@ typedef struct BTConnectionAVRCPCapabilities_t {
  *     Description:
  *         This object defines the actively connected device
  *     Fields:
- *         macId - The MAC ID of the device (6 bytes)
- *         deviceName - The friendly name of the device
  *         deviceId - The device ID (1-3)
+ *         deviceIndex - The PDL database index for this device
  *         avrcpId - The Link ID for the AVRCP connection
  *         a2dpId - The Link ID for the A2DP connection
  *         hfpId - The Link ID for the HFP connection
@@ -137,9 +142,9 @@ typedef struct BTConnectionAVRCPCapabilities_t {
  *         avrcpCaps - Available AVRCP Events
  */
 typedef struct BTConnection_t {
-    uint8_t macId[BT_DEVICE_MAC_ID_LEN];
-    char deviceName[BT_DEVICE_NAME_LEN];
+    uint8_t status: 1;
     uint8_t deviceId;
+    uint8_t deviceIndex;
     uint8_t avrcpId: 4;
     uint8_t a2dpId: 4;
     uint8_t hfpId: 4;
@@ -171,8 +176,12 @@ typedef struct BTConnection_t {
  *         callStatus - The call status
  *         scoStatus - If the SCO channel is open or closed
  *         powerState - 2/1/0 1 Standby, On, Off
+ *         pairedDevicesCheck - For the BC127, count the number of devices
+ *             return by the LIST command
  *         pairedDevicesCount - The number of devices that have paired with us
  *            in all of time. The max is 8.
+ *         pairedDeviceFound - For the BC127, the total number of items in the
+ *            LIST response.
  *         pairingErrors - The key indicates the profile in error and the value
  *             in error. This is used to track what profiles we need to re-attempt
  *             a connection with.
@@ -194,7 +203,9 @@ typedef struct BT_t {
     uint8_t callStatus: 3;
     uint8_t scoStatus: 3;
     uint8_t powerState: 2;
+    uint8_t pairedDevicesCheck: 2;
     uint8_t pairedDevicesCount: 4;
+    uint8_t pairedDevicesFound: 4;
     uint8_t pairingErrors[BT_PROFILE_COUNT];
     uint32_t metadataTimestamp;
     uint32_t rxQueueAge;
@@ -206,10 +217,10 @@ typedef struct BT_t {
     UART_t uart;
 } BT_t;
 
-void BTClearMetadata(BT_t *);
 void BTClearActiveDevice(BT_t *);
 void BTClearMetadata(BT_t *);
-void BTClearPairedDevices(BT_t *, uint8_t);
+void BTClearPairedDevices(BT_t *);
+uint8_t BTPairedDevicesFind(BT_t *, uint8_t *);
 BTConnection_t BTConnectionInit();
 void BTPairedDeviceInit(BT_t *, uint8_t *, uint8_t);
 void BTPairedDeviceSave(uint8_t *, char *, uint8_t);

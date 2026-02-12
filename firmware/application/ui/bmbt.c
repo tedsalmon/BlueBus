@@ -593,8 +593,9 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     } else {
         BMBTMainAreaRefresh(context);
     }
-    if (strlen(context->bt->activeDevice.deviceName) > 0) {
-        BMBTHeaderWriteDeviceName(context, context->bt->activeDevice.deviceName);
+    BTPairedDevice_t *dev = &context->bt->pairedDevices[context->bt->activeDevice.deviceIndex];
+    if (strlen(dev->deviceName) > 0) {
+        BMBTHeaderWriteDeviceName(context, dev->deviceName);
     } else {
         BMBTHeaderWriteDeviceName(context, LocaleGetText(LOCALE_STRING_NO_DEVICE));
     }
@@ -815,7 +816,7 @@ static void BMBTMenuDeviceSelection(BMBTContext_t *context)
             deviceName[22] = '\0';
             // Add a space and asterisks to the end of the device name
             // if it's the currently selected device
-            if (memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) == 0) {
+            if (idx == context->bt->activeDevice.deviceIndex) {
                 uint8_t startIdx = strlen(deviceName);
                 if (startIdx > 20) {
                     startIdx = 20;
@@ -1692,9 +1693,12 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
         uint8_t value = ConfigGetSetting(CONFIG_SETTING_HFP);
         if (context->bt->type == BT_BTM_TYPE_BC127) {
             if (value == 0x00) {
+                BTPairedDevice_t *dev = &context->bt->pairedDevices[
+                    context->bt->activeDevice.deviceIndex
+                ];
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_ON);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
-                BC127CommandProfileOpen(context->bt, "HFP");
+                BC127CommandProfileOpen(context->bt, dev, "HFP");
             } else {
                 ConfigSetSetting(CONFIG_SETTING_HFP, CONFIG_SETTING_OFF);
                 BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
@@ -1706,21 +1710,12 @@ static void BMBTSettingsUpdateCalling(BMBTContext_t *context, uint8_t selectedId
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x00);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_OFF), 0);
             } else {
-                BTPairedDevice_t *device = 0;
-                uint8_t i = 0;
-                for (i = 0; i < BT_DEVICE_MAC_ID_LEN; i++) {
-                    BTPairedDevice_t *tmpDev = &context->bt->pairedDevices[i];
-                    if (memcmp(context->bt->activeDevice.macId, tmpDev->macId, BT_DEVICE_MAC_ID_LEN) == 0) {
-                        device = tmpDev;
-                    }
-                }
-                if (device != 0) {
-                    BM83CommandConnect(
-                        context->bt,
-                        device,
-                        BM83_DATA_LINK_BACK_PROFILES_HF
-                    );
-                }
+                BTPairedDevice_t *device = &context->bt->pairedDevices[context->bt->activeDevice.deviceIndex];
+                BM83CommandConnect(
+                    context->bt,
+                    device,
+                    BM83_DATA_LINK_BACK_PROFILES_HF
+                );
                 ConfigSetSetting(CONFIG_SETTING_HFP, 0x01);
                 BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_HANDSFREE_ON), 0);
             }
@@ -2107,8 +2102,9 @@ void BMBTBTDeviceConnected(void *ctx, uint8_t *data)
     if (context->status.playerMode == BMBT_MODE_ACTIVE &&
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
-        if (strlen(context->bt->activeDevice.deviceName) > 0) {
-            BMBTHeaderWriteDeviceName(context, context->bt->activeDevice.deviceName);
+        BTPairedDevice_t *dev = &context->bt->pairedDevices[context->bt->activeDevice.deviceIndex];
+        if (strlen(dev->deviceName) > 0) {
+            BMBTHeaderWriteDeviceName(context, dev->deviceName);
             IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
         }
         if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
@@ -2622,41 +2618,25 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                     BC127CommandUnpair(context->bt);
                 } else {
                     BM83CommandRestore(context->bt);
-                    BTPairedDeviceClearRecords();
                     ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, 0x00);
                     ConfigSetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE, 0x00);
                 }
-                BTClearPairedDevices(context->bt, BT_TYPE_CLEAR_ALL);
+                BTPairedDeviceClearRecords();
+                BTClearPairedDevices(context->bt);
                 BMBTMenuDeviceSelection(context);
             } else if (selectedIdx == BMBT_MENU_IDX_BACK) {
                 // Back Button
                 BMBTMenuMain(context);
             } else {
                 uint8_t selectedDeviceId = selectedIdx - BMBT_MENU_IDX_FIRST_DEVICE;
-                uint8_t deviceId = 0;
-                uint8_t devicesPos = 0;
-                uint8_t idx;
-                BTPairedDevice_t *dev = 0;
-
-                for (idx = 0; idx < context->bt->pairedDevicesCount; idx++) {
-                    dev = &context->bt->pairedDevices[idx];
-                    if (dev != 0) {
-                        if ( devicesPos == selectedDeviceId ) {
-                            deviceId = idx;
-                            break;
-                        }
-                        devicesPos++;
-                    }
+                if (selectedDeviceId >= context->bt->pairedDevicesCount) {
+                    return;
                 }
-
-                if (
-                    dev != 0 &&
-                    memcmp(dev->macId, context->bt->activeDevice.macId, BT_LEN_MAC_ID) != 0
-                ) {
+                if (context->bt->activeDevice.deviceIndex != selectedDeviceId) {
                     // Trigger device selection event
                     EventTriggerCallback(
                         UI_EVENT_INITIATE_CONNECTION,
-                        (uint8_t *)&deviceId
+                        (uint8_t *)&selectedDeviceId
                     );
                 }
             }

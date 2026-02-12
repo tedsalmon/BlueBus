@@ -7,6 +7,7 @@
 #include "bt_bc127.h"
 #include "../locale.h"
 #include "bt_common.h"
+#include <stdint.h>
 
 /** BC127CVCGainTable
  * C0 - D6 (22 Settings)
@@ -406,14 +407,24 @@ void BC127CommandForwardSeekRelease(BT_t *bt)
  *         Get the friendly name of device with the provided Bluetooth address
  *     Params:
  *         BT_t *bt - A pointer to the module object
- *         char *macId - The MAC ID of the device to get the name for
+ *         BTPairedDevice_t *dev - The device to get the name for
  *     Returns:
  *         void
  */
-void BC127CommandGetDeviceName(BT_t *bt, char *macId)
+void BC127CommandGetDeviceName(BT_t *bt, BTPairedDevice_t *dev)
 {
     char command[18] = {0};
-    snprintf(command, 18, "NAME %s", macId);
+    snprintf(
+        command,
+        18,
+        "NAME %02X%02X%02X%02X%02X%02X",
+        dev->macId[0],
+        dev->macId[1],
+        dev->macId[2],
+        dev->macId[3],
+        dev->macId[4],
+        dev->macId[5]
+    );
     BC127SendCommand(bt, command);
 }
 
@@ -558,22 +569,21 @@ void BC127CommandProfileClose(BT_t *bt, uint8_t linkId)
  *     Returns:
  *         void
  */
-void BC127CommandProfileOpen(BT_t *bt, char *profile)
+void BC127CommandProfileOpen(BT_t *bt, BTPairedDevice_t *dev, char *profile)
 {
     char command[24] = {0};
-    char macId[13] = {0};
     snprintf(
-        macId,
-        13,
-        "%02X%02X%02X%02X%02X%02X",
-        bt->activeDevice.macId[0],
-        bt->activeDevice.macId[1],
-        bt->activeDevice.macId[2],
-        bt->activeDevice.macId[3],
-        bt->activeDevice.macId[4],
-        bt->activeDevice.macId[5]
+        command,
+        24,
+        "OPEN %02X%02X%02X%02X%02X%02X %s",
+        dev->macId[0],
+        dev->macId[1],
+        dev->macId[2],
+        dev->macId[3],
+        dev->macId[4],
+        dev->macId[5],
+        profile
     );
-    snprintf(command, 24, "OPEN %s %s", macId, profile);
     bt->status = BT_STATUS_CONNECTING;
     BC127SendCommand(bt, command);
 }
@@ -1423,7 +1433,7 @@ void BC127ProcessEventBuild(BT_t *bt, char **msgBuf)
     // The device sometimes resets without sending the "Ready" message
     // so we instead watch for the build string
     memset(&bt->activeDevice, 0, sizeof(BTConnection_t));
-    bt->activeDevice = BTConnectionInit();
+    BTClearActiveDevice(bt);
     bt->callStatus = BT_CALL_INACTIVE;
     bt->metadataStatus = BT_METADATA_STATUS_CUR;
     LogDebug(LOG_SOURCE_BT, "BT: Boot Complete");
@@ -1475,6 +1485,7 @@ void BC127ProcessEventCloseOk(BT_t *bt, char **msgBuf)
     uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
     // If the open connection is closing, update the state
     if (bt->activeDevice.deviceId == deviceId) {
+        LogDebug(LOG_SOURCE_BT, "BT: Closed Link: %s", msgBuf[1]);
         uint8_t status = BC127ConnectionCloseProfile(
             &bt->activeDevice,
             msgBuf[2]
@@ -1483,13 +1494,11 @@ void BC127ProcessEventCloseOk(BT_t *bt, char **msgBuf)
             LogDebug(LOG_SOURCE_BT, "BT: Device Disconnected");
             bt->playbackStatus = BT_AVRCP_STATUS_PAUSED;
             // Notify the world that the device disconnected
-            memset(&bt->activeDevice, 0, sizeof(BTConnection_t));
-            bt->activeDevice = BTConnectionInit();
+            BTClearActiveDevice(bt);
             bt->status = BT_STATUS_DISCONNECTED;
+            EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
             EventTriggerCallback(BT_EVENT_PLAYBACK_STATUS_CHANGE, 0);
-            EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, 0);
         }
-        LogDebug(LOG_SOURCE_BT, "BT: Closed link %s", msgBuf[1]);
     }
 }
 
@@ -1510,9 +1519,14 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
     // No active device is configured
     if (bt->activeDevice.deviceId == 0) {
         LogDebug(LOG_SOURCE_BT, "BT: New Active Device");
+        BTClearActiveDevice(bt);
+        uint8_t macId[6] = {0};
+        BC127ConvertMACIDToHex(msgBuf[4], macId);
+        bt->activeDevice.deviceIndex = BTPairedDevicesFind(bt, macId);
+        bt->activeDevice.status = BT_DEVICE_STATUS_CONNECTED;
         bt->activeDevice.deviceId = deviceId;
-        BC127ConvertMACIDToHex(msgBuf[4], bt->activeDevice.macId);
-        BC127CommandGetDeviceName(bt, msgBuf[4]);
+        BTPairedDevice_t *dev = &bt->pairedDevices[bt->activeDevice.deviceIndex];
+        BC127CommandGetDeviceName(bt, dev);
         isNew = 1;
     }
     if (bt->activeDevice.deviceId == deviceId) {
@@ -1543,6 +1557,29 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
 }
 
 /**
+ * BC127ProcessEventLinkLoss()
+ *     Description:
+ *         Process the LINK_LOSS events
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         char **msgBuf - The message buffer split into an array using spaces as the delimiter
+ *     Returns:
+ *         void
+ */
+void BC127ProcessEventLinkLoss(BT_t *bt, char **msgBuf)
+{
+    // Link was recovered
+    if (strcmp(msgBuf[2], "0") == 0) {
+        return;
+    }
+    if (bt->activeDevice.a2dpId == 0) {
+        // Consider this a dead link
+        uint8_t linkId = UtilsStrToInt(msgBuf[1]);
+        BC127CommandProfileClose(bt, linkId);
+    }
+}
+
+/**
  * BC127ProcessEventList()
  *     Description:
  *         Process the LIST event
@@ -1554,10 +1591,21 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
  */
 void BC127ProcessEventList(BT_t *bt, char **msgBuf)
 {
-    LogDebug(LOG_SOURCE_BT, "BT: Paired Device %s", msgBuf[1]);
-    unsigned char macId[BT_DEVICE_MAC_ID_LEN] = {0};
-    BC127ConvertMACIDToHex(msgBuf[1], macId);
-    BTPairedDeviceInit(bt, macId, 0);
+    if (bt->pairedDevicesCheck == BT_LIST_STATUS_OFF) {
+        bt->pairedDevicesCheck = BT_LIST_STATUS_RUNNING;
+    }
+    if (bt->pairedDevicesCheck == BT_LIST_STATUS_RUNNING) {
+        bt->pairedDevicesFound++;
+    }
+    if (
+        bt->pairedDevicesCheck == BT_LIST_STATUS_RAN &&
+        bt->pairedDevicesFound != bt->pairedDevicesCount
+    ) {
+        uint8_t deviceIndex = (bt->pairedDevicesFound - bt->pairedDevicesCount) - 1;
+        uint8_t macId[BT_DEVICE_MAC_ID_LEN] = {0};
+        BC127ConvertMACIDToHex(msgBuf[1], macId);
+        BTPairedDeviceInit(bt, macId, deviceIndex);
+    }
 }
 
 /**
@@ -1591,17 +1639,38 @@ void BC127ProcessEventName(BT_t *bt, char **msgBuf, char *msg)
         LogDebug(LOG_SOURCE_BT, "Process Name");
         unsigned char macId[BT_DEVICE_MAC_ID_LEN] = {0};
         BC127ConvertMACIDToHex(msgBuf[1], macId);
-        if (memcmp(macId, bt->activeDevice.macId, BT_DEVICE_MAC_ID_LEN) == 0 &&
+        BTPairedDevice_t *dev = &bt->pairedDevices[bt->activeDevice.deviceIndex];
+        if (memcmp(macId, dev->macId, BT_DEVICE_MAC_ID_LEN) == 0 &&
             bt->status != BT_STATUS_CONNECTED
         ) {
-            // Clean the device name up
-            memset(bt->activeDevice.deviceName, 0, BT_DEVICE_NAME_LEN);
-            UtilsStrncpy(bt->activeDevice.deviceName, name, BT_DEVICE_NAME_LEN);
+            memset(dev->deviceName, 0, BT_DEVICE_NAME_LEN);
+            UtilsStrncpy(dev->deviceName, name, BT_DEVICE_NAME_LEN);
+            BTPairedDeviceSave(macId, deviceName, bt->activeDevice.deviceIndex);
             bt->status = BT_STATUS_CONNECTED;
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
         }
     } else {
         LogError("BT: Bad NAME Packet");
+    }
+}
+
+/**
+ * BC127ProcessEventOk()
+ *     Description:
+ *         Process the OK event
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         char **msgBuf - The message buffer split into an array using spaces as the delimiter
+ *     Returns:
+ *         void
+ */
+void BC127ProcessEventOk(BT_t *bt, char **msgBuf)
+{
+    // We will continue to get LIST events before we see another "OK"
+    // so we can use this to power the device count check state machine
+    if (bt->pairedDevicesCheck == BT_LIST_STATUS_RUNNING) {
+        bt->pairedDevicesCheck = BT_LIST_STATUS_RAN;
+        BC127CommandList(bt);
     }
 }
 
@@ -1618,7 +1687,16 @@ void BC127ProcessEventName(BT_t *bt, char **msgBuf, char *msg)
 void BC127ProcessEventOpenError(BT_t *bt, char **msgBuf)
 {
     if (strcmp(msgBuf[1], "A2DP") == 0) {
-        bt->pairingErrors[BC127_LINK_A2DP] = 1;
+        // A2DP is the first profile we open, so if there is an error opening
+        // it then we must assume there was a complete issue connecting to
+        // the given device
+        if (bt->status == BT_STATUS_CONNECTING) {
+            BTClearActiveDevice(bt);
+            bt->status = BT_STATUS_DISCONNECTED;
+            EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
+        } else {
+            bt->pairingErrors[BC127_LINK_A2DP] = 1;
+        }
     }
     if (strcmp(msgBuf[1], "AVRCP") == 0) {
         bt->pairingErrors[BC127_LINK_AVRCP] = 1;
@@ -1648,12 +1726,18 @@ void BC127ProcessEventOpenOk(BT_t *bt, char **msgBuf)
 {
     uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
     uint8_t linkId = UtilsStrToInt(msgBuf[1]);
-    if (bt->activeDevice.deviceId != deviceId &&
+    if (
+        bt->activeDevice.deviceId != deviceId &&
         linkId != BC127_LINK_BLE
     ) {
+        BTClearActiveDevice(bt);
+        uint8_t macId[6] = {0};
+        BC127ConvertMACIDToHex(msgBuf[3], macId);
+        bt->activeDevice.deviceIndex = BTPairedDevicesFind(bt, macId);
+        bt->activeDevice.status = BT_DEVICE_STATUS_CONNECTED;
         bt->activeDevice.deviceId = deviceId;
-        BC127ConvertMACIDToHex(msgBuf[3], bt->activeDevice.macId);
-        BC127CommandGetDeviceName(bt, msgBuf[3]);
+        BTPairedDevice_t *dev = &bt->pairedDevices[bt->activeDevice.deviceIndex];
+        BC127CommandGetDeviceName(bt, dev);
         bt->status = BT_STATUS_CONNECTED;
         EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
     }
@@ -1719,7 +1803,10 @@ void BC127ProcessEventState(BT_t *bt, char **msgBuf)
 {
     // Make sure the state is not "OFF", like when module first boots
     if (strcmp(msgBuf[1], "OFF") != 0) {
-        if (strcmp(msgBuf[1], "CONNECTED[0]") == 0) {
+        if (
+            strcmp(msgBuf[1], "CONNECTED[0]") == 0 &&
+            bt->status != BT_STATUS_CONNECTING
+        ) {
             bt->status = BT_STATUS_DISCONNECTED;
         }
         if (strcmp(msgBuf[2], "CONNECTABLE[ON]") == 0) {
@@ -1811,10 +1898,14 @@ void BC127Process(BT_t *bt)
             BC127ProcessEventCloseOk(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "LINK") == 0) {
             BC127ProcessEventLink(bt, msgBuf);
+        } else if (strcmp(msgBuf[0], "LINK_LOSS") == 0) {
+            BC127ProcessEventLinkLoss(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "LIST") == 0) {
             BC127ProcessEventList(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "NAME") == 0) {
             BC127ProcessEventName(bt, msgBuf, msg);
+        } else if (strcmp(msgBuf[0], "OK") == 0) {
+            BC127ProcessEventOk(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "OPEN_ERROR") == 0) {
             BC127ProcessEventOpenError(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "OPEN_OK") == 0) {
@@ -1923,7 +2014,8 @@ uint8_t BC127ConnectionCloseProfile(BTConnection_t *conn, char *profile)
         conn->pbapId = 0;
     }
     // Clear the connection once all the links are closed
-    if (conn->a2dpId == 0 &&
+    if (
+        conn->a2dpId == 0 &&
         conn->avrcpId == 0 &&
         conn->hfpId == 0 &&
         conn->bleId == 0 &&
