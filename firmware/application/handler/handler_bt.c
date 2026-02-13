@@ -87,7 +87,8 @@ void HandlerBTInit(HandlerContext_t *context)
             HANDLER_INT_BT_AVRCP_UPDATER
         );
         BC127CommandStatus(context->bt);
-        BC127CommandBtState(context->bt, BT_STATE_OFF, BT_STATE_OFF);
+        BTCommandSetDiscoverable(context->bt, BT_STATE_OFF);
+        BTCommandSetConnectable(context->bt, BT_STATE_OFF);
         BC127CommandList(context->bt);
     } else {
         EventRegisterCallback(
@@ -126,6 +127,59 @@ void HandlerBTInit(HandlerContext_t *context)
         context,
         HANDLER_INT_VOL_MGMT
     );
+}
+
+/**
+ * HandlerBTConnect()
+ *     Description:
+ *         Centralized logic to handle device connections. This function applies
+ *         some backpressure to connection attempts in order to ensure that
+ *         we are not trying to connect to multiple devices in the PDL at once.
+ *     Params:
+ *         HandlerContext_t *context - The handler context
+ *     Returns:
+ *         void
+ */
+static void HandlerBTConnect(HandlerContext_t *context)
+{
+    uint32_t now = TimerGetMillis();
+    if ((now - context->bt->lastConnection) < BT_CONNECTION_TIMEOUT_MS) {
+        return;
+    }
+    if (
+        context->bt->powerState == BT_STATE_STANDBY &&
+        context->bt->pairedDevicesCount > 1 &&
+        context->btStatus != HANDLER_BT_STATUS_CONNECTING
+    ) {
+        context->btSelectedDevice++;
+        context->btDeviceConnRetries = 0;
+    }
+    if (context->btDeviceConnRetries >= HANDLER_DEVICE_MAX_RECONN) {
+        if (context->bt->pairedDevicesCount > 1) {
+            context->btSelectedDevice++;
+        }
+        context->btDeviceConnRetries = 0;
+    }
+    if (context->btSelectedDevice >= context->bt->pairedDevicesCount) {
+        context->btSelectedDevice = 0;
+    }
+    BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btSelectedDevice];
+    BTCommandConnect(context->bt, dev);
+    context->btStatus = HANDLER_BT_STATUS_NONE;
+    context->btDeviceConnRetries++;
+    // Guard against half-connected states
+    if (
+        context->bt->activeDevice.a2dpId == 0 &&
+        context->bt->activeDevice.hfpId == 0 &&
+        context->bt->activeDevice.avrcpId == 0 &&
+        context->bt->status == BT_STATUS_CONNECTED
+    ) {
+         // Reset the metadata so we don't display the wrong data
+        BTClearMetadata(context->bt);
+        // Clear the actively paired device
+        BTClearActiveDevice(context->bt);
+        BTCommandDisconnect(context->bt);
+    }
 }
 
 /**
@@ -324,23 +378,6 @@ void HandlerBTCallerID(void *ctx, uint8_t *data)
 }
 
 /**
- * HandlerBTDeviceLinkConnected()
- *     Description:
- *         When a device is "connected", reset the device scan timer to avoid
- *         trying the connection
- *     Params:
- *         void *ctx - The context provided at registration
- *         uint8_t *linkType - The connected link type
- *     Returns:
- *         void
- */
-void HandlerBTDeviceConnected(void *ctx, uint8_t *data)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    TimerResetScheduledTask(context->deviceScanTimerId);
-}
-
-/**
  * HandlerBTDeviceDisconnected()
  *     Description:
  *         If a device disconnects and our ignition is on,
@@ -365,28 +402,16 @@ void HandlerBTDeviceDisconnected(void *ctx, uint8_t *data)
     if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
         return;
     }
+    BTCommandSetConnectable(context->bt, BT_STATE_ON);
     if (context->btSelectedDevice != HANDLER_BT_SELECTED_DEVICE_NONE) {
         if (context->btStatus == HANDLER_BT_STATUS_CONNECTING) {
             return;
         }
         if (context->btSelectedDevice >= BT_MAX_PAIRINGS) {
+            context->btSelectedDevice = 0;
             return;
         }
-        if (context->btDeviceConnRetries >= HANDLER_DEVICE_MAX_RECONN) {
-            if (context->bt->pairedDevicesCount > 1) {
-                context->btSelectedDevice++;
-                if (context->btSelectedDevice >= context->bt->pairedDevicesCount) {
-                    context->btSelectedDevice = 0;
-                }
-            }
-            context->btDeviceConnRetries = 0;
-        }
-        BTPairedDevice_t *dev = &context->bt->pairedDevices[
-            context->btSelectedDevice
-        ];
-        BTCommandConnect(context->bt, dev);
-        context->btDeviceConnRetries++;
-        TimerResetScheduledTask(context->deviceScanTimerId);
+        HandlerBTConnect(context);
     }
 }
 
@@ -443,11 +468,17 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
             ) {
                 BTCommandPlay(context->bt);
             }
-            ConfigSetSetting(
-                CONFIG_SETTING_LAST_CONNECTED_DEVICE,
-                context->btSelectedDevice
-            );
-            BTCommandGetConnectedDeviceName(context->bt);
+            if (
+                context->bt->activeDevice.a2dpId != 0 &&
+                context->bt->activeDevice.avrcpId != 0
+            ) {
+                ConfigSetSetting(
+                    CONFIG_SETTING_LAST_CONNECTED_DEVICE,
+                    context->btSelectedDevice
+                );
+                BTCommandGetConnectedDeviceName(context->bt);
+                BTCommandSetConnectable(context->bt, BT_STATE_OFF);
+            }
             context->btDeviceConnRetries = 0;
         }
         if (linkType == BT_LINK_TYPE_HFP) {
@@ -668,7 +699,7 @@ void HandlerBTBM83AVRCPUpdates(void *ctx, uint8_t *data)
     }
 }
 
-/**
+/*
  * HandlerBTBM83DSPStatus()
  *     Description:
  *         React to DSP status updates. Disable S/PDIF when the sample
@@ -732,6 +763,7 @@ void HandlerBTBM83BootStatus(void *ctx, uint8_t *data)
         BM83CommandReadPairedDevices(context->bt);
     }
     if (type == BM83_DATA_BTM_STATUS_STANDBY_ON) {
+        BTCommandSetConnectable(context->bt, BT_STATE_ON);
         TimerTriggerScheduledTask(context->deviceScanTimerId);
     }
 }
@@ -757,18 +789,7 @@ void HandlerTimerBTScanDevices(void *ctx)
         context->bt->discoverable == BT_STATE_OFF &&
         context->bt->pairedDevicesCount > 0
     ) {
-        if (context->bt->pairedDevicesCount == 1) {
-            BTPairedDevice_t *dev = &context->bt->pairedDevices[0];
-            BTCommandConnect(context->bt, dev);
-            context->btSelectedDevice = 0;
-        } else {
-            BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btSelectedDevice];
-            BTCommandConnect(context->bt, dev);
-            context->btSelectedDevice++;
-            if (context->btSelectedDevice >= context->bt->pairedDevicesCount) {
-                context->btSelectedDevice = 0;
-            }
-        }
+        HandlerBTConnect(context);
     }
 }
 

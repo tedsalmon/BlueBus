@@ -9,6 +9,7 @@
 #include "bt/bt_bm83.h"
 #include "bt/bt_common.h"
 #include "locale.h"
+#include "timer.h"
 #include "uart.h"
 #include "utils.h"
 
@@ -170,6 +171,12 @@ void BTCommandRedial(BT_t *bt)
  */
 void BTCommandConnect(BT_t *bt, BTPairedDevice_t *dev)
 {
+    bt->lastConnection = TimerGetMillis();
+    if (bt->connectable == BT_STATE_OFF) {
+        BTCommandSetConnectable(bt, BT_STATE_ON);
+    }
+    BTClearActiveDevice(bt);
+    bt->activeDevice.deviceIndex = dev->number;
     if (bt->type == BT_BTM_TYPE_BC127) {
         bt->status = BT_STATUS_CONNECTING;
         BC127CommandProfileOpen(bt, dev, "A2DP");
@@ -195,6 +202,8 @@ void BTCommandDisconnect(BT_t *bt)
 {
     if (bt->type == BT_BTM_TYPE_BC127) {
         BC127CommandClose(bt, BT_CLOSE_ALL);
+        BTClearActiveDevice(bt);
+        BTClearMetadata(bt);
     } else {
         BM83CommandDisconnect(bt, BM83_CMD_DISCONNECT_PARAM_ALL);
     }
@@ -424,15 +433,6 @@ void BTCommandPlaybackTrackPrevious(BT_t *bt)
     }
 }
 
-void BTCommandProfileOpen(BT_t *bt)//, char *)
-{
-    if (bt->type == BT_BTM_TYPE_BC127) {
-        //BC127CommandProfileOpen(bt);
-    } else {
-        //BM83CommandMusicControl(bt, BM83_CMD_ACTION_PREVIOUS);
-    }
-}
-
 /**
  * BTCommandSetConnectable()
  *     Description:
@@ -447,6 +447,7 @@ void BTCommandSetConnectable(BT_t *bt, uint8_t state)
     if (bt->type == BT_BTM_TYPE_BC127) {
         BC127CommandBtState(bt, state, bt->discoverable);
     } else {
+        bt->connectable = state;
         if (state == BT_STATE_ON) {
             BM83CommandBTMUtilityFunction(
                 bt,
@@ -476,6 +477,7 @@ void BTCommandSetDiscoverable(BT_t *bt, uint8_t state)
 {
     if (bt->type == BT_BTM_TYPE_BC127) {
         BC127CommandBtState(bt, bt->connectable, state);
+        bt->discoverable = state;
     } else {
         if (state == BT_STATE_ON) {
             BM83CommandPairingEnable(bt);

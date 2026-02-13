@@ -7,6 +7,7 @@
 #include "bt_bm83.h"
 #include "../locale.h"
 #include "bt_common.h"
+#include <stdint.h>
 
 int8_t BTBM83MicGainTable[] = {
     0, // Default
@@ -714,6 +715,7 @@ void BM83ProcessEventAVCVendorDependentRsp(BT_t *bt, uint8_t *data, uint16_t len
  */
 void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
 {
+
     switch (data[BM83_FRAME_DB0]) {
         case BM83_DATA_BTM_STATUS_POWER_OFF: {
             LogDebug(LOG_SOURCE_BT, "BT: Power Off");
@@ -767,7 +769,6 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         }
         case BM83_DATA_BTM_STATUS_HFP_DISCO: {
             LogDebug(LOG_SOURCE_BT, "BT: HFP Closed");
-            bt->status = BT_STATUS_DISCONNECTED;
             bt->activeDevice.hfpId = 0;
             uint8_t linkType = BT_LINK_TYPE_HFP;
             EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
@@ -775,7 +776,6 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         }
         case BM83_DATA_BTM_STATUS_A2DP_DISCO: {
             LogDebug(LOG_SOURCE_BT, "BT: A2DP Closed");
-            bt->status = BT_STATUS_DISCONNECTED;
             bt->activeDevice.deviceId = 0;
             bt->activeDevice.a2dpId = 0;
             uint8_t linkType = BT_LINK_TYPE_A2DP;
@@ -812,7 +812,6 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         }
         case BM83_DATA_BTM_STATUS_AVRCP_DISCO: {
             LogDebug(LOG_SOURCE_BT, "BT: ARVCP Closed");
-            bt->status = BT_STATUS_DISCONNECTED;
             bt->activeDevice.avrcpId = 0;
             uint8_t linkType = BT_LINK_TYPE_AVRCP;
             EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
@@ -836,6 +835,8 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             bt->status = BT_STATUS_DISCONNECTED;
             bt->powerState = BT_STATE_STANDBY;
             uint8_t state = BM83_DATA_BTM_STATUS_STANDBY_ON;
+            // Immediately allow another connection attempt
+            bt->lastConnection = 0;
             EventTriggerCallback(BT_EVENT_BOOT_STATUS, &state);
             break;
         }
@@ -844,12 +845,15 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             break;
         }
         case BM83_DATA_BTM_STATUS_ACL_DISCO: {
+            uint8_t status = bt->status;
             bt->status = BT_STATUS_DISCONNECTED;
             BTClearActiveDevice(bt);
             LogDebug(LOG_SOURCE_BT, "BT: Device Disconnected");
             uint8_t linkType = BT_LINK_TYPE_ACL;
             EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
-            EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
+            if (status == BT_STATUS_CONNECTED) {
+                EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
+            }
             break;
         }
         case BM83_DATA_BTM_STATUS_MAP_CONN: {
@@ -892,6 +896,13 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
             LogDebug(LOG_SOURCE_BT, "BT: Audio Source A2DP");
             break;
         }
+    }
+    if (
+        bt->activeDevice.hfpId == 0 &&
+        bt->activeDevice.a2dpId == 0 &&
+        bt->activeDevice.avrcpId == 0
+    ) {
+        bt->status = BT_STATUS_DISCONNECTED;
     }
 }
 
@@ -1085,16 +1096,18 @@ void BM83ProcessEventReadPairedDeviceRecord(BT_t *bt, uint8_t *data, uint16_t le
     if (pairedDevices > BT_MAX_PAIRINGS) {
         pairedDevices = BT_MAX_PAIRINGS;
     }
-    uint8_t itemsCount = data[BM83_FRAME_DB0];
     uint16_t dataPos = BM83_FRAME_DB1;
+    uint8_t deviceIndex = 0;
     while (pairedDevices > 0 && (dataPos + 7) <= length) {
         uint8_t macId[6] = {0};
-        uint8_t number = data[dataPos++];
+        // Skip over the link priority
+        dataPos++;
         uint8_t i;
         for (i = 6; i > 0; i--) {
             macId[i - 1] = data[dataPos++];
         }
-        BTPairedDeviceInit(bt, macId, itemsCount - number);
+        BTPairedDeviceInit(bt, macId, deviceIndex);
+        deviceIndex++;
         pairedDevices--;
     }
 }
@@ -1118,15 +1131,46 @@ void BM83ProcessEventReportLinkBackStatus(BT_t *bt, uint8_t *data, uint16_t leng
     uint8_t eventData[2] = {linkType, linkStatus};
     if (
         linkType == BM83_DATA_LINK_BACK_ACL &&
+        linkStatus == BM83_DATA_LINK_BACK_RES_ACL_FAILED
+    ) {
+        bt->activeDevice.deviceId = 0;
+        bt->status = BT_STATUS_DISCONNECTED;
+    }
+    if (linkType == BM83_DATA_LINK_BACK_A2DP) {
+        if (
+            linkStatus == BM83_DATA_LINK_BACK_RES_SUCCESS &&
+            bt->activeDevice.a2dpId == 0
+        ) {
+            bt->activeDevice.a2dpId = 1;
+        }
+        if (
+            linkStatus == BM83_DATA_LINK_BACK_RES_FAILED &&
+            bt->activeDevice.a2dpId == 1
+        ) {
+            bt->activeDevice.a2dpId = 0;
+        }
+    }
+    if (linkType == BM83_DATA_LINK_BACK_HF) {
+        if (
+            linkStatus == BM83_DATA_LINK_BACK_RES_SUCCESS &&
+            bt->activeDevice.hfpId == 0
+        ) {
+            bt->activeDevice.hfpId = 1;
+        }
+        if (
+            linkStatus == BM83_DATA_LINK_BACK_RES_FAILED &&
+            bt->activeDevice.hfpId == 1
+        ) {
+            bt->activeDevice.hfpId = 0;
+        }
+    }
+    if (
+        bt->activeDevice.hfpId == 0 &&
+        bt->activeDevice.a2dpId == 0 &&
         linkStatus == BM83_DATA_LINK_BACK_RES_FAILED
     ) {
         bt->status = BT_STATUS_DISCONNECTED;
-    }
-    if (
-        (linkType == BM83_DATA_LINK_BACK_A2DP || linkType == BM83_DATA_LINK_BACK_HF) &&
-        linkStatus != BM83_DATA_LINK_BACK_RES_FAILED
-    ) {
-        bt->status = BT_STATUS_CONNECTED;
+        EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
     }
     EventTriggerCallback(BT_EVENT_LINK_BACK_STATUS, eventData);
 }

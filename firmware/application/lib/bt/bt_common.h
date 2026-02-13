@@ -94,6 +94,8 @@
 #define BT_VOICE_RECOG_OFF 0
 #define BT_VOICE_RECOG_ON 1
 
+#define BT_CONNECTION_TIMEOUT_MS 15000
+
 /**
  * BTPairedDevice_t
  *     Description:
@@ -188,6 +190,8 @@ typedef struct BTConnection_t {
  *         metadataTimestamp - The last time we got metadata of any kind
  *         rxQueueAge - Used to track how long data has been sitting on the
  *             RX queue without getting a MSG_END_CHAR.
+ *         lastConnection - The last time a connection was initiated. This
+ *             allows us to add some backpressure to connection attempts
  */
 typedef struct BT_t {
     BTConnection_t activeDevice;
@@ -209,6 +213,7 @@ typedef struct BT_t {
     uint8_t pairingErrors[BT_PROFILE_COUNT];
     uint32_t metadataTimestamp;
     uint32_t rxQueueAge;
+    uint32_t lastConnection;
     char title[BT_METADATA_FIELD_SIZE];
     char artist[BT_METADATA_FIELD_SIZE];
     char album[BT_METADATA_FIELD_SIZE];

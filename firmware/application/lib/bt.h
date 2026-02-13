@@ -32,7 +32,6 @@ void BTCommandPlaybackTrackRewindStart(BT_t *);
 void BTCommandPlaybackTrackRewindStop(BT_t *);
 void BTCommandPlaybackTrackNext(BT_t *);
 void BTCommandPlaybackTrackPrevious(BT_t *);
-void BTCommandProfileOpen(BT_t *);
 void BTCommandSetConnectable(BT_t *, unsigned char);
 void BTCommandSetDiscoverable(BT_t *, unsigned char);
 void BTCommandToggleVoiceRecognition(BT_t *);

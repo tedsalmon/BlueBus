@@ -1484,7 +1484,10 @@ void BC127ProcessEventCloseOk(BT_t *bt, char **msgBuf)
 {
     uint8_t deviceId = BC127GetDeviceId(msgBuf[1]);
     // If the open connection is closing, update the state
-    if (bt->activeDevice.deviceId == deviceId) {
+    if (
+        bt->activeDevice.deviceId == deviceId ||
+        bt->activeDevice.deviceId == 0
+    ) {
         LogDebug(LOG_SOURCE_BT, "BT: Closed Link: %s", msgBuf[1]);
         uint8_t status = BC127ConnectionCloseProfile(
             &bt->activeDevice,
@@ -1634,7 +1637,7 @@ void BC127ProcessEventName(BT_t *bt, char **msgBuf, char *msg)
             }
         }
         deviceName[strIdx] = '\0';
-        char name[BT_DEVICE_NAME_LEN] = {0};
+        char name[BT_DEVICE_NAME_LEN + 1] = {0};
         UtilsNormalizeText(name, deviceName, BT_DEVICE_NAME_LEN);
         LogDebug(LOG_SOURCE_BT, "Process Name");
         unsigned char macId[BT_DEVICE_MAC_ID_LEN] = {0};
@@ -1645,7 +1648,7 @@ void BC127ProcessEventName(BT_t *bt, char **msgBuf, char *msg)
         ) {
             memset(dev->deviceName, 0, BT_DEVICE_NAME_LEN);
             UtilsStrncpy(dev->deviceName, name, BT_DEVICE_NAME_LEN);
-            BTPairedDeviceSave(macId, deviceName, bt->activeDevice.deviceIndex);
+            BTPairedDeviceSave(macId, name, bt->activeDevice.deviceIndex);
             bt->status = BT_STATUS_CONNECTED;
             EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
         }

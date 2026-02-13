@@ -28,7 +28,7 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     uint32_t now = TimerGetMillis();
     Context.btDeviceConnRetries = 0;
     Context.btStartupIsRun = 0;
-    Context.btSelectedDevice = ConfigGetSetting(CONFIG_SETTING_LAST_CONNECTED_DEVICE);
+    Context.btSelectedDevice = 0;
     Context.volumeMode = HANDLER_VOLUME_MODE_NORMAL;
     Context.gtStatus = HANDLER_GT_STATUS_UNCHECKED;
     Context.monitorStatus = HANDLER_MONITOR_STATUS_UNSET;
@@ -80,9 +80,6 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
         MIDInit(bt, ibus);
         BMBTInit(bt, ibus);
     }
-    if (Context.btSelectedDevice >= BT_MAX_PAIRINGS) {
-        Context.btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
-    }
 }
 
 /**
@@ -98,6 +95,7 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
 void HandlerUICloseConnection(void *ctx, unsigned char *data)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
+    context->btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
     // Reset the metadata so we don't display the wrong data
     BTClearMetadata(context->bt);
     // Clear the actively paired device
@@ -123,7 +121,12 @@ void HandlerUIInitiateConnection(void *ctx, unsigned char *deviceId)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     context->btStatus = HANDLER_BT_STATUS_CONNECTING;
     context->btSelectedDevice = (uint8_t) *deviceId;
-    HandlerUICloseConnection(ctx, 0x00);
+    // Reset the metadata so we don't display the wrong data
+    BTClearMetadata(context->bt);
+    // Clear the actively paired device
+    BTClearActiveDevice(context->bt);
+    // Close All connections
+    BTCommandDisconnect(context->bt);
 }
 
 /**

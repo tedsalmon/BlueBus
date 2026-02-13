@@ -69,7 +69,7 @@ uint8_t BTPairedDevicesFind(BT_t *bt, uint8_t *macId)
 {
     uint8_t idx;
     for (idx = 0; idx < bt->pairedDevicesCount; idx++) {
-        if (memcmp(macId, &bt->pairedDevices[idx].macId, BT_DEVICE_MAC_ID_LEN ) == 0) {
+        if (memcmp(macId, &bt->pairedDevices[idx].macId, BT_DEVICE_MAC_ID_LEN) == 0) {
             return idx;
         }
     }
@@ -89,8 +89,8 @@ BTConnection_t BTConnectionInit()
 {
     BTConnection_t conn;
     memset(&conn, 0, sizeof(BTConnection_t));
-    // Assume the volume is halfway
     conn.status = BT_DEVICE_STATUS_DISCONNECTED;
+    // Assume the volume is halfway
     conn.a2dpVolume = 64;
     return conn;
 }
@@ -123,7 +123,7 @@ void BTPairedDeviceClearRecords(void)
  *     Params:
  *         BT_t *bt
  *         char *macId
- *         uint8_t deviceNumber - The BM83-assigned device index
+ *         uint8_t deviceNumber - The PDL index
  *     Returns:
  *         uint8_t The Pairing index
  */
