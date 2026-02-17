@@ -81,7 +81,7 @@ uint8_t HandlerSetIBusTELStatus(
 /**
  * HandlerSetVolume()
  *     Description:
- *         Abstract function to raise and lower the A2DP volume
+ *         Abstract function to change the vehicle volume
  *     Params:
  *         HandlerContext_t *context - The handler context
  *         uint8_t direction - Lower / Raise volume flag
@@ -90,20 +90,26 @@ uint8_t HandlerSetIBusTELStatus(
  */
 void HandlerSetVolume(HandlerContext_t *context, uint8_t direction)
 {
-    uint8_t newVolume = 0;
+    uint8_t i = 0;
     if (direction == HANDLER_VOLUME_DIRECTION_DOWN) {
-        newVolume = context->bt->activeDevice.a2dpVolume / 2;
         context->volumeMode = HANDLER_VOLUME_MODE_LOWERED;
+        for (i = 0; i < HANDLER_VOLUME_STEPS; i++) {
+            IBusCommandSetVolume(
+                context->ibus,
+                IBUS_DEVICE_MFL,
+                IBUS_DEVICE_RAD,
+                IBUS_RAD_VOLUME_DOWN
+            );
+        }
     } else {
-        newVolume = context->bt->activeDevice.a2dpVolume * 2;
+        for (i = 0; i < HANDLER_VOLUME_STEPS; i++) {
+            IBusCommandSetVolume(
+                context->ibus,
+                IBUS_DEVICE_MFL,
+                IBUS_DEVICE_RAD,
+                IBUS_RAD_VOLUME_UP
+            );
+        }
         context->volumeMode = HANDLER_VOLUME_MODE_NORMAL;
     }
-    char hexVolString[3] = {0};
-    snprintf(hexVolString, 3, "%X", newVolume / 8);
-    BC127CommandVolume(
-        context->bt,
-        context->bt->activeDevice.a2dpId,
-        hexVolString
-    );
-    context->bt->activeDevice.a2dpVolume = newVolume;
 }

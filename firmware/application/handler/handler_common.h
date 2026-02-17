@@ -96,6 +96,7 @@
 #define HANDLER_VOLUME_DIRECTION_UP 1
 #define HANDLER_VOLUME_MODE_LOWERED 0
 #define HANDLER_VOLUME_MODE_NORMAL 1
+#define HANDLER_VOLUME_STEPS 6
 
 typedef struct HandlerBodyModuleStatus_t {
     uint8_t lowSideDoors: 1;

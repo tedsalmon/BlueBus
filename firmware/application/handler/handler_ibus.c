@@ -1716,7 +1716,8 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (*type == IBUS_SENSOR_VALUE_GEAR_POS) {
         context->gearLastStatus = TimerGetMillis();
-        if (context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE &&
+        if (
+            context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE &&
             context->pdcActive == 0 &&
             ConfigGetSetting(CONFIG_SETTING_VISUAL_PDC) != CONFIG_SETTING_OFF
         ) {

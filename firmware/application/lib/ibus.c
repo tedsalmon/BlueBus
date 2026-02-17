@@ -490,6 +490,21 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
                 ibus->obcDateTime.month = value2;
                 ibus->obcDateTime.day = value1;
             }
+        } else if (property == IBUS_IKE_OBC_PROPERTY_RANGE) {
+            // "123 KM " or "--- KM " or "123 MLS"
+            uint16_t range = 0;
+            uint8_t idx = IBUS_PKT_DB3;
+            uint8_t maxIdx = IBUS_PKT_DB3 + 4;
+            while (idx < maxIdx && isdigit(pkt[idx])) {
+                range = range * 10 + (pkt[idx] - '0');
+                idx++;
+            }
+            // Only trigger event if we got a valid numeric range
+            if (idx > IBUS_PKT_DB3) {
+                ibus->vehicleRange = range;
+                uint8_t valueType = IBUS_SENSOR_VALUE_VEHICLE_RANGE;
+                EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+            }
         }
     }
 }

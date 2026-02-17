@@ -842,17 +842,12 @@ void HandlerTimerBTTCUStateChange(void *ctx)
 void HandlerTimerBTVolumeManagement(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetSetting(CONFIG_SETTING_MANAGE_VOLUME) == CONFIG_SETTING_ON &&
-        context->volumeMode != HANDLER_VOLUME_MODE_LOWERED &&
+    if (
         context->bt->activeDevice.a2dpId != 0 &&
-        context->bt->type != BT_BTM_TYPE_BM83 &&
-        context->bt->activeDevice.a2dpVolume != 0
+        context->bt->type == BT_BTM_TYPE_BC127
     ) {
         if (context->bt->activeDevice.a2dpVolume < 127) {
-            LogWarning(
-                "BT: Set Max Volume (%d)",
-                context->bt->activeDevice.a2dpVolume
-            );
+            LogDebug(LOG_SOURCE_BT, "BT: Set Max Volume");
             BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpId, "F");
             context->bt->activeDevice.a2dpVolume = 127;
         }
@@ -860,7 +855,8 @@ void HandlerTimerBTVolumeManagement(void *ctx)
     uint8_t lowerVolumeOnReverse = ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV);
     uint32_t now = TimerGetMillis();
     // Lower volume when PDC is active
-    if (lowerVolumeOnReverse == CONFIG_SETTING_ON &&
+    if (
+        lowerVolumeOnReverse == CONFIG_SETTING_ON &&
         context->ibus->moduleStatus.PDC == 1 &&
         context->bt->activeDevice.a2dpId != 0
     ) {
@@ -874,7 +870,8 @@ void HandlerTimerBTVolumeManagement(void *ctx)
             );
             HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
         }
-        if (context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
+        if (
+            context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
             timeSinceUpdate <= HANDLER_WAIT_REV_VOL
         ) {
             LogWarning(

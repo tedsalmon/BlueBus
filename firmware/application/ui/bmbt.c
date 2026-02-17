@@ -2495,32 +2495,6 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
 }
 
 /**
- * BMBTRangeUpdate()
- *     Description:
- *         Handle Display of Routing to Fuel Station on low range
- *     Params:
- *         void *context - A void pointer to the BMBTContext_t struct
- *         uint16_t *range - A pointer to the range value
- *     Returns:
- *         void
- */
-void BMBTRangeUpdate(void *ctx, uint8_t *value)
-{
-    BMBTContext_t *context = (BMBTContext_t *) ctx;
-    uint8_t range = *value;
-
-    uint8_t navConfig = ConfigGetSetting(CONFIG_SETTING_NAV) & CONFIG_SETTING_NAV_ROUTE_RANGE;
-    if (
-        navConfig == CONFIG_SETTING_NAV_ROUTE_RANGE &&
-        range < 15 &&
-        context->navRange == 0
-    ) {
-        context->navRange = 1;
-        IBusCommandSESRouteFuel(context->ibus);
-    }
-}
-
-/**
  * BMBTIBusMonitorStatus()
  *     Description:
  *          Redraw the display when we return from a different Video
@@ -2817,12 +2791,24 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
         }
     }
 
+    uint8_t navConfig = ConfigGetSetting(CONFIG_SETTING_NAV) & CONFIG_SETTING_NAV_ROUTE_RANGE;
+    if (
+        navConfig == CONFIG_SETTING_NAV_ROUTE_RANGE &&
+        context->ibus->vehicleRange < 15 &&
+        context->navRange == 0
+    ) {
+        context->navRange = 1;
+        IBusCommandSESRouteFuel(context->ibus);
+    }
+
+
     if (redraw == 1) {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
         IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
     }
 
-    if (context->menu == BMBT_MENU_DASHBOARD ||
+    if (
+        context->menu == BMBT_MENU_DASHBOARD ||
         context->menu == BMBT_MENU_DASHBOARD_FRESH
     ) {
         BMBTMenuDashboardUpdateOBCValues(context);
