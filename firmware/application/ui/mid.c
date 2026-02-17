@@ -183,6 +183,13 @@ static void MIDSetTempDisplayText(
     TimerTriggerScheduledTask(context->displayUpdateTaskId);
 }
 
+static void MIDDisplayOBC(MIDContext_t *context)
+{
+    context->mode = MID_MODE_OBC;
+    MenuSingleLineOBC(&context->menuContext);
+    IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_OBC, "OBC");
+}
+
 static void MIDMenuDevices(MIDContext_t *context)
 {
     context->mode = MID_MODE_DEVICES;
@@ -406,6 +413,7 @@ void MIDIBusMIDButtonPress(void *ctx, unsigned char *pkt)
                 context->mode = MID_MODE_OBC_NEW;
                 MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_OBC);
             } else if (context->mode == MID_MODE_OBC) {
+                MIDDisplayOBC(context);
                 MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_METADATA);
                 context->mode = MID_MODE_ACTIVE_NEW;
             } else {
@@ -578,13 +586,6 @@ void MIDIBusMIDModeChange(void *ctx, unsigned char *pkt)
             IBusCommandRADCDCRequest(context->ibus, IBUS_CDC_CMD_STOP_PLAYING);
         }
     }
-}
-
-static void MIDDisplayOBC(MIDContext_t *context)
-{
-    context->mode = MID_MODE_OBC;
-    MenuSingleLineOBC(&context->menuContext);
-    IBusCommandMIDMenuWriteSingle(context->ibus, MID_BUTTON_OBC, "OBC");
 }
 
 void MIDTimerMenuWrite(void *ctx)

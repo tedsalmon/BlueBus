@@ -841,7 +841,9 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                     }
                 }
             }
-            if (context->lmState.comfortBlinkerStatus != HANDLER_LM_COMF_BLINK_OFF ||
+            IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_OFF);
+            if (
+                context->lmState.comfortBlinkerStatus != HANDLER_LM_COMF_BLINK_OFF ||
                 context->lmState.comfortParkingLampsStatus != HANDLER_LM_COMF_PARKING_OFF
             ) {
                 HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_ALL_OFF);
@@ -872,9 +874,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             }
             // Enable the TEL LEDs
             if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {
-                if (context->bt->activeDevice.avrcpId == 0 &&
-                    context->bt->activeDevice.a2dpId == 0
-                ) {
+                if (context->bt->status == BT_STATUS_DISCONNECTED) {
                     IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
                 } else {
                     IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
@@ -898,9 +898,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
         }
         // Enable the TEL LEDs
         if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {
-            if (context->bt->activeDevice.avrcpId == 0 &&
-                context->bt->activeDevice.a2dpId == 0
-            ) {
+            if (context->bt->status == BT_STATUS_DISCONNECTED) {
                 IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
             } else {
                 IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);

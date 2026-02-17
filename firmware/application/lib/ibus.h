@@ -375,6 +375,8 @@
 #define IBUS_TEL_LED_STATUS_RED 0x01
 #define IBUS_TEL_LED_STATUS_RED_BLINKING 0x03
 #define IBUS_TEL_LED_STATUS_GREEN 0x10
+#define IBUS_TEL_LED_STATUS_YELLOW 0x14
+#define IBUS_TEL_LED_STATUS_OFF 0x00
 #define IBUS_TEL_SIG_EVEREST 0x38
 
 #define IBUS_BLUEBUS_CARPHONICS_EXTERNAL_CONTROL 0xBC
@@ -595,6 +597,7 @@ typedef struct IBus_t {
     uint8_t lmVariant;
     uint8_t oilTemperature;
     uint8_t vehicleType;
+    uint16_t vehicleRange;
     uint8_t gtInputSrc: 1;
     IBusModuleStatus_t moduleStatus;
     IBusPDCSensorStatus_t pdcSensors;

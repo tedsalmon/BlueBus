@@ -1236,20 +1236,6 @@ static void BMBTMenuSettingsNav(BMBTContext_t *context)
         text,
         0
     );
-    snprintf(
-        text,
-        BMBT_MENU_STRING_MAX_SIZE,
-        LocaleGetText(LOCALE_STRING_NAV_SILENT),
-        (ConfigGetSetting(CONFIG_SETTING_NAV) & CONFIG_SETTING_NAV_SILENT) == CONFIG_SETTING_NAV_SILENT ?
-            LocaleGetText(LOCALE_STRING_ON) : LocaleGetText(LOCALE_STRING_OFF)
-    );
-
-    BMBTGTWriteIndex(
-        context,
-        BMBT_MENU_IDX_SETTINGS_NAV_SILENT,
-        text,
-        0
-    );
 
     snprintf(
         text,
@@ -1262,6 +1248,20 @@ static void BMBTMenuSettingsNav(BMBTContext_t *context)
     BMBTGTWriteIndex(
         context,
         BMBT_MENU_IDX_SETTINGS_NAV_RANGE,
+        text,
+        0
+    );
+    snprintf(
+        text,
+        BMBT_MENU_STRING_MAX_SIZE,
+        LocaleGetText(LOCALE_STRING_NAV_SILENT),
+        (ConfigGetSetting(CONFIG_SETTING_NAV) & CONFIG_SETTING_NAV_SILENT) == CONFIG_SETTING_NAV_SILENT ?
+            LocaleGetText(LOCALE_STRING_ON) : LocaleGetText(LOCALE_STRING_OFF)
+    );
+
+    BMBTGTWriteIndex(
+        context,
+        BMBT_MENU_IDX_SETTINGS_NAV_SILENT,
         text,
         3
     );

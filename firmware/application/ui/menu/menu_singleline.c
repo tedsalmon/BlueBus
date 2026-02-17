@@ -281,9 +281,10 @@ void MenuSingleLineSetUIView(MenuSingleLineContext_t *context, uint8_t view)
             break;
         case MENU_SINGLELINE_VIEW_DEVICES:
             MenuSingleLineDevices(context, 0);
-
+            break;
     }
 }
+
 /**
  * MenuSingleLineSettings()
  *     Description:
