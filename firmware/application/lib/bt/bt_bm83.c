@@ -336,6 +336,143 @@ void BM83CommandPairingDisable(BT_t *bt)
 }
 
 /**
+ * BM83CommandPBAPAbort()
+ *     Description:
+ *         Abort an ongoing PBAP request (PBAPC_Cmd -> 0x3F, Sub 0x06)
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BM83CommandPBAPAbort(BT_t *bt)
+{
+    uint8_t command[] = {
+        BM83_CMD_PBAPC_CMD,
+        BM83_PBAP_SUBCMD_ABORT,
+        bt->activeDevice.deviceId & 0xF
+    };
+    BM83SendCommand(bt, command, sizeof(command));
+}
+
+/**
+ * BM83CommandPBAPClose()
+ *     Description:
+ *         Close the PBAP session (PBAPC_Cmd -> 0x3F, Sub 0x01)
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BM83CommandPBAPClose(BT_t *bt)
+{
+    uint8_t command[] = {
+        BM83_CMD_PBAPC_CMD,
+        BM83_PBAP_SUBCMD_CLOSE_SESSION,
+        bt->activeDevice.deviceId & 0xF
+    };
+    BM83SendCommand(bt, command, sizeof(command));
+}
+
+/**
+ * BM83CommandPBAPContiunation()
+ *     Description:
+ *         Send a PBAP continuation request
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         uint8_t type - The phonebook type to pull
+ *         uint16_t offset - The starting offset (0 for first page)
+ *         uint8_t maxCount - Maximum number of entries to retrieve (up to 8)
+ *     Returns:
+ *         void
+ */
+void BM83CommandPBAPContinuation(BT_t *bt)
+{
+    uint8_t command[29] = {0};
+    command[0] = BM83_CMD_PBAPC_CMD;
+    command[1] = BM83_PBAP_SUBCMD_PULL_PHONEBOOK;
+    command[2] = bt->activeDevice.deviceId & 0xF;
+    command[3] = BM83_PBAP_REPO_TELECOM;
+    command[17] = BM83_PBAP_FORMAT_VCARD30;
+    BM83SendCommand(bt, command, sizeof(command));
+}
+
+/**
+ * BM83CommandPBAPGetPhonebook()
+ *     Description:
+ *         Get a list of contacts with name and phone numbers
+ *         (PBAPC_Cmd -> 0x3F, Sub 0x02 Pull_Phone_Book_Req)
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         uint8_t type - The phonebook type to pull
+ *         uint16_t offset - The starting offset (0 for first page)
+ *         uint8_t maxCount - Maximum number of entries to retrieve (up to 8)
+ *     Returns:
+ *         void
+ */
+void BM83CommandPBAPGetPhonebook(BT_t *bt, uint8_t type, uint16_t offset, uint8_t maxCount)
+{
+    // Flags: Property Selector, Format, List_Start_Offset, Max_List_Count
+    uint16_t flags = (
+        BM83_PBAP_FLAG_PROPERTY_SELECTOR |
+        BM83_PBAP_FLAG_FORMAT |
+        BM83_PBAP_FLAG_LIST_START_OFFSET |
+        BM83_PBAP_FLAG_MAX_LIST_COUNT
+    );
+    uint8_t command[] = {
+        BM83_CMD_PBAPC_CMD,
+        BM83_PBAP_SUBCMD_PULL_PHONEBOOK,
+        bt->activeDevice.deviceId & 0xF, // Linked Database, the lower nibble
+        BM83_PBAP_REPO_TELECOM,
+        type,
+        (uint8_t)(flags >> 8),
+        (uint8_t)(flags & 0xFF),
+        (uint8_t)(maxCount >> 8),
+        (uint8_t)(maxCount & 0xFF),
+        0x82, // Property Selector: Bit 1 = FN, Bit 7 = TEL -> byte 0 = 0x82
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        BM83_PBAP_FORMAT_VCARD30,
+        (uint8_t) (offset >> 8),
+        (uint8_t) (offset & 0xFF),
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00,
+        0x00
+    };
+    BM83SendCommand(bt, command, sizeof(command));
+}
+
+/**
+ * BM83CommandPBAPOpen()
+ *     Description:
+ *         Open a PBAP session with the connected device
+ *         (PBAPC_Cmd -> 0x3F, Sub 0x00)
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BM83CommandPBAPOpen(BT_t *bt)
+{
+    uint8_t command[] = {
+        BM83_CMD_PBAPC_CMD,
+        BM83_PBAP_SUBCMD_OPEN_SESSION,
+        bt->activeDevice.deviceId & 0xF
+    };
+    BM83SendCommand(bt, command, sizeof(command));
+}
+
+/**
  * BM83CommandPowerOn()
  *     Description:
  *         Power the Module on (MMI_Action -> 0x02)
@@ -987,6 +1124,147 @@ void BM83ProcessEventCallerID(BT_t *bt, uint8_t *data, uint16_t length)
 }
 
 /**
+ * BM83ProcessEventPBAP()
+ *     Description:
+ *         Process PBAP events with state machine vCard parsing
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         uint8_t *data - The frame data
+ *         uint16_t length - The size of the frame
+ *     Returns:
+ *         void
+ */
+void BM83ProcessEventPBAP(BT_t *bt, uint8_t *data, uint16_t length)
+{
+    if (length < 5) {
+        LogWarning("BT: PBAP event too short");
+        return;
+    }
+    uint8_t packetType = data[0];
+    uint16_t payloadLength = ((uint16_t)data[3] << 8) | data[4];
+    uint8_t *payload = &data[5];
+    if (
+        packetType == BM83_PBAP_PACKET_SINGLE ||
+        packetType == BM83_PBAP_PACKET_FRAG_START
+    ) {
+        if (payloadLength < 1) {
+            return;
+        }
+        bt->pbap.parser.subEvent = payload[0];
+    }
+    if (bt->pbap.parser.subEvent == BM83_PBAP_EVT_SESSION_OPENED) {
+        if (payloadLength >= 3) {
+            uint8_t status = payload[2];
+            bt->pbap.active = (status == BM83_PBAP_SESSION_SUCCESS);
+            bt->pbap.status = BT_PBAP_STATUS_IDLE;
+            LogDebug(
+                LOG_SOURCE_BT,
+                "BT: PBAP Session %s",
+                bt->pbap.active ? "Opened" : "Failed"
+            );
+            EventTriggerCallback(BT_EVENT_PBAP_SESSION_STATUS, &status);
+        }
+        return;
+    }
+    if (bt->pbap.parser.subEvent == BM83_PBAP_EVT_SESSION_DISCONNECTED) {
+        bt->pbap.active = 0;
+        bt->pbap.status = BT_PBAP_STATUS_IDLE;
+        LogDebug(LOG_SOURCE_BT, "BT: PBAP Session Disconnected");
+        uint8_t status = 0xFF;
+        EventTriggerCallback(BT_EVENT_PBAP_SESSION_STATUS, &status);
+        return;
+    }
+    if (bt->pbap.parser.subEvent == BM83_PBAP_EVT_ERROR_RSP) {
+        if (payloadLength >= 3) {
+            uint8_t errorCode = payload[2];
+            LogWarning("BT: PBAP Error: 0x%02X", errorCode);
+        }
+        bt->pbap.status = BT_PBAP_STATUS_IDLE;
+        return;
+    }
+    if (
+        bt->pbap.parser.subEvent == BM83_PBAP_EVT_PULL_PHONEBOOK_RSP ||
+        bt->pbap.parser.subEvent == BM83_PBAP_EVT_PULL_VCARD_LISTING_RSP
+    ) {
+        if (
+            packetType == BM83_PBAP_PACKET_SINGLE ||
+            packetType == BM83_PBAP_PACKET_FRAG_START
+        ) {
+            // Only reset contact state if this is a new operation, not a continuation
+            if (bt->pbap.status != BT_PBAP_STATUS_WAITING) {
+                bt->pbap.status = BT_PBAP_STATUS_WAITING;
+                bt->pbap.contactCount = 0;
+                bt->pbap.contactIdx = 0;
+                memset(&bt->pbap.parser, 0, sizeof(bt->pbap.parser));
+                memset(bt->pbap.contacts, 0, sizeof(bt->pbap.contacts));
+            }
+            if (payloadLength >= 3) {
+                bt->pbap.parser.isEndOfBody = payload[2];
+            }
+        }
+        // For CONTINUE/END packets, vCard data starts immediately
+        // For SINGLE/FRAG_START, we must skip the PBAP response headers
+        uint16_t dataOffset = 0;
+        if (
+            packetType == BM83_PBAP_PACKET_SINGLE ||
+            packetType == BM83_PBAP_PACKET_FRAG_START
+        ) {
+            // The first 56 bytes are the header data that we want to avoid
+            dataOffset = BM83_PBAP_OFFSET_HEADER;
+            // Scan forward past any extra padding
+            while (dataOffset < payloadLength && payload[dataOffset] == 0) {
+                dataOffset++;
+            }
+        }
+        // Process vCard data byte by byte
+        uint16_t i;
+        for (i = dataOffset; i < payloadLength; i++) {
+            uint8_t currByte = payload[i];
+            // CRLF reached, which means we have one line from the vCard
+            if (bt->pbap.parser.isDelim && currByte == '\n') {
+                bt->pbap.parser.isDelim = 0;
+                bt->pbap.parser.buffer[bt->pbap.parser.bufferIdx] = 0;
+                if (
+                    bt->pbap.parser.bufferIdx > 0 &&
+                    bt->pbap.parser.buffer[0] != ' ' &&
+                    bt->pbap.parser.buffer[0] != '\t'
+                ) {
+                    BTProcessPBAPLine(bt);
+                }
+                bt->pbap.parser.bufferIdx = 0;
+                continue;
+            }
+            bt->pbap.parser.isDelim = (currByte == BT_PBAP_FRAME_DELIM);
+            if (bt->pbap.parser.isDelim) {
+                continue;
+            }
+            if (bt->pbap.parser.bufferIdx < (BT_PBAP_LINE_BUFFER_SIZE - 1)) {
+                bt->pbap.parser.buffer[bt->pbap.parser.bufferIdx++] = currByte;
+            } else {
+                LogWarning("BT: PBAP Parser Buffer Overflow Guard");
+            }
+        }
+        if (
+            packetType == BM83_PBAP_PACKET_SINGLE ||
+            packetType == BM83_PBAP_PACKET_FRAG_END
+        ) {
+            if (bt->pbap.parser.isEndOfBody) {
+                // Transfer complete - trigger callback
+                bt->pbap.status = BT_PBAP_STATUS_IDLE;
+                LogDebug(
+                    LOG_SOURCE_BT,
+                    "BT: PBAP complete, %d contacts",
+                    bt->pbap.contactCount
+                );
+                EventTriggerCallback(BT_EVENT_PBAP_CONTACT_RECEIVED, 0);
+            } else {
+                BM83CommandPBAPContinuation(bt);
+            }
+        }
+    }
+}
+
+/**
  * BM83ProcessEventReadLinkStatus()
  *     Description:
  *         Process Link Status Information
@@ -1356,6 +1634,9 @@ void BM83Process(BT_t *bt)
             }
             if (event == BM83_EVT_CALLER_ID) {
                 BM83ProcessEventCallerID(bt, eventData, dataLength);
+            }
+            if (event == BM83_EVT_PBAPC_EVENT) {
+                BM83ProcessEventPBAP(bt, eventData, dataLength);
             }
             if (event == BM83_EVT_READ_LINK_STATUS_REPLY) {
                 BM83ProcessEventReadLinkStatus(bt, eventData, dataLength);

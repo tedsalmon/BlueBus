@@ -413,6 +413,27 @@ uint8_t UtilsStrToInt(char *string)
 }
 
 /**
+ * UtilsCharIndex()
+ *     Description:
+ *         Find the first instance of needle in haystack `string`
+ *     Params:
+ *         char *string - The subject
+ *         uint8_t needle - The char to look for
+ *     Returns:
+ *         int16_t The index of the given needle or -1 for not found
+ */
+int16_t UtilsCharIndex(char *string, uint8_t needle)
+{
+    uint16_t i = 0;
+    for (i = 0; i < strlen(string); i++) {
+        if (string[i] == needle) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/**
  * UtilsTransliterateUnicodeToASCII()
  *     Description:
  *         Transliterates Unicode character to the corresponding ASCII string.

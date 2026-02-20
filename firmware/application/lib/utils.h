@@ -209,6 +209,7 @@ int8_t UtilsStricmp(const char *, const char *);
 char * UtilsStrncpy(char *, const char *, size_t);
 unsigned char UtilsStrToHex(char *);
 uint8_t UtilsStrToInt(char *);
+int16_t UtilsCharIndex(char *, uint8_t);
 char * UtilsTransliterateUnicodeToASCII(uint32_t);
 char * UtilsTransliterateExtendedASCIIToASCII(uint32_t);
 unsigned char UtilsConvertCyrillicUnicodeToExtendedASCII(uint32_t);

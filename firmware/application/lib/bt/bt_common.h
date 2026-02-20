@@ -57,6 +57,8 @@
 #define BT_EVENT_BTM_ADDRESS 15
 #define BT_EVENT_TIME_UPDATE 16
 #define BT_EVENT_DSP_STATUS 17
+#define BT_EVENT_PBAP_CONTACT_RECEIVED 18
+#define BT_EVENT_PBAP_SESSION_STATUS 19
 
 #define BT_LEN_MAC_ID 6
 
@@ -91,10 +93,102 @@
 #define BT_DEVICE_NAME_LEN 32
 #define BT_DEVICE_RECORD_LEN (BT_DEVICE_MAC_ID_LEN + BT_DEVICE_NAME_LEN)
 
+#define BT_PBAP_CONTACT_MAX_NUMBERS 3
+#define BT_PBAP_CONTACT_NAME_LEN 32
+#define BT_PBAP_LINE_BUFFER_SIZE 64
+#define BT_PBAP_MAX_CONTACTS 8
+
+#define BT_PBAP_FRAME_DELIM 0x0D // <CR>
+
+#define BT_PBAP_STATUS_IDLE 0
+#define BT_PBAP_STATUS_WAITING 1
+
+#define BT_PBAP_BCD_STAR 0x0A
+#define BT_PBAP_BCD_HASH 0x0B
+#define BT_PBAP_BCD_PLUS 0x0C
+#define BT_PBAP_BCD_UNUSED 0x0F
+
+#define BT_PBAP_TEL_LEN 8
+#define BT_PBAP_TEL_TYPE_CELL 1
+#define BT_PBAP_TEL_TYPE_HOME 2
+#define BT_PBAP_TEL_TYPE_UNKNOWN 0
+#define BT_PBAP_TEL_TYPE_WORK 3
+
+
 #define BT_VOICE_RECOG_OFF 0
 #define BT_VOICE_RECOG_ON 1
 
 #define BT_CONNECTION_TIMEOUT_MS 15000
+
+/**
+ * BTPBAPContactTelephone_t
+ *     Description:
+ *         Phone number stored in BCD format with type
+ *     Fields:
+ *         number - BCD encoded phone number (16 digits max)
+ *         type - Telephone type (CELL, HOME, WORK, UNKNOWN)
+ */
+typedef struct BTPBAPContactTelephone_t {
+    uint8_t number[8];
+    uint8_t type;
+} BTPBAPContactTelephone_t;
+
+/**
+ * BTPBAPContact_t
+ *     Description:
+ *         A contact entry from PBAP with name and up to 3 numbers
+ *     Fields:
+ *         name - The contact name
+ *         numbers - Up to 3 phone numbers with types
+ *         numberCount - The number of numbers for the given contact
+ */
+typedef struct BTPBAPContact_t {
+    char name[BT_PBAP_CONTACT_NAME_LEN];
+    BTPBAPContactTelephone_t numbers[BT_PBAP_CONTACT_MAX_NUMBERS];
+    uint8_t numberCount;
+} BTPBAPContact_t;
+
+/**
+ * BTPBAPParserState_t
+ *     Description:
+ *         PBAP Parser State Machine
+ *     Fields:
+ *         subEvent - Sub-event code for fragmented packets
+ *         inVCard - Currently parsing a vCard
+ *         isDelim - Previous char was CR (for CRLF handling)
+ *         isEndOfBody - At the END:VCARD of the vCard
+ *         bufferIdx - Current line buffer length
+ *         buffer - Buffer for incomplete line
+ */
+typedef struct BTPBAPParserState_t {
+    uint8_t subEvent;
+    uint8_t inVCard: 1;
+    uint8_t isDelim: 1;
+    uint8_t isEndOfBody: 1;
+    uint8_t bufferIdx;
+    char buffer[BT_PBAP_LINE_BUFFER_SIZE];
+
+} BTPBAPParserState_t;
+
+/**
+ * BTPBAP_t
+ *     Description:
+ *         PBAP state and contact data
+ *     Fields:
+ *         active - Is a PBAP session active
+ *         status - BT_PBAP_STATUS_IDLE, BT_PBAP_STATUS_WAITING
+ *         contactCount - Number of contacts in buffer
+ *         contactIdx - The index of the contact we are currently copying
+ *         contacts - Buffer for contact entries
+ */
+typedef struct BTPBAP_t {
+    uint8_t active: 1;
+    uint8_t status: 1;
+    uint8_t contactCount;
+    uint8_t contactIdx;
+    BTPBAPContact_t contacts[BT_PBAP_MAX_CONTACTS];
+    BTPBAPParserState_t parser;
+} BTPBAP_t;
 
 /**
  * BTPairedDevice_t
@@ -219,16 +313,20 @@ typedef struct BT_t {
     char album[BT_METADATA_FIELD_SIZE];
     char callerId[BT_CALLER_ID_FIELD_SIZE];
     char dialBuffer[BT_DIAL_BUFFER_FIELD_SIZE];
+    BTPBAP_t pbap;
     UART_t uart;
 } BT_t;
 
 void BTClearActiveDevice(BT_t *);
 void BTClearMetadata(BT_t *);
 void BTClearPairedDevices(BT_t *);
-uint8_t BTPairedDevicesFind(BT_t *, uint8_t *);
 BTConnection_t BTConnectionInit();
-void BTPairedDeviceInit(BT_t *, uint8_t *, uint8_t);
-void BTPairedDeviceSave(uint8_t *, char *, uint8_t);
-void BTPairedDeviceLoadRecord(BTPairedDevice_t *, uint8_t);
 void BTPairedDeviceClearRecords(void);
+void BTPairedDeviceInit(BT_t *, uint8_t *, uint8_t);
+void BTPairedDeviceLoadRecord(BTPairedDevice_t *, uint8_t);
+void BTPairedDeviceSave(uint8_t *, char *, uint8_t);
+uint8_t BTPairedDevicesFind(BT_t *, uint8_t *);
+void BTPBAPBCDToPhoneNumber(const uint8_t *, char *, uint8_t);
+uint8_t BTPBAPPhoneNumberToBCD(const char *, uint8_t *);
+void BTParseVCard(BT_t *);
 #endif /* BT_COMMON_H */
