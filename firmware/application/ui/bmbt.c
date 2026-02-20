@@ -2399,8 +2399,31 @@ void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[IBUS_PKT_DB2] == 0x0C) {
         if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-            IBusCommandTELSetGTDisplayMenu(context->ibus);
-            IBusCommandTELSetGTDisplayNumber(context->ibus, context->bt->dialBuffer);
+            IBusCommandTELMenuText(
+                context->ibus,
+                IBUS_DEVICE_GT,
+                IBUS_TEL_LAYOUT_DIAL,
+                IBUS_TEL_FUNC_DIGIT,
+                IBUS_TEL_OPT_CLEAR,
+                ""
+            );
+            if (strlen(context->bt->dialBuffer) > 0) {
+                IBusCommandTELTitleText(
+                    context->ibus,
+                    IBUS_DEVICE_GT,
+                    IBUS_TEL_TITLE_DIAL_NUMBER,
+                    0x00,
+                    context->bt->dialBuffer
+                );
+            } else {
+                IBusCommandTELTitleText(
+                    context->ibus,
+                    IBUS_DEVICE_GT,
+                    IBUS_TEL_TITLE_DIAL_CLEAR,
+                    IBUS_TEL_TITLE_OPT_UPDATE,
+                    ""
+                );
+            }
         }
     }
 }

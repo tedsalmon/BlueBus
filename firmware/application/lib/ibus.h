@@ -203,6 +203,7 @@
 #define IBUS_CMD_IKE_CCM_WRITE_TEXT 0x1A
 
 #define IBUS_DATA_IKE_CCM_WRITE_CLEAR_TEXT 0x30
+#define IBUS_DATA_IKE_CCM_WRITE_PERSIST_TEXT 0x36
 #define IBUS_DATA_IKE_NUMERIC_CLEAR 0x20
 #define IBUS_DATA_IKE_NUMERIC_WRITE 0x23
 
@@ -367,17 +368,107 @@
 
 #define IBUS_TEL_CMD_LED_STATUS 0x2B
 #define IBUS_TEL_CMD_STATUS 0x2C
-#define IBUS_TEL_CMD_MAIN_MENU 0x21
-#define IBUS_TEL_CMD_NUMBER 0x23
 #define IBUS_TEL_STATUS_NONE 0x00
 #define IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE 0x10
 #define IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE 0x35
-#define IBUS_TEL_LED_STATUS_RED 0x01
-#define IBUS_TEL_LED_STATUS_RED_BLINKING 0x03
-#define IBUS_TEL_LED_STATUS_GREEN 0x10
-#define IBUS_TEL_LED_STATUS_YELLOW 0x14
-#define IBUS_TEL_LED_STATUS_OFF 0x00
 #define IBUS_TEL_SIG_EVEREST 0x38
+
+// Telephone Special Characters
+#define IBUS_TEL_CHAR_FIELD_DELIMITER 0x06
+#define IBUS_TEL_CHAR_FLASH_PREFIX 0x01
+#define IBUS_TEL_CHAR_HANDSFREE_ICON 0xC6
+#define IBUS_TEL_CHAR_ON_CALL_LEFT 0xC7
+#define IBUS_TEL_CHAR_ON_CALL_RIGHT 0xC8
+
+// Telephone Commands
+#define IBUS_TEL_CMD_BODY_TEXT 0xA5
+#define IBUS_TEL_CMD_MENU_TEXT 0x21
+#define IBUS_TEL_CMD_PROPERTY_TEXT 0x24
+#define IBUS_TEL_CMD_SMS_ICON 0xA6
+#define IBUS_TEL_CMD_TITLE_TEXT 0x23
+
+// Telephone Detail Layout Indices
+#define IBUS_TEL_DETAIL_BTN_BACK 0x50
+#define IBUS_TEL_DETAIL_BTN_CENTER 0x53
+#define IBUS_TEL_DETAIL_BTN_LEFT 0x51
+#define IBUS_TEL_DETAIL_BTN_RIGHT 0x52
+#define IBUS_TEL_DETAIL_GREYED_LINE 0x60
+#define IBUS_TEL_DETAIL_LINE_0 0x40
+#define IBUS_TEL_DETAIL_LINE_1 0x41
+#define IBUS_TEL_DETAIL_LINE_2 0x42
+#define IBUS_TEL_DETAIL_LINE_3 0x43
+#define IBUS_TEL_DETAIL_LINE_4 0x44
+#define IBUS_TEL_DETAIL_LINE_5 0x45
+
+// Telephone Function Types (for 0x31 input reports)
+#define IBUS_TEL_FUNC_CONTACT 0x01
+#define IBUS_TEL_FUNC_DIGIT 0x02
+#define IBUS_TEL_FUNC_INFO 0x08
+#define IBUS_TEL_FUNC_NAVIGATION 0x07
+#define IBUS_TEL_FUNC_NULL 0x00
+#define IBUS_TEL_FUNC_SOS 0x05
+
+// Telephone Layout Types
+#define IBUS_TEL_LAYOUT_DETAIL 0xF1
+#define IBUS_TEL_LAYOUT_DIAL 0x42
+#define IBUS_TEL_LAYOUT_DIRECTORY 0x43
+#define IBUS_TEL_LAYOUT_LIST 0xF0
+#define IBUS_TEL_LAYOUT_TOP_8 0x80
+
+// Telephone LED Bitfield (0x2B)
+#define IBUS_TEL_LED_OFF 0x00
+#define IBUS_TEL_LED_GREEN_BLINK 0x30
+#define IBUS_TEL_LED_GREEN_ON 0x10
+#define IBUS_TEL_LED_RED_BLINK 0x03
+#define IBUS_TEL_LED_RED_ON 0x01
+#define IBUS_TEL_LED_YELLOW_BLINK 0x0C
+#define IBUS_TEL_LED_YELLOW_ON 0x04
+
+// Telephone Options Bitfield
+#define IBUS_TEL_OPT_BUFFER 0x40
+#define IBUS_TEL_OPT_CLEAR 0x20
+#define IBUS_TEL_OPT_HIGHLIGHT 0x80
+#define IBUS_TEL_OPT_INDEX_MASK 0x1F
+
+// Telephone Property Layout Types
+#define IBUS_TEL_PROP_CALL_COST_CURRENT 0x93
+#define IBUS_TEL_PROP_CALL_COST_TOTAL 0x94
+#define IBUS_TEL_PROP_CALL_TIME_MINUTES 0x96
+#define IBUS_TEL_PROP_CALL_TIME_SECONDS 0x97
+#define IBUS_TEL_PROP_SIGNAL_STRENGTH 0x91
+
+// Telephone Signal Strength Bar Characters
+#define IBUS_TEL_SIGNAL_BAR_0 0xB2
+#define IBUS_TEL_SIGNAL_BAR_1 0xB3
+#define IBUS_TEL_SIGNAL_BAR_2 0xB4
+#define IBUS_TEL_SIGNAL_BAR_3 0xB5
+#define IBUS_TEL_SIGNAL_BAR_4 0xB6
+#define IBUS_TEL_SIGNAL_BAR_5 0xB7
+#define IBUS_TEL_SIGNAL_BAR_FULL 0xB8
+
+// Telephone Status Bitfield (0x2C)
+#define IBUS_TEL_STATUS_ESTABLISHING_CALL 0x04
+#define IBUS_TEL_STATUS_HANDSFREE 0x01
+#define IBUS_TEL_STATUS_ON_CALL 0x20
+#define IBUS_TEL_STATUS_POWER 0x10
+
+// Telephone Title Layout Types
+#define IBUS_TEL_TITLE_DEFAULT 0x00
+#define IBUS_TEL_TITLE_DIAL_CLEAR 0x61
+#define IBUS_TEL_TITLE_DIAL_NUMBER 0x63
+#define IBUS_TEL_TITLE_DIR_NAME 0x52
+#define IBUS_TEL_TITLE_DIR_NUMBER 0x53
+#define IBUS_TEL_TITLE_ON_CALL 0x01
+#define IBUS_TEL_TITLE_ON_CALL_HFS 0x02
+#define IBUS_TEL_TITLE_PIN_DIGITS 0x05
+#define IBUS_TEL_TITLE_SOS 0xC0
+#define IBUS_TEL_TITLE_TOP_8_CLEAR 0x80
+#define IBUS_TEL_TITLE_TOP_8_NAME 0x81
+#define IBUS_TEL_TITLE_TOP_8_NUMBER 0x82
+
+// Telephone Title Options
+#define IBUS_TEL_TITLE_OPT_SET 0x30
+#define IBUS_TEL_TITLE_OPT_UPDATE 0x20
 
 #define IBUS_BLUEBUS_CARPHONICS_EXTERNAL_CONTROL 0xBC
 #define IBUS_BLUEBUS_CMD_SET_STATUS 0xBB
@@ -693,10 +784,17 @@ void IBusCommandSESShowMap(IBus_t *);
 void IBusCommandSESRouteFuel(IBus_t *);
 void IBusCommandSESSilentNavigation(IBus_t *);
 void IBusCommandSetVolume(IBus_t *, uint8_t, uint8_t, uint8_t);
-void IBusCommandTELSetGTDisplayMenu(IBus_t *);
-void IBusCommandTELSetGTDisplayNumber(IBus_t *, char *);
-void IBusCommandTELSetLED(IBus_t *, uint8_t);
+void IBusCommandTELBodyText(IBus_t *, uint8_t, uint8_t, uint8_t, uint8_t, char *);
+void IBusCommandTELCallTime(IBus_t *, uint8_t, uint8_t, uint8_t);
+void IBusCommandTELHandsfreeIndicator(IBus_t *, uint8_t);
+void IBusCommandTELLED(IBus_t *, uint8_t);
+void IBusCommandTELMenuText(IBus_t *, uint8_t, uint8_t, uint8_t, uint8_t, char *);
+void IBusCommandTELOnCallIndicator(IBus_t *, uint8_t);
+void IBusCommandTELPropertyText(IBus_t *, uint8_t, uint8_t, char *);
+void IBusCommandTELSignalStrength(IBus_t *, uint8_t, uint8_t);
+void IBusCommandTELSMSIcon(IBus_t *, uint8_t);
 void IBusCommandTELStatus(IBus_t *, uint8_t);
 void IBusCommandTELStatusText(IBus_t *, char *, uint8_t);
+void IBusCommandTELTitleText(IBus_t *, uint8_t, uint8_t, uint8_t, char *);
 void IBusCommandVMModeSet(IBus_t *, uint8_t);
 #endif /* IBUS_H */

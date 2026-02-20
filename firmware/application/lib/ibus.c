@@ -2618,14 +2618,17 @@ void IBusCommandTELIKEDisplayClear(IBus_t *ibus)
  */
 void IBusCommandIKECheckControlDisplayWrite(IBus_t *ibus, char *text)
 {
-    uint8_t len = strlen(text);
-    uint8_t msgLen = len + 3;
+    uint8_t textLen = strlen(text);
+    // Check control display requires exactly 20 characters
+    uint8_t paddedLen = 20;
+    uint8_t msgLen = paddedLen + 3;
     uint8_t msg[msgLen];
     memset(&msg, 0, msgLen);
     msg[0] = IBUS_CMD_IKE_CCM_WRITE_TEXT;
-    msg[1] = IBUS_DATA_IKE_CCM_WRITE_CLEAR_TEXT;
+    msg[1] = IBUS_DATA_IKE_CCM_WRITE_PERSIST_TEXT;
     msg[2] = 0x00;
-    memcpy(msg + 3, text, len);
+    memset(msg + 3, 0x20, paddedLen);
+    memcpy(msg + 3, text, (textLen < paddedLen) ? textLen : paddedLen);
     IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, msgLen);
 }
 
@@ -2640,7 +2643,12 @@ void IBusCommandIKECheckControlDisplayWrite(IBus_t *ibus, char *text)
  */
 void IBusCommandIKECheckControlDisplayClear(IBus_t *ibus)
 {
-    IBusCommandIKECheckControlDisplayWrite(ibus, "");
+    uint8_t msg[3] = {
+        IBUS_CMD_IKE_CCM_WRITE_TEXT,
+        IBUS_DATA_IKE_CCM_WRITE_CLEAR_TEXT,
+        0x00
+    };
+    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
 }
 
 /**
@@ -3421,60 +3429,258 @@ void IBusCommandSetVolume(
 }
 
 /**
- * IBusCommandTELSetGTDisplayMenu()
+ * IBusCommandTELBodyText()
  *     Description:
- *        Enable the Telephone Menu on the GT
+ *        Write body text with cursor offset to a telephone layout (0xA5 command).
+ *        Used for SMS messages and list layouts. Allows writing long lines in chunks
+ *        using the cursor offset to avoid GT buffer overflow.
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t dest - Destination device
+ *         uint8_t layout - Layout type (IBUS_TEL_LAYOUT_LIST or IBUS_TEL_LAYOUT_DETAIL)
+ *         uint8_t offset - Cursor offset
+ *         uint8_t options - Options bitfield (index | CLEAR | BUFFER | HIGHLIGHT)
+ *         char *text - The text to display
  *     Returns:
  *         void
  */
-void IBusCommandTELSetGTDisplayMenu(IBus_t *ibus)
-{
-    const uint8_t msg[] = {IBUS_TEL_CMD_MAIN_MENU, 0x42, 0x02, 0x20};
-    IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, sizeof(msg));
+void IBusCommandTELBodyText(
+    IBus_t *ibus,
+    uint8_t dest,
+    uint8_t layout,
+    uint8_t offset,
+    uint8_t options,
+    char *text
+) {
+    uint8_t textLength = strlen(text);
+    uint8_t msgLength = textLength + 4;
+    uint8_t msg[msgLength];
+    msg[0] = IBUS_TEL_CMD_BODY_TEXT;
+    msg[1] = layout;
+    msg[2] = offset;
+    msg[3] = options;
+    if (textLength > 0) {
+        memcpy(msg + 4, text, textLength);
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_TEL, dest, msg, msgLength);
 }
+
 /**
- * IBusCommandTELSetGTDisplayNumber()
+ * IBusCommandTELCallTime()
  *     Description:
- *        Display or clear a phone number on the TEL Menu
+ *        Display call duration on the telephone info layout.
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t dest - Destination device
+ *         uint8_t minutes - Call duration minutes (0-999)
+ *         uint8_t seconds - Call duration seconds (0-59)
  *     Returns:
  *         void
  */
-void IBusCommandTELSetGTDisplayNumber(IBus_t *ibus, char *dialBuffer)
+void IBusCommandTELCallTime(IBus_t *ibus, uint8_t dest, uint8_t minutes, uint8_t seconds)
 {
-    // Display the last dialed number if one is set
-    uint8_t bufferLength = strlen(dialBuffer);
-    if (bufferLength > 0) {
-        uint8_t frameLength = bufferLength + 4;
-        uint8_t msg[frameLength];
-        memset(&msg, 0, frameLength);
-        msg[0] = IBUS_TEL_CMD_NUMBER;
-        msg[1] = 0x63;
-        msg[2] = 0x00;
-        snprintf((char *) msg + 3, bufferLength + 1, "%s", dialBuffer);
-        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, frameLength);
+    char minStr[4] = {0};
+    snprintf(minStr, sizeof(minStr), "%3d", minutes);
+    uint8_t minMsg[6];
+    minMsg[0] = IBUS_TEL_CMD_PROPERTY_TEXT;
+    minMsg[1] = IBUS_TEL_PROP_CALL_TIME_MINUTES;
+    minMsg[2] = 0x00;
+    memcpy(minMsg + 3, minStr, 3);
+    IBusSendCommand(ibus, IBUS_DEVICE_TEL, dest, minMsg, 6);
+
+    char secStr[3] = {0};
+    snprintf(secStr, sizeof(secStr), "%02d", seconds % 60);
+    uint8_t secMsg[5];
+    secMsg[0] = IBUS_TEL_CMD_PROPERTY_TEXT;
+    secMsg[1] = IBUS_TEL_PROP_CALL_TIME_SECONDS;
+    secMsg[2] = 0x00;
+    memcpy(secMsg + 3, secStr, 2);
+    IBusSendCommand(ibus, IBUS_DEVICE_TEL, dest, secMsg, 5);
+}
+
+/**
+ * IBusCommandTELHandsfreeIndicator()
+ *     Description:
+ *        Show or hide the handsfree indicator character on displays.
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t show - Show / hide indicator (bool)
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELHandsfreeIndicator(IBus_t *ibus, uint8_t show)
+{
+    if (show) {
+        uint8_t msg[] = {
+            IBUS_TEL_CMD_TITLE_TEXT,
+            IBUS_TEL_TITLE_ON_CALL_HFS,
+            0x00,
+            IBUS_TEL_CHAR_HANDSFREE_ICON
+        };
+        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, msg, sizeof(msg));
     } else {
-        const uint8_t msg[] = {IBUS_TEL_CMD_NUMBER, 0x61, 0x20};
-        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_GT, msg, sizeof(msg));
+        uint8_t msg[] = {
+            IBUS_TEL_CMD_TITLE_TEXT,
+            IBUS_TEL_TITLE_ON_CALL_HFS,
+            0x00
+        };
+        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, msg, sizeof(msg));
     }
 }
 
 /**
- * IBusCommandTELSetLEDIBus()
+ * IBusCommandTELLED()
  *     Description:
- *        Set the LED indicator status
+ *        Control the red/yellow/green LED indicators on the BMBT and MID (0x2B command).
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         uint8_t leds - The bitmask of LEDs to light up
+ *         uint8_t leds - LED bitfield (combine IBUS_TEL_LED_* values)
  *     Returns:
  *         void
  */
-void IBusCommandTELSetLED(IBus_t *ibus, uint8_t leds)
+void IBusCommandTELLED(IBus_t *ibus, uint8_t leds)
 {
-    const uint8_t msg[] = {IBUS_TEL_CMD_LED_STATUS, leds};
+    uint8_t msg[] = {IBUS_TEL_CMD_LED_STATUS, leds};
+    IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, msg, sizeof(msg));
+}
+
+/**
+ * IBusCommandTELMenuText()
+ *     Description:
+ *        Write menu text to a telephone layout
+ *        Used for DIAL, DIRECTORY, TOP_8, LIST, and DETAIL layouts.
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t dest - Destination device
+ *         uint8_t layout - Layout type (IBUS_TEL_LAYOUT_*)
+ *         uint8_t function - Function context for input reports (IBUS_TEL_FUNC_*)
+ *         uint8_t options - Options bitfield (index | CLEAR | BUFFER | HIGHLIGHT)
+ *         char *text - The text to display (use 0x06 as field delimiter)
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELMenuText(
+    IBus_t *ibus,
+    uint8_t dest,
+    uint8_t layout,
+    uint8_t function,
+    uint8_t options,
+    char *text
+) {
+    uint8_t textLength = strlen(text);
+    uint8_t msgLength = textLength + 4;
+    uint8_t msg[msgLength];
+    msg[0] = IBUS_TEL_CMD_MENU_TEXT;
+    msg[1] = layout;
+    msg[2] = function;
+    msg[3] = options;
+    if (textLength > 0) {
+        memcpy(msg + 4, text, textLength);
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_TEL, dest, msg, msgLength);
+}
+
+/**
+ * IBusCommandTELOnCallIndicator()
+ *     Description:
+ *        Show or hide the on-call indicator characters on displays.
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t show - Show / hide indicator (bool)
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELOnCallIndicator(IBus_t *ibus, uint8_t show)
+{
+    if (show) {
+        uint8_t msg[] = {
+            IBUS_TEL_CMD_TITLE_TEXT,
+            IBUS_TEL_TITLE_ON_CALL,
+            0x00,
+            IBUS_TEL_CHAR_ON_CALL_LEFT,
+            IBUS_TEL_CHAR_ON_CALL_RIGHT
+        };
+        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, msg, sizeof(msg));
+    } else {
+        uint8_t msg[] = {IBUS_TEL_CMD_TITLE_TEXT, IBUS_TEL_TITLE_ON_CALL, 0x00};
+        IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, msg, sizeof(msg));
+    }
+}
+
+/**
+ * IBusCommandTELPropertyText()
+ *     Description:
+ *        Write property text to a telephone layout (0x24
+ *        Used for signal strength bars, call cost, and call duration display.
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t dest - Destination device
+ *         uint8_t layout - Property layout type (IBUS_TEL_PROP_*)
+ *         char *text - The text to display
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELPropertyText(
+    IBus_t *ibus,
+    uint8_t dest,
+    uint8_t layout,
+    char *text
+) {
+    uint8_t textLength = strlen(text);
+    uint8_t msgLength = textLength + 3;
+    uint8_t msg[msgLength];
+    msg[0] = IBUS_TEL_CMD_PROPERTY_TEXT;
+    msg[1] = layout;
+    msg[2] = 0x00;
+    if (textLength > 0) {
+        memcpy(msg + 3, text, textLength);
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_TEL, dest, msg, msgLength);
+}
+
+/**
+ * IBusCommandTELSignalStrength()
+ *     Description:
+ *        Display signal strength bars on the telephone info layout.
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t dest - Destination device
+ *         uint8_t bars - Number of bars to display (0-7)
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELSignalStrength(IBus_t *ibus, uint8_t dest, uint8_t bars)
+{
+    if (bars > 7) {
+        bars = 7;
+    }
+    uint8_t msg[10];
+    msg[0] = IBUS_TEL_CMD_PROPERTY_TEXT;
+    msg[1] = IBUS_TEL_PROP_SIGNAL_STRENGTH;
+    msg[2] = 0x00;
+    for (uint8_t i = 0; i < 7; i++) {
+        if (i < bars) {
+            msg[3 + i] = IBUS_TEL_SIGNAL_BAR_FULL;
+        } else {
+            msg[3 + i] = IBUS_TEL_SIGNAL_BAR_0;
+        }
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_TEL, dest, msg, 10);
+}
+
+/**
+ * IBusCommandTELSMSIcon()
+ *     Description:
+ *        Control the SMS unread notification icon
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t show - 1 to show icon, 0 to hide icon
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELSMSIcon(IBus_t *ibus, uint8_t show)
+{
+    uint8_t msg[] = {IBUS_TEL_CMD_SMS_ICON, 0x00, show ? 0x01 : 0x00};
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, msg, sizeof(msg));
 }
 
@@ -3514,6 +3720,39 @@ void IBusCommandTELStatusText(IBus_t *ibus, char *text, uint8_t index)
     statusText[2] = 0x20;
     memcpy(statusText + 3, text, textLength);
     IBusSendCommand(ibus, IBUS_DEVICE_TEL, IBUS_DEVICE_ANZV, statusText, sizeof(statusText));
+}
+
+/**
+ * IBusCommandTELTitleText()
+ *     Description:
+ *        Write title/heading text to a telephone layout
+ *        Used for dial number display, directory contact info, call indicators, etc.
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *         uint8_t dest - Destination device
+ *         uint8_t layout - Title layout type (IBUS_TEL_TITLE_*)
+ *         uint8_t options - Options (IBUS_TEL_TITLE_OPT_UPDATE or IBUS_TEL_TITLE_OPT_SET)
+ *         char *text - The text to display
+ *     Returns:
+ *         void
+ */
+void IBusCommandTELTitleText(
+    IBus_t *ibus,
+    uint8_t dest,
+    uint8_t layout,
+    uint8_t options,
+    char *text
+) {
+    uint8_t textLength = strlen(text);
+    uint8_t msgLength = textLength + 3;
+    uint8_t msg[msgLength];
+    msg[0] = IBUS_TEL_CMD_TITLE_TEXT;
+    msg[1] = layout;
+    msg[2] = options;
+    if (textLength > 0) {
+        memcpy(msg + 3, text, textLength);
+    }
+    IBusSendCommand(ibus, IBUS_DEVICE_TEL, dest, msg, msgLength);
 }
 
 /**

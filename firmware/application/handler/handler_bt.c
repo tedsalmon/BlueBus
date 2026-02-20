@@ -396,8 +396,11 @@ void HandlerBTDeviceDisconnected(void *ctx, uint8_t *data)
     if (context->bt->type == BT_BTM_TYPE_BC127) {
         BC127ClearPairingErrors(context->bt);
     }
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-        IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
+    if (
+        ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
+        context->ibus->ignitionStatus != IBUS_IGNITION_OFF
+    ) {
+        IBusCommandTELLED(context->ibus, IBUS_TEL_LED_RED_ON);
     }
     if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
         return;
@@ -490,7 +493,7 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
                     BC127CommandClose(context->bt, context->bt->activeDevice.hfpId);
                 }
             } else {
-                IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
+                IBusCommandTELLED(context->ibus, IBUS_TEL_LED_GREEN_ON);
                 if (context->bt->type == BT_BTM_TYPE_BC127) {
                     // Set the device character set to UTF-8
                     BC127CommandATSet(context->bt, "CSCS", "\"UTF-8\"");
@@ -923,14 +926,15 @@ void HandlerTimerBTVolumeManagement(void *ctx)
 void HandlerTimerBTBC127State(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->bt->powerState == BT_STATE_OFF &&
+    if (
+        context->bt->powerState == BT_STATE_OFF &&
         context->btBootState == HANDLER_BT_BOOT_OK
     ) {
         LogWarning("BC127 Boot Failure");
         uint16_t bootFailCount = ConfigGetBC127BootFailures();
         bootFailCount++;
         ConfigSetBC127BootFailures(bootFailCount);
-        IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED_BLINKING);
+        IBusCommandTELLED(context->ibus, IBUS_TEL_LED_RED_BLINK);
         context->btBootState = HANDLER_BT_BOOT_FAIL;
     }
 }

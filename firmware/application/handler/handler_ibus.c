@@ -5,6 +5,7 @@
  *     Implement the logic around I/K-Bus events
  */
 #include "handler_ibus.h"
+#include "handler_common.h"
 #include <stdint.h>
 
 void HandlerIBusInit(HandlerContext_t *context)
@@ -841,7 +842,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                     }
                 }
             }
-            IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_OFF);
+            IBusCommandTELLED(context->ibus, IBUS_TEL_LED_OFF);
             if (
                 context->lmState.comfortBlinkerStatus != HANDLER_LM_COMF_BLINK_OFF ||
                 context->lmState.comfortParkingLampsStatus != HANDLER_LM_COMF_PARKING_OFF
@@ -874,10 +875,17 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             }
             // Enable the TEL LEDs
             if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {
-                if (context->bt->status == BT_STATUS_DISCONNECTED) {
-                    IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
+                if (
+                    context->bt->type == BT_BTM_TYPE_BC127 &&
+                    context->btBootState == HANDLER_BT_BOOT_FAIL
+                ) {
+                    IBusCommandTELLED(context->ibus, IBUS_TEL_LED_RED_BLINK);
                 } else {
-                    IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
+                    if (context->bt->status == BT_STATUS_DISCONNECTED) {
+                        IBusCommandTELLED(context->ibus, IBUS_TEL_LED_RED_ON);
+                    } else {
+                        IBusCommandTELLED(context->ibus, IBUS_TEL_LED_GREEN_ON);
+                    }
                 }
             }
             IBusCommandSetModuleStatus(
@@ -898,10 +906,17 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
         }
         // Enable the TEL LEDs
         if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {
-            if (context->bt->status == BT_STATUS_DISCONNECTED) {
-                IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_RED);
+            if (
+                context->bt->type == BT_BTM_TYPE_BC127 &&
+                context->btBootState == HANDLER_BT_BOOT_FAIL
+            ) {
+                IBusCommandTELLED(context->ibus, IBUS_TEL_LED_RED_BLINK);
             } else {
-                IBusCommandTELSetLED(context->ibus, IBUS_TEL_LED_STATUS_GREEN);
+                if (context->bt->status == BT_STATUS_DISCONNECTED) {
+                    IBusCommandTELLED(context->ibus, IBUS_TEL_LED_RED_ON);
+                } else {
+                    IBusCommandTELLED(context->ibus, IBUS_TEL_LED_GREEN_ON);
+                }
             }
         }
         // Set the IKE to "found" if we haven't already to prevent
