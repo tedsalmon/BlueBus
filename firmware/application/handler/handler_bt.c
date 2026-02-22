@@ -46,6 +46,16 @@ void HandlerBTInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        BT_EVENT_DEVICE_LINK_DISCONNECTED,
+        &HandlerBTDeviceLinkDisconnected,
+        context
+    );
+    EventRegisterCallback(
+        BT_EVENT_PAIRINGS_LOADED,
+        &HandlerBTPairingsLoaded,
+        context
+    );
+    EventRegisterCallback(
         BT_EVENT_PLAYBACK_STATUS_CHANGE,
         &HandlerBTPlaybackStatus,
         context
@@ -86,9 +96,6 @@ void HandlerBTInit(HandlerContext_t *context)
             context,
             HANDLER_INT_BT_AVRCP_UPDATER
         );
-        BC127CommandStatus(context->bt);
-        BTCommandSetDiscoverable(context->bt, BT_STATE_OFF);
-        BTCommandSetConnectable(context->bt, BT_STATE_OFF);
         BC127CommandList(context->bt);
     } else {
         EventRegisterCallback(
@@ -142,8 +149,10 @@ void HandlerBTInit(HandlerContext_t *context)
  */
 static void HandlerBTConnect(HandlerContext_t *context)
 {
-    uint32_t now = TimerGetMillis();
-    if ((now - context->bt->lastConnection) < BT_CONNECTION_TIMEOUT_MS) {
+    if (
+        context->bt->lastConnection != 0 &&
+        (TimerGetMillis() - context->bt->lastConnection) < BT_CONNECTION_TIMEOUT_MS
+    ) {
         return;
     }
     if (
@@ -398,7 +407,7 @@ void HandlerBTDeviceDisconnected(void *ctx, uint8_t *data)
     }
     if (
         ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
-        context->ibus->ignitionStatus != IBUS_IGNITION_OFF
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF
     ) {
         IBusCommandTELLED(context->ibus, IBUS_TEL_LED_RED_ON);
     }
@@ -519,6 +528,46 @@ void HandlerBTDeviceLinkConnected(void *ctx, uint8_t *data)
     } else {
         BTCommandDisconnect(context->bt);
     }
+}
+
+/**
+ * HandlerBTDeviceDisconnected()
+ *     Description:
+ *         If all profiles are closed for a device, turn on the disconnected LED
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBTDeviceLinkDisconnected(void *ctx, uint8_t *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (
+        ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF &&
+        context->bt->activeDevice.hfpId == 0 &&
+        context->bt->activeDevice.a2dpId == 0 &&
+        context->bt->activeDevice.avrcpId == 0
+    ) {
+        IBusCommandTELLED(context->ibus, IBUS_TEL_LED_RED_ON);
+    }
+}
+
+/**
+ * HandlerBTPairingsLoaded()
+ *     Description:
+ *         After the PDL is loaded, immediately trigger the device scan
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerBTPairingsLoaded(void *ctx, uint8_t *data)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    TimerTriggerScheduledTask(context->deviceScanTimerId);
 }
 
 /**

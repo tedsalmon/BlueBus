@@ -40,6 +40,7 @@ BT_t BTInit()
     bt.playbackStatus = BT_AVRCP_STATUS_PAUSED;
     bt.rxQueueAge = 0;
     bt.powerState = BT_STATE_OFF;
+    bt.lastConnection = 0;
     memset(bt.pairedDevices, 0, sizeof(bt.pairedDevices));
     UtilsStrncpy(bt.callerId, LocaleGetText(LOCALE_STRING_VOICE_ASSISTANT), BT_CALLER_ID_FIELD_SIZE);
     memset(bt.dialBuffer, 0, sizeof(bt.dialBuffer));
@@ -55,10 +56,7 @@ BT_t BTInit()
         UART_BAUD_115200,
         UART_PARITY_NONE
     );
-    if (bt.type == BT_BTM_TYPE_BM83) {
-        // The BM83 is not pairable by default
-        bt.discoverable = BT_STATE_OFF;
-    }
+    bt.discoverable = BT_STATE_OFF;
     return bt;
 }
 

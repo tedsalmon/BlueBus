@@ -8,6 +8,7 @@
 #include "../locale.h"
 #include "bt_common.h"
 #include <stdint.h>
+#include <string.h>
 
 int8_t BTBM83MicGainTable[] = {
     0, // Default
@@ -852,7 +853,7 @@ void BM83ProcessEventAVCVendorDependentRsp(BT_t *bt, uint8_t *data, uint16_t len
  */
 void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
 {
-
+    uint8_t isDisco = 0;
     switch (data[BM83_FRAME_DB0]) {
         case BM83_DATA_BTM_STATUS_POWER_OFF: {
             LogDebug(LOG_SOURCE_BT, "BT: Power Off");
@@ -906,6 +907,7 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         }
         case BM83_DATA_BTM_STATUS_HFP_DISCO: {
             LogDebug(LOG_SOURCE_BT, "BT: HFP Closed");
+            isDisco = 1;
             bt->activeDevice.hfpId = 0;
             uint8_t linkType = BT_LINK_TYPE_HFP;
             EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
@@ -913,6 +915,7 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         }
         case BM83_DATA_BTM_STATUS_A2DP_DISCO: {
             LogDebug(LOG_SOURCE_BT, "BT: A2DP Closed");
+            isDisco = 1;
             bt->activeDevice.deviceId = 0;
             bt->activeDevice.a2dpId = 0;
             uint8_t linkType = BT_LINK_TYPE_A2DP;
@@ -949,6 +952,7 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         }
         case BM83_DATA_BTM_STATUS_AVRCP_DISCO: {
             LogDebug(LOG_SOURCE_BT, "BT: ARVCP Closed");
+            isDisco = 1;
             bt->activeDevice.avrcpId = 0;
             uint8_t linkType = BT_LINK_TYPE_AVRCP;
             EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
@@ -1037,7 +1041,8 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
     if (
         bt->activeDevice.hfpId == 0 &&
         bt->activeDevice.a2dpId == 0 &&
-        bt->activeDevice.avrcpId == 0
+        bt->activeDevice.avrcpId == 0 &&
+        isDisco == 1
     ) {
         bt->status = BT_STATUS_DISCONNECTED;
     }
@@ -1229,7 +1234,7 @@ void BM83ProcessEventPBAP(BT_t *bt, uint8_t *data, uint16_t length)
                     bt->pbap.parser.buffer[0] != ' ' &&
                     bt->pbap.parser.buffer[0] != '\t'
                 ) {
-                    BTProcessPBAPLine(bt);
+                    BTPBAPParseVCard(bt);
                 }
                 bt->pbap.parser.bufferIdx = 0;
                 continue;
@@ -1388,6 +1393,7 @@ void BM83ProcessEventReadPairedDeviceRecord(BT_t *bt, uint8_t *data, uint16_t le
         deviceIndex++;
         pairedDevices--;
     }
+    EventTriggerCallback(BT_EVENT_PAIRINGS_LOADED, 0);
 }
 
 /**

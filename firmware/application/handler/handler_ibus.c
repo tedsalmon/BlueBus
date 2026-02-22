@@ -547,7 +547,8 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
     context->cdChangerLastPoll = now;
     context->cdChangerLastStatus = now;
     if (now > 30000) {
-        if (context->ibus->moduleStatus.MID == 0 &&
+        if (
+            context->ibus->moduleStatus.MID == 0 &&
             context->ibus->moduleStatus.GT == 0 &&
             context->ibus->moduleStatus.BMBT == 0 &&
             context->ibus->moduleStatus.VM == 0 &&
@@ -620,7 +621,6 @@ void HandlerIBusDSPConfigSet(void *ctx, uint8_t *pkt)
  * HandlerIBusFirstMessageReceived()
  *     Description:
  *         Request module status after the first IBus message is received.
- *         DO NOT change the order in which these modules are polled.
  *     Params:
  *         void *ctx - The context provided at registration
  *         uint8_t *tmp - Any event data
@@ -631,6 +631,7 @@ void HandlerIBusFirstMessageReceived(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (context->ibusModulePingState == HANDLER_IBUS_MODULE_PING_STATE_OFF) {
+        IBusCommandCDCAnnounce(context->ibus);
         context->ibusModulePingState = HANDLER_IBUS_MODULE_PING_STATE_READY;
     }
 }
@@ -1254,7 +1255,7 @@ void HandlerIBusLMDimmerStatus(void *ctx, uint8_t *pkt)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (
         ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON &&
-        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_ENABLED) == CONFIG_SETTING_ON
+        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF
     ) {
         uint8_t checksum = IBusGetLMDimmerChecksum(pkt);
         if (checksum != context->lmDimmerChecksum) {
@@ -1979,7 +1980,7 @@ void HandlerTimerIBusLCMIOStatus(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (
         ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON &&
-        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_ENABLED) == CONFIG_SETTING_ON
+        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF
     ) {
         uint32_t now = TimerGetMillis();
         uint32_t timeDiff = now - context->lmLastIOStatus;

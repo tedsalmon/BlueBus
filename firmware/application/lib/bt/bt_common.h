@@ -40,6 +40,7 @@
 
 #define BT_TYPE_CLEAR_ALL 0
 
+// 32 Events Max
 #define BT_EVENT_METADATA_UPDATE 0
 #define BT_EVENT_PLAYBACK_STATUS_CHANGE 1
 #define BT_EVENT_DEVICE_CONNECTED 2
@@ -59,6 +60,7 @@
 #define BT_EVENT_DSP_STATUS 17
 #define BT_EVENT_PBAP_CONTACT_RECEIVED 18
 #define BT_EVENT_PBAP_SESSION_STATUS 19
+#define BT_EVENT_PAIRINGS_LOADED 20
 
 #define BT_LEN_MAC_ID 6
 
@@ -82,6 +84,7 @@
 #define BT_LINK_TYPE_HFP 4
 #define BT_LINK_TYPE_BLE 5
 #define BT_LINK_TYPE_MAP 6
+#define BT_LINK_TYPE_PBAP 7
 
 #define BT_LIST_STATUS_OFF 0
 #define BT_LIST_STATUS_RUNNING 1
@@ -97,6 +100,14 @@
 #define BT_PBAP_CONTACT_NAME_LEN 32
 #define BT_PBAP_LINE_BUFFER_SIZE 64
 #define BT_PBAP_MAX_CONTACTS 8
+
+#define BT_PBAP_OBJ_COMBINED 0x04
+#define BT_PBAP_OBJ_FAVORITES 0x05
+#define BT_PBAP_OBJ_INCOMING 0x01
+#define BT_PBAP_OBJ_MISSED 0x03
+#define BT_PBAP_OBJ_OUTGOING 0x02
+#define BT_PBAP_OBJ_PHONEBOOK 0x00
+#define BT_PBAP_OBJ_SPEEDDIAL 0x06
 
 #define BT_PBAP_FRAME_DELIM 0x0D // <CR>
 
@@ -305,9 +316,9 @@ typedef struct BT_t {
     uint8_t pairedDevicesCount: 4;
     uint8_t pairedDevicesFound: 4;
     uint8_t pairingErrors[BT_PROFILE_COUNT];
+    uint32_t lastConnection;
     uint32_t metadataTimestamp;
     uint32_t rxQueueAge;
-    uint32_t lastConnection;
     char title[BT_METADATA_FIELD_SIZE];
     char artist[BT_METADATA_FIELD_SIZE];
     char album[BT_METADATA_FIELD_SIZE];
@@ -322,11 +333,11 @@ void BTClearMetadata(BT_t *);
 void BTClearPairedDevices(BT_t *);
 BTConnection_t BTConnectionInit();
 void BTPairedDeviceClearRecords(void);
+uint8_t BTPairedDeviceFind(BT_t *, uint8_t *);
 void BTPairedDeviceInit(BT_t *, uint8_t *, uint8_t);
 void BTPairedDeviceLoadRecord(BTPairedDevice_t *, uint8_t);
 void BTPairedDeviceSave(uint8_t *, char *, uint8_t);
-uint8_t BTPairedDevicesFind(BT_t *, uint8_t *);
-void BTPBAPBCDToPhoneNumber(const uint8_t *, char *, uint8_t);
-uint8_t BTPBAPPhoneNumberToBCD(const char *, uint8_t *);
-void BTParseVCard(BT_t *);
+void BTPBAPParseVCard(BT_t *);
+void BTPBAPTelephoneFromBCD(const uint8_t *, char *, uint8_t);
+uint8_t BTPBAPTelephoneToBCD(const char *, uint8_t *);
 #endif /* BT_COMMON_H */

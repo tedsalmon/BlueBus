@@ -644,9 +644,9 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         return;
     }
     char tempUnit = 'C';
-    char ambtempstr[8] = {0};
-    char oiltempstr[7] = {0};
-    char cooltempstr[7] = {0};
+    char ambtempstr[14] = {0};
+    char oiltempstr[14] = {0};
+    char cooltempstr[14] = {0};
 
     if (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) {
         tempUnit = 'F';
@@ -665,28 +665,59 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
             cooltemp = (cooltemp * 1.8 + 32 + 0.5);
         }
     }
-
-    char temperature[29] = {0};
-
-    if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
-        snprintf(ambtempstr, 8, "A:%s", context->ibus->ambientTemperatureCalculated);
-    } else {
-        snprintf(ambtempstr, 8, "A:%+d", ambtemp);
-    }
-    if (cooltemp > 0) {
-        snprintf(cooltempstr, 7, "C:%d,", cooltemp);
-    }
-    if (oiltemp > 0) {
-        snprintf(oiltempstr, 7, "O:%d,", oiltemp);
-        snprintf(temperature, 29, "%s%s%s\xB0%c", oiltempstr, cooltempstr, ambtempstr, tempUnit);
-    } else {
-        snprintf(temperature, 29, "Temp\xB0%c: %s%s", tempUnit, cooltempstr, ambtempstr);
-    }
-
-    if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
+    if (context->ibus->gtVersion >= IBUS_GT_MKIV_STATIC) {
+        char temperature[29] = {0};
+        if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
+            snprintf(ambtempstr, 8, "A:%s", context->ibus->ambientTemperatureCalculated);
+        } else {
+            snprintf(ambtempstr, 8, "A:%+d", ambtemp);
+        }
+        if (cooltemp > 0) {
+            snprintf(cooltempstr, 7, "C:%d,", cooltemp);
+        }
+        if (oiltemp > 0) {
+            snprintf(oiltempstr, 7, "O:%d,", oiltemp);
+            snprintf(temperature, 29, "%s%s%s\xB0%c", oiltempstr, cooltempstr, ambtempstr, tempUnit);
+        } else {
+            snprintf(temperature, 29, "Temp\xB0%c: %s%s", tempUnit, cooltempstr, ambtempstr);
+        }
         IBusCommandGTWriteIndexStatic(context->ibus, 0x45, temperature);
     } else {
-        IBusCommandGTWriteIndex(context->ibus, 4, temperature);
+        uint8_t currentIdx = 5;
+        char header[9] = {0};
+        snprintf(header, 9, "Temp\xB0%c:", tempUnit);
+        IBusCommandGTWriteIndex(context->ibus, currentIdx++, header);
+        if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
+            snprintf(ambtempstr, 8, "A:%s", context->ibus->ambientTemperatureCalculated);
+            IBusCommandGTWriteIndex(
+                context->ibus,
+                currentIdx++,
+                ambtempstr
+            );
+        } else {
+            snprintf(ambtempstr, 8, "A:%+d", ambtemp);
+            IBusCommandGTWriteIndex(
+                context->ibus,
+                currentIdx++,
+                ambtempstr
+            );
+        }
+        if (cooltemp > 0) {
+            snprintf(cooltempstr, 7, "C:%d", cooltemp);
+            IBusCommandGTWriteIndex(
+                context->ibus,
+                currentIdx++,
+                cooltempstr
+            );
+        }
+        if (oiltemp > 0) {
+            snprintf(oiltempstr, 7, "O:%d", oiltemp);
+            IBusCommandGTWriteIndex(
+                context->ibus,
+                currentIdx++,
+                oiltempstr
+            );
+        }
     }
 }
 
@@ -2531,7 +2562,10 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
 void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->status.tvStatus == BMBT_TV_STATUS_ON) {
+    if (
+        context->status.tvStatus == BMBT_TV_STATUS_ON ||
+        context->status.playerMode == BMBT_MODE_INACTIVE
+    ) {
         return;
     }
     if (context->ibus->gtInputSrc == IBUS_GT_INPUT_SRC_GT) {
@@ -2765,10 +2799,13 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
         tempUnit = 'F';
     }
 
-    if (config == CONFIG_SETTING_TEMP_AMBIENT &&
-        (updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED ||
-        updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP ||
-        updateType == IBUS_SENSOR_VALUE_TEMP_UNIT) &&
+    if (
+        config == CONFIG_SETTING_TEMP_AMBIENT &&
+        (
+            updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED ||
+            updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP ||
+            updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
+        ) &&
         context->ibus->ambientTemperatureCalculated[0] != 0
     ) {
         snprintf(temperature, 8, "%s\xB0%c", context->ibus->ambientTemperatureCalculated, tempUnit);

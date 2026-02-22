@@ -102,7 +102,7 @@
 #define BMBT_HEADER_TIMER_WRITE_INT 100
 #define BMBT_HEADER_TIMER_WRITE_TIMEOUT 500
 #define BMBT_MENU_HEADER_TIMER_OFF 255
-/* 23 + 1 for null terminator */
+/* 23 + 1 for null terminator / This is 14 for the older UI */
 #define BMBT_MENU_STRING_MAX_SIZE 24
 #define BMBT_METADATA_MODE_OFF 0x00
 #define BMBT_METADATA_MODE_PARTY 0x01

@@ -103,6 +103,8 @@ void BC127ProcessEventName(BT_t *, char **, char *);
 void BC127ProcessEventOk(BT_t *, char **);
 void BC127ProcessEventOpenError(BT_t *, char **);
 void BC127ProcessEventOpenOk(BT_t *, char **);
+void BC127ProcessEventPBPull(BT_t *, char **, char *, uint8_t);
+void BC127ProcessEventPBPullData(BT_t *, char *);
 void BC127ProcessEventSCO(BT_t *, uint8_t);
 void BC127ProcessEventState(BT_t *, char **);
 void BC127Process(BT_t *);

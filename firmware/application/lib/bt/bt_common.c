@@ -57,7 +57,7 @@ void BTClearPairedDevices(BT_t *bt)
 }
 
 /**
- * BTPairedDevicesFind()
+ * BTPairedDeviceFind()
  *     Description:
  *        Clear the paired devices list
  *     Params:
@@ -65,7 +65,7 @@ void BTClearPairedDevices(BT_t *bt)
  *     Returns:
  *         void
  */
-uint8_t BTPairedDevicesFind(BT_t *bt, uint8_t *macId)
+uint8_t BTPairedDeviceFind(BT_t *bt, uint8_t *macId)
 {
     uint8_t idx;
     for (idx = 0; idx < bt->pairedDevicesCount; idx++) {
@@ -73,7 +73,7 @@ uint8_t BTPairedDevicesFind(BT_t *bt, uint8_t *macId)
             return idx;
         }
     }
-    return 0;
+    return 0xFF;
 }
 
 /**
@@ -262,7 +262,115 @@ void BTPairedDeviceSave(uint8_t *macId, char *deviceName, uint8_t devIdx)
 }
 
 /**
- * BTPBAPBCDToPhoneNumber()
+ * BTPBAPParseVCard()
+ *     Description:
+ *         Process a single line from vCard data
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BTPBAPParseVCard(BT_t *bt)
+{
+    char *line = bt->pbap.parser.buffer;
+    uint8_t len = bt->pbap.parser.bufferIdx;
+    if (memcmp(line, "BEGIN:VCARD", 11) == 0) {
+        bt->pbap.parser.inVCard = 1;
+        bt->pbap.contactIdx = bt->pbap.contactCount;
+        if (bt->pbap.contactIdx < BT_PBAP_MAX_CONTACTS) {
+            memset(&bt->pbap.contacts[bt->pbap.contactIdx], 0, sizeof(BTPBAPContact_t));
+        }
+        return;
+    }
+    if (memcmp(line, "END:VCARD", 9) == 0) {
+        if (
+            bt->pbap.parser.inVCard &&
+            bt->pbap.contactIdx < BT_PBAP_MAX_CONTACTS
+        ) {
+            bt->pbap.contactCount++;
+        }
+        bt->pbap.parser.inVCard = 0;
+        return;
+    }
+    // Exit if we are not within a vCard
+    if (!bt->pbap.parser.inVCard) {
+        return;
+    }
+    if (bt->pbap.contactIdx >= BT_PBAP_MAX_CONTACTS) {
+        return;
+    }
+    if (memcmp(line, "FN:", 3) == 0 || memcmp(line, "FN;", 3) == 0) {
+        // FN may have parameters (e.g. FN;CHARSET=UTF-8:Name)
+        int8_t colonIdx = UtilsCharIndex(line, ':');
+        if (colonIdx <= 0) {
+            return;
+        }
+        uint8_t nameStart = (uint8_t) colonIdx + 1;
+        uint8_t nameLen = len - nameStart;
+        if (nameLen >= BT_PBAP_CONTACT_NAME_LEN) {
+            nameLen = BT_PBAP_CONTACT_NAME_LEN - 1;
+        }
+        BTPBAPContact_t *contact = &bt->pbap.contacts[bt->pbap.contactIdx];
+        memcpy(contact->name, line + nameStart, nameLen);
+        contact->name[nameLen] = '\0';
+        return;
+    }
+    if (
+        memcmp(line, "TEL:", 4) == 0 ||
+        memcmp(line, "TEL;", 4) == 0
+    ) {
+        BTPBAPContact_t *contact = &bt->pbap.contacts[bt->pbap.contactIdx];
+        BTPBAPContactTelephone_t *tel = &contact->numbers[contact->numberCount];
+        // Parse type
+        uint8_t telType = BT_PBAP_TEL_TYPE_UNKNOWN;
+        int8_t numStart = UtilsCharIndex(line, ':');
+        if (numStart <= 0) {
+            return;
+        }
+        uint8_t numberStart = (uint8_t) numStart;
+        // We will reuse this counter
+        uint8_t i;
+        // Check for type parameter
+        if (line[3] == ';' && numberStart > 3) {
+            int8_t typeDeclarationEnd = UtilsCharIndex(line, '=');
+            // 4 is right after the ';'
+            uint8_t typeStrIdx = 4;
+            if (typeDeclarationEnd > 0) {
+                typeStrIdx = typeDeclarationEnd + 1;
+            }
+            uint8_t typeLen = numberStart - typeStrIdx;
+            char telTypeStr[typeLen + 1];
+            memset(telTypeStr, 0, typeLen + 1);
+            for (i = 0; i < typeLen; i++) {
+                telTypeStr[i] = line[i + typeStrIdx];
+            }
+            if (
+                UtilsStricmp(telTypeStr, "CELL") == 0 ||
+                UtilsStricmp(telTypeStr, "MOBILE") == 0
+            ) {
+                telType = BT_PBAP_TEL_TYPE_CELL;
+            } else if (UtilsStricmp(telTypeStr, "HOME") == 0) {
+                telType = BT_PBAP_TEL_TYPE_HOME;
+            } else if (UtilsStricmp(telTypeStr, "WORK") == 0) {
+                telType = BT_PBAP_TEL_TYPE_WORK;
+            }
+        }
+        numberStart++;
+        uint8_t numberLen = len - numberStart;
+        char number[numberLen + 1];
+        memset(number, 0, numberLen + 1);
+        for (i = 0; i < numberLen; i++) {
+            number[i] = line[i + numberStart];
+        }
+        tel->type = telType;
+        BTPBAPTelephoneToBCD(number, tel->number);
+        contact->numberCount++;
+    }
+}
+
+
+/**
+ * BTPBAPTelephoneFromBCD()
  *     Description:
  *         Convert a BCD-encoded phone number to ASCII string
  *     Params:
@@ -272,7 +380,7 @@ void BTPairedDeviceSave(uint8_t *macId, char *deviceName, uint8_t devIdx)
  *     Returns:
  *         void
  */
-void BTPBAPBCDToPhoneNumber(const uint8_t *bcd, char *ascii, uint8_t maxLen)
+void BTPBAPTelephoneFromBCD(const uint8_t *bcd, char *ascii, uint8_t maxLen)
 {
     uint8_t i;
     uint8_t pos = 0;
@@ -308,7 +416,7 @@ void BTPBAPBCDToPhoneNumber(const uint8_t *bcd, char *ascii, uint8_t maxLen)
 }
 
 /**
- * BTPBAPPhoneNumberToBCD()
+ * BTPBAPTelephoneToBCD()
  *     Description:
  *         Convert an ASCII phone number to BCD encoding
  *     Params:
@@ -317,7 +425,7 @@ void BTPBAPBCDToPhoneNumber(const uint8_t *bcd, char *ascii, uint8_t maxLen)
  *     Returns:
  *         uint8_t - Number of digits encoded
  */
-uint8_t BTPBAPPhoneNumberToBCD(const char *ascii, uint8_t *bcd)
+uint8_t BTPBAPTelephoneToBCD(const char *ascii, uint8_t *bcd)
 {
     uint8_t i;
     uint8_t digitCount = 0;
@@ -354,104 +462,3 @@ uint8_t BTPBAPPhoneNumberToBCD(const char *ascii, uint8_t *bcd)
     }
     return digitCount;
 }
-
-/**
- * BTParseVCard()
- *     Description:
- *         Process a single line from vCard data
- *     Params:
- *         BT_t *bt - A pointer to the module object
- *     Returns:
- *         void
- */
-void BTParseVCard(BT_t *bt)
-{
-    char *line = bt->pbap.parser.buffer;
-    uint8_t len = bt->pbap.parser.bufferIdx;
-    if (memcmp(line, "BEGIN:VCARD", 11) == 0) {
-        bt->pbap.parser.inVCard = 1;
-        bt->pbap.contactIdx = bt->pbap.contactCount;
-        if (bt->pbap.contactIdx < BT_PBAP_MAX_CONTACTS) {
-            memset(&bt->pbap.contacts[bt->pbap.contactIdx], 0, sizeof(BTPBAPContact_t));
-        }
-        return;
-    }
-    if (memcmp(line, "END:VCARD", 8) == 0) {
-        if (
-            bt->pbap.parser.inVCard &&
-            bt->pbap.contactIdx < BT_PBAP_MAX_CONTACTS
-        ) {
-            bt->pbap.contactCount++;
-        }
-        bt->pbap.parser.inVCard = 0;
-        return;
-    }
-    // Exit if we are not within a vCard
-    if (!bt->pbap.parser.inVCard) {
-        return;
-    }
-    if (bt->pbap.contactIdx >= BT_PBAP_MAX_CONTACTS) {
-        return;
-    }
-    if (memcmp(line, "FN:", 3) == 0) {
-        uint8_t nameLen = len - 3;
-        if (nameLen >= BT_PBAP_CONTACT_NAME_LEN) {
-            nameLen = BT_PBAP_CONTACT_NAME_LEN - 1;
-        }
-        BTPBAPContact_t *contact = &bt->pbap.contacts[bt->pbap.contactIdx];
-        memcpy(contact->name, line + 3, nameLen);
-        contact->name[nameLen] = '\0';
-        return;
-    }
-    if (
-        memcmp(line, "TEL:", 4) == 0 ||
-        memcmp(line, "TEL;", 4) == 0
-    ) {
-        BTPBAPContact_t *contact = &bt->pbap.contacts[bt->pbap.contactIdx];
-        BTPBAPContactTelephone_t *tel = &contact->numbers[contact->numberCount];
-        // Parse type
-        uint8_t telType = BT_PBAP_TEL_TYPE_UNKNOWN;
-        uint8_t numberStart = (uint8_t) UtilsCharIndex(line, ':');
-        if (numberStart == 0) {
-            return;
-        }
-        // We will reuse this counter
-        uint8_t i;
-        // Check for type parameter
-        if (line[3] == ';' && numberStart > 3) {
-            int8_t typeDeclarationEnd = UtilsCharIndex(line, '=');
-            // 4 is right after the ';'
-            uint8_t typeStrIdx = 4;
-            if (typeDeclarationEnd > 0) {
-                typeStrIdx = typeDeclarationEnd + 1;
-            }
-            uint8_t typeLen = numberStart - typeStrIdx;
-            char telTypeStr[typeLen + 1];
-            memset(telTypeStr, 0, typeLen + 1);
-            for (i = 0; i < typeLen; i++) {
-                telTypeStr[i] = line[i + typeStrIdx];
-            }
-            if (
-                UtilsStricmp(telTypeStr, "CELL") == 0 ||
-                UtilsStricmp(telTypeStr, "MOBILE") == 0
-            ) {
-                telType = BT_PBAP_TEL_TYPE_CELL;
-            } else if (UtilsStricmp(telTypeStr, "HOME") == 0) {
-                telType = BT_PBAP_TEL_TYPE_HOME;
-            } else if (UtilsStricmp(telTypeStr, "WORK") == 0) {
-                telType = BT_PBAP_TEL_TYPE_WORK;
-            }
-        }
-        numberStart++;
-        uint8_t numberLen = len - numberStart;
-        char number[numberLen];
-        memset(&number, 0, numberLen);
-        for (i = 0; i < numberLen; i++) {
-            number[i] = line[i + numberStart];
-        }
-        tel->type = telType;
-        BTPBAPPhoneNumberToBCD(number, tel->number);
-        contact->numberCount++;
-    }
-}
-

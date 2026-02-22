@@ -5,6 +5,7 @@
  *     Implement Upgrade Tasks
  */
 #include "upgrade.h"
+#include "lib/bt/bt_common.h"
 #include "lib/config.h"
 
 /**
@@ -129,7 +130,7 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
     }
     // Changes in version 1.3.5
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 3, 5) == 1) {
-        ConfigSetSetting(CONFIG_SETTING_LM_IO_POLL_ENABLED, CONFIG_SETTING_ON);
+        ConfigSetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED, CONFIG_SETTING_OFF);
         LogRaw("Ran Upgrade 1.3.5\r\n");
     }
     // Changes in version 1.4.0
@@ -139,6 +140,12 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
         ConfigSetSetting(CONFIG_SETTING_NAV, CONFIG_SETTING_OFF);
         ConfigSetSetting(CONFIG_SETTING_AUTO_TIME, CONFIG_SETTING_OFF);
         LogRaw("Ran Upgrade 1.4.0\r\n");
+    }
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 4, 6) == 1) {
+        if (bt->type == BT_BTM_TYPE_BC127) {
+            BC127CommandSetBtState(bt, BT_STATE_OFF, BT_STATE_OFF);
+            BC127CommandWrite(bt);
+        }
     }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,

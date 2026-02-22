@@ -1522,7 +1522,7 @@ uint8_t IBusGetNavType(uint8_t *packet)
         navType = IBUS_GT_MKIII_NEW_UI;
     }
     if (navType == IBUS_GT_MKIV &&
-        (softwareVersion == 0 || softwareVersion == 1 || softwareVersion >= 40)
+        (softwareVersion <= 2 || softwareVersion >= 40)
     ) {
         navType = IBUS_GT_MKIV_STATIC;
     }

@@ -502,6 +502,107 @@ void BC127CommandList(BT_t *bt)
 }
 
 /**
+ * BC127CommandPBAPAbort()
+ *     Description:
+ *         Abort an active phonebook download
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandPBAPAbort(BT_t *bt)
+{
+    if (bt->activeDevice.pbapId != 0) {
+        char command[13] = {0};
+        snprintf(command, 13, "PB_ABORT %02X", bt->activeDevice.pbapId);
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to PB_ABORT - PBAP link unopened");
+    }
+}
+
+/**
+ * BC127CommandPBAPClose()
+ *     Description:
+ *         Close the PBAP session by closing the PBAP profile link
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandPBAPClose(BT_t *bt)
+{
+    if (bt->activeDevice.pbapId != 0) {
+        if (bt->pbap.status == BT_PBAP_STATUS_WAITING) {
+            BC127CommandPBAPAbort(bt);
+        }
+        BC127CommandProfileClose(bt, bt->activeDevice.pbapId);
+    } else {
+        LogWarning("BT: Unable to close PBAP - link unopened");
+    }
+}
+
+/**
+ * BC127CommandPBAPGetPhonebook()
+ *     Description:
+ *         Download contacts from the phone via PBAP.
+ *         PB_PULL <link_ID> <repository> <phonebook> <maxlist> <start_index> <filter>
+ *         Filter 0x82 = FN | TEL
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         uint8_t phonebook - The phonebook to pull (1=main, 2=incoming, 3=outgoing, 4=missed, 5=combined)
+ *         uint16_t startIndex - The starting index
+ *         uint8_t maxList - Maximum number of entries to download
+ *     Returns:
+ *         void
+ */
+void BC127CommandPBAPGetPhonebook(BT_t *bt, uint8_t phonebook, uint16_t startIndex, uint8_t maxList)
+{
+    if (bt->activeDevice.pbapId != 0) {
+        bt->pbap.status = BT_PBAP_STATUS_WAITING;
+        bt->pbap.contactCount = 0;
+        bt->pbap.contactIdx = 0;
+        memset(&bt->pbap.parser, 0, sizeof(bt->pbap.parser));
+        memset(bt->pbap.contacts, 0, sizeof(bt->pbap.contacts));
+        char command[32] = {0};
+        snprintf(
+            command,
+            32,
+            "PB_PULL %d 1 %d %d %d 82",
+            bt->activeDevice.pbapId,
+            phonebook,
+            maxList,
+            startIndex
+        );
+        BC127SendCommand(bt, command);
+    } else {
+        LogWarning("BT: Unable to PB_PULL - PBAP link unopened");
+    }
+}
+
+/**
+ * BC127CommandPBAPOpen()
+ *     Description:
+ *         Open a PBAP profile connection with the active device
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *     Returns:
+ *         void
+ */
+void BC127CommandPBAPOpen(BT_t *bt)
+{
+    if (bt->activeDevice.deviceId != 0) {
+        BC127CommandProfileOpen(
+            bt,
+            &bt->pairedDevices[bt->activeDevice.deviceIndex],
+            "PBAP"
+        );
+    } else {
+        LogWarning("BT: Unable to open PBAP - no active device");
+    }
+}
+
+/**
  * BC127CommandPause()
  *     Description:
  *         Pause the currently selected A2DP device
@@ -1489,6 +1590,12 @@ void BC127ProcessEventCloseOk(BT_t *bt, char **msgBuf)
         bt->activeDevice.deviceId == 0
     ) {
         LogDebug(LOG_SOURCE_BT, "BT: Closed Link: %s", msgBuf[1]);
+        if (strcmp(msgBuf[2], "PBAP") == 0) {
+            bt->pbap.active = 0;
+            bt->pbap.status = BT_PBAP_STATUS_IDLE;
+            uint8_t pbapStatus = 0xFF;
+            EventTriggerCallback(BT_EVENT_PBAP_SESSION_STATUS, &pbapStatus);
+        }
         uint8_t status = BC127ConnectionCloseProfile(
             &bt->activeDevice,
             msgBuf[2]
@@ -1525,7 +1632,10 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
         BTClearActiveDevice(bt);
         uint8_t macId[6] = {0};
         BC127ConvertMACIDToHex(msgBuf[4], macId);
-        bt->activeDevice.deviceIndex = BTPairedDevicesFind(bt, macId);
+
+        uint8_t deviceIndex = BTPairedDeviceFind(bt, macId);
+        LogWarning("%s / %02X / %d", msgBuf[4], macId[0], deviceId);
+        bt->activeDevice.deviceIndex = deviceIndex;
         bt->activeDevice.status = BT_DEVICE_STATUS_CONNECTED;
         bt->activeDevice.deviceId = deviceId;
         BTPairedDevice_t *dev = &bt->pairedDevices[bt->activeDevice.deviceIndex];
@@ -1533,6 +1643,12 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
         isNew = 1;
     }
     if (bt->activeDevice.deviceId == deviceId) {
+        // PBAP requires special handling
+        if (strcmp(msgBuf[3], "PBAP") == 0 && bt->pbap.active == 0) {
+            bt->pbap.active = 1;
+            bt->pbap.status = BT_PBAP_STATUS_IDLE;
+            EventTriggerCallback(BT_EVENT_PBAP_SESSION_STATUS, 0);
+        }
         uint8_t linkId = UtilsStrToInt(msgBuf[1]);
         BC127ConnectionOpenProfile(&bt->activeDevice, msgBuf[3], linkId);
         // Set the playback status
@@ -1609,6 +1725,12 @@ void BC127ProcessEventList(BT_t *bt, char **msgBuf)
         BC127ConvertMACIDToHex(msgBuf[1], macId);
         BTPairedDeviceInit(bt, macId, deviceIndex);
     }
+    if (
+        bt->pairedDevicesCheck == BT_LIST_STATUS_RAN &&
+        bt->pairedDevicesFound == bt->pairedDevicesCount
+    ) {
+        EventTriggerCallback(BT_EVENT_PAIRINGS_LOADED, 0);
+    }
 }
 
 /**
@@ -1674,6 +1796,22 @@ void BC127ProcessEventOk(BT_t *bt, char **msgBuf)
     if (bt->pairedDevicesCheck == BT_LIST_STATUS_RUNNING) {
         bt->pairedDevicesCheck = BT_LIST_STATUS_RAN;
         BC127CommandList(bt);
+        BC127CommandStatus(bt);
+    }
+    if (bt->pbap.status == BT_PBAP_STATUS_WAITING) {
+        // Flush any residual data left in the parser buffer (e.g. END:VCARD)
+        if (bt->pbap.parser.bufferIdx > 0) {
+            bt->pbap.parser.buffer[bt->pbap.parser.bufferIdx] = '\0';
+            BTPBAPParseVCard(bt);
+            bt->pbap.parser.bufferIdx = 0;
+        }
+        bt->pbap.status = BT_PBAP_STATUS_IDLE;
+        LogDebug(
+            LOG_SOURCE_BT,
+            "BT: PBAP complete, %d contacts",
+            bt->pbap.contactCount
+        );
+        EventTriggerCallback(BT_EVENT_PBAP_CONTACT_RECEIVED, 0);
     }
 }
 
@@ -1736,7 +1874,7 @@ void BC127ProcessEventOpenOk(BT_t *bt, char **msgBuf)
         BTClearActiveDevice(bt);
         uint8_t macId[6] = {0};
         BC127ConvertMACIDToHex(msgBuf[3], macId);
-        bt->activeDevice.deviceIndex = BTPairedDevicesFind(bt, macId);
+        bt->activeDevice.deviceIndex = BTPairedDeviceFind(bt, macId);
         bt->activeDevice.status = BT_DEVICE_STATUS_CONNECTED;
         bt->activeDevice.deviceId = deviceId;
         BTPairedDevice_t *dev = &bt->pairedDevices[bt->activeDevice.deviceIndex];
@@ -1767,11 +1905,116 @@ void BC127ProcessEventOpenOk(BT_t *bt, char **msgBuf)
         linkType = BT_LINK_TYPE_MAP;
         bt->pairingErrors[BC127_LINK_MAP] = 0;
     }
+    if (strcmp(msgBuf[2], "PBAP") == 0) {
+        bt->pairingErrors[BC127_LINK_PBAP] = 0;
+        linkType = BT_LINK_TYPE_PBAP;
+        bt->pbap.active = 1;
+        bt->pbap.status = BT_PBAP_STATUS_IDLE;
+        uint8_t status = 0;
+        EventTriggerCallback(BT_EVENT_PBAP_SESSION_STATUS, &status);
+    }
     LogDebug(LOG_SOURCE_BT, "BT: Open %s for ID %s", msgBuf[2], msgBuf[1]);
     EventTriggerCallback(
         BT_EVENT_DEVICE_LINK_CONNECTED,
         &linkType
     );
+}
+
+/**
+ * BC127PBAPFeedData()
+ *     Description:
+ *         Scan input data for the literal 6-char delimiter \0D\0A that the
+ *         BC127 uses to represent line breaks in PBAP vCard data.
+ *         Characters are accumulated into parser.buffer one at a time.
+ *         On each delimiter hit the buffer is null-terminated and
+ *         BTPBAPParseVCard() is called, then bufferIdx is reset.
+ *         Partial lines are left in the buffer for the next call.
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         const char *data - Input data to scan
+ *         uint16_t len - Length of input data
+ *     Returns:
+ *         void
+ */
+static void BC127PBAPFeedData(BT_t *bt, const char *data, uint16_t len)
+{
+    BTPBAPParserState_t *parser = &bt->pbap.parser;
+    uint16_t i = 0;
+    while (i < len) {
+        // Check for the literal 6-char delimiter \0D\0A
+        if (i + 5 < len &&
+            data[i]     == '\\' &&
+            data[i + 1] == '0' &&
+            data[i + 2] == 'D' &&
+            data[i + 3] == '\\' &&
+            data[i + 4] == '0' &&
+            data[i + 5] == 'A'
+        ) {
+            // Delimiter found: null-terminate and parse
+            parser->buffer[parser->bufferIdx] = '\0';
+            BTPBAPParseVCard(bt);
+            parser->bufferIdx = 0;
+            i += 6;
+        } else {
+            if (parser->bufferIdx < BT_PBAP_LINE_BUFFER_SIZE - 1) {
+                parser->buffer[parser->bufferIdx++] = data[i];
+            }
+            i++;
+        }
+    }
+}
+
+/**
+ * BC127ProcessEventPBPull()
+ *     Description:
+ *         Process a PB_PULL notification line. The first PB_PULL message
+ *         contains the link ID, size, and the beginning of vCard data.
+ *         The vCard data is fed line-by-line into the shared vCard parser.
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         char **msgBuf - The tokenized message
+ *         char *msg - The raw message string
+ *         uint8_t delimCount - Number of tokens
+ *     Returns:
+ *         void
+ */
+void BC127ProcessEventPBPull(BT_t *bt, char **msgBuf, char *msg, uint8_t delimCount)
+{
+    if (bt->pbap.status != BT_PBAP_STATUS_WAITING) {
+        return;
+    }
+    if (delimCount < 4) {
+        return;
+    }
+    // Find the start of vCard data after "PB_PULL <linkId> <size> "
+    char *dataStart = msg;
+    uint8_t spaceCount = 0;
+    while (*dataStart != '\0' && spaceCount < 3) {
+        if (*dataStart == ' ') {
+            spaceCount++;
+        }
+        dataStart++;
+    }
+    if (*dataStart == '\0') {
+        return;
+    }
+    BC127PBAPFeedData(bt, dataStart, strlen(dataStart));
+}
+
+/**
+ * BC127ProcessEventPBPullData()
+ *     Description:
+ *         Process a bare vCard data line during an active PB_PULL.
+ *         These are continuation lines that arrive without the PB_PULL prefix.
+ *     Params:
+ *         BT_t *bt - A pointer to the module object
+ *         char *msg - The raw message string
+ *     Returns:
+ *         void
+ */
+void BC127ProcessEventPBPullData(BT_t *bt, char *msg)
+{
+    BC127PBAPFeedData(bt, msg, strlen(msg));
 }
 
 /**
@@ -1842,9 +2085,11 @@ void BC127Process(BT_t *bt)
 {
     uint16_t messageLength = CharQueueSeek(&bt->uart.rxQueue, BC127_MSG_END_CHAR);
     if (messageLength > 0) {
+        LogWarning("%d / %d", messageLength, CharQueueGetSize(&bt->uart.rxQueue));
         // We received a valid message, so set the power & state to on
         bt->powerState = BT_STATE_ON;
         char msg[messageLength];
+        memset(msg, 0, messageLength);
         uint16_t i;
         uint16_t delimCount = 1;
         for (i = 0; i < messageLength; i++) {
@@ -2055,5 +2300,6 @@ void BC127ConnectionOpenProfile(BTConnection_t *conn, char *profile, uint8_t lin
         conn->mapId = linkId;
     } else if (strcmp(profile, "PBAP") == 0) {
         conn->pbapId = linkId;
+        LogWarning("PBAP: %d / %d", linkId, conn->pbapId);
     }
 }
