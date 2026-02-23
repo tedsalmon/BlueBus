@@ -40,6 +40,9 @@ int8_t BTBC127MicGainTable[] = {
     39 // Technically 39.5 - D6
 };
 
+/* The literal 6-char escape sequence the BC127 uses for CRLF in PBAP data */
+static const char BC127_PBAP_DELIM[] = "\\0D\\0A";
+
 /**
  * BC127ClearPairingErrors()
  *     Description:
@@ -533,7 +536,7 @@ void BC127CommandPBAPAbort(BT_t *bt)
 void BC127CommandPBAPClose(BT_t *bt)
 {
     if (bt->activeDevice.pbapId != 0) {
-        if (bt->pbap.status == BT_PBAP_STATUS_WAITING) {
+        if (bt->pbap.status != BT_PBAP_STATUS_IDLE) {
             BC127CommandPBAPAbort(bt);
         }
         BC127CommandProfileClose(bt, bt->activeDevice.pbapId);
@@ -559,7 +562,7 @@ void BC127CommandPBAPClose(BT_t *bt)
 void BC127CommandPBAPGetPhonebook(BT_t *bt, uint8_t phonebook, uint16_t startIndex, uint8_t maxList)
 {
     if (bt->activeDevice.pbapId != 0) {
-        bt->pbap.status = BT_PBAP_STATUS_WAITING;
+        bt->pbap.status = BT_PBAP_STATUS_PENDING;
         bt->pbap.contactCount = 0;
         bt->pbap.contactIdx = 0;
         memset(&bt->pbap.parser, 0, sizeof(bt->pbap.parser));
@@ -1634,7 +1637,6 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
         BC127ConvertMACIDToHex(msgBuf[4], macId);
 
         uint8_t deviceIndex = BTPairedDeviceFind(bt, macId);
-        LogWarning("%s / %02X / %d", msgBuf[4], macId[0], deviceId);
         bt->activeDevice.deviceIndex = deviceIndex;
         bt->activeDevice.status = BT_DEVICE_STATUS_CONNECTED;
         bt->activeDevice.deviceId = deviceId;
@@ -1799,6 +1801,17 @@ void BC127ProcessEventOk(BT_t *bt, char **msgBuf)
         BC127CommandStatus(bt);
     }
     if (bt->pbap.status == BT_PBAP_STATUS_WAITING) {
+        // Flush any partial delimiter match into the line buffer
+        if (bt->pbap.parser.isDelim > 0) {
+            uint8_t j;
+            for (j = 0; j < bt->pbap.parser.isDelim; j++) {
+                if (bt->pbap.parser.bufferIdx < BT_PBAP_LINE_BUFFER_SIZE - 1) {
+                    bt->pbap.parser.buffer[bt->pbap.parser.bufferIdx++] =
+                        BC127_PBAP_DELIM[j];
+                }
+            }
+            bt->pbap.parser.isDelim = 0;
+        }
         // Flush any residual data left in the parser buffer (e.g. END:VCARD)
         if (bt->pbap.parser.bufferIdx > 0) {
             bt->pbap.parser.buffer[bt->pbap.parser.bufferIdx] = '\0';
@@ -1921,100 +1934,81 @@ void BC127ProcessEventOpenOk(BT_t *bt, char **msgBuf)
 }
 
 /**
- * BC127PBAPFeedData()
+ * BC127ProcessProcessEventPBPull()
  *     Description:
- *         Scan input data for the literal 6-char delimiter \0D\0A that the
- *         BC127 uses to represent line breaks in PBAP vCard data.
- *         Characters are accumulated into parser.buffer one at a time.
- *         On each delimiter hit the buffer is null-terminated and
- *         BTPBAPParseVCard() is called, then bufferIdx is reset.
- *         Partial lines are left in the buffer for the next call.
+ *         Handle PB_PULL vCard data directly from the ring buffer into the
+ *         parser, character by character.  This avoids allocating the entire
+ *         message on the stack (which can be >800 bytes for large pulls)
+ *         and drains the ring buffer quickly so the ISR has room to write
+ *         the next UART line.
  *     Params:
  *         BT_t *bt - A pointer to the module object
- *         const char *data - Input data to scan
- *         uint16_t len - Length of input data
+ *         char *msg - The string of characters in the queue
+ *         uint8_t hasHeader - If we need to
  *     Returns:
  *         void
  */
-static void BC127PBAPFeedData(BT_t *bt, const char *data, uint16_t len)
+void BC127ProcessEventPBPull(BT_t *bt, char *msg, uint8_t hasHeader)
 {
-    BTPBAPParserState_t *parser = &bt->pbap.parser;
     uint16_t i = 0;
-    while (i < len) {
-        // Check for the literal 6-char delimiter \0D\0A
-        if (i + 5 < len &&
-            data[i]     == '\\' &&
-            data[i + 1] == '0' &&
-            data[i + 2] == 'D' &&
-            data[i + 3] == '\\' &&
-            data[i + 4] == '0' &&
-            data[i + 5] == 'A'
-        ) {
-            // Delimiter found: null-terminate and parse
-            parser->buffer[parser->bufferIdx] = '\0';
-            BTPBAPParseVCard(bt);
-            parser->bufferIdx = 0;
-            i += 6;
+    uint16_t messageLength = strlen(msg);
+    if (hasHeader) {
+        // Skip past "PB_PULL <linkId> <size> "
+        if (memcmp(msg, "PB_PULL", 7) == 0) {
+            uint8_t spaceCount = 0;
+            while (i < messageLength) {
+                i++;
+                if (msg[i] == ' ') {
+                    spaceCount++;
+                    if (spaceCount == 3) {
+                        // Advance past the space
+                        i++;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    // Feed remaining bytes directly into the vCard parser
+    while (i < messageLength) {
+        uint8_t c = msg[i];
+        if (c == BC127_MSG_END_CHAR) {
+            continue;
+        }
+        BTPBAPParserState_t *parser = &bt->pbap.parser;
+        if (c == BC127_PBAP_DELIM[parser->isDelim]) {
+            parser->isDelim++;
+            if (parser->isDelim == 6) {
+                // Full delimiter matched: null-terminate and parse the line
+                parser->buffer[parser->bufferIdx] = '\0';
+                BTPBAPParseVCard(bt);
+                parser->bufferIdx = 0;
+                parser->isDelim = 0;
+            }
+        } else if (parser->isDelim > 0) {
+            // Partial match failed — flush the matched chars into the line buffer
+            uint8_t j;
+            for (j = 0; j < parser->isDelim; j++) {
+                if (parser->bufferIdx < BT_PBAP_LINE_BUFFER_SIZE - 1) {
+                    parser->buffer[parser->bufferIdx++] = BC127_PBAP_DELIM[j];
+                }
+            }
+            parser->isDelim = 0;
+            // Re-check the current char against the start of the delimiter
+            if (c == BC127_PBAP_DELIM[0]) {
+                parser->isDelim = 1;
+            } else {
+                if (parser->bufferIdx < BT_PBAP_LINE_BUFFER_SIZE - 1) {
+                    parser->buffer[parser->bufferIdx++] = c;
+                }
+            }
         } else {
             if (parser->bufferIdx < BT_PBAP_LINE_BUFFER_SIZE - 1) {
-                parser->buffer[parser->bufferIdx++] = data[i];
+                parser->buffer[parser->bufferIdx++] = c;
             }
-            i++;
         }
+        i++;
     }
-}
-
-/**
- * BC127ProcessEventPBPull()
- *     Description:
- *         Process a PB_PULL notification line. The first PB_PULL message
- *         contains the link ID, size, and the beginning of vCard data.
- *         The vCard data is fed line-by-line into the shared vCard parser.
- *     Params:
- *         BT_t *bt - A pointer to the module object
- *         char **msgBuf - The tokenized message
- *         char *msg - The raw message string
- *         uint8_t delimCount - Number of tokens
- *     Returns:
- *         void
- */
-void BC127ProcessEventPBPull(BT_t *bt, char **msgBuf, char *msg, uint8_t delimCount)
-{
-    if (bt->pbap.status != BT_PBAP_STATUS_WAITING) {
-        return;
-    }
-    if (delimCount < 4) {
-        return;
-    }
-    // Find the start of vCard data after "PB_PULL <linkId> <size> "
-    char *dataStart = msg;
-    uint8_t spaceCount = 0;
-    while (*dataStart != '\0' && spaceCount < 3) {
-        if (*dataStart == ' ') {
-            spaceCount++;
-        }
-        dataStart++;
-    }
-    if (*dataStart == '\0') {
-        return;
-    }
-    BC127PBAPFeedData(bt, dataStart, strlen(dataStart));
-}
-
-/**
- * BC127ProcessEventPBPullData()
- *     Description:
- *         Process a bare vCard data line during an active PB_PULL.
- *         These are continuation lines that arrive without the PB_PULL prefix.
- *     Params:
- *         BT_t *bt - A pointer to the module object
- *         char *msg - The raw message string
- *     Returns:
- *         void
- */
-void BC127ProcessEventPBPullData(BT_t *bt, char *msg)
-{
-    BC127PBAPFeedData(bt, msg, strlen(msg));
 }
 
 /**
@@ -2083,9 +2077,12 @@ void BC127ProcessEventState(BT_t *bt, char **msgBuf)
  */
 void BC127Process(BT_t *bt)
 {
+    uint16_t queueSize = CharQueueGetSize(&bt->uart.rxQueue);
     uint16_t messageLength = CharQueueSeek(&bt->uart.rxQueue, BC127_MSG_END_CHAR);
+    // Message length is a misnomer, really. This should be hasEOLChar, but
+    // contextually it makes more sense to keep it as messageLength due to
+    // the way its value is subsequently used
     if (messageLength > 0) {
-        LogWarning("%d / %d", messageLength, CharQueueGetSize(&bt->uart.rxQueue));
         // We received a valid message, so set the power & state to on
         bt->powerState = BT_STATE_ON;
         char msg[messageLength];
@@ -2100,13 +2097,10 @@ void BC127Process(BT_t *bt)
             if (c != BC127_MSG_END_CHAR) {
                 msg[i] = c;
             } else {
-                // The protocol states that 0x0D delimits messages,
-                // so we change it to a null terminator instead
+                // Convert to a string
                 msg[i] = '\0';
             }
         }
-        // Copy the message, since strtok adds a null terminator after the first
-        // occurence of the delimiter, causes issues with any functions used going forward
         char tmpMsg[messageLength];
         strcpy(tmpMsg, msg);
         char *msgBuf[delimCount];
@@ -2158,16 +2152,32 @@ void BC127Process(BT_t *bt)
             BC127ProcessEventOpenError(bt, msgBuf);
         } else if (strcmp(msgBuf[0], "OPEN_OK") == 0) {
             BC127ProcessEventOpenOk(bt, msgBuf);
+        } else if (strcmp(msgBuf[0], "PENDING") == 0) {
+            if (bt->pbap.status == BT_PBAP_STATUS_PENDING) {
+                bt->pbap.status = BT_PBAP_STATUS_HEADER_WAIT;
+            }
+        } else if (strcmp(msgBuf[0], "PB_PULL") == 0) {
+            bt->pbap.status = BT_PBAP_STATUS_WAITING;
+            BC127ProcessEventPBPull(bt, msg, 1);
         } else if (strcmp(msgBuf[0], "SCO_CLOSE") == 0) {
             BC127ProcessEventSCO(bt, (uint8_t)BT_CALL_SCO_CLOSE);
         } else if (strcmp(msgBuf[0], "SCO_OPEN") == 0) {
             BC127ProcessEventSCO(bt, (uint8_t)BT_CALL_SCO_OPEN);
         } else if (strcmp(msgBuf[0], "STATE") == 0) {
             BC127ProcessEventState(bt, msgBuf);
+        } else {
+            // Parse any partial data
+            if (bt->pbap.status == BT_PBAP_STATUS_WAITING) {
+                BC127ProcessEventPBPull(bt, msg, 0);
+                // We had a BC127_MSG_END_CHAR, so we should expect
+                // that the next message will have the header prepended
+                bt->pbap.status = BT_PBAP_STATUS_HEADER_WAIT;
+            }
         }
         // Reset the age of the Rx queue
         bt->rxQueueAge = 0;
-    } else if (CharQueueGetSize(&bt->uart.rxQueue) > 0) {
+    } else if (queueSize > 0) {
+        // Handle expiry of the RX queue as required
         if (bt->rxQueueAge == 0) {
             bt->rxQueueAge = TimerGetMillis();
         } else {
@@ -2175,7 +2185,68 @@ void BC127Process(BT_t *bt)
                 UARTRXQueueReset(&bt->uart);
                 bt->rxQueueAge = 0;
                 LogInfo(LOG_SOURCE_BT, "BT: RX Queue Timeout");
+                UARTReportErrors(&bt->uart);
+                return;
             }
+        }
+        // Important: We must stream PBAP data out of the UART ring buffer
+        // as it comes in so that it does not overflow
+        if (
+            bt->pbap.status == BT_PBAP_STATUS_IDLE ||
+            bt->pbap.status == BT_PBAP_STATUS_PENDING
+        ) {
+            UARTReportErrors(&bt->uart);
+            return;
+        }
+        uint16_t i = 0;
+        if (bt->pbap.status == BT_PBAP_STATUS_HEADER_WAIT) {
+            // Check for the header
+            uint8_t delimCount = 0;
+            uint8_t header[BC127_PBAP_CMD_LEN + 1] = {0};
+            for (i = 0; i < queueSize; i++) {
+                char c = CharQueueGetOffset(&bt->uart.rxQueue, i);
+                if (i < BC127_PBAP_CMD_LEN) {
+                    header[i] = c;
+                } else if (c == ' ') {
+                    delimCount++;
+                }
+                if (delimCount == 3) {
+                    i++;
+                    break;
+                }
+            }
+            if (
+                memcmp(header, "PB_PULL", 7) == 0 &&
+                delimCount == 3
+            ) {
+                // Remove the header
+                while (i > 0) {
+                    i--;
+                    CharQueueNext(&bt->uart.rxQueue);
+                }
+                bt->pbap.status = BT_PBAP_STATUS_WAITING;
+            }
+        }
+        if (bt->pbap.status == BT_PBAP_STATUS_WAITING) {
+            // Ensure we have the newest queue size
+            queueSize = CharQueueGetSize(&bt->uart.rxQueue);
+            char msg[queueSize + 1];
+            memset(&msg, 0, queueSize + 1);
+            for (i = 0; i < queueSize; i++) {
+                msg[i] = CharQueueNext(&bt->uart.rxQueue);
+                if (msg[i] == BC127_MSG_END_CHAR) {
+                    msg[i] = 0;
+                    bt->pbap.status = BT_PBAP_STATUS_HEADER_WAIT;
+                    break;
+                }
+            }
+            msg[i++] = '\0';
+            if (strlen(msg) > 0) {
+                // s = Streamed in
+                LogDebug(LOG_SOURCE_BT, "BT: R[s]: '%s'", msg);
+                BC127ProcessEventPBPull(bt, msg, 0);
+            }
+            bt->rxQueueAge = 0;
         }
     }
     UARTReportErrors(&bt->uart);
@@ -2300,6 +2371,5 @@ void BC127ConnectionOpenProfile(BTConnection_t *conn, char *profile, uint8_t lin
         conn->mapId = linkId;
     } else if (strcmp(profile, "PBAP") == 0) {
         conn->pbapId = linkId;
-        LogWarning("PBAP: %d / %d", linkId, conn->pbapId);
     }
 }

@@ -32,7 +32,9 @@
 #define BC127_LINK_AVRCP 1
 #define BC127_LINK_HFP 3
 #define BC127_LINK_BLE 4
+#define BC127_LINK_PBAP 6
 #define BC127_LINK_MAP 8
+#define BC127_PBAP_CMD_LEN 7
 
 extern int8_t BTBC127MicGainTable[];
 
@@ -59,6 +61,10 @@ void BC127CommandGetMetadata(BT_t *);
 void BC127CommandLicense(BT_t *, char *, char *);
 void BC127CommandList(BT_t *);
 void BC127CommandPause(BT_t *);
+void BC127CommandPBAPAbort(BT_t *);
+void BC127CommandPBAPClose(BT_t *);
+void BC127CommandPBAPGetPhonebook(BT_t *, uint8_t, uint16_t, uint8_t);
+void BC127CommandPBAPOpen(BT_t *);
 void BC127CommandPlay(BT_t *);
 void BC127CommandProfileClose(BT_t *, uint8_t);
 void BC127CommandProfileOpen(BT_t *, BTPairedDevice_t *, char *);
@@ -103,9 +109,8 @@ void BC127ProcessEventName(BT_t *, char **, char *);
 void BC127ProcessEventOk(BT_t *, char **);
 void BC127ProcessEventOpenError(BT_t *, char **);
 void BC127ProcessEventOpenOk(BT_t *, char **);
-void BC127ProcessEventPBPull(BT_t *, char **, char *, uint8_t);
-void BC127ProcessEventPBPullData(BT_t *, char *);
 void BC127ProcessEventSCO(BT_t *, uint8_t);
+void BC127ProcessEventPBPull(BT_t *, char *, uint8_t);
 void BC127ProcessEventState(BT_t *, char **);
 void BC127Process(BT_t *);
 void BC127SendCommand(BT_t *, char *);

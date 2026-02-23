@@ -112,7 +112,9 @@
 #define BT_PBAP_FRAME_DELIM 0x0D // <CR>
 
 #define BT_PBAP_STATUS_IDLE 0
-#define BT_PBAP_STATUS_WAITING 1
+#define BT_PBAP_STATUS_PENDING 1
+#define BT_PBAP_STATUS_HEADER_WAIT 2
+#define BT_PBAP_STATUS_WAITING 3
 
 #define BT_PBAP_BCD_STAR 0x0A
 #define BT_PBAP_BCD_HASH 0x0B
@@ -174,7 +176,7 @@ typedef struct BTPBAPContact_t {
 typedef struct BTPBAPParserState_t {
     uint8_t subEvent;
     uint8_t inVCard: 1;
-    uint8_t isDelim: 1;
+    uint8_t isDelim: 3;
     uint8_t isEndOfBody: 1;
     uint8_t bufferIdx;
     char buffer[BT_PBAP_LINE_BUFFER_SIZE];
@@ -194,7 +196,7 @@ typedef struct BTPBAPParserState_t {
  */
 typedef struct BTPBAP_t {
     uint8_t active: 1;
-    uint8_t status: 1;
+    uint8_t status: 2;
     uint8_t contactCount;
     uint8_t contactIdx;
     BTPBAPContact_t contacts[BT_PBAP_MAX_CONTACTS];
@@ -256,8 +258,8 @@ typedef struct BTConnection_t {
     uint8_t a2dpId: 4;
     uint8_t hfpId: 4;
     uint8_t bleId: 4;
-    uint8_t mapId: 4;
-    uint8_t pbapId: 4;
+    uint8_t mapId: 5;
+    uint8_t pbapId: 5;
     uint8_t a2dpVolume;
     BTConnectionAVRCPCapabilities_t avrcpCaps;
 } BTConnection_t;

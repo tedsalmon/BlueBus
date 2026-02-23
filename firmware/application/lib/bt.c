@@ -284,6 +284,132 @@ void BTCommandPause(BT_t *bt)
 }
 
 /**
+ * BTCommandPBAPAbort()
+ *     Description:
+ *         Abort an active phonebook download
+ *     Params:
+ *         BT_t *bt - The Bluetooth context
+ *     Returns:
+ *         void
+ */
+void BTCommandPBAPAbort(BT_t *bt)
+{
+    if (bt->type == BT_BTM_TYPE_BC127) {
+        BC127CommandPBAPAbort(bt);
+    } else {
+        BM83CommandPBAPAbort(bt);
+    }
+}
+
+/**
+ * BTCommandPBAPClose()
+ *     Description:
+ *         Close the PBAP session
+ *     Params:
+ *         BT_t *bt - The Bluetooth context
+ *     Returns:
+ *         void
+ */
+void BTCommandPBAPClose(BT_t *bt)
+{
+    if (bt->type == BT_BTM_TYPE_BC127) {
+        BC127CommandPBAPClose(bt);
+    } else {
+        BM83CommandPBAPClose(bt);
+    }
+}
+
+/**
+ * BTCommandPBAPGetPhonebook()
+ *     Description:
+ *         Download contacts from the phone via PBAP
+ *     Params:
+ *         BT_t *bt - The Bluetooth context
+ *         uint8_t phonebook - The phonebook to pull
+ *         uint16_t startIndex - The starting index
+ *         uint8_t maxList - Maximum number of entries to download
+ *     Returns:
+ *         void
+ */
+void BTCommandPBAPGetPhonebook(BT_t *bt, uint8_t phonebook, uint16_t startIndex, uint8_t maxList)
+{
+    uint8_t type;
+    if (bt->type == BT_BTM_TYPE_BC127) {
+        switch (phonebook) {
+            case BT_PBAP_OBJ_PHONEBOOK:
+                type = 1;
+                break;
+            case BT_PBAP_OBJ_INCOMING:
+                type = 2;
+                break;
+            case BT_PBAP_OBJ_OUTGOING:
+                type = 3;
+                break;
+            case BT_PBAP_OBJ_MISSED:
+                type = 4;
+                break;
+            case BT_PBAP_OBJ_COMBINED:
+                type = 5;
+                break;
+            default:
+                LogWarning("BT: Unsupported phonebook type %d for BC127", phonebook);
+                return;
+        }
+        BC127CommandPBAPGetPhonebook(bt, type, startIndex, maxList);
+    } else {
+        // Translate abstract phonebook type to BM83 phonebook object type
+        switch (phonebook) {
+            case BT_PBAP_OBJ_PHONEBOOK:
+                type = BM83_PBAP_OBJ_PHONEBOOK;
+                break;
+            case BT_PBAP_OBJ_INCOMING:
+                type = BM83_PBAP_OBJ_INCOMING;
+                break;
+            case BT_PBAP_OBJ_OUTGOING:
+                type = BM83_PBAP_OBJ_OUTGOING;
+                break;
+            case BT_PBAP_OBJ_MISSED:
+                type = BM83_PBAP_OBJ_MISSED;
+                break;
+            case BT_PBAP_OBJ_COMBINED:
+                type = BM83_PBAP_OBJ_COMBINED;
+                break;
+            case BT_PBAP_OBJ_SPEEDDIAL:
+                type = BM83_PBAP_OBJ_SPEEDDIAL;
+                break;
+            case BT_PBAP_OBJ_FAVORITES:
+                type = BM83_PBAP_OBJ_FAVORITES;
+                break;
+            default:
+                LogWarning("BT: Unsupported phonebook type %d for BM83", phonebook);
+                return;
+        }
+        BM83CommandPBAPGetPhonebook(bt, type, startIndex, maxList);
+    }
+}
+
+/**
+ * BTCommandPBAPOpen()
+ *     Description:
+ *         Open a PBAP profile connection with the active device
+ *     Params:
+ *         BT_t *bt - The Bluetooth context
+ *     Returns:
+ *         void
+ */
+void BTCommandPBAPOpen(BT_t *bt)
+{
+    if (bt->activeDevice.pbapId > 0) {
+        return;
+    }
+    if (bt->type == BT_BTM_TYPE_BC127) {
+        BC127CommandPBAPOpen(bt);
+    } else {
+        BM83CommandPBAPOpen(bt);
+    }
+}
+
+/**
  * BTCommandPlay()
  *     Description:
  *         Resume Playback
