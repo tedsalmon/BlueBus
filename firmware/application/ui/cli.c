@@ -726,13 +726,13 @@ void CLIProcess()
                 } else if (UtilsStricmp(msgBuf[1], "LMPOLL") == 0) {
                     if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         ConfigSetSetting(
-                            CONFIG_SETTING_LM_IO_POLL_ENABLED,
-                            CONFIG_SETTING_OFF
+                            CONFIG_SETTING_LM_IO_POLL_DISABLED,
+                            CONFIG_SETTING_ON
                         );
                     } else if (UtilsStricmp(msgBuf[2], "ON") == 0) {
                         ConfigSetSetting(
-                            CONFIG_SETTING_LM_IO_POLL_ENABLED,
-                            CONFIG_SETTING_ON
+                            CONFIG_SETTING_LM_IO_POLL_DISABLED,
+                            CONFIG_SETTING_OFF
                         );
                     } else {
                         cmdSuccess = 0;
@@ -817,7 +817,7 @@ void CLIProcess()
                     );
                     BC127CommandSetBtVolConfig(cli.bt, 15, 100, 10, 1);
                     BC127CommandSetProfiles(cli.bt, 1, 1, 1, 1);
-                    BC127CommandSetBtState(cli.bt, 2, 2);
+                    BC127CommandSetBtState(cli.bt, BT_STATE_OFF, BT_STATE_OFF);
                     BC127CommandSetCodec(cli.bt, 1, "OFF");
                     BC127CommandSetMetadata(cli.bt, 1);
                     BC127CommandSetModuleName(cli.bt, "BlueBus");

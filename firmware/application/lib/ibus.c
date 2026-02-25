@@ -342,22 +342,10 @@ static void IBusHandleGTMessage(IBus_t *ibus, uint8_t *pkt)
         // The GT broadcasts an emulated version of the BMBT button press
         // command 0x48 that matches the "Phone" button on the BMBT
         EventTriggerCallback(IBUS_EVENT_BMBT_BUTTON, pkt);
-    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
-        EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_AUDIO_INPUT) {
+        EventTriggerCallback(IBUS_EVENT_GT_AUDIO_INPUT_CONTROL, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
-        if (
-            pkt[IBUS_PKT_DST] == IBUS_DEVICE_JNAV &&
-            (pkt[IBUS_PKT_DB1] & 0xF) != 0
-        ) {
-            // Sent after pin 17 is left floating again
-            ibus->gtInputSrc = IBUS_GT_INPUT_SRC_GT;
-        } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 0) {
-            if (ibus->gtInputSrc == IBUS_GT_INPUT_SRC_GT) {
-                ibus->gtInputSrc = IBUS_GT_INPUT_SRC_EXTERNAL;
-            } else {
-                ibus->gtInputSrc = IBUS_GT_INPUT_SRC_EXTERNAL;
-            }
-        }
+        ibus->videoSource = pkt[IBUS_PKT_DB1] & 0x02;
         EventTriggerCallback(IBUS_EVENT_MONITOR_STATUS, pkt);
     }
 }
@@ -858,25 +846,13 @@ static void IBusHandleVMMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
-    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_TV_STATUS) {
-        EventTriggerCallback(IBUS_EVENT_TV_STATUS, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_AUDIO_INPUT) {
+        EventTriggerCallback(IBUS_EVENT_GT_AUDIO_INPUT_CONTROL, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
-        if (
-            pkt[IBUS_PKT_DST] == IBUS_DEVICE_JNAV &&
-            (pkt[IBUS_PKT_DB1] & 0x3) != 0
-        ) {
-            // Sent after pin 17 is left floating again
-            ibus->gtInputSrc = IBUS_GT_INPUT_SRC_GT;
-        } else if ((pkt[IBUS_PKT_DB1] & 0x3) != 0) {
-            if (ibus->gtInputSrc == IBUS_GT_INPUT_SRC_GT) {
-                ibus->gtInputSrc = IBUS_GT_INPUT_SRC_EXTERNAL;
-            } else {
-                ibus->gtInputSrc = IBUS_GT_INPUT_SRC_GT;
-            }
-        }
+        ibus->videoSource = pkt[IBUS_PKT_DB1] & 0x02;
         EventTriggerCallback(IBUS_EVENT_MONITOR_STATUS, pkt);
-
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+    } else if (
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
         pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
         pkt[IBUS_PKT_LEN] >= 0x0F
     ) {

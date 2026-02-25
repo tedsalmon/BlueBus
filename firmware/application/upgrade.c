@@ -128,11 +128,6 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 3, 2) == 1) {
         LogRaw("Ran Upgrade 1.3.2\r\n");
     }
-    // Changes in version 1.3.5
-    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 3, 5) == 1) {
-        ConfigSetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED, CONFIG_SETTING_OFF);
-        LogRaw("Ran Upgrade 1.3.5\r\n");
-    }
     // Changes in version 1.4.0
     if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 4, 0) == 1) {
         ConfigSetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM, CONFIG_SETTING_OFF);
@@ -146,6 +141,11 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
             BC127CommandSetBtState(bt, BT_STATE_OFF, BT_STATE_OFF);
             BC127CommandWrite(bt);
         }
+    }
+    // Changes in version 1.4.7
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 4, 7) == 1) {
+        ConfigSetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED, CONFIG_SETTING_OFF);
+        LogRaw("Ran Upgrade 1.4.7\r\n");
     }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,

@@ -113,8 +113,9 @@
 #define IBUS_CDC_DISC_LOADED_ALL 0x3F
 
 // BMBT status
-#define IBUS_GT_INPUT_SRC_GT 0
-#define IBUS_GT_INPUT_SRC_EXTERNAL 1
+#define IBUS_VIDEO_SOURCE_NAV_GT 0
+#define IBUS_VIDEO_SOURCE_TV 1
+#define IBUS_VIDEO_SOURCE_VM_GT 2
 
 // DSP
 #define IBUS_DSP_CMD_CONFIG_SET 0x36
@@ -176,7 +177,7 @@
 #define IBUS_CMD_GT_MENU_SELECT 0x31
 #define IBUS_CMD_GT_DISPLAY_RADIO_MENU 0x37
 #define IBUS_CMD_GT_SCREEN_MODE_SET 0x45
-#define IBUS_CMD_GT_RAD_TV_STATUS 0x4E
+#define IBUS_CMD_GT_RAD_AUDIO_INPUT 0x4E
 #define IBUS_CMD_GT_MONITOR_CONTROL 0x4F
 #define IBUS_CMD_GT_WRITE_INDEX 0x60
 #define IBUS_CMD_GT_WRITE_INDEX_TMC 0x61
@@ -585,7 +586,7 @@
 #define IBUS_EVENT_TEL_VOLUME_CHANGE 61
 #define IBUS_EVENT_RAD_VOLUME_CHANGE 62
 #define IBUS_EVENT_LM_IDENT_RESPONSE 63
-#define IBUS_EVENT_TV_STATUS 64
+#define IBUS_EVENT_GT_AUDIO_INPUT_CONTROL 64
 #define IBUS_EVENT_PDC_STATUS 65
 #define IBUS_EVENT_PDC_SENSOR_UPDATE 66
 #define IBUS_EVENT_SENSOR_VALUE_UPDATE 67
@@ -690,7 +691,7 @@ typedef struct IBus_t {
     uint8_t oilTemperature;
     uint8_t vehicleType;
     uint16_t vehicleRange;
-    uint8_t gtInputSrc: 1;
+    uint8_t videoSource: 2;
     IBusModuleStatus_t moduleStatus;
     IBusPDCSensorStatus_t pdcSensors;
     IBusDateTime_t obcDateTime;

@@ -73,7 +73,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     Context.status.displayMode = BMBT_DISPLAY_OFF;
     Context.status.navState = BMBT_NAV_STATE_ON;
     Context.status.radType = IBUS_RADIO_TYPE_BM53;
-    Context.status.tvStatus = BMBT_TV_STATUS_OFF;
+    Context.status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
     Context.status.navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
     Context.status.radioDisplayStatus = BMBT_RAD_DISPLAY_STATUS_ON;
     Context.timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
@@ -172,11 +172,6 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBUS_EVENT_SCREEN_MODE_UPDATE,
         &BMBTRADScreenModeRequest,
-        &Context
-    );
-    EventRegisterCallback(
-        IBUS_EVENT_TV_STATUS,
-        &BMBTTVStatusUpdate,
         &Context
     );
     EventRegisterCallback(
@@ -289,10 +284,6 @@ void BMBTDestroy()
     EventUnregisterCallback(
         IBUS_EVENT_SCREEN_MODE_UPDATE,
         &BMBTRADScreenModeRequest
-    );
-    EventUnregisterCallback(
-        IBUS_EVENT_TV_STATUS,
-        &BMBTTVStatusUpdate
     );
     EventUnregisterCallback(
         IBUS_EVENT_IKE_VEHICLE_CONFIG,
@@ -949,9 +940,9 @@ static void BMBTMenuSettingsAudio(BMBTContext_t *context)
         uint8_t gain = (currentVolume - 0x30) / 2;
         snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
     } else if (currentVolume == 0) {
-        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
+        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, "%s", LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
     } else if (currentVolume == 0x30) {
-        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
+        snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, "%s", LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
     } else {
         uint8_t gain = (0x30 - currentVolume) / 2;
         snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
@@ -1577,9 +1568,9 @@ static void BMBTSettingsUpdateAudio(BMBTContext_t *context, uint8_t selectedIdx)
             uint8_t gain = (currentVolume - 0x30) / 2;
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_NEG_DB), gain);
         } else if (currentVolume == 0) {
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, "%s", LocaleGetText(LOCALE_STRING_VOLUME_24_DB));
         } else if (currentVolume == 0x30) {
-            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
+            snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, "%s", LocaleGetText(LOCALE_STRING_VOLUME_0_DB));
         } else {
             uint8_t gain = (0x30 - currentVolume) / 2;
             snprintf(volText, BMBT_MENU_STRING_MAX_SIZE, LocaleGetText(LOCALE_STRING_VOLUME_POS_DB), gain);
@@ -2130,7 +2121,8 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
 void BMBTBTDeviceConnected(void *ctx, uint8_t *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->status.playerMode == BMBT_MODE_ACTIVE &&
+    if (
+        context->status.playerMode == BMBT_MODE_ACTIVE &&
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
         BTPairedDevice_t *dev = &context->bt->pairedDevices[context->bt->activeDevice.deviceIndex];
@@ -2157,7 +2149,8 @@ void BMBTBTDeviceConnected(void *ctx, uint8_t *data)
 void BMBTBTDeviceDisconnected(void *ctx, uint8_t *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->status.playerMode == BMBT_MODE_ACTIVE &&
+    if (
+        context->status.playerMode == BMBT_MODE_ACTIVE &&
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
         BMBTHeaderWriteDeviceName(context, LocaleGetText(LOCALE_STRING_NO_DEVICE));
@@ -2220,7 +2213,10 @@ void BMBTBTMetadata(void *ctx, uint8_t *data)
 void BMBTBTPlaybackStatus(void *ctx, uint8_t *tmp)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->status.displayMode == BMBT_DISPLAY_ON) {
+    if (
+        context->status.playerMode == BMBT_MODE_ACTIVE &&
+        context->status.displayMode == BMBT_DISPLAY_ON
+    ) {
         if (context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED) {
             BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 1);
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
@@ -2266,9 +2262,11 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (context->status.playerMode == BMBT_MODE_ACTIVE) {
         if (
-            (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_PLAY_PAUSE ||
-                pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_NUM1) &&
-            context->ibus->gtInputSrc == IBUS_GT_INPUT_SRC_GT
+            (
+                pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_PLAY_PAUSE ||
+                pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_NUM1
+            ) &&
+            context->status.videoSource == BMBT_VIDEO_SOURCE_INTERNAL
         ) {
             BTCommandPlaybackToggle(context->bt);
         }
@@ -2322,7 +2320,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
     // Handle calls at any time
     if (
         ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
-        context->ibus->gtInputSrc == IBUS_GT_INPUT_SRC_GT
+        context->status.videoSource == BMBT_VIDEO_SOURCE_INTERNAL
     ) {
         if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_TEL_RELEASE) {
             if (context->bt->callStatus == BT_CALL_ACTIVE) {
@@ -2364,23 +2362,28 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         // In this case, just leave the system in Audio + OBC mode
         if (
             context->ibus->moduleStatus.NAV == 0 &&
-            context->status.tvStatus == BMBT_TV_STATUS_OFF
+            context->status.videoSource == BMBT_VIDEO_SOURCE_INTERNAL
         ) {
             BMBTSetRADMenuStatus(context, BMBT_RAD_DISPLAY_STATUS_ON);
         }
         context->menu = BMBT_MENU_NONE;
         context->status.playerMode = BMBT_MODE_INACTIVE;
         context->status.displayMode = BMBT_DISPLAY_OFF;
+        context->telState = BMBT_TEL_STATE_NONE;
         BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 0);
-    } else if (requestedCommand == IBUS_CDC_CMD_START_PLAYING ||
-        (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
-         context->status.playerMode == BMBT_MODE_INACTIVE)
+    } else if (
+        requestedCommand == IBUS_CDC_CMD_START_PLAYING ||
+        (
+            context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
+            context->status.playerMode == BMBT_MODE_INACTIVE
+        )
     ) {
         BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 0);
         if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON) {
             BTCommandPlay(context->bt);
-        } else if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING &&
-                   context->status.playerMode == BMBT_MODE_INACTIVE
+        } else if (
+            context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING &&
+            context->status.playerMode == BMBT_MODE_INACTIVE
         ) {
             BTCommandPause(context->bt);
         }
@@ -2391,6 +2394,17 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         context->status.displayMode = BMBT_DISPLAY_ON;
         BMBTTriggerWriteHeader(context);
         BMBTTriggerWriteMenu(context);
+    } else if (
+        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
+        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
+    ) {
+        if (context->status.videoSource == BMBT_VIDEO_SOURCE_INTERNAL) {
+            if (pkt[IBUS_PKT_DB2] == 0x00) {
+                BTCommandPlaybackTrackNext(context->bt);
+            } else {
+                BTCommandPlaybackTrackPrevious(context->bt);
+            }
+        }
     } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE) {
         // Enable & Disable the UI based on the "Random" playback mode setting
         // This adds support for GTs that run without radio, like the R51/R52/R53
@@ -2562,14 +2576,17 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
 void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (
-        context->status.tvStatus == BMBT_TV_STATUS_ON ||
-        context->status.playerMode == BMBT_MODE_INACTIVE
-    ) {
+    if (context->status.playerMode == BMBT_MODE_INACTIVE) {
         return;
     }
-    if (context->ibus->gtInputSrc == IBUS_GT_INPUT_SRC_GT) {
+    if (context->ibus->videoSource == IBUS_VIDEO_SOURCE_TV) {
+        context->status.displayMode = BMBT_DISPLAY_OFF;
+        return;
+    }
+    if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_JNAV) {
+        // Sent after pin 17 is left floating again
         context->status.displayMode = BMBT_DISPLAY_ON;
+        context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
         if (context->menu != BMBT_MENU_DASHBOARD_FRESH) {
             context->menu = BMBT_MENU_NONE;
         }
@@ -2582,7 +2599,8 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
             BMBTMainAreaRefresh(context);
         }
         BMBTTriggerWriteHeader(context);
-    } else {
+    } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 1) {
+        context->status.videoSource = BMBT_VIDEO_SOURCE_EXTERNAL;
         context->status.displayMode = BMBT_DISPLAY_OFF;
     }
 }
@@ -2600,7 +2618,11 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
 void BMBTIBusGTMenuBufferUpdate(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->status.menuBufferStatus == BMBT_MENU_BUFFER_FLUSH) {
+    if (
+        context->status.playerMode == BMBT_MODE_ACTIVE &&
+        context->status.displayMode == BMBT_DISPLAY_ON &&
+        context->status.menuBufferStatus == BMBT_MENU_BUFFER_FLUSH
+    ) {
         IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
         context->status.menuBufferStatus = BMBT_MENU_BUFFER_OK;
     }
@@ -2747,7 +2769,8 @@ void BMBTIBusScreenBufferFlush(void *ctx, uint8_t *pkt)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     // If we cannot write to the display, we are not the active
     // player, or this is a "Zone" (header) update, then ignore the message.
-    if (context->status.playerMode != BMBT_MODE_ACTIVE ||
+    if (
+        context->status.playerMode != BMBT_MODE_ACTIVE ||
         context->status.displayMode != BMBT_DISPLAY_ON ||
         pkt[IBUS_PKT_DB1] != IBUS_CMD_GT_WRITE_ZONE
     ) {
@@ -2781,7 +2804,8 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
     char config = ConfigGetTempDisplay();
 
     // We may need to add additional `updateType` values in the future
-    if (config == CONFIG_SETTING_OFF ||
+    if (
+        config == CONFIG_SETTING_OFF ||
         context->status.displayMode != BMBT_DISPLAY_ON ||
         updateType == IBUS_SENSOR_VALUE_GEAR_POS
     ) {
@@ -2892,7 +2916,7 @@ void BMBTRADDisplayMenu(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
-    if (context->ibus->gtInputSrc == IBUS_GT_INPUT_SRC_EXTERNAL) {
+    if (context->status.videoSource == BMBT_VIDEO_SOURCE_EXTERNAL) {
         IBusCommandVMModeSet(context->ibus, IBUS_BLUEBUS_CARPHONICS_DISABLE);
     }
 }
@@ -2935,7 +2959,8 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             context->status.radType = IBUS_RADIO_TYPE_BM24;
         }
     }
-    if (context->status.playerMode == BMBT_MODE_ACTIVE &&
+    if (
+        context->status.playerMode == BMBT_MODE_ACTIVE &&
         textIsOurs == 0
     ) {
         uint8_t pktLen = (uint8_t) pkt[IBUS_PKT_LEN] + 2;
@@ -3055,27 +3080,6 @@ void BMBTGTScreenModeSet(void *ctx, uint8_t *pkt)
     }
 }
 
-
-/**
- * BMBTTVStatusUpdate()
- *     Description:
- *         Listen for the GT -> RAD Television status message
- *     Params:
- *         void *ctx - The context
- *         uint8_t *pkt - The IBus Message received
- *     Returns:
- *         void
- */
-void BMBTTVStatusUpdate(void *ctx, uint8_t *pkt)
-{
-    BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if ((pkt[IBUS_PKT_DB1] & 0x01) == 0) {
-        context->status.tvStatus = BMBT_TV_STATUS_OFF;
-    } else {
-        context->status.tvStatus = BMBT_TV_STATUS_ON;
-    }
-}
-
 /**
  * BMBTIBusVehicleConfig()
  *     Description:
@@ -3157,7 +3161,8 @@ void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
 void BMBTTimerHeaderWrite(void *ctx)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->status.playerMode == BMBT_MODE_ACTIVE &&
+    if (
+        context->status.playerMode == BMBT_MODE_ACTIVE &&
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
         if (context->timerHeaderIntervals != BMBT_MENU_HEADER_TIMER_OFF) {
@@ -3250,7 +3255,8 @@ void BMBTTimerMenuWrite(void *ctx)
 void BMBTTimerScrollDisplay(void *ctx)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->status.playerMode == BMBT_MODE_ACTIVE &&
+    if (
+        context->status.playerMode == BMBT_MODE_ACTIVE &&
         context->status.displayMode == BMBT_DISPLAY_ON &&
         ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != CONFIG_SETTING_OFF
     ) {

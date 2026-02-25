@@ -115,18 +115,26 @@
 #define BMBT_NAV_STATE_BOOT 0x00
 #define BMBT_NAV_STATE_ON 0x01
 #define BMBT_SCROLL_TEXT_TIMER 500
-#define BMBT_TV_STATUS_OFF 0
-#define BMBT_TV_STATUS_ON 1
+#define BMBT_VIDEO_SOURCE_INTERNAL 0
+#define BMBT_VIDEO_SOURCE_EXTERNAL 1
 
 #define BMBT_AUTOZOOM_TOLERANCE 4
 #define BMBT_AUTOZOOM_DELAY 10000
+
+typedef struct BMBTTELStatus_t {
+    uint8_t telState;
+    uint16_t telPageOffset;
+    uint8_t telSelectedContact;
+    uint8_t telSelectedNumber;
+    uint8_t telPBAPObjectType;
+} BMBTTELStatus_t;
 
 typedef struct BMBTStatus_t {
     uint8_t playerMode: 1;
     uint8_t displayMode: 2;
     uint8_t navState: 1;
     uint8_t radType: 4;
-    uint8_t tvStatus: 1;
+    uint8_t videoSource: 1;
     uint8_t menuBufferStatus: 1;
     uint8_t radioDisplayStatus: 1;
     uint8_t navIndexType;
@@ -172,7 +180,6 @@ void BMBTRADDisplayMenu(void *, uint8_t *);
 void BMBTRADUpdateMainArea(void *, uint8_t *);
 void BMBTRADScreenModeRequest(void *, uint8_t *);
 void BMBTGTScreenModeSet(void *, uint8_t *);
-void BMBTTVStatusUpdate(void *, uint8_t *);
 void BMBTIBusVehicleConfig(void *, uint8_t *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuWrite(void *);

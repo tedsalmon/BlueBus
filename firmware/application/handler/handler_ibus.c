@@ -456,19 +456,6 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
     ) {
         curFunction = context->ibus->cdChangerFunction;
         curStatus = IBUS_CDC_STAT_PLAYING;
-        // Do not go backwards/forwards if the UI is CD53 because
-        // those actions can be used to use the UI
-        if (context->uiMode != CONFIG_UI_CD53 &&
-            context->uiMode != CONFIG_UI_MIR &&
-            context->uiMode != CONFIG_UI_IRIS &&
-            context->ibus->gtInputSrc != IBUS_GT_INPUT_SRC_EXTERNAL
-        ) {
-            if (pkt[IBUS_PKT_DB2] == 0x00) {
-                BTCommandPlaybackTrackNext(context->bt);
-            } else {
-                BTCommandPlaybackTrackPrevious(context->bt);
-            }
-        }
     } else if (requestedCommand == IBUS_CDC_CMD_SEEK) {
         if (pkt[IBUS_PKT_DB2] == 0x00) {
             context->seekMode = HANDLER_CDC_SEEK_MODE_REV;
