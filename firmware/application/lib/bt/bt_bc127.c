@@ -1825,6 +1825,15 @@ void BC127ProcessEventOk(BT_t *bt, char **msgBuf)
             bt->pbap.contactCount
         );
         EventTriggerCallback(BT_EVENT_PBAP_CONTACT_RECEIVED, 0);
+    } else if (bt->pbap.status != BT_PBAP_STATUS_IDLE) {
+        bt->pbap.contactCount = 0;
+        bt->pbap.status = BT_PBAP_STATUS_IDLE;
+        LogDebug(
+            LOG_SOURCE_BT,
+            "BT: PBAP complete, %d contacts",
+            bt->pbap.contactCount
+        );
+        EventTriggerCallback(BT_EVENT_PBAP_CONTACT_RECEIVED, 0);
     }
 }
 
