@@ -63,6 +63,8 @@ static const char *navZoomScaleMetric[IBUS_SES_ZOOM_LEVELS] = {
     "10km"
 };
 
+static const uint8_t BMBT_TEL_CONTACT_IDX[4] = {0x0, 0x4, 0x10, 0x14};
+
 void BMBTInit(BT_t *bt, IBus_t *ibus)
 {
     memset(&Context, 0, sizeof(BMBTContext_t));
@@ -102,6 +104,16 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         BT_EVENT_METADATA_UPDATE,
         &BMBTBTMetadata,
+        &Context
+    );
+    EventRegisterCallback(
+        BT_EVENT_PBAP_CONTACT_RECEIVED,
+        &BMBTBTPBAPContactReceived,
+        &Context
+    );
+    EventRegisterCallback(
+        BT_EVENT_PBAP_SESSION_STATUS,
+        &BMBTBTPBAPSessionStatus,
         &Context
     );
     EventRegisterCallback(
@@ -228,6 +240,14 @@ void BMBTDestroy()
     EventUnregisterCallback(
         BT_EVENT_METADATA_UPDATE,
         &BMBTBTMetadata
+    );
+    EventUnregisterCallback(
+        BT_EVENT_PBAP_CONTACT_RECEIVED,
+        &BMBTBTPBAPContactReceived
+    );
+    EventUnregisterCallback(
+        BT_EVENT_PBAP_SESSION_STATUS,
+        &BMBTBTPBAPSessionStatus
     );
     EventUnregisterCallback(
         BT_EVENT_BOOT,
@@ -2109,6 +2129,437 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
 }
 
 /**
+ * BMBTTELRequestPBAP
+ *     Description:
+ *         Wrapper to request contacts or try to open a PBAP session
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         uint8_t *tmp - The data from the event
+ *     Returns:
+ *         void
+ */
+static void BMBTTELRequestPBAP(BMBTContext_t *context) {
+    if (context->bt->pbap.active || context->bt->activeDevice.pbapId > 0) {
+        BTCommandPBAPGetPhonebook(
+            context->bt,
+            context->tel.phonebookType,
+            context->tel.page,
+            BT_PBAP_MAX_CONTACTS
+        );
+    } else {
+        BTCommandPBAPOpen(context->bt);
+    }
+}
+
+/**
+ * BMBTTELMenuDial()
+ *     Description:
+ *         Render the Dial Menu. Automatically reset the dial buffer.
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         uint8_t *tmp - The data from the event
+ *     Returns:
+ *         void
+ */
+static void BMBTTELMenuDial(BMBTContext_t *context)
+{
+    memset(context->bt->dialBuffer, 0, sizeof(context->bt->dialBuffer));
+    IBusCommandTELMenuText(
+        context->ibus,
+        IBUS_DEVICE_GT,
+        IBUS_TEL_LAYOUT_DIAL,
+        IBUS_TEL_FUNC_DIGIT,
+        IBUS_TEL_OPT_CLEAR,
+        ""
+    );
+    IBusCommandTELTitleText(
+        context->ibus,
+        IBUS_DEVICE_GT,
+        IBUS_TEL_TITLE_DIAL_CLEAR,
+        IBUS_TEL_TITLE_OPT_UPDATE,
+        ""
+    );
+    context->tel.state = BMBT_TEL_STATE_DIAL;
+}
+
+/**
+ * BMBTTELMenuContactList()
+ *     Description:
+ *         Render The PBAP contact list for both Phonebook and Top 8
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         uint8_t *tmp - The data from the event
+ *     Returns:
+ *         void
+ */
+static void BMBTTELMenuContactList(BMBTContext_t *context, uint8_t pbType)
+{
+    if (context->bt->pbap.contactCount == 0) {
+        IBusCommandTELMenuText(
+            context->ibus,
+            IBUS_DEVICE_GT,
+            pbType,
+            IBUS_TEL_FUNC_CONTACT,
+            IBUS_TEL_OPT_CLEAR,
+            "No Contacts"
+        );
+        return;
+    }
+    uint8_t i;
+    uint8_t offset = 0;
+    char lineBuffer[32] = {0};
+    uint8_t isFlushed = 1;
+    for (i = 0; i < context->bt->pbap.contactCount; i++) {
+        lineBuffer[offset++] = 0x06;
+        char name[15] = {0};
+        UtilsStrncpy(name, context->bt->pbap.contacts[i].name, 15);
+        uint8_t nameLen = strlen(name);
+        if (strlen(context->bt->pbap.contacts[i].name) > 14) {
+            name[13] = '.';
+        }
+        memcpy(lineBuffer + offset, name, nameLen);
+        if (!isFlushed || i == (context->bt->pbap.contactCount - 1)) {
+            uint8_t options = BMBT_TEL_CONTACT_IDX[i / 2];
+            if (i == 0) {
+                options = IBUS_TEL_OPT_CLEAR | options;
+            } else if (i != (context->bt->pbap.contactCount - 1)) {
+                options = IBUS_TEL_OPT_BUFFER | options;
+            }
+            IBusCommandTELMenuText(
+                context->ibus,
+                IBUS_DEVICE_GT,
+                pbType,
+                IBUS_TEL_FUNC_CONTACT,
+                options,
+                lineBuffer
+            );
+            memset(lineBuffer, 0, 32);
+            offset = 0;
+            isFlushed = 1;
+        } else {
+            offset += nameLen;
+            isFlushed = 0;
+        }
+    }
+}
+
+/**
+ * BMBTTELMenuDialUpdate()
+ *     Description:
+ *         Handle All inputs on the Dial Menu
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         uint8_t *tmp - The data from the event
+ *     Returns:
+ *         void
+ */
+static void BMBTTELMenuDialUpdate(BMBTContext_t *context, uint8_t *pkt)
+{
+    uint8_t db1 = pkt[IBUS_PKT_DB1];
+    if (db1 == IBUS_TEL_LAYOUT_DIAL && pkt[IBUS_PKT_DB2] == IBUS_TEL_FUNC_DIGIT) {
+        uint8_t digit = pkt[IBUS_PKT_DB3];
+        if (digit <= 0x09) {
+            digit = 0x30 + digit;
+        } else if (digit == BMBT_TEL_DIGIT_STAR) {
+            digit = '*';
+        } else if (digit == BMBT_TEL_DIGIT_HASH) {
+            digit = '#';
+        } else if (digit != BMBT_TEL_DIGIT_BACKSPACE) {
+            return;
+        }
+        uint8_t len = strlen(context->bt->dialBuffer);
+        if (digit == BMBT_TEL_DIGIT_BACKSPACE && len > 0) {
+            context->bt->dialBuffer[len - 1] = '\0';
+            len--;
+        } else if (len < BT_DIAL_BUFFER_FIELD_SIZE - 1) {
+            context->bt->dialBuffer[len] = digit;
+            context->bt->dialBuffer[len + 1] = '\0';
+            len++;
+        }
+        if (len > 0) {
+            char display[BT_DIAL_BUFFER_FIELD_SIZE + 1];
+            snprintf(display, sizeof(display), "%s_", context->bt->dialBuffer);
+            IBusCommandTELTitleText(
+                context->ibus,
+                IBUS_DEVICE_GT,
+                IBUS_TEL_TITLE_DIAL_NUMBER,
+                0x00,
+                display
+            );
+        } else {
+            IBusCommandTELTitleText(
+                context->ibus,
+                IBUS_DEVICE_GT,
+                IBUS_TEL_TITLE_DIAL_CLEAR,
+                IBUS_TEL_TITLE_OPT_UPDATE,
+                ""
+            );
+        }
+    } else if (
+        db1 == IBUS_TEL_LAYOUT_DIAL &&
+        pkt[IBUS_PKT_DB2] == IBUS_TEL_FUNC_NAVIGATION &&
+        pkt[IBUS_PKT_DB3] == BMBT_TEL_NAV_OPEN_DIRECTORY
+    ) {
+        context->tel.state = BMBT_TEL_STATE_DIRECTORY;
+        context->tel.phonebookType = BT_PBAP_OBJ_PHONEBOOK;
+        context->tel.page = 0;
+        BMBTTELRequestPBAP(context);
+    } else if (db1 == 0x00 && pkt[IBUS_PKT_DB2] == 0x00 && pkt[IBUS_PKT_DB3] == BMBT_TEL_NAV_NEXT) {
+        context->tel.state = BMBT_TEL_STATE_LAST_DIALED;
+        context->tel.contactIdx = 0;
+        context->tel.phonebookType = BT_PBAP_OBJ_OUTGOING;
+        context->tel.page = 0;
+        BMBTTELRequestPBAP(context);
+    }
+}
+
+/**
+ * BMBTTELMenuNumberList()
+ *     Description:
+ *         Render phone numbers for a given contact with multiple phone numbers
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *     Returns:
+ *         void
+ */
+static void BMBTTELMenuNumberList(BMBTContext_t *context, uint8_t contactIdx)
+{
+    BTPBAPContact_t *contact = &context->bt->pbap.contacts[contactIdx];
+    uint8_t i;
+    for (i = 0; i < contact->numberCount && i < BT_PBAP_CONTACT_MAX_NUMBERS; i++) {
+        char lineBuffer[32] = {0};
+        char phoneStr[16] = {0};
+        BTPBAPTelephoneFromBCD(contact->numbers[i].number, phoneStr, sizeof(phoneStr));
+        const char *typeLabel;
+        switch (contact->numbers[i].type) {
+            case BT_PBAP_TEL_TYPE_CELL:
+                typeLabel = "Cell:";
+                break;
+            case BT_PBAP_TEL_TYPE_HOME:
+                typeLabel = "Home:";
+                break;
+            case BT_PBAP_TEL_TYPE_WORK:
+                typeLabel = "Work:";
+                break;
+            default:
+                typeLabel = "Tel:";
+                break;
+        }
+        snprintf(lineBuffer, 31, "\x06%s\x06%s", typeLabel, phoneStr);
+        uint8_t options = BMBT_TEL_CONTACT_IDX[i];
+        if (i == 0) {
+            options = IBUS_TEL_OPT_CLEAR | options;
+        } else if (i != (contact->numberCount - 1)) {
+            options = IBUS_TEL_OPT_BUFFER | options;
+        }
+        IBusCommandTELMenuText(
+            context->ibus,
+            IBUS_DEVICE_GT,
+            IBUS_TEL_LAYOUT_DIRECTORY,
+            IBUS_TEL_FUNC_CONTACT,
+            options,
+            lineBuffer
+        );
+    }
+    IBusCommandTELTitleText(
+        context->ibus,
+        IBUS_DEVICE_GT,
+        IBUS_TEL_TITLE_DIR_NAME,
+        0x00,
+        contact->name
+    );
+}
+
+/**
+ * BMBTTELSetSelectedNumber()
+ *     Description:
+ *         Copy the selected contact number into the dial buffer and update
+ *         the menu title with it
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *     Returns:
+ *         void
+ */
+static void BMBTTELSetSelectedNumber(BMBTContext_t *context)
+{
+    BTPBAPContact_t *contact = &context->bt->pbap.contacts[context->tel.contactIdx];
+    char phoneStr[BT_DIAL_BUFFER_FIELD_SIZE] = {0};
+    BTPBAPTelephoneFromBCD(
+        contact->numbers[context->tel.numberIdx].number,
+        phoneStr,
+        sizeof(phoneStr)
+    );
+    memset(context->bt->dialBuffer, 0, BT_DIAL_BUFFER_FIELD_SIZE);
+    strncpy(context->bt->dialBuffer, phoneStr, BT_DIAL_BUFFER_FIELD_SIZE - 1);
+    uint8_t nameLayout;
+    uint8_t numberLayout;
+    if (context->tel.phonebookType == BT_PBAP_OBJ_FAVORITES) {
+        nameLayout = IBUS_TEL_TITLE_TOP_8_NAME;
+        numberLayout = IBUS_TEL_TITLE_TOP_8_NUMBER;
+    } else if (
+        context->tel.state == BMBT_TEL_STATE_LAST_DIALED ||
+        context->tel.phonebookType == BT_PBAP_OBJ_OUTGOING
+    ) {
+        nameLayout = IBUS_TEL_TITLE_DIAL_NUMBER;
+        numberLayout = IBUS_TEL_TITLE_DIAL_NUMBER;
+    } else {
+        nameLayout = IBUS_TEL_TITLE_DIR_NAME;
+        numberLayout = IBUS_TEL_TITLE_DIR_NUMBER;
+    }
+    IBusCommandTELTitleText(
+        context->ibus,
+        IBUS_DEVICE_GT,
+        nameLayout,
+        0x00,
+        contact->name
+    );
+    IBusCommandTELTitleText(
+        context->ibus,
+        IBUS_DEVICE_GT,
+        numberLayout,
+        0x00,
+        phoneStr
+    );
+}
+
+/**
+ * BMBTTELMenuContactListUpdate()
+ *     Description:
+ *         Handle inputs for the Top 8 and Directory menus (contact selection)
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *     Returns:
+ *         void
+ */
+static void BMBTTELMenuContactListUpdate(BMBTContext_t *context, uint8_t *pkt)
+{
+    if (pkt[IBUS_PKT_DB2] == IBUS_TEL_FUNC_CONTACT) {
+        uint8_t selectedIdx = ((pkt[IBUS_PKT_DB3] >> 4) * 4) + ((pkt[IBUS_PKT_DB3] & 0x0F) / 2);
+        if (selectedIdx >= context->bt->pbap.contactCount) {
+            return;
+        }
+        context->tel.contactIdx = selectedIdx;
+        BTPBAPContact_t *contact = &context->bt->pbap.contacts[selectedIdx];
+        if (contact->numberCount == 1) {
+            context->tel.numberIdx = 0;
+            char phoneStr[BT_DIAL_BUFFER_FIELD_SIZE] = {0};
+            BTPBAPTelephoneFromBCD(
+                contact->numbers[0].number,
+                phoneStr,
+                sizeof(phoneStr)
+            );
+            memset(context->bt->dialBuffer, 0, BT_DIAL_BUFFER_FIELD_SIZE);
+            strncpy(context->bt->dialBuffer, phoneStr, BT_DIAL_BUFFER_FIELD_SIZE - 1);
+            BMBTTELSetSelectedNumber(context);
+        } else {
+            BMBTTELMenuNumberList(context, selectedIdx);
+            context->tel.state = BMBT_TEL_STATE_NUMBER_SELECT;
+        }
+    } else if (pkt[IBUS_PKT_DB2] == IBUS_TEL_FUNC_NULL && pkt[IBUS_PKT_DB3] == BMBT_TEL_NAV_PREV) {
+        if (context->tel.page >= BMBT_TEL_PAGE_SIZE) {
+            context->tel.page -= BMBT_TEL_PAGE_SIZE;
+            BMBTTELRequestPBAP(context);
+        }
+    } else if (pkt[IBUS_PKT_DB2] == IBUS_TEL_FUNC_NULL && pkt[IBUS_PKT_DB3] == BMBT_TEL_NAV_NEXT) {
+        if (context->bt->pbap.contactCount == BT_PBAP_MAX_CONTACTS) {
+            context->tel.page += BMBT_TEL_PAGE_SIZE;
+            BMBTTELRequestPBAP(context);
+        }
+    } else if (
+        pkt[IBUS_PKT_DB2] == IBUS_TEL_FUNC_NAVIGATION &&
+        pkt[IBUS_PKT_DB3] == BMBT_TEL_NAV_BACK_TO_DIAL
+    ) {
+        BMBTTELMenuDial(context);
+    }
+}
+
+/**
+ * BMBTTELMenuNumberListUpdate()
+ *     Description:
+ *         Handle inputs for the phone number selection
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *     Returns:
+ *         void
+ */
+static void BMBTTELMenuNumberListUpdate(BMBTContext_t *context, uint8_t *pkt)
+{
+    if (pkt[IBUS_PKT_DB2] == IBUS_TEL_FUNC_CONTACT) {
+        uint8_t selectedIdx = ((pkt[IBUS_PKT_DB3] >> 4) * 4) + ((pkt[IBUS_PKT_DB3] & 0x0F) / 2);
+        // Each item takes two rows, so account for that
+        if (selectedIdx % 2 == 0) {
+            selectedIdx--;
+        }
+        BTPBAPContact_t *contact = &context->bt->pbap.contacts[context->tel.contactIdx];
+        if (selectedIdx < contact->numberCount) {
+            context->tel.numberIdx = selectedIdx;
+            char phoneStr[BT_DIAL_BUFFER_FIELD_SIZE] = {0};
+            BTPBAPTelephoneFromBCD(
+                contact->numbers[selectedIdx].number,
+                phoneStr,
+                sizeof(phoneStr)
+            );
+            memset(context->bt->dialBuffer, 0, BT_DIAL_BUFFER_FIELD_SIZE);
+            strncpy(context->bt->dialBuffer, phoneStr, BT_DIAL_BUFFER_FIELD_SIZE - 1);
+            BMBTTELSetSelectedNumber(context);
+        }
+    } else if (
+        pkt[IBUS_PKT_DB2] == IBUS_TEL_FUNC_NAVIGATION &&
+        pkt[IBUS_PKT_DB3] == BMBT_TEL_NAV_BACK_TO_DIAL
+    ) {
+        uint8_t pbType = 0;
+        if (context->tel.phonebookType == BT_PBAP_OBJ_FAVORITES) {
+            context->tel.state = BMBT_TEL_STATE_TOP_8;
+            pbType = IBUS_TEL_LAYOUT_TOP_8;
+        } else {
+            context->tel.state = BMBT_TEL_STATE_DIRECTORY;
+            pbType = IBUS_TEL_LAYOUT_DIRECTORY;
+        }
+        BMBTTELMenuContactList(context, pbType);
+    }
+}
+
+/**
+ * BMBTTELMenuLastDialedUpdate()
+ *     Description:
+ *         Handle the last dialed phone number input
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *     Returns:
+ *         void
+ */
+static void BMBTTELMenuLastDialedUpdate(BMBTContext_t *context, uint8_t *pkt)
+{
+    if (pkt[IBUS_PKT_DB2] == 0x00 && pkt[IBUS_PKT_DB3] == BMBT_TEL_NAV_NEXT) {
+        context->tel.contactIdx++;
+        if (context->tel.contactIdx >= context->bt->pbap.contactCount) {
+            if (context->bt->pbap.contactCount == BT_PBAP_MAX_CONTACTS) {
+                context->tel.page += BMBT_TEL_PAGE_SIZE;
+                context->tel.contactIdx = 0;
+                BMBTTELRequestPBAP(context);
+            } else {
+                context->tel.contactIdx = context->bt->pbap.contactCount - 1;
+            }
+        } else {
+            BMBTTELSetSelectedNumber(context);
+        }
+    } else if (pkt[IBUS_PKT_DB2] == 0x00 && pkt[IBUS_PKT_DB3] == BMBT_TEL_NAV_PREV) {
+        if (context->tel.contactIdx > 0) {
+            context->tel.contactIdx--;
+            BMBTTELSetSelectedNumber(context);
+        } else if (context->tel.page > 0) {
+            context->tel.page -= BMBT_TEL_PAGE_SIZE;
+            context->tel.contactIdx = BMBT_TEL_PAGE_SIZE - 1;
+            BMBTTELRequestPBAP(context);
+        } else {
+            BMBTTELMenuDial(context);
+        }
+    }
+}
+
+// Event Handling Below
+
+/**
  * BMBTBTDeviceConnected()
  *     Description:
  *         Handle screen updates when a device connects
@@ -2160,6 +2611,7 @@ void BMBTBTDeviceDisconnected(void *ctx, uint8_t *data)
             BMBTMenuDeviceSelection(context);
         }
     }
+    context->tel.state = BMBT_TEL_STATE_NONE;
 }
 
 /**
@@ -2196,6 +2648,54 @@ void BMBTBTMetadata(void *ctx, uint8_t *data)
             context->menu == BMBT_MENU_DASHBOARD_FRESH
         ) {
             BMBTMenuDashboard(context);
+        }
+    }
+}
+
+void BMBTBTPBAPContactReceived(void *ctx, uint8_t *data)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    switch (context->tel.state) {
+        case BMBT_TEL_STATE_DIRECTORY:
+            BMBTTELMenuContactList(context, IBUS_TEL_LAYOUT_DIRECTORY);
+            break;
+        case BMBT_TEL_STATE_TOP_8:
+            BMBTTELMenuContactList(context, IBUS_TEL_LAYOUT_TOP_8);
+            break;
+        case BMBT_TEL_STATE_LAST_DIALED: {
+            context->tel.contactIdx = 0;
+            context->tel.numberIdx = 0;
+            if (context->bt->pbap.contactCount == 0) {
+                IBusCommandTELTitleText(
+                    context->ibus,
+                    IBUS_DEVICE_GT,
+                    IBUS_TEL_TITLE_DIAL_NUMBER,
+                    0x00,
+                    "No Entries"
+                );
+            } else {
+                BMBTTELSetSelectedNumber(context);
+            }
+            break;
+        }
+    }
+}
+
+void BMBTBTPBAPSessionStatus(void *ctx, uint8_t *data)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    if (context->bt->pbap.active) {
+        if (
+            context->tel.state == BMBT_TEL_STATE_DIRECTORY ||
+            context->tel.state == BMBT_TEL_STATE_TOP_8 ||
+            context->tel.state == BMBT_TEL_STATE_LAST_DIALED
+        ) {
+            BTCommandPBAPGetPhonebook(
+                context->bt,
+                context->tel.phonebookType,
+                context->tel.page,
+                BT_PBAP_MAX_CONTACTS
+            );
         }
     }
 }
@@ -2329,12 +2829,23 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                 BTCommandCallAccept(context->bt);
             } else if (context->bt->callStatus == BT_CALL_OUTGOING) {
                 BTCommandCallEnd(context->bt);
+            } else if (context->bt->callStatus == BT_CALL_INACTIVE) {
+                if (
+                    context->tel.state == BMBT_TEL_STATE_DIAL &&
+                    strlen(context->bt->dialBuffer) > 0
+                ) {
+                    BTCommandDial(context->bt, context->bt->dialBuffer, 0);
+                }
             }
-        } else if (context->bt->callStatus == BT_CALL_INACTIVE &&
-                   pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_TEL_HOLD
+        } else if (
+            context->bt->callStatus == BT_CALL_INACTIVE &&
+            pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_TEL_HOLD
         ) {
             BTCommandToggleVoiceRecognition(context->bt);
         }
+    }
+    if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_MENU_RELEASE) {
+        context->tel.state = BMBT_TEL_STATE_NONE;
     }
 }
 
@@ -2369,7 +2880,7 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         context->menu = BMBT_MENU_NONE;
         context->status.playerMode = BMBT_MODE_INACTIVE;
         context->status.displayMode = BMBT_DISPLAY_OFF;
-        context->telState = BMBT_TEL_STATE_NONE;
+        context->tel.state = BMBT_TEL_STATE_NONE;
         BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 0);
     } else if (
         requestedCommand == IBUS_CDC_CMD_START_PLAYING ||
@@ -2443,32 +2954,20 @@ void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == 0x02 && pkt[IBUS_PKT_DB2] == 0x0C) {
-        if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
-            IBusCommandTELMenuText(
-                context->ibus,
-                IBUS_DEVICE_GT,
-                IBUS_TEL_LAYOUT_DIAL,
-                IBUS_TEL_FUNC_DIGIT,
-                IBUS_TEL_OPT_CLEAR,
-                ""
-            );
-            if (strlen(context->bt->dialBuffer) > 0) {
-                IBusCommandTELTitleText(
-                    context->ibus,
-                    IBUS_DEVICE_GT,
-                    IBUS_TEL_TITLE_DIAL_NUMBER,
-                    0x00,
-                    context->bt->dialBuffer
-                );
-            } else {
-                IBusCommandTELTitleText(
-                    context->ibus,
-                    IBUS_DEVICE_GT,
-                    IBUS_TEL_TITLE_DIAL_CLEAR,
-                    IBUS_TEL_TITLE_OPT_UPDATE,
-                    ""
-                );
-            }
+        if (ConfigGetSetting(CONFIG_SETTING_HFP) != CONFIG_SETTING_ON) {
+            return;
+        }
+        if (context->bt->activeDevice.pbapId == 0) {
+            BTCommandPBAPOpen(context->bt);
+        }
+        // Top-8 and Telephone menu both send the same frame
+        if (context->tel.state == BMBT_TEL_STATE_DIAL) {
+            context->tel.state = BMBT_TEL_STATE_TOP_8;
+            context->tel.page = 0;
+            context->tel.phonebookType = BT_PBAP_OBJ_FAVORITES;
+            BMBTTELRequestPBAP(context);
+        } else {
+            BMBTTELMenuDial(context);
         }
     }
 }
@@ -2631,6 +3130,28 @@ void BMBTIBusGTMenuBufferUpdate(void *ctx, uint8_t *pkt)
 void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
+    if (
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL &&
+        ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON &&
+        context->tel.state != BMBT_TEL_STATE_NONE
+    ) {
+        switch (context->tel.state) {
+            case BMBT_TEL_STATE_DIAL:
+                BMBTTELMenuDialUpdate(context, pkt);
+                break;
+            case BMBT_TEL_STATE_TOP_8:
+            case BMBT_TEL_STATE_DIRECTORY:
+                BMBTTELMenuContactListUpdate(context, pkt);
+                break;
+            case BMBT_TEL_STATE_LAST_DIALED:
+                BMBTTELMenuLastDialedUpdate(context, pkt);
+                break;
+            case BMBT_TEL_STATE_NUMBER_SELECT:
+                BMBTTELMenuNumberListUpdate(context, pkt);
+                break;
+        }
+        return;
+    }
     uint8_t selectedIdx = (uint8_t) pkt[IBUS_PKT_DB3];
     if (context->status.radType == IBUS_RADIO_TYPE_BM24) {
         if (selectedIdx < 10) {

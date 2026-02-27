@@ -336,6 +336,7 @@ void BTCommandPBAPGetPhonebook(BT_t *bt, uint8_t phonebook, uint16_t startIndex,
     uint8_t type;
     if (bt->type == BT_BTM_TYPE_BC127) {
         switch (phonebook) {
+            case BT_PBAP_OBJ_FAVORITES:
             case BT_PBAP_OBJ_PHONEBOOK:
                 type = 1;
                 break;

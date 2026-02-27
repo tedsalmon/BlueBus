@@ -90,6 +90,23 @@
 #define BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF 4
 #define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 5
 
+#define BMBT_TEL_STATE_NONE 0
+#define BMBT_TEL_STATE_DIAL 1
+#define BMBT_TEL_STATE_DIRECTORY 2
+#define BMBT_TEL_STATE_TOP_8 3
+#define BMBT_TEL_STATE_LAST_DIALED 4
+#define BMBT_TEL_STATE_NUMBER_SELECT 5
+
+#define BMBT_TEL_PAGE_SIZE 8
+
+#define BMBT_TEL_DIGIT_BACKSPACE 0x0A
+#define BMBT_TEL_DIGIT_STAR 0x1A
+#define BMBT_TEL_DIGIT_HASH 0x1B
+#define BMBT_TEL_NAV_BACK_TO_DIAL 0x1E
+#define BMBT_TEL_NAV_OPEN_DIRECTORY 0x1F
+#define BMBT_TEL_NAV_PREV 0x0C
+#define BMBT_TEL_NAV_NEXT 0x0D
+
 #define BMBT_MENU_BUFFER_OK 0
 #define BMBT_MENU_BUFFER_FLUSH 1
 
@@ -122,11 +139,11 @@
 #define BMBT_AUTOZOOM_DELAY 10000
 
 typedef struct BMBTTELStatus_t {
-    uint8_t telState;
-    uint16_t telPageOffset;
-    uint8_t telSelectedContact;
-    uint8_t telSelectedNumber;
-    uint8_t telPBAPObjectType;
+    uint8_t state: 3;
+    uint8_t contactIdx: 4;
+    uint8_t numberIdx: 2;
+    uint8_t phonebookType: 3;
+    uint8_t page;
 } BMBTTELStatus_t;
 
 typedef struct BMBTStatus_t {
@@ -143,20 +160,21 @@ typedef struct BMBTStatus_t {
 typedef struct BMBTContext_t {
     BT_t *bt;
     IBus_t *ibus;
-    uint8_t menu;
     BMBTStatus_t status;
+    BMBTTELStatus_t tel;
     uint8_t timerHeaderIntervals;
     uint8_t timerMenuIntervals;
     uint8_t displayUpdateTaskId;
     uint8_t headerWriteTaskId;
     uint8_t menuWriteTaskId;
+    uint8_t menu;
     uint8_t dspMode;
-    UtilsAbstractDisplayValue_t mainDisplay;
     uint8_t navZoom: 4;
     uint8_t navMapShown: 1;
     uint8_t navSilenced: 1;
     uint8_t navRange: 1;
     uint32_t navZoomTime;
+    UtilsAbstractDisplayValue_t mainDisplay;
 } BMBTContext_t;
 
 void BMBTInit(BT_t *, IBus_t *);
@@ -164,6 +182,8 @@ void BMBTDestroy();
 void BMBTBTDeviceConnected(void *, uint8_t *);
 void BMBTBTDeviceDisconnected(void *, uint8_t *);
 void BMBTBTMetadata(void *, uint8_t *);
+void BMBTBTPBAPContactReceived(void *, uint8_t *);
+void BMBTBTPBAPSessionStatus(void *, uint8_t *);
 void BMBTBTPlaybackStatus(void *, uint8_t *);
 void BMBTBTReady(void *, uint8_t *);
 void BMBTIBusBMBTButtonPress(void *, uint8_t *);
