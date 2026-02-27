@@ -158,7 +158,8 @@ static void IBusHandleBMBTMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_RESP) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
-    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON0 ||
+    } else if (
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON0 ||
         pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON1
     ) {
         EventTriggerCallback(IBUS_EVENT_BMBT_BUTTON, pkt);
@@ -345,7 +346,7 @@ static void IBusHandleGTMessage(IBus_t *ibus, uint8_t *pkt)
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_AUDIO_INPUT) {
         EventTriggerCallback(IBUS_EVENT_GT_AUDIO_INPUT_CONTROL, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
-        ibus->videoSource = pkt[IBUS_PKT_DB1] & 0x02;
+        ibus->videoSource = pkt[IBUS_PKT_DB1] & 0x0F;
         EventTriggerCallback(IBUS_EVENT_MONITOR_STATUS, pkt);
     }
 }
@@ -756,9 +757,18 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         }
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_WITH_CURSOR &&
             pkt[IBUS_PKT_DB2] == 0x01 &&
-            pkt[IBUS_PKT_DB3] == 0x00
+            pkt[IBUS_PKT_DB3] <= 0x03
         ) {
-            EventTriggerCallback(IBUS_EVENT_SCREEN_BUFFER_FLUSH, pkt);
+            if (
+                pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_INDEX ||
+                pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_INDEX_TMC ||
+                pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_STATIC
+            ) {
+                EventTriggerCallback(IBUS_EVENT_SCREEN_BUFFER_FLUSH, pkt);
+            }
+            if (pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_ZONE && pkt[IBUS_PKT_DB3] == 0x00) {
+                EventTriggerCallback(IBUS_EVENT_SCREEN_BUFFER_FLUSH, pkt);
+            }
         }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_IKE) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_TITLE &&
@@ -849,7 +859,7 @@ static void IBusHandleVMMessage(IBus_t *ibus, uint8_t *pkt)
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_RAD_AUDIO_INPUT) {
         EventTriggerCallback(IBUS_EVENT_GT_AUDIO_INPUT_CONTROL, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_MONITOR_CONTROL) {
-        ibus->videoSource = pkt[IBUS_PKT_DB1] & 0x02;
+        ibus->videoSource = pkt[IBUS_PKT_DB1] & 0x0F;
         EventTriggerCallback(IBUS_EVENT_MONITOR_STATUS, pkt);
     } else if (
         pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&

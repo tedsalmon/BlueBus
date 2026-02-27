@@ -329,7 +329,8 @@ void BMBTDestroy()
  */
 static void BMBTGTBufferFlush(BMBTContext_t *context)
 {
-    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI &&
+    if (
+        context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI &&
         context->ibus->moduleStatus.NAV == 0
     ) {
         context->status.menuBufferStatus = BMBT_MENU_BUFFER_FLUSH;
@@ -339,7 +340,7 @@ static void BMBTGTBufferFlush(BMBTContext_t *context)
 }
 
 /**
- * BMBTMenuRefresh()
+ * BMBTMainAreaRefresh()
  *     Description:
  *         Trigger the scheduled task to rewrite the main area. If the text
  *         fits on the screen, reset the index so it is written again
@@ -543,6 +544,23 @@ static void BMBTGTWriteIndex(
 }
 
 /**
+ * BMBTGTFlushHeaderWrite()
+ *     Description:
+ *         Wrapper to correct set the headerBufferStatus when flushing headers
+ *     Params:
+ *         BMBTContext_t *context - The context
+ *         char *text - The text to write
+ *         uint8_t flush - Flush the header write
+ *     Returns:
+ *         void
+ */
+static void BMBTGTFlushHeaderWrite(BMBTContext_t *context)
+{
+    context->status.headerBufferStatus = BMBT_MENU_BUFFER_FLUSH;
+    IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+}
+
+/**
  * BMBTGTWriteTitle()
  *     Description:
  *         Wrapper to automatically account for the nav type when
@@ -550,18 +568,22 @@ static void BMBTGTWriteIndex(
  *     Params:
  *         BMBTContext_t *context - The context
  *         char *text - The text to write
+ *         uint8_t flush - Flush the header write
  *     Returns:
  *         void
  */
-static void BMBTGTWriteTitle(BMBTContext_t *context, char *text)
+static void BMBTGTWriteTitle(BMBTContext_t *context, char *text, uint8_t flush)
 {
-    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI ||
+    if (
+        context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI ||
         context->ibus->moduleStatus.NAV == 0
     ) {
         IBusCommandGTWriteTitleArea(context->ibus, text);
     } else {
         IBusCommandGTWriteTitleIndex(context->ibus, text);
-        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+        if (flush) {
+            BMBTGTFlushHeaderWrite(context);
+        }
     }
 }
 
@@ -579,7 +601,8 @@ static void BMBTGTWriteTitle(BMBTContext_t *context, char *text)
  */
 static void BMBTGTWriteTitleIndex(BMBTContext_t *context, char *text)
 {
-    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI &&
+    if (
+        context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI &&
         context->ibus->moduleStatus.NAV == 0
     ) {
         if (strlen(text) > IBUS_DATA_GT_MKIII_MAX_TITLE_LEN) {
@@ -589,7 +612,7 @@ static void BMBTGTWriteTitleIndex(BMBTContext_t *context, char *text)
         } else {
             IBusCommandGTWriteIndexTitle(context->ibus, text);
         }
-        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+        BMBTGTFlushHeaderWrite(context);
     } else {
         IBusCommandGTWriteIndexTitleNGUI(context->ibus, text);
     }
@@ -597,10 +620,11 @@ static void BMBTGTWriteTitleIndex(BMBTContext_t *context, char *text)
 
 static void BMBTHeaderWrite(BMBTContext_t *context)
 {
-    if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
+    if (
+        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
         context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
     ) {
-        BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+        BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0);
     } else {
         BMBTMainAreaRefresh(context);
     }
@@ -618,7 +642,7 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     uint8_t tempMode = ConfigGetTempDisplay();
     // Clear the "CD1" Header
     IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "    ");
-    IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+    BMBTGTFlushHeaderWrite(context);
     uint8_t valueType = 0;
     switch (tempMode) {
         case CONFIG_SETTING_TEMP_COOLANT:
@@ -849,31 +873,25 @@ static void BMBTMenuDeviceSelection(BMBTContext_t *context)
     }
     for (idx = 0; idx < context->bt->pairedDevicesCount; idx++) {
         dev = &context->bt->pairedDevices[idx];
-        if (dev != 0) {
-            if (devicesCount > 0) {
-                devicesCount--;
-            }
-            char deviceName[23] = {0};
-            strncpy(deviceName, dev->deviceName, 11);
-            deviceName[22] = '\0';
-            // Add a space and asterisks to the end of the device name
-            // if it's the currently selected device
-            if (idx == context->bt->activeDevice.deviceIndex) {
-                uint8_t startIdx = strlen(deviceName);
-                if (startIdx > 20) {
-                    startIdx = 20;
-                }
-                deviceName[startIdx++] = 0x20;
-                deviceName[startIdx++] = 0x2A;
-            }
-            if (devicesCount == 0) {
-                uint8_t feedCount = 6 - screenIdx;
-                BMBTGTWriteIndex(context, screenIdx, deviceName, feedCount);
-            } else {
-                BMBTGTWriteIndex(context, screenIdx, deviceName, 0);
-            }
-            screenIdx++;
+        if (devicesCount > 0) {
+            devicesCount--;
         }
+        char deviceName[15] = {0x20};
+        memcpy(deviceName, dev->deviceName, 14);
+        deviceName[14] = '\0';
+        // Add a space and asterisks to the end of the device name
+        // if it's the currently selected device
+        if (idx == context->bt->activeDevice.deviceIndex) {
+            deviceName[12] = 0x20;
+            deviceName[13] = 0x2A;
+        }
+        if (devicesCount == 0) {
+            uint8_t feedCount = 6 - screenIdx;
+            BMBTGTWriteIndex(context, screenIdx, deviceName, feedCount);
+        } else {
+            BMBTGTWriteIndex(context, screenIdx, deviceName, 0);
+        }
+        screenIdx++;
     }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
@@ -2011,7 +2029,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
             BMBTSetMainDisplayText(context, text, 0, 0);
         } else if (value == BMBT_METADATA_MODE_OFF) {
             BMBTGTBufferFlush(context);
-            BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+            BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 1);
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_DEFAULT_MENU) {
         if (ConfigGetSetting(CONFIG_SETTING_BMBT_DEFAULT_MENU) == 0x00) {
@@ -2045,7 +2063,7 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
         } else {
             // Clear the header area
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, "      ");
-            IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+            BMBTGTFlushHeaderWrite(context);
             ConfigSetTempDisplay(CONFIG_SETTING_OFF);
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_TEMPS_OFF), 0);
         }
@@ -2579,7 +2597,7 @@ void BMBTBTDeviceConnected(void *ctx, uint8_t *data)
         BTPairedDevice_t *dev = &context->bt->pairedDevices[context->bt->activeDevice.deviceIndex];
         if (strlen(dev->deviceName) > 0) {
             BMBTHeaderWriteDeviceName(context, dev->deviceName);
-            IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+            BMBTGTFlushHeaderWrite(context);
         }
         if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             BMBTMenuDeviceSelection(context);
@@ -2606,7 +2624,7 @@ void BMBTBTDeviceDisconnected(void *ctx, uint8_t *data)
     ) {
         BMBTHeaderWriteDeviceName(context, LocaleGetText(LOCALE_STRING_NO_DEVICE));
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "||");
-        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+        BMBTGTFlushHeaderWrite(context);
         if (context->menu == BMBT_MENU_DEVICE_SELECTION) {
             BMBTMenuDeviceSelection(context);
         }
@@ -2724,7 +2742,7 @@ void BMBTBTPlaybackStatus(void *ctx, uint8_t *tmp)
             BMBTMainAreaRefresh(context);
             IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
         }
-        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+        BMBTGTFlushHeaderWrite(context);
     }
 }
 
@@ -2743,7 +2761,7 @@ void BMBTBTReady(void *ctx, uint8_t *tmp)
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     BMBTHeaderWriteDeviceName(context, LocaleGetText(LOCALE_STRING_NO_DEVICE));
     if (context->status.displayMode == BMBT_DISPLAY_ON) {
-        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+        BMBTGTFlushHeaderWrite(context);
     }
 }
 
@@ -2788,14 +2806,6 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                     }
                     if (context->status.radioDisplayStatus == BMBT_RAD_DISPLAY_STATUS_ON) {
                         BMBTSetRADMenuStatus(context, BMBT_RAD_DISPLAY_STATUS_OFF);
-                    }
-                    if (
-                        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
-                        context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
-                    ) {
-                        BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
-                    } else {
-                        BMBTMainAreaRefresh(context);
                     }
                     BMBTTriggerWriteHeader(context);
                     BMBTTriggerWriteMenu(context);
@@ -2921,13 +2931,6 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         // This adds support for GTs that run without radio, like the R51/R52/R53
         if (pkt[IBUS_PKT_DB2] == 0x01) {
             context->status.displayMode = BMBT_DISPLAY_ON;
-            if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
-                context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
-            ) {
-                BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
-            } else {
-                BMBTMainAreaRefresh(context);
-            }
             BMBTTriggerWriteHeader(context);
             BMBTTriggerWriteMenu(context);
         } else {
@@ -3081,6 +3084,9 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
     if (context->ibus->videoSource == IBUS_VIDEO_SOURCE_TV) {
         context->status.displayMode = BMBT_DISPLAY_OFF;
         return;
+    } else if (context->status.displayMode == BMBT_DISPLAY_OFF) {
+        // Reset the display state
+        context->status.displayMode = BMBT_DISPLAY_ON;
     }
     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_JNAV) {
         // Sent after pin 17 is left floating again
@@ -3089,19 +3095,12 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
         if (context->menu != BMBT_MENU_DASHBOARD_FRESH) {
             context->menu = BMBT_MENU_NONE;
         }
-        if (
-            ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
-            context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
-        ) {
-            BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
-        } else {
-            BMBTMainAreaRefresh(context);
-        }
         BMBTTriggerWriteHeader(context);
-    } else if ((pkt[IBUS_PKT_DB1] & 0xF) != 1) {
+    } else if ((pkt[IBUS_PKT_DB1] & 0xF) == 2) {
         context->status.videoSource = BMBT_VIDEO_SOURCE_EXTERNAL;
         context->status.displayMode = BMBT_DISPLAY_OFF;
     }
+
 }
 
 /**
@@ -3288,18 +3287,30 @@ void BMBTIBusScreenModeSet(void *ctx, uint8_t *pkt)
 void BMBTIBusScreenBufferFlush(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    // If we cannot write to the display, we are not the active
-    // player, or this is a "Zone" (header) update, then ignore the message.
+    // If we are not the active display, then ignore the message
     if (
         context->status.playerMode != BMBT_MODE_ACTIVE ||
-        context->status.displayMode != BMBT_DISPLAY_ON ||
-        pkt[IBUS_PKT_DB1] != IBUS_CMD_GT_WRITE_ZONE
+        context->status.displayMode != BMBT_DISPLAY_ON
     ) {
         return;
     }
-    // If the update does not match our current menu state, override it
-    if (pkt[IBUS_PKT_DB1] != context->status.navIndexType) {
+    // Header was updated
+    if (pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_ZONE) {
+        // This small state machine allows us to ignore our own header update
+        if (context->status.headerBufferStatus == BMBT_MENU_BUFFER_OK) {
+            BMBTTriggerWriteHeader(context);
+        } else {
+            context->status.headerBufferStatus = BMBT_MENU_BUFFER_OK;
+        }
+    } else if (pkt[IBUS_PKT_DB1] != context->status.navIndexType) {
+        // If the update does not match our current menu state, override it
         IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    }
+    if (pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_STATIC && pkt[IBUS_PKT_DB3] > 0) {
+        // When Audiotext is enabled (for MP3-capable CD Changers, which we
+        // adverise as), the Radio will try to clear the static UI from time
+        // to time
+        //IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
     }
 }
 
@@ -3409,7 +3420,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
 
     if (redraw == 1) {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
-        IBusCommandGTUpdate(context->ibus, IBUS_CMD_GT_WRITE_ZONE);
+        BMBTGTFlushHeaderWrite(context);
     }
 
     if (
@@ -3527,12 +3538,14 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
                 context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
             ) {
-                BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH));
+                BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 1);
             } else {
                 BMBTMainAreaRefresh(context);
             }
-            BMBTTriggerWriteHeader(context);
-            BMBTTriggerWriteMenu(context);
+            if (context->status.displayMode == BMBT_DISPLAY_ON) {
+                BMBTTriggerWriteHeader(context);
+                BMBTTriggerWriteMenu(context);
+            }
         }
     }
 }
@@ -3568,12 +3581,17 @@ void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
         }
         if (
             pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
-            (context->status.displayMode == BMBT_DISPLAY_ON ||
-             context->status.displayMode == BMBT_DISPLAY_TONE_SEL_INFO)
+            (
+                context->status.displayMode == BMBT_DISPLAY_ON ||
+                context->status.displayMode == BMBT_DISPLAY_TONE_SEL_INFO
+            )
         ) {
+            context->status.displayMode = BMBT_DISPLAY_ON;
+            BMBTTriggerWriteHeader(context);
             BMBTTriggerWriteMenu(context);
-        } else if (pkt[IBUS_PKT_DB1] == IBUS_GT_TONE_MENU_OFF ||
-             pkt[IBUS_PKT_DB1] == IBUS_GT_SEL_MENU_OFF
+        } else if (
+            pkt[IBUS_PKT_DB1] == IBUS_GT_TONE_MENU_OFF ||
+            pkt[IBUS_PKT_DB1] == IBUS_GT_SEL_MENU_OFF
         ) {
             context->status.displayMode = BMBT_DISPLAY_ON;
         }
@@ -3661,10 +3679,17 @@ void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
             break;
     }
 
-    uint8_t bbLang = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    uint8_t configuredLang = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
 
-    if (((bbLang == CONFIG_SETTING_LANGUAGE_AUTO) || (bbLang == 255) || (bbLang >= 0x80)) && (lang != (bbLang & 0x0F))) {
-// overwrite only when not flagged as user-forced
+    if (
+        (
+            configuredLang == CONFIG_SETTING_LANGUAGE_AUTO ||
+            configuredLang == 255 ||
+            configuredLang >= 0x80
+        ) &&
+        lang != (configuredLang & 0x0F)
+    ) {
+        // Overwrite only when not flagged as user-forced
         ConfigSetSetting(CONFIG_SETTING_LANGUAGE, (lang | 0x80));
     }
 }
@@ -3683,19 +3708,19 @@ void BMBTTimerHeaderWrite(void *ctx)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     if (
-        context->status.playerMode == BMBT_MODE_ACTIVE &&
-        context->status.displayMode == BMBT_DISPLAY_ON
+        context->status.playerMode != BMBT_MODE_ACTIVE ||
+        context->status.displayMode != BMBT_DISPLAY_ON ||
+        context->timerHeaderIntervals == BMBT_MENU_HEADER_TIMER_OFF
     ) {
-        if (context->timerHeaderIntervals != BMBT_MENU_HEADER_TIMER_OFF) {
-            uint16_t time = context->timerHeaderIntervals * BMBT_HEADER_TIMER_WRITE_INT;
-            if (time >= BMBT_HEADER_TIMER_WRITE_TIMEOUT) {
-                BMBTHeaderWrite(context);
-                // Increment the intervals so we aren't called again
-                context->timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
-            } else {
-                context->timerHeaderIntervals++;
-            }
-        }
+        return;
+    }
+    uint16_t time = context->timerHeaderIntervals * BMBT_HEADER_TIMER_WRITE_INT;
+    if (time >= BMBT_HEADER_TIMER_WRITE_TIMEOUT) {
+        BMBTHeaderWrite(context);
+        // Increment the intervals so we aren't called again
+        context->timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
+    } else {
+        context->timerHeaderIntervals++;
     }
 }
 
@@ -3799,7 +3824,7 @@ void BMBTTimerScrollDisplay(void *ctx)
                     &context->mainDisplay.text[context->mainDisplay.index],
                     textLength + 1
                 );
-                BMBTGTWriteTitle(context, text);
+                BMBTGTWriteTitle(context, text, 1);
                 // Pause at the beginning of the text
                 if (context->mainDisplay.index == 0) {
                     context->mainDisplay.timeout = 5;
@@ -3821,7 +3846,7 @@ void BMBTTimerScrollDisplay(void *ctx)
                 }
             } else {
                 if (context->mainDisplay.index == 0) {
-                    BMBTGTWriteTitle(context, context->mainDisplay.text);
+                    BMBTGTWriteTitle(context, context->mainDisplay.text, 1);
                 }
                 context->mainDisplay.index = 1;
             }

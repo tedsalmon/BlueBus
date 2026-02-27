@@ -119,8 +119,8 @@
 #define BMBT_HEADER_TIMER_WRITE_INT 100
 #define BMBT_HEADER_TIMER_WRITE_TIMEOUT 500
 #define BMBT_MENU_HEADER_TIMER_OFF 255
-/* 23 + 1 for null terminator / This is 14 for the older UI */
-#define BMBT_MENU_STRING_MAX_SIZE 24
+
+#define BMBT_MENU_STRING_MAX_SIZE 16
 #define BMBT_METADATA_MODE_OFF 0x00
 #define BMBT_METADATA_MODE_PARTY 0x01
 #define BMBT_METADATA_MODE_CHUNK 0x02
@@ -152,6 +152,7 @@ typedef struct BMBTStatus_t {
     uint8_t navState: 1;
     uint8_t radType: 4;
     uint8_t videoSource: 1;
+    uint8_t headerBufferStatus: 1;
     uint8_t menuBufferStatus: 1;
     uint8_t radioDisplayStatus: 1;
     uint8_t navIndexType;
