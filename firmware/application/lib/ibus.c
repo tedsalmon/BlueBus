@@ -6,6 +6,7 @@
  */
 #include "ibus.h"
 #include "config.h"
+#include "event.h"
 #include <ctype.h>
 
 static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
@@ -773,6 +774,9 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
             if (pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_ZONE && pkt[IBUS_PKT_DB3] == 0x00) {
                 EventTriggerCallback(IBUS_EVENT_SCREEN_BUFFER_FLUSH, pkt);
             }
+        }
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_PLAYBACK_CTRL) {
+            EventTriggerCallback(IBUS_EVENT_RAD_PLAYBACK_CTRL, pkt);
         }
     } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_IKE) {
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_TITLE &&
@@ -2654,7 +2658,7 @@ void IBusCommandIKECheckControlDisplayClear(IBus_t *ibus)
 void IBusCommandIKENumbericDisplayWrite(IBus_t *ibus, uint8_t number)
 {
     uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, IBUS_DATA_IKE_NUMERIC_WRITE, number};
-    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
+    IBusSendCommand(ibus, IBUS_DEVICE_NAVE, IBUS_DEVICE_IKE, msg, sizeof(msg));
 }
 
 /**

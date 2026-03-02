@@ -5,6 +5,8 @@
  *     Implement the BoardMonitor UI Mode handler
  */
 #include "bmbt.h"
+#include <stdio.h>
+#include <string.h>
 static BMBTContext_t Context;
 
 static const uint8_t menuSettings[] = {
@@ -179,6 +181,11 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     EventRegisterCallback(
         IBUS_EVENT_SCREEN_MODE_SET,
         &BMBTGTScreenModeSet,
+        &Context
+    );
+    EventRegisterCallback(
+        IBUS_EVENT_RAD_PLAYBACK_CTRL,
+        &BMBTIBusPlaybackCtrl,
         &Context
     );
     EventRegisterCallback(
@@ -2801,6 +2808,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                 if (context->status.displayMode == BMBT_DISPLAY_OFF) {
                     IBusCommandVMModeSet(context->ibus, IBUS_BLUEBUS_CARPHONICS_DISABLE);
                     context->status.displayMode = BMBT_DISPLAY_ON;
+                    context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
                     if (context->menu != BMBT_MENU_DASHBOARD_FRESH) {
                         context->menu = BMBT_MENU_NONE;
                     }
@@ -2821,9 +2829,9 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
         // Handle the SEL and Info buttons gracefully
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_BMBT_BUTTON0 && pkt[IBUS_PKT_LEN] == 0x05) {
             if (pkt[IBUS_PKT_DB2] == IBUS_DEVICE_BMBT_BUTTON_INFO) {
-                context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
+                context->status.displayMode = BMBT_DISPLAY_TONE_INFO;
             } else if (pkt[IBUS_PKT_DB2] == IBUS_DEVICE_BMBT_BUTTON_SEL) {
-                context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
+                context->status.displayMode = BMBT_DISPLAY_TONE_INFO;
             }
         }
     }
@@ -2841,7 +2849,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                 BTCommandCallEnd(context->bt);
             } else if (context->bt->callStatus == BT_CALL_INACTIVE) {
                 if (
-                    context->tel.state == BMBT_TEL_STATE_DIAL &&
+                    context->tel.state != BMBT_TEL_STATE_DIAL &&
                     strlen(context->bt->dialBuffer) > 0
                 ) {
                     BTCommandDial(context->bt, context->bt->dialBuffer, 0);
@@ -2890,7 +2898,6 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         context->menu = BMBT_MENU_NONE;
         context->status.playerMode = BMBT_MODE_INACTIVE;
         context->status.displayMode = BMBT_DISPLAY_OFF;
-        context->tel.state = BMBT_TEL_STATE_NONE;
         BMBTSetMainDisplayText(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 0, 0);
     } else if (
         requestedCommand == IBUS_CDC_CMD_START_PLAYING ||
@@ -2913,6 +2920,7 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         context->timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;
         context->status.playerMode = BMBT_MODE_ACTIVE;
         context->status.displayMode = BMBT_DISPLAY_ON;
+        context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
         BMBTTriggerWriteHeader(context);
         BMBTTriggerWriteMenu(context);
     } else if (
@@ -2931,6 +2939,7 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         // This adds support for GTs that run without radio, like the R51/R52/R53
         if (pkt[IBUS_PKT_DB2] == 0x01) {
             context->status.displayMode = BMBT_DISPLAY_ON;
+            context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
             BMBTTriggerWriteHeader(context);
             BMBTTriggerWriteMenu(context);
         } else {
@@ -3087,6 +3096,7 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
     } else if (context->status.displayMode == BMBT_DISPLAY_OFF) {
         // Reset the display state
         context->status.displayMode = BMBT_DISPLAY_ON;
+        context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
     }
     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_JNAV) {
         // Sent after pin 17 is left floating again
@@ -3247,6 +3257,23 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
             BMBTSettingsUpdateUI(context, selectedIdx);
         }
     }
+}
+
+/**
+ * BMBTIBusPlaybackCtrl()
+ *     Description:
+ *         This callback is triggered when the radio sends a playback
+ *         control command.
+ *     Params:
+ *         void *ctx - The context
+ *         uint8_t *pkt - The IBus Message received
+ *     Returns:
+ *         void
+ */
+void BMBTIBusPlaybackCtrl(void *ctx, uint8_t *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    context->status.displayMode = BMBT_DISPLAY_SEL;
 }
 
 /**
@@ -3447,7 +3474,7 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
 void BMBTRADDisplayMenu(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    context->status.displayMode = BMBT_DISPLAY_TONE_SEL_INFO;
+    context->status.displayMode = BMBT_DISPLAY_TONE_INFO;
     if (context->status.videoSource == BMBT_VIDEO_SOURCE_EXTERNAL) {
         IBusCommandVMModeSet(context->ibus, IBUS_BLUEBUS_CARPHONICS_DISABLE);
     }
@@ -3532,10 +3559,12 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             }
             if (context->status.displayMode == BMBT_DISPLAY_OFF) {
                 context->status.displayMode = BMBT_DISPLAY_ON;
+                context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
             } else if (UtilsStricmp("NO DISC", text) == 0) {
                 BMBTTriggerWriteMenu(context);
             }
-            if (ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
+            if (
+                ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
                 context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED
             ) {
                 BMBTGTWriteTitle(context, LocaleGetText(LOCALE_STRING_BLUETOOTH), 1);
@@ -3563,38 +3592,41 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
 void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    if (context->status.playerMode == BMBT_MODE_ACTIVE) {
-        if (pkt[IBUS_PKT_DB1] == 0x01 || pkt[IBUS_PKT_DB1] == IBUS_RAD_PRIORITY_GT) {
-            if (context->menu == BMBT_MENU_DASHBOARD) {
-                context->menu = BMBT_MENU_DASHBOARD_FRESH;
-            } else {
-                context->menu = BMBT_MENU_NONE;
-            }
-            context->status.displayMode = BMBT_DISPLAY_OFF;
+    if (context->status.playerMode != BMBT_MODE_ACTIVE) {
+        return;
+    }
+    if (pkt[IBUS_PKT_DB1] == 0x01 || pkt[IBUS_PKT_DB1] == IBUS_RAD_PRIORITY_GT) {
+        if (context->menu == BMBT_MENU_DASHBOARD) {
+            context->menu = BMBT_MENU_DASHBOARD_FRESH;
+        } else {
+            context->menu = BMBT_MENU_NONE;
         }
-        if (
-            pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
-            context->status.navState == BMBT_NAV_STATE_BOOT
-        ) {
-            BMBTSetRADMenuStatus(context, BMBT_RAD_DISPLAY_STATUS_OFF);
-            context->status.navState = BMBT_NAV_STATE_ON;
-        }
-        if (
-            pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
-            (
-                context->status.displayMode == BMBT_DISPLAY_ON ||
-                context->status.displayMode == BMBT_DISPLAY_TONE_SEL_INFO
-            )
-        ) {
-            context->status.displayMode = BMBT_DISPLAY_ON;
-            BMBTTriggerWriteHeader(context);
-            BMBTTriggerWriteMenu(context);
-        } else if (
-            pkt[IBUS_PKT_DB1] == IBUS_GT_TONE_MENU_OFF ||
-            pkt[IBUS_PKT_DB1] == IBUS_GT_SEL_MENU_OFF
-        ) {
-            context->status.displayMode = BMBT_DISPLAY_ON;
-        }
+        context->status.displayMode = BMBT_DISPLAY_OFF;
+    }
+    if (
+        pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
+        context->status.navState == BMBT_NAV_STATE_BOOT
+    ) {
+        BMBTSetRADMenuStatus(context, BMBT_RAD_DISPLAY_STATUS_OFF);
+        context->status.navState = BMBT_NAV_STATE_ON;
+    }
+    if (
+        pkt[IBUS_PKT_DB1] == IBUS_RAD_HIDE_BODY &&
+        (
+            context->status.displayMode == BMBT_DISPLAY_ON ||
+            context->status.displayMode == BMBT_DISPLAY_TONE_INFO
+        )
+    ) {
+        context->status.displayMode = BMBT_DISPLAY_ON;
+        context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
+        BMBTTriggerWriteHeader(context);
+        BMBTTriggerWriteMenu(context);
+    } else if (
+        pkt[IBUS_PKT_DB1] == IBUS_GT_TONE_MENU_OFF ||
+        pkt[IBUS_PKT_DB1] == IBUS_GT_SEL_MENU_OFF
+    ) {
+        context->status.displayMode = BMBT_DISPLAY_ON;
+        context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
     }
 }
 

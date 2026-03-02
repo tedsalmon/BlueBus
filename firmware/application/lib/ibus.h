@@ -234,6 +234,7 @@
 #define IBUS_CMD_RAD_WRITE_MID_MENU 0x21
 
 #define IBUS_CMD_VOL_CTRL 0x32
+#define IBUS_CMD_RAD_PLAYBACK_CTRL 0x33
 
 #define IBUS_GT_DETECT_ERROR 0
 #define IBUS_GT_MKI 1
@@ -606,6 +607,7 @@
 #define IBUS_EVENT_NAV_GPSDATETIME_UPDATE 76
 #define IBUS_EVENT_RANGE_UPDATE 77
 #define IBUS_EVENT_GT_SCREEN_MODE_SET 78
+#define IBUS_EVENT_RAD_PLAYBACK_CTRL 79
 
 // Configuration and protocol definitions
 #define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
