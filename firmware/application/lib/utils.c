@@ -251,7 +251,56 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
 }
 
 /**
- * UtilsRemoveSubstring()
+ * UtilsSubstrExists()
+ *     Description:
+ *         Check if a substring exists within the first `length` bytes of a
+ *         string. If `boundary` is non-zero, only check positions immediately
+ *         following that boundary character (or the start of the string).
+ *     Params:
+ *         const char *haystack - The string to search in
+ *         uint8_t length - Number of bytes to search within
+ *         const char *needle - The substring to find
+ *         char boundary - Boundary character to anchor searches, or 0 to
+ *             search every position
+ *     Returns:
+ *         uint8_t - 1 if found, 0 otherwise
+ */
+uint8_t UtilsSubstrExists(
+    const char *haystack,
+    uint8_t length,
+    const char *needle,
+    char boundary
+) {
+    uint8_t needleLen = strlen(needle);
+    if (length < needleLen) {
+        return 0;
+    }
+    if (boundary != 0) {
+        uint8_t i = 0;
+        // Check at start of string
+        if (memcmp(haystack, needle, needleLen) == 0) {
+            return 1;
+        }
+        for (i = 0; i < length; i++) {
+            if (haystack[i] == boundary && i + 1 + needleLen <= length) {
+                if (memcmp(haystack + i + 1, needle, needleLen) == 0) {
+                    return 1;
+                }
+            }
+        }
+    } else {
+        uint8_t i;
+        for (i = 0; i + needleLen <= length; i++) {
+            if (memcmp(haystack + i, needle, needleLen) == 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/**
+ * UtilsSubstrRemove()
  *     Description:
  *         Remove the given substring from the given subject
  *     Params:
@@ -260,7 +309,7 @@ void UtilsNormalizeText(char *string, const char *input, uint16_t max_len)
  *     Returns:
  *         void
  */
-void UtilsRemoveSubstring(char *string, const char *trash)
+void UtilsSubstrRemove(char *string, const char *trash)
 {
     uint16_t removeLength = strlen(trash);
     while ((string = strstr(string, trash))) {
@@ -377,6 +426,7 @@ int8_t UtilsStricmp(const char *string, const char *compare)
  */
 char * UtilsStrncpy(char *dest, const char *src, size_t size)
 {
+    // Size - 1 to avoid copying a character we would just override anyways
     strncpy(dest, src, size - 1);
     dest[size - 1] = '\0';
     return dest;

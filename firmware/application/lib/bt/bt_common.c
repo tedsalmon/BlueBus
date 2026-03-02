@@ -262,6 +262,34 @@ void BTPairedDeviceSave(uint8_t *macId, char *deviceName, uint8_t devIdx)
 }
 
 /**
+ * BTPBAPDecodeQuotedPrintable()
+ *     Description:
+ *         Decode a quoted-printable encoded string in-place.
+ *         Each =XX sequence is converted to the raw byte value.
+ *     Params:
+ *         char *str - The string to decode (modified in-place)
+ *         uint8_t len - Length of the input string
+ *     Returns:
+ *         uint8_t - New length after decoding
+ */
+static uint8_t BTPBAPDecodeQuotedPrintable(char *str, uint8_t len)
+{
+    uint8_t readIdx = 0;
+    uint8_t writeIdx = 0;
+    while (readIdx < len) {
+        if (str[readIdx] == '=' && (readIdx + 2) < len) {
+            char hexBuf[3] = {str[readIdx + 1], str[readIdx + 2], '\0'};
+            str[writeIdx++] = (char) UtilsStrToHex(hexBuf);
+            readIdx += 3;
+        } else {
+            str[writeIdx++] = str[readIdx++];
+        }
+    }
+    str[writeIdx] = '\0';
+    return writeIdx;
+}
+
+/**
  * BTPBAPParseVCard()
  *     Description:
  *         Process a single line from vCard data
@@ -307,12 +335,11 @@ void BTPBAPParseVCard(BT_t *bt)
         }
         uint8_t nameStart = (uint8_t) colonIdx + 1;
         uint8_t nameLen = len - nameStart;
-        if (nameLen >= BT_PBAP_CONTACT_NAME_LEN) {
-            nameLen = BT_PBAP_CONTACT_NAME_LEN - 1;
-        }
         BTPBAPContact_t *contact = &bt->pbap.contacts[bt->pbap.contactIdx];
-        memcpy(contact->name, line + nameStart, nameLen);
-        contact->name[nameLen] = '\0';
+        if (UtilsSubstrExists(line, (uint8_t) colonIdx, "ENCODING=QUOTED-PRINTABLE", ';')) {
+            nameLen = BTPBAPDecodeQuotedPrintable(line + nameStart, nameLen);
+        }
+        UtilsNormalizeText(contact->name, line + nameStart, BT_PBAP_CONTACT_NAME_LEN);
         return;
     }
     if (memcmp(line, "N:", 2) == 0 || memcmp(line, "N;", 2) == 0) {
@@ -323,6 +350,9 @@ void BTPBAPParseVCard(BT_t *bt)
         }
         uint8_t nameStart = (uint8_t) colonIdx + 1;
         uint8_t nameLen = len - nameStart;
+        if (UtilsSubstrExists(line, (uint8_t) colonIdx, "ENCODING=QUOTED-PRINTABLE", ';')) {
+            nameLen = BTPBAPDecodeQuotedPrintable(line + nameStart, nameLen);
+        }
         if (nameLen >= BT_PBAP_CONTACT_NAME_LEN) {
             nameLen = BT_PBAP_CONTACT_NAME_LEN - 1;
         }
@@ -332,10 +362,11 @@ void BTPBAPParseVCard(BT_t *bt)
         // Find semicolon separating Last;First in the value
         int8_t semiIdx = UtilsCharIndex(nameValue, ';');
         BTPBAPContact_t *contact = &bt->pbap.contacts[bt->pbap.contactIdx];
+        char composedName[BT_PBAP_CONTACT_NAME_LEN] = {0};
         if (semiIdx < 0) {
             // No semicolon - use the whole value as the name
-            memcpy(contact->name, nameValue, nameLen);
-            contact->name[nameLen] = '\0';
+            memcpy(composedName, nameValue, nameLen);
+            composedName[nameLen] = '\0';
         } else {
             uint8_t lastLen = (uint8_t) semiIdx;
             char *first = nameValue + semiIdx + 1;
@@ -353,24 +384,25 @@ void BTPBAPParseVCard(BT_t *bt)
             uint8_t pos = 0;
             if (firstLen > 0 && lastLen > 0) {
                 // "First Last"
-                memcpy(contact->name, first, firstLen);
+                memcpy(composedName, first, firstLen);
                 pos = firstLen;
-                contact->name[pos++] = ' ';
+                composedName[pos++] = ' ';
                 uint8_t copyLen = lastLen;
                 if (pos + copyLen > BT_PBAP_CONTACT_NAME_LEN - 1) {
                     copyLen = BT_PBAP_CONTACT_NAME_LEN - 1 - pos;
                 }
-                memcpy(contact->name + pos, nameValue, copyLen);
+                memcpy(composedName + pos, nameValue, copyLen);
                 pos += copyLen;
             } else if (firstLen > 0) {
-                memcpy(contact->name, first, firstLen);
+                memcpy(composedName, first, firstLen);
                 pos = firstLen;
             } else if (lastLen > 0) {
-                memcpy(contact->name, nameValue, lastLen);
+                memcpy(composedName, nameValue, lastLen);
                 pos = lastLen;
             }
-            contact->name[pos] = '\0';
+            composedName[pos] = '\0';
         }
+        UtilsNormalizeText(contact->name, composedName, BT_PBAP_CONTACT_NAME_LEN);
         return;
     }
     if (

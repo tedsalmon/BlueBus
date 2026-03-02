@@ -1147,50 +1147,53 @@ void BM83ProcessEventPBAP(BT_t *bt, uint8_t *data, uint16_t length)
     }
     uint8_t packetType = data[0];
     uint16_t payloadLength = ((uint16_t)data[3] << 8) | data[4];
+    if (payloadLength == 0) {
+        return;
+    }
     uint8_t *payload = &data[5];
     if (
         packetType == BM83_PBAP_PACKET_SINGLE ||
         packetType == BM83_PBAP_PACKET_FRAG_START
     ) {
-        if (payloadLength < 1) {
+        bt->pbap.parser.subEvent = payload[0];
+        if (bt->pbap.parser.subEvent == BM83_PBAP_EVT_SESSION_OPENED) {
+            if (payloadLength >= 3) {
+                uint8_t status = payload[2];
+                bt->pbap.active = (status == BM83_PBAP_SESSION_SUCCESS);
+                bt->pbap.status = BT_PBAP_STATUS_IDLE;
+                LogDebug(
+                    LOG_SOURCE_BT,
+                    "BT: PBAP Session %s",
+                    bt->pbap.active ? "Opened" : "Failed"
+                );
+                EventTriggerCallback(BT_EVENT_PBAP_SESSION_STATUS, &status);
+            }
             return;
         }
-        bt->pbap.parser.subEvent = payload[0];
-    }
-    if (bt->pbap.parser.subEvent == BM83_PBAP_EVT_SESSION_OPENED) {
-        if (payloadLength >= 3) {
-            uint8_t status = payload[2];
-            bt->pbap.active = (status == BM83_PBAP_SESSION_SUCCESS);
+        if (bt->pbap.parser.subEvent == BM83_PBAP_EVT_SESSION_DISCONNECTED) {
+            bt->pbap.active = 0;
             bt->pbap.status = BT_PBAP_STATUS_IDLE;
-            LogDebug(
-                LOG_SOURCE_BT,
-                "BT: PBAP Session %s",
-                bt->pbap.active ? "Opened" : "Failed"
-            );
+            LogDebug(LOG_SOURCE_BT, "BT: PBAP Session Disconnected");
+            uint8_t status = 0xFF;
             EventTriggerCallback(BT_EVENT_PBAP_SESSION_STATUS, &status);
+            return;
         }
-        return;
-    }
-    if (bt->pbap.parser.subEvent == BM83_PBAP_EVT_SESSION_DISCONNECTED) {
-        bt->pbap.active = 0;
-        bt->pbap.status = BT_PBAP_STATUS_IDLE;
-        LogDebug(LOG_SOURCE_BT, "BT: PBAP Session Disconnected");
-        uint8_t status = 0xFF;
-        EventTriggerCallback(BT_EVENT_PBAP_SESSION_STATUS, &status);
-        return;
-    }
-    if (bt->pbap.parser.subEvent == BM83_PBAP_EVT_ERROR_RSP) {
-        if (payloadLength >= 3) {
-            uint8_t errorCode = payload[2];
-            LogWarning("BT: PBAP Error: 0x%02X", errorCode);
+        if (bt->pbap.parser.subEvent == BM83_PBAP_EVT_ERROR_RSP) {
+            if (payloadLength >= 3) {
+                uint8_t errorCode = payload[2];
+                LogWarning("BT: PBAP Error: 0x%02X", errorCode);
+            }
+            bt->pbap.status = BT_PBAP_STATUS_IDLE;
+            return;
         }
-        bt->pbap.status = BT_PBAP_STATUS_IDLE;
-        return;
     }
     if (
         bt->pbap.parser.subEvent == BM83_PBAP_EVT_PULL_PHONEBOOK_RSP ||
         bt->pbap.parser.subEvent == BM83_PBAP_EVT_PULL_VCARD_LISTING_RSP
     ) {
+        // For CONTINUE/END packets, vCard data starts immediately
+        // For SINGLE/FRAG_START, we must skip the PBAP response headers
+        uint16_t dataOffset = 0;
         if (
             packetType == BM83_PBAP_PACKET_SINGLE ||
             packetType == BM83_PBAP_PACKET_FRAG_START
@@ -1202,18 +1205,12 @@ void BM83ProcessEventPBAP(BT_t *bt, uint8_t *data, uint16_t length)
                 bt->pbap.contactIdx = 0;
                 memset(&bt->pbap.parser, 0, sizeof(bt->pbap.parser));
                 memset(bt->pbap.contacts, 0, sizeof(bt->pbap.contacts));
+                // Reset the current sub-event
+                bt->pbap.parser.subEvent = payload[0];
             }
             if (payloadLength >= 3) {
                 bt->pbap.parser.isEndOfBody = payload[2];
             }
-        }
-        // For CONTINUE/END packets, vCard data starts immediately
-        // For SINGLE/FRAG_START, we must skip the PBAP response headers
-        uint16_t dataOffset = 0;
-        if (
-            packetType == BM83_PBAP_PACKET_SINGLE ||
-            packetType == BM83_PBAP_PACKET_FRAG_START
-        ) {
             // The first 56 bytes are the header data that we want to avoid
             dataOffset = BM83_PBAP_OFFSET_HEADER;
             // Scan forward past any extra padding

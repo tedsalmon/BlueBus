@@ -121,7 +121,15 @@ void BTCommandDial(BT_t *bt, const char *number, const char *name)
         while (*number !=0 && pos < BT_DIAL_BUFFER_FIELD_SIZE - 2) {
             char c = *number;
             // ITU-T Recommendation V.250 dial command
-            if ((c=='+')||(c==',')||(c=='#')||(c=='*')||(c>='0'&&c<='9')||(c>='A'&&c<='C')||(c>='a'&&c<='c')) {
+            if (
+                c == '+' ||
+                c == ',' ||
+                c == '#' ||
+                c == '*' ||
+                (c >= '0' && c <= '9') ||
+                (c >= 'A' && c <= 'C') ||
+                (c >= 'a' && c <= 'c')
+            ) {
                 cleannum[pos++]=c;
             }
             number++;

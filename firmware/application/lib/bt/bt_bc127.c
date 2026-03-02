@@ -1324,13 +1324,13 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         char callerId[BT_CALLER_ID_FIELD_SIZE + 1]  = {0};
         if (cidDelimCounter == 2) {
             // Remove the escaped quotes that come through
-            UtilsRemoveSubstring(cidDataBuf[0], "\\22");
+            UtilsSubstrRemove(cidDataBuf[0], "\\22");
             // Clean the text up
             UtilsNormalizeText(callerId, cidDataBuf[0], BT_CALLER_ID_FIELD_SIZE);
         } else {
             if (cidDataBuf[cidDelimCounter - 1] != 0x00) {
                 // Remove the escaped quotes that come through
-                UtilsRemoveSubstring(cidDataBuf[cidDelimCounter - 1], "\\22");
+                UtilsSubstrRemove(cidDataBuf[cidDelimCounter - 1], "\\22");
                 // Clean the text up
                 UtilsNormalizeText(callerId, cidDataBuf[cidDelimCounter - 1], BT_CALLER_ID_FIELD_SIZE);
             }
@@ -1348,8 +1348,8 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
         // Example 24h: \2222/10/19, 00:08:18\22
         //         12h: \2223/01/13, 1:31:00 pm\22
 
-        UtilsRemoveSubstring(msgBuf[4], "\\22");
-        UtilsRemoveSubstring(msgBuf[5], "\\22");
+        UtilsSubstrRemove(msgBuf[4], "\\22");
+        UtilsSubstrRemove(msgBuf[5], "\\22");
 
         uint8_t datetime[6] = {0};
         uint8_t sepCount = 0;
