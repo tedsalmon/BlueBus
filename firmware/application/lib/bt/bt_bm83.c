@@ -437,7 +437,7 @@ void BM83CommandPBAPGetPhonebook(BT_t *bt, uint8_t type, uint16_t offset, uint8_
         0x00,
         0x00,
         0x00,
-        BM83_PBAP_FORMAT_VCARD30,
+        BM83_PBAP_FORMAT_VCARD21,
         (uint8_t) (offset >> 8),
         (uint8_t) (offset & 0xFF),
         0x00,

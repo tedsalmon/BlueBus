@@ -92,6 +92,8 @@
 #define HANDLER_MONITOR_STATUS_POWERED_OFF 1
 #define HANDLER_MONITOR_STATUS_POWERED_ON 2
 
+#define HANDLER_PDC_MAX_TICKS 12
+
 #define HANDLER_VOLUME_DIRECTION_DOWN 0
 #define HANDLER_VOLUME_DIRECTION_UP 1
 #define HANDLER_VOLUME_MODE_LOWERED 0
@@ -126,6 +128,7 @@ typedef struct HandlerContext_t {
     uint8_t gtStatus: 1;
     uint8_t monitorStatus: 2;
     uint8_t pdcActive: 1;
+    uint8_t pdcInactivityTicks: 4;
     uint8_t telOnStatus: 1;
     uint8_t uiMode;
     uint8_t lmDimmerChecksum;
@@ -144,7 +147,6 @@ typedef struct HandlerContext_t {
     uint32_t gearLastStatus;
     uint32_t lmLastIOStatus;
     uint32_t lmLastStatusSet;
-    uint32_t pdcLastStatus;
     uint32_t radLastMessage;
 } HandlerContext_t;
 

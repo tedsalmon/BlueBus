@@ -57,9 +57,9 @@ IBus_t IBusInit()
     memset(ibus.telematicsLatitude, 0, sizeof(ibus.telematicsLatitude));
     memset(ibus.telematicsLongtitude, 0, sizeof(ibus.telematicsLongtitude));
     // Instantiate all our sensors to a value of 255 / 0xFF by default
-    IBusPDCSensorStatus_t pdcSensors;
-    memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
-    ibus.pdcSensors = pdcSensors;
+    IBUSPDCStatus_t pdc;
+    memset(&pdc, 0, sizeof(pdc));
+    ibus.pdc = pdc;
     ibus.txLastStamp = TimerGetMillis();
     return ibus;
 }
@@ -663,43 +663,47 @@ static void IBusHandleNAVMessage(IBus_t *ibus, uint8_t *pkt)
 
 static void IBusHandlePDCMessage(IBus_t *ibus, uint8_t *pkt)
 {
-    // The PDC does not seem to handshake via 0x01 / 0x02 so emit this event
-    // any time we see 0x5A from the PDC. Keep this above all other code to
-    // ensure event listeners know the PDC is alive before performing work
-    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_LCM_BULB_IND_REQ) {
+    if (ibus->moduleStatus.PDC == 0) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
-    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS) {
+    }
+    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS) {
+        // If we see this message, PDC is active
+        ibus->pdc.status = IBUS_PDC_STATUS_ACTIVE;
         EventTriggerCallback(IBUS_EVENT_PDC_STATUS, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_SENSOR_RESPONSE) {
-        // Reinstantiate all our sensors to a value of 255 / 0xFF by default
-        IBusPDCSensorStatus_t pdcSensors;
-        memset(&pdcSensors, IBUS_PDC_DEFAULT_SENSOR_VALUE, sizeof(pdcSensors));
-        ibus->pdcSensors = pdcSensors;
+        uint8_t chkSum = pkt[pkt[IBUS_PKT_LEN] + 1];
+        uint8_t isUpdated = chkSum == ibus->pdc.checksum;
+        memset(&ibus->pdc, 0, sizeof(IBUSPDCStatus_t));
         // Ensure PDC is active -- first bit of the tenth data byte of the packet
         if ((pkt[13] & 0x1) == 1) {
-            ibus->pdcSensors.frontLeft = pkt[IBUS_PKT_DB6];
-            ibus->pdcSensors.frontCenterLeft = pkt[11];
-            ibus->pdcSensors.frontCenterRight = pkt[12];
-            ibus->pdcSensors.frontRight = pkt[10];
-            ibus->pdcSensors.rearLeft = pkt[IBUS_PKT_DB2];
-            ibus->pdcSensors.rearCenterLeft = pkt[IBUS_PKT_DB4];
-            ibus->pdcSensors.rearCenterRight = pkt[IBUS_PKT_DB5];
-            ibus->pdcSensors.rearRight = pkt[IBUS_PKT_DB3];
-
-            LogDebug(
-                LOG_SOURCE_IBUS,
-                "PDC distances(cm): F: %i - %i - %i - %i, R: %i - %i - %i - %i",
-                ibus->pdcSensors.frontLeft,
-                ibus->pdcSensors.frontCenterLeft,
-                ibus->pdcSensors.frontCenterRight,
-                ibus->pdcSensors.frontRight,
-                ibus->pdcSensors.rearLeft,
-                ibus->pdcSensors.rearCenterLeft,
-                ibus->pdcSensors.rearCenterRight,
-                ibus->pdcSensors.rearRight
-            );
-            EventTriggerCallback(IBUS_EVENT_PDC_SENSOR_UPDATE, pkt);
+            ibus->pdc.status = IBUS_PDC_STATUS_ACTIVE;
+        } else {
+            ibus->pdc.status = IBUS_PDC_STATUS_INACTIVE;
         }
+        ibus->pdc.isUpdated = isUpdated;
+        ibus->pdc.frontLeft = pkt[IBUS_PKT_DB6];
+        ibus->pdc.frontCenterLeft = pkt[11];
+        ibus->pdc.frontCenterRight = pkt[12];
+        ibus->pdc.frontRight = pkt[10];
+        ibus->pdc.rearLeft = pkt[IBUS_PKT_DB2];
+        ibus->pdc.rearCenterLeft = pkt[IBUS_PKT_DB4];
+        ibus->pdc.rearCenterRight = pkt[IBUS_PKT_DB5];
+        ibus->pdc.rearRight = pkt[IBUS_PKT_DB3];
+
+        LogDebug(
+            LOG_SOURCE_IBUS,
+            "PDC: F: %i - %i - %i - %i, R: %i - %i - %i - %i",
+            ibus->pdc.frontLeft,
+            ibus->pdc.frontCenterLeft,
+            ibus->pdc.frontCenterRight,
+            ibus->pdc.frontRight,
+            ibus->pdc.rearLeft,
+            ibus->pdc.rearCenterLeft,
+            ibus->pdc.rearCenterRight,
+            ibus->pdc.rearRight
+        );
+        ibus->pdc.checksum = chkSum;
+        EventTriggerCallback(IBUS_EVENT_PDC_SENSOR_UPDATE, pkt);
     }
 }
 

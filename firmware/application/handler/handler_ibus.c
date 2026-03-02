@@ -1464,18 +1464,15 @@ void HandlerIBusNavGPSDateTimeUpdate(void *ctx, uint8_t *pkt)
 void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE) {
-        context->pdcLastStatus = TimerGetMillis();
-    }
-
+    context->pdcInactivityTicks = 0;
     uint8_t pdcConfig = ConfigGetSetting(CONFIG_SETTING_VISUAL_PDC);
-    // Do nothing if the feature is disabled
     if (pdcConfig == CONFIG_SETTING_OFF) {
         return;
     }
 
     if (context->pdcActive == 0) {
-        if (pdcConfig == CONFIG_SETTING_PDC_CLUSTER ||
+        if (
+            pdcConfig == CONFIG_SETTING_PDC_CLUSTER ||
             pdcConfig == CONFIG_SETTING_PDC_BOTH
         ) {
             if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
@@ -1485,17 +1482,21 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
             }
         }
     } else {
+        if (context->ibus->pdc.isUpdated == 0) {
+            // Nothing changed, so no need to update the display
+            return;
+        }
         uint8_t frontValues[4] = {
-            context->ibus->pdcSensors.frontLeft,
-            context->ibus->pdcSensors.frontCenterLeft,
-            context->ibus->pdcSensors.frontCenterRight,
-            context->ibus->pdcSensors.frontRight
+            context->ibus->pdc.frontLeft,
+            context->ibus->pdc.frontCenterLeft,
+            context->ibus->pdc.frontCenterRight,
+            context->ibus->pdc.frontRight
         };
         uint8_t rearValues[4] = {
-            context->ibus->pdcSensors.rearLeft,
-            context->ibus->pdcSensors.rearCenterLeft,
-            context->ibus->pdcSensors.rearCenterRight,
-            context->ibus->pdcSensors.rearRight
+            context->ibus->pdc.rearLeft,
+            context->ibus->pdc.rearCenterLeft,
+            context->ibus->pdc.rearCenterRight,
+            context->ibus->pdc.rearRight
         };
         uint8_t frontMin = UtilsGetMinByte(frontValues, 4);
         uint8_t rearMin = UtilsGetMinByte(rearValues, 4);
@@ -1586,24 +1587,16 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
 void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    context->pdcLastStatus = TimerGetMillis();
-    if (context->ibus->moduleStatus.PDC == 0) {
-        context->ibus->moduleStatus.PDC = 1;
-    }
-    if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
-        context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
-        context->bt->activeDevice.a2dpId != 0
+    if (
+        ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
+        context->volumeMode == HANDLER_VOLUME_MODE_NORMAL
     ) {
-        LogInfo(
-            LOG_SOURCE_SYSTEM,
-            "PDC: LOWER VOLUME (%d)",
-            context->bt->activeDevice.a2dpVolume
-        );
+        LogInfo(LOG_SOURCE_SYSTEM, "PDC: Lower Vol");
         HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
     }
-    if (context->pdcActive == 0 &&
-        ConfigGetSetting(CONFIG_SETTING_VISUAL_PDC) != CONFIG_SETTING_OFF
-    ) {
+    // Request distances so we know when PDC has been disabled
+    context->pdcInactivityTicks = 0;
+    if (context->pdcActive == 0) {
         context->pdcActive = 1;
         IBusCommandPDCGetSensorStatus(context->ibus);
         TimerRegisterScheduledTask(
@@ -1611,7 +1604,7 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
             context,
             HANDLER_INT_PDC_DISTANCE
         );
-        LogInfo(LOG_SOURCE_SYSTEM, "PDC: Activate Distance Timer");
+        LogInfo(LOG_SOURCE_SYSTEM, "PDC: Enable Distance Timer");
     }
 }
 
@@ -1731,14 +1724,6 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
                 context,
                 HANDLER_INT_PDC_DISTANCE
             );
-        }
-        if (context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE &&
-            context->pdcActive == 1
-        ) {
-            TimerUnregisterScheduledTask(&HandlerTimerIBusPDCDistance);
-            context->pdcActive = 0;
-            HandlerIBusPDCSensorUpdate(ctx, 0);
-            context->pdcLastStatus = 0;
         }
     }
 }
@@ -2016,10 +2001,15 @@ void HandlerTimerIBusLightingState(void *ctx)
 void HandlerTimerIBusPDCDistance(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->pdcActive != 1 ||
+    // pdcInactivityTicks allows us to track how long it has been
+    // since we last saw a status update from the PDC module as a catch
+    // for us getting into a weird state where we do not know PDC is inactive
+    // The formula is SECONDS * 0.25 with a max of 3.75 seconds
+    if (
+        context->pdcInactivityTicks == HANDLER_PDC_MAX_TICKS ||
         (
-            context->pdcLastStatus != 0 &&
-            context->pdcLastStatus + 2000 < TimerGetMillis()
+            context->ibus->pdc.status == IBUS_PDC_STATUS_INACTIVE &&
+            context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE
         )
     ) {
         TimerUnregisterScheduledTask(&HandlerTimerIBusPDCDistance);
@@ -2027,8 +2017,17 @@ void HandlerTimerIBusPDCDistance(void *ctx)
             context->pdcActive = 0;
             HandlerIBusPDCSensorUpdate(ctx, 0);
         }
+        if (
+            ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
+            context->volumeMode == HANDLER_VOLUME_MODE_LOWERED
+        ) {
+            LogInfo(LOG_SOURCE_SYSTEM, "PDC: Raise Vol");
+            HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
+        }
+        context->pdcInactivityTicks = 0;
     } else {
         IBusCommandPDCGetSensorStatus(context->ibus);
+        context->pdcInactivityTicks++;
     }
 }
 

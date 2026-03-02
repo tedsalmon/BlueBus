@@ -117,6 +117,10 @@
 #define IBUS_VIDEO_SOURCE_TV 1
 #define IBUS_VIDEO_SOURCE_VM_GT 2
 
+// PDC Status
+#define IBUS_PDC_STATUS_INACTIVE 0
+#define IBUS_PDC_STATUS_ACTIVE 1
+
 // DSP
 #define IBUS_DSP_CMD_CONFIG_SET 0x36
 #define IBUS_DSP_CONFIG_SET_INPUT_RADIO 0xA1
@@ -637,11 +641,13 @@ typedef struct IBusModuleStatus_t {
 } IBusModuleStatus_t;
 
 /**
- * IBusPDCSensorStatus_t
+ * IBUSPDCStatus_t
  *     Description:
  *         This object tracks the PDC distances given by each sensor
  */
-typedef struct IBusPDCSensorStatus_t {
+typedef struct IBUSPDCStatus_t {
+    uint8_t status: 1;
+    uint8_t isUpdated: 1;
     uint8_t frontLeft;
     uint8_t frontCenterLeft;
     uint8_t frontCenterRight;
@@ -650,7 +656,8 @@ typedef struct IBusPDCSensorStatus_t {
     uint8_t rearCenterLeft;
     uint8_t rearCenterRight;
     uint8_t rearRight;
-} IBusPDCSensorStatus_t;
+    uint8_t checksum;
+} IBUSPDCStatus_t;
 
 typedef struct IBusDateTime_t {
     uint16_t year;
@@ -694,7 +701,7 @@ typedef struct IBus_t {
     uint16_t vehicleRange;
     uint8_t videoSource: 2;
     IBusModuleStatus_t moduleStatus;
-    IBusPDCSensorStatus_t pdcSensors;
+    IBUSPDCStatus_t pdc;
     IBusDateTime_t obcDateTime;
     IBusDateTime_t gpsDateTime;
     char telematicsLocale[IBUS_TELEMATICS_LOCATION_LEN];

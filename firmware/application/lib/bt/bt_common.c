@@ -315,6 +315,64 @@ void BTPBAPParseVCard(BT_t *bt)
         contact->name[nameLen] = '\0';
         return;
     }
+    if (memcmp(line, "N:", 2) == 0 || memcmp(line, "N;", 2) == 0) {
+        // N may have parameters (e.g. N;CHARSET=UTF-8:Last;First;Middle;Prefix;Suffix)
+        int8_t colonIdx = UtilsCharIndex(line, ':');
+        if (colonIdx <= 0) {
+            return;
+        }
+        uint8_t nameStart = (uint8_t) colonIdx + 1;
+        uint8_t nameLen = len - nameStart;
+        if (nameLen >= BT_PBAP_CONTACT_NAME_LEN) {
+            nameLen = BT_PBAP_CONTACT_NAME_LEN - 1;
+        }
+        char nameValue[BT_PBAP_CONTACT_NAME_LEN] = {0};
+        memcpy(nameValue, line + nameStart, nameLen);
+        nameValue[nameLen] = '\0';
+        // Find semicolon separating Last;First in the value
+        int8_t semiIdx = UtilsCharIndex(nameValue, ';');
+        BTPBAPContact_t *contact = &bt->pbap.contacts[bt->pbap.contactIdx];
+        if (semiIdx < 0) {
+            // No semicolon - use the whole value as the name
+            memcpy(contact->name, nameValue, nameLen);
+            contact->name[nameLen] = '\0';
+        } else {
+            uint8_t lastLen = (uint8_t) semiIdx;
+            char *first = nameValue + semiIdx + 1;
+            // Terminate last name at the semicolon
+            nameValue[semiIdx] = '\0';
+            // First name ends at the next semicolon or end of string
+            int8_t nextSemi = UtilsCharIndex(first, ';');
+            uint8_t firstLen;
+            if (nextSemi >= 0) {
+                firstLen = (uint8_t) nextSemi;
+                first[nextSemi] = '\0';
+            } else {
+                firstLen = strlen(first);
+            }
+            uint8_t pos = 0;
+            if (firstLen > 0 && lastLen > 0) {
+                // "First Last"
+                memcpy(contact->name, first, firstLen);
+                pos = firstLen;
+                contact->name[pos++] = ' ';
+                uint8_t copyLen = lastLen;
+                if (pos + copyLen > BT_PBAP_CONTACT_NAME_LEN - 1) {
+                    copyLen = BT_PBAP_CONTACT_NAME_LEN - 1 - pos;
+                }
+                memcpy(contact->name + pos, nameValue, copyLen);
+                pos += copyLen;
+            } else if (firstLen > 0) {
+                memcpy(contact->name, first, firstLen);
+                pos = firstLen;
+            } else if (lastLen > 0) {
+                memcpy(contact->name, nameValue, lastLen);
+                pos = lastLen;
+            }
+            contact->name[pos] = '\0';
+        }
+        return;
+    }
     if (
         memcmp(line, "TEL:", 4) == 0 ||
         memcmp(line, "TEL;", 4) == 0

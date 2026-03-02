@@ -904,60 +904,39 @@ void HandlerTimerBTVolumeManagement(void *ctx)
             context->bt->activeDevice.a2dpVolume = 127;
         }
     }
-    uint8_t lowerVolumeOnReverse = ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV);
-    uint32_t now = TimerGetMillis();
-    // Lower volume when PDC is active
+    if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_OFF) {
+        return;
+    }
     if (
-        lowerVolumeOnReverse == CONFIG_SETTING_ON &&
-        context->ibus->moduleStatus.PDC == 1 &&
-        context->bt->activeDevice.a2dpId != 0
+        context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
+        context->ibus->pdc.status == IBUS_PDC_STATUS_INACTIVE
     ) {
-        uint32_t timeSinceUpdate = now - context->pdcLastStatus;
-        if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
-            timeSinceUpdate >= HANDLER_WAIT_REV_VOL
-        ) {
-            LogWarning(
-                "PDC DONE - RAISE VOLUME -- Currently %d",
-                context->bt->activeDevice.a2dpVolume
-            );
-            HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
-        }
-        if (
-            context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
-            timeSinceUpdate <= HANDLER_WAIT_REV_VOL
-        ) {
-            LogWarning(
-                "PDC START - LOWER VOLUME -- Currently %d",
-                context->bt->activeDevice.a2dpVolume
-            );
-            HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
-        }
+        LogDebug(LOG_SOURCE_SYSTEM, "PDC: Raise Volume");
+        HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
+    }
+    if (
+        context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
+        context->ibus->pdc.status == IBUS_PDC_STATUS_ACTIVE
+    ) {
+        LogDebug(LOG_SOURCE_SYSTEM, "PDC: Lower Volume");
+        HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
     }
     // Lower volume when the transmission is in reverse
-    if (lowerVolumeOnReverse == CONFIG_SETTING_ON &&
-        context->bt->activeDevice.a2dpId != 0
+    uint32_t timeSinceUpdate = TimerGetMillis() - context->gearLastStatus;
+    if (
+        context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
+        context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE
     ) {
-        uint32_t timeSinceUpdate = now - context->gearLastStatus;
-        if (context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
-            context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE &&
-            timeSinceUpdate >= HANDLER_WAIT_REV_VOL
-        ) {
-            LogWarning(
-                "TRANS OUT OF REV - RAISE VOLUME -- Currently %d",
-                context->bt->activeDevice.a2dpVolume
-            );
-            HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
-        }
-        if (context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
-            context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE &&
-            timeSinceUpdate >= HANDLER_WAIT_REV_VOL
-        ) {
-            LogWarning(
-                "TRANS IN REV - LOWER VOLUME -- Currently %d",
-                context->bt->activeDevice.a2dpVolume
-            );
-            HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
-        }
+        LogDebug(LOG_SOURCE_SYSTEM, "Gear Pos: !R: Raise Volume");
+        HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
+    }
+    if (
+        context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
+        context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE &&
+        timeSinceUpdate >= HANDLER_WAIT_REV_VOL
+    ) {
+        LogDebug(LOG_SOURCE_SYSTEM, "Gear Pos: R: Lower Volume");
+        HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
     }
 }
 
