@@ -1587,16 +1587,16 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
 void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (
-        ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
-        context->volumeMode == HANDLER_VOLUME_MODE_NORMAL
-    ) {
-        LogInfo(LOG_SOURCE_SYSTEM, "PDC: Lower Vol");
-        HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
-    }
     // Request distances so we know when PDC has been disabled
     context->pdcInactivityTicks = 0;
     if (context->pdcActive == 0) {
+        if (
+            ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
+            context->volumeMode == HANDLER_VOLUME_MODE_NORMAL
+        ) {
+            LogInfo(LOG_SOURCE_SYSTEM, "PDC: Lower Vol");
+            HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
+        }
         context->pdcActive = 1;
         IBusCommandPDCGetSensorStatus(context->ibus);
         TimerRegisterScheduledTask(
@@ -1724,6 +1724,19 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
                 context,
                 HANDLER_INT_PDC_DISTANCE
             );
+        }
+        if (
+            context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE &&
+            context->volumeMode != HANDLER_VOLUME_MODE_LOWERED &&
+            ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == 1
+        ) {
+            HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
+        }
+        if (
+            context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE &&
+            context->volumeMode == HANDLER_VOLUME_MODE_LOWERED
+        ) {
+            HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
         }
     }
 }
@@ -2019,7 +2032,8 @@ void HandlerTimerIBusPDCDistance(void *ctx)
         }
         if (
             ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_ON &&
-            context->volumeMode == HANDLER_VOLUME_MODE_LOWERED
+            context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
+            context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE
         ) {
             LogInfo(LOG_SOURCE_SYSTEM, "PDC: Raise Vol");
             HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);

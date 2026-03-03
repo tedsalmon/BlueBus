@@ -2673,7 +2673,7 @@ void IBusCommandIKENumbericDisplayWrite(IBus_t *ibus, uint8_t number)
 void IBusCommandIKENumbericDisplayClear(IBus_t *ibus)
 {
     uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, IBUS_DATA_IKE_NUMERIC_CLEAR, 0x00};
-    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
+    IBusSendCommand(ibus, IBUS_DEVICE_NAVE, IBUS_DEVICE_IKE, msg, sizeof(msg));
 }
 
 /**

@@ -82,9 +82,9 @@ void HandlerBTInit(HandlerContext_t *context)
             context
         );
         TimerRegisterScheduledTask(
-            &HandlerTimerBTBC127State,
+            &HandlerTimerBTBC127AVRCPPoll,
             context,
-            HANDLER_INT_BC127_STATE
+            HANDLER_INT_BT_AVRCP_UPDATER
         );
         TimerRegisterScheduledTask(
             &HandlerTimerBTBC127OpenProfileErrors,
@@ -92,9 +92,14 @@ void HandlerBTInit(HandlerContext_t *context)
             HANDLER_INT_PROFILE_ERROR
         );
         TimerRegisterScheduledTask(
-            &HandlerTimerBTBC127AVRCPPoll,
+            &HandlerTimerBTBC127State,
             context,
-            HANDLER_INT_BT_AVRCP_UPDATER
+            HANDLER_INT_BC127_STATE
+        );
+        TimerRegisterScheduledTask(
+            &HandlerTimerBC127VolumeManagement,
+            context,
+            HANDLER_INT_VOL_MGMT
         );
         BC127CommandList(context->bt);
     } else {
@@ -129,11 +134,6 @@ void HandlerBTInit(HandlerContext_t *context)
             HANDLER_INT_BM83_POWER_RESET
         );
     }
-    TimerRegisterScheduledTask(
-        &HandlerTimerBTVolumeManagement,
-        context,
-        HANDLER_INT_VOL_MGMT
-    );
 }
 
 /**
@@ -882,65 +882,38 @@ void HandlerTimerBTTCUStateChange(void *ctx)
     );
 }
 
+/* BC127 Specific Timers */
+
 /**
- * HandlerTimerVolumeManagement()
+ * HandlerTimerBTBC127AVRCPPoll()
  *     Description:
- *         Manage the A2DP volume per user settings
+ *         Request current playing song periodically as well as playback status
  *     Params:
  *         void *ctx - The context provided at registration
  *     Returns:
  *         void
  */
-void HandlerTimerBTVolumeManagement(void *ctx)
+void HandlerTimerBTBC127AVRCPPoll(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (
-        context->bt->activeDevice.a2dpId != 0 &&
-        context->bt->type == BT_BTM_TYPE_BC127
-    ) {
-        if (context->bt->activeDevice.a2dpVolume < 127) {
-            LogDebug(LOG_SOURCE_BT, "BT: Set Max Volume");
-            BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpId, "F");
-            context->bt->activeDevice.a2dpVolume = 127;
-        }
-    }
-    if (ConfigGetSetting(CONFIG_SETTING_VOLUME_LOWER_ON_REV) == CONFIG_SETTING_OFF) {
+    uint32_t now = TimerGetMillis();
+    if (context->bt->activeDevice.avrcpId == 0) {
         return;
     }
     if (
-        context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
-        context->ibus->pdc.status == IBUS_PDC_STATUS_INACTIVE
+        now - HANDLER_BT_METADATA_TIMEOUT >= context->bt->metadataTimestamp &&
+        context->bt->callStatus == BT_CALL_INACTIVE &&
+        context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING
     ) {
-        LogDebug(LOG_SOURCE_SYSTEM, "PDC: Raise Volume");
-        HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
+        BC127CommandGetMetadata(context->bt);
     }
     if (
-        context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
-        context->ibus->pdc.status == IBUS_PDC_STATUS_ACTIVE
+        context->bt->status != BT_STATUS_DISCONNECTED &&
+        context->ibus->ignitionStatus > IBUS_IGNITION_OFF
     ) {
-        LogDebug(LOG_SOURCE_SYSTEM, "PDC: Lower Volume");
-        HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
-    }
-    // Lower volume when the transmission is in reverse
-    uint32_t timeSinceUpdate = TimerGetMillis() - context->gearLastStatus;
-    if (
-        context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
-        context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE
-    ) {
-        LogDebug(LOG_SOURCE_SYSTEM, "Gear Pos: !R: Raise Volume");
-        HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
-    }
-    if (
-        context->volumeMode == HANDLER_VOLUME_MODE_NORMAL &&
-        context->ibus->gearPosition == IBUS_IKE_GEAR_REVERSE &&
-        timeSinceUpdate >= HANDLER_WAIT_REV_VOL
-    ) {
-        LogDebug(LOG_SOURCE_SYSTEM, "Gear Pos: R: Lower Volume");
-        HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_DOWN);
+        BC127CommandStatusAVRCP(context->bt);
     }
 }
-
-/* BC127 Specific Timers */
 
 /**
  * HandlerTimerBTBC127State()
@@ -1011,33 +984,26 @@ void HandlerTimerBTBC127OpenProfileErrors(void *ctx)
 }
 
 /**
- * HandlerTimerBTBC127AVRCPPoll()
+ * HandlerTimerVolumeManagement()
  *     Description:
- *         Request current playing song periodically as well as playback status
+ *         Manage the A2DP volume to ensure it is always maxed
  *     Params:
  *         void *ctx - The context provided at registration
  *     Returns:
  *         void
  */
-void HandlerTimerBTBC127AVRCPPoll(void *ctx)
+void HandlerTimerBC127VolumeManagement(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    uint32_t now = TimerGetMillis();
-    if (context->bt->activeDevice.avrcpId == 0) {
-        return;
-    }
     if (
-        now - HANDLER_BT_METADATA_TIMEOUT >= context->bt->metadataTimestamp &&
-        context->bt->callStatus == BT_CALL_INACTIVE &&
-        context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING
+        context->bt->activeDevice.a2dpId != 0 &&
+        context->bt->type == BT_BTM_TYPE_BC127
     ) {
-        BC127CommandGetMetadata(context->bt);
-    }
-    if (
-        context->bt->status != BT_STATUS_DISCONNECTED &&
-        context->ibus->ignitionStatus > IBUS_IGNITION_OFF
-    ) {
-        BC127CommandStatusAVRCP(context->bt);
+        if (context->bt->activeDevice.a2dpVolume < 127) {
+            LogDebug(LOG_SOURCE_BT, "BT: Set Max Volume");
+            BC127CommandVolume(context->bt, context->bt->activeDevice.a2dpId, "F");
+            context->bt->activeDevice.a2dpVolume = 127;
+        }
     }
 }
 

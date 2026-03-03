@@ -43,12 +43,12 @@ void HandlerBTBM83DSPStatus(void *, uint8_t *);
 
 void HandlerTimerBTScanDevices(void *);
 void HandlerTimerBTTCUStateChange(void *);
-void HandlerTimerBTVolumeManagement(void *);
 
 void HandlerTimerBTBC127AVRCPPoll(void *);
-void HandlerTimerBTBC127OpenProfileErrors(void *);
 void HandlerTimerBTBC127RequestDateTime(void *);
+void HandlerTimerBTBC127OpenProfileErrors(void *);
 void HandlerTimerBTBC127State(void *);
+void HandlerTimerBC127VolumeManagement(void *);
 
 void HandlerTimerBTBM83AVRCPManager(void *);
 void HandlerTimerBTBM83ManagePowerState(void *);

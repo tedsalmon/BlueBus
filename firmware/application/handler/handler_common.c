@@ -91,6 +91,11 @@ uint8_t HandlerSetIBusTELStatus(
 void HandlerSetVolume(HandlerContext_t *context, uint8_t direction)
 {
     uint8_t i = 0;
+    LogDebug(
+        LOG_SOURCE_SYSTEM,
+        "Set Vol: %s",
+        (direction == HANDLER_VOLUME_DIRECTION_DOWN) ? "Down" : "Up"
+    );
     if (direction == HANDLER_VOLUME_DIRECTION_DOWN) {
         for (i = 0; i < HANDLER_VOLUME_STEPS; i++) {
             IBusCommandSetVolume(
