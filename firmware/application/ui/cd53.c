@@ -22,7 +22,12 @@ void CD53Init(BT_t *bt, IBus_t *ibus)
     }
     Context.radioType = ConfigGetUIMode();
     Context.mediaChangeState = CD53_MEDIA_STATE_OK;
-    Context.menuContext = MenuSingleLineInit(ibus, bt, &CD53DisplayUpdateText, &Context);
+    MenuSingleLineInit(&Context.menuContext, ibus, bt);
+    EventRegisterCallback(
+        UI_EVENT_MAIN_DISPLAY_UPDATE,
+        &CD53UIDisplayUpdateText,
+        &Context
+    );
     EventRegisterCallback(
         BT_EVENT_CALLER_ID_UPDATE,
         &CD53BTCallerID,
@@ -188,24 +193,23 @@ static void CD53RedisplayText(CD53Context_t *context)
 }
 
 /**
- * CD53DisplayUpdateText()
+ * CD53UIDisplayUpdateText()
  *     Description:
  *         Handle updates from the menu driver
  *     Params:
  *         void *ctx - A void pointer to the CD53Context_t struct
- *         char *text - The text to update
- *         int8_t timeout - The timeout for the text
- *         uint8_t updateType - If we are updating the temp or main text
+ *         uint8_t *data - The data struct disguised as a pointer
  *     Returns:
  *         void
  */
-void CD53DisplayUpdateText(void *ctx, char *text, int8_t timeout, uint8_t updateType)
+void CD53UIDisplayUpdateText(void *ctx, uint8_t *data)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
-    if (updateType == MENU_SINGLELINE_DISPLAY_UPDATE_MAIN) {
-        CD53SetMainDisplayText(context, text, timeout);
-    } else if (updateType == MENU_SINGLELINE_DISPLAY_UPDATE_TEMP) {
-        CD53SetTempDisplayText(context, text, timeout);
+    MenuSingleLineDisplayUpdate_t *update = (MenuSingleLineDisplayUpdate_t *) data;
+    if (update->type == MENU_SINGLELINE_DISPLAY_UPDATE_MAIN) {
+        CD53SetMainDisplayText(context, update->text, update->timeout);
+    } else if (update->type == MENU_SINGLELINE_DISPLAY_UPDATE_TEMP) {
+        CD53SetTempDisplayText(context, update->text, update->timeout);
     }
 }
 
@@ -263,7 +267,6 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                 context->displayMetadata = CD53_DISPLAY_OBC;
                 MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_OBC);
             } else {
-                // OBC Mode
                 MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_METADATA);
                 context->displayMetadata = CD53_DISPLAY_METADATA_ON;
                 CD53BTMetadata(context, 0x00);
@@ -461,7 +464,7 @@ void CD53BTPlaybackStatus(void *ctx, unsigned char *status)
     // Display "Paused" if we're in Bluetooth mode
     if (context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING &&
         context->mode == CD53_MODE_ACTIVE &&
-        context->displayMetadata
+        context->displayMetadata == CD53_DISPLAY_METADATA_ON
     ) {
         if (context->bt->playbackStatus == BT_AVRCP_STATUS_PAUSED) {
             // If we are not mid-song change
@@ -535,16 +538,17 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
     } else if (requestedCommand == IBUS_CDC_CMD_START_PLAYING) {
         // Start Playing
         if (context->mode == CD53_MODE_OFF) {
+            context->mode = CD53_MODE_ACTIVE;
             CD53SetMainDisplayText(context, "Bluetooth", 0);
             if (ConfigGetSetting(CONFIG_SETTING_AUTOPLAY) == CONFIG_SETTING_ON) {
                 BTCommandPlay(context->bt);
             } else if (btPlaybackStatus == BT_AVRCP_STATUS_PLAYING) {
                 BTCommandPause(context->bt);
             }
-            context->mode = CD53_MODE_ACTIVE;
         }
-    } else if (requestedCommand == IBUS_CDC_CMD_SCAN ||
-               requestedCommand == IBUS_CDC_CMD_RANDOM_MODE
+    } else if (
+        requestedCommand == IBUS_CDC_CMD_SCAN ||
+        requestedCommand == IBUS_CDC_CMD_RANDOM_MODE
     ) {
         if (context->mode == CD53_MODE_ACTIVE) {
             TimerTriggerScheduledTask(context->displayUpdateTaskId);
@@ -552,7 +556,8 @@ void CD53IBusCDChangerStatus(void *ctx, unsigned char *pkt)
             CD53RedisplayText(context);
         }
     }
-    if (requestedCommand == IBUS_CDC_CMD_CD_CHANGE ||
+    if (
+        requestedCommand == IBUS_CDC_CMD_CD_CHANGE ||
         requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
         requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
     ) {

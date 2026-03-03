@@ -69,7 +69,7 @@ typedef struct CD53Context_t {
 } CD53Context_t;
 void CD53Init(BT_t *, IBus_t *);
 void CD53Destroy();
-void CD53DisplayUpdateText(void *, char *, int8_t, uint8_t);
+void CD53UIDisplayUpdateText(void *, uint8_t *);
 void CD53BTCallerID(void *, uint8_t *);
 void CD53BTCallStatus(void *, uint8_t *);
 void CD53BTDeviceDisconnected(void *, uint8_t *);

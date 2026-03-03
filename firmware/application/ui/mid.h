@@ -59,6 +59,10 @@
 #define MID_MODE_OBC 8
 #define MID_MODE_OBC_NEW 9
 
+#define MID_DISPLAY_METADATA_OFF 0
+#define MID_DISPLAY_METADATA_ON 1
+#define MID_DISPLAY_OBC 2
+
 #define MID_MODE_CHANGE_OFF 0
 #define MID_MODE_CHANGE_PRESS 1
 #define MID_MODE_CHANGE_RELEASE 2
@@ -75,6 +79,7 @@ typedef struct MIDContext_t {
     BT_t *bt;
     IBus_t *ibus;
     uint8_t mode;
+    uint8_t displayMetadata: 2;
     uint8_t displayUpdate;
     uint8_t modeChangeStatus;
     char mainText[16];
@@ -85,7 +90,7 @@ typedef struct MIDContext_t {
 } MIDContext_t;
 void MIDInit(BT_t *, IBus_t *);
 void MIDDestroy();
-void MIDDisplayUpdateText(void *, char *, int8_t, uint8_t);
+void MIDUIDisplayUpdateText(void *ctx, uint8_t *data);
 void MIDBTDeviceDisconnected(void *, uint8_t *);
 void MIDBTMetadataUpdate(void *, uint8_t *);
 void MIDBTPlaybackStatus(void *, uint8_t *);

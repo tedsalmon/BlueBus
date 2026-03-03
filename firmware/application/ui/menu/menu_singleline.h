@@ -52,13 +52,20 @@
 #define MENU_SINGLELINE_DIRECTION_BACK 1
 
 /*
+ *
+ */
+typedef struct MenuSingleLineDisplayUpdate_t {
+    char text[UTILS_DISPLAY_TEXT_SIZE];
+    uint8_t timeout;
+    uint8_t type;
+} MenuSingleLineDisplayUpdate_t;
+
+/*
  * MenuSingleLineContext_t
  */
 typedef struct MenuSingleLineContext_t {
     IBus_t *ibus;
     BT_t *bt;
-    void (*uiUpdateFunc)(void *, const char *, int8_t, uint8_t);
-    void *uiContext;
     uint8_t uiMode;
     uint8_t activeView;
     uint8_t settingIdx;
@@ -68,10 +75,9 @@ typedef struct MenuSingleLineContext_t {
     uint16_t vehicleSpeed;
 } MenuSingleLineContext_t;
 
-MenuSingleLineContext_t MenuSingleLineInit(IBus_t *, BT_t*, void *, void *);
+void MenuSingleLineInit(MenuSingleLineContext_t *, IBus_t *, BT_t*);
 void MenuSingleLineDestory();
-void MenuSingleLineMainDisplayText(MenuSingleLineContext_t *, const char *, int8_t);
-void MenuSingleLineSetTempDisplayText(MenuSingleLineContext_t *, const char *, int8_t);
+void MenuSingleLineSetDisplayText(MenuSingleLineContext_t *, const char *, int8_t, uint8_t);
 void MenuSingleLineIBusSensorValueUpdate(void *, uint8_t *);
 void MenuSingleLineIBusSpeedUpdate(void *, uint8_t *);
 void MenuSingleLineOBC(MenuSingleLineContext_t *);
