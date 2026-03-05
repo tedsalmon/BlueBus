@@ -12,6 +12,7 @@
 #include <string.h>
 #include <xc.h>
 #include "config.h"
+#include "log.h"
 
 #define UTILS_CHAR_LATIN_CAPITAL_A_WITH_GRAVE 0xC380
 #define UTILS_CHAR_LATIN_CAPITAL_A_WITH_ACUTE 0xC381
@@ -195,6 +196,7 @@ typedef struct UtilsAbstractDisplayValue_t {
     uint8_t status;
     int8_t timeout;
 } UtilsAbstractDisplayValue_t;
+void UtilsCheckRCON();
 uint8_t UtilsConvertCmToIn(uint8_t);
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *, uint8_t);
 uint8_t UtilsGetBoardVersion();

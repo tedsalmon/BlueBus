@@ -22,6 +22,57 @@ static const char UTILS_CHARS_LATIN[] =
 
 static int8_t BOARD_VERSION = -1;
 
+void UtilsCheckRCON()
+{
+    uint16_t rcon = RCON;
+    // POR and BOR are both set on a normal power-on
+    if ((rcon & 0x0003) == 0x0003 && (rcon & 0xC2F0) == 0) {
+        RCONbits.POR = 0;
+        RCONbits.BOR = 0;
+        return;
+    }
+    // Software Resets shouldn't be logged
+    if (RCONbits.SWR) {
+        RCONbits.SWR = 0;
+        return;
+    }
+    LogError("RCON: 0x%04X", rcon);
+    uint8_t reason = CONFIG_POR_REASON_NONE;
+    if (RCONbits.TRAPR) {
+        LogError("RST: Trap Conflict");
+        reason = CONFIG_POR_REASON_TRAP;
+        RCONbits.TRAPR = 0;
+    }
+    if (RCONbits.IOPUWR) {
+        LogError("RST: Illegal Opcode / Uninitialized W");
+        reason = CONFIG_POR_REASON_ILLEGAL_OP;
+        RCONbits.IOPUWR = 0;
+    }
+    if (RCONbits.CM) {
+        LogError("RST: Configuration Mismatch");
+        reason = CONFIG_POR_REASON_CFG_MISMATCH;
+        RCONbits.CM = 0;
+    }
+    if (RCONbits.EXTR) {
+        LogError("RST: External (MCLR)");
+        reason = CONFIG_POR_REASON_MCLR;
+        RCONbits.EXTR = 0;
+    }
+    if (RCONbits.WDTO) {
+        LogError("RST: Watchdog Timeout");
+        reason = CONFIG_POR_REASON_WDT;
+        RCONbits.WDTO = 0;
+    }
+    if (RCONbits.BOR && !(rcon & 0x0001)) {
+        LogError("RST: Brown-out");
+        reason = CONFIG_POR_REASON_BROWNOUT;
+        RCONbits.BOR = 0;
+    }
+    RCONbits.POR = 0;
+    ConfigSetByte(CONFIG_POR_REASON, reason);
+
+}
+
 /**
  * UtilsConvertCmToIn()
  *     Description:

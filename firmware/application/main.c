@@ -114,6 +114,7 @@ int main(void)
 
     // Initialize low level modules
     EEPROMInit();
+    UtilsCheckRCON();
     TimerInit();
     I2CInit();
 

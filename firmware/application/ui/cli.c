@@ -487,6 +487,22 @@ void CLIProcess()
                     LogRaw("    NVM Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_NVM));
                     LogRaw("    General Failures: %d\r\n", ConfigGetTrapCount(CONFIG_TRAP_GEN));
                     LogRaw("    Last Trap: %02x\r\n", ConfigGetTrapLast());
+                    uint8_t porReason = ConfigGetSetting(CONFIG_POR_REASON);
+                    char *porReasonStr = "None";
+                    if (porReason == CONFIG_POR_REASON_TRAP) {
+                        porReasonStr = "Trap Conflict";
+                    } else if (porReason == CONFIG_POR_REASON_ILLEGAL_OP) {
+                        porReasonStr = "Illegal Opcode / Uninitialized W";
+                    } else if (porReason == CONFIG_POR_REASON_CFG_MISMATCH) {
+                        porReasonStr = "Configuration Mismatch";
+                    } else if (porReason == CONFIG_POR_REASON_MCLR) {
+                        porReasonStr = "External (MCLR)";
+                    } else if (porReason == CONFIG_POR_REASON_WDT) {
+                        porReasonStr = "Watchdog Timeout";
+                    } else if (porReason == CONFIG_POR_REASON_BROWNOUT) {
+                        porReasonStr = "Brown-out";
+                    }
+                    LogRaw("Last Unexpected Reset Reason: %s\r\n", porReasonStr);
                     LogRaw("BC127 Boot Failures: %u\r\n", ConfigGetBC127BootFailures());
                 } else if (UtilsStricmp(msgBuf[1], "UI") == 0) {
                     uint8_t uiMode = ConfigGetUIMode();
