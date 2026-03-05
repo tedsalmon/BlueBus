@@ -248,7 +248,7 @@ void MenuSingleLineSetUIView(MenuSingleLineContext_t *context, uint8_t view)
             MenuSingleLineOBC(context);
             break;
         case MENU_SINGLELINE_VIEW_DEVICES:
-            MenuSingleLineDevices(context, 0);
+            MenuSingleLineDevices(context, MENU_SINGLELINE_DIRECTION_FORWARD);
             break;
     }
 }
@@ -615,15 +615,15 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
             currentVolume = 24;
         }
         context->settingValue = currentVolume;
-        char volText[18] = {0};
+        char volText[19] = {0};
         if (currentVolume > 0x30) {
             uint8_t gain = (currentVolume - 0x30) / 2;
-            snprintf(volText, 17, "DAC Volume: -%ddB", gain);
+            snprintf(volText, 18, "DAC Volume: -%ddB", gain);
         } else if (currentVolume == 0x30) {
-            snprintf(volText, 17, "DAC Volume: 0dB");
+            snprintf(volText, 18, "DAC Volume: 0dB");
         } else {
             uint8_t gain = (0x30 - currentVolume) / 2;
-            snprintf(volText, 17, "DAC Volume: +%ddB", gain);
+            snprintf(volText, 18, "DAC Volume: +%ddB", gain);
         }
         MenuSingleLineSetDisplayText(
             context,
@@ -1235,18 +1235,23 @@ void MenuSingleLineDevices(
             0,
             MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
         );
+        return;
     }
-    if (direction == MENU_SINGLELINE_DIRECTION_FORWARD) {
-        if (context->btDeviceIndex >= context->bt->pairedDevicesCount) {
-            context->btDeviceIndex = 0;
-        } else {
-            context->btDeviceIndex++;
-        }
+    if (context->bt->pairedDevicesCount == 1) {
+        context->btDeviceIndex = 0;
     } else {
-        if (context->btDeviceIndex == 0) {
-            context->btDeviceIndex = context->bt->pairedDevicesCount - 1;
+        if (direction == MENU_SINGLELINE_DIRECTION_FORWARD) {
+            if (context->btDeviceIndex >= context->bt->pairedDevicesCount) {
+                context->btDeviceIndex = 0;
+            } else {
+                context->btDeviceIndex++;
+            }
         } else {
-            context->btDeviceIndex--;
+            if (context->btDeviceIndex == 0) {
+                context->btDeviceIndex = context->bt->pairedDevicesCount - 1;
+            } else {
+                context->btDeviceIndex--;
+            }
         }
     }
     BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
@@ -1270,11 +1275,7 @@ void MenuSingleLineDevices(
 void MenuSingleLineDevicesConnect(MenuSingleLineContext_t *context) {
     if (context->bt->pairedDevicesCount > 0) {
         // Connect to device
-        BTPairedDevice_t *dev = &context->bt->pairedDevices[context->btDeviceIndex];
-        if (
-            context->btDeviceIndex != context->bt->activeDevice.deviceIndex &&
-            dev != 0
-        ) {
+        if (context->btDeviceIndex != context->bt->activeDevice.deviceIndex) {
             // Trigger device selection event
             EventTriggerCallback(
                 UI_EVENT_INITIATE_CONNECTION,
@@ -1283,7 +1284,7 @@ void MenuSingleLineDevicesConnect(MenuSingleLineContext_t *context) {
             MenuSingleLineSetDisplayText(
                 context,
                 "Connecting",
-                4,
+                8,
                 MENU_SINGLELINE_DISPLAY_UPDATE_TEMP
             );
         } else {

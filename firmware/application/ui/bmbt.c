@@ -2849,7 +2849,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                 BTCommandCallEnd(context->bt);
             } else if (context->bt->callStatus == BT_CALL_INACTIVE) {
                 if (
-                    context->tel.state != BMBT_TEL_STATE_DIAL &&
+                    context->tel.state != BMBT_TEL_STATE_NONE &&
                     strlen(context->bt->dialBuffer) > 0
                 ) {
                     BTCommandDial(context->bt, context->bt->dialBuffer, 0);
@@ -3095,7 +3095,6 @@ void BMBTIBusMonitorStatus(void *ctx, uint8_t *pkt)
         return;
     } else if (context->status.displayMode == BMBT_DISPLAY_OFF) {
         // Reset the display state
-        context->status.displayMode = BMBT_DISPLAY_ON;
         context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
     }
     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_JNAV) {

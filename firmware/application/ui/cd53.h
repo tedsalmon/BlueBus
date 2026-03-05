@@ -19,11 +19,11 @@
 #define CD53_DISPLAY_METADATA_ON 1
 #define CD53_DISPLAY_METADATA_OFF 0
 #define CD53_DISPLAY_OBC 2
-#define CD53_DISPLAY_SCROLL_SPEED 750
+#define CD53_DISPLAY_SCROLL_SPEED 375
 #define CD53_DISPLAY_STATUS_OFF 0
 #define CD53_DISPLAY_STATUS_ON 1
 #define CD53_DISPLAY_STATUS_NEW 2
-#define CD53_DISPLAY_TIMER_INT 250
+#define CD53_DISPLAY_TIMER_INT 125
 #define CD53_DISPLAY_TEXT_LEN 11
 #define CD53_MEDIA_STATE_OK 0
 #define CD53_MEDIA_STATE_CHANGE 1
@@ -62,6 +62,7 @@ typedef struct CD53Context_t {
     uint8_t settingMode;
     uint8_t radioType;
     uint8_t mediaChangeState;
+    uint8_t scrollTick: 2;
     uint32_t lastTelephoneButtonPress;
     UtilsAbstractDisplayValue_t mainDisplay;
     UtilsAbstractDisplayValue_t tempDisplay;
