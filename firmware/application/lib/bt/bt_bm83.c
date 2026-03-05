@@ -1485,6 +1485,9 @@ void BM83ProcessDataGetAllAttributes(
     uint8_t dataDiffers = 0;
     bt->metadataStatus = BT_METADATA_STATUS_CUR;
     uint8_t i = 0;
+    // Keep these out of the loop to limit stack pressure
+    char text[BT_METADATA_MAX_SIZE] = {0};
+    char tempString[BT_METADATA_MAX_SIZE] = {0};
     for (i = 0; i < attributeCount; i++) {
         if (bytePos >= length) {
             LogDebug(LOG_SOURCE_BT, "BT: AVRCP Frame Overflow");
@@ -1498,13 +1501,13 @@ void BM83ProcessDataGetAllAttributes(
         uint16_t attributeLen = (data[bytePos + 1] & 0xFF) | (data[bytePos] << 8);
         // Skip over the length and to the beginning of the data
         bytePos = bytePos + 2;
-        char text[BT_METADATA_MAX_SIZE] = {0};
+        memset(text, 0, BT_METADATA_MAX_SIZE);
         if (
             attributeType == BM83_AVRCP_DATA_ELEMENT_TYPE_ALBUM ||
             attributeType == BM83_AVRCP_DATA_ELEMENT_TYPE_ARTIST ||
             attributeType == BM83_AVRCP_DATA_ELEMENT_TYPE_TITLE
         ) {
-            char tempString[BT_METADATA_MAX_SIZE] = {0};
+            memset(tempString, 0, BT_METADATA_MAX_SIZE);
             uint16_t j = 0;
             for (j = 0; j < attributeLen; j++) {
                 if (j < BT_METADATA_MAX_SIZE - 1) {

@@ -167,7 +167,7 @@ static void CD53SetMainDisplayText(
     UtilsStrncpy(context->mainDisplay.text, str, UTILS_DISPLAY_TEXT_SIZE);
     context->mainDisplay.length = strlen(context->mainDisplay.text);
     context->mainDisplay.index = 0;
-    TimerTriggerScheduledTask(context->displayUpdateTaskId);
+    TimerResetScheduledTask(context->displayUpdateTaskId);
     context->mainDisplay.timeout = timeout;
 }
 
@@ -183,7 +183,7 @@ static void CD53SetTempDisplayText(
     // Unlike the main display, we need to set the timeout beforehand, that way
     // the timer knows how many iterations to display the text for.
     context->tempDisplay.timeout = timeout;
-    TimerTriggerScheduledTask(context->displayUpdateTaskId);
+    TimerResetScheduledTask(context->displayUpdateTaskId);
 }
 
 static void CD53RedisplayText(CD53Context_t *context)
@@ -248,14 +248,15 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
                 }
                 BTCommandPlaybackToggle(context->bt);
             } else {
-                CD53SetTempDisplayText(context, "No Device", 4);
+                CD53SetTempDisplayText(context, "No Device", 8);
                 CD53SetMainDisplayText(context, "Bluetooth", 0);
             }
         } else {
             CD53RedisplayText(context);
         }
-    } else if (pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE &&
-               pkt[IBUS_PKT_DB2] == 0x02
+    } else if (
+        pkt[IBUS_PKT_DB1] == IBUS_CDC_CMD_CD_CHANGE &&
+        pkt[IBUS_PKT_DB2] == 0x02
     ) {
         if (context->mode == CD53_MODE_ACTIVE) {
             // Toggle: Metadata ON -> OFF -> OBC -> ON
@@ -302,6 +303,7 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         }
         // Settings Menu
         if (context->mode != CD53_MODE_SETTINGS) {
+            CD53SetTempDisplayText(context, "Settings", 2);
             MenuSingleLineSettings(&context->menuContext);
             context->mode = CD53_MODE_SETTINGS;
         } else {
@@ -320,7 +322,8 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         }
         // Device selection mode
         if (context->mode != CD53_MODE_DEVICE_SEL) {
-            MenuSingleLineDevices(&context->menuContext, MENU_SINGLELINE_DIRECTION_FORWARD);
+            CD53SetTempDisplayText(context, "Devices", 2);
+            MenuSingleLineSetUIView(&context->menuContext, MENU_SINGLELINE_VIEW_DEVICES);
             context->mode = CD53_MODE_DEVICE_SEL;
         } else {
             context->mode = CD53_MODE_ACTIVE;
@@ -338,12 +341,11 @@ static void CD53HandleUIButtons(CD53Context_t *context, unsigned char *pkt)
         }
         // Toggle the discoverable state
         uint8_t state;
-        int8_t timeout = 1500 / CD53_DISPLAY_SCROLL_SPEED;
         if (context->bt->discoverable == BT_STATE_ON) {
-            CD53SetTempDisplayText(context, "Pairing Off", timeout);
+            CD53SetTempDisplayText(context, "Pairing Off", 2);
             state = BT_STATE_OFF;
         } else {
-            CD53SetTempDisplayText(context, "Pairing On", timeout);
+            CD53SetTempDisplayText(context, "Pairing On", 2);
             state = BT_STATE_ON;
             // To pair a new device, we must disconnect the active one
             EventTriggerCallback(UI_EVENT_CLOSE_CONNECTION, 0x00);
@@ -594,11 +596,12 @@ void CD53IBusMFLButton(void *ctx, unsigned char *pkt)
     CD53Context_t *context = (CD53Context_t *) ctx;
     if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_TEL) {
         // 0x00 = R/T Mode RAD
-        if (pkt[IBUS_PKT_DB1] == 0x00 &&
+        if (
+            pkt[IBUS_PKT_DB1] == 0x00 &&
             context->displayMetadata == CD53_DISPLAY_METADATA_ON
         ) {
-            // Do not do this as it will stick the radio in TEL mode
-            //CD53RedisplayText(context);
+            // Push the screen rewrite out to allow the user to input
+            TimerResetScheduledTask(context->displayUpdateTaskId);
         } else if (pkt[IBUS_PKT_DB1] == IBUS_MFL_BTN_EVENT_NEXT_REL ||
                    pkt[IBUS_PKT_DB1] == IBUS_MFL_BTN_EVENT_PREV_REL
         ) {
@@ -628,7 +631,8 @@ void CD53TimerDisplay(void *ctx)
 {
     CD53Context_t *context = (CD53Context_t *) ctx;
     // Do not display text when the mode is OFF or DISPLAY_OFF
-    if (context->mode == CD53_MODE_OFF ||
+    if (
+        context->mode == CD53_MODE_OFF ||
         context->mode == CD53_MODE_ACTIVE_DISPLAY_OFF
     ) {
         return;
