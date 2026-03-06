@@ -24,10 +24,15 @@ uint8_t EVENT_CALLBACKS_COUNT = 0;
  */
 void EventRegisterCallback(uint8_t eventType, void *callback, void *context)
 {
-    Event_t cb;
-    cb.type = eventType;
-    cb.callback = callback;
-    cb.context = context;
+    if (EVENT_CALLBACKS_COUNT == EVENT_MAX_CALLBACKS) {
+        LogWarning("Too many Event Callbacks! Increase EVENT_MAX_CALLBACKS");
+        return;
+    }
+    Event_t cb = {
+        .type = eventType,
+        .callback = callback,
+        .context = context
+    };
     EVENT_CALLBACKS[EVENT_CALLBACKS_COUNT++] = cb;
 }
 
