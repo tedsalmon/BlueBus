@@ -667,13 +667,21 @@ static void IBusHandlePDCMessage(IBus_t *ibus, uint8_t *pkt)
     if (ibus->moduleStatus.PDC == 0) {
         IBusHandleModuleStatus(ibus, pkt[IBUS_PKT_SRC]);
     }
-    if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS) {
+    // Some PDC modules send 0x07, others request the bulb status when
+    // manually engaged by the "PDC" button
+    if (
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_STATUS ||
+        (
+            pkt[IBUS_PKT_DST] == IBUS_DEVICE_LCM &&
+            pkt[IBUS_PKT_CMD] == IBUS_CMD_LCM_BULB_IND_REQ
+        )
+    ) {
         // If we see this message, PDC is active
         ibus->pdc.status = IBUS_PDC_STATUS_ACTIVE;
         EventTriggerCallback(IBUS_EVENT_PDC_STATUS, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_PDC_SENSOR_RESPONSE) {
         uint8_t chkSum = pkt[pkt[IBUS_PKT_LEN] + 1];
-        uint8_t isUpdated = chkSum == ibus->pdc.checksum;
+        uint8_t isUpdated = chkSum != ibus->pdc.checksum;
         memset(&ibus->pdc, 0, sizeof(IBUSPDCStatus_t));
         // Ensure PDC is active -- first bit of the tenth data byte of the packet
         if ((pkt[13] & 0x1) == 1) {
