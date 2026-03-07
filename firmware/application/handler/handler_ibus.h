@@ -44,7 +44,6 @@ void HandlerIBusPDCSensorUpdate(void *, uint8_t *);
 void HandlerIBusPDCStatus(void *, uint8_t *);
 void HandlerIBusRADMessageReceived(void *, uint8_t *);
 void HandlerIBusVMDIAIdentityResponse(void *, uint8_t *);
-void HandlerIBusVolumeChange(void *, uint8_t *);
 void HandlerIBusSensorValueUpdate(void *, uint8_t *);
 void HandlerIBusTELVolumeChange(void *, uint8_t *);
 void HandlerTimerIBusCDCAnnounce(void *);

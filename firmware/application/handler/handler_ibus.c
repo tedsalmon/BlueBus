@@ -116,16 +116,6 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_MFL_VOLUME_CHANGE,
-        &HandlerIBusVolumeChange,
-        context
-    );
-    EventRegisterCallback(
-        IBUS_EVENT_RAD_VOLUME_CHANGE,
-        &HandlerIBusVolumeChange,
-        context
-    );
-    EventRegisterCallback(
         IBUS_EVENT_RAD_MESSAGE_RCV,
         &HandlerIBusRADMessageReceived,
         context
@@ -1635,49 +1625,6 @@ void HandlerIBusVMDIAIdentityResponse(void *ctx, uint8_t *type)
             LogInfo(LOG_SOURCE_SYSTEM, "Detected MID / BMBT UI");
             HandlerIBusSwitchUI(context, CONFIG_UI_MID_BMBT);
         }
-    }
-}
-
-/**
- * HandlerIBusVolumeChange()
- *     Description:
- *         Adjust the volume for calls based on how the user is adjusting
- *         the audio volume. Handles MFL volume changes and radio volume changes
- *     Params:
- *         void *ctx - The context provided at registration
- *         uint8_t *pkt - The IBus packet
- *     Returns:
- *         void
- */
-void HandlerIBusVolumeChange(void *ctx, uint8_t *pkt)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    // Since we cannot consistently monitor the volume in non-Nav & Non-MID cars
-    // then we should not track the volume changes via the MFL as it will cause
-    // issues for the end user who may not know this
-    if (context->uiMode != CONFIG_UI_BMBT &&
-        context->uiMode != CONFIG_UI_MID_BMBT &&
-        context->uiMode != CONFIG_UI_MID
-    ) {
-        return;
-    }
-    // Only watch for changes when not on a call and not reverting volume after call ended
-    if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE) {
-        uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
-        uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
-        int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
-        if (direction == IBUS_RAD_VOLUME_DOWN) {
-            volume += steps;
-            if (volume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
-                volume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
-            }
-        } else if (direction == IBUS_RAD_VOLUME_UP) {
-            volume -= steps;
-            if (volume <= 0) {
-                volume = 0;
-            }
-        }
-        ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
     }
 }
 
