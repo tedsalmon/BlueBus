@@ -800,6 +800,8 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             context->monitorStatus = HANDLER_MONITOR_STATUS_UNSET;
             context->gmState.doorsLocked = 0;
             context->gmState.lowSideDoors = 0;
+            TimerUnregisterScheduledTask(&HandlerTimerIBusIdent);
+
         // If the engine was on, but now it's in position 1
         } else if (
             context->ibus->ignitionStatus >= IBUS_IGNITION_KL15 &&
@@ -972,12 +974,14 @@ void HandlerIBusIKEVehicleConfig(void *ctx, uint8_t *pkt)
             ConfigSetIKEType(IBUS_IKE_TYPE_LOW);
             LogDebug(LOG_SOURCE_SYSTEM, "Detected New Vehicle Type: E46/Z4");
         } else if (rawVehicleType == 0x02) {
+            ConfigSetByte(CONFIG_GM_VARIANT, IBUS_GM_ZKE3_GM1);
             ConfigSetIKEType(IBUS_IKE_TYPE_LOW);
             LogDebug(
                 LOG_SOURCE_SYSTEM,
                 "Detected New Vehicle Type: E38/E39/E53 - Low OBC"
             );
         } else if (rawVehicleType == 0x00) {
+            ConfigSetByte(CONFIG_GM_VARIANT, IBUS_GM_ZKE3_GM1);
             ConfigSetIKEType(IBUS_IKE_TYPE_HIGH);
             LogDebug(
                 LOG_SOURCE_SYSTEM,

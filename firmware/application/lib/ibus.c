@@ -1411,8 +1411,9 @@ uint8_t IBusGetLMVariant(uint8_t *packet)
     } else if (diagnosticIndex == 0x12 && codingIndex == 0x16) {
         lmVariant = IBUS_LM_LCM_II;
         LogInfo(LOG_SOURCE_IBUS, "Light Module: LCM_II");
-    } else if ((diagnosticIndex == 0x12 && codingIndex == 0x17) ||
-               diagnosticIndex == 0x13
+    } else if (
+        (diagnosticIndex == 0x12 && codingIndex == 0x17) ||
+        diagnosticIndex == 0x13
     ) {
         lmVariant = IBUS_LM_LCM_III;
         LogInfo(LOG_SOURCE_IBUS, "Light Module: LCM_III");
@@ -1422,7 +1423,7 @@ uint8_t IBusGetLMVariant(uint8_t *packet)
     } else if (diagnosticIndex >= 0x20 && diagnosticIndex <= 0x2f) {
         lmVariant = IBUS_LM_LSZ;
         LogInfo(LOG_SOURCE_IBUS, "Light Module: LSZ");
-    } else if (diagnosticIndex == 0x30) {
+    } else if (diagnosticIndex >= 0x30 && diagnosticIndex <= 0x40) {
         lmVariant = IBUS_LM_LSZ_2;
         LogInfo(LOG_SOURCE_IBUS, "Light Module: LSZ_2");
     }
