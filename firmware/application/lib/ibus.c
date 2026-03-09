@@ -7,6 +7,7 @@
 #include "ibus.h"
 #include "config.h"
 #include "event.h"
+#include "utils.h"
 #include <ctype.h>
 
 static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
@@ -768,19 +769,25 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_DISPLAY_RADIO_MENU) {
             EventTriggerCallback(IBUS_EVENT_RAD_DISPLAY_MENU, pkt);
         }
-        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_WITH_CURSOR &&
-            pkt[IBUS_PKT_DB2] == 0x01 &&
-            pkt[IBUS_PKT_DB3] <= 0x03
+        // We do not care about screen writes to a cursor position other than 0
+        // which is 0x01
+        if (
+            pkt[IBUS_PKT_CMD] == IBUS_CMD_GT_WRITE_WITH_CURSOR &&
+            pkt[IBUS_PKT_DB2] == 0x01
         ) {
-            if (
-                pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_INDEX ||
-                pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_INDEX_TMC ||
-                pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_STATIC
-            ) {
-                EventTriggerCallback(IBUS_EVENT_SCREEN_BUFFER_FLUSH, pkt);
-            }
-            if (pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_ZONE && pkt[IBUS_PKT_DB3] == 0x00) {
-                EventTriggerCallback(IBUS_EVENT_SCREEN_BUFFER_FLUSH, pkt);
+            if (pkt[IBUS_PKT_DB3] == 0x00){
+                if (
+                    pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_INDEX ||
+                    pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_INDEX_TMC ||
+                    pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_STATIC ||
+                    pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_ZONE
+                ) {
+                    EventTriggerCallback(IBUS_EVENT_GT_SCREEN_BUFFER_FLUSH, pkt);
+                }
+            } else if (UTILS_CHECK_BIT(pkt[IBUS_PKT_DB3], 6) == 0) {
+                // This tells us that it is not us writing the UI
+                // as we always buffer the write with the 7th bit
+                EventTriggerCallback(IBUS_EVENT_GT_SCREEN_BUFFER_WRITE, pkt);
             }
         }
         if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RAD_PLAYBACK_CTRL) {
@@ -1669,7 +1676,7 @@ void IBusCommandCDCPollResponse(IBus_t *ibus)
  * IBusCommandCDCStatus()
  *     Description:
  *        Respond to the Radio's status request
- *        Sample Packet from a factory iPod module:
+ *        Sample frame from a factory iPod module:
  *          18 0E 68 39 00 82 00 60 00 07 11 00 01 00 0B CK
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object

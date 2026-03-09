@@ -108,6 +108,9 @@
 #define BMBT_TEL_NAV_PREV 0x0C
 #define BMBT_TEL_NAV_NEXT 0x0D
 
+#define BMBT_NO_FORCE 0
+#define BMBT_FORCE 1
+
 #define BMBT_MENU_BUFFER_OK 0
 #define BMBT_MENU_BUFFER_FLUSH 1
 
@@ -156,6 +159,7 @@ typedef struct BMBTStatus_t {
     uint8_t headerBufferStatus: 1;
     uint8_t menuBufferStatus: 1;
     uint8_t radioDisplayStatus: 1;
+    uint8_t screenCleared: 1;
     uint8_t navIndexType;
 } BMBTStatus_t;
 
@@ -198,6 +202,7 @@ void BMBTIBusMenuSelect(void *, uint8_t *);
 void BMBTIBusPlaybackCtrl(void *, uint8_t *);
 void BMBTIBusScreenModeSet(void *, uint8_t *);
 void BMBTIBusScreenBufferFlush(void *, uint8_t *);
+void BMBTIBusScreenBufferWrite(void *, uint8_t *);
 void BMBTIBusSensorValueUpdate(void *, uint8_t *);
 void BMBTRADDisplayMenu(void *, uint8_t *);
 void BMBTRADUpdateMainArea(void *, uint8_t *);

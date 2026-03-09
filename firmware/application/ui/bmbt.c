@@ -159,8 +159,13 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_SCREEN_BUFFER_FLUSH,
+        IBUS_EVENT_GT_SCREEN_BUFFER_FLUSH,
         &BMBTIBusScreenBufferFlush,
+        &Context
+    );
+    EventRegisterCallback(
+        IBUS_EVENT_GT_SCREEN_BUFFER_WRITE,
+        &BMBTIBusScreenBufferWrite,
         &Context
     );
     EventRegisterCallback(
@@ -277,7 +282,7 @@ void BMBTDestroy()
         &BMBTIBusScreenModeSet
     );
     EventUnregisterCallback(
-        IBUS_EVENT_SCREEN_BUFFER_FLUSH,
+        IBUS_EVENT_GT_SCREEN_BUFFER_FLUSH,
         &BMBTIBusScreenBufferFlush
     );
     EventUnregisterCallback(
@@ -456,14 +461,17 @@ static void BMBTTriggerWriteHeader(BMBTContext_t *context)
  *         timer. If the counter has already been triggered, do nothing.
  *     Params:
  *         BMBTContext_t *context - The context
+ *         uint8_t force - BMBT_FORCE to force the timer path,
+ *                         BMBT_NO_FORCE for default behavior
  *     Returns:
  *         void
  */
-static void BMBTTriggerWriteMenu(BMBTContext_t *context)
+static void BMBTTriggerWriteMenu(BMBTContext_t *context, uint8_t force)
 {
     // If we can refresh the last menu back onto the screen,
     // do so immediately. Otherwise, trigger the menu write timer
-    if (context->menu == BMBT_MENU_NONE ||
+    if (force == BMBT_FORCE ||
+        context->menu == BMBT_MENU_NONE ||
         context->menu == BMBT_MENU_DASHBOARD_FRESH ||
         context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI ||
         context->status.radType == IBUS_RADIO_TYPE_C43 ||
@@ -2816,7 +2824,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                         BMBTSetRADMenuStatus(context, BMBT_RAD_DISPLAY_STATUS_OFF);
                     }
                     BMBTTriggerWriteHeader(context);
-                    BMBTTriggerWriteMenu(context);
+                    BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
                 } else {
                     IBusCommandVMModeSet(context->ibus, IBUS_BLUEBUS_CARPHONICS_ENABLE);
                     context->status.displayMode = BMBT_DISPLAY_OFF;
@@ -2922,7 +2930,7 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         context->status.displayMode = BMBT_DISPLAY_ON;
         context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
         BMBTTriggerWriteHeader(context);
-        BMBTTriggerWriteMenu(context);
+        BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
     } else if (
         requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
         requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
@@ -2941,7 +2949,7 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
             context->status.displayMode = BMBT_DISPLAY_ON;
             context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
             BMBTTriggerWriteHeader(context);
-            BMBTTriggerWriteMenu(context);
+            BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
         } else {
             IBusCommandRADClearMenu(context->ibus);
             context->menu = BMBT_MENU_NONE;
@@ -3331,12 +3339,39 @@ void BMBTIBusScreenBufferFlush(void *ctx, uint8_t *pkt)
     } else if (pkt[IBUS_PKT_DB1] != context->status.navIndexType) {
         // If the update does not match our current menu state, override it
         IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+    } else if (context->status.screenCleared == 1) {
+        // The buffer has been written out from under us, so restore it
+        context->status.screenCleared = 0;
+        BMBTTriggerWriteMenu(context, BMBT_FORCE);
     }
-    if (pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_STATIC && pkt[IBUS_PKT_DB3] > 0) {
+}
+
+/**
+ * BMBTIBusScreenBufferWrite()
+ *     Description:
+ *         Track screen writes from the radio to the GT
+ *     Params:
+ *         void *context - A void pointer to the BMBTContext_t struct
+ *         uint8_t *pkt - The I/K-Bus packet
+ *     Returns:
+ *         void
+ */
+void BMBTIBusScreenBufferWrite(void *ctx, uint8_t *pkt)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    // If we are not the active display, then ignore the message
+    if (
+        context->status.playerMode != BMBT_MODE_ACTIVE ||
+        context->status.displayMode != BMBT_DISPLAY_ON
+    ) {
+        return;
+    }
+    if (pkt[IBUS_PKT_DB1] == IBUS_CMD_GT_WRITE_STATIC) {
         // When Audiotext is enabled (for MP3-capable CD Changers, which we
         // adverise as), the Radio will try to clear the static UI from time
-        // to time
-        //IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
+        // to time. Other such updates can also occur especially for Euro-spec
+        // cars
+        context->status.screenCleared = 1;
     }
 }
 
@@ -3473,6 +3508,9 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
 void BMBTRADDisplayMenu(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
+    if (context->status.displayMode == BMBT_DISPLAY_OFF) {
+        return;
+    }
     context->status.displayMode = BMBT_DISPLAY_TONE_INFO;
     if (context->status.videoSource == BMBT_VIDEO_SOURCE_EXTERNAL) {
         IBusCommandVMModeSet(context->ibus, IBUS_BLUEBUS_CARPHONICS_DISABLE);
@@ -3560,7 +3598,7 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
                 context->status.displayMode = BMBT_DISPLAY_ON;
                 context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
             } else if (UtilsStricmp("NO DISC", text) == 0) {
-                BMBTTriggerWriteMenu(context);
+                BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
             }
             if (
                 ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) == CONFIG_SETTING_OFF ||
@@ -3572,7 +3610,7 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             }
             if (context->status.displayMode == BMBT_DISPLAY_ON) {
                 BMBTTriggerWriteHeader(context);
-                BMBTTriggerWriteMenu(context);
+                BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
             }
         }
     }
@@ -3619,7 +3657,7 @@ void BMBTRADScreenModeRequest(void *ctx, uint8_t *pkt)
         context->status.displayMode = BMBT_DISPLAY_ON;
         context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
         BMBTTriggerWriteHeader(context);
-        BMBTTriggerWriteMenu(context);
+        BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
     } else if (
         pkt[IBUS_PKT_DB1] == IBUS_GT_TONE_MENU_OFF ||
         pkt[IBUS_PKT_DB1] == IBUS_GT_SEL_MENU_OFF
