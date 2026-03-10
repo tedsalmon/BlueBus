@@ -55,7 +55,7 @@
  */
 typedef struct MenuSingleLineDisplayUpdate_t {
     char text[UTILS_DISPLAY_TEXT_SIZE];
-    uint8_t timeout;
+    int8_t timeout;
     uint8_t type;
 } MenuSingleLineDisplayUpdate_t;
 

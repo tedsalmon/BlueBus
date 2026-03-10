@@ -189,7 +189,8 @@ static void CD53SetTempDisplayText(
     // Unlike the main text, we need to set the timeout beforehand, that way
     // the timer knows how many iterations to display the text for.
     // Quadruple the timeout to compensate for the 125ms timer interval
-    context->tempDisplay.timeout = timeout * 4;
+    // DO NOT use multiplication as the value is implicitly cast to int16_t
+    context->tempDisplay.timeout = timeout + timeout + timeout + timeout;
     TimerResetScheduledTask(context->displayUpdateTaskId);
 }
 
@@ -426,9 +427,10 @@ void CD53BTDeviceReady(void *ctx, unsigned char *tmp)
 }
 
 
-void CD53BTMetadata(CD53Context_t *context, unsigned char *metadata)
+void CD53BTMetadata(CD53Context_t *context, uint8_t *data)
 {
-    if (context->displayMetadata == CD53_DISPLAY_METADATA_ON &&
+    if (
+        context->displayMetadata == CD53_DISPLAY_METADATA_ON &&
         context->mode == CD53_MODE_ACTIVE
     ) {
         if (strlen(context->bt->title) > 0) {

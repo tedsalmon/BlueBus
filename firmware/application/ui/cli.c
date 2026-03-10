@@ -225,8 +225,6 @@ void CLICommandBTBC127(char **msgBuf, uint8_t *cmdSuccess, uint8_t delimCount)
         if (*cmdSuccess != 0) {
             BC127CommandSetModuleName(cli.bt, nameBuf);
         }
-    } else if (UtilsStricmp(msgBuf[1], "PBAP") == 0) {
-        BC127SendCommand(cli.bt, "PB_PULL 16 3 1 5 0 87");
     } else if (UtilsStricmp(msgBuf[1], "VERSION") == 0) {
         BC127CommandVersion(cli.bt);
     } else {
@@ -469,6 +467,22 @@ void CLIProcess()
                     BTCommandDial(cli.bt, cli.bt->dialBuffer, 0);
                 } else if (UtilsStricmp(msgBuf[1], "REDIAL_PHONE") == 0) {
                     BTCommandRedial(cli.bt);
+                } else if (UtilsStricmp(msgBuf[1], "PBOPEN") == 0) {
+                    BTCommandPBAPOpen(cli.bt);
+                } else if (UtilsStricmp(msgBuf[1], "PBCLOSE") == 0) {
+                    BTCommandPBAPClose(cli.bt);
+                } else if (UtilsStricmp(msgBuf[1], "PBGET") == 0) {
+                    if (delimCount >= 3) {
+                        if (cli.bt->pbap.active) {
+                            uint16_t offset = UtilsStrToInt(msgBuf[2]);
+                            BTCommandPBAPGetPhonebook(cli.bt, BT_PBAP_OBJ_PHONEBOOK, offset, BT_PBAP_MAX_CONTACTS);
+                        } else {
+                            LogRaw("PBAP session not open. Use BT PBOPEN first.\r\n");
+                            cmdSuccess = 0;
+                        }
+                    } else {
+                        cmdSuccess = 0;
+                    }
                 } else if (cli.bt->type == BT_BTM_TYPE_BC127) {
                     CLICommandBTBC127(msgBuf, &cmdSuccess, delimCount);
                 } else {
@@ -885,9 +899,8 @@ void CLIProcess()
                 ConfigSetSetting(CONFIG_SETTING_MIC_BIAS, CONFIG_SETTING_ON);
                 ConfigSetSetting(CONFIG_SETTING_MIC_GAIN, micGain);
             } else if (UtilsStricmp(msgBuf[0], "TEST") == 0) {
-                int8_t status = 0x00;
                 uint8_t buffer = 0x00;
-                status = I2CRead(0x4C, 0x76, &buffer);
+                I2CRead(0x4C, 0x76, &buffer);
                 if (buffer == 0x85) {
                     LogRaw("DAC: OK\r\n");
                 } else {
@@ -925,6 +938,9 @@ void CLIProcess()
                     LogRaw("    BT PAUSE - Send the AVRCP Pause Command\r\n");
                     LogRaw("    BT RESTORE - Reset the BM83\r\n");
                 }
+                LogRaw("    BT PBOPEN - Open a PBAP session with the connected device\r\n");
+                LogRaw("    BT PBCLOSE - Close the PBAP session\r\n");
+                LogRaw("    BT PBGET <offset> - Get phonebook contacts starting at offset\r\n");
                 LogRaw("    BT AT command> - Send raw AT command\r\n");
                 LogRaw("    BT DIAL <number> <name> - Dial a number and display name\r\n");
                 LogRaw("    BT REDIAL - Dial last number\r\n");

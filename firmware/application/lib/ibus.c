@@ -979,7 +979,7 @@ void IBusProcess(IBus_t *ibus)
                 }
                 if (memcmp(ibus->txBuffer[ibus->txBufferReadbackIdx], pkt, msgLength) == 0) {
                     LogRawDebug(LOG_SOURCE_IBUS, "[SELF]");
-                    memset(ibus->txBuffer[ibus->txBufferReadbackIdx], 0, msgLength);
+                    memset(ibus->txBuffer[ibus->txBufferReadbackIdx], 0, IBUS_MAX_MSG_LENGTH);
                     if (ibus->txBufferReadbackIdx + 1 == IBUS_TX_BUFFER_SIZE) {
                         ibus->txBufferReadbackIdx = 0;
                     } else {
@@ -1041,8 +1041,7 @@ void IBusProcess(IBus_t *ibus)
                         "IBus: %02X -> %02X Length: %d - Invalid Checksum",
                         pkt[IBUS_PKT_SRC],
                         pkt[IBUS_PKT_DST],
-                        msgLength,
-                        pkt[IBUS_PKT_LEN]
+                        msgLength
                     );
                 }
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
@@ -1056,7 +1055,7 @@ void IBusProcess(IBus_t *ibus)
     } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx) {
         // Flush the transmit buffer out to the bus
         uint8_t txTimeout = IBUS_TX_TIMEOUT_OFF;
-        uint8_t beginTxTimestamp = TimerGetMillis();
+        uint32_t beginTxTimestamp = TimerGetMillis();
         while (
             ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
             txTimeout != IBUS_TX_TIMEOUT_ON
@@ -1154,11 +1153,7 @@ static void IBusSendCommandInternal(
     // Check if buffer is full (one slot must remain empty to distinguish full from empty)
     if (usedSlots >= IBUS_TX_BUFFER_SIZE - 1) {
         long long unsigned int ts = (long long unsigned int) TimerGetMillis();
-        LogRawDebug(
-            LOG_SOURCE_IBUS,
-            "[%llu] ERROR: IBus: TX Buffer Overflow.\r\n",
-            ts
-        );
+        LogRaw("[%llu] ERROR: IBus: TX Buffer Overflow.\r\n", ts);
         return;
     }
     uint8_t idx, msgSize;
@@ -1195,6 +1190,8 @@ static void IBusSendCommandInternal(
         ibus->txBufferReadIdx = bufferIdx;
         ibus->txBufferReadbackIdx = bufferIdx;
     }
+    // Reset the buffer prior to writing into it
+    memset(ibus->txBuffer[bufferIdx], 0, IBUS_MAX_MSG_LENGTH);
     memcpy(ibus->txBuffer[bufferIdx], msg, msgSize);
 }
 

@@ -1323,10 +1323,6 @@ void BC127ProcessEventAT(BT_t *bt, char **msgBuf, uint8_t delimCount)
             p = strtok(0x00, delimeter);
         }
         // Set and clean up the variables to hold the new caller ID text
-        uint16_t cidLen = strlen(cidDataBuf[0]);
-        if (cidDelimCounter > 2) {
-            cidLen = strlen(cidDataBuf[cidDelimCounter - 1]);
-        }
         char callerId[BT_CALLER_ID_FIELD_SIZE + 1]  = {0};
         if (cidDelimCounter == 2) {
             // Remove the escaped quotes that come through
