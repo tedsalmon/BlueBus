@@ -5,7 +5,13 @@
  *     Implement the CD53 UI Mode handler
  */
 #include "cd53.h"
+#include <string.h>
+#include <stdio.h>
+#include "../lib/bt.h"
+#include "../lib/event.h"
+#include "../lib/timer.h"
 #include "menu/menu_singleline.h"
+
 static CD53Context_t Context;
 
 void CD53Init(BT_t *bt, IBus_t *ibus)

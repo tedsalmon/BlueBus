@@ -5,7 +5,16 @@
  *     Implement the MID UI Mode handler
  */
 #include "mid.h"
+#include <stdio.h>
+#include <string.h>
 #include "menu/menu_singleline.h"
+#include "../lib/bt/bt_common.h"
+#include "../lib/bt.h"
+#include "../lib/config.h"
+#include "../lib/event.h"
+#include "../lib/ibus.h"
+#include "../lib/timer.h"
+#include "../lib/utils.h"
 static MIDContext_t Context;
 
 void MIDInit(BT_t *bt, IBus_t *ibus)

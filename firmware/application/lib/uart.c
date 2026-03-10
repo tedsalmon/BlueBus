@@ -6,6 +6,12 @@
  *     easier, and consistent data r/w
  */
 #include "uart.h"
+#include <string.h>
+#include "log.h"
+#include "sfr_setters.h"
+#include "timer.h"
+#include "utils.h"
+#include "../mappings.h"
 
 static UART_t *UARTModules[UART_MODULES_COUNT];
 

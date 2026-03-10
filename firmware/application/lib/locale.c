@@ -5,6 +5,7 @@
  *     Contains functionality for string localization
  */
 #include "locale.h"
+#include "config.h"
 
 static char *LOCALE_LANG_ENGLISH[] = {
     "- Not Playing -",

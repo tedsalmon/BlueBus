@@ -5,6 +5,8 @@
  *     Shared structs, defines and functions for the Handlers
  */
 #include "handler_common.h"
+#include "../lib/config.h"
+#include "../lib/log.h"
 
 /**
  * HandlerGetTelMode()

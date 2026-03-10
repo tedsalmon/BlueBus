@@ -6,9 +6,8 @@
  */
 #ifndef HANDLER_CONTEXT_H
 #define HANDLER_CONTEXT_H
-#include "../lib/bt.h"
+#include "../lib/bt/bt_common.h"
 #include "../lib/ibus.h"
-#include "../lib/pcm51xx.h"
 
 
 #define HANDLER_BT_BOOT_OK 0

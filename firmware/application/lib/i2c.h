@@ -6,11 +6,7 @@
  */
 #ifndef I2C_H
 #define I2C_H
-#include <xc.h>
-#include "../mappings.h"
-#include "log.h"
-#include "sfr_setters.h"
-#include "timer.h"
+#include <stdint.h>
 
 #define I2C_BRG_100 0x26
 #define I2C_BRG_400 0x12

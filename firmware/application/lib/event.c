@@ -5,6 +5,8 @@
  *     Implement an event system so that modules can interact with each other
  */
 #include "event.h"
+#include <string.h>
+#include "log.h"
 volatile Event_t EVENT_CALLBACKS[EVENT_MAX_CALLBACKS];
 uint8_t EVENT_CALLBACKS_COUNT = 0;
 

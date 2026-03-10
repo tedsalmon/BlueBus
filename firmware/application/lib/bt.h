@@ -7,11 +7,7 @@
 #ifndef BT_H
 #define BT_H
 #include <stdint.h>
-#include "../mappings.h"
-#include "bt/bt_bc127.h"
-#include "bt/bt_bm83.h"
 #include "bt/bt_common.h"
-#include "uart.h"
 
 BT_t BTInit();
 void BTCommandCallAccept(BT_t *);

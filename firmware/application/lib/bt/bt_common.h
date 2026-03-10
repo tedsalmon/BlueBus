@@ -7,10 +7,6 @@
 #ifndef BT_COMMON_H
 #define BT_COMMON_H
 #include "../../mappings.h"
-#include "../config.h"
-#include "../eeprom.h"
-#include "../log.h"
-#include "../event.h"
 #include "../uart.h"
 
 #define BT_AVRCP_ACTION_GET_METADATA 0

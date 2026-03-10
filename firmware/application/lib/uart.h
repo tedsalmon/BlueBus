@@ -9,10 +9,6 @@
 #include <stdint.h>
 #include <xc.h>
 #include "char_queue.h"
-#include "log.h"
-#include "sfr_setters.h"
-#include "timer.h"
-#include "utils.h"
 #define UART_BAUD_115200 34
 #define UART_BAUD_9600 103
 #define UART_ERR_GERR 0x1

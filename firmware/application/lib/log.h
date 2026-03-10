@@ -7,13 +7,8 @@
 #ifndef LOG_H
 #define LOG_H
 #include <stdint.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include "../mappings.h"
 #include "config.h"
-#include "timer.h"
-#include "uart.h"
+
 // Metadata is the largest single buffer at 384 bytes, so add another 32 bytes
 // to that in order to get a usable buffer size
 #define LOG_MESSAGE_SIZE 416

@@ -6,19 +6,9 @@
  */
 #ifndef CLI_H
 #define CLI_H
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include "../mappings.h"
-#include "../lib/bt/bt_bc127.h"
-#include "../lib/bt/bt_bm83.h"
-#include "../lib/bt.h"
-#include "../lib/char_queue.h"
-#include "../lib/config.h"
-#include "../lib/i2c.h"
+#include "../lib/bt/bt_common.h"
 #include "../lib/ibus.h"
 #include "../lib/pcm51xx.h"
-#include "../lib/timer.h"
 #include "../lib/uart.h"
 
 // Banner timeout is in seconds

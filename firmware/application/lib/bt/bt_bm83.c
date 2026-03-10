@@ -5,10 +5,15 @@
  *     Implementation of the Microchip BM83 Bluetooth UART API
  */
 #include "bt_bm83.h"
-#include "../locale.h"
-#include "bt_common.h"
+#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#include "bt_common.h"
+#include "../event.h"
+#include "../locale.h"
+#include "../log.h"
+#include "../timer.h"
+#include "../utils.h"
 
 int8_t BTBM83MicGainTable[] = {
     0, // Default

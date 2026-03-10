@@ -5,9 +5,18 @@
  *     Implement the logic to have the BC127 and IBus communicate
  */
 #include "handler.h"
-#include "handler/handler_common.h"
+#include <string.h>
+#include "handler/handler_bt.h"
+#include "handler/handler_ibus.h"
 #include "lib/bt/bt_common.h"
+#include "lib/bt.h"
 #include "lib/config.h"
+#include "lib/event.h"
+#include "lib/timer.h"
+#include "ui/bmbt.h"
+#include "ui/cd53.h"
+#include "ui/mid.h"
+
 static HandlerContext_t Context;
 
 /**

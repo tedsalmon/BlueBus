@@ -5,6 +5,12 @@
  *     Helper utils that may be useful in more than one place
  */
 #include "utils.h"
+#include <ctype.h>
+#include <string.h>
+#include <xc.h>
+#include "../mappings.h"
+#include "config.h"
+#include "log.h"
 
 static const char UTILS_CHARS_LATIN[] =
     "AAAA\xa1""AACEEEEIIII" /* 00C0-00CF */

@@ -5,10 +5,14 @@
  *     Implementation of the abstract Bluetooth Module API
  */
 #include "bt.h"
+#include <stdio.h>
+#include <string.h>
 #include "bt/bt_bc127.h"
 #include "bt/bt_bm83.h"
 #include "bt/bt_common.h"
+#include "config.h"
 #include "locale.h"
+#include "log.h"
 #include "timer.h"
 #include "uart.h"
 #include "utils.h"

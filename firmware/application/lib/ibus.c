@@ -5,10 +5,17 @@
  *     This implements the I-Bus
  */
 #include "ibus.h"
-#include "config.h"
-#include "event.h"
-#include "utils.h"
 #include <ctype.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include "../mappings.h"
+#include "char_queue.h"
+#include "config.h"
+#include "log.h"
+#include "event.h"
+#include "timer.h"
+#include "utils.h"
 
 static const uint8_t IBUS_SES_NAV_ZOOM_CONSTANT[IBUS_SES_ZOOM_LEVELS] = {
     0x01, // 125 - special case when stationary

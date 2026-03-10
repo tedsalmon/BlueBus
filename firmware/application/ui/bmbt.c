@@ -7,6 +7,15 @@
 #include "bmbt.h"
 #include <stdio.h>
 #include <string.h>
+#include "../lib/config.h"
+#include "../lib/event.h"
+#include "../lib/locale.h"
+#include "../lib/utils.h"
+#include "../lib/pcm51xx.h"
+#include "../lib/bt.h"
+#include "../lib/bt/bt_bc127.h"
+#include "../lib/bt/bt_bm83.h"
+
 static BMBTContext_t Context;
 
 static const uint8_t menuSettings[] = {

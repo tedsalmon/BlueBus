@@ -6,19 +6,10 @@
  */
 #ifndef BMBT_H
 #define BMBT_H
-#include <stdio.h>
-#include "../lib/bt/bt_bc127.h"
-#include "../lib/bt/bt_bm83.h"
-#include "../lib/bt.h"
-#include "../lib/config.h"
-#include "../lib/event.h"
-#include "../lib/i2c.h"
+#include "../lib/bt/bt_common.h"
 #include "../lib/ibus.h"
-#include "../lib/locale.h"
-#include "../lib/pcm51xx.h"
-#include "../lib/timer.h"
 #include "../lib/utils.h"
-#include "../lib/wm88xx.h"
+
 #define BMBT_DISPLAY_OFF 0x00
 #define BMBT_DISPLAY_TONE_INFO 0x01
 #define BMBT_DISPLAY_SEL 0x02

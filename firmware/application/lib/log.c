@@ -5,6 +5,12 @@
  *     Implementation of logging mechanisms that we can use throughout the project
  */
 #include "log.h"
+#include "uart.h"
+#include <stdarg.h>
+#include <stdio.h>
+#include "../mappings.h"
+#include "config.h"
+#include "timer.h"
 
 /**
  * LogMessage()

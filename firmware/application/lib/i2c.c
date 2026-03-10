@@ -5,6 +5,12 @@
  *     Implementation of the I2C Bus. Currently only I2C3 is implemented
  */
 #include "i2c.h"
+#include <xc.h>
+#include "../mappings.h"
+#include "log.h"
+#include "sfr_setters.h"
+#include "timer.h"
+
 static uint8_t I2CStatus;
 
 /**

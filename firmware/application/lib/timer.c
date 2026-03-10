@@ -6,6 +6,10 @@
  *     time events in the application. Implement a scheduled task queue.
  */
 #include "timer.h"
+#include <string.h>
+#include <xc.h>
+#include "log.h"
+#include "sfr_setters.h"
 volatile uint32_t TimerCurrentMillis = 0;
 volatile TimerScheduledTask_t TimerRegisteredTasks[TIMER_TASKS_MAX];
 uint8_t TimerRegisteredTasksCount = 0;

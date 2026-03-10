@@ -6,14 +6,9 @@
  */
 #ifndef MID_H
 #define MID_H
-#include "../lib/bt/bt_bc127.h"
-#include "../lib/bt.h"
-#include "../lib/config.h"
-#include "../lib/event.h"
 #include "../lib/ibus.h"
-#include "../lib/log.h"
-#include "../lib/timer.h"
 #include "../lib/utils.h"
+#include "../lib/bt/bt_common.h"
 #include "menu/menu_singleline.h"
 
 #define MID_BUTTON_PLAYBACK 0x40

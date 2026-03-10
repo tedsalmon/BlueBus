@@ -7,8 +7,6 @@
 #ifndef LOCALE_H
 #define LOCALE_H
 #include <stdint.h>
-#include "config.h"
-#include "utils.h"
 
 #define LOCALE_STRING_NOT_PLAYING 0
 #define LOCALE_STRING_ABOUT 1

@@ -6,13 +6,8 @@
  */
 #ifndef UTILS_H
 #define UTILS_H
-#include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
-#include <xc.h>
-#include "config.h"
-#include "log.h"
 
 #define UTILS_CHAR_LATIN_CAPITAL_A_WITH_GRAVE 0xC380
 #define UTILS_CHAR_LATIN_CAPITAL_A_WITH_ACUTE 0xC381

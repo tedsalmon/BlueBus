@@ -6,17 +6,9 @@
  */
 #ifndef IBUS_H
 #define IBUS_H
-#include <math.h>
+#include <stddef.h>
 #include <stdint.h>
-#include <string.h>
-#include "../mappings.h"
-#include "char_queue.h"
-#include "log.h"
-#include "event.h"
-#include "ibus.h"
-#include "timer.h"
 #include "uart.h"
-#include "utils.h"
 
 // Devices
 #define IBUS_DEVICE_GM 0x00 /* Body module */

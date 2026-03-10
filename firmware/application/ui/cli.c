@@ -5,6 +5,19 @@
  *     Implement a CLI to pass commands to the device
  */
 #include "cli.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include "../mappings.h"
+#include "../lib/bt/bt_bc127.h"
+#include "../lib/bt/bt_bm83.h"
+#include "../lib/bt.h"
+#include "../lib/char_queue.h"
+#include "../lib/config.h"
+#include "../lib/event.h"
+#include "../lib/i2c.h"
+#include "../lib/timer.h"
+#include "../lib/utils.h"
 
 static CLI_t cli;
 

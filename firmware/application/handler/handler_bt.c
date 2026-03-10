@@ -5,7 +5,19 @@
  *     Implement the logic around the BT events
  */
 #include "handler_bt.h"
+#include <string.h>
 #include "handler_common.h"
+#include "../lib/bt.h"
+#include "../lib/config.h"
+#include "../lib/event.h"
+#include "../lib/locale.h"
+#include "../lib/log.h"
+#include "../lib/pcm51xx.h"
+#include "../lib/timer.h"
+#include "../lib/utils.h"
+#include "../lib/bt/bt_bc127.h"
+#include "../lib/bt/bt_bm83.h"
+
 static char *PROFILES[] = {
     "A2DP",
     "AVRCP",

@@ -6,14 +6,9 @@
  */
 #ifndef CD53_H
 #define CD53_H
-#include <stdio.h>
-#include "../lib/bt/bt_bc127.h"
-#include "../lib/bt.h"
-#include "../lib/log.h"
-#include "../lib/event.h"
 #include "../lib/ibus.h"
-#include "../lib/timer.h"
 #include "../lib/utils.h"
+#include "../lib/bt/bt_common.h"
 #include "menu/menu_singleline.h"
 
 #define CD53_DISPLAY_METADATA_ON 1

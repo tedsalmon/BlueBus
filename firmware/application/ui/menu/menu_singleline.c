@@ -5,6 +5,12 @@
  *     Implement the MID UI Mode handler
  */
 #include "menu_singleline.h"
+#include "../../lib/bt/bt_bc127.h"
+#include "../../lib/bt/bt_bm83.h"
+#include "../../lib/config.h"
+#include "../../lib/event.h"
+#include <stdio.h>
+#include <string.h>
 
 static uint8_t SETTINGS_MENU[] = {
     MENU_SINGLELINE_SETTING_IDX_METADATA_MODE,

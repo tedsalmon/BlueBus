@@ -5,6 +5,7 @@
  *     Implement a FIFO queue to store bytes read from UART into
  */
 #include "char_queue.h"
+#include <string.h>
 
 /**
  * CharQueueInit()

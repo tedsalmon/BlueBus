@@ -4,9 +4,6 @@
  * Description:
  *     Utilities for use with the on-board WM8804 I2S transceiver
  */
-#include "i2c.h"
-#include "timer.h"
-#include "log.h"
 
 #define WM88XX_I2C_ADDR 0x3A
 #define WM88XX_POLL_INT 5000

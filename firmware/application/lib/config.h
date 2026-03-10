@@ -6,7 +6,6 @@
  */
 #ifndef CONFIG_H
 #define CONFIG_H
-#include "eeprom.h"
 #include <stdint.h>
 
 /* EEPROM 0x00 - 0x07: Reserved for the BlueBus */

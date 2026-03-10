@@ -5,6 +5,9 @@
  *     EEPROM mechanisms
  */
 #include "eeprom.h"
+#include "../mappings.h"
+#include "sfr_setters.h"
+#include "utils.h"
 
 // These values constitute the SOA mode for each SPI module
 static const uint8_t SPI_SDO_MODES[] = {7, 10, 23};

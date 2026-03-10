@@ -7,8 +7,7 @@
 #ifndef MENU_SINGLELINE_H
 #define MENU_SINGLELINE_H
 
-#include "../../lib/bt.h"
-#include "../../lib/config.h"
+#include "../../lib/bt/bt_common.h"
 #include "../../lib/ibus.h"
 #include "../../lib/pcm51xx.h"
 #include "../../lib/utils.h"

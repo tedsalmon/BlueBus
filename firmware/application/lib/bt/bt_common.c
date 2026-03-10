@@ -6,6 +6,12 @@
  */
 #include "bt_common.h"
 #include <stdio.h>
+#include <string.h>
+#include "../config.h"
+#include "../eeprom.h"
+#include "../event.h"
+#include "../log.h"
+#include "../utils.h"
 
 
 /**

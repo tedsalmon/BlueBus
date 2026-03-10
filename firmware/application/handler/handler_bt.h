@@ -6,18 +6,6 @@
  */
 #ifndef HANDLER_BT_H
 #define HANDLER_BT_H
-#include <stdio.h>
-#include "../lib/bt/bt_bc127.h"
-#include "../lib/bt/bt_bm83.h"
-#include "../lib/bt/bt_common.h"
-#include "../lib/log.h"
-#include "../lib/event.h"
-#include "../lib/ibus.h"
-#include "../lib/timer.h"
-#include "../lib/utils.h"
-#include "../ui/bmbt.h"
-#include "../ui/cd53.h"
-#include "../ui/mid.h"
 #include "handler_common.h"
 
 void HandlerBTInit(HandlerContext_t *);

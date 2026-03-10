@@ -5,6 +5,8 @@
  *     Get & Set Configuration items on the EEPROM
  */
 #include "config.h"
+#include "eeprom.h"
+#include <stdio.h>
 
 uint8_t CONFIG_SETTING_CACHE[CONFIG_SETTING_CACHE_SIZE] = {0};
 uint8_t CONFIG_VALUE_CACHE[CONFIG_VALUE_CACHE_SIZE] = {0};

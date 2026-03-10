@@ -21,10 +21,7 @@
 #define TIMER_INDEX 0
 #define TIMER_TASK_DISABLED 0
 #include <stdint.h>
-#include <string.h>
-#include <xc.h>
-#include "log.h"
-#include "sfr_setters.h"
+
 /**
  * TimerScheduledTask_t
  *     Description:

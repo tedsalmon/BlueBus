@@ -8,7 +8,7 @@
 #define EVENT_H
 #define EVENT_MAX_CALLBACKS 128
 #include <stdint.h>
-#include "log.h"
+
 typedef struct Event_t {
     uint8_t type;
     void *context;

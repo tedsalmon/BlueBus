@@ -5,9 +5,15 @@
  *     Implementation of the Sierra Wireless BC127 Bluetooth UART API
  */
 #include "bt_bc127.h"
+#include "../event.h"
 #include "../locale.h"
+#include "../log.h"
+#include "../timer.h"
+#include "../utils.h"
 #include "bt_common.h"
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 /** BC127CVCGainTable
  * C0 - D6 (22 Settings)

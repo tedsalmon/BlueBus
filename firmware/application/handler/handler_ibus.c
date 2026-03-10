@@ -7,6 +7,14 @@
 #include "handler_ibus.h"
 #include "handler_common.h"
 #include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "../lib/bt/bt_bc127.h"
+#include "../lib/bt.h"
+#include "../lib/event.h"
+#include "../ui/bmbt.h"
+#include "../ui/cd53.h"
+#include "../ui/mid.h"
 
 void HandlerIBusInit(HandlerContext_t *context)
 {

@@ -6,6 +6,7 @@
  */
 #ifndef BM83_H
 #define BM83_H
+#include <stddef.h>
 #include <stdint.h>
 #include "bt_common.h"
 

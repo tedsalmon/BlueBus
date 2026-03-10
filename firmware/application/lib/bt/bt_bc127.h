@@ -7,14 +7,6 @@
 #ifndef BC127_H
 #define BC127_H
 #include <stdint.h>
-#include <string.h>
-#include <stdio.h>
-#include "../../mappings.h"
-#include "../log.h"
-#include "../event.h"
-#include "../timer.h"
-#include "../uart.h"
-#include "../utils.h"
 #include "bt_common.h"
 
 #define BC127_AUDIO_SPDIF "2"
