@@ -608,11 +608,11 @@
 #define IBUS_RX_BUFFER_SIZE 255 // 8-bit Max
 #define IBUS_TX_BUFFER_SIZE 24
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
-#define IBUS_TX_BUFFER_WAIT 7 // If we transmit faster, other modules may not hear us
+#define IBUS_TX_BUFFER_WAIT 8 // If we transmit faster, other modules may not hear us
 #define IBUS_TX_TIMEOUT_OFF 0
 #define IBUS_TX_TIMEOUT_ON 1
 #define IBUS_TX_TIMEOUT_DATA_SENT 2
-#define IBUS_TX_TIMEOUT_WAIT 250
+#define IBUS_TX_TIMEOUT_WAIT 50
 
 /**
  * IBusModuleStatus_t

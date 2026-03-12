@@ -50,6 +50,11 @@ void CLIInit(UART_t *uart, BT_t *bt, IBus_t *ibus)
         &CLIEventBTBTMAddress,
         &cli
     );
+    EventRegisterCallback(
+        BT_EVENT_PBAP_CONTACT_RECEIVED,
+        &CLIEventPBAPContactReceived,
+        &cli
+    );
 }
 
 /**
@@ -351,6 +356,46 @@ void CLIEventBTBTMAddress(void *ctx, uint8_t *data)
         data[4],
         data[5]
     );
+}
+
+/**
+ * CLIEventPBAPContactReceived()
+ *     Description:
+ *         Handle PBAP contact search results
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *data - Any event data
+ *     Returns:
+ *         void
+ */
+void CLIEventPBAPContactReceived(void *ctx, uint8_t *data)
+{
+    CLI_t *cli = (CLI_t *)ctx;
+    if (cli->terminalReady == 1) {
+        return;
+    }
+    if (cli->bt->pbap.contactCount == 0) {
+        LogRaw("No contacts found.\r\n# ");
+        return;
+    }
+    LogRaw("Contacts(%d):\r\n", cli->bt->pbap.contactCount);
+    uint8_t i;
+    for (i = 0; i < cli->bt->pbap.contactCount; i++) {
+        BTPBAPContact_t *contact = &cli->bt->pbap.contacts[i];
+        LogRaw("%s:", contact->name);
+        uint8_t j;
+        for (j = 0; j < contact->numberCount; j++) {
+            char phoneNumber[16];
+            BTPBAPTelephoneFromBCD(
+                contact->numbers[j].number,
+                phoneNumber,
+                sizeof(phoneNumber)
+            );
+            LogRaw(" '%s'", phoneNumber);
+        }
+        LogRaw("\r\n");
+    }
+    LogRaw("# ");
 }
 
 /**

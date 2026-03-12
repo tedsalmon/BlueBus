@@ -1052,10 +1052,20 @@ void IBusProcess(IBus_t *ibus)
             EventTriggerCallback(IBUS_EVENT_FIRST_MESSAGE_RECEIVED, 0);
         }
         ibus->rxLastStamp = TimerGetMillis();
-    } else if (ibus->txBufferWriteIdx != ibus->txBufferReadIdx) {
+    }
+
+    // Transmit when we are not receiving
+    if (
+        ibus->rxBufferIdx == 0 &&
+        ibus->txBufferWriteIdx != ibus->txBufferReadIdx
+    ) {
         // Flush the transmit buffer out to the bus
         uint8_t txTimeout = IBUS_TX_TIMEOUT_OFF;
         uint32_t beginTxTimestamp = TimerGetMillis();
+        // Enforce the IBUS_TX_BUFFER_WAIT for received bytes
+        if (ibus->rxLastStamp > ibus->txLastStamp) {
+            ibus->txLastStamp = ibus->rxLastStamp;
+        }
         while (
             ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
             txTimeout != IBUS_TX_TIMEOUT_ON
@@ -2678,7 +2688,7 @@ void IBusCommandIKECheckControlDisplayClear(IBus_t *ibus)
 void IBusCommandIKENumbericDisplayWrite(IBus_t *ibus, uint8_t number)
 {
     uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, IBUS_DATA_IKE_NUMERIC_WRITE, number};
-    IBusSendCommand(ibus, IBUS_DEVICE_NAVE, IBUS_DEVICE_IKE, msg, sizeof(msg));
+    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
 }
 
 /**
@@ -2693,7 +2703,7 @@ void IBusCommandIKENumbericDisplayWrite(IBus_t *ibus, uint8_t number)
 void IBusCommandIKENumbericDisplayClear(IBus_t *ibus)
 {
     uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, IBUS_DATA_IKE_NUMERIC_CLEAR, 0x00};
-    IBusSendCommand(ibus, IBUS_DEVICE_NAVE, IBUS_DEVICE_IKE, msg, sizeof(msg));
+    IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
 }
 
 /**
