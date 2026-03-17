@@ -907,6 +907,11 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                 }
             }
         }
+       IBusCommandIKEOBCControl(
+            context->ibus,
+            IBUS_IKE_OBC_PROPERTY_TEMPERATURE,
+            IBUS_IKE_OBC_PROPERTY_REQUEST_TEXT
+        );
         // Set the IKE to "found" if we haven't already to prevent
         // sending the telephone status multiple times
         context->ibus->moduleStatus.IKE = 1;
@@ -1480,7 +1485,7 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
             if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
                 IBusCommandIKENumbericDisplayClear(context->ibus);
             } else {
-                IBusCommandIKECheckControlDisplayClear(context->ibus);
+                IBusCommandTELIKEDisplayClear(context->ibus);
             }
         }
     } else {
@@ -1570,7 +1575,7 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
                         (units == 0) ? "cm" : "in"
                     );
                 }
-                IBusCommandIKECheckControlDisplayWrite(context->ibus, pdcValues);
+                IBusCommandTELIKEDisplayWrite(context->ibus, pdcValues);
             }
         }
     }

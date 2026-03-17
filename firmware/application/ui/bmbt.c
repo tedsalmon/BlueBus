@@ -496,78 +496,6 @@ static void BMBTTriggerWriteMenu(BMBTContext_t *context, uint8_t force)
 }
 
 /**
- * BMBTHeaderWriteDeviceName()
- *     Description:
- *         Wrapper to extend the length of the device field to 20 characters
- *         with space padding if we are writing to the old style UI.
- *     Params:
- *         BMBTContext_t *context - The context
- *         char *text - The text to write
- *     Returns:
- *         void
- */
-static void BMBTHeaderWriteDeviceName(BMBTContext_t *context, char *text)
-{
-    char cleanName[21];
-    memset(cleanName, 0x20, 21);
-    memcpy(cleanName, text, 21);
-    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
-        cleanName[20] = '\0';
-    } else {
-        cleanName[15] = '\0';
-    }
-    IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, cleanName);
-}
-
-/**
- * BMBTGTWriteIndex()
- *     Description:
- *         Wrapper to automatically push the nav type into the I-Bus Library
- *         Command so that we can save verbosity in these calls
- *     Params:
- *         BMBTContext_t *context - The context
- *         uint8_t index - The index to write to
- *         char *text - The text to write
- *         uint8_t clearIdxs - Number of additional rows to clear
- *         uint8_t lastIdx - Number of additional rows to clear
- *     Returns:
- *         void
- */
-static void BMBTGTWriteIndex(
-    BMBTContext_t *context,
-    uint8_t index,
-    char *text,
-    uint8_t clearIdxs
-) {
-
-    uint8_t stringLength = strlen(text);
-    uint8_t newTextLength = stringLength + clearIdxs + 1;
-    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
-        if (stringLength > IBUS_DATA_GT_MKIII_MAX_IDX_LEN) {
-            newTextLength = newTextLength - (stringLength - IBUS_DATA_GT_MKIII_MAX_IDX_LEN);
-            stringLength = IBUS_DATA_GT_MKIII_MAX_IDX_LEN;
-        }
-        if (index + clearIdxs < 7) {
-            index = index + 0x40;
-        }
-        newTextLength = IBUS_DATA_GT_MKIII_MAX_IDX_LEN + clearIdxs + 1;
-    } else {
-        index = index + 0x40;
-    }
-    context->status.navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
-    char newText[newTextLength + 1];
-    memset(&newText, 0x20, newTextLength);
-    strncpy(newText, text, stringLength);
-    stringLength = newTextLength - (clearIdxs + 1);
-    while (stringLength < newTextLength) {
-        newText[stringLength] = 0x06;
-        stringLength++;
-    }
-    newText[newTextLength] = '\0';
-    IBusCommandGTWriteIndexTMC(context->ibus, index, newText);
-}
-
-/**
  * BMBTGTFlushHeaderWrite()
  *     Description:
  *         Wrapper to correct set the headerBufferStatus when flushing headers
@@ -642,6 +570,109 @@ static void BMBTGTWriteTitleIndex(BMBTContext_t *context, char *text)
     }
 }
 
+/**
+ * BMBTHeaderWriteDeviceName()
+ *     Description:
+ *         Wrapper to extend the length of the device field to 20 characters
+ *         with space padding if we are writing to the old style UI.
+ *     Params:
+ *         BMBTContext_t *context - The context
+ *         char *text - The text to write
+ *     Returns:
+ *         void
+ */
+static void BMBTHeaderWriteDeviceName(BMBTContext_t *context, char *text)
+{
+    char cleanName[21];
+    memset(cleanName, 0x20, 21);
+    memcpy(cleanName, text, 21);
+    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
+        cleanName[20] = '\0';
+    } else {
+        cleanName[15] = '\0';
+    }
+    IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_DEV_NAME, cleanName);
+}
+
+/**
+ * BMBTHeaderWriteTemperature()
+ *     Description:
+ *         Wrapper to update the temperature in the headers
+ *     Params:
+ *         BMBTContext_t *context - The context
+ *         uint8_t updateType - The value that was updated
+ *     Returns:
+ *         void
+ */
+
+static void BMBTHeaderWriteTemperature(BMBTContext_t *context, uint8_t updateType)
+{
+    uint8_t tempDisplayConfig = ConfigGetTempDisplay();
+    int16_t tempValue = IBUS_AMBIENT_TEMP_UNSET;
+    uint8_t units = (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) ? 'F' : 'C';
+    char temperature[8] = {0};
+    if (tempDisplayConfig == CONFIG_SETTING_TEMP_AMBIENT) {
+        if (
+            updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP ||
+            updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED ||
+            updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
+        ) {
+            if (context->ibus->ambientTemperatureCalculated[0] != 0) {
+                tempValue = 0;
+                snprintf(
+                    temperature,
+                    8,
+                    "%s\xB0%c",
+                    context->ibus->ambientTemperatureCalculated,
+                    units
+                );
+            } else {
+                tempValue = context->ibus->ambientTemperature;
+            }
+        }
+    }
+    if (tempDisplayConfig == CONFIG_SETTING_TEMP_COOLANT) {
+        if(
+            updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP ||
+            updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
+        ) {
+            tempValue = context->ibus->coolantTemperature;
+        }
+    }
+    if (tempDisplayConfig == CONFIG_SETTING_TEMP_OIL) {
+        if(
+            updateType == IBUS_SENSOR_VALUE_OIL_TEMP ||
+            updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
+        ) {
+            tempValue = context->ibus->oilTemperature;
+        }
+    }
+    if (
+        tempValue != IBUS_AMBIENT_TEMP_UNSET &&
+        tempDisplayConfig != CONFIG_SETTING_OFF &&
+        context->status.displayMode == BMBT_DISPLAY_ON
+    ) {
+        if (strlen(temperature) == 0) {
+            if (units == 'F') {
+                tempValue = tempValue * 1.8 + 32 + 0.5;
+            }
+            if (tempDisplayConfig == CONFIG_SETTING_TEMP_AMBIENT) {
+                if (units == 'F') {
+                    snprintf(temperature, 7, "%+d\xB0%c", tempValue, units);
+                } else {
+                    snprintf(temperature, 8, "%+d.0\xB0%c", tempValue, units);
+                }
+            } else if (tempValue > 0){
+                snprintf(temperature, 6, "%d\xB0%c", tempValue, units);
+            } else {
+                return;
+            }
+        }
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
+    }
+}
+
+
 static void BMBTHeaderWrite(BMBTContext_t *context)
 {
     if (
@@ -663,12 +694,10 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     } else {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
     }
-    uint8_t tempMode = ConfigGetTempDisplay();
     // Clear the "CD1" Header
     IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "    ");
-    BMBTGTFlushHeaderWrite(context);
     uint8_t valueType = 0;
-    switch (tempMode) {
+    switch (ConfigGetTempDisplay()) {
         case CONFIG_SETTING_TEMP_COOLANT:
             valueType = IBUS_SENSOR_VALUE_COOLANT_TEMP;
             break;
@@ -680,8 +709,57 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
             break;
     }
     if (valueType > 0) {
-        BMBTIBusSensorValueUpdate((void *)context, &valueType);
+        BMBTHeaderWriteTemperature(context, valueType);
     }
+    BMBTGTFlushHeaderWrite(context);
+}
+
+/**
+ * BMBTGTWriteIndex()
+ *     Description:
+ *         Wrapper to automatically push the nav type into the I-Bus Library
+ *         Command so that we can save verbosity in these calls
+ *     Params:
+ *         BMBTContext_t *context - The context
+ *         uint8_t index - The index to write to
+ *         char *text - The text to write
+ *         uint8_t clearIdxs - Number of additional rows to clear
+ *         uint8_t lastIdx - Number of additional rows to clear
+ *     Returns:
+ *         void
+ */
+static void BMBTGTWriteIndex(
+    BMBTContext_t *context,
+    uint8_t index,
+    char *text,
+    uint8_t clearIdxs
+) {
+
+    uint8_t stringLength = strlen(text);
+    uint8_t newTextLength = stringLength + clearIdxs + 1;
+    if (context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI) {
+        if (stringLength > IBUS_DATA_GT_MKIII_MAX_IDX_LEN) {
+            newTextLength = newTextLength - (stringLength - IBUS_DATA_GT_MKIII_MAX_IDX_LEN);
+            stringLength = IBUS_DATA_GT_MKIII_MAX_IDX_LEN;
+        }
+        if (index + clearIdxs < 7) {
+            index = index + 0x40;
+        }
+        newTextLength = IBUS_DATA_GT_MKIII_MAX_IDX_LEN + clearIdxs + 1;
+    } else {
+        index = index + 0x40;
+    }
+    context->status.navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
+    char newText[newTextLength + 1];
+    memset(&newText, 0x20, newTextLength);
+    strncpy(newText, text, stringLength);
+    stringLength = newTextLength - (clearIdxs + 1);
+    while (stringLength < newTextLength) {
+        newText[stringLength] = 0x06;
+        stringLength++;
+    }
+    newText[newTextLength] = '\0';
+    IBusCommandGTWriteIndexTMC(context->ibus, index, newText);
 }
 
 static void BMBTMenuMain(BMBTContext_t *context)
@@ -728,7 +806,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         char temperature[29] = {0};
         if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
             snprintf(ambtempstr, 8, "A:%s", context->ibus->ambientTemperatureCalculated);
-        } else {
+        } else if (context->ibus->ambientTemperature != IBUS_AMBIENT_TEMP_UNSET) {
             snprintf(ambtempstr, 8, "A:%+d", ambtemp);
         }
         if (cooltemp > 0) {
@@ -753,7 +831,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
                 currentIdx++,
                 ambtempstr
             );
-        } else {
+        } else if (context->ibus->ambientTemperature != IBUS_AMBIENT_TEMP_UNSET) {
             snprintf(ambtempstr, 8, "A:%+d", ambtemp);
             IBusCommandGTWriteIndex(
                 context->ibus,
@@ -3399,84 +3477,6 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
     uint8_t updateType = *type;
-    int temp = 0;
-    char tempUnit = 'C';
-    char redraw = 0;
-    char temperature[8] = {0};
-    char config = ConfigGetTempDisplay();
-
-    // We may need to add additional `updateType` values in the future
-    if (
-        config == CONFIG_SETTING_OFF ||
-        context->status.displayMode != BMBT_DISPLAY_ON ||
-        updateType == IBUS_SENSOR_VALUE_GEAR_POS
-    ) {
-        return;
-    }
-    if (context->ibus->ambientTemperatureCalculated[0] == 0) {
-       IBusCommandIKEOBCControl(
-            context->ibus,
-            IBUS_IKE_OBC_PROPERTY_TEMPERATURE,
-            IBUS_IKE_OBC_PROPERTY_REQUEST_TEXT
-        );
-    }
-
-    if (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) {
-        tempUnit = 'F';
-    }
-
-    if (
-        config == CONFIG_SETTING_TEMP_AMBIENT &&
-        (
-            updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED ||
-            updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP ||
-            updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
-        ) &&
-        context->ibus->ambientTemperatureCalculated[0] != 0
-    ) {
-        snprintf(temperature, 8, "%s\xB0%c", context->ibus->ambientTemperatureCalculated, tempUnit);
-        redraw = 1;
-    } else {
-        if (config == CONFIG_SETTING_TEMP_COOLANT &&
-            (updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP ||
-            updateType == IBUS_SENSOR_VALUE_TEMP_UNIT)
-        ) {
-            temp = context->ibus->coolantTemperature;
-            if (temp != 0) {
-                redraw = 1;
-            }
-        } else if (config == CONFIG_SETTING_TEMP_AMBIENT &&
-            (updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP ||
-            updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED ||
-            updateType == IBUS_SENSOR_VALUE_TEMP_UNIT)
-        ) {
-            temp = context->ibus->ambientTemperature;
-            redraw = 1;
-        } else if (config == CONFIG_SETTING_TEMP_OIL &&
-            (updateType == IBUS_SENSOR_VALUE_OIL_TEMP ||
-            updateType == IBUS_SENSOR_VALUE_TEMP_UNIT)
-        ) {
-            temp = context->ibus->oilTemperature;
-            if (temp != 0) {
-                redraw = 1;
-            }
-        }
-        if (redraw == 1) {
-            if (tempUnit == 'F') {
-                temp = temp * 1.8 + 32 + 0.5;
-            }
-            if (config == CONFIG_SETTING_TEMP_AMBIENT) {
-                if (tempUnit == 'F') {
-                    snprintf(temperature, 7, "%+d\xB0%c", temp, tempUnit);
-                } else {
-                    snprintf(temperature, 8, "%+d.0\xB0%c", temp, tempUnit);
-                }
-            } else {
-                snprintf(temperature, 6, "%d\xB0%c", temp, tempUnit);
-            }
-        }
-    }
-
     uint8_t navConfig = ConfigGetSetting(CONFIG_SETTING_NAV) & CONFIG_SETTING_NAV_ROUTE_RANGE;
     if (
         navConfig == CONFIG_SETTING_NAV_ROUTE_RANGE &&
@@ -3486,19 +3486,25 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
         context->navRange = 1;
         IBusCommandSESRouteFuel(context->ibus);
     }
-
-
-    if (redraw == 1) {
-        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_TEMPS, temperature);
-        BMBTGTFlushHeaderWrite(context);
-    }
-
     if (
-        context->menu == BMBT_MENU_DASHBOARD ||
-        context->menu == BMBT_MENU_DASHBOARD_FRESH
+        updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP ||
+        updateType == IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED ||
+        updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP ||
+        updateType == IBUS_SENSOR_VALUE_OIL_TEMP ||
+        updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
     ) {
-        BMBTMenuDashboardUpdateOBCValues(context);
-        BMBTGTBufferFlush(context);
+        if (context->status.displayMode == BMBT_DISPLAY_OFF) {
+            return;
+        }
+        BMBTHeaderWriteTemperature(context, updateType);
+        BMBTGTFlushHeaderWrite(context);
+        if (
+            context->menu == BMBT_MENU_DASHBOARD ||
+            context->menu == BMBT_MENU_DASHBOARD_FRESH
+        ) {
+            BMBTMenuDashboardUpdateOBCValues(context);
+            BMBTGTBufferFlush(context);
+        }
     }
 }
 

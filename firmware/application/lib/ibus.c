@@ -404,7 +404,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
         signed char tmp = pkt[IBUS_PKT_DB1];
-        if (ibus->ambientTemperature != tmp && tmp > -60 && tmp < 60) {
+        if (ibus->ambientTemperature != tmp && tmp > IBUS_AMBIENT_TEMP_UNSET && tmp < 60) {
             ibus->ambientTemperature = tmp;
             uint8_t valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
@@ -416,7 +416,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
             property == IBUS_IKE_TEXT_TEMPERATURE &&
             pkt[IBUS_PKT_LEN] >= 7 &&
             pkt[IBUS_PKT_LEN] <= 11
-        ) {
+       ) {
 
             uint8_t *temp = pkt + 6;
             uint8_t size = pkt[IBUS_PKT_LEN] - 5;
@@ -2632,8 +2632,8 @@ void IBusCommandTELIKEDisplayWrite(IBus_t *ibus, char *message)
 {
     uint8_t len = strlen(message);
     // Max display width
-    if (len > 16) {
-        len = 16;
+    if (len > 20) {
+        len = 20;
     }
     uint8_t displayText[len + 3];
     memset(&displayText, 0, sizeof(displayText));
