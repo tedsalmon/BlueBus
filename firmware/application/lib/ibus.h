@@ -608,11 +608,16 @@
 #define IBUS_RX_BUFFER_SIZE 255 // 8-bit Max
 #define IBUS_TX_BUFFER_SIZE 24
 #define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
-#define IBUS_TX_BUFFER_WAIT 8 // If we transmit faster, other modules may not hear us
+#define IBUS_TX_FRAME_IDLE_WAIT 5 // Idle wait time between frames; high priority
 #define IBUS_TX_TIMEOUT_OFF 0
 #define IBUS_TX_TIMEOUT_ON 1
 #define IBUS_TX_TIMEOUT_DATA_SENT 2
-#define IBUS_TX_TIMEOUT_WAIT 50
+// We should wait at least one full frame period
+#define IBUS_TX_TIMEOUT_WAIT (IBUS_RX_BUFFER_TIMEOUT + IBUS_TX_FRAME_IDLE_WAIT)
+#define IBUS_TX_MAX_RETRIES 3
+// Larger TX bursts could trigger this errantly. We wait 10 frame periods before
+// assuming it is lost. 10 is the max number of frames we generally transmit
+#define IBUS_TX_LOOPBACK_TIMEOUT (IBUS_TX_TIMEOUT_WAIT * 10)
 
 /**
  * IBusModuleStatus_t
@@ -677,9 +682,10 @@ typedef struct IBus_t {
     uint8_t txBufferReadbackIdx;
     uint8_t txBufferReadIdx;
     uint8_t txBufferWriteIdx;
+    uint8_t txRetries: 2;
     uint32_t rxLastStamp;
     uint32_t txLastStamp;
-    signed char ambientTemperature;
+    int8_t ambientTemperature;
     char ambientTemperatureCalculated[7];
     uint8_t coolantTemperature;
     uint8_t cdChangerFunction;

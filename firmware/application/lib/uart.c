@@ -178,14 +178,14 @@ static uint8_t UARTRXInterruptHandler(uint8_t moduleIndex)
             uart->rxError ^= UART_ERR_GERR;
             // Clear the buffer overflow error, if it is set
             if (UTILS_CHECK_BIT(uart->registers->uxsta, 1) != 0) {
-                uart->rxError ^= UART_ERR_OERR;
+                uart->rxError |= UART_ERR_OERR;
                 uart->registers->uxsta ^= 0x2;
             }
             if (UTILS_CHECK_BIT(uart->registers->uxsta, 2) != 0) {
-                uart->rxError ^= UART_ERR_FERR;
+                uart->rxError |= UART_ERR_FERR;
             }
             if (UTILS_CHECK_BIT(uart->registers->uxsta, 3) != 0) {
-                uart->rxError ^= UART_ERR_PERR;
+                uart->rxError |= UART_ERR_PERR;
             }
             // Clear the byte in the RX buffer
             // DO NOT use uart->registers->uxrxreg. As of xc16 2.0.0 it will

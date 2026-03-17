@@ -60,6 +60,9 @@ IBus_t IBusInit()
     ibus.lmDimmerVoltage = 0xFF;
     ibus.lmPhotoVoltage = 0xFF; // Photosensor voltage (LSZ)
     ibus.oilTemperature = 0x00;
+    ibus.ambientTemperature = IBUS_AMBIENT_TEMP_UNSET;
+    ibus.coolantTemperature = 0;
+    ibus.txLastStamp = 0;
     memset(ibus.ambientTemperatureCalculated, 0, 7);
     memset(ibus.telematicsLocale, 0, sizeof(ibus.telematicsLocale));
     memset(ibus.telematicsStreet, 0, sizeof(ibus.telematicsStreet));
@@ -69,7 +72,6 @@ IBus_t IBusInit()
     IBUSPDCStatus_t pdc;
     memset(&pdc, 0, sizeof(pdc));
     ibus.pdc = pdc;
-    ibus.txLastStamp = TimerGetMillis();
     return ibus;
 }
 
@@ -967,6 +969,7 @@ void IBusProcess(IBus_t *ibus)
                 ibus->rxBufferIdx = 0;
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
                 CharQueueReset(&ibus->uart.rxQueue);
+                LogRaw("IBus: ERR_LEN[%d]\r\n", msgLength);
             } else if (msgLength == ibus->rxBufferIdx) {
                 uint8_t idx;
                 uint8_t pkt[msgLength];
@@ -985,6 +988,7 @@ void IBusProcess(IBus_t *ibus)
                     } else {
                         ibus->txBufferReadbackIdx++;
                     }
+                    ibus->txRetries = 0;
                 }
                 LogRawDebug(LOG_SOURCE_IBUS, "\r\n");
                 if (IBusValidateChecksum(pkt) == 1) {
@@ -1037,12 +1041,14 @@ void IBusProcess(IBus_t *ibus)
                         IBusHandleTELMessage(ibus, pkt);
                     }
                 } else {
-                    LogError(
+                    LogDebug(
+                        LOG_SOURCE_IBUS,
                         "IBus: %02X -> %02X Length: %d - Invalid Checksum",
                         pkt[IBUS_PKT_SRC],
                         pkt[IBUS_PKT_DST],
                         msgLength
                     );
+                    LogRaw("IBus: ERR_CHK[%d]\r\n", msgLength);
                 }
                 memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
                 ibus->rxBufferIdx = 0;
@@ -1052,47 +1058,59 @@ void IBusProcess(IBus_t *ibus)
             EventTriggerCallback(IBUS_EVENT_FIRST_MESSAGE_RECEIVED, 0);
         }
         ibus->rxLastStamp = TimerGetMillis();
-    }
-
-    // Transmit when we are not receiving
-    if (
+    } else if (
         ibus->rxBufferIdx == 0 &&
-        ibus->txBufferWriteIdx != ibus->txBufferReadIdx
+        ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
+        (TimerGetMillis() - ibus->rxLastStamp) >= IBUS_TX_FRAME_IDLE_WAIT
     ) {
         // Flush the transmit buffer out to the bus
         uint8_t txTimeout = IBUS_TX_TIMEOUT_OFF;
         uint32_t beginTxTimestamp = TimerGetMillis();
-        // Enforce the IBUS_TX_BUFFER_WAIT for received bytes
-        if (ibus->rxLastStamp > ibus->txLastStamp) {
-            ibus->txLastStamp = ibus->rxLastStamp;
-        }
+        uint16_t txCount = 0;
         while (
             ibus->txBufferWriteIdx != ibus->txBufferReadIdx &&
             txTimeout != IBUS_TX_TIMEOUT_ON
         ) {
             uint32_t now = TimerGetMillis();
-            if ((now - ibus->txLastStamp) >= IBUS_TX_BUFFER_WAIT) {
+            if ((now - ibus->txLastStamp) >= IBUS_TX_FRAME_IDLE_WAIT) {
                 uint8_t msgLen = ibus->txBuffer[ibus->txBufferReadIdx][1] + 2;
                 uint8_t idx;
-                /*
-                 * Make sure that the STATUS pin on the TH3122 is low, indicating no
-                 * bus activity before transmitting
-                 */
+                // Ensure the bus is not busy
                 if (IBUS_UART_STATUS == 0) {
+                    // Break the while loop if the number of frames in the RX
+                    // ring buffer are greater than what we have transmitted
+                    if (CharQueueGetSize(&ibus->uart.rxQueue) > txCount) {
+                        break;
+                    }
                     for (idx = 0; idx < msgLen; idx++) {
+                        if (IBUS_UART_STATUS != 0) {
+                            // Bus became active mid-transmission — abort
+                            txTimeout = IBUS_TX_TIMEOUT_ON;
+                            // Reset this to prevent frame retransmission
+                            ibus->txLastStamp = TimerGetMillis();
+                            // It isn't a collision unless we already
+                            // transmitted a byte. Only alarm in these instances
+                            if (idx > 0) {
+                                LogRaw("IBus: ERR_COL\r\n");
+                            }
+                            break;
+                        }
                         ibus->uart.registers->uxtxreg = ibus->txBuffer[ibus->txBufferReadIdx][idx];
                         // Wait for the data to leave the TX buffer
                         while ((ibus->uart.registers->uxsta & (1 << 9)) != 0);
+                        txCount++;
                     }
-                    txTimeout = IBUS_TX_TIMEOUT_DATA_SENT;
-                    if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
-                        ibus->txBufferReadIdx = 0;
-                    } else {
-                        ibus->txBufferReadIdx++;
+                    if (txTimeout != IBUS_TX_TIMEOUT_ON) {
+                        ibus->txLastStamp = TimerGetMillis();
+                        txTimeout = IBUS_TX_TIMEOUT_DATA_SENT;
+                        if (ibus->txBufferReadIdx + 1 == IBUS_TX_BUFFER_SIZE) {
+                            ibus->txBufferReadIdx = 0;
+                        } else {
+                            ibus->txBufferReadIdx++;
+                        }
                     }
-                    ibus->txLastStamp = TimerGetMillis();
                 } else if (txTimeout != IBUS_TX_TIMEOUT_DATA_SENT) {
-                    if ((now - beginTxTimestamp) > IBUS_TX_TIMEOUT_WAIT) {
+                    if ((now - beginTxTimestamp) >= IBUS_TX_TIMEOUT_WAIT) {
                         txTimeout = IBUS_TX_TIMEOUT_ON;
                     }
                 }
@@ -1103,7 +1121,8 @@ void IBusProcess(IBus_t *ibus)
     // Clear the RX Buffer if it's over the timeout or about to overflow
     if (ibus->rxBufferIdx > 0) {
         uint32_t now = TimerGetMillis();
-        if ((now - ibus->rxLastStamp) > IBUS_RX_BUFFER_TIMEOUT ||
+        if (
+            (now - ibus->rxLastStamp) > IBUS_RX_BUFFER_TIMEOUT ||
             (ibus->rxBufferIdx + 1) == IBUS_RX_BUFFER_SIZE
         ) {
             long long unsigned int ts = (long long unsigned int) TimerGetMillis();
@@ -1118,8 +1137,25 @@ void IBusProcess(IBus_t *ibus)
                 LogRawDebug(LOG_SOURCE_IBUS, "%02X ", ibus->rxBuffer[idx]);
             }
             LogRawDebug(LOG_SOURCE_IBUS, "\r\n");
+            LogRaw("IBus: ERR_TMO[%d]\r\n", ibus->rxBufferIdx);
             ibus->rxBufferIdx = 0;
             memset(ibus->rxBuffer, 0, IBUS_RX_BUFFER_SIZE);
+        }
+    }
+    // Frame retransmission after a given timeout
+    if (
+        ibus->txBufferReadbackIdx != ibus->txBufferReadIdx &&
+        ibus->txBufferReadIdx == ibus->txBufferWriteIdx &&
+        ibus->txLastStamp > 0 &&
+        (TimerGetMillis() - ibus->txLastStamp) > IBUS_TX_LOOPBACK_TIMEOUT
+    ) {
+        if (ibus->txRetries < IBUS_TX_MAX_RETRIES) {
+            ibus->txRetries++;
+            LogRaw("IBus: ERR_RTX[%d]\r\n", ibus->txRetries);
+            ibus->txBufferReadIdx = ibus->txBufferReadbackIdx;
+        } else {
+            ibus->txBufferReadbackIdx = ibus->txBufferReadIdx;
+            ibus->txRetries = 0;
         }
     }
     UARTReportErrors(&ibus->uart);

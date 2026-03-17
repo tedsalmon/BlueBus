@@ -470,7 +470,7 @@ void HandlerIBusCDCStatus(void *ctx, uint8_t *pkt)
         requestedCommand == IBUS_CDC_CMD_SCAN ||
         requestedCommand == IBUS_CDC_CMD_RANDOM_MODE
     ) {
-        curStatus = IBUS_CDC_STAT_STOP;
+        curStatus = IBUS_CDC_STAT_PLAYING;
         curFunction = context->ibus->cdChangerFunction;
         // The 5th octet in the packet tells the CDC if we should
         // enable or disable the given mode
