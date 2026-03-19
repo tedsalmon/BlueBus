@@ -96,6 +96,8 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Off",
     "Default",
     "Auto",
+    "True Speed: On",
+    "True Speed: Off",
 };
 
 static char *LOCALE_LANG_FRENCH[] = {
@@ -187,6 +189,8 @@ static char *LOCALE_LANG_FRENCH[] = {
     "Non",
     "Default",
     "Auto",
+    "V. R\xE9""elle: Oui",
+    "V. R\xE9""elle: Non",
 };
 
 static char *LOCALE_LANG_ITALIAN[] = {
@@ -278,6 +282,8 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Off",
     "Default",
     "Auto",
+    "Vel. Reale: S\xec""",
+    "Vel. Reale: No",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -369,6 +375,8 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Off",
     "Default",
     "Auto",
+    "W. Snelh.: Aan",
+    "W. Snelh.: Uit",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -460,6 +468,8 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Off",
     "Default",
     "Auto",
+    "T. Kiirus: Sees",
+    "T. Kiirus: V\xe4lj",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -551,6 +561,8 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Off",
     "Default",
     "Auto",
+    "True Spd: On",
+    "True Spd: Off",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -642,6 +654,8 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Off",
     "Default",
     "Auto",
+    "W. Geschw: Ein",
+    "W. Geschw: Aus",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -733,6 +747,8 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Off",
     "Default",
     "Auto",
+    "V. Real: Enc.",
+    "V. Real: Apg.",
 };
 
 static char *LOCALE_LANG_POLISH[] = {
@@ -824,6 +840,8 @@ static char *LOCALE_LANG_POLISH[] = {
     "Off",
     "Default",
     "Auto",
+    "Pred. Rz.: Wl.",
+    "Pred. Rz.: Wyl.",
 };
 
 /**

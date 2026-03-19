@@ -15,7 +15,7 @@
 #define BMBT_DISPLAY_SEL 0x02
 #define BMBT_DISPLAY_ON 0x03
 #define BMBT_DISPLAY_TEXT_LEN 9
-#define BMBT_HEADER_BT 1
+#define BMBT_HEADER_SPEED 1
 #define BMBT_HEADER_PB_STAT 2
 #define BMBT_HEADER_TEMPS 5
 #define BMBT_HEADER_DEV_NAME 6
@@ -81,6 +81,7 @@
 #define BMBT_MENU_IDX_SETTINGS_IU_DASH_OBC 3
 #define BMBT_MENU_IDX_SETTINGS_UI_MONITOR_OFF 4
 #define BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE 5
+#define BMBT_MENU_IDX_SETTINGS_UI_TRUE_SPEED 6
 
 #define BMBT_TEL_STATE_NONE 0
 #define BMBT_TEL_STATE_DIAL 1
@@ -170,6 +171,7 @@ typedef struct BMBTContext_t {
     uint8_t menuWriteTaskId;
     uint8_t menu;
     uint8_t dspMode;
+    uint8_t speed;
     uint8_t navZoom: 4;
     uint8_t navMapShown: 1;
     uint8_t navSilenced: 1;

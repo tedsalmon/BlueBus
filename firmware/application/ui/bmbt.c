@@ -682,6 +682,26 @@ static void BMBTHeaderWriteTemperature(BMBTContext_t *context, uint8_t updateTyp
 }
 
 
+/**
+ * BMBTHeaderWriteSpeed()
+ *     Description:
+ *         Write the vehicle speed into header zone 1
+ *     Params:
+ *         BMBTContext_t *context - The context
+ *     Returns:
+ *         void
+ */
+static void BMBTHeaderWriteSpeed(BMBTContext_t *context)
+{
+    uint8_t speed = context->speed;
+    if (ConfigGetDistUnit() == 1) {
+        speed = (speed * 5) / 8;
+    }
+    char speedStr[5] = {0};
+    snprintf(speedStr, 5, "%3d", speed);
+    IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_SPEED, speedStr);
+}
+
 static void BMBTHeaderWrite(BMBTContext_t *context)
 {
     if (
@@ -703,8 +723,12 @@ static void BMBTHeaderWrite(BMBTContext_t *context)
     } else {
         IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_PB_STAT, "> ");
     }
-    // Clear the "CD1" Header
-    IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_BT, "    ");
+    // Write speed or clear the "CD1" Header
+    if (ConfigGetSetting(CONFIG_SETTING_TRUE_SPEED) == CONFIG_SETTING_ON) {
+        BMBTHeaderWriteSpeed(context);
+    } else {
+        IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_SPEED, "    ");
+    }
     uint8_t valueType = 0;
     switch (ConfigGetTempDisplay()) {
         case CONFIG_SETTING_TEMP_COOLANT:
@@ -1697,8 +1721,23 @@ static void BMBTMenuSettingsUI(BMBTContext_t *context)
         context,
         BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE,
         langStr,
-        1
+        0
     );
+    if (ConfigGetSetting(CONFIG_SETTING_TRUE_SPEED) == CONFIG_SETTING_ON) {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_UI_TRUE_SPEED,
+            LocaleGetText(LOCALE_STRING_SPEED_ON),
+            0
+        );
+    } else {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_UI_TRUE_SPEED,
+            LocaleGetText(LOCALE_STRING_SPEED_OFF),
+            0
+        );
+    }
     BMBTGTWriteIndex(context, BMBT_MENU_IDX_BACK, LocaleGetText(LOCALE_STRING_BACK), 0);
     BMBTGTBufferFlush(context);
     context->menu = BMBT_MENU_SETTINGS_UI;
@@ -2227,6 +2266,28 @@ static void BMBTSettingsUpdateUI(BMBTContext_t *context, uint8_t selectedIdx)
                 0
             );
             ConfigSetSetting(CONFIG_SETTING_MONITOR_OFF, CONFIG_SETTING_ON);
+        }
+    } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_TRUE_SPEED) {
+        if (ConfigGetSetting(CONFIG_SETTING_TRUE_SPEED) == CONFIG_SETTING_ON) {
+            ConfigSetSetting(CONFIG_SETTING_TRUE_SPEED, CONFIG_SETTING_OFF);
+            IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_SPEED, "    ");
+            BMBTGTFlushHeaderWrite(context);
+            BMBTGTWriteIndex(
+                context,
+                selectedIdx,
+                LocaleGetText(LOCALE_STRING_SPEED_OFF),
+                0
+            );
+        } else {
+            ConfigSetSetting(CONFIG_SETTING_TRUE_SPEED, CONFIG_SETTING_ON);
+            BMBTHeaderWriteSpeed(context);
+            BMBTGTFlushHeaderWrite(context);
+            BMBTGTWriteIndex(
+                context,
+                selectedIdx,
+                LocaleGetText(LOCALE_STRING_SPEED_ON),
+                0
+            );
         }
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_UI_LANGUAGE) {
         uint8_t selectedLanguage = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
@@ -3109,8 +3170,17 @@ void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
 void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    uint16_t speed = pkt[IBUS_PKT_DB1] * 2;
+    uint8_t speed = pkt[IBUS_PKT_DB1];
     uint32_t now = TimerGetMillis();
+
+    if (
+        ConfigGetSetting(CONFIG_SETTING_TRUE_SPEED) == CONFIG_SETTING_ON &&
+        context->status.displayMode == BMBT_DISPLAY_ON
+    ) {
+        context->speed = speed;
+        BMBTHeaderWriteSpeed(context);
+        BMBTGTFlushHeaderWrite(context);
+    }
 
     uint8_t autozoom = ConfigGetSetting(CONFIG_SETTING_COMFORT_AUTOZOOM);
     if (autozoom != CONFIG_SETTING_OFF) {
@@ -3172,7 +3242,8 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
             context->menu == BMBT_MENU_DASHBOARD_FRESH
         )
     ) {
-        if (automap == CONFIG_SETTING_NAV_MAP_DEFAULT ||
+        if (
+            automap == CONFIG_SETTING_NAV_MAP_DEFAULT ||
             (automap == CONFIG_SETTING_NAV_MAP_SPEED_20 && speed >= 20) ||
             (automap == CONFIG_SETTING_NAV_MAP_SPEED_30 && speed >= 30) ||
             (automap == CONFIG_SETTING_NAV_MAP_SPEED_50 && speed >= 50) ||
