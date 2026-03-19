@@ -1190,11 +1190,11 @@ static void IBusSendCommandInternal(
         return;
     }
     // Calculate number of used slots in the ring buffer
-    uint8_t usedSlots;
+    uint8_t usedSlots = 0;
     if (ibus->txBufferWriteIdx >= ibus->txBufferReadIdx) {
         usedSlots = ibus->txBufferWriteIdx - ibus->txBufferReadIdx;
     } else {
-        usedSlots = IBUS_TX_BUFFER_SIZE - ibus->txBufferReadIdx + ibus->txBufferWriteIdx;
+        usedSlots = (IBUS_TX_BUFFER_SIZE - ibus->txBufferReadIdx) + ibus->txBufferWriteIdx;
     }
     // Check if buffer is full (one slot must remain empty to distinguish full from empty)
     if (usedSlots >= IBUS_TX_BUFFER_SIZE - 1) {

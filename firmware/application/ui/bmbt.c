@@ -109,7 +109,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        BT_EVENT_DEVICE_LINK_DISCONNECTED,
+        BT_EVENT_DEVICE_DISCONNECTED,
         &BMBTBTDeviceDisconnected,
         &Context
     );
