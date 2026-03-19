@@ -3371,7 +3371,7 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
                 } else {
                     BMBTGTWriteIndex(context, BMBT_MENU_IDX_PAIRING_MODE, LocaleGetText(LOCALE_STRING_PAIRING_ON), 0);
                     state = BT_STATE_ON;
-                    if (context->bt->activeDevice.deviceId != 0) {
+                    if (context->bt->activeDevice.status == BT_DEVICE_STATUS_CONNECTED) {
                         // To pair a new device, we must disconnect the active one
                         EventTriggerCallback(UI_EVENT_CLOSE_CONNECTION, 0x00);
                     }

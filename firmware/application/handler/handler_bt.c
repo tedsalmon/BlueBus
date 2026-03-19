@@ -63,6 +63,11 @@ void HandlerBTInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
+        BT_EVENT_PAIRING_STATUS,
+        &HandlerBTPairingStatus,
+        context
+    );
+    EventRegisterCallback(
         BT_EVENT_PAIRINGS_LOADED,
         &HandlerBTPairingsLoaded,
         context
@@ -567,6 +572,27 @@ void HandlerBTDeviceLinkDisconnected(void *ctx, uint8_t *data)
 }
 
 /**
+ * HandlerBTPairingStatus()
+ *     Description:
+ *         Act upon pairing status updates
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *status - The current pairing status
+ *     Returns:
+ *         void
+ */
+void HandlerBTPairingStatus(void *ctx, uint8_t *status)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (*status == BT_STATE_ON) {
+        context->btSelectedDevice = HANDLER_BT_SELECTED_DEVICE_NONE;
+    } else {
+        context->btSelectedDevice = 0;
+        TimerTriggerScheduledTask(context->deviceScanTimerId);
+    }
+}
+
+/**
  * HandlerBTPairingsLoaded()
  *     Description:
  *         After the PDL is loaded, immediately trigger the device scan
@@ -826,7 +852,10 @@ void HandlerBTBM83BootStatus(void *ctx, uint8_t *data)
     if (type == BM83_DATA_BOOT_STATUS_POWER_ON) {
         BM83CommandReadPairedDevices(context->bt);
     }
-    if (type == BM83_DATA_BTM_STATUS_STANDBY_ON) {
+    if (
+        type == BM83_DATA_BTM_STATUS_STANDBY_ON &&
+        context->btSelectedDevice != HANDLER_BT_SELECTED_DEVICE_NONE
+    ) {
         BTCommandSetConnectable(context->bt, BT_STATE_ON);
         TimerTriggerScheduledTask(context->deviceScanTimerId);
     }
@@ -849,8 +878,9 @@ void HandlerTimerBTScanDevices(void *ctx)
     if (context->ibus->ignitionStatus == IBUS_IGNITION_OFF) {
         return;
     }
-    if (context->bt->status == BT_STATUS_DISCONNECTED &&
-        context->bt->discoverable == BT_STATE_OFF &&
+    if (
+        context->bt->status == BT_STATUS_DISCONNECTED &&
+        context->btSelectedDevice != HANDLER_BT_SELECTED_DEVICE_NONE &&
         context->bt->pairedDevicesCount > 0
     ) {
         HandlerBTConnect(context);

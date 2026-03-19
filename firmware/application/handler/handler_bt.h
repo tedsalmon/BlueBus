@@ -14,6 +14,7 @@ void HandlerBTCallerID(void *, uint8_t *);
 void HandlerBTDeviceDisconnected(void *, uint8_t *);
 void HandlerBTDeviceLinkConnected(void *, uint8_t *);
 void HandlerBTDeviceLinkDisconnected(void *, uint8_t *);
+void HandlerBTPairingStatus(void *, uint8_t *);
 void HandlerBTPairingsLoaded(void *, uint8_t *);
 void HandlerBTPlaybackStatus(void *, uint8_t *);
 void HandlerBTTimeUpdate(void *, uint8_t *);

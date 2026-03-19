@@ -869,6 +869,8 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         case BM83_DATA_BTM_STATUS_PAIRING_ON: {
             LogDebug(LOG_SOURCE_BT, "BT: Pairing On");
             bt->discoverable = BT_STATE_ON;
+            uint8_t status = BT_STATE_ON;
+            EventTriggerCallback(BT_EVENT_PAIRING_STATUS, &status);
             break;
         }
         case BM83_DATA_BTM_STATUS_POWER_ON: {
@@ -890,6 +892,8 @@ void BM83ProcessEventBTMStatus(BT_t *bt, uint8_t *data, uint16_t length)
         case BM83_DATA_BTM_STATUS_PAIRING_NOK: {
             LogDebug(LOG_SOURCE_BT, "BT: Pairing Error");
             bt->discoverable = BT_STATE_OFF;
+            uint8_t status = BT_STATE_OFF;
+            EventTriggerCallback(BT_EVENT_PAIRING_STATUS, &status);
             break;
         }
         case BM83_DATA_BTM_STATUS_HFP_CONN: {
