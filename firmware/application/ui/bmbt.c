@@ -89,6 +89,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     Context.status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
     Context.status.navIndexType = IBUS_CMD_GT_WRITE_INDEX_TMC;
     Context.status.radioDisplayStatus = BMBT_RAD_DISPLAY_STATUS_ON;
+    Context.status.menuState = BMBT_MENU_STATE_REL;
     Context.timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     Context.timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     Context.mainDisplay = UtilsDisplayValueInit(
@@ -390,8 +391,11 @@ static void BMBTMainAreaRefresh(BMBTContext_t *context)
  */
 static void BMBTMenuRefresh(BMBTContext_t *context)
 {
-    if ((context->menu != BMBT_MENU_DASHBOARD &&
-        context->menu != BMBT_MENU_DASHBOARD_FRESH) ||
+    if (
+        (
+            context->menu != BMBT_MENU_DASHBOARD &&
+            context->menu != BMBT_MENU_DASHBOARD_FRESH
+        ) ||
         context->ibus->gtVersion != IBUS_GT_MKIV_STATIC
     ) {
         IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
@@ -479,7 +483,8 @@ static void BMBTTriggerWriteMenu(BMBTContext_t *context, uint8_t force)
 {
     // If we can refresh the last menu back onto the screen,
     // do so immediately. Otherwise, trigger the menu write timer
-    if (force == BMBT_FORCE ||
+    if (
+        force == BMBT_FORCE ||
         context->menu == BMBT_MENU_NONE ||
         context->menu == BMBT_MENU_DASHBOARD_FRESH ||
         context->ibus->gtVersion < IBUS_GT_MKIII_NEW_UI ||
@@ -608,7 +613,7 @@ static void BMBTHeaderWriteDeviceName(BMBTContext_t *context, char *text)
 static void BMBTHeaderWriteTemperature(BMBTContext_t *context, uint8_t updateType)
 {
     uint8_t tempDisplayConfig = ConfigGetTempDisplay();
-    int16_t tempValue = IBUS_AMBIENT_TEMP_UNSET;
+    int16_t tempValue = IBUS_TEMP_UNSET;
     uint8_t units = (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) ? 'F' : 'C';
     char temperature[8] = {0};
     if (tempDisplayConfig == CONFIG_SETTING_TEMP_AMBIENT) {
@@ -636,7 +641,9 @@ static void BMBTHeaderWriteTemperature(BMBTContext_t *context, uint8_t updateTyp
             updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP ||
             updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
         ) {
-            tempValue = context->ibus->coolantTemperature;
+            if (context->ibus->coolantTemperature == 0) {
+                tempValue = IBUS_TEMP_UNSET;
+            }
         }
     }
     if (tempDisplayConfig == CONFIG_SETTING_TEMP_OIL) {
@@ -644,11 +651,13 @@ static void BMBTHeaderWriteTemperature(BMBTContext_t *context, uint8_t updateTyp
             updateType == IBUS_SENSOR_VALUE_OIL_TEMP ||
             updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
         ) {
-            tempValue = context->ibus->oilTemperature;
+            if (context->ibus->oilTemperature > 0) {
+                tempValue = IBUS_TEMP_UNSET;
+            }
         }
     }
     if (
-        tempValue != IBUS_AMBIENT_TEMP_UNSET &&
+        tempValue != IBUS_TEMP_UNSET &&
         tempDisplayConfig != CONFIG_SETTING_OFF &&
         context->status.displayMode == BMBT_DISPLAY_ON
     ) {
@@ -792,6 +801,14 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
     int ambtemp = context->ibus->ambientTemperature;
     int oiltemp = context->ibus->oilTemperature;
     int cooltemp = context->ibus->coolantTemperature;
+    if (
+        ambtemp == IBUS_TEMP_UNSET &&
+        context->ibus->ambientTemperatureCalculated[0] == 0x00 &&
+        cooltemp == 0 &&
+        oiltemp == 0
+    ) {
+        return;
+    }
 
     if (tempUnit == 'F') {
         ambtemp = (ambtemp * 1.8 + 32 + 0.5);
@@ -806,7 +823,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         char temperature[29] = {0};
         if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
             snprintf(ambtempstr, 8, "A:%s", context->ibus->ambientTemperatureCalculated);
-        } else if (context->ibus->ambientTemperature != IBUS_AMBIENT_TEMP_UNSET) {
+        } else if (context->ibus->ambientTemperature != IBUS_TEMP_UNSET) {
             snprintf(ambtempstr, 8, "A:%+d", ambtemp);
         }
         if (cooltemp > 0) {
@@ -831,7 +848,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
                 currentIdx++,
                 ambtempstr
             );
-        } else if (context->ibus->ambientTemperature != IBUS_AMBIENT_TEMP_UNSET) {
+        } else if (context->ibus->ambientTemperature != IBUS_TEMP_UNSET) {
             snprintf(ambtempstr, 8, "A:%+d", ambtemp);
             IBusCommandGTWriteIndex(
                 context->ibus,
@@ -3256,14 +3273,14 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
         return;
     }
     uint8_t selectedIdx = (uint8_t) pkt[IBUS_PKT_DB3];
-    if (context->status.radType == IBUS_RADIO_TYPE_BM24) {
-        if (selectedIdx < 10) {
-            selectedIdx = 0xFF;
-        } else {
-            selectedIdx = selectedIdx - 0x40;
-        }
+    // Only listen for release events
+    if (selectedIdx < 0x40) {
+        context->status.menuState = BMBT_MENU_STATE_PRESS;
+        return;
     }
-    if (selectedIdx < 10 && context->status.displayMode == BMBT_DISPLAY_ON) {
+    context->status.menuState = BMBT_MENU_STATE_REL;
+    selectedIdx = selectedIdx & 0x0F;
+    if (context->status.displayMode == BMBT_DISPLAY_ON) {
         if (context->menu == BMBT_MENU_MAIN) {
             if (selectedIdx == BMBT_MENU_IDX_DASHBOARD) {
                 BMBTMenuDashboard(context);
@@ -3426,7 +3443,10 @@ void BMBTIBusScreenBufferFlush(void *ctx, uint8_t *pkt)
     } else if (pkt[IBUS_PKT_DB1] != context->status.navIndexType) {
         // If the update does not match our current menu state, override it
         IBusCommandGTUpdate(context->ibus, context->status.navIndexType);
-    } else if (context->status.screenCleared == 1) {
+    } else if (
+        context->status.menuState != BMBT_MENU_STATE_PRESS &&
+        context->status.screenCleared == 1
+    ) {
         // The buffer has been written out from under us, so restore it
         context->status.screenCleared = 0;
         BMBTTriggerWriteMenu(context, BMBT_FORCE);
@@ -3612,7 +3632,10 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             if (context->status.displayMode == BMBT_DISPLAY_OFF) {
                 context->status.displayMode = BMBT_DISPLAY_ON;
                 context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
-            } else if (UtilsStricmp("NO DISC", text) == 0) {
+            } else if (
+                UtilsStricmp("NO DISC", text) == 0 &&
+                context->status.menuState != BMBT_MENU_STATE_PRESS
+            ) {
                 BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
             }
             if (
@@ -3625,7 +3648,9 @@ void BMBTRADUpdateMainArea(void *ctx, uint8_t *pkt)
             }
             if (context->status.displayMode == BMBT_DISPLAY_ON) {
                 BMBTTriggerWriteHeader(context);
-                BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
+                if (context->status.menuState != BMBT_MENU_STATE_PRESS) {
+                    BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
+                }
             }
         }
     }

@@ -60,7 +60,7 @@ IBus_t IBusInit()
     ibus.lmDimmerVoltage = 0xFF;
     ibus.lmPhotoVoltage = 0xFF; // Photosensor voltage (LSZ)
     ibus.oilTemperature = 0x00;
-    ibus.ambientTemperature = IBUS_AMBIENT_TEMP_UNSET;
+    ibus.ambientTemperature = IBUS_TEMP_UNSET;
     ibus.coolantTemperature = 0;
     ibus.txLastStamp = 0;
     memset(ibus.ambientTemperatureCalculated, 0, 7);
@@ -404,7 +404,7 @@ static void IBusHandleIKEMessage(IBus_t *ibus, uint8_t *pkt)
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
         }
         signed char tmp = pkt[IBUS_PKT_DB1];
-        if (ibus->ambientTemperature != tmp && tmp > IBUS_AMBIENT_TEMP_UNSET && tmp < 60) {
+        if (ibus->ambientTemperature != tmp && tmp > IBUS_TEMP_UNSET && tmp < 60) {
             ibus->ambientTemperature = tmp;
             uint8_t valueType = IBUS_SENSOR_VALUE_AMBIENT_TEMP;
             EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
@@ -1088,7 +1088,7 @@ void IBusProcess(IBus_t *ibus)
                             txTimeout = IBUS_TX_TIMEOUT_ON;
                             // Reset this to prevent frame retransmission
                             ibus->txLastStamp = TimerGetMillis();
-                            // It isn't a collision unless we already
+                            // It is not a collision unless we already
                             // transmitted a byte. Only alarm in these instances
                             if (idx > 0) {
                                 LogRaw("IBus: ERR_COL\r\n");

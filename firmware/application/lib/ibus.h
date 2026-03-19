@@ -500,7 +500,7 @@
 #define IBUS_SENSOR_VALUE_VEHICLE_RANGE 0x07
 
 #define IBUS_AMBIENT_TEMP_MIN -40
-#define IBUS_AMBIENT_TEMP_UNSET -41
+#define IBUS_TEMP_UNSET -128 // 0x80
 
 #define IBUS_SES_ZOOM_LEVELS 8
 #define IBUS_SES_CMD_NAV_CTRL 0xAA
@@ -606,12 +606,16 @@
 #define IBUS_EVENT_GT_SCREEN_BUFFER_WRITE 80
 
 // Configuration and protocol definitions
-#define IBUS_MAX_MSG_LENGTH 47 // Src Len Dest Cmd Data[42 Byte Max] XOR
+// Src Len Dest Cmd Data[42 Byte Max] XOR
+#define IBUS_MAX_MSG_LENGTH 47
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
-#define IBUS_RX_BUFFER_SIZE 255 // 8-bit Max
+#define IBUS_RX_BUFFER_SIZE 255
 #define IBUS_TX_BUFFER_SIZE 24
-#define IBUS_RX_BUFFER_TIMEOUT 70 // At 9600 baud, we transmit ~1.5 byte/ms
-#define IBUS_TX_FRAME_IDLE_WAIT 5 // Idle wait time between frames; high priority
+// 9600 baud = ~1.1 = 1.5 bytes/ms - IBUS_MAX_MSG_LENGTH * 2
+#define IBUS_RX_BUFFER_TIMEOUT 71
+// This is the time we wait before transmitting. Any faster than this, and the
+// MKIII v20 based GT will miss frames
+#define IBUS_TX_FRAME_IDLE_WAIT 8
 #define IBUS_TX_TIMEOUT_OFF 0
 #define IBUS_TX_TIMEOUT_ON 1
 #define IBUS_TX_TIMEOUT_DATA_SENT 2

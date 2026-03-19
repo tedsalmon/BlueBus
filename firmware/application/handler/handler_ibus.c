@@ -1737,7 +1737,7 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
         int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
         if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
             // Drop Telephony mode so the radio acknowledges the volume changes
-            IBusCommandTELStatus(context->ibus, IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE);
+            HandlerSetIBusTELStatus(context, IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE);
         }
         uint8_t sourceSystem = IBUS_DEVICE_BMBT;
         if (context->ibus->moduleStatus.MID == 1) {
@@ -1764,11 +1764,6 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
             }
         }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
-        if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
-            // Re-enable telephony mode
-            IBusCommandTELStatus(context->ibus, IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE);
-            IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
-        }
     } else {
         uint8_t volume = ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL);
         // PCM51XX volume gets lower as you raise the value in the register
