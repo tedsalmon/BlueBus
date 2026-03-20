@@ -111,7 +111,7 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        BT_EVENT_DEVICE_DISCONNECTED,
+        BT_EVENT_DEVICE_LINK_DISCONNECTED,
         &BMBTBTDeviceDisconnected,
         &Context
     );
@@ -2806,6 +2806,9 @@ void BMBTBTDeviceConnected(void *ctx, uint8_t *data)
 void BMBTBTDeviceDisconnected(void *ctx, uint8_t *data)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
+    if (*data != BT_LINK_TYPE_ACL) {
+        return;
+    }
     if (
         context->status.playerMode == BMBT_MODE_ACTIVE &&
         context->status.displayMode == BMBT_DISPLAY_ON

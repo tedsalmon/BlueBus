@@ -1611,7 +1611,9 @@ void BC127ProcessEventCloseOk(BT_t *bt, char **msgBuf)
             // Notify the world that the device disconnected
             BTClearActiveDevice(bt);
             bt->status = BT_STATUS_DISCONNECTED;
+            uint8_t linkType = BT_LINK_TYPE_ACL;
             EventTriggerCallback(BT_EVENT_DEVICE_DISCONNECTED, 0);
+            EventTriggerCallback(BT_EVENT_DEVICE_LINK_DISCONNECTED, &linkType);
             EventTriggerCallback(BT_EVENT_PLAYBACK_STATUS_CHANGE, 0);
         }
     }
