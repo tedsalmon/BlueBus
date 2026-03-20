@@ -92,6 +92,8 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
     Context.status.menuState = BMBT_MENU_STATE_REL;
     Context.timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     Context.timerMenuIntervals = BMBT_MENU_HEADER_TIMER_OFF;
+    Context.menuPressedTicks = BMBT_MENU_SELECT_TIMER_OFF;
+    Context.menuPressedIdx = 0;
     Context.mainDisplay = UtilsDisplayValueInit(
         LocaleGetText(LOCALE_STRING_BLUETOOTH),
         BMBT_DISPLAY_OFF
@@ -238,6 +240,11 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context,
         BMBT_SCROLL_TEXT_TIMER
     );
+    Context.menuPressTaskId = TimerRegisterScheduledTask(
+        &BMBTTimerMenuSelection,
+        &Context,
+        BMBT_MENU_SELECT_TIMER_INT
+    );
 }
 
 /**
@@ -332,6 +339,7 @@ void BMBTDestroy()
         &BMBTIBusVehicleConfig
     );
     TimerUnregisterScheduledTask(&BMBTTimerHeaderWrite);
+    TimerUnregisterScheduledTask(&BMBTTimerMenuSelection);
     TimerUnregisterScheduledTask(&BMBTTimerMenuWrite);
     TimerUnregisterScheduledTask(&BMBTTimerScrollDisplay);
     memset(&Context, 0, sizeof(BMBTContext_t));
@@ -2968,8 +2976,16 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
         ) {
             BTCommandPlaybackToggle(context->bt);
         }
-        if (pkt[IBUS_PKT_DB1] == IBUS_DEVICE_BMBT_BUTTON_KNOB) {
-            if (context->status.displayMode == BMBT_DISPLAY_ON &&
+        if (pkt[IBUS_PKT_DB1] == (IBUS_DEVICE_BMBT_BUTTON_KNOB | 0x80)) {
+            if (
+                context->menuPressedTicks == BMBT_MENU_SELECT_TIMER_OFF &&
+                context->status.menuState == BMBT_MENU_STATE_PRESS
+            ) {
+                context->menuPressedTicks = 0;
+                TimerResetScheduledTask(context->menuPressTaskId);
+            }
+            if (
+                context->status.displayMode == BMBT_DISPLAY_ON &&
                 context->menu == BMBT_MENU_DASHBOARD &&
                 context->ibus->gtVersion == IBUS_GT_MKIV_STATIC
             ) {
@@ -3347,9 +3363,11 @@ void BMBTIBusMenuSelect(void *ctx, uint8_t *pkt)
     // Only listen for release events
     if (selectedIdx < 0x40) {
         context->status.menuState = BMBT_MENU_STATE_PRESS;
+        context->menuPressedIdx = selectedIdx;
         return;
     }
     context->status.menuState = BMBT_MENU_STATE_REL;
+    context->menuPressedTicks = BMBT_MENU_SELECT_TIMER_OFF;
     selectedIdx = selectedIdx & 0x0F;
     if (context->status.displayMode == BMBT_DISPLAY_ON) {
         if (context->menu == BMBT_MENU_MAIN) {
@@ -3901,6 +3919,43 @@ void BMBTTimerHeaderWrite(void *ctx)
         context->timerHeaderIntervals = BMBT_MENU_HEADER_TIMER_OFF;
     } else {
         context->timerHeaderIntervals++;
+    }
+}
+
+/**
+ * BMBTTimerMenuSelection()
+ *     Description:
+ *         Fallback timer for GT menu select release events. If the GT fails
+ *         to send a 0x31 release event after a knob release, synthesize one
+ *         after a timeout so menu selections are not lost.
+ *     Params:
+ *         void *ctx - The context
+ *     Returns:
+ *         void
+ */
+void BMBTTimerMenuSelection(void *ctx)
+{
+    BMBTContext_t *context = (BMBTContext_t *) ctx;
+    if (context->menuPressedTicks == BMBT_MENU_SELECT_TIMER_OFF) {
+        return;
+    }
+    context->menuPressedTicks++;
+    if (context->menuPressedTicks >= BMBT_MENU_SELECT_TIMER_TIMEOUT) {
+        LogDebug(LOG_SOURCE_IBUS, "Inject Index Press [%d]", context->menuPressedIdx);
+        // Instead of broadcasting the message on the bus, stub it out
+        // internally and feed it to the menu selection function
+        uint8_t msg[] = {
+            IBUS_DEVICE_GT,
+            0x06,
+            IBUS_DEVICE_RAD,
+            IBUS_CMD_GT_MENU_SELECT,
+            IBUS_CMD_GT_WRITE_INDEX_TMC,
+            0x00,
+            0x40 | context->menuPressedIdx,
+            0x00 // XOR can be omitted since we are not validating the frame
+        };
+        BMBTIBusMenuSelect(ctx, msg);
+        context->menuPressedTicks = BMBT_MENU_SELECT_TIMER_OFF;
     }
 }
 

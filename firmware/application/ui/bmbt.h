@@ -117,7 +117,11 @@
 #define BMBT_MENU_TIMER_WRITE_TIMEOUT 500
 #define BMBT_HEADER_TIMER_WRITE_INT 100
 #define BMBT_HEADER_TIMER_WRITE_TIMEOUT 500
-#define BMBT_MENU_HEADER_TIMER_OFF 255
+#define BMBT_MENU_HEADER_TIMER_OFF 0xFF
+
+#define BMBT_MENU_SELECT_TIMER_OFF 0x07
+#define BMBT_MENU_SELECT_TIMER_INT 75
+#define BMBT_MENU_SELECT_TIMER_TIMEOUT 3
 
 #define BMBT_MENU_STRING_MAX_SIZE 16
 #define BMBT_METADATA_MODE_OFF 0x00
@@ -169,6 +173,9 @@ typedef struct BMBTContext_t {
     uint8_t displayUpdateTaskId;
     uint8_t headerWriteTaskId;
     uint8_t menuWriteTaskId;
+    uint8_t menuPressedTicks: 3;
+    uint8_t menuPressedIdx;
+    uint8_t menuPressTaskId;
     uint8_t menu;
     uint8_t dspMode;
     uint8_t speed;
@@ -207,6 +214,7 @@ void BMBTRADScreenModeRequest(void *, uint8_t *);
 void BMBTGTScreenModeSet(void *, uint8_t *);
 void BMBTIBusVehicleConfig(void *, uint8_t *);
 void BMBTTimerHeaderWrite(void *);
+void BMBTTimerMenuSelection(void *);
 void BMBTTimerMenuWrite(void *);
 void BMBTTimerScrollDisplay(void *);
 #endif /* BMBT_H */
