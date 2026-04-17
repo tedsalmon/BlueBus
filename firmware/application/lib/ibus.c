@@ -59,6 +59,7 @@ IBus_t IBusInit()
     ibus.lmVariant = ConfigGetLMVariant();
     ibus.lmDimmerVoltage = 0xFF;
     ibus.lmPhotoVoltage = 0xFF; // Photosensor voltage (LSZ)
+    ibus.batteryVoltage = 0;
     ibus.oilTemperature = 0x00;
     ibus.ambientTemperature = IBUS_TEMP_UNSET;
     ibus.coolantTemperature = 0;
@@ -554,7 +555,22 @@ static void IBusHandleLCMMessage(IBus_t *ibus, uint8_t *pkt)
         ibus->lmLoadRearVoltage = pkt[IBUS_LM_IO_LOAD_REAR_OFFSET];
         // Photosensor voltage (LSZ)
         ibus->lmPhotoVoltage = pkt[IBUS_LM_IO_PHOTO_OFFSET];
-        if (ibus->vehicleType != IBUS_VEHICLE_TYPE_E46 &&
+        // Battery Voltage
+        uint16_t refScale = IBUS_LM_BATTERY_SCALE_DEFAULT;
+        if (
+            ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
+            ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
+        ) {
+            refScale = IBUS_LM_BATTERY_SCALE_E46_E8X;
+        }
+        uint8_t batteryVoltage = (uint8_t)((pkt[IBUS_PKT_DB10] * 100) / refScale);
+        if (batteryVoltage != ibus->batteryVoltage) {
+            ibus->batteryVoltage = batteryVoltage;
+            uint8_t valueType  = IBUS_SENSOR_VALUE_BATTERY_VOLTAGE;
+            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+        }
+        if (
+            ibus->vehicleType != IBUS_VEHICLE_TYPE_E46 &&
             ibus->vehicleType != IBUS_VEHICLE_TYPE_E8X &&
             pkt[23] != 0x00
         ) {
@@ -571,16 +587,18 @@ static void IBusHandleLCMMessage(IBus_t *ibus, uint8_t *pkt)
                 EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
             }
         }
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
-               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
-               pkt[IBUS_PKT_LEN] == 0x03
+    } else if (
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+        pkt[IBUS_PKT_LEN] == 0x03
     ) {
         EventTriggerCallback(IBUS_EVENT_LCM_DIAGNOSTICS_ACKNOWLEDGE, pkt);
     } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_LCM_RESP_REDUNDANT_DATA) {
         EventTriggerCallback(IBUS_EVENT_LCM_REDUNDANT_DATA, pkt);
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
-               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
-               pkt[IBUS_PKT_LEN] == 0x0F
+    } else if (
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+        pkt[IBUS_PKT_LEN] == 0x0F
     ) {
       // I was a bit nervous about relying upon message length, but only an
       // ident request (0x00) results in a reply of this length. Winning.
@@ -2714,16 +2732,19 @@ void IBusCommandIKECheckControlDisplayClear(IBus_t *ibus)
 /**
  * IBusCommandIKENumbericDisplayWrite()
  *     Description:
- *        Send a message to write the numeric display on the low OBC
- *     Params:
+ *        Send a message to write the numeric display on the low OBC. The IKE
+ *        expects a two-digit binary-coded decimal (BCD) pair, with a multiplier
+ *        Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
- *         uint8_t number - The number to write to the screen
+ *         uint8_t number - The decimal number (0-99) to write to the screen
+ *         uint8_t mode - One of the IBUS_DATA_IKE_NUMERIC_* mode constants
  *     Returns:
  *         void
  */
-void IBusCommandIKENumbericDisplayWrite(IBus_t *ibus, uint8_t number)
+void IBusCommandIKENumbericDisplayWrite(IBus_t *ibus, uint8_t number, uint8_t mode)
 {
-    uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, IBUS_DATA_IKE_NUMERIC_WRITE, number};
+    uint8_t bcd = ((number / 10) << 4) | (number % 10);
+    uint8_t msg[3] = {IBUS_CMD_IKE_WRITE_NUMERIC, mode, bcd};
     IBusSendCommand(ibus, IBUS_DEVICE_PDC, IBUS_DEVICE_IKE, msg, sizeof(msg));
 }
 

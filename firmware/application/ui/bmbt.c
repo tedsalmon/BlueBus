@@ -443,14 +443,20 @@ static void BMBTSetRADMenuStatus(BMBTContext_t *context, uint8_t status)
 {
     if (
         status == BMBT_RAD_DISPLAY_STATUS_OFF &&
-        context->status.radioDisplayStatus == BMBT_RAD_DISPLAY_STATUS_ON
+        (
+            context->status.radioDisplayStatus == BMBT_RAD_DISPLAY_STATUS_ON ||
+            context->ibus->moduleStatus.VM == 0
+        )
     ) {
         IBusCommandRADDisableMenu(context->ibus);
         context->status.radioDisplayStatus = BMBT_RAD_DISPLAY_STATUS_OFF;
     }
     if (
         status == BMBT_RAD_DISPLAY_STATUS_ON &&
-        context->status.radioDisplayStatus == BMBT_RAD_DISPLAY_STATUS_OFF
+        (
+            context->status.radioDisplayStatus == BMBT_RAD_DISPLAY_STATUS_OFF &&
+            context->ibus->moduleStatus.VM == 0
+        )
     ) {
         IBusCommandRADEnableMenu(context->ibus);
         context->status.radioDisplayStatus = BMBT_RAD_DISPLAY_STATUS_ON;
@@ -649,8 +655,8 @@ static void BMBTHeaderWriteTemperature(BMBTContext_t *context, uint8_t updateTyp
             updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP ||
             updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
         ) {
-            if (context->ibus->coolantTemperature == 0) {
-                tempValue = IBUS_TEMP_UNSET;
+            if (context->ibus->coolantTemperature > 0) {
+                tempValue = context->ibus->coolantTemperature;
             }
         }
     }
@@ -660,7 +666,7 @@ static void BMBTHeaderWriteTemperature(BMBTContext_t *context, uint8_t updateTyp
             updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
         ) {
             if (context->ibus->oilTemperature > 0) {
-                tempValue = IBUS_TEMP_UNSET;
+                tempValue = context->ibus->oilTemperature;
             }
         }
     }
@@ -817,6 +823,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
 {
     if (ConfigGetSetting(CONFIG_SETTING_BMBT_DASHBOARD_OBC) == CONFIG_SETTING_OFF) {
         if (context->ibus->gtVersion == IBUS_GT_MKIV_STATIC) {
+           IBusCommandGTWriteIndexStatic(context->ibus, 0x44, "\x06");
            IBusCommandGTWriteIndexStatic(context->ibus, 0x45, "\x06");
         }
         return;
@@ -825,6 +832,7 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
     char ambtempstr[14] = {0};
     char oiltempstr[14] = {0};
     char cooltempstr[14] = {0};
+    char battstr[14] = {0};
 
     if (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) {
         tempUnit = 'F';
@@ -833,11 +841,13 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
     int ambtemp = context->ibus->ambientTemperature;
     int oiltemp = context->ibus->oilTemperature;
     int cooltemp = context->ibus->coolantTemperature;
+    uint8_t battVolt = context->ibus->batteryVoltage;
     if (
         ambtemp == IBUS_TEMP_UNSET &&
         context->ibus->ambientTemperatureCalculated[0] == 0x00 &&
         cooltemp == 0 &&
-        oiltemp == 0
+        oiltemp == 0 &&
+        battVolt == 0
     ) {
         return;
     }
@@ -851,6 +861,9 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
             cooltemp = (cooltemp * 1.8 + 32 + 0.5);
         }
     }
+    if (battVolt > 0) {
+        snprintf(battstr, 14, "B:%d.%dv", battVolt / 10, battVolt % 10);
+    }
     if (context->ibus->gtVersion >= IBUS_GT_MKIV_STATIC) {
         char temperature[29] = {0};
         if (context->ibus->ambientTemperatureCalculated[0] != 0x00) {
@@ -861,6 +874,11 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         if (cooltemp > 0) {
             snprintf(cooltempstr, 7, "C:%d,", cooltemp);
         }
+        if (battVolt > 0) {
+            IBusCommandGTWriteIndexStatic(context->ibus, 0x44, battstr);
+        } else {
+            IBusCommandGTWriteIndexStatic(context->ibus, 0x44, "\x06");
+        }
         if (oiltemp > 0) {
             snprintf(oiltempstr, 7, "O:%d,", oiltemp);
             snprintf(temperature, 29, "%s%s%s\xB0%c", oiltempstr, cooltempstr, ambtempstr, tempUnit);
@@ -870,6 +888,9 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         IBusCommandGTWriteIndexStatic(context->ibus, 0x45, temperature);
     } else {
         uint8_t currentIdx = 5;
+        if (battVolt > 0) {
+            IBusCommandGTWriteIndex(context->ibus, currentIdx++, battstr);
+        }
         char header[9] = {0};
         snprintf(header, 9, "Temp\xB0%c:", tempUnit);
         IBusCommandGTWriteIndex(context->ibus, currentIdx++, header);
@@ -3004,9 +3025,7 @@ void BMBTIBusBMBTButtonPress(void *ctx, uint8_t *pkt)
                     if (context->menu != BMBT_MENU_DASHBOARD_FRESH) {
                         context->menu = BMBT_MENU_NONE;
                     }
-                    if (context->status.radioDisplayStatus == BMBT_RAD_DISPLAY_STATUS_ON) {
-                        BMBTSetRADMenuStatus(context, BMBT_RAD_DISPLAY_STATUS_OFF);
-                    }
+                    BMBTSetRADMenuStatus(context, BMBT_RAD_DISPLAY_STATUS_OFF);
                     BMBTTriggerWriteHeader(context);
                     BMBTTriggerWriteMenu(context, BMBT_NO_FORCE);
                 } else {
@@ -3128,7 +3147,7 @@ void BMBTIBusCDChangerStatus(void *ctx, uint8_t *pkt)
         }
     } else if (requestedCommand == IBUS_CDC_CMD_RANDOM_MODE) {
         // Enable & Disable the UI based on the "Random" playback mode setting
-        // This adds support for GTs that run without radio, like the R51/R52/R53
+        // This adds support for GTs that run without radio, like the R50/R52/R53
         if (pkt[IBUS_PKT_DB2] == 0x01) {
             context->status.displayMode = BMBT_DISPLAY_ON;
             context->status.videoSource = BMBT_VIDEO_SOURCE_INTERNAL;
@@ -3189,7 +3208,7 @@ void BMBTIBusGTChangeUIRequest(void *ctx, uint8_t *pkt)
 void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
 {
     BMBTContext_t *context = (BMBTContext_t *) ctx;
-    uint8_t speed = pkt[IBUS_PKT_DB1];
+    uint8_t speed = pkt[IBUS_PKT_DB1] * 2;
     uint32_t now = TimerGetMillis();
 
     if (
@@ -3226,7 +3245,7 @@ void BMBTIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
             zoomLevel = context->navZoom;
         } else if (context->navZoom != zoomLevel) {
             LogDebug(
-                LOG_SOURCE_UI,
+                LOG_SOURCE_IBUS,
                 "Autozoom: kmh=%i, currentZoom=%i, wishedZoom=%i, timeDiff=%lu",
                 speed,
                 context->navZoom,
@@ -3610,6 +3629,18 @@ void BMBTIBusSensorValueUpdate(void *ctx, uint8_t *type)
         }
         BMBTHeaderWriteTemperature(context, updateType);
         BMBTGTFlushHeaderWrite(context);
+        if (
+            context->menu == BMBT_MENU_DASHBOARD ||
+            context->menu == BMBT_MENU_DASHBOARD_FRESH
+        ) {
+            BMBTMenuDashboardUpdateOBCValues(context);
+            BMBTGTBufferFlush(context);
+        }
+    }
+    if (updateType == IBUS_SENSOR_VALUE_BATTERY_VOLTAGE) {
+        if (context->status.displayMode == BMBT_DISPLAY_OFF) {
+            return;
+        }
         if (
             context->menu == BMBT_MENU_DASHBOARD ||
             context->menu == BMBT_MENU_DASHBOARD_FRESH

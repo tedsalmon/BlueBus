@@ -158,7 +158,7 @@
 #define IBUS_CMD_ZKE3_GM5_JOB_UNLOCK_LOW 0x43
 
 #define IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK 0x03
-#define IBUS_CMD_ZKE5_JOB_LOCK_ALL 0x34
+#define IBUS_CMD_ZKE5_JOB_LOCK_ALL 0x4F
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_LOW 0x37
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_ALL 0x45
 
@@ -202,8 +202,14 @@
 
 #define IBUS_DATA_IKE_CCM_WRITE_CLEAR_TEXT 0x30
 #define IBUS_DATA_IKE_CCM_WRITE_PERSIST_TEXT 0x36
+
 #define IBUS_DATA_IKE_NUMERIC_CLEAR 0x20
-#define IBUS_DATA_IKE_NUMERIC_WRITE 0x23
+#define IBUS_DATA_IKE_NUMERIC_X1_M 0x21
+#define IBUS_DATA_IKE_NUMERIC_X1 0x23
+#define IBUS_DATA_IKE_NUMERIC_X100_M 0x25
+#define IBUS_DATA_IKE_NUMERIC_X100 0x27
+#define IBUS_DATA_IKE_NUMERIC_X10_M 0x29
+#define IBUS_DATA_IKE_NUMERIC_X10 0x2B
 
 #define IBUS_CMD_LCM_REQ_REDUNDANT_DATA 0x53
 #define IBUS_CMD_LCM_RESP_REDUNDANT_DATA 0x54
@@ -334,6 +340,9 @@
 #define IBUS_LM_IO_PHOTO_OFFSET 22
 // LME38 has unique mapping
 #define IBUS_LME38_IO_DIMMER_OFFSET 22
+
+#define IBUS_LM_BATTERY_SCALE_DEFAULT 136
+#define IBUS_LM_BATTERY_SCALE_E46_E8X 132
 
 // Light Module variants
 #define IBUS_LM_LME38 1
@@ -498,6 +507,7 @@
 #define IBUS_SENSOR_VALUE_GEAR_POS 0x05
 #define IBUS_SENSOR_VALUE_AMBIENT_TEMP_CALCULATED 0x06
 #define IBUS_SENSOR_VALUE_VEHICLE_RANGE 0x07
+#define IBUS_SENSOR_VALUE_BATTERY_VOLTAGE 0x08
 
 #define IBUS_AMBIENT_TEMP_MIN -40
 #define IBUS_TEMP_UNSET -128 // 0x80
@@ -705,6 +715,7 @@ typedef struct IBus_t {
     uint8_t lmPhotoVoltage;
     uint8_t lmVariant;
     uint8_t oilTemperature;
+    uint8_t batteryVoltage;
     uint8_t vehicleType;
     uint16_t vehicleRange;
     uint8_t videoSource: 2;
@@ -778,7 +789,7 @@ void IBusCommandTELIKEDisplayWrite(IBus_t *, char *);
 void IBusCommandTELIKEDisplayClear(IBus_t *);
 void IBusCommandIKECheckControlDisplayWrite(IBus_t *, char *);
 void IBusCommandIKECheckControlDisplayClear(IBus_t *);
-void IBusCommandIKENumbericDisplayWrite(IBus_t *, uint8_t);
+void IBusCommandIKENumbericDisplayWrite(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKENumbericDisplayClear(IBus_t *);
 void IBusCommandLMActivateBulbs(IBus_t *, uint8_t, uint8_t);
 void IBusCommandLMGetClusterIndicators(IBus_t *);

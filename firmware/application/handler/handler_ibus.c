@@ -1255,8 +1255,8 @@ void HandlerIBusLMDimmerStatus(void *ctx, uint8_t *pkt)
         if (checksum != context->lmDimmerChecksum) {
             IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
             context->lmDimmerChecksum = checksum;
+            context->lmLastIOStatus = TimerGetMillis();
         }
-        context->lmLastIOStatus = TimerGetMillis();
     }
 }
 
@@ -1508,6 +1508,8 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
         uint8_t frontMin = UtilsGetMinByte(frontValues, 4);
         uint8_t rearMin = UtilsGetMinByte(rearValues, 4);
         uint8_t minimum = (rearMin > frontMin) ? frontMin : rearMin;
+        // 0xFF is no obstacle
+        uint8_t pdcNoObstacle = (minimum == 255);
         // Anything under 5cm should be considered 0
         if (frontMin < 5) {
             frontMin = 0;
@@ -1532,7 +1534,21 @@ void HandlerIBusPDCSensorUpdate(void *ctx, uint8_t *pkt)
                 }
             }
             if (ConfigGetIKEType() == IBUS_IKE_TYPE_LOW) {
-                IBusCommandIKENumbericDisplayWrite(context->ibus, minimum);
+                if (pdcNoObstacle) {
+                    IBusCommandIKENumbericDisplayClear(context->ibus);
+                } else if (minimum <= 99) {
+                    IBusCommandIKENumbericDisplayWrite(
+                        context->ibus,
+                        minimum,
+                        IBUS_DATA_IKE_NUMERIC_X1
+                    );
+                } else {
+                    IBusCommandIKENumbericDisplayWrite(
+                        context->ibus,
+                        minimum / 10,
+                        IBUS_DATA_IKE_NUMERIC_X10
+                    );
+                }
             } else {
                 char pdcValues[21] = {0};
                 char minStr[3] = {0};
@@ -1698,7 +1714,8 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
         }
         if (
             context->ibus->gearPosition != IBUS_IKE_GEAR_REVERSE &&
-            context->volumeMode == HANDLER_VOLUME_MODE_LOWERED
+            context->volumeMode == HANDLER_VOLUME_MODE_LOWERED &&
+            context->pdcActive == 0
         ) {
             HandlerSetVolume(context, HANDLER_VOLUME_DIRECTION_UP);
         }
@@ -1922,13 +1939,10 @@ void HandlerTimerIBusCDCSendStatus(void *ctx)
 void HandlerTimerIBusLCMIOStatus(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (
-        ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON &&
-        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF
-    ) {
+    if (ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF) {
         uint32_t now = TimerGetMillis();
         uint32_t timeDiff = now - context->lmLastIOStatus;
-        if (timeDiff >= 30000 && HandlerIBusGetIsIgnitionStatusOn(context) == 1) {
+        if (timeDiff >= HANDLER_LCM_IO_TIMEOUT && HandlerIBusGetIsIgnitionStatusOn(context) == 1) {
             IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
             context->lmLastIOStatus = now;
         }

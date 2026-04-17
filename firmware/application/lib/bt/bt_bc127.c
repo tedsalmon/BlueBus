@@ -1639,8 +1639,11 @@ void BC127ProcessEventLink(BT_t *bt, char **msgBuf)
         BTClearActiveDevice(bt);
         uint8_t macId[6] = {0};
         BC127ConvertMACIDToHex(msgBuf[4], macId);
-
         uint8_t deviceIndex = BTPairedDeviceFind(bt, macId);
+        if (deviceIndex == 0xFF) {
+            BTPairedDeviceInit(bt, macId, bt->pairedDevicesCount);
+            deviceIndex = BTPairedDeviceFind(bt, macId);
+        }
         bt->activeDevice.deviceIndex = deviceIndex;
         bt->activeDevice.status = BT_DEVICE_STATUS_CONNECTED;
         bt->activeDevice.deviceId = deviceId;
@@ -1900,7 +1903,12 @@ void BC127ProcessEventOpenOk(BT_t *bt, char **msgBuf)
         BTClearActiveDevice(bt);
         uint8_t macId[6] = {0};
         BC127ConvertMACIDToHex(msgBuf[3], macId);
-        bt->activeDevice.deviceIndex = BTPairedDeviceFind(bt, macId);
+        uint8_t deviceIndex = BTPairedDeviceFind(bt, macId);
+        if (deviceIndex == 0xFF) {
+            BTPairedDeviceInit(bt, macId, bt->pairedDevicesCount);
+            deviceIndex = BTPairedDeviceFind(bt, macId);
+        }
+        bt->activeDevice.deviceIndex = deviceIndex;
         bt->activeDevice.status = BT_DEVICE_STATUS_CONNECTED;
         bt->activeDevice.deviceId = deviceId;
         BTPairedDevice_t *dev = &bt->pairedDevices[bt->activeDevice.deviceIndex];

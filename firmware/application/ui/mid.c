@@ -371,8 +371,9 @@ void MIDIBusCDChangerStatus(void *ctx, unsigned char *pkt)
         if (context->mode == MID_MODE_OFF) {
             IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x02);
         }
-    } else if (requestedCommand == IBUS_CDC_CMD_CD_CHANGE &&
-               context->mode == MID_MODE_DISPLAY_OFF
+    } else if (
+        requestedCommand == IBUS_CDC_CMD_CD_CHANGE &&
+        context->mode == MID_MODE_DISPLAY_OFF
     ) {
         IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x02);
     } else if (requestedCommand == IBUS_CDC_CMD_GET_STATUS) {
@@ -383,6 +384,15 @@ void MIDIBusCDChangerStatus(void *ctx, unsigned char *pkt)
         ) {
             context->modeChangeStatus = MID_MODE_CHANGE_OFF;
             IBusCommandMIDSetMode(context->ibus, IBUS_DEVICE_TEL, 0x02);
+        }
+    } else if (
+        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK ||
+        requestedCommand == IBUS_CDC_CMD_CHANGE_TRACK_BLAUPUNKT
+    ) {
+        if (pkt[IBUS_PKT_DB2] == 0x00) {
+            BTCommandPlaybackTrackNext(context->bt);
+        } else {
+            BTCommandPlaybackTrackPrevious(context->bt);
         }
     }
 }
