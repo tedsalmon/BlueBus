@@ -148,6 +148,9 @@
 #define IBUS_CMD_EWS_IMMOBILISER_STATUS 0x74
 
 #define IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP 0x7A
+#define IBUS_CMD_GM_REMOTE_KEY_ENTRY 0x72
+#define IBUS_GM_REMOTE_KEY_UNLOCK 0x02
+#define IBUS_GM_REMOTE_KEY_LOCK 0x01
 #define IBUS_CMD_ZKE3_GM1_JOB_CENTRAL_LOCK 0x0B
 #define IBUS_CMD_ZKE3_GM5_JOB_CENTRAL_LOCK 0x14
 #define IBUS_CMD_ZKE3_GM5_JOB_LOCK_HIGH 0x40
@@ -161,6 +164,7 @@
 #define IBUS_CMD_ZKE5_JOB_LOCK_ALL 0x4F
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_LOW 0x37
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_ALL 0x45
+#define IBUS_CMD_ZKE5_JOB_UNLOCK_TRUNK 0x06
 
 #define IBUS_CMD_VOLUME_SET 0x32
 
@@ -291,6 +295,9 @@
 #define IBUS_LM_BLINKER_OFF 0
 #define IBUS_LM_BLINKER_LEFT 1
 #define IBUS_LM_BLINKER_RIGHT 2
+#define IBUS_LM_HOME_OFF 0
+#define IBUS_LM_HOME_WELCOME 1
+#define IBUS_LM_HOME_FOLLOW 2
 
 #define IBUS_LM_BULB_OFF 0x00
 
@@ -301,6 +308,11 @@
 // Side Marker Left = Byte 2, Side Marker Right = Byte 3
 #define IBUS_LME38_SIDE_MARKER_LEFT 0x02
 #define IBUS_LME38_SIDE_MARKER_RIGHT 0x40
+// High Beam Left + Right = Byte 4, Tail Lamp Left = Byte 3, Tail Lamp Right = Byte 2
+#define IBUS_LME38_HIGH_BEAM_L 0x01
+#define IBUS_LME38_HIGH_BEAM_R 0x02
+#define IBUS_LME38_TAIL_LAMP_L 0x20
+#define IBUS_LME38_TAIL_LAMP_R 0x04
 
 // LCM, LCM_A
 // Different bytes! Update the blinker msg if alternating.
@@ -310,15 +322,25 @@
 // Byte 1 (S2_BLK_L switch No.1 left turn / S2_BLK_R switch No.1 right turn)
 #define IBUS_LCM_BLINKER_OFF 0x00
 #define IBUS_LCM_BLINKER_LEFT 0x01
-#define IBUS_LCM_BLINKER_RIGHT 0x0
+#define IBUS_LCM_BLINKER_RIGHT 0x02
 // Side Marker Left = Byte 5, Side Marker Right = Byte 6
 #define IBUS_LCM_SIDE_MARKER_LEFT 0x01
 #define IBUS_LCM_SIDE_MARKER_RIGHT 0x20
+// High Beam Left + Right = Byte 5, Tail Lamp Left = Byte 6, Tail Lamp Right = Byte 7
+#define IBUS_LCM_HIGH_BEAM_L 0x10
+#define IBUS_LCM_HIGH_BEAM_R 0x20
+#define IBUS_LCM_TAIL_LAMP_L 0x08
+#define IBUS_LCM_TAIL_LAMP_R 0x10
 
 // LCM_II, LCM_III, LCM_IV (Byte 2)
 #define IBUS_LCM_II_BLINKER_OFF 0x00
 #define IBUS_LCM_II_BLINKER_LEFT 0x80
 #define IBUS_LCM_II_BLINKER_RIGHT 0x40
+// High Beam Left + Right = Byte 5, Tail Lamp Left = Byte 6, Tail Lamp Right = Byte 7
+#define IBUS_LCM_II_HIGH_BEAM_L 0x10
+#define IBUS_LCM_II_HIGH_BEAM_R 0x20
+#define IBUS_LCM_II_TAIL_LAMP_L 0x08
+#define IBUS_LCM_II_TAIL_LAMP_R 0x10
 
 // LSZ, LSZ_2 (Headlight Status = Byte 2, Blinker Status = Byte 3)
 #define IBUS_LSZ_HEADLIGHT_OFF 0xFF
@@ -329,6 +351,11 @@
 // Front Side Marker Left = Byte 5, Front Side Marker Right = Byte 4
 #define IBUS_LSZ_SIDE_MARKER_LEFT 0x08
 #define IBUS_LSZ_SIDE_MARKER_RIGHT 0x02
+// High Beam Left + Right = Byte 5, Tail Lamp Left = Byte 5, Tail Lamp Right = Byte 6
+#define IBUS_LSZ_HIGH_BEAM_L 0x10
+#define IBUS_LSZ_HIGH_BEAM_R 0x20
+#define IBUS_LSZ_TAIL_LAMP_L 0x40
+#define IBUS_LSZ_TAIL_LAMP_R 0x08
 
 // Ident (0x00) parameter offsets
 #define IBUS_LM_CI_ID_OFFSET 9
@@ -339,7 +366,8 @@
 #define IBUS_LM_IO_LOAD_REAR_OFFSET 20
 #define IBUS_LM_IO_PHOTO_OFFSET 22
 // LME38 has unique mapping
-#define IBUS_LME38_IO_DIMMER_OFFSET 22
+#define IBUS_LME38_IO_BATTERY_VOLTAGE_OFFSET 10
+#define IBUS_LME38_IO_DIMMER_OFFSET 23
 
 #define IBUS_LM_BATTERY_SCALE_DEFAULT 136
 #define IBUS_LM_BATTERY_SCALE_E46_E8X 132
@@ -614,6 +642,8 @@
 #define IBUS_EVENT_GT_SCREEN_MODE_SET 78
 #define IBUS_EVENT_RAD_PLAYBACK_CTRL 79
 #define IBUS_EVENT_GT_SCREEN_BUFFER_WRITE 80
+#define IBUS_EVENT_ZKE_DIAG_ACK 81
+#define IBUS_EVENT_GM_REMOTE_KEY_ENTRY 82
 
 // Configuration and protocol definitions
 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -791,7 +821,7 @@ void IBusCommandIKECheckControlDisplayWrite(IBus_t *, char *);
 void IBusCommandIKECheckControlDisplayClear(IBus_t *);
 void IBusCommandIKENumbericDisplayWrite(IBus_t *, uint8_t, uint8_t);
 void IBusCommandIKENumbericDisplayClear(IBus_t *);
-void IBusCommandLMActivateBulbs(IBus_t *, uint8_t, uint8_t);
+void IBusCommandLMActivateBulbs(IBus_t *, uint8_t, uint8_t, uint8_t);
 void IBusCommandLMGetClusterIndicators(IBus_t *);
 void IBusCommandLMGetRedundantData(IBus_t *);
 void IBusCommandMIDButtonPress(IBus_t *, uint8_t, uint8_t);
@@ -824,5 +854,6 @@ void IBusCommandTELSMSIcon(IBus_t *, uint8_t);
 void IBusCommandTELStatus(IBus_t *, uint8_t);
 void IBusCommandTELStatusText(IBus_t *, char *, uint8_t);
 void IBusCommandTELTitleText(IBus_t *, uint8_t, uint8_t, uint8_t, char *);
+void IBusCommandGMDoorUnlockTrunk(IBus_t *);
 void IBusCommandVMModeSet(IBus_t *, uint8_t);
 #endif /* IBUS_H */

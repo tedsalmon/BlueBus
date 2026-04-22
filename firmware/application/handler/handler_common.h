@@ -41,6 +41,8 @@
 #define HANDLER_IBUS_MODULE_PING_STATE_GM 11
 #define HANDLER_GT_STATUS_UNCHECKED 0
 #define HANDLER_GT_STATUS_CHECKED 1
+#define HANDLER_ZKE_UNLOCK_STATE_OFF 0
+#define HANDLER_ZKE_UNLOCK_STATE_UNLOCKING 1
 #define HANDLER_INT_BC127_STATE 1000
 #define HANDLER_INT_CDC_ANOUNCE 1000
 #define HANDLER_INT_CDC_STATUS 500
@@ -48,7 +50,7 @@
 #define HANDLER_INT_IBUS_IDENT 60000
 #define HANDLER_INT_IBUS_PINGS 250
 #define HANDLER_INT_TCU_STATE_CHANGE 100
-#define HANDLER_INT_LCM_IO_STATUS 15000
+#define HANDLER_INT_LCM_IO_STATUS 5000
 #define HANDLER_LCM_IO_TIMEOUT 15000
 #define HANDLER_INT_LIGHTING_STATE 1000
 #define HANDLER_INT_BT_AVRCP_UPDATER 1000
@@ -68,6 +70,7 @@
 #define HANDLER_LM_COMF_BLINK_RIGHT 0x02
 #define HANDLER_LM_COMF_PARKING_OFF 0x00
 #define HANDLER_LM_COMF_PARKING_ON 0x01
+#define HANDLER_LM_HOME_LIGHT_INTERVALS 3
 #define HANDLER_LM_EVENT_REFRESH 0x00
 #define HANDLER_LM_EVENT_ALL_OFF 0x01
 #define HANDLER_LM_EVENT_BLINK_OFF 0x02
@@ -75,6 +78,9 @@
 #define HANDLER_LM_EVENT_BLINK_RIGHT 0x04
 #define HANDLER_LM_EVENT_PARKING_OFF 0x05
 #define HANDLER_LM_EVENT_PARKING_ON 0x06
+#define HANDLER_LM_EVENT_HOME_WELCOME 0x07
+#define HANDLER_LM_EVENT_HOME_FOLLOW 0x08
+#define HANDLER_LM_EVENT_HOME_OFF 0x09
 #define HANDLER_MFL_STATUS_OFF 0
 #define HANDLER_MFL_STATUS_SPEAK_HOLD 1
 #define HANDLER_POWER_OFF 0
@@ -103,13 +109,27 @@
 typedef struct HandlerBodyModuleStatus_t {
     uint8_t lowSideDoors: 1;
     uint8_t doorsLocked: 1;
+    uint8_t unlockState: 1;
 } HandlerBodyModuleStatus_t;
 
+/**
+ * HandlerLightControlStatus_t
+ *    blinkerCount: Number of blinks executed
+ *    blinkMode: The currently engaged blinker mode
+ *    blinkStatus: The currently active blinker
+ *    parkingLampMode: If parking lamps are active or not
+ *    homeLightsMode: The current home lights mode
+ *    homeLightsArmed: Bool for arming follow-me-home lights
+ *    homeLightsTicks: Track timer ticks for home light timeout
+ */
 typedef struct HandlerLightControlStatus_t {
+    uint8_t blinkCount: 4;
+    uint8_t blinkMode: 2;
     uint8_t blinkStatus: 2;
-    uint8_t blinkCount: 8;
-    uint8_t comfortBlinkerStatus: 2;
-    uint8_t comfortParkingLampsStatus: 1;
+    uint8_t parkingLampsMode: 1;
+    uint8_t homeLightsMode: 2;
+    uint8_t homeLightsArmed: 1;
+    uint8_t homeLightsTicks;
 } HandlerLightControlStatus_t;
 
 typedef struct HandlerContext_t {

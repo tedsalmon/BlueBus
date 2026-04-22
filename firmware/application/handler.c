@@ -12,7 +12,6 @@
 #include "lib/bt.h"
 #include "lib/config.h"
 #include "lib/event.h"
-#include "lib/log.h"
 #include "lib/timer.h"
 #include "ui/bmbt.h"
 #include "ui/cd53.h"

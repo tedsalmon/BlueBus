@@ -223,9 +223,17 @@ static void IBusHandleGMMessage(IBus_t *ibus, uint8_t *pkt)
 {
     if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_DOORS_FLAPS_STATUS_RESP) {
         EventTriggerCallback(IBUS_EVENT_DOORS_FLAPS_STATUS_RESPONSE, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_GM_REMOTE_KEY_ENTRY) {
+        EventTriggerCallback(IBUS_EVENT_GM_REMOTE_KEY_ENTRY, pkt);
     } else if (pkt[IBUS_PKT_CMD] == 0xB0) {
         uint8_t err = IBUS_GM_IDENT_ERR;
         EventTriggerCallback(IBUS_EVENT_GM_IDENT_RESP, &err);
+    } else if (
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+        pkt[IBUS_PKT_LEN] == 0x03
+    ) {
+        EventTriggerCallback(IBUS_EVENT_ZKE_DIAG_ACK, pkt);
     } else if (
         pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
         pkt[IBUS_PKT_LEN] == 0x0F
@@ -527,21 +535,28 @@ static void IBusHandleLCMMessage(IBus_t *ibus, uint8_t *pkt)
         pkt[IBUS_PKT_CMD] == IBUS_LCM_LIGHT_STATUS_RESP
     ) {
         EventTriggerCallback(IBUS_EVENT_LCM_LIGHT_STATUS, pkt);
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO &&
-               pkt[IBUS_PKT_CMD] == IBUS_LCM_DIMMER_STATUS
+    } else if (
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_GLO &&
+        pkt[IBUS_PKT_CMD] == IBUS_LCM_DIMMER_STATUS
     ) {
         EventTriggerCallback(IBUS_EVENT_LCM_DIMMER_STATUS, pkt);
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
-               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
-               pkt[IBUS_PKT_LEN] == 0x19
+    } else if (
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+        pkt[IBUS_PKT_LEN] == 0x19
     ) {
         // LME38 has unique status. It's shorter, and different mapping.
-        // Length is an (educated) guess based on number of bytes required to
-        // populate the job results.
         ibus->lmDimmerVoltage = pkt[IBUS_LME38_IO_DIMMER_OFFSET];
-    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
-               pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
-               pkt[IBUS_PKT_LEN] == 0x23
+        uint8_t batteryVoltage = (uint8_t)((pkt[IBUS_LME38_IO_BATTERY_VOLTAGE_OFFSET] * 100) / IBUS_LM_BATTERY_SCALE_DEFAULT);
+        if (batteryVoltage != ibus->batteryVoltage) {
+            ibus->batteryVoltage = batteryVoltage;
+            uint8_t valueType = IBUS_SENSOR_VALUE_BATTERY_VOLTAGE;
+            EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+        }
+    } else if (
+        pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
+        pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
+        pkt[IBUS_PKT_LEN] == 0x23
     ) {
         // Status reply length and mapping is the same for LCM and LSZ variants.
         // The non-applicable parameters default to 0x00, i.e. LCM does not
@@ -556,14 +571,7 @@ static void IBusHandleLCMMessage(IBus_t *ibus, uint8_t *pkt)
         // Photosensor voltage (LSZ)
         ibus->lmPhotoVoltage = pkt[IBUS_LM_IO_PHOTO_OFFSET];
         // Battery Voltage
-        uint16_t refScale = IBUS_LM_BATTERY_SCALE_DEFAULT;
-        if (
-            ibus->vehicleType == IBUS_VEHICLE_TYPE_E46 ||
-            ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X
-        ) {
-            refScale = IBUS_LM_BATTERY_SCALE_E46_E8X;
-        }
-        uint8_t batteryVoltage = (uint8_t)((pkt[IBUS_PKT_DB10] * 100) / refScale);
+        uint8_t batteryVoltage = (uint8_t)((pkt[IBUS_PKT_DB10] * 100) / IBUS_LM_BATTERY_SCALE_DEFAULT);
         if (batteryVoltage != ibus->batteryVoltage) {
             ibus->batteryVoltage = batteryVoltage;
             uint8_t valueType  = IBUS_SENSOR_VALUE_BATTERY_VOLTAGE;
@@ -600,15 +608,15 @@ static void IBusHandleLCMMessage(IBus_t *ibus, uint8_t *pkt)
         pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
         pkt[IBUS_PKT_LEN] == 0x0F
     ) {
-      // I was a bit nervous about relying upon message length, but only an
-      // ident request (0x00) results in a reply of this length. Winning.
-      // I would have done the same GT and had the ident logic in the handler,
-      // but it's a bit unwieldy so I split it out.
-      uint8_t lmVariant = IBusGetLMVariant(pkt);
-      // I did not modify struct in above method as it was not very _SOLID_.
-      // Yes, that's right, SOLID. Don't you roll your eyes at me!
-      ibus->lmVariant = lmVariant;
-      EventTriggerCallback(IBUS_EVENT_LM_IDENT_RESPONSE, &lmVariant);
+        // I was a bit nervous about relying upon message length, but only an
+        // ident request (0x00) results in a reply of this length. Winning.
+        // I would have done the same GT and had the ident logic in the handler,
+        // but it's a bit unwieldy so I split it out.
+        uint8_t lmVariant = IBusGetLMVariant(pkt);
+        // I did not modify struct in above method as it was not very _SOLID_.
+        // Yes, that's right, SOLID. Don't you roll your eyes at me!
+        ibus->lmVariant = lmVariant;
+        EventTriggerCallback(IBUS_EVENT_LM_IDENT_RESPONSE, &lmVariant);
     }
 }
 
@@ -2180,6 +2188,26 @@ void IBusCommandGMDoorUnlockAll(IBus_t *ibus)
 }
 
 /**
+ * IBusCommandGMDoorUnlockTrunk()
+ *     Description:
+ *         Issue a diagnostic message to the GM to open the trunk/tailgate (ZKE5 only)
+ *         Note: Currently unused
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandGMDoorUnlockTrunk(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_CMD_DIA_JOB_REQUEST,
+        IBUS_CMD_ZKE5_JOB_UNLOCK_TRUNK,
+        0x01
+    };
+    IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
+}
+
+/**
  * IBusCommandGMDoorLockAll()
  *     Description:
  *        Issue a diagnostic message to the GM to lock all doors
@@ -2801,13 +2829,15 @@ void IBusCommandIRISDisplayWrite(IBus_t *ibus, char *text)
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         uint8_t blinkerSide - left or right blinker
  *         uint8_t parkingLights - Activate the parking lights
+ *         uint8_t homeLights - Activate Welcome / Follow-Me Home lights
  *     Returns:
  *         void
  */
 void IBusCommandLMActivateBulbs(
     IBus_t *ibus,
     uint8_t blinkerSide,
-    uint8_t parkingLights
+    uint8_t parkingLights,
+    uint8_t homeLights
 ) {
     uint8_t blinker = IBUS_LSZ_BLINKER_OFF;
     uint8_t parkingLightLeft = IBUS_LM_BULB_OFF;
@@ -2828,14 +2858,24 @@ void IBusCommandLMActivateBulbs(
             parkingLightLeft = IBUS_LME38_SIDE_MARKER_LEFT;
             parkingLightRight = IBUS_LME38_SIDE_MARKER_RIGHT;
         }
+        uint8_t highBeam = IBUS_LM_BULB_OFF;
+        uint8_t tailLeft = IBUS_LM_BULB_OFF;
+        uint8_t tailRight = IBUS_LM_BULB_OFF;
+        if (homeLights == IBUS_LM_HOME_WELCOME) {
+            highBeam = IBUS_LME38_HIGH_BEAM_L | IBUS_LME38_HIGH_BEAM_R;
+            tailLeft = IBUS_LME38_TAIL_LAMP_L;
+            tailRight = IBUS_LME38_TAIL_LAMP_R;
+        } else if (homeLights == IBUS_LM_HOME_FOLLOW) {
+            highBeam = IBUS_LME38_HIGH_BEAM_L | IBUS_LME38_HIGH_BEAM_R;
+        }
         // No LWR load sensor/HVAC pot voltage for LME38
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             blinker,
             0x00,
-            parkingLightLeft,
-            parkingLightRight,
-            0x00,
+            parkingLightLeft | tailLeft,
+            parkingLightRight | tailRight,
+            highBeam,
             0x00,
             0x00,
             ibus->lmDimmerVoltage,
@@ -2870,6 +2910,16 @@ void IBusCommandLMActivateBulbs(
             parkingLightLeft = IBUS_LCM_SIDE_MARKER_LEFT;
             parkingLightRight = IBUS_LCM_SIDE_MARKER_RIGHT;
         }
+        uint8_t highBeam = IBUS_LM_BULB_OFF;
+        uint8_t tailLeft = IBUS_LM_BULB_OFF;
+        uint8_t tailRight = IBUS_LM_BULB_OFF;
+        if (homeLights == IBUS_LM_HOME_WELCOME) {
+            highBeam = IBUS_LCM_HIGH_BEAM_L | IBUS_LCM_HIGH_BEAM_R;
+            tailLeft = IBUS_LCM_TAIL_LAMP_L;
+            tailRight = IBUS_LCM_TAIL_LAMP_R;
+        } else if (homeLights == IBUS_LM_HOME_FOLLOW) {
+            highBeam = IBUS_LCM_HIGH_BEAM_L | IBUS_LCM_HIGH_BEAM_R;
+        }
         // This is an issue! I'm not sure what differentiates S1 and S2.
         // It's meaningful enough a distinction that it is displayed in INPA.
         uint8_t msg[] = {
@@ -2879,9 +2929,9 @@ void IBusCommandLMActivateBulbs(
             0x00,
             0x00,
             0x00,
-            parkingLightLeft,
-            parkingLightRight,
-            0x00,
+            parkingLightLeft | highBeam,
+            parkingLightRight | tailLeft,
+            tailRight,
             0x00,
             ibus->lmDimmerVoltage,
             ibus->lmLoadRearVoltage,
@@ -2914,6 +2964,16 @@ void IBusCommandLMActivateBulbs(
             parkingLightLeft = IBUS_LCM_SIDE_MARKER_LEFT;
             parkingLightRight = IBUS_LCM_SIDE_MARKER_RIGHT;
         }
+        uint8_t highBeam = IBUS_LM_BULB_OFF;
+        uint8_t tailLeft = IBUS_LM_BULB_OFF;
+        uint8_t tailRight = IBUS_LM_BULB_OFF;
+        if (homeLights == IBUS_LM_HOME_WELCOME) {
+            highBeam = IBUS_LCM_II_HIGH_BEAM_L | IBUS_LCM_II_HIGH_BEAM_R;
+            tailLeft = IBUS_LCM_II_TAIL_LAMP_L;
+            tailRight = IBUS_LCM_II_TAIL_LAMP_R;
+        } else if (homeLights == IBUS_LM_HOME_FOLLOW) {
+            highBeam = IBUS_LCM_II_HIGH_BEAM_L | IBUS_LCM_II_HIGH_BEAM_R;
+        }
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00,
@@ -2921,9 +2981,9 @@ void IBusCommandLMActivateBulbs(
             blinker,
             0x00,
             0x00,
-            parkingLightLeft,
-            parkingLightRight,
-            0x00,
+            parkingLightLeft | highBeam,
+            parkingLightRight | tailLeft,
+            tailRight,
             0x00,
             ibus->lmDimmerVoltage,
             ibus->lmLoadRearVoltage,
@@ -2955,6 +3015,16 @@ void IBusCommandLMActivateBulbs(
             parkingLightLeft = IBUS_LSZ_SIDE_MARKER_LEFT;
             parkingLightRight = IBUS_LSZ_SIDE_MARKER_RIGHT;
         }
+        uint8_t highBeam = IBUS_LM_BULB_OFF;
+        uint8_t tailLeft = IBUS_LM_BULB_OFF;
+        uint8_t tailRight = IBUS_LM_BULB_OFF;
+        if (homeLights == IBUS_LM_HOME_WELCOME) {
+            highBeam = IBUS_LSZ_HIGH_BEAM_L | IBUS_LSZ_HIGH_BEAM_R;
+            tailLeft = IBUS_LSZ_TAIL_LAMP_L;
+            tailRight = IBUS_LSZ_TAIL_LAMP_R;
+        } else if (homeLights == IBUS_LM_HOME_FOLLOW) {
+            highBeam = IBUS_LSZ_HIGH_BEAM_L | IBUS_LSZ_HIGH_BEAM_R;
+        }
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             0x00,
@@ -2962,8 +3032,8 @@ void IBusCommandLMActivateBulbs(
             IBUS_LSZ_HEADLIGHT_OFF,
             blinker,
             parkingLightRight,
-            parkingLightLeft,
-            0x00,
+            parkingLightLeft | highBeam | tailLeft,
+            tailRight,
             ibus->lmLoadFrontVoltage,
             0x00,
             ibus->lmDimmerVoltage,
@@ -2982,7 +3052,6 @@ void IBusCommandLMActivateBulbs(
         );
     }
 }
-
 
 /**
  * IBusCommandLMGetClusterIndicators()

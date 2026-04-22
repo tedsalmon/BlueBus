@@ -307,7 +307,9 @@ uint8_t ConfigGetIKEType()
 /**
  * ConfigGetLightingFeaturesActive()
  *     Description:
- *         Check if any lighting features are active and return a boolean
+ *         Check if blinker or parkling lighting features are active and
+ *         return a boolean. Other lighting features are irrelevant as they
+ *         activate with the car off
  *     Params:
  *         None
  *     Returns:

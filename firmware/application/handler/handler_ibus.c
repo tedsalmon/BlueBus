@@ -11,7 +11,10 @@
 #include <string.h>
 #include "../lib/bt/bt_bc127.h"
 #include "../lib/bt.h"
+#include "../lib/config.h"
 #include "../lib/event.h"
+#include "../lib/log.h"
+#include "../lib/timer.h"
 #include "../ui/bmbt.h"
 #include "../ui/cd53.h"
 #include "../ui/mid.h"
@@ -46,6 +49,16 @@ void HandlerIBusInit(HandlerContext_t *context)
     EventRegisterCallback(
         IBUS_EVENT_DOORS_FLAPS_STATUS_RESPONSE,
         &HandlerIBusGMDoorsFlapsStatusResponse,
+        context
+    );
+    EventRegisterCallback(
+        IBUS_EVENT_GM_REMOTE_KEY_ENTRY,
+        &HandlerIBusGMRemoteKeyEntry,
+        context
+    );
+    EventRegisterCallback(
+        IBUS_EVENT_ZKE_DIAG_ACK,
+        &HandlerIBusGMDiagAck,
         context
     );
     EventRegisterCallback(
@@ -282,43 +295,61 @@ static void HandlerIBusLMActivateBulbs(
 ) {
     context->lmLastStatusSet = TimerGetMillis();
     TimerResetScheduledTask(context->lightingStateTimerId);
-    uint8_t blinkers = context->lmState.comfortBlinkerStatus;
-    uint8_t parkingLamps = context->lmState.comfortParkingLampsStatus;
+    uint8_t blinkers = context->lmState.blinkMode;
+    uint8_t parkingLamps = context->lmState.parkingLampsMode;
+    uint8_t homeLights = context->lmState.homeLightsMode;
     switch (event) {
         case HANDLER_LM_EVENT_ALL_OFF:
             parkingLamps = HANDLER_LM_COMF_PARKING_OFF;
-            context->lmState.comfortParkingLampsStatus = HANDLER_LM_COMF_PARKING_OFF;
+            context->lmState.parkingLampsMode = HANDLER_LM_COMF_PARKING_OFF;
             blinkers = HANDLER_LM_COMF_BLINK_OFF;
-            context->lmState.comfortBlinkerStatus = HANDLER_LM_COMF_BLINK_OFF;
+            context->lmState.blinkMode = HANDLER_LM_COMF_BLINK_OFF;
+            homeLights = IBUS_LM_HOME_OFF;
+            context->lmState.homeLightsMode = IBUS_LM_HOME_OFF;
             break;
         case HANDLER_LM_EVENT_BLINK_OFF:
             blinkers = HANDLER_LM_COMF_BLINK_OFF;
-            context->lmState.comfortBlinkerStatus = HANDLER_LM_COMF_BLINK_OFF;
+            context->lmState.blinkMode = HANDLER_LM_COMF_BLINK_OFF;
             break;
         case HANDLER_LM_EVENT_BLINK_LEFT:
             blinkers = HANDLER_LM_COMF_BLINK_LEFT;
-            context->lmState.comfortBlinkerStatus = HANDLER_LM_COMF_BLINK_LEFT;
+            context->lmState.blinkMode = HANDLER_LM_COMF_BLINK_LEFT;
             break;
         case HANDLER_LM_EVENT_BLINK_RIGHT:
             blinkers = HANDLER_LM_COMF_BLINK_RIGHT;
-            context->lmState.comfortBlinkerStatus = HANDLER_LM_COMF_BLINK_RIGHT;
+            context->lmState.blinkMode = HANDLER_LM_COMF_BLINK_RIGHT;
             break;
         case HANDLER_LM_EVENT_PARKING_OFF:
             parkingLamps = HANDLER_LM_COMF_PARKING_OFF;
-            context->lmState.comfortParkingLampsStatus = HANDLER_LM_COMF_PARKING_OFF;
+            context->lmState.parkingLampsMode = HANDLER_LM_COMF_PARKING_OFF;
             break;
         case HANDLER_LM_EVENT_PARKING_ON:
             parkingLamps = HANDLER_LM_COMF_PARKING_ON;
-            context->lmState.comfortParkingLampsStatus = HANDLER_LM_COMF_PARKING_ON;
+            context->lmState.parkingLampsMode = HANDLER_LM_COMF_PARKING_ON;
+            break;
+        case HANDLER_LM_EVENT_HOME_FOLLOW:
+            homeLights = IBUS_LM_HOME_FOLLOW;
+            context->lmState.homeLightsMode = IBUS_LM_HOME_FOLLOW;
+            context->lmState.homeLightsTicks = 0;
+            break;
+        case HANDLER_LM_EVENT_HOME_WELCOME:
+            homeLights = IBUS_LM_HOME_WELCOME;
+            context->lmState.homeLightsMode = IBUS_LM_HOME_WELCOME;
+            context->lmState.homeLightsTicks = 0;
+            break;
+        case HANDLER_LM_EVENT_HOME_OFF:
+            homeLights = IBUS_LM_HOME_OFF;
+            context->lmState.homeLightsMode = IBUS_LM_HOME_OFF;
             break;
     }
     if (
         blinkers == HANDLER_LM_COMF_BLINK_OFF &&
-        parkingLamps == HANDLER_LM_COMF_PARKING_OFF
+        parkingLamps == HANDLER_LM_COMF_PARKING_OFF &&
+        homeLights == IBUS_LM_HOME_OFF
     ) {
         IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
     } else {
-        IBusCommandLMActivateBulbs(context->ibus, blinkers, parkingLamps);
+        IBusCommandLMActivateBulbs(context->ibus, blinkers, parkingLamps, homeLights);
     }
 }
 
@@ -622,6 +653,28 @@ void HandlerIBusFirstMessageReceived(void *ctx, uint8_t *pkt)
 }
 
 /**
+ * HandlerIBusDiagAck()
+ *     Description:
+ *         Handle the DIA ACK from the General Module.
+ *         For the ZKE5 only:
+ *             Press the center unlock button to trigger
+ *             the trunk to become unlocked
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - The IBus Packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGMDiagAck(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    if (context->gmState.unlockState == HANDLER_ZKE_UNLOCK_STATE_UNLOCKING) {
+        context->gmState.unlockState = HANDLER_ZKE_UNLOCK_STATE_OFF;
+        IBusCommandGMDoorCenterLockButton(context->ibus);
+    }
+}
+
+/**
  * HandlerIBusGMIdentResponse()
  *     Description:
  *         Handle the response from the GM Variant Lookup
@@ -644,6 +697,36 @@ void HandlerIBusGMIdentResponse(void *ctx, uint8_t *pkt)
 }
 
 /**
+ * HandlerIBusGMRemoteKeyEntry()
+ *     Description:
+ *         Handle key fob remote key entry events from the GM (Body Module).
+ *         When the unlock button is pressed and ignition is off, activate
+ *         Welcome Home lights (high beams + taillights) for 30 seconds.
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *pkt - The IBus Packet
+ *     Returns:
+ *         void
+ */
+void HandlerIBusGMRemoteKeyEntry(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint8_t homeLights = ConfigGetSetting(CONFIG_SETTING_COMFORT_HOME_LIGHTS);
+    uint8_t keyAction = (pkt[IBUS_PKT_DB1] >> 4) & 0x0F;
+    if (
+        keyAction == IBUS_GM_REMOTE_KEY_UNLOCK &&
+        context->ibus->ignitionStatus == IBUS_IGNITION_OFF &&
+        (
+            homeLights == CONFIG_SETTING_HOME_LIGHTS_WELCOME ||
+            homeLights == CONFIG_SETTING_HOME_LIGHTS_BOTH
+        )
+    ) {
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Welcome Home Lights On");
+        HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_HOME_WELCOME);
+    }
+}
+
+/**
  * HandlerIBusGMDoorsFlapStatusResponse()
  *     Description:
  *         Track which doors have been opened while the ignition was on
@@ -662,13 +745,25 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, uint8_t *pkt)
             context->gmState.lowSideDoors = 1;
         }
     }
-    // The 5th bit in the first data byte contains the lock status
-    if (UTILS_CHECK_BIT(pkt[IBUS_PKT_DB1], 5) != 0) {
+    // 0x30 = arrested, 0x20 = single lock, 0x10 = unlocked
+    if ((pkt[IBUS_PKT_DB1] & 0x30) != 0x10) {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks locked");
         context->gmState.doorsLocked = 1;
+        context->gmState.unlockState = 0;
     } else {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks unlocked");
         context->gmState.doorsLocked = 0;
+    }
+    // Follow Me Home: activate when driver door opens while armed
+    // Do not check if the setting is enabled as it can only enter the armed
+    // state if a prior check passes
+    if (
+        context->lmState.homeLightsArmed == 1 &&
+        (pkt[IBUS_PKT_DB1] & 0x01)
+    ) {
+        context->lmState.homeLightsArmed = 0;
+        LogInfo(LOG_SOURCE_SYSTEM, "Handler: Follow Lights On");
+        HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_HOME_FOLLOW);
     }
 }
 
@@ -803,12 +898,21 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                     } else {
                         IBusCommandGMDoorUnlockHigh(context->ibus);
                     }
+                    context->gmState.unlockState = HANDLER_ZKE_UNLOCK_STATE_UNLOCKING;
                 }
             }
             context->monitorStatus = HANDLER_MONITOR_STATUS_UNSET;
             context->gmState.doorsLocked = 0;
             context->gmState.lowSideDoors = 0;
             TimerUnregisterScheduledTask(&HandlerTimerIBusIdent);
+            // Arm Follow Me Home if ignition was at KL15 or above
+            uint8_t homeLights = ConfigGetSetting(CONFIG_SETTING_COMFORT_HOME_LIGHTS);
+            if (
+                homeLights == CONFIG_SETTING_HOME_LIGHTS_FOLLOW ||
+                homeLights == CONFIG_SETTING_HOME_LIGHTS_BOTH
+            ) {
+                context->lmState.homeLightsArmed = 1;
+            }
 
         // If the engine was on, but now it's in position 1
         } else if (
@@ -828,12 +932,13 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
                     } else {
                         IBusCommandGMDoorUnlockHigh(context->ibus);
                     }
+                    context->gmState.unlockState = HANDLER_ZKE_UNLOCK_STATE_UNLOCKING;
                 }
             }
             IBusCommandTELLED(context->ibus, IBUS_TEL_LED_OFF);
             if (
-                context->lmState.comfortBlinkerStatus != HANDLER_LM_COMF_BLINK_OFF ||
-                context->lmState.comfortParkingLampsStatus != HANDLER_LM_COMF_PARKING_OFF
+                context->lmState.blinkMode != HANDLER_LM_COMF_BLINK_OFF ||
+                context->lmState.parkingLampsMode != HANDLER_LM_COMF_PARKING_OFF
             ) {
                 HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_ALL_OFF);
             }
@@ -842,9 +947,15 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             context->ibus->ignitionStatus == IBUS_IGNITION_OFF &&
             ignitionStatus != IBUS_IGNITION_OFF
         ) {
+            // Cancel any active home lights
+            if (context->lmState.homeLightsMode != IBUS_LM_HOME_OFF) {
+                HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_HOME_OFF);
+            }
+            context->lmState.homeLightsArmed = 0;
             // Enable Telephone on
             UtilsSetPinMode(UTILS_PIN_TEL_ON, 1);
             context->telOnStatus = HANDLER_TEL_ON;
+            context->gmState.unlockState = HANDLER_ZKE_UNLOCK_STATE_OFF;
             LogDebug(LOG_SOURCE_SYSTEM, "Ign On");
             // Reset the metadata so we don't display the wrong data
             BTClearMetadata(context->bt);
@@ -949,6 +1060,7 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
                 IBusCommandGMDoorLockAll(context->ibus);
             }
             context->gmState.doorsLocked = 1;
+            context->gmState.unlockState = HANDLER_ZKE_UNLOCK_STATE_OFF;
         }
     }
     // Turn off the BMBT when the vehicle sets off
@@ -1043,7 +1155,8 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
         uint8_t lightStatus = pkt[IBUS_PKT_DB1];
         uint8_t lightStatus2 = pkt[IBUS_PKT_DB3];
         // Left blinker
-        if (UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
+        if (
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_LEFT_SIG_BIT) != 0 &&
             UTILS_CHECK_BIT(lightStatus, IBUS_LM_RIGHT_SIG_BIT) == 0 &&
             UTILS_CHECK_BIT(lightStatus2, IBUS_LM_BLINK_SIG_BIT) != 0
         ) {
@@ -1056,7 +1169,7 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
             context->lmState.blinkCount++;
             context->lmState.blinkStatus = HANDLER_LM_BLINK_LEFT;
 
-            switch (context->lmState.comfortBlinkerStatus) {
+            switch (context->lmState.blinkMode) {
                 case HANDLER_LM_COMF_BLINK_OFF:
                     LogDebug(
                         CONFIG_DEVICE_LOG_SYSTEM,
@@ -1109,7 +1222,7 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
             }
             context->lmState.blinkCount++;
             context->lmState.blinkStatus = HANDLER_LM_BLINK_RIGHT;
-            switch (context->lmState.comfortBlinkerStatus) {
+            switch (context->lmState.blinkMode) {
                 case HANDLER_LM_COMF_BLINK_OFF:
                     LogDebug(
                         CONFIG_DEVICE_LOG_SYSTEM,
@@ -1163,7 +1276,7 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
                     context->lmState.blinkCount
                 );
                 // I believe this is redundant, but better safe than sorry.
-                switch (context->lmState.comfortBlinkerStatus) {
+                switch (context->lmState.blinkMode) {
                     case HANDLER_LM_COMF_BLINK_RIGHT:
                         LogDebug(
                             CONFIG_DEVICE_LOG_SYSTEM,
@@ -1218,7 +1331,7 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
     if (parkingLamps == CONFIG_SETTING_ON) {
         uint8_t lightStatus = pkt[IBUS_PKT_DB1];
         if (
-            context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON ||
+            context->lmState.parkingLampsMode == HANDLER_LM_COMF_PARKING_ON ||
             UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
             UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
             UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
@@ -1227,7 +1340,7 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
         }
         HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_ON);
     } else {
-        if (context->lmState.comfortParkingLampsStatus == HANDLER_LM_COMF_PARKING_ON) {
+        if (context->lmState.parkingLampsMode == HANDLER_LM_COMF_PARKING_ON) {
             HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_OFF);
         }
     }
@@ -1247,10 +1360,7 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
 void HandlerIBusLMDimmerStatus(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (
-        ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON &&
-        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF
-    ) {
+    if (ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF) {
         uint8_t checksum = IBusGetLMDimmerChecksum(pkt);
         if (checksum != context->lmDimmerChecksum) {
             IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
@@ -1961,16 +2071,21 @@ void HandlerTimerIBusLCMIOStatus(void *ctx)
 void HandlerTimerIBusLightingState(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetLightingFeaturesActive() == CONFIG_SETTING_ON) {
-        uint32_t now = TimerGetMillis();
-        if (HandlerIBusGetIsIgnitionStatusOn(context) == 1 &&
-            (now - context->lmLastStatusSet) >= 10000 &&
-            (
-                context->lmState.comfortBlinkerStatus != HANDLER_LM_COMF_BLINK_OFF ||
-                context->lmState.comfortParkingLampsStatus != HANDLER_LM_COMF_PARKING_OFF
-            )
-        ) {
-            HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_REFRESH);
+    if (
+        (
+            context->lmState.blinkMode != HANDLER_LM_COMF_BLINK_OFF ||
+            context->lmState.parkingLampsMode != HANDLER_LM_COMF_PARKING_OFF
+        ) &&
+        HandlerIBusGetIsIgnitionStatusOn(context) == 1 &&
+        (TimerGetMillis() - context->lmLastStatusSet) >= 10000
+    ) {
+        HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_REFRESH);
+    }
+    if (context->lmState.homeLightsMode != IBUS_LM_HOME_OFF) {
+        context->lmState.homeLightsTicks++;
+        if (context->lmState.homeLightsTicks >= HANDLER_LM_HOME_LIGHT_INTERVALS) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Handler: Home Lights Timeout");
+            HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_HOME_OFF);
         }
     }
 }
