@@ -146,7 +146,7 @@ def send_file(data):
 
 if __name__ == '__main__':
     try:
-        parser = ArgumentParser(description='Interact with the BlueBus Bootloader')
+        parser = ArgumentParser(description='Interact with the BlueBus Bootloader', epilog='Multiple options can be used to perform a sequence of operations. For example, to program firmware and then start the application, use the --firmware and --start options.')
         parser.add_argument(
             '--port',
             metavar='port',
@@ -307,8 +307,13 @@ if __name__ == '__main__':
                                 send_file(data[data_idx])
                             else:
                                 print() # Add New line
-                                today = date.today().isocalendar()
-                                write_build(today[1], today[0] - 2000)
+                                if args.writebuild:
+                                    today = date.today().isocalendar()
+                                    write_build(today[1], today[0] - 2000)
+                                elif args.start:
+                                    start_app()
+                                else:
+                                    sys.exit(0)
                         if command == PROTOCOL_CMD_READ_SN_RESPONSE:
                             serial_number = ord(rx_buffer[0]) << 8 | ord(rx_buffer[1])
                             print('SN: %d' % serial_number)
@@ -353,6 +358,8 @@ if __name__ == '__main__':
                                 write_sn(msb, lsb)
                             elif args.start:
                                 start_app()
+                            else:
+                                sys.exit(0)
                         if command == PROTOCOL_CMD_START_APP_RESPONSE:
                             print('App Started')
                             sys.exit(0)
