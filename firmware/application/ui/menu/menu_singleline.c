@@ -44,10 +44,10 @@ static uint8_t SETTINGS_TO_CONFIG_MAP[] = {
     CONFIG_SETTING_TEL_MODE,
     CONFIG_SETTING_COMFORT_BLINKERS,
     CONFIG_SETTING_COMFORT_PARKING_LAMPS,
+    CONFIG_SETTING_COMFORT_HOME_LIGHTS,
     CONFIG_SETTING_COMFORT_LOCKS,
     CONFIG_SETTING_COMFORT_UNLOCK,
-    CONFIG_SETTING_VISUAL_PDC,
-    CONFIG_SETTING_COMFORT_HOME_LIGHTS
+    CONFIG_SETTING_VISUAL_PDC
 };
 
 /**
@@ -476,8 +476,8 @@ void MenuSingleLineSettingsScroll(MenuSingleLineContext_t *context, uint8_t dire
     if (context->settingMode == MENU_SINGLELINE_SETTING_MODE_SCROLL_SETTINGS) {
         uint8_t nextOption = 0;
         if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_METADATA_MODE && direction == 0x01) {
-            nextOption = SETTINGS_MENU[MENU_SINGLELINE_SETTING_IDX_HOME_LIGHTS];
-        } else if(context->settingIdx == MENU_SINGLELINE_SETTING_IDX_HOME_LIGHTS && direction == 0x00) {
+            nextOption = SETTINGS_MENU[MENU_SINGLELINE_SETTING_IDX_PAIRINGS];
+        } else if(context->settingIdx == MENU_SINGLELINE_SETTING_IDX_PAIRINGS && direction == 0x00) {
             nextOption = SETTINGS_MENU[MENU_SINGLELINE_SETTING_IDX_METADATA_MODE];
         } else {
             if (direction == 0x00) {
