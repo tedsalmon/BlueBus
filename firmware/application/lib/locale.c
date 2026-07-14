@@ -64,6 +64,7 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Volume: 0dB",
     "Lang: %s",
     "Park Lts.: Front",
+    "Park Lts.: Both",
     "Park Lts.: Off",
     "Vol. Rev: On",
     "Vol. Rev: Off",
@@ -102,7 +103,6 @@ static char *LOCALE_LANG_ENGLISH[] = {
     "Home Lts.: Welc",
     "Home Lts.: Fol.",
     "Home Lts.: Both",
-    "Park Lts.: Both",
 };
 
 static char *LOCALE_LANG_FRENCH[] = {
@@ -162,6 +162,7 @@ static char *LOCALE_LANG_FRENCH[] = {
     "Volume: 0dB",
     "Langue: %s",
     "Feux park.: Oui",
+    "Feux park.: Les 2",
     "Feux park.: Non",
     "Vol. inv.: Oui",
     "Vol. inv.: Non",
@@ -200,7 +201,6 @@ static char *LOCALE_LANG_FRENCH[] = {
     "Feux M.: Bienve",
     "Feux M.: Suivi",
     "Feux M.: Les 2",
-    "Feux park.: Les 2",
 };
 
 static char *LOCALE_LANG_ITALIAN[] = {
@@ -260,6 +260,7 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Volume: 0dB",
     "Lingua: %s",
     "Luci park.: S\xEC",
+    "Luci park.: Entram",
     "Luci park.: No",
     "Vol. Inv.: S\xEC",
     "Vol. Inv.: No",
@@ -298,7 +299,6 @@ static char *LOCALE_LANG_ITALIAN[] = {
     "Luci C.: Benve",
     "Luci C.: Seg.",
     "Luci C.: Entram",
-    "Luci park.: Entram",
 };
 
 static char *LOCALE_LANG_DUTCH[] = {
@@ -358,6 +358,7 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Volume: 0dB",
     "Taal: %s",
     "Parklicht: Aan",
+    "Parklicht: Beide",
     "Parklicht: Uit",
     "Vol. Rev: Aan",
     "Vol. Rev: Uit",
@@ -396,7 +397,6 @@ static char *LOCALE_LANG_DUTCH[] = {
     "Thuisl.: Welk.",
     "Thuisl.: Volg.",
     "Thuisl.: Beide",
-    "Parklicht: Beide",
 };
 
 static char *LOCALE_LANG_ESTONIAN[] = {
@@ -456,6 +456,7 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Heli: 0dB",
     "Keel: %s",
     "Parktuled: Sees",
+    "Parktuled: M\xF5l.",
     "Parktuled: V\xE4lj",
     "Tag. heli: Sees",
     "Tag. heli: V\xE4lj",
@@ -494,7 +495,6 @@ static char *LOCALE_LANG_ESTONIAN[] = {
     "Kodutuled: Terv",
     "Kodutuled: J\xE4rg",
     "Kodutuled: M\xF5l.",
-    "Parktuled: M\xF5l.",
 };
 
 static char LOCALE_LANG_RUSSIAN[][24] = {
@@ -554,6 +554,7 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     {195,240,238,236,234,':',' ','0','d','B',0},
     {223,231,251,234,':',' ','%','s',0},
     "Park Lts.: Off",
+    "Park Lts.: Both",
     "Park Lts.: On",
     "Vol. Rev: Off",
     "Vol. Rev: On",
@@ -592,7 +593,6 @@ static char LOCALE_LANG_RUSSIAN[][24] = {
     "Home Lts.: Welc",
     "Home Lts.: Fol.",
     "Home Lts.: Both",
-    "Park Lts.: Both",
 };
 
 static char *LOCALE_LANG_GERMAN[] = {
@@ -652,6 +652,7 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Lautst: 0dB",
     "Sprache: %s",
     "Park Lts.: Ein",
+    "Park Lts.: Beide",
     "Park Lts.: Aus",
     "Vol. Rev: Ein",
     "Vol. Rev: Aus",
@@ -690,7 +691,6 @@ static char *LOCALE_LANG_GERMAN[] = {
     "Heim Lt.: Begr\xFC",
     "Heim Lt.: Folg.",
     "Heim Lt.: Beide",
-    "Park Lts.: Beide",
 };
 
 static char *LOCALE_LANG_SPANISH[] = {
@@ -750,6 +750,7 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Volumen: 0dB",
     "Idioma: %s",
     "Park Lts.: Enc.",
+    "Park Lts.: Ambos",
     "Park Lts.: Apg.",
     "Vol. Rev: Enc.",
     "Vol. Rev: Apg.",
@@ -788,7 +789,6 @@ static char *LOCALE_LANG_SPANISH[] = {
     "Luces H.: Bien.",
     "Luces H.: Seg.",
     "Luces H.: Ambos",
-    "Park Lts.: Ambos",
 };
 
 static char *LOCALE_LANG_POLISH[] = {
@@ -848,6 +848,7 @@ static char *LOCALE_LANG_POLISH[] = {
     "Glosnosc: 0dB",
     "Jezyk: %s",
     "Sw. poz.: Wl.",
+    "Sw. poz.: Oba",
     "Sw. poz.: Wyl.",
     "Kor. Dzw.: Wl.",
     "Kor. Dzw.: Wyl.",
@@ -886,7 +887,6 @@ static char *LOCALE_LANG_POLISH[] = {
     "Sw. dom.: Pow.",
     "Sw. dom.: Odpr.",
     "Sw. dom.: Oba",
-    "Sw. poz.: Oba",
 };
 
 /**
