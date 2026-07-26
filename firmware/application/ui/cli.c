@@ -894,6 +894,14 @@ void CLIProcess()
                     } else if (UtilsStricmp(msgBuf[2], "ALWAYSON") == 0) {
                         if (UtilsStricmp(msgBuf[3], "ON") == 0) {
                             ConfigSetSetting(CONFIG_SETTING_IGN_ALWAYS_ON, CONFIG_SETTING_ON);
+                            uint8_t ignitionStatus = 0x01;
+                            IBusCommandIKESetIgnitionStatus(cli.ibus, ignitionStatus);
+                            EventTriggerCallback(
+                                IBUS_EVENT_IKE_IGNITION_STATUS,
+                                (uint8_t *)&ignitionStatus
+                            );
+                            cli.ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
+                            cli.ibus->ignitionStatus = 1;
                         } else if (UtilsStricmp(msgBuf[3], "OFF") == 0) {
                             ConfigSetSetting(CONFIG_SETTING_IGN_ALWAYS_ON, CONFIG_SETTING_OFF);
                         } else {

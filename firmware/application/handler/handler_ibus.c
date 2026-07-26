@@ -193,6 +193,7 @@ void HandlerIBusInit(HandlerContext_t *context)
     );
     if (ConfigGetSetting(CONFIG_SETTING_IGN_ALWAYS_ON) == CONFIG_SETTING_ON) {
         IBusSetInternalIgnitionStatus(context->ibus, IBUS_IGNITION_KL15);
+        context->ibus->cdChangerFunction = IBUS_CDC_FUNC_PLAYING;
     }
 }
 
