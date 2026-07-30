@@ -97,8 +97,8 @@ void HandlerIBusInit(HandlerContext_t *context)
         context
     );
     EventRegisterCallback(
-        IBUS_EVENT_LCM_REDUNDANT_DATA,
-        &HandlerIBusLMRedundantData,
+        IBUS_EVENT_REDUNDANT_DATA,
+        &HandlerIBusRedundantData,
         context
     );
     EventRegisterCallback(
@@ -696,6 +696,18 @@ void HandlerIBusGMIdentResponse(void *ctx, uint8_t *pkt)
     if (ConfigGetSetting(CONFIG_GM_VARIANT_ADDRESS) != *pkt) {
         ConfigSetSetting(CONFIG_GM_VARIANT_ADDRESS, *pkt);
     }
+    // R50/R53 Mini Cooper: the ZKE is also the LSZ -- there is no separate
+    // light module at 0xD0. Redirect all LM requests to the GM address.
+    if (*pkt == IBUS_GM_ZKEBC1) {
+        context->ibus->moduleStatus.LCM = 1;
+        context->ibus->lmVariant = IBUS_LM_ZKEBC1;
+        ConfigSetLMVariant(IBUS_LM_ZKEBC1);
+    }
+    if (*pkt == IBUS_GM_ZKEBC1RD) {
+        context->ibus->moduleStatus.LCM = 1;
+        context->ibus->lmVariant = IBUS_LM_ZKEBC1RD;
+        ConfigSetLMVariant(IBUS_LM_ZKEBC1RD);
+    }
 }
 
 /**
@@ -914,7 +926,6 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             context->monitorStatus = HANDLER_MONITOR_STATUS_UNSET;
             context->gmState.doorsLocked = 0;
             context->gmState.lowSideDoors = 0;
-            TimerUnregisterScheduledTask(&HandlerTimerIBusIdent);
             // Arm Follow Me Home if ignition was at KL15 or above
             uint8_t homeLightss = ConfigGetSetting(CONFIG_SETTING_COMFORT_HOME_LIGHTS);
             if (
@@ -1372,69 +1383,18 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
 void HandlerIBusLMDimmerStatus(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF) {
+    if (
+        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF &&
+        context->ibus->lmVariant != IBUS_LM_ZKEBC1 &&
+        context->ibus->lmVariant != IBUS_LM_ZKEBC1RD
+    ) {
         uint8_t checksum = IBusGetLMDimmerChecksum(pkt);
-        if (checksum != context->lmDimmerChecksum) {
-            IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
-            context->lmDimmerChecksum = checksum;
-            context->lmLastIOStatus = TimerGetMillis();
+        if (checksum == context->lmDimmerChecksum) {
+            return;
         }
-    }
-}
-
-/**
- * HandlerIBusLMRedundantData()
- *     Description:
- *         Check the VIN to see if we're in a new vehicle
- *         Raw: D0 10 80 54 50 4E 66 05 80 06 10 42 38 07 00 06 05 81
- *     Params:
- *         void *ctx - The context provided at registration
- *         uint8_t *tmp - Any event data
- *     Returns:
- *         void
- */
-void HandlerIBusLMRedundantData(void *ctx, uint8_t *pkt)
-{
-    HandlerContext_t *context = (HandlerContext_t *) ctx;
-    uint8_t currentVehicleId[5] = {};
-    ConfigGetVehicleIdentity(currentVehicleId);
-    uint8_t vehicleId[] = {
-        pkt[IBUS_PKT_DB1],
-        pkt[IBUS_PKT_DB2],
-        pkt[IBUS_PKT_DB3],
-        pkt[IBUS_PKT_DB4],
-        (pkt[IBUS_PKT_DB5] >> 4) & 0xF,
-    };
-    // Check VIN
-    if (memcmp(&vehicleId, &currentVehicleId, 5) != 0) {
-        char vinTwo[] = {vehicleId[0], vehicleId[1], '\0'};
-        LogWarning(
-            "Detected VIN Change: %s%02x%02x%x",
-            vinTwo,
-            vehicleId[2],
-            vehicleId[3],
-            vehicleId[4]
-        );
-        // Reset what we know about the car
-        ConfigSetByte(CONFIG_UI_MODE, 0x00);
-        ConfigSetByte(CONFIG_NAV_TYPE, 0x00);
-        ConfigSetByte(CONFIG_VEHICLE_TYPE, 0x00);
-        ConfigSetByte(CONFIG_LM_VARIANT, 0x00);
-        ConfigSetByte(CONFIG_GM_VARIANT, 0x00);
-        // Save the new VIN
-        ConfigSetVehicleIdentity(vehicleId);
-        // Request the vehicle configuration
-        IBusCommandIKEGetVehicleConfig(context->ibus);
-        // Fallback to the CD53 UI as appropriate
-        if (context->ibus->moduleStatus.MID == 0 &&
-            context->ibus->moduleStatus.GT == 0 &&
-            context->ibus->moduleStatus.BMBT == 0 &&
-            context->ibus->moduleStatus.VM == 0 &&
-            context->uiMode != CONFIG_UI_CD53
-        ) {
-            LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
-            HandlerIBusSwitchUI(context, CONFIG_UI_CD53);
-        }
+        IBusCommandDIAGetIOStatus(context->ibus, IBUS_DEVICE_LCM);
+        context->lmDimmerChecksum = checksum;
+        context->lmLastIOStatus = TimerGetMillis();
     }
 }
 
@@ -1754,6 +1714,63 @@ void HandlerIBusPDCStatus(void *ctx, uint8_t *pkt)
 }
 
 /**
+ * HandlerIBusRedundantData()
+ *     Description:
+ *         Check the VIN to see if we're in a new vehicle
+ *         Note: We can also receive redundant data from the ZKE on Mini's
+ *         Raw: D0 10 80 54 50 4E 66 05 80 06 10 42 38 07 00 06 05 81
+ *     Params:
+ *         void *ctx - The context provided at registration
+ *         uint8_t *tmp - Any event data
+ *     Returns:
+ *         void
+ */
+void HandlerIBusRedundantData(void *ctx, uint8_t *pkt)
+{
+    HandlerContext_t *context = (HandlerContext_t *) ctx;
+    uint8_t currentVehicleId[5] = {};
+    ConfigGetVehicleIdentity(currentVehicleId);
+    uint8_t vehicleId[] = {
+        pkt[IBUS_PKT_DB1],
+        pkt[IBUS_PKT_DB2],
+        pkt[IBUS_PKT_DB3],
+        pkt[IBUS_PKT_DB4],
+        (pkt[IBUS_PKT_DB5] >> 4) & 0xF,
+    };
+    // Check VIN
+    if (memcmp(&vehicleId, &currentVehicleId, 5) != 0) {
+        char vinTwo[] = {vehicleId[0], vehicleId[1], '\0'};
+        LogWarning(
+            "Detected VIN Change: %s%02x%02x%x",
+            vinTwo,
+            vehicleId[2],
+            vehicleId[3],
+            vehicleId[4]
+        );
+        // Reset what we know about the car
+        ConfigSetByte(CONFIG_UI_MODE, 0x00);
+        ConfigSetByte(CONFIG_NAV_TYPE, 0x00);
+        ConfigSetByte(CONFIG_VEHICLE_TYPE, 0x00);
+        ConfigSetByte(CONFIG_LM_VARIANT, 0x00);
+        ConfigSetByte(CONFIG_GM_VARIANT, 0x00);
+        // Save the new VIN
+        ConfigSetVehicleIdentity(vehicleId);
+        // Request the vehicle configuration
+        IBusCommandIKEGetVehicleConfig(context->ibus);
+        // Fallback to the CD53 UI as appropriate
+        if (context->ibus->moduleStatus.MID == 0 &&
+            context->ibus->moduleStatus.GT == 0 &&
+            context->ibus->moduleStatus.BMBT == 0 &&
+            context->ibus->moduleStatus.VM == 0 &&
+            context->uiMode != CONFIG_UI_CD53
+        ) {
+            LogInfo(LOG_SOURCE_SYSTEM, "Fallback to CD53");
+            HandlerIBusSwitchUI(context, CONFIG_UI_CD53);
+        }
+    }
+}
+
+/**
  * HandlerIBusVMDIAIdentityResponse()
  *     Description:
  *         Identify the video module hardware and software versions
@@ -2069,7 +2086,11 @@ void HandlerTimerIBusCDCSendStatus(void *ctx)
 void HandlerTimerIBusLCMIOStatus(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF) {
+    if (
+        ConfigGetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED) == CONFIG_SETTING_OFF &&
+        context->ibus->lmVariant != IBUS_LM_ZKEBC1 &&
+        context->ibus->lmVariant != IBUS_LM_ZKEBC1RD
+    ) {
         uint32_t now = TimerGetMillis();
         uint32_t timeDiff = now - context->lmLastIOStatus;
         if (timeDiff >= HANDLER_LCM_IO_TIMEOUT && HandlerIBusGetIsIgnitionStatusOn(context) == 1) {
@@ -2171,6 +2192,9 @@ void HandlerTimerIBusIdent(void *ctx)
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t lmVariant = ConfigGetLMVariant();
     uint8_t gmVariant = ConfigGetSetting(CONFIG_GM_VARIANT);
+    if (context->ibus->ignitionStatus < IBUS_IGNITION_KL15) {
+        return;
+    }
     if (
         context->ibus->moduleStatus.LCM == 1 &&
         lmVariant == CONFIG_SETTING_OFF
@@ -2180,7 +2204,6 @@ void HandlerTimerIBusIdent(void *ctx)
     }
     if (
         context->ibus->moduleStatus.GM == 1 &&
-        context->ibus->ignitionStatus >= IBUS_IGNITION_KL15 &&
         gmVariant == CONFIG_SETTING_OFF
     ) {
         // Identify the ZKE / GM if we do not have an ID for it
