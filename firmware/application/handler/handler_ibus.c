@@ -2010,6 +2010,14 @@ void HandlerTimerIBusCDCAnnounce(void *ctx)
     uint32_t now = TimerGetMillis();
     uint32_t pollTimeDiff = now - context->cdChangerLastPoll;
     uint32_t radRxTimeDiff = now - context->radLastMessage;
+    if (
+        context->ibus->ignitionStatus == IBUS_IGNITION_KL99 &&
+        radRxTimeDiff >= HANDLER_KL99_RAD_TIMEOUT_MILLIS
+    ) {
+        LogWarning("KL-99: Timeout");
+        IBusSetInternalIgnitionStatus(context->ibus, IBUS_IGNITION_OFF);
+        return;
+    }
     if (pollTimeDiff >= HANDLER_CDC_ANOUNCE_TIMEOUT &&
         radRxTimeDiff < 61000 &&
         HandlerIBusGetIsIgnitionStatusOn(context) == 1
