@@ -670,6 +670,9 @@ void HandlerIBusGMDiagAck(void *ctx, uint8_t *pkt)
     if (context->gmState.unlockState == HANDLER_ZKE_UNLOCK_STATE_UNLOCKING) {
         context->gmState.unlockState = HANDLER_ZKE_UNLOCK_STATE_OFF;
         IBusCommandGMDoorCenterLockButton(context->ibus);
+    } else if (context->gmState.lockState == HANDLER_ZKE_LOCK_STATE_LOCKING) {
+        context->gmState.lockState = HANDLER_ZKE_LOCK_STATE_OFF;
+        IBusCommandGMDoorLockDriver(context->ibus);
     }
 }
 
@@ -749,6 +752,7 @@ void HandlerIBusGMDoorsFlapsStatusResponse(void *ctx, uint8_t *pkt)
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks locked");
         context->gmState.doorsLocked = 1;
         context->gmState.unlockState = 0;
+        context->gmState.lockState = 0;
     } else {
         LogInfo(LOG_SOURCE_SYSTEM, "Handler: Central Locks unlocked");
         context->gmState.doorsLocked = 0;
@@ -962,6 +966,7 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             UtilsSetPinMode(UTILS_PIN_TEL_ON, 1);
             context->telOnStatus = HANDLER_TEL_ON;
             context->gmState.unlockState = HANDLER_ZKE_UNLOCK_STATE_OFF;
+            context->gmState.lockState = HANDLER_ZKE_LOCK_STATE_OFF;
             LogDebug(LOG_SOURCE_SYSTEM, "Ign On");
             // Reset the metadata so we don't display the wrong data
             BTClearMetadata(context->bt);
@@ -1064,6 +1069,7 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
                 IBusCommandGMDoorCenterLockButton(context->ibus);
             } else {
                 IBusCommandGMDoorLockAll(context->ibus);
+                context->gmState.lockState = HANDLER_ZKE_LOCK_STATE_LOCKING;
             }
             context->gmState.doorsLocked = 1;
             context->gmState.unlockState = HANDLER_ZKE_UNLOCK_STATE_OFF;

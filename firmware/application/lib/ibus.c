@@ -2263,9 +2263,29 @@ void IBusCommandGMDoorLockAll(IBus_t *ibus)
 }
 
 /**
+ * IBusCommandGMDoorLockDriver()
+ *     Description:
+ *        Issue a diagnostic message to the ZKE5 to lock the driver door
+ *        via its dedicated motor (MVRFT)
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandGMDoorLockDriver(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_CMD_DIA_JOB_REQUEST,
+        IBUS_CMD_ZKE5_JOB_LOCK_DRIVER,
+        0x01
+    };
+    IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
+}
+
+/**
  * IBusCommandGTBMBTControl()
  *     Description:
- *        Issue a diagnostic message to the GM to lock all doors
+ *        Issue a diagnostic message to set the monitor status
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         uint8_t status - The status to set the monitor to

@@ -162,6 +162,7 @@
 
 #define IBUS_CMD_ZKE5_JOB_CENTRAL_LOCK 0x03
 #define IBUS_CMD_ZKE5_JOB_LOCK_ALL 0x4F
+#define IBUS_CMD_ZKE5_JOB_LOCK_DRIVER 0x47
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_LOW 0x37
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_ALL 0x45
 #define IBUS_CMD_ZKE5_JOB_UNLOCK_TRUNK 0x06
@@ -796,6 +797,7 @@ void IBusCommandGMDoorLockHigh(IBus_t *);
 void IBusCommandGMDoorLockLow(IBus_t *);
 void IBusCommandGMDoorUnlockAll(IBus_t *);
 void IBusCommandGMDoorLockAll(IBus_t *);
+void IBusCommandGMDoorLockDriver(IBus_t *);
 void IBusCommandGTBMBTControl(IBus_t *, uint8_t);
 void IBusCommandGTUpdate(IBus_t *, uint8_t);
 void IBusCommandGTWriteBusinessNavTitle(IBus_t *, char *);

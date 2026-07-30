@@ -43,6 +43,8 @@
 #define HANDLER_GT_STATUS_CHECKED 1
 #define HANDLER_ZKE_UNLOCK_STATE_OFF 0
 #define HANDLER_ZKE_UNLOCK_STATE_UNLOCKING 1
+#define HANDLER_ZKE_LOCK_STATE_OFF 0
+#define HANDLER_ZKE_LOCK_STATE_LOCKING 1
 #define HANDLER_INT_BC127_STATE 1000
 #define HANDLER_INT_CDC_ANOUNCE 1000
 #define HANDLER_INT_CDC_STATUS 500
@@ -110,6 +112,7 @@ typedef struct HandlerBodyModuleStatus_t {
     uint8_t lowSideDoors: 1;
     uint8_t doorsLocked: 1;
     uint8_t unlockState: 1;
+    uint8_t lockState: 1;
 } HandlerBodyModuleStatus_t;
 
 /**
