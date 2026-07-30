@@ -226,24 +226,25 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
     }
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     // If we were playing before the call, try to resume playback
-    if (context->bt->callStatus == BT_CALL_INACTIVE &&
+    if (
+        context->bt->callStatus == BT_CALL_INACTIVE &&
         context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING
     ) {
         BTCommandPlay(context->bt);
     }
-    // Tell the vehicle what the call status is
-    uint8_t statusChange = HandlerSetIBusTELStatus(
-        context,
-        HANDLER_TEL_STATUS_SET
-    );
-    if (statusChange == 0) {
+    uint8_t currentTelStatus = HandlerGetIBusTELStatus(context);
+    if (context->telStatus == currentTelStatus) {
         return;
+    }
+    // Disable call mode before we change the volume
+    if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE) {
+        HandlerSetIBusTELStatus(context, HANDLER_TEL_STATUS_SET);
     }
     LogDebug(LOG_SOURCE_SYSTEM, "C_TCU");
     if (context->bt->type == BT_BTM_TYPE_BM83) {
         uint8_t micGain = ConfigGetSetting(CONFIG_SETTING_MIC_GAIN);
         while (micGain > 0) {
-            if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+            if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
                 BM83CommandMicGainUp(context->bt);
             } else {
                 BM83CommandMicGainDown(context->bt);
@@ -254,7 +255,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
     uint8_t boardVersion = UtilsGetBoardVersion();
     // Handle volume control
     if (HandlerGetTelMode(context) == HANDLER_TEL_MODE_TCU) {
-        if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+        if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
             LogDebug(LOG_SOURCE_SYSTEM, "C_TCU > 1");
             if (
                 boardVersion == BOARD_VERSION_TWO &&
@@ -295,7 +296,7 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             sourceSystem = IBUS_DEVICE_MFL;
             volStepMax = 0x01;
         }
-        if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+        if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
             if (
                 context->ibus->cdChangerFunction == IBUS_CDC_FUNC_NOT_PLAYING &&
                 dspMode == CONFIG_SETTING_DSP_INPUT_SPDIF &&
@@ -313,9 +314,6 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                 IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_RADIO);
             }
             LogDebug(LOG_SOURCE_SYSTEM, "Call > 1");
-            if (strlen(context->bt->callerId) > 0 && context->uiMode != CONFIG_UI_CD53) {
-                IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
-            }
             if (volume > CONFIG_SETTING_TEL_VOL_OFFSET_MAX) {
                 volume = CONFIG_SETTING_TEL_VOL_OFFSET_MAX;
                 ConfigSetSetting(CONFIG_SETTING_TEL_VOL, CONFIG_SETTING_TEL_VOL_OFFSET_MAX);
@@ -380,6 +378,13 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             ) {
                 IBusCommandDSPSetMode(context->ibus, IBUS_DSP_CONFIG_SET_INPUT_SPDIF);
             }
+        }
+    }
+    // Enable call mode AFTER we change the volume
+    if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+        HandlerSetIBusTELStatus(context, HANDLER_TEL_STATUS_SET);
+        if (strlen(context->bt->callerId) > 0 && context->uiMode != CONFIG_UI_CD53) {
+            IBusCommandTELStatusText(context->ibus, context->bt->callerId, 0);
         }
     }
 }
@@ -900,7 +905,7 @@ void HandlerTimerBTScanDevices(void *ctx)
 void HandlerTimerBTTCUStateChange(void *ctx)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (context->telStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+    if (HandlerGetIBusTELStatus(context) == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
         LogDebug(LOG_SOURCE_SYSTEM, "C_TCU > 2");
         uint8_t telMode = ConfigGetSetting(CONFIG_SETTING_TEL_MODE);
         if (

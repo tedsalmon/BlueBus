@@ -35,6 +35,26 @@ uint8_t HandlerGetTelMode(HandlerContext_t *context)
 }
 
 /**
+ * HandlerGetIBusTELStatus()
+ *     Description:
+ *         Get the TEL status based on the current state
+ *     Params:
+ *         HandlerContext_t *context - The module context
+ *     Returns:
+ *         uint8_t - The current phone state
+ */
+uint8_t HandlerGetIBusTELStatus(HandlerContext_t *context)
+{
+    uint8_t currentTelStatus = 0x00;
+    if (context->bt->scoStatus == BT_CALL_SCO_OPEN) {
+        currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE;
+    } else {
+        currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
+    }
+    return currentTelStatus;
+}
+
+/**
  * HandlerSetIBusTELStatus()
  *     Description:
  *         Send the TEL status to the vehicle
@@ -47,35 +67,32 @@ uint8_t HandlerGetTelMode(HandlerContext_t *context)
  */
 uint8_t HandlerSetIBusTELStatus(
     HandlerContext_t *context,
-    unsigned char sendFlag
+    uint8_t sendFlag
 ) {
-    if (ConfigGetTelephonyFeaturesActive() == CONFIG_SETTING_ON) {
-        unsigned char currentTelStatus = 0x00;
-        if (context->bt->scoStatus == BT_CALL_SCO_OPEN) {
-            currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE;
-        } else {
-            currentTelStatus = IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE;
-        }
-        if (context->telStatus != currentTelStatus ||
-            sendFlag == HANDLER_TEL_STATUS_FORCE
+    if (ConfigGetTelephonyFeaturesActive() != CONFIG_SETTING_ON) {
+        return 0;
+    }
+    uint8_t currentTelStatus = HandlerGetIBusTELStatus(context);
+    if (
+        context->telStatus != currentTelStatus ||
+        sendFlag == HANDLER_TEL_STATUS_FORCE
+    ) {
+        context->telStatus = currentTelStatus;
+        // Do not set the active call flag for these UIs to allow
+        // the radio volume controls to remain active
+        if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE &&
+            (
+                context->uiMode == CONFIG_UI_CD53 ||
+                context->uiMode == CONFIG_UI_MIR ||
+                context->uiMode == CONFIG_UI_IRIS ||
+                context->ibus->vehicleType == IBUS_VEHICLE_TYPE_R50
+            ) &&
+            context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
         ) {
-            context->telStatus = currentTelStatus;
-            // Do not set the active call flag for these UIs to allow
-            // the radio volume controls to remain active
-            if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE &&
-                (
-                    context->uiMode == CONFIG_UI_CD53 ||
-                    context->uiMode == CONFIG_UI_MIR ||
-                    context->uiMode == CONFIG_UI_IRIS ||
-                    context->ibus->vehicleType == IBUS_VEHICLE_TYPE_R50
-                ) &&
-                context->ibus->cdChangerFunction == IBUS_CDC_FUNC_PLAYING
-            ) {
-                return 1;
-            }
-            IBusCommandTELStatus(context->ibus, currentTelStatus);
             return 1;
         }
+        IBusCommandTELStatus(context->ibus, currentTelStatus);
+        return 1;
     }
     return 0;
 }
