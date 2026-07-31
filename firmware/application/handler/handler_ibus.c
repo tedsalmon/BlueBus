@@ -300,8 +300,8 @@ static void HandlerIBusLMActivateBulbs(
     uint8_t homeLights = context->lmState.homeLightsMode;
     switch (event) {
         case HANDLER_LM_EVENT_ALL_OFF:
-            parkingLamps = HANDLER_LM_COMF_PARKING_OFF;
-            context->lmState.parkingLampsMode = HANDLER_LM_COMF_PARKING_OFF;
+            parkingLamps = IBUS_LM_PARK_LIGHTS_OFF;
+            context->lmState.parkingLampsMode = IBUS_LM_PARK_LIGHTS_OFF;
             blinkers = HANDLER_LM_COMF_BLINK_OFF;
             context->lmState.blinkMode = HANDLER_LM_COMF_BLINK_OFF;
             break;
@@ -318,12 +318,16 @@ static void HandlerIBusLMActivateBulbs(
             context->lmState.blinkMode = HANDLER_LM_COMF_BLINK_RIGHT;
             break;
         case HANDLER_LM_EVENT_PARKING_OFF:
-            parkingLamps = HANDLER_LM_COMF_PARKING_OFF;
-            context->lmState.parkingLampsMode = HANDLER_LM_COMF_PARKING_OFF;
+            parkingLamps = IBUS_LM_PARK_LIGHTS_OFF;
+            context->lmState.parkingLampsMode = IBUS_LM_PARK_LIGHTS_OFF;
             break;
-        case HANDLER_LM_EVENT_PARKING_ON:
-            parkingLamps = HANDLER_LM_COMF_PARKING_ON;
-            context->lmState.parkingLampsMode = HANDLER_LM_COMF_PARKING_ON;
+        case HANDLER_LM_EVENT_PARKING_FRONT:
+            parkingLamps = IBUS_LM_PARK_LIGHTS_FRONT;
+            context->lmState.parkingLampsMode = IBUS_LM_PARK_LIGHTS_FRONT;
+            break;
+        case HANDLER_LM_EVENT_PARKING_FRONT_AND_REAR:
+            parkingLamps = IBUS_LM_PARK_LIGHTS_FRONT_AND_REAR;
+            context->lmState.parkingLampsMode = IBUS_LM_PARK_LIGHTS_FRONT_AND_REAR;
             break;
         case HANDLER_LM_EVENT_HOME_FOLLOW:
             homeLights = IBUS_LM_HOME_FOLLOW;
@@ -342,7 +346,7 @@ static void HandlerIBusLMActivateBulbs(
     }
     if (
         blinkers == HANDLER_LM_COMF_BLINK_OFF &&
-        parkingLamps == HANDLER_LM_COMF_PARKING_OFF &&
+        parkingLamps == IBUS_LM_PARK_LIGHTS_OFF &&
         homeLights == IBUS_LM_HOME_OFF
     ) {
         IBusCommandDIATerminateDiag(context->ibus, IBUS_DEVICE_LCM);
@@ -1351,19 +1355,30 @@ void HandlerIBusLMLightStatus(void *ctx, uint8_t *pkt)
         }
     }
     // Engage ANGEL EYEZ
-    if (parkingLamps == CONFIG_SETTING_ON) {
+    if (parkingLamps == CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT) {
         uint8_t lightStatus = pkt[IBUS_PKT_DB1];
         if (
-            context->lmState.parkingLampsMode == HANDLER_LM_COMF_PARKING_ON ||
+            context->lmState.parkingLampsMode == HANDLER_LM_COMF_PARKING_FRONT ||
             UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
             UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
             UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
         ) {
             return;
         }
-        HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_ON);
+        HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_FRONT);
+    } else if (parkingLamps == CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT_AND_REAR) {
+        uint8_t lightStatus = pkt[IBUS_PKT_DB1];
+        if (
+            context->lmState.parkingLampsMode == HANDLER_LM_COMF_PARKING_FRONT_AND_REAR ||
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_PARKING) ||
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_LOW_BEAM) ||
+            UTILS_CHECK_BIT(lightStatus, IBUS_LM_SIG_BIT_HIGH_BEAM)
+        ) {
+            return;
+        }
+        HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_FRONT_AND_REAR);
     } else {
-        if (context->lmState.parkingLampsMode == HANDLER_LM_COMF_PARKING_ON) {
+        if (context->lmState.parkingLampsMode == HANDLER_LM_COMF_PARKING_FRONT || context->lmState.parkingLampsMode == HANDLER_LM_COMF_PARKING_FRONT_AND_REAR) {
             HandlerIBusLMActivateBulbs(context, HANDLER_LM_EVENT_PARKING_OFF);
         }
     }

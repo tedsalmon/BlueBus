@@ -1267,11 +1267,19 @@ static void BMBTMenuSettingsComfort(BMBTContext_t *context)
         blinkerText,
         0
     );
-    if (ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS) == CONFIG_SETTING_ON) {
+    uint8_t parkingLamps = ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS);
+    if (parkingLamps == CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT) {
         BMBTGTWriteIndex(
             context,
             BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS,
-            LocaleGetText(LOCALE_STRING_PARK_LAMPS_ON),
+            LocaleGetText(LOCALE_STRING_PARK_LAMPS_FRONT),
+            0
+        );
+    } else if (parkingLamps == CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT_AND_REAR) {
+        BMBTGTWriteIndex(
+            context,
+            BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS,
+            LocaleGetText(LOCALE_STRING_PARK_LAMPS_FRONT_AND_REAR),
             0
         );
     } else {
@@ -1887,8 +1895,11 @@ static void BMBTSettingsUpdateComfort(BMBTContext_t *context, uint8_t selectedId
     } else if (selectedIdx == BMBT_MENU_IDX_SETTINGS_COMFORT_PARKING_LAMPS) {
         uint8_t value = ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS);
         if (value == CONFIG_SETTING_OFF) {
-            value = CONFIG_SETTING_ON;
-            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_ON), 0);
+            value = CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT;
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_FRONT), 0);
+        } else if (value == CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT) {
+            value = CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT_AND_REAR;
+            BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_FRONT_AND_REAR), 0);
         } else {
             value = CONFIG_SETTING_OFF;
             BMBTGTWriteIndex(context, selectedIdx, LocaleGetText(LOCALE_STRING_PARK_LAMPS_OFF), 0);

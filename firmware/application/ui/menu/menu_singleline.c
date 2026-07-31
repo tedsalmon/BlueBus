@@ -744,7 +744,24 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
         );
     }
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_PARK_LIGHTS) {
-        if (ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS) == CONFIG_SETTING_OFF) {
+        context->settingValue = ConfigGetSetting(CONFIG_SETTING_COMFORT_PARKING_LAMPS);
+        if (context->settingValue == CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT) {
+            MenuSingleLineSetDisplayText(
+                context,
+                "Parking Lamps: Front",
+                0,
+                MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
+            );
+            context->settingValue = CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT;
+        } else if (context->settingValue == CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT_AND_REAR) {
+            MenuSingleLineSetDisplayText(
+                context,
+                "Parking Lamps: Front,Rear",
+                0,
+                MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
+            );
+            context->settingValue = CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT_AND_REAR;
+        } else {
             MenuSingleLineSetDisplayText(
                 context,
                 "Parking Lamps: Off",
@@ -752,14 +769,6 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
                 MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
             );
             context->settingValue = CONFIG_SETTING_OFF;
-        } else {
-            MenuSingleLineSetDisplayText(
-                context,
-                "Parking Lamps: On",
-                0,
-                MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
-            );
-            context->settingValue = CONFIG_SETTING_ON;
         }
     }
     if (nextMenu == MENU_SINGLELINE_SETTING_IDX_COMFORT_LOCKS) {

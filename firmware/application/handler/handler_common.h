@@ -71,7 +71,8 @@
 #define HANDLER_LM_COMF_BLINK_LEFT 0x01
 #define HANDLER_LM_COMF_BLINK_RIGHT 0x02
 #define HANDLER_LM_COMF_PARKING_OFF 0x00
-#define HANDLER_LM_COMF_PARKING_ON 0x01
+#define HANDLER_LM_COMF_PARKING_FRONT 0x01
+#define HANDLER_LM_COMF_PARKING_FRONT_AND_REAR 0x02
 #define HANDLER_LM_HOME_LIGHT_INTERVALS 30
 #define HANDLER_LM_EVENT_REFRESH 0x00
 #define HANDLER_LM_EVENT_ALL_OFF 0x01
@@ -79,7 +80,8 @@
 #define HANDLER_LM_EVENT_BLINK_LEFT 0x03
 #define HANDLER_LM_EVENT_BLINK_RIGHT 0x04
 #define HANDLER_LM_EVENT_PARKING_OFF 0x05
-#define HANDLER_LM_EVENT_PARKING_ON 0x06
+#define HANDLER_LM_EVENT_PARKING_FRONT 0x06
+#define HANDLER_LM_EVENT_PARKING_FRONT_AND_REAR 0x10
 #define HANDLER_LM_EVENT_HOME_WELCOME 0x07
 #define HANDLER_LM_EVENT_HOME_FOLLOW 0x08
 #define HANDLER_LM_EVENT_HOME_OFF 0x09
@@ -130,7 +132,7 @@ typedef struct HandlerLightControlStatus_t {
     uint8_t blinkCount: 4;
     uint8_t blinkMode: 2;
     uint8_t blinkStatus: 2;
-    uint8_t parkingLampsMode: 1;
+    uint8_t parkingLampsMode: 2;
     uint8_t homeLightsMode: 2;
     uint8_t homeLightsArmed: 1;
     uint8_t homeLightsTicks;
