@@ -228,6 +228,8 @@ static void IBusHandleGMMessage(IBus_t *ibus, uint8_t *pkt)
     } else if (pkt[IBUS_PKT_CMD] == 0xB0) {
         uint8_t err = IBUS_GM_IDENT_ERR;
         EventTriggerCallback(IBUS_EVENT_GM_IDENT_RESP, &err);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RESP_REDUNDANT_DATA) {
+        EventTriggerCallback(IBUS_EVENT_REDUNDANT_DATA, pkt);
     } else if (
         pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
         pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
@@ -621,8 +623,8 @@ static void IBusHandleLCMMessage(IBus_t *ibus, uint8_t *pkt)
         pkt[IBUS_PKT_LEN] == 0x03
     ) {
         EventTriggerCallback(IBUS_EVENT_LCM_DIAGNOSTICS_ACKNOWLEDGE, pkt);
-    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_LCM_RESP_REDUNDANT_DATA) {
-        EventTriggerCallback(IBUS_EVENT_LCM_REDUNDANT_DATA, pkt);
+    } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_RESP_REDUNDANT_DATA) {
+        EventTriggerCallback(IBUS_EVENT_REDUNDANT_DATA, pkt);
     } else if (
         pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
         pkt[IBUS_PKT_CMD] == IBUS_CMD_DIA_DIAG_RESPONSE &&
@@ -2266,9 +2268,29 @@ void IBusCommandGMDoorLockAll(IBus_t *ibus)
 }
 
 /**
+ * IBusCommandGMDoorLockDriver()
+ *     Description:
+ *        Issue a diagnostic message to the ZKE5 to lock the driver door
+ *        via its dedicated motor (MVRFT)
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandGMDoorLockDriver(IBus_t *ibus)
+{
+    uint8_t msg[] = {
+        IBUS_CMD_DIA_JOB_REQUEST,
+        IBUS_CMD_ZKE5_JOB_LOCK_DRIVER,
+        0x01
+    };
+    IBusSendCommand(ibus, IBUS_DEVICE_DIA, IBUS_DEVICE_GM, msg, sizeof(msg));
+}
+
+/**
  * IBusCommandGTBMBTControl()
  *     Description:
- *        Issue a diagnostic message to the GM to lock all doors
+ *        Issue a diagnostic message to set the monitor status
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *         uint8_t status - The status to set the monitor to
@@ -3134,6 +3156,8 @@ void IBusCommandLMGetClusterIndicators(IBus_t *ibus)
  *     Description:
  *        Query the Light Module for the vehicle redundant data (VIN, Mileage)
  *        Raw: 80 03 D0 53 00
+ *        Note: For ZKEBC1/ZKEBC1RD, the response to this message will come from
+ *        the ZKE, but it *will* still respond if we address the light module
  *     Params:
  *         IBus_t *ibus - The pointer to the IBus_t object
  *     Returns:
@@ -3141,7 +3165,7 @@ void IBusCommandLMGetClusterIndicators(IBus_t *ibus)
  */
 void IBusCommandLMGetRedundantData(IBus_t *ibus)
 {
-    uint8_t msg[] = {IBUS_CMD_LCM_REQ_REDUNDANT_DATA};
+    uint8_t msg[] = {IBUS_CMD_REQ_REDUNDANT_DATA};
     IBusSendCommand(
         ibus,
         IBUS_DEVICE_IKE,

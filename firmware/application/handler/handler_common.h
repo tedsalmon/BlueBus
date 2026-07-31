@@ -43,6 +43,8 @@
 #define HANDLER_GT_STATUS_CHECKED 1
 #define HANDLER_ZKE_UNLOCK_STATE_OFF 0
 #define HANDLER_ZKE_UNLOCK_STATE_UNLOCKING 1
+#define HANDLER_ZKE_LOCK_STATE_OFF 0
+#define HANDLER_ZKE_LOCK_STATE_LOCKING 1
 #define HANDLER_INT_BC127_STATE 1000
 #define HANDLER_INT_CDC_ANOUNCE 1000
 #define HANDLER_INT_CDC_STATUS 500
@@ -88,6 +90,7 @@
 #define HANDLER_POWER_OFF 0
 #define HANDLER_POWER_ON 1
 #define HANDLER_POWER_TIMEOUT_MILLIS 61000
+#define HANDLER_KL99_RAD_TIMEOUT_MILLIS 60000
 #define HANDLER_TEL_MODE_AUDIO 0
 #define HANDLER_TEL_MODE_TCU 1
 #define HANDLER_TEL_STATUS_SET 0
@@ -112,6 +115,7 @@ typedef struct HandlerBodyModuleStatus_t {
     uint8_t lowSideDoors: 1;
     uint8_t doorsLocked: 1;
     uint8_t unlockState: 1;
+    uint8_t lockState: 1;
 } HandlerBodyModuleStatus_t;
 
 /**
@@ -173,6 +177,7 @@ typedef struct HandlerContext_t {
 } HandlerContext_t;
 
 uint8_t HandlerGetTelMode(HandlerContext_t *);
-uint8_t HandlerSetIBusTELStatus(HandlerContext_t *, unsigned char);
+uint8_t HandlerGetIBusTELStatus(HandlerContext_t *);
+uint8_t HandlerSetIBusTELStatus(HandlerContext_t *, uint8_t);
 void HandlerSetVolume(HandlerContext_t *, uint8_t);
 #endif /* HANDLER_CONTEXT_H */
