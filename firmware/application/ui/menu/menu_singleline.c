@@ -756,7 +756,7 @@ void MenuSingleLineSettingsNextSetting(MenuSingleLineContext_t *context, uint8_t
         } else if (context->settingValue == CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT_AND_REAR) {
             MenuSingleLineSetDisplayText(
                 context,
-                "Parking Lamps: Front,Rear",
+                "Parking Lamps: Front + Rear",
                 0,
                 MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
             );
@@ -1006,8 +1006,7 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
         }
     }
     if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_LOWER_VOL_REV ||
-        context->settingIdx == MENU_SINGLELINE_SETTING_IDX_TEL_HFP ||
-        context->settingIdx == MENU_SINGLELINE_SETTING_IDX_PARK_LIGHTS
+        context->settingIdx == MENU_SINGLELINE_SETTING_IDX_TEL_HFP
     ) {
         if (context->settingValue == CONFIG_SETTING_OFF) {
             MenuSingleLineSetDisplayText(
@@ -1017,6 +1016,33 @@ void MenuSingleLineSettingsNextValue(MenuSingleLineContext_t *context, uint8_t d
                 MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
             );
             context->settingValue = CONFIG_SETTING_ON;
+        } else {
+            MenuSingleLineSetDisplayText(
+                context,
+                "Off",
+                0,
+                MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
+            );
+            context->settingValue = CONFIG_SETTING_OFF;
+        }
+    }
+    if (context->settingIdx == MENU_SINGLELINE_SETTING_IDX_PARK_LIGHTS) {
+        if (context->settingValue == CONFIG_SETTING_OFF) {
+            MenuSingleLineSetDisplayText(
+                context,
+                "Front",
+                0,
+                MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
+            );
+            context->settingValue = CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT;
+        } else if (context->settingValue == CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT) {
+            MenuSingleLineSetDisplayText(
+                context,
+                "Front + Rear",
+                0,
+                MENU_SINGLELINE_DISPLAY_UPDATE_MAIN
+            );
+            context->settingValue = CONFIG_SETTING_COMFORT_PARK_LIGHTS_FRONT_AND_REAR;
         } else {
             MenuSingleLineSetDisplayText(
                 context,
