@@ -2967,7 +2967,7 @@ void IBusCommandLMActivateBulbs(
             parkingLightLeft = IBUS_LCM_SIDE_MARKER_LEFT;
             parkingLightRight = IBUS_LCM_SIDE_MARKER_RIGHT;
         }
-        if (parkingLights == IBUS_LM_PARK_LIGHTS_FRONT) {
+        if (parkingLights == IBUS_LM_PARK_LIGHTS_FRONT_AND_REAR) {
             tailLeft = IBUS_LCM_TAIL_LAMP_L;
             tailRight = IBUS_LCM_TAIL_LAMP_R;
         }
