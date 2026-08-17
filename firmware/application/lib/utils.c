@@ -95,6 +95,42 @@ uint8_t UtilsConvertCmToIn(uint8_t cm)
 }
 
 /**
+ * UtilsConvertCelsiusToFahrenheit()
+ *     Description:
+ *         Convert Celsius to the nearest whole degree Freedom using integer
+ *         math.
+ *     Params:
+ *         int16_t celsius - The temperature in Celsius
+ *     Returns:
+ *         int16_t The converted and rounded value in Freedom
+ */
+int16_t UtilsConvertCelsiusToFahrenheit(int16_t celsius)
+{
+    int32_t tenths = (int32_t) celsius * 18;
+    if (tenths < 0) {
+        tenths -= 5;
+    } else {
+        tenths += 5;
+    }
+    return (int16_t) ((tenths / 10) + 32);
+}
+
+/**
+ * UtilsConvertKmToMi()
+ *     Description:
+ *         Convert Kilometers to the nearest whole mile using integer math.
+ *         1 mile is 1.609344 km, which reduces to the ratio 15625 / 25146.
+ *     Params:
+ *         uint16_t km - Kilometers
+ *     Returns:
+ *         uint16_t The converted and rounded value in miles
+ */
+uint16_t UtilsConvertKmToMi(uint16_t km)
+{
+    return (uint16_t) ((((uint32_t) km * 15625) + 12573) / 25146);
+}
+
+/**
  * UtilsDisplayValueInit()
  *     Description:
  *         Get a blank display value struct

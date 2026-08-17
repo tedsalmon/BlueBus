@@ -192,7 +192,9 @@ typedef struct UtilsAbstractDisplayValue_t {
     int8_t timeout;
 } UtilsAbstractDisplayValue_t;
 void UtilsCheckRCON();
+int16_t UtilsConvertCelsiusToFahrenheit(int16_t);
 uint8_t UtilsConvertCmToIn(uint8_t);
+uint16_t UtilsConvertKmToMi(uint16_t);
 UtilsAbstractDisplayValue_t UtilsDisplayValueInit(char *, uint8_t);
 uint8_t UtilsGetBoardVersion();
 uint8_t UtilsGetMinByte(uint8_t *, uint8_t);

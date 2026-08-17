@@ -213,7 +213,6 @@ void BMBTRADDisplayMenu(void *, uint8_t *);
 void BMBTRADUpdateMainArea(void *, uint8_t *);
 void BMBTRADScreenModeRequest(void *, uint8_t *);
 void BMBTGTScreenModeSet(void *, uint8_t *);
-void BMBTIBusVehicleConfig(void *, uint8_t *);
 void BMBTTimerHeaderWrite(void *);
 void BMBTTimerMenuSelection(void *);
 void BMBTTimerMenuWrite(void *);

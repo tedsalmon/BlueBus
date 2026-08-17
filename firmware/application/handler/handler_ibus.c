@@ -1023,6 +1023,8 @@ void HandlerIBusIKEIgnitionStatus(void *ctx, uint8_t *pkt)
             // Ask the LCM for the redundant data
             LogDebug(LOG_SOURCE_SYSTEM, "Handler: Request LCM Redundant Data");
             IBusCommandLMGetRedundantData(context->ibus);
+            // Refresh the vehicle configuration to align UOMs
+            IBusCommandIKEGetVehicleConfig(context->ibus);
         }
     } else if (ignitionStatus > IBUS_IGNITION_OFF) {
         // Send the CDC Status only if we are not on a call
@@ -1104,7 +1106,8 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
 /**
  * HandlerIBusIKEVehicleConfig()
  *     Description:
- *         Handle updates to the vehicle configuration values
+ *         Handle updates to the vehicle configuration values. This includes
+ *         the units and language that the cluster is configured for
  *     Params:
  *         void *ctx - The context provided at registration
  *         uint8_t *pkt - The IBus Packet
@@ -1113,6 +1116,60 @@ void HandlerIBusIKESpeedRPMUpdate(void *ctx, uint8_t *pkt)
  */
 void HandlerIBusIKEVehicleConfig(void *ctx, uint8_t *pkt)
 {
+    // Update the temperature unit
+    uint8_t tempUnit = IBusGetConfigTemp(pkt);
+    if (tempUnit != ConfigGetTempUnit()) {
+        ConfigSetTempUnit(tempUnit);
+        uint8_t valueType = IBUS_SENSOR_VALUE_TEMP_UNIT;
+        EventTriggerCallback(IBUS_EVENT_SENSOR_VALUE_UPDATE, &valueType);
+    }
+    // Update the distance unit
+    uint8_t distUnit = IBusGetConfigDistance(pkt);
+    if (distUnit != ConfigGetDistUnit()) {
+        ConfigSetDistUnit(distUnit);
+    }
+    // Update the language, if we support it
+    uint8_t lang = CONFIG_SETTING_LANGUAGE_ENGLISH;
+    switch (IBusGetConfigLanguage(pkt)) {
+        case 0: // DE
+            lang = CONFIG_SETTING_LANGUAGE_GERMAN;
+            break;
+        case 3: // IT
+            lang = CONFIG_SETTING_LANGUAGE_ITALIAN;
+            break;
+        case 4: // ES
+            lang = CONFIG_SETTING_LANGUAGE_SPANISH;
+            break;
+        case 6: // FR
+            lang = CONFIG_SETTING_LANGUAGE_FRENCH;
+            break;
+        case 9: // NL
+            lang = CONFIG_SETTING_LANGUAGE_DUTCH;
+            break;
+        case 10: // RU
+            lang = CONFIG_SETTING_LANGUAGE_RUSSIAN;
+            break;
+        case 1: // GB
+        case 2: // US
+        case 5: // JP
+        case 7: // CA
+        case 8: // GOLF
+        default:
+            lang = CONFIG_SETTING_LANGUAGE_ENGLISH;
+            break;
+    }
+    uint8_t configuredLang = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
+    if (
+        (
+            configuredLang == CONFIG_SETTING_LANGUAGE_AUTO ||
+            configuredLang == 255 ||
+            configuredLang >= 0x80
+        ) &&
+        lang != (configuredLang & 0x0F)
+    ) {
+        // Overwrite only when not flagged as user-forced
+        ConfigSetSetting(CONFIG_SETTING_LANGUAGE, (lang | 0x80));
+    }
     uint8_t rawVehicleType = (pkt[IBUS_PKT_DB1] >> 4) & 0xF;
     uint8_t detectedVehicleType = IBusGetVehicleType(pkt);
     if (detectedVehicleType == 0xFF) {

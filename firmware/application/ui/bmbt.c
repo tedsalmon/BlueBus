@@ -211,11 +211,6 @@ void BMBTInit(BT_t *bt, IBus_t *ibus)
         &Context
     );
     EventRegisterCallback(
-        IBUS_EVENT_IKE_VEHICLE_CONFIG,
-        &BMBTIBusVehicleConfig,
-        &Context
-    );
-    EventRegisterCallback(
         IBUS_EVENT_IKE_SPEED_RPM_UPDATE,
         &BMBTIKESpeedRPMUpdate,
         &Context
@@ -333,10 +328,6 @@ void BMBTDestroy()
     EventUnregisterCallback(
         IBUS_EVENT_SCREEN_MODE_UPDATE,
         &BMBTRADScreenModeRequest
-    );
-    EventUnregisterCallback(
-        IBUS_EVENT_IKE_VEHICLE_CONFIG,
-        &BMBTIBusVehicleConfig
     );
     TimerUnregisterScheduledTask(&BMBTTimerHeaderWrite);
     TimerUnregisterScheduledTask(&BMBTTimerMenuSelection);
@@ -677,7 +668,7 @@ static void BMBTHeaderWriteTemperature(BMBTContext_t *context, uint8_t updateTyp
     ) {
         if (strlen(temperature) == 0) {
             if (units == 'F') {
-                tempValue = tempValue * 1.8 + 32 + 0.5;
+                tempValue = UtilsConvertCelsiusToFahrenheit(tempValue);
             }
             if (tempDisplayConfig == CONFIG_SETTING_TEMP_AMBIENT) {
                 if (units == 'F') {
@@ -707,12 +698,12 @@ static void BMBTHeaderWriteTemperature(BMBTContext_t *context, uint8_t updateTyp
  */
 static void BMBTHeaderWriteSpeed(BMBTContext_t *context)
 {
-    uint8_t speed = context->speed;
+    uint16_t speed = context->speed;
     if (ConfigGetDistUnit() == 1) {
-        speed = (speed * 5) / 8;
+        speed = UtilsConvertKmToMi(speed);
     }
     char speedStr[5] = {0};
-    snprintf(speedStr, 5, "%3d", speed);
+    snprintf(speedStr, 5, "%3u", speed);
     IBusCommandGTWriteZone(context->ibus, BMBT_HEADER_SPEED, speedStr);
 }
 
@@ -838,9 +829,9 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
         tempUnit = 'F';
     }
 
-    int ambtemp = context->ibus->ambientTemperature;
-    int oiltemp = context->ibus->oilTemperature;
-    int cooltemp = context->ibus->coolantTemperature;
+    int16_t ambtemp = context->ibus->ambientTemperature;
+    int16_t oiltemp = context->ibus->oilTemperature;
+    int16_t cooltemp = context->ibus->coolantTemperature;
     uint8_t battVolt = context->ibus->batteryVoltage;
     if (
         ambtemp == IBUS_TEMP_UNSET &&
@@ -853,12 +844,12 @@ static void BMBTMenuDashboardUpdateOBCValues(BMBTContext_t *context)
     }
 
     if (tempUnit == 'F') {
-        ambtemp = (ambtemp * 1.8 + 32 + 0.5);
+        ambtemp = UtilsConvertCelsiusToFahrenheit(ambtemp);
         if (oiltemp > 0) {
-            oiltemp = (oiltemp * 1.8 + 32 + 0.5);
+            oiltemp = UtilsConvertCelsiusToFahrenheit(oiltemp);
         }
         if (cooltemp > 0) {
-            cooltemp = (cooltemp * 1.8 + 32 + 0.5);
+            cooltemp = UtilsConvertCelsiusToFahrenheit(cooltemp);
         }
     }
     if (battVolt > 0) {
@@ -3908,80 +3899,6 @@ void BMBTGTScreenModeSet(void *ctx, uint8_t *pkt)
     }
 }
 
-/**
- * BMBTIBusVehicleConfig()
- *     Description:
- *        Update the temperature unit configuration if it changes
- *     Params:
- *         void *ctx - The context
- *         uint8_t *pkt - The IBus Message received
- *     Returns:
- *         void
- */
-void BMBTIBusVehicleConfig(void *ctx, uint8_t *pkt)
-{
-    // Update the temperature unit
-    uint8_t tempUnit = IBusGetConfigTemp(pkt);
-    if (tempUnit != ConfigGetTempUnit()) {
-        ConfigSetTempUnit(tempUnit);
-        uint8_t valueType = IBUS_SENSOR_VALUE_TEMP_UNIT;
-        BMBTIBusSensorValueUpdate(ctx, &valueType);
-    }
-
-    uint8_t distUnit = IBusGetConfigDistance(pkt);
-    if (distUnit != ConfigGetDistUnit()) {
-        ConfigSetDistUnit(distUnit);
-    }
-
-// Update also the language if we support it
-// https://github.com/piersholt/wilhelm-docs/blob/master/ike/15.md
-
-    uint8_t langIbus = IBusGetConfigLanguage(pkt);;
-    uint8_t lang = 255;
-
-    switch (langIbus) {
-        case 0: // DE
-            lang = CONFIG_SETTING_LANGUAGE_GERMAN;
-            break;
-        case 3: // IT
-            lang = CONFIG_SETTING_LANGUAGE_ITALIAN;
-            break;
-        case 4: // ES
-            lang = CONFIG_SETTING_LANGUAGE_SPANISH;
-            break;
-        case 6: // FR
-            lang = CONFIG_SETTING_LANGUAGE_FRENCH;
-            break;
-        case 9: // NL
-            lang = CONFIG_SETTING_LANGUAGE_DUTCH;
-            break;
-        case 10: //RU
-            lang = CONFIG_SETTING_LANGUAGE_RUSSIAN;
-            break;
-        case 1: // GB
-        case 2: // US
-        case 5: // JP
-        case 7: // CA
-        case 8: // GOLF
-        default:
-            lang = CONFIG_SETTING_LANGUAGE_ENGLISH;
-            break;
-    }
-
-    uint8_t configuredLang = ConfigGetSetting(CONFIG_SETTING_LANGUAGE);
-
-    if (
-        (
-            configuredLang == CONFIG_SETTING_LANGUAGE_AUTO ||
-            configuredLang == 255 ||
-            configuredLang >= 0x80
-        ) &&
-        lang != (configuredLang & 0x0F)
-    ) {
-        // Overwrite only when not flagged as user-forced
-        ConfigSetSetting(CONFIG_SETTING_LANGUAGE, (lang | 0x80));
-    }
-}
 
 /**
  * BMBTTimerHeaderWrite()

@@ -160,7 +160,8 @@ void MenuSingleLineIBusSensorValueUpdate(void *ctx, uint8_t *type)
     }
     if (
         updateType == IBUS_SENSOR_VALUE_COOLANT_TEMP ||
-        updateType == IBUS_SENSOR_VALUE_OIL_TEMP
+        updateType == IBUS_SENSOR_VALUE_OIL_TEMP ||
+        updateType == IBUS_SENSOR_VALUE_TEMP_UNIT
     ) {
         MenuSingleLineOBC(context);
     }
@@ -204,27 +205,32 @@ void MenuSingleLineOBC(MenuSingleLineContext_t *context)
         return;
     }
 
-    uint8_t coolant = context->ibus->coolantTemperature;
-    uint8_t oil = context->ibus->oilTemperature;
+    int16_t coolant = context->ibus->coolantTemperature;
+    int16_t oil = context->ibus->oilTemperature;
+    uint16_t speed = context->vehicleSpeed;
 
     // Convert to Fahrenheit if configured
     if (ConfigGetTempUnit() == CONFIG_SETTING_TEMP_FAHRENHEIT) {
-        coolant = (coolant * 9 / 5) + 32;
+        coolant = UtilsConvertCelsiusToFahrenheit(coolant);
         if (oil != 0) {
-            oil = (oil * 9 / 5) + 32;
+            oil = UtilsConvertCelsiusToFahrenheit(oil);
         }
+    }
+    // Convert to miles per hour if configured
+    if (ConfigGetDistUnit() == 1) {
+        speed = UtilsConvertKmToMi(speed);
     }
 
     char text[25] = {0};
     if (context->uiMode == CONFIG_UI_MID) {
         // MID: 24 chars max
         if (oil != 0) {
-            snprintf(text, 24, "C:%d O:%d S:%u", coolant, oil, context->vehicleSpeed);
+            snprintf(text, 25, "C:%d O:%d S:%u", coolant, oil, speed);
         } else {
-            snprintf(text, 24, "Coolant:%d Speed:%u", coolant, context->vehicleSpeed);
+            snprintf(text, 25, "Coolant:%d Speed:%u", coolant, speed);
         }
     } else {
-        snprintf(text, 12, "C:%d S:%u", coolant, context->vehicleSpeed);
+        snprintf(text, 12, "C:%d S:%u", coolant, speed);
     }
     MenuSingleLineSetDisplayText(
         context,
