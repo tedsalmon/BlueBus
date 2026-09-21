@@ -1774,14 +1774,16 @@ void BC127ProcessEventName(BT_t *bt, char **msgBuf, char *msg)
         unsigned char macId[BT_DEVICE_MAC_ID_LEN] = {0};
         BC127ConvertMACIDToHex(msgBuf[1], macId);
         BTPairedDevice_t *dev = &bt->pairedDevices[bt->activeDevice.deviceIndex];
-        if (memcmp(macId, dev->macId, BT_DEVICE_MAC_ID_LEN) == 0 &&
-            bt->status != BT_STATUS_CONNECTED
-        ) {
-            memset(dev->deviceName, 0, BT_DEVICE_NAME_LEN);
-            UtilsStrncpy(dev->deviceName, name, BT_DEVICE_NAME_LEN);
-            BTPairedDeviceSave(macId, name, bt->activeDevice.deviceIndex);
-            bt->status = BT_STATUS_CONNECTED;
-            EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
+        if (memcmp(macId, dev->macId, BT_DEVICE_MAC_ID_LEN) == 0) {
+            if (strcmp(dev->deviceName, name) != 0) {
+                memset(dev->deviceName, 0, BT_DEVICE_NAME_LEN);
+                UtilsStrncpy(dev->deviceName, name, BT_DEVICE_NAME_LEN);
+                BTPairedDeviceSave(macId, name, bt->activeDevice.deviceIndex);
+            }
+            if (bt->status != BT_STATUS_CONNECTED) {
+                bt->status = BT_STATUS_CONNECTED;
+                EventTriggerCallback(BT_EVENT_DEVICE_CONNECTED, 0);
+            }
         }
     } else {
         LogError("BT: Bad NAME Packet");
