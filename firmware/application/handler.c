@@ -47,6 +47,8 @@ void HandlerInit(BT_t *bt, IBus_t *ibus)
     Context.mflButtonStatus = HANDLER_MFL_STATUS_OFF;
     Context.telStatus = IBUS_TEL_STATUS_NONE;
     Context.telOnStatus = HANDLER_TEL_OFF;
+    Context.telMode = HANDLER_TEL_MODE_AUDIO;
+    Context.telVolSteps = 0;
     Context.btBootState = HANDLER_BT_BOOT_OK;
     memset(&Context.gmState, 0, sizeof(HandlerBodyModuleStatus_t));
     memset(&Context.lmState, 0, sizeof(HandlerLightControlStatus_t));

@@ -253,8 +253,13 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
         }
     }
     uint8_t boardVersion = UtilsGetBoardVersion();
+    // Store the call mode state rather than computing it from other states
+    // in case the system state has changed since the call began
+    if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
+        context->telMode = HandlerGetTelMode(context);
+    }
     // Handle volume control
-    if (HandlerGetTelMode(context) == HANDLER_TEL_MODE_TCU) {
+    if (context->telMode == HANDLER_TEL_MODE_TCU) {
         if (currentTelStatus == IBUS_TEL_STATUS_ACTIVE_POWER_CALL_HANDSFREE) {
             LogDebug(LOG_SOURCE_SYSTEM, "C_TCU > 1");
             if (
@@ -319,8 +324,10 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
                 ConfigSetSetting(CONFIG_SETTING_TEL_VOL, CONFIG_SETTING_TEL_VOL_OFFSET_MAX);
             } else if (volume < 0) {
                 volume = 0;
-                ConfigSetValue(CONFIG_SETTING_TEL_VOL, 0);
+                ConfigSetSetting(CONFIG_SETTING_TEL_VOL, 0);
             }
+            // Remember what we raised so the teardown lowers the same amount
+            context->telVolSteps = (uint8_t) volume;
             LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %d", volume);
             while (volume > 0) {
                 uint8_t volStep = volume;
@@ -346,6 +353,8 @@ void HandlerBTCallStatus(void *ctx, uint8_t *data)
             // Temporarily set the call status flag to volume change
             // so we do not alter the volume that we are lowering ourselves
             context->telStatus = HANDLER_TEL_STATUS_VOL_CHANGE;
+            volume = (int8_t) context->telVolSteps;
+            context->telVolSteps = 0;
             LogDebug(LOG_SOURCE_SYSTEM, "Call > Volume: %d", -volume);
             while (volume > 0) {
                 uint8_t volStep = volume;

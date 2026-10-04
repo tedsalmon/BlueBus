@@ -410,7 +410,9 @@ void HandlerIBusBlueBusTELStatusUpdate(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     if (pkt[IBUS_PKT_DB1] == IBUS_BLUEBUS_SUBCMD_SET_STATUS_TEL) {
-        context->telStatus = pkt[IBUS_PKT_DB2];
+        // Volume frames have been transmitted at this point,
+        // so check the TEL status from the current state reported by the BTM
+        context->telStatus = HandlerGetIBusTELStatus(context);
     }
 }
 
@@ -1992,6 +1994,9 @@ void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
             }
         }
         ConfigSetSetting(CONFIG_SETTING_TEL_VOL, volume);
+        // Keep the offset we owe the radio in step with the user's change so
+        // the call teardown restores the pre-call volume exactly
+        context->telVolSteps = (uint8_t) volume;
     } else {
         uint8_t volume = ConfigGetSetting(CONFIG_SETTING_DAC_TEL_TCU_MODE_VOL);
         // PCM51XX volume gets lower as you raise the value in the register

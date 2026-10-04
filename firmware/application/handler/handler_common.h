@@ -138,6 +138,46 @@ typedef struct HandlerLightControlStatus_t {
     uint8_t homeLightsTicks;
 } HandlerLightControlStatus_t;
 
+/**
+ * HandlerContext_t
+ *  *bt:
+ *  *ibus:
+ *  btDeviceConnRetries:
+ *  btSelectedDevice:
+ *  btStatus:
+ *  btStartupIsRun:
+ *  btBootState:
+ *  btAutoplay:
+ *  ibusModulePingState:
+ *  mflButtonStatus:
+ *  seekMode:
+ *  volumeMode:
+ *  gtStatus:
+ *  monitorStatus:
+ *  pdcActive:
+ *  pdcInactivityTicks:
+ *  telOnStatus:
+ *  telMode: Track the last call mode we used rather than deriving it from state
+ *  telVolSteps: The number of volume steps we sent to the radio
+ *  uiMode:
+ *  lmDimmerChecksum:
+ *  telStatus:
+ *  gmState:
+ *  lmState:
+ *  powerStatus:
+ *  scanIntervals:
+ *  deviceScanTimerId:
+ *  tcuStateChangeTimerId:
+ *  lightingStateTimerId:
+ *  avrcpRegisterStatusNotifierTimerId:
+ *  bm83PowerStateTimerId:
+ *  cdChangerLastPoll:
+ *  cdChangerLastStatus:
+ *  gearLastStatus:
+ *  lmLastIOStatus:
+ *  lmLastStatusSet:
+ *  radLastMessage:
+ */
 typedef struct HandlerContext_t {
     BT_t *bt;
     IBus_t *ibus;
@@ -156,6 +196,8 @@ typedef struct HandlerContext_t {
     uint8_t pdcActive: 1;
     uint8_t pdcInactivityTicks: 4;
     uint8_t telOnStatus: 1;
+    uint8_t telMode: 1;
+    uint8_t telVolSteps: 4;
     uint8_t uiMode;
     uint8_t lmDimmerChecksum;
     uint8_t telStatus;
