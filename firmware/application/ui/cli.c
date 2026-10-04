@@ -918,6 +918,14 @@ void CLIProcess()
                     } else {
                         CLIWrite("Invalid UI Mode specified\r\n");
                     }
+                } else if (UtilsStricmp(msgBuf[1], "HEADLESS") == 0) {
+                    if (UtilsStricmp(msgBuf[2], "ON") == 0) {
+                        ConfigSetSetting(CONFIG_SETTING_HEADLESS, CONFIG_SETTING_ON);
+                    } else if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
+                        ConfigSetSetting(CONFIG_SETTING_HEADLESS, CONFIG_SETTING_OFF);
+                    } else {
+                        cmdSuccess = 0;
+                    }
                 } else if (UtilsStricmp(msgBuf[1], "IGN") == 0) {
                     if (UtilsStricmp(msgBuf[2], "OFF") == 0) {
                         uint8_t ignitionStatus = 0x00;
@@ -1141,6 +1149,7 @@ void CLIProcess()
                 CLIWrite("    SET COMFORT UNLOCK x - Unlock the car at the given ignition position. POS0, POS1 or OFF\r\n");
                 CLIWrite("    SET DAC GAIN xx - Set the PCM5122 gain from 0x00 - 0xCF (higher is lower)\r\n");
                 CLIWrite("    SET DSP INPUT ANALOG/DIGITAL/DEFAULT - Set the CD Changer DSP input\r\n");
+                CLIWrite("    SET HEADLESS ON/OFF - Enable or disable support for vehicles without a BMBT (Uncommon -- Do not use unless directed to)\r\n");
                 CLIWrite("    SET IGN ON/OFF/ALWAYSON - Send the ignition status message or configure the BlueBus to assume the ignition is always on\r\n");
                 CLIWrite("    SET LOG x ON/OFF - Change logging for x (BT, IBUS, SYS, UI)\r\n");
                 CLIWrite("    SET PWROFF ON/OFF - Enable or disable auto power off\r\n");

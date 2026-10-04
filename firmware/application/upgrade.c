@@ -147,6 +147,11 @@ uint8_t UpgradeProcess(BT_t *bt, IBus_t *ibus)
         ConfigSetSetting(CONFIG_SETTING_LM_IO_POLL_DISABLED, CONFIG_SETTING_OFF);
         LogRaw("Ran Upgrade 1.4.7\r\n");
     }
+    // Changes in version 1.4.42
+    if (UpgradeVersionCompare(curMajor, curMinor, curPatch, 1, 4, 42) == 1) {
+        ConfigSetSetting(CONFIG_SETTING_HEADLESS, CONFIG_SETTING_OFF);
+        LogRaw("Ran Upgrade 1.4.42\r\n");
+    }
     ConfigSetFirmwareVersion(
         FIRMWARE_VERSION_MAJOR,
         FIRMWARE_VERSION_MINOR,

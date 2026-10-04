@@ -1486,7 +1486,51 @@ void HandlerIBusMFLButton(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
     uint8_t mflButton = pkt[IBUS_PKT_DB1];
-    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+    if (ConfigGetSetting(CONFIG_SETTING_HEADLESS) == CONFIG_SETTING_ON) {
+        // Support for using the BlueBus in a Nav car without a BMBT
+        // (because racecar?)
+        if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
+            if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_HOLD) {
+                context->mflButtonStatus = HANDLER_MFL_STATUS_SPEAK_HOLD;
+                if (context->bt->status == BT_STATUS_CONNECTED) {
+                    BTCommandToggleVoiceRecognition(context->bt);
+                }
+            }
+        }
+        if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_PRESS) {
+            uint8_t msg[] = {
+                IBUS_CMD_BMBT_BUTTON1,
+                0x23
+            };
+            IBusSendCommand(
+                context->ibus,
+                IBUS_DEVICE_BMBT,
+                IBUS_DEVICE_RAD,
+                msg,
+                sizeof(msg)
+            );
+        } else if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_REL) {
+            uint8_t msg[] = {
+                IBUS_CMD_BMBT_BUTTON1,
+                0xA3
+            };
+            IBusSendCommand(
+                context->ibus,
+                IBUS_DEVICE_BMBT,
+                IBUS_DEVICE_RAD,
+                msg,
+                sizeof(msg)
+            );
+        } else if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_HOLD) {
+            if (context->bt->status != BT_STATUS_CONNECTED) {
+                if (context->bt->discoverable == BT_STATE_OFF) {
+                    BTCommandSetDiscoverable(context->bt, BT_STATE_ON);
+                } else {
+                    BTCommandSetDiscoverable(context->bt, BT_STATE_OFF);
+                }
+            }
+        }
+    } else if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_ON) {
         if (mflButton == IBUS_MFL_BTN_EVENT_VOICE_PRESS) {
             context->mflButtonStatus = HANDLER_MFL_STATUS_OFF;
         }
