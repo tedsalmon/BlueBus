@@ -1982,7 +1982,7 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
 /**
  * HandlerIBusTELVolumeChange()
  *     Description:
- *         Adjust the volume for calls when asked to do so by the BMBT / MID.
+ *         Adjust the volume for calls when asked to do so.
  *         If the vehicle has a DSP or MID, then forward those changes to the DSP
  *         or RAD rather than adjusting the DAC volume.
  *     Params:
@@ -1994,22 +1994,20 @@ void HandlerIBusSensorValueUpdate(void *ctx, uint8_t *type)
 void HandlerIBusTELVolumeChange(void *ctx, uint8_t *pkt)
 {
     HandlerContext_t *context = (HandlerContext_t *) ctx;
-    if (
-        ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF ||
-        (
-            context->uiMode != CONFIG_UI_BMBT &&
-            context->uiMode != CONFIG_UI_MID &&
-            context->uiMode != CONFIG_UI_MID_BMBT
-        )
-    ) {
+    if (ConfigGetSetting(CONFIG_SETTING_HFP) == CONFIG_SETTING_OFF) {
         return;
     }
     uint8_t direction = pkt[IBUS_PKT_DB1] & 0x01;
     uint8_t steps = pkt[IBUS_PKT_DB1] >> 4;
-    // Forward volume changes to the RAD / DSP when in Bluetooth mode
-    if (HandlerGetTelMode(context) == HANDLER_TEL_MODE_AUDIO) {
+    // Forward volume changes to the RAD / DSP when in Bluetooth mode.
+    // Use the current mode so a mid-call CDC state change cannot send us down
+    // the wrong branch
+    if (context->telMode == HANDLER_TEL_MODE_AUDIO) {
         int8_t volume = ConfigGetSetting(CONFIG_SETTING_TEL_VOL);
-        if (context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X) {
+        if (
+            context->ibus->vehicleType == IBUS_VEHICLE_TYPE_E8X &&
+            (context->uiMode == CONFIG_UI_BMBT || context->uiMode == CONFIG_UI_MID_BMBT)
+        ) {
             // Drop Telephony mode so the radio acknowledges the volume changes
             HandlerSetIBusTELStatus(context, IBUS_TEL_STATUS_ACTIVE_POWER_HANDSFREE);
         }

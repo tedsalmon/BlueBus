@@ -340,6 +340,16 @@ void MIDBTPlaybackStatus(void *ctx, unsigned char *tmp)
     }
     if (context->bt->playbackStatus == BT_AVRCP_STATUS_PLAYING) {
         IBusCommandMIDMenuWriteSingle(context->ibus, 0, "||");
+        if (
+            context->displayMetadata == MID_DISPLAY_METADATA_ON &&
+            ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != MENU_SINGLELINE_SETTING_METADATA_MODE_OFF
+        ) {
+            if (strlen(context->bt->title) > 0) {
+                MIDBTMetadataUpdate((void *) context, 0x00);
+            } else {
+                MIDSetMainDisplayText(context, "Bluetooth", 0);
+            }
+        }
         BTCommandGetMetadata(context->bt);
     } else {
         if (

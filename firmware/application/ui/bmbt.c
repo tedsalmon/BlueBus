@@ -3934,7 +3934,7 @@ void BMBTTimerHeaderWrite(void *ctx)
  * BMBTTimerMenuSelection()
  *     Description:
  *         Fallback timer for GT menu select release events. If the GT fails
- *         to send a 0x31 release event after a knob release, synthesize one
+ *         to send a 0x31 release event after a knob release, inject one
  *         after a timeout so menu selections are not lost.
  *     Params:
  *         void *ctx - The context
@@ -3949,7 +3949,11 @@ void BMBTTimerMenuSelection(void *ctx)
     }
     context->menuPressedTicks++;
     if (context->menuPressedTicks >= BMBT_MENU_SELECT_TIMER_TIMEOUT) {
-        LogDebug(LOG_SOURCE_IBUS, "Inject Index Press [%d]", context->menuPressedIdx);
+        LogDebug(
+            LOG_SOURCE_UI,
+            "Inject Menu release frame for index: %d",
+            context->menuPressedIdx
+        );
         // Instead of broadcasting the message on the bus, stub it out
         // internally and feed it to the menu selection function
         uint8_t msg[] = {
@@ -3960,7 +3964,7 @@ void BMBTTimerMenuSelection(void *ctx)
             IBUS_CMD_GT_WRITE_INDEX_TMC,
             0x00,
             0x40 | context->menuPressedIdx,
-            0x00 // XOR can be omitted since we are not validating the frame
+            0x00
         };
         BMBTIBusMenuSelect(ctx, msg);
         context->menuPressedTicks = BMBT_MENU_SELECT_TIMER_OFF;
@@ -4047,7 +4051,8 @@ void BMBTTimerScrollDisplay(void *ctx)
     if (
         context->status.playerMode == BMBT_MODE_ACTIVE &&
         context->status.displayMode == BMBT_DISPLAY_ON &&
-        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != CONFIG_SETTING_OFF
+        ConfigGetSetting(CONFIG_SETTING_METADATA_MODE) != CONFIG_SETTING_OFF &&
+        context->ibus->ignitionStatus != IBUS_IGNITION_OFF
     ) {
         // Display the main text if there isn't a timeout set
         if (context->mainDisplay.timeout > 0) {

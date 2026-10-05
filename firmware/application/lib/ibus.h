@@ -657,7 +657,7 @@
 #define IBUS_MAX_MSG_LENGTH 47
 #define IBUS_RAD_MAIN_AREA_WATERMARK 0x10
 #define IBUS_RX_BUFFER_SIZE 255
-#define IBUS_TX_BUFFER_SIZE 24
+#define IBUS_TX_BUFFER_SIZE 32
 // 9600 baud = ~1.1 = 1.5 bytes/ms - IBUS_MAX_MSG_LENGTH * 2
 #define IBUS_RX_BUFFER_TIMEOUT 71
 // This is the time we wait before transmitting. Any faster than this, and the
