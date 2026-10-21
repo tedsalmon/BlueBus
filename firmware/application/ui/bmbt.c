@@ -432,6 +432,14 @@ static void BMBTSetMainDisplayText(
  */
 static void BMBTSetRADMenuStatus(BMBTContext_t *context, uint8_t status)
 {
+    // Ignore new UI with C43 so our overlay rewrite trick
+    // does not cause us to drop to the main menu of the GT
+    if (
+        context->ibus->gtVersion >= IBUS_GT_MKIII_NEW_UI &&
+        context->status.radType == IBUS_RADIO_TYPE_C43
+    ) {
+        return;
+    }
     if (
         status == BMBT_RAD_DISPLAY_STATUS_OFF &&
         (

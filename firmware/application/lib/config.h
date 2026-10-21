@@ -228,6 +228,7 @@ uint16_t ConfigGetBC127BootFailures();
 void ConfigGetBTDeviceName(char *);
 uint8_t ConfigGetBuildWeek();
 uint8_t ConfigGetBuildYear();
+uint8_t ConfigGetByte(uint8_t);
 void ConfigGetBytes(uint8_t, uint8_t *, uint8_t);
 uint8_t ConfigGetComfortLock();
 uint8_t ConfigGetComfortUnlock();

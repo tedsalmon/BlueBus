@@ -56,7 +56,7 @@ static int8_t CONFIG_TIMEZONE_OFFSETS[CONFIG_TIMEZONE_COUNT] = {
  *     Returns:
  *         uint8_t
  */
-static inline uint8_t ConfigGetByte(uint8_t address)
+uint8_t ConfigGetByte(uint8_t address)
 {
     uint8_t value = 0;
     if (address < CONFIG_SETTING_CACHE_SIZE) {
@@ -1094,6 +1094,7 @@ void ConfigSetValue(uint8_t address, uint8_t value)
     if (address >= CONFIG_VALUE_START_ADDRESS &&
         address <= CONFIG_VALUE_END_ADDRESS
     ) {
+        CONFIG_VALUE_CACHE[address - CONFIG_VALUE_START_ADDRESS] = value;
         ConfigSetByte(address, value);
     }
 }
