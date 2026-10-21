@@ -47,6 +47,8 @@ void CLIInit(UART_t *uart, BT_t *bt, IBus_t *ibus)
     );
     cli.lastChar = 0;
     cli.lastRxTimestamp = 0;
+    cli.lastLogTimestamp = 0;
+    cli.promptVisible = 0;
     EventRegisterCallback(
         BT_EVENT_BTM_ADDRESS,
         &CLIEventBTBTMAddress,
@@ -83,10 +85,20 @@ void CLIInit(UART_t *uart, BT_t *bt, IBus_t *ibus)
 void CLIEventWriteBefore(void *ctx, unsigned char *data)
 {
     CLI_t *context = (CLI_t *)ctx;
-    if (context->terminalReady != 2) {
+    if (context->terminalReady != 2 || context->promptVisible == 0) {
         return;
     }
-    UARTSendString(context->uart, "\r\x1B[2K");
+    UARTSendChar(context->uart, '\r');
+    uint16_t inputLength = CharQueueGetSize(&context->uart->rxQueue);
+    if (inputLength > 0) {
+        // Blank the line so a log line shorter than the input leaves nothing behind
+        uint16_t i;
+        for (i = 0; i < inputLength + CLI_PROMPT_LENGTH; i++) {
+            UARTSendChar(context->uart, ' ');
+        }
+        UARTSendChar(context->uart, '\r');
+    }
+    context->promptVisible = 0;
 }
 
 /**
@@ -94,7 +106,8 @@ void CLIEventWriteBefore(void *ctx, unsigned char *data)
  *     Description:
  *         On log write completion, we need to rewrite our current input
  *         buffer to the console. This is so we do not overwrite the users
- *         current input
+ *         current input. Without input, the prompt is deferred until the
+ *         log output goes quiet so it is not repeated between log lines
  *     Params:
  *         void *ctx - The content that we registered for this event
  *         uint8_t *data - The event data
@@ -107,7 +120,11 @@ void CLIEventWriteComplete(void *ctx, uint8_t *data)
     if (context->terminalReady != 2) {
         return;
     }
-    UARTSendString(context->uart, "# ");
+    context->lastLogTimestamp = TimerGetMillis();
+    if (CharQueueGetSize(&context->uart->rxQueue) == 0) {
+        return;
+    }
+    UARTSendString(context->uart, CLI_PROMPT);
     uint16_t cursor = context->uart->rxQueue.readCursor;
     uint16_t end = context->uart->rxQueue.writeCursor;
     while (cursor != end) {
@@ -118,6 +135,7 @@ void CLIEventWriteComplete(void *ctx, uint8_t *data)
             cursor = 0;
         }
     }
+    context->promptVisible = 1;
 }
 
 /**
@@ -547,6 +565,10 @@ void CLIProcess()
 {
     while (cli.lastChar != cli.uart->rxQueue.writeCursor) {
         uint8_t nextChar = CharQueueGet(&cli.uart->rxQueue, cli.lastChar);
+        if (cli.terminalReady == 2 && cli.promptVisible == 0) {
+            CLIWrite(CLI_PROMPT);
+            cli.promptVisible = 1;
+        }
         if (nextChar != CLI_MSG_DELETE_CHAR) {
             UARTSendChar(cli.uart, nextChar);
         }
@@ -587,6 +609,7 @@ void CLIProcess()
     if (messageLength > 0) {
         // Send a newline to keep the CLI pretty
         UARTSendChar(cli.uart, 0x0A);
+        cli.promptVisible = 0;
         char msg[messageLength];
         uint16_t i;
         uint8_t delimCount = 1;
@@ -673,10 +696,11 @@ void CLIProcess()
             } else if (UtilsStricmp(msgBuf[0], "GET") == 0) {
                 if (UtilsStricmp(msgBuf[1], "BYTE") == 0 && delimCount == 3) {
                     uint8_t byte = UtilsStrToHex(msgBuf[2]);
-                    if (byte >= CONFIG_SETTING_START_ADDRESS &&
-                        byte <= CONFIG_SETTING_END_ADDRESS
+                    if (
+                        byte >= CONFIG_SETTING_START_ADDRESS &&
+                        byte <= CONFIG_VALUE_END_ADDRESS
                     ) {
-                        uint8_t value = ConfigGetSetting(byte);
+                        uint8_t value = ConfigGetByte(byte);
                         CLIWrite("Byte 0x%02X = 0x%02X\r\n", byte, value);
                     } else {
                         cmdSuccess = 0;
@@ -827,10 +851,11 @@ void CLIProcess()
                 if (UtilsStricmp(msgBuf[1], "BYTE") == 0 && delimCount == 4) {
                     uint8_t byte = UtilsStrToHex(msgBuf[2]);
                     uint8_t value = UtilsStrToHex(msgBuf[3]);
-                    if (byte >= CONFIG_SETTING_START_ADDRESS &&
-                        byte <= CONFIG_SETTING_END_ADDRESS
+                    if (
+                        byte >= CONFIG_SETTING_START_ADDRESS &&
+                        byte < CONFIG_VALUE_END_ADDRESS
                     ) {
-                        ConfigSetSetting(byte, value);
+                        ConfigSetByte(byte, value);
                     } else {
                         cmdSuccess = 0;
                     }
@@ -1182,8 +1207,9 @@ void CLIProcess()
                 CLIWrite("Try HELP or ?\r\n");
                 CLIWrite("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
             }
-            CLIWrite("# ");
+            CLIWrite(CLI_PROMPT);
         }
+        cli.promptVisible = 1;
         cli.lastRxTimestamp = TimerGetMillis();
     }
 }
@@ -1191,7 +1217,8 @@ void CLIProcess()
 /**
  * CLITimerTerminalReady()
  *     Description:
- *         Read the RX queue and process the messages into meaningful data
+ *         Print the banner once the terminal is ready and restore the
+ *         prompt once log output has gone quiet
  *     Params:
  *         void *ctx - Pointer to the CLI context
  *     Returns:
@@ -1207,7 +1234,15 @@ void CLITimerTerminalReady(void *ctx)
         CLIWrite("BlueBus Firmware: %s\r\n", version);
         CLIWrite("Try HELP or ?\r\n");
         CLIWrite("~~~~~~~~~~~~~~~~~~~~~~~~~\r\n");
-        CLIWrite("# ");
+        CLIWrite(CLI_PROMPT);
+        cli.promptVisible = 1;
         cli.lastRxTimestamp = TimerGetMillis();
+    }
+    if (cli.terminalReady == 2 &&
+        cli.promptVisible == 0 &&
+        (TimerGetMillis() - cli.lastLogTimestamp) >= CLI_PROMPT_TIMEOUT
+    ) {
+        CLIWrite(CLI_PROMPT);
+        cli.promptVisible = 1;
     }
 }

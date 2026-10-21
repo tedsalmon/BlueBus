@@ -16,6 +16,9 @@
 #define CLI_MSG_END_CHAR 0x0D
 #define CLI_MSG_DELIMETER 0x20
 #define CLI_MSG_DELETE_CHAR 0x7F
+#define CLI_PROMPT "# "
+#define CLI_PROMPT_LENGTH 2
+#define CLI_PROMPT_TIMEOUT 250
 /**
  * CLI_t
  *     Description:
@@ -25,6 +28,8 @@
  *         BT_t *bt - A pointer to the Blueooth module object
  *         IBus_t *bt - A pointer to the IBus object
  *         uint16_t lastChar - The last character
+ *         uint32_t lastLogTimestamp - Last time a log line was written
+ *         uint8_t promptVisible - Whether the prompt is on the current line
  */
 typedef struct CLI_t {
     UART_t *uart;
@@ -33,7 +38,9 @@ typedef struct CLI_t {
     uint8_t terminalReadyTaskId;
     uint16_t lastChar;
     uint32_t lastRxTimestamp;
+    uint32_t lastLogTimestamp;
     uint8_t terminalReady;
+    uint8_t promptVisible;
 } CLI_t;
 void CLIInit(UART_t *, BT_t *, IBus_t *);
 void CLIEventWriteBefore(void *, unsigned char *);
