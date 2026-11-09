@@ -335,6 +335,9 @@
 #define IBUS_LCM_HIGH_BEAM_R 0x20
 #define IBUS_LCM_TAIL_LAMP_L 0x08
 #define IBUS_LCM_TAIL_LAMP_R 0x10
+// Inner Tail Lamp Left = Byte 5, Inner Tail Lamp Right = Byte 7
+#define IBUS_LCM_TAIL_LAMP_INNER_L 0x02
+#define IBUS_LCM_TAIL_LAMP_INNER_R 0x08
 
 // LCM_II, LCM_III, LCM_IV (Byte 2)
 #define IBUS_LCM_II_BLINKER_OFF 0x00
@@ -345,6 +348,9 @@
 #define IBUS_LCM_II_HIGH_BEAM_R 0x20
 #define IBUS_LCM_II_TAIL_LAMP_L 0x08
 #define IBUS_LCM_II_TAIL_LAMP_R 0x10
+// Inner Tail Lamp Left = Byte 5, Inner Tail Lamp Right = Byte 7
+#define IBUS_LCM_II_TAIL_LAMP_INNER_L 0x02
+#define IBUS_LCM_II_TAIL_LAMP_INNER_R 0x08
 
 // LSZ, LSZ_2 (Headlight Status = Byte 2, Blinker Status = Byte 3)
 #define IBUS_LSZ_HEADLIGHT_OFF 0xFF

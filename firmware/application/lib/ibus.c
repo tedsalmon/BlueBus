@@ -2937,20 +2937,21 @@ void IBusCommandLMActivateBulbs(
             tailRight = IBUS_LME38_TAIL_LAMP_R;
         }
         uint8_t highBeam = IBUS_LM_BULB_OFF;
-        if (homeLights == IBUS_LM_HOME_WELCOME) {
+        if (
+            homeLights == IBUS_LM_HOME_WELCOME ||
+            homeLights == IBUS_LM_HOME_FOLLOW
+        ) {
             highBeam = IBUS_LME38_HIGH_BEAM_L | IBUS_LME38_HIGH_BEAM_R;
             tailLeft = IBUS_LME38_TAIL_LAMP_L;
             tailRight = IBUS_LME38_TAIL_LAMP_R;
-        } else if (homeLights == IBUS_LM_HOME_FOLLOW) {
-            highBeam = IBUS_LME38_HIGH_BEAM_L | IBUS_LME38_HIGH_BEAM_R;
         }
         // No LWR load sensor/HVAC pot voltage for LME38
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
             blinker,
             0x00,
-            parkingLightLeft | tailLeft,
-            parkingLightRight | tailRight,
+            parkingLightLeft | tailRight,
+            parkingLightRight | tailLeft,
             highBeam,
             0x00,
             0x00,
@@ -2984,6 +2985,8 @@ void IBusCommandLMActivateBulbs(
         }
         uint8_t tailLeft = IBUS_LM_BULB_OFF;
         uint8_t tailRight = IBUS_LM_BULB_OFF;
+        uint8_t tailInnerLeft = IBUS_LM_BULB_OFF;
+        uint8_t tailInnerRight = IBUS_LM_BULB_OFF;
         if (
             parkingLights == IBUS_LM_PARK_LIGHTS_FRONT ||
             parkingLights == IBUS_LM_PARK_LIGHTS_FRONT_AND_REAR
@@ -2993,15 +2996,20 @@ void IBusCommandLMActivateBulbs(
         }
         if (parkingLights == IBUS_LM_PARK_LIGHTS_FRONT_AND_REAR) {
             tailLeft = IBUS_LCM_TAIL_LAMP_L;
+            tailInnerLeft = IBUS_LCM_TAIL_LAMP_INNER_L;
             tailRight = IBUS_LCM_TAIL_LAMP_R;
+            tailInnerRight = IBUS_LCM_TAIL_LAMP_INNER_R;
         }
         uint8_t highBeam = IBUS_LM_BULB_OFF;
-        if (homeLights == IBUS_LM_HOME_WELCOME) {
+        if (
+            homeLights == IBUS_LM_HOME_WELCOME ||
+            homeLights == IBUS_LM_HOME_FOLLOW
+        ) {
             highBeam = IBUS_LCM_HIGH_BEAM_L | IBUS_LCM_HIGH_BEAM_R;
             tailLeft = IBUS_LCM_TAIL_LAMP_L;
+            tailInnerLeft = IBUS_LCM_TAIL_LAMP_INNER_L;
             tailRight = IBUS_LCM_TAIL_LAMP_R;
-        } else if (homeLights == IBUS_LM_HOME_FOLLOW) {
-            highBeam = IBUS_LCM_HIGH_BEAM_L | IBUS_LCM_HIGH_BEAM_R;
+            tailInnerRight = IBUS_LCM_TAIL_LAMP_INNER_R;
         }
         // This is an issue! I'm not sure what differentiates S1 and S2.
         // It's meaningful enough a distinction that it is displayed in INPA.
@@ -3012,9 +3020,9 @@ void IBusCommandLMActivateBulbs(
             0x00,
             0x00,
             0x00,
-            parkingLightLeft | highBeam,
+            parkingLightLeft | highBeam | tailInnerLeft,
             parkingLightRight | tailLeft,
-            tailRight,
+            tailRight | tailInnerRight,
             0x00,
             ibus->lmDimmerVoltage,
             ibus->lmLoadRearVoltage,
@@ -3045,6 +3053,8 @@ void IBusCommandLMActivateBulbs(
         }
         uint8_t tailLeft = IBUS_LM_BULB_OFF;
         uint8_t tailRight = IBUS_LM_BULB_OFF;
+        uint8_t tailInnerLeft = IBUS_LM_BULB_OFF;
+        uint8_t tailInnerRight = IBUS_LM_BULB_OFF;
         if (
             parkingLights == IBUS_LM_PARK_LIGHTS_FRONT ||
             parkingLights == IBUS_LM_PARK_LIGHTS_FRONT_AND_REAR
@@ -3054,15 +3064,20 @@ void IBusCommandLMActivateBulbs(
         }
         if (parkingLights == IBUS_LM_PARK_LIGHTS_FRONT_AND_REAR) {
             tailLeft = IBUS_LCM_II_TAIL_LAMP_L;
+            tailInnerLeft = IBUS_LCM_II_TAIL_LAMP_INNER_L;
             tailRight = IBUS_LCM_II_TAIL_LAMP_R;
+            tailInnerRight = IBUS_LCM_II_TAIL_LAMP_INNER_R;
         }
         uint8_t highBeam = IBUS_LM_BULB_OFF;
-        if (homeLights == IBUS_LM_HOME_WELCOME) {
+        if (
+            homeLights == IBUS_LM_HOME_WELCOME ||
+            homeLights == IBUS_LM_HOME_FOLLOW
+        ) {
             highBeam = IBUS_LCM_II_HIGH_BEAM_L | IBUS_LCM_II_HIGH_BEAM_R;
             tailLeft = IBUS_LCM_II_TAIL_LAMP_L;
+            tailInnerLeft = IBUS_LCM_II_TAIL_LAMP_INNER_L;
             tailRight = IBUS_LCM_II_TAIL_LAMP_R;
-        } else if (homeLights == IBUS_LM_HOME_FOLLOW) {
-            highBeam = IBUS_LCM_II_HIGH_BEAM_L | IBUS_LCM_II_HIGH_BEAM_R;
+            tailInnerRight = IBUS_LCM_II_TAIL_LAMP_INNER_R;
         }
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
@@ -3071,9 +3086,9 @@ void IBusCommandLMActivateBulbs(
             blinker,
             0x00,
             0x00,
-            parkingLightLeft | highBeam,
+            parkingLightLeft | highBeam | tailInnerLeft,
             parkingLightRight | tailLeft,
-            tailRight,
+            tailRight | tailInnerRight,
             0x00,
             ibus->lmDimmerVoltage,
             ibus->lmLoadRearVoltage,
@@ -3117,12 +3132,13 @@ void IBusCommandLMActivateBulbs(
             tailRight = IBUS_LSZ_TAIL_LAMP_R;
         }
         uint8_t highBeam = IBUS_LM_BULB_OFF;
-        if (homeLights == IBUS_LM_HOME_WELCOME) {
+        if (
+            homeLights == IBUS_LM_HOME_WELCOME ||
+            homeLights == IBUS_LM_HOME_FOLLOW
+        ) {
             highBeam = IBUS_LSZ_HIGH_BEAM_L | IBUS_LSZ_HIGH_BEAM_R;
             tailLeft = IBUS_LSZ_TAIL_LAMP_L;
             tailRight = IBUS_LSZ_TAIL_LAMP_R;
-        } else if (homeLights == IBUS_LM_HOME_FOLLOW) {
-            highBeam = IBUS_LSZ_HIGH_BEAM_L | IBUS_LSZ_HIGH_BEAM_R;
         }
         uint8_t msg[] = {
             IBUS_CMD_DIA_JOB_REQUEST,
