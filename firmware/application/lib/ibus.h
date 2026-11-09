@@ -239,6 +239,11 @@
 #define IBUS_CMD_VOL_CTRL 0x32
 #define IBUS_CMD_RAD_PLAYBACK_CTRL 0x33
 
+#define IBUS_CMD_SDRS_UI_STATE_REQ 0xD7
+#define IBUS_CMD_SDRS_UI_STATE 0xD8
+#define IBUS_SDRS_UI_STATE_SELECTED 0x08
+#define IBUS_SDRS_UI_STATE_HIDDEN 0x80
+
 #define IBUS_GT_DETECT_ERROR 0
 #define IBUS_GT_MKI 1
 #define IBUS_GT_MKII 2
@@ -657,6 +662,7 @@
 #define IBUS_EVENT_GT_SCREEN_BUFFER_WRITE 80
 #define IBUS_EVENT_ZKE_DIAG_ACK 81
 #define IBUS_EVENT_GM_REMOTE_KEY_ENTRY 82
+#define IBUS_EVENT_SDRS_UI_STATE 83
 
 // Configuration and protocol definitions
 // Src Len Dest Cmd Data[42 Byte Max] XOR
@@ -851,6 +857,10 @@ void IBusCommandRADClearMenu(IBus_t *);
 void IBusCommandRADDisableMenu(IBus_t *);
 void IBusCommandRADEnableMenu(IBus_t *);
 void IBusCommandRADExitMenu(IBus_t *);
+void IBusCommandSDRSAnnounce(IBus_t *);
+void IBusCommandSDRSPollResponse(IBus_t *);
+void IBusCommandSDRSScreenModeUpdate(IBus_t *);
+void IBusCommandSDRSUIStateRequest(IBus_t *);
 void IBusCommandSESSetMapZoom(IBus_t *, uint8_t);
 void IBusCommandSESShowMap(IBus_t *);
 void IBusCommandSESRouteFuel(IBus_t *);

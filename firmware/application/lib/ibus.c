@@ -791,6 +791,12 @@ static void IBusHandleRADMessage(IBus_t *ibus, uint8_t *pkt)
             }
             EventTriggerCallback(IBUS_EVENT_CD_STATUS_REQUEST, pkt);
         }
+    } else if (pkt[IBUS_PKT_DST] == IBUS_DEVICE_SDRS) {
+        if (pkt[IBUS_PKT_CMD] == IBUS_CMD_MOD_STATUS_REQ) {
+            EventTriggerCallback(IBUS_EVENT_MODULE_STATUS_REQUEST, pkt);
+        } else if (pkt[IBUS_PKT_CMD] == IBUS_CMD_SDRS_UI_STATE) {
+            EventTriggerCallback(IBUS_EVENT_SDRS_UI_STATE, pkt);
+        }
     } else if (
         pkt[IBUS_PKT_DST] == IBUS_DEVICE_DIA &&
         pkt[IBUS_PKT_LEN] > 8 &&
@@ -3578,6 +3584,78 @@ void IBusCommandRADExitMenu(IBus_t *ibus)
         msg,
         sizeof(msg)
     );
+}
+
+/**
+ * IBusCommandSDRSAnnounce()
+ *     Description:
+ *        Announce the satellite tuner so the radio offers the SAT source
+ *        Raw: 73 04 FF 02 00 8A
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSDRSAnnounce(IBus_t *ibus)
+{
+    const uint8_t msg[] = {IBUS_CMD_MOD_STATUS_RESP, 0x00};
+    IBusSendCommand(ibus, IBUS_DEVICE_SDRS, IBUS_DEVICE_LOC, msg, sizeof(msg));
+}
+
+/**
+ * IBusCommandSDRSPollResponse()
+ *     Description:
+ *        Respond to the Radio's "Ping" with our "Pong"
+ *        Raw: 73 04 68 02 00 1D
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSDRSPollResponse(IBus_t *ibus)
+{
+    const uint8_t msg[] = {IBUS_CMD_MOD_STATUS_RESP, 0x00};
+    // Send it ahead of anything else in the queue, as with the CDC pong
+    IBusSendCommandInternal(
+        ibus,
+        IBUS_DEVICE_SDRS,
+        IBUS_DEVICE_RAD,
+        msg,
+        sizeof(msg),
+        IBUS_MSG_PRIORITY_HIGH
+    );
+}
+
+/**
+ * IBusCommandSDRSScreenModeUpdate()
+ *     Description:
+ *        Tell the GT that the tuner has relinquished the display
+ *        Raw: 73 04 3B 46 01 0B
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSDRSScreenModeUpdate(IBus_t *ibus)
+{
+    const uint8_t msg[] = {IBUS_CMD_RAD_SCREEN_MODE_UPDATE, 0x01};
+    IBusSendCommand(ibus, IBUS_DEVICE_SDRS, IBUS_DEVICE_GT, msg, sizeof(msg));
+}
+
+/**
+ * IBusCommandSDRSUIStateRequest()
+ *     Description:
+ *        Ask the radio whether the tuner is in the foreground
+ *        Raw: 73 03 68 D7 CF
+ *     Params:
+ *         IBus_t *ibus - The pointer to the IBus_t object
+ *     Returns:
+ *         void
+ */
+void IBusCommandSDRSUIStateRequest(IBus_t *ibus)
+{
+    const uint8_t msg[] = {IBUS_CMD_SDRS_UI_STATE_REQ};
+    IBusSendCommand(ibus, IBUS_DEVICE_SDRS, IBUS_DEVICE_RAD, msg, sizeof(msg));
 }
 
 /**
